@@ -156,7 +156,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -2008,7 +2008,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .spec.suspend
@@ -2161,7 +2161,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -2339,7 +2339,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -3594,7 +3594,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .status.phase
@@ -19398,6 +19398,12 @@ spec:
                 required:
                 - podSpec
                 type: object
+              retryOnFailure:
+                default: true
+                type: boolean
+              retryOnFailureDelay:
+                default: 30s
+                type: string
             required:
             - onApply
             type: object
@@ -19515,7 +19521,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -19722,7 +19728,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -19943,7 +19949,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -20172,7 +20178,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -20315,7 +20321,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -20467,7 +20473,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/router\.ingress-class
@@ -20701,7 +20707,7 @@ spec:
     - jsonPath: .spec.svcCIDR
       name: ServiceCIDR
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -20727,8 +20733,6 @@ spec:
           spec:
             description: GatewaySpec defines the desired state of Gateway
             properties:
-              adminNamespace:
-                type: string
               clusterCIDR:
                 type: string
               dnsSuffix:
@@ -20783,12 +20787,13 @@ spec:
                 type: string
               svcCIDR:
                 type: string
+              targetNamespace:
+                type: string
               wireguardKeysRef:
                 description: secret's data will be unmarshalled into WireguardKeys
                 properties:
                   name:
-                    type: string
-                  namespace:
+                    description: .metadata.name of the resource
                     type: string
                 required:
                 - name
@@ -20892,51 +20897,6 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: ipbinds.networking.kloudlite.io
-spec:
-  group: networking.kloudlite.io
-  names:
-    kind: IPBind
-    listKind: IPBindList
-    plural: ipbinds
-    singular: ipbind
-  scope: Namespaced
-  versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: IPBind is the Schema for the ipbinds API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: IPBindSpec defines the desired state of IPBind
-            type: object
-          status:
-            description: IPBindStatus defines the observed state of IPBind
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
   name: podbindings.networking.kloudlite.io
 spec:
   group: networking.kloudlite.io
@@ -20945,7 +20905,7 @@ spec:
     listKind: PodBindingList
     plural: podbindings
     singular: podbinding
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.globalIP
@@ -21108,7 +21068,7 @@ spec:
     listKind: ServiceBindingList
     plural: servicebindings
     singular: servicebinding
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
@@ -21335,7 +21295,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -21752,7 +21712,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -21934,7 +21894,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -22111,7 +22071,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -22575,7 +22535,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -22753,7 +22713,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -23530,7 +23490,7 @@ spec:
     - jsonPath: .metadata.annotations.kloudlite\.io\/credentials-ref
       name: Credentials
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -23712,7 +23672,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -23955,7 +23915,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -24131,7 +24091,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Seen
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready

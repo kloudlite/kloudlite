@@ -1,8 +1,0 @@
-Following components should be up and running:
-
-  - AWS EBS CSI Driver (with snapshotting support)
-  - AWS Spot node terminator (terminates spot nodes, when it receives a termination request)
-
-  {{- if .Values.common.velero.enabled}}
-  - Velero for cluster backup and restore
-  {{- end }}

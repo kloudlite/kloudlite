@@ -5,7 +5,6 @@ icon: https://avatars.githubusercontent.com/u/98086655
 
 type: application
 
-# vX.X.X is a placeholder, and it will be replaced by github actions, while releasing the helm chart
-version: "v1.0.5"
-appVersion: "v1.0.5"
+version: "v1.0.7"
+appVersion: "v1.0.7"
 

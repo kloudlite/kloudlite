@@ -1,94 +1,114 @@
-# Globals
-global:
-  isDev: false
+# -- kloudlite release version, defaults to `Chart.AppVersion`
+# @ignored
+kloudliteRelease: "v1.0.7"
 
-  # -- image pull policies for kloudlite pods, belonging to this chart, could be Always | IfNotPresent
-  imagePullPolicy: "" 
+# -- base domain
+baseDomain: ""
 
-  nodeSelector: &nodeSelector { }
-  # -- tolerations for pods belonging to this release
-  tolerations: &tolerations []
+# -- kloudlite DNS suffix, when left empty, defaults to `dns.<baseDomain>`
+# -- @ignored
+kloudliteDNSSuffix: ""
 
-  # -- podlabels for pods belonging to this release
-  podLabels: &podLabels {}
+# -- pod labels, added to all kloudlite pods
+# -- @ignored
+podLabels: {}
 
-  # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
-  cookieDomain: '.kloudlite.io'
+# -- pod annotations, added to all kloudlite pods
+# -- @ignored
+podAnnotations: {}
 
-  # -- base domain for all routers exposed through this culuster
-  baseDomain: 'platform.kloudlite.io'
-  secondaryDomain: 'khost.dev'
+# -- cluster internal DNS name
+# -- @ignored
+clusterInternalDNS: "cluster.local"
 
-  # -- router domain defaults to `global.baseDomain`
-  routerDomain: ''
-
-  # -- kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name
-  accountName: 'kloudlite'
-
-  # -- kloudlite cluster name, required only for labelling purposes, does not need to be a real kloudlite cluster name
-  clusterName: 'platform'
-
-  # -- cluster internal DNS name
-  clusterInternalDNS: "cluster.local"
-
-  # @ignored
-  # -- account cookie name, that console-api should expect, while any client communicates through it's graphql interface
-  accountCookieName: "kloudlite-account"
-
-  # -- cluster cookie name, that console-api should expect, while any client communicates through it's graphql interface
-  # @ignored
-  clusterCookieName: "kloudlite-cluster"
-
-  # -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
-  clusterSvcAccount: kloudlite-cluster-svc-account
-
-  # -- service account for non k8s operations, just for specifying image pull secrets
-  normalSvcAccount: kloudlite-svc-account
-
-  # -- default project workspace name, the one that should be auto created, whenever you create a project
-  defaultProjectWorkspaceName: "default"
-
-  statefulPriorityClassName: "stateful"
-
-  # -- (string) if not set, defaults to .Chart.AppVersion
-  kloudlite_release: ""
-
-  ingressClassName: "ingress-nginx"
-
-  kloudliteDNSSuffix: ""
-
-# Cluster Management
+# -- @ignored
 certManager:
-  # -- whether to enable cert-manager
-  enabled: true
-  name: cert-manager
-  certIssuer:
+  # -- whether to install cert-manager, when false, you must already have cert-manager installed
+  install: true
+  clusterIssuer:
+    create: true
+
     name: kloudlite-cluster-issuer
-    # -- email that should be used for communicating with lets-encrypt services
-    acmeEmail: sample@example.com
+    # -- email that should be used for communicating with CA
+    acmeEmail: support@kloudlite.io
 
-ingressController:
-  enabled: true
-  name: ingress-nginx
-  configuration:
-    # -- can be DaemonSet or Deployment
-    controllerKind: "DaemonSet"
+  # -- solvers to use for the cluster issuer
+  # -- [http01 solvers](https://cert-manager.io/docs/configuration/acme/http01/)
+  # -- [dns01 solvers](https://cert-manager.io/docs/configuration/acme/dns01/)
+  solvers: []
 
-    nodeSelector:
-      node-role.kubernetes.io/control-plane: "true"
+# -- @ignored
+nginxIngress:
+  # -- whether to install nginx ingress controller, when false, you must already have nginx ingress controller installed
+  install: true
+  ingressClass:
+    name: nginx
 
-    tolerations:
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
+  wildcardCert:
+    # -- when enabled, secretName and secretNamespace must be provided
+    enabled: false
+    secretName: ""
+    secretNamespace: ""
 
+# -- victoria metrics for metrics aggregation and querying
+# -- @ignored
+victoriaMetrics:
+  install: true
+  # -- in go's time.Duration string format
+  retentionPeriod: "1d"
+  vmselect:
+    volumeSize: 2Gi
+  vmcluster:
+    volumeSize: 10Gi
+
+# -- vector for logs and metrics collection
+# -- @ignored
+vector:
+  install: true
+  replicas: 1
+
+# -- @ignored
+serviceAccounts:
+  clusterAdmin:
+    create: true
+    # -- name of the cluster admin service account
+    name: kloudlite-admin-sa
+
+  normal:
+    create: true
+    # -- name of the normal user service account
+    name: kloudlite-normal-sa
+
+# -- @ignored
+persistence:
+  storageClasses:
+    # -- ext4 storage class name
+    ext4: sc-ext4
+    # -- xfs storage class name
+    xfs: sc-xfs
+
+# -- if you want to be able to send emails, you need to provide a sendgrid api key
+# -- @ignored
+sendgrid:
+  # -- sendgrid api key
+  apiKey: ""
+
+  # -- sender email address from which the emails will be sent
+  sender: ""
+
+# -- edge gateways configuration, **secretKeyRef.key** must be serializable into [[]AvailableKloudliteRegion](https://github.com/kloudlite/api/blob/7e90c2f3a47c43ad9026ebfe99dfdbb8327f72ce/apps/accounts/internal/env/env.go#L38C1-L38C39)
+# -- @ignored
+edgeGateways: 
+  - id: "self"
+    region: "kloudlite-platform"
+    displayName: "KloudLite Platform"
+    cloudprovider: "self"
+
+# -- @ignored
 scheduling:
   stateful:
     nodeSelector: {}
-    tolerations:
-      - key: "kloudlite.io/nodepool.role"
-        operator: "Equal"
-        value: "stateful"
-        effect: "NoExecute"
+    tolerations: []
     topologySpreadConstraints: []
   stateless:
     nodeSelector: {}
@@ -99,274 +119,122 @@ scheduling:
         effect: "NoExecute"
     topologySpreadConstraints: []
 
-nodepools:
-  stateless:
-    labels:
-      kloudlite.io/nodepool.role: "stateless"
-    tolerations: []
-    #   - key: "kloudlite.io/nodepool.role"
-    #     operator: "Equal"
-    #     value: "stateless"
-    #     effect: "NoExecute"
-    # taints
-    #   - key: "kloudlite.io/nodepool.role"
-    #     value: "stateless"
-    #     effect: "NoExecute"
-    # tolerations:
-    #   - key: "kloudlite.io/nodepool.role"
-    #     operator: "Equal"
-    #     value: "stateless"
-    #     effect: "NoExecute"
-
-  stateful:
-    labels:
-      kloudlite.io/nodepool.role: "stateful"
-    taints:
-      - key: "kloudlite.io/nodepool.role"
-        value: "stateful"
-        effect: "NoExecute"
-    tolerations:
-      - key: "kloudlite.io/nodepool.role"
-        operator: "Equal"
-        value: "stateful"
-        effect: "NoExecute"
-  iac:
-    labels:
-      kloudlite.io/nodepool.role: "iac"
-    taints:
-      - key: "kloudlite.io/nodepool.role"
-        value: "iac"
-        effect: "NoExecute"
-    tolerations:
-      - key: "kloudlite.io/nodepool.role"
-        operator: "Equal"
-        value: "iac"
-        effect: "NoExecute"
-
-descheduler:
-  enabled: true
-
-# clusterAutoscaler:
-#   enabled: true
-#   configuration:
-#     chartVersion: ""
-
-vectorAgent:
-  enabled: true
-  name: vector-agent
-  description: "vector agent for shipping logs to centralized vector aggregator"
-
-cloudflareWildCardCert:
-  enabled: true
-  certificateName: cloudflare-wildcard-cert
-  tlsSecretName: kl-cert-wildcard-tls
-  # -- cloudflare authz credentials
-  cloudflareCreds:
-    # -- cloudflare authorized email
-    email: ""
-    # -- cloudflare authorized secret token
-    secretToken: ""
-  # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
-  domains:
-    # -- should default to basedomain
-    - '*.platform.kloudlite.io'
-
-# Backing Services
-loki:
-  enabled: false
-  name: loki-stack
-  configuration:
-    s3credentials:
-      awsAccessKeyId: ""
-      awsSecretAccessKey: ""
-      region: ""
-      bucketName: ""
-
-vector:
-  enabled: true
-  name: vector
-
-grafana:
-  enabled: true
-  name: grafana
-  configuration:
-    volumeSize: 2Gi
-    nodeSelector: {}
-
-prometheus:
-  enabled: true
-  name: prometheus
-  configuration:
-    prometheus:
-      volumeSize: 2Gi
-      nodeSelector: {}
-    alertmanager:
-      volumeSize: 2Gi
-
-victoriaMetrics:
-  enabled: true
-  name: victoria-metrics
-  configuration:
-    vmselect:
-      volumeSize: 2Gi
-    vmcluster:
-      volumeSize: 10Gi
-
-nats:
-  runAsCluster: false
-  replicas: 3
-  configuration:
-    user: "sample"
-    password: "sample"
-
-    volumeSize: 10Gi
-
-distribution:
-  domain: cr.khost.dev
-  secret: <distribution-secret>
-  tls:
-    enabled: true
-  storage:
-    # -- should be one of gcs or s3
-    driver: "" 
-
-    gcs:
-      bucket: ""
-      keyfileJson: ""
-
-    s3:
-      enabled: false
-
-      bucketName: ""
-      endpoint: ""
-      accessKey: ""
-      secretKey: ""
-      region: ""
-
+# -- mongodb configuration
+# -- @ignored
 mongo:
-  # rootPassword: <mongo-root-password>
   runAsCluster: false
   replicas: 1
-  configuration:
-    volumeSize: 2Gi
-    nodeSelector: {}
-  externalDB:
-    dbURL: ""
-    authDBName: ""
+  volumeSize: 10Gi
+  nodeSelector: {}
+  tolerations: []
 
-# setting up csi-s3 driver
-csiS3:
-  storageClass: "csi-s3"
-  s3:
-    accessKey: ""
-    secretKey: ""
+# -- nats configuration
+# -- @ignored
+nats:
+  runAsCluster: false
+  replicas: 1
+  volumeSize: 20Gi
 
-    # https endpoint like https://s3.ap-south-1.amazonaws.com
-    endpoint: ""
+  # user: "sample"
+  # password: "sample"
 
-    bucketName: ""
+  nodeSelector: {}
+  tolerations: []
 
-# Storage
-persistence:
-  storageClasses:
-    # -- ext4 storage class name
-    ext4: sc-ext4
-    # -- xfs storage class name
-    xfs: sc-xfs
+  streams:
+    events:
+      name: events
+      subjects: "events.>"
+      maxMsgBytes: 500kB
+      maxMsgsPerSubject: 2
 
-longhorn:
-  enabled: false
+    resourceSync:
+      name: resource-sync
+      subjects: "resource-sync.>"
+      maxMsgBytes: 500kB
+      # maxMsgsPerSubject: 2
 
-# Configs & Secrets
-oAuth:
-  # -- secret where all oauth credentials should be
-  secretName: oauth-secrets
-  enabled: true
-  providers:
-    google:
-      # -- whether to enable google oAuth2
-      enabled: true
-      # -- google oAuth2 callback url
-      callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/google
-      # -- google oAuth2 Client ID
-      clientId: ""
-      # -- google oAuth2 Client Secret
-      clientSecret: ""
-    gitlab:
-      # -- whether to enable gitlab oAuth2
-      enabled: true
-      # -- gitlab oAuth2 callback url
-      callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/gitlab
-      # -- gitlab oAuth2 Client ID
-      clientId: ""
-      # -- gitlab oAuth2 Client Secret
-      clientSecret: ""
-    github:
-      # -- whether to enable GitHub oAuth2
-      enabled: true
-      # -- GitHub oAuth2 callback url
-      callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/github
-      # -- (string) (REQUIRED, if enabled) GitHub oAuth2 Client ID
-      clientId: ""
-      # -- (string) (REQUIRED, if enabled) GitHub oAuth2 Client Secret
-      clientSecret: ""
+    sendToAgent:
+      name: send-to-agent
+      subjects: "send-to-agent.>"
+      maxMsgBytes: 500kB
 
-      # -- GitHub app id
-      appId: ""
-      # -- GitHub app private key (base64 encoded)
-      appPrivateKey: ""
-      # -- GitHub app name, that we want to install on user's GitHub account
-      githubAppName: "" # kloudlite-dev
+      workQueue: true
+      # maxMsgsPerSubject: 2
 
-sendGrid:
-  # -- sendgrid api key for email communications, if (sendgrid.enabled)
-  apiKey: ""
-  # -- email through which we should be sending emails to target users, if (sendgrid.enabled)
-  supportEmail: ""
+    receiveFromAgent:
+      name: receive-from-agent
+      subjects: "receive-from-agent.>"
+      maxMsgBytes: 500kB
+      maxMsgsPerSubject: 1  # apiVersion.namespace.name in subject
+      workQueue: true
 
-aws:
-  # (string) REQUIRED, AWS Access Key
-  accessKey: ""
-  # (string) REQUIRED, AWS Secret Key
-  secretKey: ""
+  buckets:
+    sessionKVBucket:
+      name: auth-session
+      storage: file
+    verifyTokenBucket:
+      name: verify-token
+      storage: file
+    consoleCacheBucket:
+      name: console-cache
+      storage: file
+    resetTokenBucket:
+      name: reset-token
+      storage: file
 
-  # fill in the values via, the cloudformation stack, created by `github.com/kloudlite/infrastructure-as-code/aws/cloudformation`
-  cloudformation:
-    stackNamePrefix: "kloudlite-tenant-stack"
-    roleNamePrefix: "kloudlite-tenant-role"
-    instanceProfileNamePrefix: "kloudlite-instance-profile"
-    stackS3URL: "https://kloudlite-platform-production-assets.s3.ap-south-1.amazonaws.com/public/cloudformation-templates/cloudformation.yml"
-    params:
-      trustedARN: "arn:aws:iam::855999427630:root"
-
-webhookSecrets:
-  name: webhook-secrets
-  # -- webhook authz secret for gitlab webhooks
-  gitlabSecret: ""
-  # -- webhook authz secret for GitHub webhooks
-  githubSecret: ""
-  githubAuthzSecret: ""
-  authzSecret: ""
-  # -- webhook authz secret for kloudlite internal calls
-  kloudliteSecret: ""
-
-edgeGateways:
-  secretKeyRef:
-    # -- assumes, that the secret is in the same namespace as the chart
-    name: ""
-    key: ""
-
-# Microservices
-apps:
-  websocketApi:
-    # -- image (with tag) for websocket-server api
+# -- @ignored
+operators:
+  # -- platform operator configuration
+  platformOperator:
+    # -- image (with tag) for platform operator
+    # -- @ignored
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/websocket-server
+      repository: ghcr.io/kloudlite/kloudlite/operator/platform
       tag: ""
+      pullPolicy: ""
+
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+
+    serviceAccountName: kloudlite-svc-account
+
     configuration:
-      replicas: 1
-    minReplicas: 2
-    maxReplicas: 4
+      # -- @ignored
+      helmCharts:
+        jobImage:
+          repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
+          tag: ""
+
+      # -- ingress class name to use while creating ingress resources
+      ingressClassName: "nginx"
+
+# -- @ignored
+apps:
+  accountsApi:
+    # -- image (with tag) for accounts api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/accounts
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  consoleApi:
+    # -- image (with tag) for console api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/console
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
   authApi:
     # -- image (with tag) for auth api
@@ -374,385 +242,194 @@ apps:
       repository: ghcr.io/kloudlite/kloudlite/api/auth
       tag: ""
 
-    configuration:
-      replicas: 1
-      httpPort: 3000
-      grpcPort: 3001
-    minReplicas: 2
-    maxReplicas: 4
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
-  klInstaller:
-    image:
-      repository: ghcr.io/kloudlite/bin-installer
-      tag: ""
-    configuration:
-      replicas: 1
+    oAuth2:
+      enabled: false
+      providers:
+        google:
+          enabled: false
+          callbackURL: ""
+          clientID: ""
+          clientSecret: ""
 
-    minReplicas: 2
-    maxReplicas: 4
+        gitlab:
+          enabled: false
+          callbackURL: ""
+          clientID: ""
+          clientSecret: ""
+
+        github:
+          enabled: false
+          callbackURL: ""
+          clientID: ""
+          clientSecret: ""
+
+          githubAppID: ""
+          appPrivateKey: ""
+          githubAppName: "" 
 
   commsApi:
     # -- image (with tag) for comms api
-    image:
+    image: 
       repository: ghcr.io/kloudlite/kloudlite/api/comms
       tag: ""
-    configuration:
-      replicas: 1
-      grpcPort: 3001
-    minReplicas: 2
-    maxReplicas: 4
 
-  healthApi:
-    # -- image (with tag) for console api
-    image:
-      repository: ghcr.io/kloudlite/kloudlite/api/kube-svc-health
-      tag: ""
-    configuration:
-      replicas: 2
-      httpPort: 3000
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
-    minReplicas: 2
-    maxReplicas: 4
-
-  consoleApi:
-    # -- image (with tag) for console api
-    image:
-      repository: ghcr.io/kloudlite/kloudlite/api/console
-      tag: ""
-    configuration:
-      logsAndMetricsHttpPort: 9100
-      vpnDeviceNamespace: "kl-vpn-devices"
-      replicas: 1
-
-      httpPort: 3000
-      grpcPort: 3001
-    minReplicas: 2
-    maxReplicas: 4
-        
-  accountsApi:
-    # -- image (with tag) for accounts api
+  gatewayApi:
+    # -- image (with tag) for gateway api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/accounts
-      4ag: ""
+      repository: ghcr.io/kloudlite/kloudlite/api/gateway
+      tag: ""
 
-    configuration:
-      replicas: 1
-      httpPort: 3000
-      grpcPort: 3001
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
-    minReplicas: 2
-    maxReplicas: 4
+    exposeWithIngress: false
 
   iamApi:
-    image:
+    # -- image (with tag) for gateway api
+    image: 
       repository: ghcr.io/kloudlite/kloudlite/api/iam
       tag: ""
-    configuration:
-      replicas: 1
-      httpPort: 3000
-      grpcPort: 3001
 
-    minReplicas: 2
-    maxReplicas: 4
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
   infraApi:
     # -- image (with tag) for infra api
-    image:
+    image: 
       repository: ghcr.io/kloudlite/kloudlite/api/infra
       tag: ""
-    configuration:
-      replicas: 1
-      kloudliteRelease: ""
-      httpPort: 3000
-      grpcPort: 3001
 
-      globalVpnKubeReverseProxyAuthzToken: ""
-
-      imageGatewayKubeProxy: 
-        repository: "ghcr.io/kloudlite/kloudlite/api/cmd/gateway-kube-proxy"
-        tag: ""
-
-    minReplicas: 2
-    maxReplicas: 4
-
-  gatewayApi:
-    image:
-      repository: ghcr.io/kloudlite/kloudlite/api/gateway
-      tag: ""
-    configuration:
-      replicas: 1
-      httpPort: 3000
-
-    minReplicas: 2
-    maxReplicas: 4
-
-  containerRegistryApi:
-    # -- image (with tag) for container registry api
-    image:
-      repository: ghcr.io/kloudlite/kloudlite/api/container-registry
+    # -- image for gateway kube reverse proxy
+    imageGatewayKubeProxy:
+      repository: ghcr.io/kloudlite/kloudlite/api/cmd/gateway-kube-proxy
       tag: ""
 
-    configuration:
-      replicas: 1
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+    globalVpnKubeReverseProxyAuthzToken: ""
 
-      # -- (number) port on which container registry event listener should listen
-      eventListenerPort: 4001
-      registrySecret: ""
-
-      buildClusterName: ""
-      buildClusterAccountName: ""
-
-      # -- namespace, in which build runs should be created
-      jobBuildNamespace: "kloudlite"
-      authorizerPort: 4000
-      httpPort: 3000
-      grpcPort: 3001
-
-    minReplicas: 2
-    maxReplicas: 4
-
-  auditLoggingWorker:
+  messageOfficeApi:
+    # -- image (with tag) for message office api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/worker-audit-logging
+      repository: ghcr.io/kloudlite/kloudlite/api/message-office
       tag: ""
-    configuration:
-      replicas: 1
 
-    minReplicas: 2
-    maxReplicas: 4
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  observabilityApi:
+    # -- image (with tag) for observability api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/observability
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
   webhooksApi:
     # -- image (with tag) for webhooks api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/webhook
-      tag: ""
-    configuration:
-      replicas: 1
-
-    minReplicas: 2
-    maxReplicas: 4
-
-  messageOfficeApi:
-    # -- image (with tag) for message office api
-    image:
-      repository: ghcr.io/kloudlite/kloudlite/api/message-office
+      repository: ghcr.io/kloudlite/kloudlite/api/webhooks
       tag: ""
 
-    configuration:
-      replicas: 1
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
-      # @ignored
-      externalGrpcPort: 3001
+    discordWebhookUrl: ""
+    webhookAuthzTokenHashingSecret: ""
 
-      # @ignored
-      internalGrpcPort: 3002
+    authenticationSecrets:
+      githubAuthzSecret: ""
+      gitlabAuthzSecret: ""
+      kloudliteAuthzSecret: ""
 
-      # -- token hashing secret, that is used to hash access tokens for kloudlite agents
-      # -- consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
-      tokenHashingSecret: ""
-      platformAccessToken: "sample"
-
-    minReplicas: 2
-    maxReplicas: 4
-
-  observabilityApi:
-    image:
-      repository: "ghcr.io/kloudlite/kloudlite/api/observability"
+  klInstaller:
+    install: false
+    # -- image (with tag) for kl cli installer
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/kl-installer
       tag: ""
-    configuration:
-      replicas: 1
-      httpPort: "3000"
 
-    minReplicas: 2
-    maxReplicas: 4
+    replicas: 1
+
+  websocketApi:
+    # -- image (with tag) for websocket api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/webhooks
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  authWeb:
+    # -- image (with tag) for websocket api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/web/auth
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
   consoleWeb:
-    enabled: true
-    # -- image (with tag) for console web
+    # -- image (with tag) for websocket api
     image: 
       repository: ghcr.io/kloudlite/kloudlite/web/console
       tag: ""
-    configuration:
-      replicas: 1
 
-      artifactHubKeyID: ""
-      artifactHubKeySecret: ""
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
 
-      httpPort: 3000
-    minReplicas: 2
-    maxReplicas: 4
+    artifactHubKeyID: ""
+    artifactHubKeySecret: ""
 
-  authWeb:
-    enabled: true
-    # -- image (with tag) for auth web
-    image:
-      repository: ghcr.io/kloudlite/kloudlite/web/auth
-      tag: ""
-    configuration:
-      replicas: 1
-      httpPort: 3000
-    minReplicas: 2
-    maxReplicas: 4
-
-operators:
-  preferOperatorsOnMasterNodes: true
-  platformOperator:
-    # -- whether to enable platform operator
-    enabled: true
-    # -- image (with tag) for platform operator
+  healthApi:
+    install: false
+    # -- image (with tag) for health api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/operator/platform
+      repository: ghcr.io/kloudlite/kloudlite/api/health
       tag: ""
 
-    configuration:
-      nodepools:
-        enabled: true
-        extractFromCluster: true
-
-        # if extractFromCluster is true, the following values are ignored, as these values are referred from `kube-system/k3s-params` namespace
-        cloudProviderName: "aws"
-        cloudProviderRegion: "ap-south-1"
-
-        aws:
-          vpc_params:
-            readFromCluster: true
-            secret:
-              name: "kloudlite-aws-settings"
-              namespace: "kube-system"
-              keys:
-                vpcId: "vpc_id"
-                vpcPublicSubnets: "vpc_public_subnets"
-
-        # -- k3s agent join token, as nodepools are effectively agent nodes
-        k3sAgentJoinToken: ""
-
-        # -- k3s masters public DNS Host
-        k3sServerPublicHost: ""
-
-      wireguard:
-        # -- cluster pods CIDR range
-        podCIDR: 10.42.0.0/16
-        # -- cluster services CIDR range
-        svcCIDR: 10.43.0.0/16
-
-        enableExamples: true
-
-      helmCharts:
-        jobImage:
-          repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
-          tag: ""
-
-      cluster:
-        jobImage:
-          repository: ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job
-          tag: ""
-        cloudflare:
-          # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters
-          zoneId: ""
-          # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created
-          baseDomain: ""
-
-      gateway:
-        imageWebhookServer:
-          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook
-          tag: ""
-
-        imageIPManager:
-          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager
-          tag: ""
-
-        imageIPBindingController:
-          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller
-          tag: ""
-
-        imageDNS:
-          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns
-          tag: ""
-
-        imageLogsProxy:
-          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy
-          tag: ""
-
-envVars:
-  db:
-    authDB: auth-db
-    consoleDB: console-db
-    commsDB: comms-db
-    accountsDB: accounts-db
-    registryDB: registry-db
-    eventsDB: events-db
-    iamDB: iam-db
-    infraDB: infra-db
-    messageOfficeDB: message-office-db
-  grpc:
-    authGRPCAddr: auth-api:3001
-  nats:
-    url: nats://nats:4222
-    streams:
-      events:
-        name: events
-        subjects: "events.>"
-        maxMsgBytes: 500kB
-        maxMsgsPerSubject: 2
-
-      resourceSync:
-        name: resource-sync
-        subjects: "resource-sync.>"
-        maxMsgBytes: 500kB
-        # maxMsgsPerSubject: 2
-
-      sendToAgent:
-        name: send-to-agent
-        subjects: "send-to-agent.>"
-        maxMsgBytes: 500kB
-
-        workQueue: true
-        # maxMsgsPerSubject: 2
-
-      receiveFromAgent:
-        name: receive-from-agent
-        subjects: "receive-from-agent.>"
-        maxMsgBytes: 500kB
-        maxMsgsPerSubject: 1  # apiVersion.namespace.name in subject
-        workQueue: true
-
-      # logs:
-      #   name: logs
-      #   subjects: "logs.>"
-      #   maxMsgBytes: 2MB
-      #   maxAge: "3h"
-
-    buckets:
-      sessionKVBucket:
-        name: auth-session
-        storage: file
-      verifyTokenBucket:
-        name: verify-token
-        storage: file
-      consoleCacheBucket:
-        name: console-cache
-        storage: file
-      resetTokenBucket:
-        name: reset-token
-        storage: file
-
-crons:
-  mongoBackup:
-    name: mongo-backup
-    configuration:
-      image: mongo:latest
-      # mongodbUri: ""
-      numBackups: 5
-      schedule: "0 */2 * * *" # Runs every 2 hours
-      encryptionPassword: ""
-      storageSize: "10Gi"
-  natsBackup:
-    name: nats-backup
-    configuration:
-      image: natsio/nats-box:latest
-      # server: ""
-      numBackups: 5
-      schedule: "0 */2 * * *" # Runs every 2 hours
-      # bucket: ""
-      encryptionPassword: ""
-      storageSize: "50Gi"
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
