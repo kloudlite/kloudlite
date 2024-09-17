@@ -20,6 +20,7 @@ on:
       - "go.*"
       - ".github/workflows/**"
       - "apis/**/*.go"
+      - "needs-images/**"
 
 permissions:
   contents: read
@@ -35,6 +36,7 @@ jobs:
           - name: platform-operator
           - name: wireguard-operator
           - name: helm-charts-operator
+          - name: helm-charts-job-runner
           - name: networking-operator
           - name: networking/cmd/ip-binding-controller
           - name: networking/cmd/ip-manager
@@ -65,6 +67,7 @@ jobs:
           agent-operator: ${{ matrix.images.name == 'agent-operator' }}
           wireguard-operator: ${{ matrix.images.name == 'wireguard-operator' }}
           helm-charts-operator: ${{ matrix.images.name == 'helm-charts-operator' }}
+          helm-charts-job-runner: ${{ matrix.images.name == 'helm-charts-job-runner' }}
           networking-operator: ${{ matrix.images.name == 'networking-operator' }}
 
           networking_ip-binding-controller: ${{ matrix.images.name == 'networking/cmd/ip-binding-controller' }}
