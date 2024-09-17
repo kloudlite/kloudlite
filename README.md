@@ -34,15 +34,21 @@ Kloudlite is a platform designed to enhance developers' productivity by providin
 <!-- - [FAQ]() -->
 <!-- - Watch [a video overview]() of Kloudlite -->
 
+
+## Self Hosting
+- [Opensource Helm Charts](https://github.com/kloudlite/helm-charts)
+- [Enterprise Support](https://kloudlite.io/contact-us)
+
 ## Contact
 - [Twitter](https://x.com/kloudlite): Follow us on Twitter!
 - [Discord](https://discord.com/invite/m5tYzQfcG8): Click [here](https://discord.com/invite/m5tYzQfcG8) to join. You can ask question to our maintainers and to the rich and active community.
+- [Write to us](https://kloudlite.io/contact-us)
 
 ## Contributing
 If you are interested in contributing to Kloudlite, read about our...
 
 - [Contributing Guide](https://kloudlite.io/docs/contributing/code-of-conduct)
-- [Report an issue and propose Pull Requests](https://github.com/kloudlite)
+- [Report an issue and propose Pull Requests](https://github.com/kloudlite/issues)
 
 ## Roadmap
 The Kloudlite product roadmap can be found [here](https://github.com/orgs/kloudlite/projects/18).
@@ -53,4 +59,4 @@ The Kloudlite product roadmap can be found [here](https://github.com/orgs/kloudl
 If you've found a vulnerability or a potential vulnerability in the Kloudlite server, please let us know at support@kloudlite.io.
 
 ## License
-Unless otherwise noted, the Kloudlite source files are distributed under the Apache Version 2.0 license found in the LICENSE file.
+Unless otherwise noted, the Kloudlite source files are distributed under the AGPL Version 2.0 license found in the LICENSE file.
