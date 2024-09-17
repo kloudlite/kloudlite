@@ -21,7 +21,7 @@ type Client struct {
 	MockDeleteYAML     func(ctx context.Context, yamls ...[]byte) error
 	MockGet            func(ctx context.Context, nn types.NamespacedName, obj client.Object) error
 	MockList           func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
-	MockListSecrets    func(ctx context.Context, namespace string, secretType corev1.SecretType) ([]v1.Secret, error)
+	MockListSecrets    func(ctx context.Context, namespace string, secretType corev1.SecretType) ([]corev1.Secret, error)
 	MockReadLogs       func(ctx context.Context, namespace string, name string, writer io.WriteCloser, opts *k8s.ReadLogsOptions) error
 	MockUpdate         func(ctx context.Context, obj client.Object) error
 	MockValidateObject func(ctx context.Context, obj client.Object) error
@@ -82,7 +82,7 @@ func (cMock *Client) List(ctx context.Context, list client.ObjectList, opts ...c
 	panic("Client: method 'List' not implemented, yet")
 }
 
-func (cMock *Client) ListSecrets(ctx context.Context, namespace string, secretType corev1.SecretType) ([]v1.Secret, error) {
+func (cMock *Client) ListSecrets(ctx context.Context, namespace string, secretType corev1.SecretType) ([]corev1.Secret, error) {
 	if cMock.MockListSecrets != nil {
 		cMock.registerCall("ListSecrets", ctx, namespace, secretType)
 		return cMock.MockListSecrets(ctx, namespace, secretType)

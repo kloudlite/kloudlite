@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/kloudlite/api/apps/infra/internal/app"
+	"github.com/kloudlite/api/apps/infra/internal/app/adapters"
 	"github.com/kloudlite/api/apps/infra/internal/env"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -68,7 +69,7 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(ev.AccountsGrpcAddr)
 	}),
 
-	fx.Provide(func(ev *env.Env) (app.MessageOfficeInternalGrpcClient, error) {
+	fx.Provide(func(ev *env.Env) (adapters.MesasageOfficeGRPCClient, error) {
 		return grpc.NewGrpcClient(ev.MessageOfficeInternalGrpcAddr)
 	}),
 

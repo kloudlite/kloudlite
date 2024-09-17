@@ -8,9 +8,9 @@ import (
 	"github.com/kloudlite/api/apps/message-office/internal/app/graph/generated"
 	proto_rpc "github.com/kloudlite/api/apps/message-office/internal/app/proto-rpc"
 	"github.com/kloudlite/api/apps/message-office/internal/domain"
+	"github.com/kloudlite/api/apps/message-office/internal/entities"
 	"github.com/kloudlite/api/apps/message-office/internal/env"
 	"github.com/kloudlite/api/grpc-interfaces/infra"
-	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
@@ -27,12 +27,12 @@ type (
 
 type (
 	ExternalGrpcServer grpc.Server
-	InternalGrpcServer grpc.Server
 )
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*domain.MessageOfficeToken]("mo_tokens", "mot", domain.MOTokenIndexes),
-	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
+	repos.NewFxMongoRepo[*entities.PlatformEdgeCluster]("platform_edge_clusters", "pec", entities.PlatformEdgeClusterIndexes),
+	repos.NewFxMongoRepo[*entities.ClusterAllocation]("cluster_allocations", "ca", entities.ClusterAllocationIndexes),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) UpdatesProducer {
 		return msg_nats.NewJetstreamProducer(jsc)
@@ -72,11 +72,9 @@ var Module = fx.Module("app",
 		}
 	}),
 
+	// internal grpc server
 	fx.Provide(newInternalMsgServer),
-
-	fx.Invoke(func(server InternalGrpcServer, internalMsgServer message_office_internal.MessageOfficeInternalServer) {
-		message_office_internal.RegisterMessageOfficeInternalServer(server, internalMsgServer)
-	}),
+	fx.Invoke(RegisterInternalMsgServer),
 
 	fx.Invoke(
 		func(server ExternalGrpcServer, messageServer messages.MessageDispatchServiceServer) {

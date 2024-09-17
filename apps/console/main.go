@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log/slog"
 	"os"
 	"time"
 
@@ -20,28 +19,30 @@ import (
 )
 
 func main() {
+	start := time.Now()
+	common.PrintBuildInfo()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 
 	var debug bool
 	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "console", ShowDebugLog: debug})
-	if err != nil {
-		panic(err)
+	if isDev {
+		debug = true
 	}
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
 
 	app := fx.New(
 		fx.NopLogger,
-
-		fx.Provide(func() logging.Logger {
-			return logger
+		fx.Provide(func() (logging.Logger, error) {
+			return logging.New(&logging.Options{Name: "console", ShowDebugLog: debug})
 		}),
 
-		fx.Provide(func() *slog.Logger {
-			return logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
-		}),
+		fx.Supply(logger),
 
 		fx.Provide(func() (*env.Env, error) {
 			if e, err := env.LoadEnv(); err != nil {
@@ -53,7 +54,7 @@ func main() {
 		}),
 
 		fx.Provide(func(e *env.Env) (*rest.Config, error) {
-			if e.KubernetesApiProxy != "" {
+			if isDev {
 				return &rest.Config{
 					Host: e.KubernetesApiProxy,
 				}, nil
@@ -65,18 +66,17 @@ func main() {
 
 	ctx, cancelFunc := func() (context.Context, context.CancelFunc) {
 		if isDev {
-			return context.WithTimeout(context.TODO(), 20*time.Second)
+			return context.WithTimeout(context.TODO(), 10*time.Second)
 		}
 		return context.WithTimeout(context.TODO(), 5*time.Second)
 	}()
 	defer cancelFunc()
 
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "console startup errors")
-		logger.Infof("EXITING as errors encountered during startup")
+		logger.Error("while starting console, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }

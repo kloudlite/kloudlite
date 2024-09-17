@@ -208,11 +208,23 @@ type Build @key(fields: "id") {
 	id: ID! @isLoggedInAndVerified @hasAccount
 }
 
+type OnlineStatus {
+  lastOnlineAt: Date!
+  willBeOfflineAt: Date!
+}
+
+extend type Environment {
+  onlineStatus: OnlineStatus
+}
+
 extend type App {
 	build: Build
 	serviceHost: String
+  onlineStatus: OnlineStatus
 }
 
 extend type ImportedManagedResource {
   managedResource: ManagedResource
+  onlineStatus: OnlineStatus
 }
+

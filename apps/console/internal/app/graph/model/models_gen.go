@@ -739,6 +739,11 @@ type ManagedResourcePaginatedRecords struct {
 type Mutation struct {
 }
 
+type OnlineStatus struct {
+	LastOnlineAt    string `json:"lastOnlineAt"`
+	WillBeOfflineAt string `json:"willBeOfflineAt"`
+}
+
 type PageInfo struct {
 	EndCursor   *string `json:"endCursor,omitempty"`
 	HasNextPage *bool   `json:"hasNextPage,omitempty"`

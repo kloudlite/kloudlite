@@ -4,7 +4,6 @@ import (
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	"github.com/kloudlite/api/apps/accounts/internal/env"
 	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/grpc-interfaces/container_registry"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
@@ -73,11 +72,11 @@ type Domain interface {
 }
 
 type domain struct {
-	authClient              auth.AuthClient
-	iamClient               iam.IAMClient
-	consoleClient           console.ConsoleClient
-	containerRegistryClient container_registry.ContainerRegistryClient
-	commsClient             comms.CommsClient
+	authClient    auth.AuthClient
+	iamClient     iam.IAMClient
+	consoleClient console.ConsoleClient
+	// containerRegistryClient container_registry.ContainerRegistryClient
+	commsClient comms.CommsClient
 
 	accountRepo    repos.DbRepo[*entities.Account]
 	invitationRepo repos.DbRepo[*entities.Invitation]
@@ -93,7 +92,7 @@ type domain struct {
 func NewDomain(
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
-	containerRegistryClient container_registry.ContainerRegistryClient,
+	// containerRegistryClient container_registry.ContainerRegistryClient,
 	authClient auth.AuthClient,
 	commsClient comms.CommsClient,
 
@@ -108,11 +107,11 @@ func NewDomain(
 	logger logging.Logger,
 ) Domain {
 	return &domain{
-		authClient:              authClient,
-		iamClient:               iamCli,
-		consoleClient:           consoleClient,
-		commsClient:             commsClient,
-		containerRegistryClient: containerRegistryClient,
+		authClient:    authClient,
+		iamClient:     iamCli,
+		consoleClient: consoleClient,
+		commsClient:   commsClient,
+		// containerRegistryClient: containerRegistryClient,
 
 		k8sClient: k8sClient,
 

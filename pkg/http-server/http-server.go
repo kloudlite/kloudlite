@@ -3,6 +3,7 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ type Server interface {
 }
 
 type server struct {
-	Logger logging.Logger
+	logger *slog.Logger
 	*fiber.App
 	isDev bool
 }
@@ -62,14 +63,16 @@ func (s *server) Listen(addr string) error {
 	case status := <-errChannel:
 		return errors.Newf("could not start server because %v", status.Error())
 	case <-ctx.Done():
-		s.Logger.Infof("Http Server started @ (addr: %q)", addr)
+		s.logger.Info("HTTP server listening", "at", addr)
 	}
 	return nil
 }
 
 type ServerArgs struct {
-	IsDev            bool
+	IsDev bool
+	// Logger is deprecated, now use Slogger
 	Logger           logging.Logger
+	Slogger          *slog.Logger
 	CorsAllowOrigins *string
 	IAMGrpcAddr      string `env:"IAM_GRPC_ADDR" required:"true"`
 }
@@ -115,11 +118,11 @@ func NewServer(args ServerArgs) Server {
 		)
 	}
 
-	if args.Logger == nil {
-		args.Logger = logging.EmptyLogger
+	if args.Slogger == nil {
+		args.Slogger = slog.Default()
 	}
 
-	return &server{App: app, Logger: args.Logger, isDev: args.IsDev}
+	return &server{App: app, logger: args.Slogger, isDev: args.IsDev}
 }
 
 func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...fiber.Handler) {

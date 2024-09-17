@@ -33,11 +33,7 @@ func (g *grpcServer) Listen(addr string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not listen to net/tcp server")
 	}
-	if g.slogger != nil {
-		g.slogger.Info("grpc server listening", "at", addr)
-	} else {
-		g.logger.Infof("listening on %s", addr)
-	}
+	g.slogger.Info("grpc server listening", "at", addr)
 	return g.Serve(listen)
 }
 
@@ -46,12 +42,8 @@ func (g *grpcServer) Stop() {
 }
 
 func NewGrpcServer(opts ServerOpts) (Server, error) {
-	if opts.Logger == nil {
-		lgr, err := logging.New(&logging.Options{Name: "grpc-server", Dev: false})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-		opts.Logger = lgr
+	if opts.Slogger == nil {
+		opts.Slogger = slog.Default()
 	}
 
 	server := grpc.NewServer(

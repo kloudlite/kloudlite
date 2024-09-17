@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/apps/auth/internal/app/graph"
