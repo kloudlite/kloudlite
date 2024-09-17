@@ -31,9 +31,7 @@
 {{- $result := dict }}
 
 {{- range $k, $v := $items }}
-  {{- if (index (index (index $v "metadata") "annotations") "storageclass.kubernetes.io/is-default-class") }}
-    {{- /* {{ $result = dict "provisioner" (dig "provisioner" "." $v) }} */}}
-    {{- /* {{ $result = dict "reclaimPolicy" (dig "reclaimPolicy" "." $v) }} */}}
+  {{- if dig "metadata" "annotations" "storageclass.kubernetes.io/is-default-class" "." $v }}
     {{- $_ := set $result "provisioner" (dig "provisioner" "." $v) }}
     {{- $_ := set $result "reclaimPolicy" (dig "reclaimPolicy" "." $v) }}
   {{- end }}

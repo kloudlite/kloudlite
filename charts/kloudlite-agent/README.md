@@ -2,7 +2,7 @@
 
 [kloudlite-agent](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-agent) Kloudlite Agent to make your kubernetes cluster communicate securely with kloudlite control plane
 
-![Version: v1.0.5](https://img.shields.io/badge/Version-v1.0.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.5](https://img.shields.io/badge/AppVersion-v1.0.5-informational?style=flat-square)
+![Version: v1.0.7](https://img.shields.io/badge/Version-v1.0.7-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.7](https://img.shields.io/badge/AppVersion-v1.0.7-informational?style=flat-square)
 
 ## Chart also installs these charts
 - [ingress-nginx](https://kubernetes.github.io/ingress-nginx)
@@ -18,9 +18,8 @@ helm repo update
 
 ## Install Chart
 
-**Important:** only helm3 is supported</br>
-**Important:** [kloudlite-operators](../kloudlite-operators) must be installed beforehand</br>
-**Important:** ensure kloudlite CRDs have been installed</br>
+> [!NOTE]
+> only helm3 is supported
 
 ```console
 helm install [RELEASE_NAME] kloudlite/kloudlite-agent --namespace [NAMESPACE]

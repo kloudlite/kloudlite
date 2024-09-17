@@ -25,16 +25,6 @@ helm repo update
 > [!NOTE]
 > only helm3 is supported
 
-### Installing Kloudlite CRDs
-```console
-kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{ template "chart.version" . }}/crds-all.yml
-```
-
-### Installing chart
-```console
-helm install {{$releaseName}} {{$chartRepo}}/{{$chartName}} --namespace {{$releaseNamespace}} --create-namespace --version {{template "chart.version" .}}
-```
-
 ```console
 helm install [RELEASE_NAME] kloudlite/{{$chartName}} --namespace [NAMESPACE]
 ```
