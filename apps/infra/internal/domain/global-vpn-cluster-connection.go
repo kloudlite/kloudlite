@@ -167,15 +167,18 @@ func (d *domain) reconGlobalVPNConnections(ctx InfraContext, vpnName string) err
 		}
 
 		xcc.Spec.Peers = peers
-		unp, err := d.gvpnConnRepo.Patch(
-			ctx,
-			repos.Filter{
-				fields.AccountName:  ctx.AccountName,
-				fields.ClusterName:  xcc.ClusterName,
-				fields.MetadataName: xcc.Name,
+		unp, err := d.gvpnConnRepo.PatchById(ctx, xcc.Id, common.PatchForUpdate(ctx, xcc, common.PatchOpts{
+			XPatch: map[string]any{
+				fc.GlobalVPNConnectionSpecPeers: peers,
 			},
-			common.PatchForUpdate(ctx, xcc, common.PatchOpts{XPatch: map[string]any{fc.GlobalVPNConnectionSpecPeers: peers}}),
-		)
+		}))
+		// unp, err := d.gvpnConnRepo.Patch(ctx, repos.Filter{
+		// 	fields.AccountName:  ctx.AccountName,
+		// 	fields.ClusterName:  xcc.ClusterName,
+		// 	fields.MetadataName: xcc.Name,
+		// },
+		// 	common.PatchForUpdate(ctx, xcc, common.PatchOpts{XPatch: map[string]any{fc.GlobalVPNConnectionSpecPeers: peers}}),
+		// )
 		if err != nil {
 			return errors.NewE(err)
 		}
