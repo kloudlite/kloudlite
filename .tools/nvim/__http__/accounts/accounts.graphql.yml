@@ -44,14 +44,15 @@ query: |
     accounts_createAccount(account: $account) {
       id
       isActive
+      kloudliteGatewayRegion
     }
   }
 variables:
   account:
-    contactEmail: "{{.email}}"
-    displayName: "Example Account Name"
+    displayName: "test account - nxt"
     metadata:
       name: "{{.accountName}}"
+    kloudliteGatewayRegion: "k3d/mt1"
 
 ---
 
