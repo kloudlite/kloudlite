@@ -22,7 +22,7 @@ inputs:
     description: "cachix auth token"
 
   docker_enabled:
-    description: "dokcer enabled"
+    description: "docker enabled"
     default: "false"
 
   git_directory:
@@ -51,6 +51,10 @@ inputs:
 
   helm-charts-operator:
     description: 'build helm-charts operator'
+    default: false
+
+  helm-charts-job-runner:
+    description: 'builds helm-charts-job-runner'
     default: false
 
   networking_ip-manager:
@@ -271,6 +275,13 @@ runs:
       shell: bash
       run: |
         task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/helm-charts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: helm charts job runner
+      if: ${{ inputs.helm-charts-job-runner == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/needs-images/helm-job-runner/
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/workers/helm-job-runner:${IMAGE_TAG:-latest} override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: networking/ip-manager cache
       if: ${{ inputs.networking_ip-manager == 'true' }}
