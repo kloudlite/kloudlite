@@ -723,6 +723,7 @@ export const cliQueries = (executor: IExecutor) => ({
         infra_createBYOKCluster(cluster: $cluster) {
           id
           clusterToken
+          displayName
           metadata {
             name
           }
@@ -914,6 +915,7 @@ export const cliQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
+              clusterToken
               displayName
               id
               metadata {
