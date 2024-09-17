@@ -28,14 +28,11 @@ type Env struct {
 	MessageOfficeInternalGRPCAddr string `env:"MESSAGE_OFFICE_INTERNAL_GRPC_ADDR" required:"true"`
 	AccountGRPCAddr               string `env:"ACCOUNT_GRPC_ADDR" required:"true"`
 
-	PromHttpAddr         string `env:"PROM_HTTP_ADDR" required:"true"`
 	SessionKVBucket      string `env:"SESSION_KV_BUCKET" required:"true"`
 	ConsoleCacheKVBucket string `env:"CONSOLE_CACHE_KV_BUCKET" required:"true"`
 	IsDev                bool
 
 	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY" default:"localhost:8080"`
-
-	DeviceNamespace string `env:"DEVICE_NAMESPACE" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
