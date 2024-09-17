@@ -68,7 +68,8 @@ tasks:
     vars:
       push: true
     cmds:
-      - docker buildx build -f Dockerfile --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
+      - echo "building and pushing {{.Image}}"
+      # - docker buildx build -f Dockerfile --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
       # - docker build -f ./DockerfileNIX -t {{.Image}} . {{.dockerArgs}}
       # - |+
       #   if [ "{{.push}}" == "true" ]; then
