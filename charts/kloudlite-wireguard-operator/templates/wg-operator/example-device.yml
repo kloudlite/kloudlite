@@ -1,9 +1,0 @@
-apiVersion: wireguard.kloudlite.io/v1
-kind: Device
-metadata:
-  name: example-device
-  namespace: {{.Release.Namespace}}
-spec:
-  ports:
-  - port: 80
-    targetPort: 3000

@@ -1,5 +1,7 @@
 {{- $chartRepo := "kloudlite" -}} 
 {{- $chartName := .Name -}}
+{{- $releaseName := .Name -}}
+{{- $releaseNamespace := "kloudlite" -}}
 
 {{ template "chart.header" . }}
 [{{$chartName}}](https://github.com/kloudlite.io/helm-charts/charts/{{$chartName}}) {{.Description}}
@@ -15,60 +17,55 @@ helm repo add kloudlite https://kloudlite.github.io/helm-charts
 helm repo update
 ```
 
-## Install Chart
+## Installation
 
-**Important:** only helm3 is supported</br>
-**Important:** [kloudlite-operators](../kloudlite-operators) must be installed beforehand</br>
-**Important:** ensure kloudlite CRDs have been installed</br>
+> [!NOTE]
+> only helm3 is supported
 
+#### Installing Kloudlite CRDs
 ```console
-helm install [RELEASE_NAME] kloudlite/{{$chartName}} --namespace [NAMESPACE] [--create-namespace]
+kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{ template "chart.version" . }}/crds-all.yml
 ```
 
-The command deploys kloudlite-agent on the Kubernetes cluster in the default configuration.
+#### Installing chart
+```console
+helm install {{$releaseName}} {{$chartRepo}}/{{$chartName}} --namespace {{$releaseNamespace}} --create-namespace --version {{template "chart.version" .}} --set baseDomain="<base_domain>"
+```
+
+> [!TIP]
+> To list all available chart versions, run `helm search repo {{$chartRepo}}/{{$chartName}}`
+
+The command deploys kloudlite-platform on your Kubernetes cluster in the default configuration.
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-## Installing Nightly Releases
-
-To list all nightly versions (**NOTE**: nightly versions are suffixed by `-nightly`)
-
-```console
-helm search repo kloudlite/{{$chartName}} --devel
-```
-
-To install
-```console
-helm install [RELEASE_NAME] kloudlite/{{$chartName}} --version [NIGHTLY_VERSION] --namespace [NAMESPACE] --create-namespace 
-```
-
-
-## Uninstall Chart
-
-```console
-helm uninstall [RELEASE_NAME] -n [NAMESPACE]
-```
-
-This removes all the Kubernetes components associated with the chart and deletes the release.
-
-_See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
-
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] kloudlite/{{$chartName}} --install --namespace [NAMESPACE]
+helm upgrade {{$releaseName}} {{$chartRepo}}/{{$chartName}} --namespace {{$releaseNamespace}} --version {{template "chart.version" .}} --set baseDomain="<base_domain>"
 ```
 
 _See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._
 
 ## Configuration
 
-See [Customizing the Chart Before Installing](https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing). To see all configurable options with detailed comments, visit the chart's [values.yaml](./values.yaml), or run these configuration commands:
+See [Customizing the Chart Before Installing](https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing). To see all configurable options with detailed comments, visit the chart's [values.yaml](./values.yaml), or run these commands:
 
 ```console
 helm show values {{$chartRepo}}/{{$chartName}}
 ```
 
 {{ template "chart.valuesSection" . }}
+
+## Uninstalling Chart
+
+```console
+helm uninstall {{$releaseName}} -n {{$releaseNamespace}}
+```
+
+This removes all the Kubernetes components associated with the chart and deletes the release.
+
+_See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
+
