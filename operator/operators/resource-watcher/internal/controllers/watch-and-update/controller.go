@@ -240,7 +240,14 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 				return err
 			}
 
-			s, err := rApi.Get(ctx, r.Client, fn.NN(gateway.Spec.WireguardKeysRef.Namespace, gateway.Spec.WireguardKeysRef.Name), &corev1.Secret{})
+			if obj.GetDeletionTimestamp() != nil {
+				// INFO: when gateway is being deleted, we should just let it be deleted
+				return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+					Object: obj,
+				})
+			}
+
+			s, err := rApi.Get(ctx, r.Client, fn.NN(gateway.Spec.TargetNamespace, gateway.Spec.WireguardKeysRef.Name), &corev1.Secret{})
 			if err != nil {
 				return err
 			}
