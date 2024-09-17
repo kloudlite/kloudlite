@@ -61,7 +61,7 @@ func main() {
 		}),
 
 		fx.Provide(func(e *env.Env) (*rest.Config, error) {
-			if e.KubernetesApiProxy != "" {
+			if isDev && e.KubernetesApiProxy != "" {
 				return &rest.Config{
 					Host: e.KubernetesApiProxy,
 				}, nil
