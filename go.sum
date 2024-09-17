@@ -177,8 +177,8 @@ github.com/klauspost/compress v1.17.9 h1:6KIumPrER1LHsvBVuDa0r5xaG0Es51mhhB9BQB2
 github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55 h1:YnZh3TL6AG4EfoInx1/L5zcPHd2QxgLKseJB1KtHjdQ=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
-github.com/kloudlite/operator v0.0.0-20240828110352-a9cc09ec2511 h1:6+Dt7TsoCI9U0UIk6BNxdFCB2YZ4nkjBqSrG3qoyGdw=
-github.com/kloudlite/operator v0.0.0-20240828110352-a9cc09ec2511/go.mod h1:VkreINDW43qeTsDv9gfGH5M9c5OG/jPGYOGxj8otsGY=
+github.com/kloudlite/operator v0.0.0-20240917124613-0418df6214cf h1:GPPzhVCddW5Ba+gxaumhdX3cq5HB6qs99v47v2aKbkc=
+github.com/kloudlite/operator v0.0.0-20240917124613-0418df6214cf/go.mod h1:VkreINDW43qeTsDv9gfGH5M9c5OG/jPGYOGxj8otsGY=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
