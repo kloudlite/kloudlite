@@ -172,6 +172,7 @@ func TestRepo_AllocatePlatformEdgeCluster(t *testing.T) {
 			wantErr: mo_errors.ErrNoClustersInRegion,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Repo{

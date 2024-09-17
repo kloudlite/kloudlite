@@ -4,21 +4,33 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"time"
+
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/env"
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/framework"
 	"github.com/kloudlite/api/pkg/config"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"time"
 )
 
 func main() {
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
 
+	logger := logging.NewSlogLogger(logging.SlogOptions{
+		ShowCaller:         true,
+		ShowDebugLogs:      debug,
+		SetAsDefaultLogger: true,
+	})
+
 	app := fx.New(
+		fx.NopLogger,
 		func() fx.Option {
 			if isDev {
 				return fx.Options()
@@ -30,6 +42,8 @@ func main() {
 				return logging.New(&logging.Options{Name: "audit-logging-worker", Dev: isDev})
 			},
 		),
+		fx.Supply(logger),
+
 		fn.FxErrorHandler(),
 		config.EnvFx[env.Env](),
 		framework.Module,

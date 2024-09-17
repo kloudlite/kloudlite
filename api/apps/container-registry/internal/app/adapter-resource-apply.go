@@ -43,7 +43,6 @@ func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.RegistryContext
 
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -67,7 +66,6 @@ func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.RegistryCont
 
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
