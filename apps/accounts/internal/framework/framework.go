@@ -68,9 +68,9 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(ev.CommsGrpcAddr)
 	}),
 
-	fx.Provide(func(ev *env.Env) (app.ContainerRegistryClient, error) {
-		return grpc.NewGrpcClient(ev.ContainerRegistryGrpcAddr)
-	}),
+	// fx.Provide(func(ev *env.Env) (app.ContainerRegistryClient, error) {
+	// 	return grpc.NewGrpcClient(ev.ContainerRegistryGrpcAddr)
+	// }),
 
 	fx.Provide(func(ev *env.Env) (app.ConsoleClient, error) {
 		return grpc.NewGrpcClient(ev.ConsoleGrpcAddr)
@@ -78,7 +78,8 @@ var Module = fx.Module("framework",
 
 	app.Module,
 
-	fx.Invoke(func(c1 app.AuthClient, c2 app.IAMClient, c3 app.CommsClient, c4 app.ContainerRegistryClient, c5 app.ConsoleClient, lf fx.Lifecycle) {
+	// fx.Invoke(func(c1 app.AuthClient, c2 app.IAMClient, c3 app.CommsClient, c4 app.ContainerRegistryClient, c5 app.ConsoleClient, lf fx.Lifecycle) {
+	fx.Invoke(func(c1 app.AuthClient, c2 app.IAMClient, c3 app.CommsClient, c5 app.ConsoleClient, lf fx.Lifecycle) {
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {
 				if err := c1.Close(); err != nil {
@@ -90,9 +91,9 @@ var Module = fx.Module("framework",
 				if err := c3.Close(); err != nil {
 					return errors.NewE(err)
 				}
-				if err := c4.Close(); err != nil {
-					return errors.NewE(err)
-				}
+				// if err := c4.Close(); err != nil {
+				// 	return errors.NewE(err)
+				// }
 				if err := c5.Close(); err != nil {
 					return errors.NewE(err)
 				}
