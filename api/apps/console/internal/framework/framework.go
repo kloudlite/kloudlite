@@ -68,12 +68,21 @@ var Module = fx.Module("framework",
 		return k8s.NewClient(restCfg, nil)
 	}),
 
+	// grpc clients
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
 		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.InfraClient, error) {
 		return grpc.NewGrpcClient(ev.InfraGrpcAddr)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.AccountsClient, error) {
+		return grpc.NewGrpcClient(ev.AccountGRPCAddr)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.MessageOfficeInternalClient, error) {
+		return grpc.NewGrpcClient(ev.MessageOfficeInternalGRPCAddr)
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient, c2 app.InfraClient) {

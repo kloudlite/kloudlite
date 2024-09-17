@@ -104,6 +104,7 @@ type ComplexityRoot struct {
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
+		OnlineStatus      func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		ServiceHost       func(childComplexity int) int
 		Spec              func(childComplexity int) int
@@ -231,6 +232,7 @@ type ComplexityRoot struct {
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
+		OnlineStatus      func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
@@ -615,6 +617,7 @@ type ComplexityRoot struct {
 		ManagedResourceRef func(childComplexity int) int
 		MarkedForDeletion  func(childComplexity int) int
 		Name               func(childComplexity int) int
+		OnlineStatus       func(childComplexity int) int
 		RecordVersion      func(childComplexity int) int
 		SecretRef          func(childComplexity int) int
 		SyncStatus         func(childComplexity int) int
@@ -773,6 +776,11 @@ type ComplexityRoot struct {
 		InfraCreateClusterManagedService  func(childComplexity int, service entities.ClusterManagedService) int
 		InfraDeleteClusterManagedService  func(childComplexity int, name string) int
 		InfraUpdateClusterManagedService  func(childComplexity int, service entities.ClusterManagedService) int
+	}
+
+	OnlineStatus struct {
+		LastOnlineAt    func(childComplexity int) int
+		WillBeOfflineAt func(childComplexity int) int
 	}
 
 	PageInfo struct {
@@ -967,6 +975,7 @@ type AppResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.App) (string, error)
 	Build(ctx context.Context, obj *entities.App) (*model.Build, error)
 	ServiceHost(ctx context.Context, obj *entities.App) (*string, error)
+	OnlineStatus(ctx context.Context, obj *entities.App) (*model.OnlineStatus, error)
 }
 type ClusterManagedServiceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ClusterManagedService) (string, error)
@@ -992,6 +1001,7 @@ type EnvironmentResolver interface {
 	Spec(ctx context.Context, obj *entities.Environment) (*model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec, error)
 
 	UpdateTime(ctx context.Context, obj *entities.Environment) (string, error)
+	OnlineStatus(ctx context.Context, obj *entities.Environment) (*model.OnlineStatus, error)
 }
 type ExternalAppResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ExternalApp) (string, error)
@@ -1034,6 +1044,7 @@ type ImportedManagedResourceResolver interface {
 
 	UpdateTime(ctx context.Context, obj *entities.ImportedManagedResource) (string, error)
 	ManagedResource(ctx context.Context, obj *entities.ImportedManagedResource) (*entities.ManagedResource, error)
+	OnlineStatus(ctx context.Context, obj *entities.ImportedManagedResource) (*model.OnlineStatus, error)
 }
 type K8s__io___api___core___v1__SecretResolver interface {
 	Data(ctx context.Context, obj *v11.Secret) (map[string]interface{}, error)
@@ -1328,6 +1339,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.ObjectMeta(childComplexity), true
+
+	case "App.onlineStatus":
+		if e.complexity.App.OnlineStatus == nil {
+			break
+		}
+
+		return e.complexity.App.OnlineStatus(childComplexity), true
 
 	case "App.recordVersion":
 		if e.complexity.App.RecordVersion == nil {
@@ -1907,6 +1925,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Environment.ObjectMeta(childComplexity), true
+
+	case "Environment.onlineStatus":
+		if e.complexity.Environment.OnlineStatus == nil {
+			break
+		}
+
+		return e.complexity.Environment.OnlineStatus(childComplexity), true
 
 	case "Environment.recordVersion":
 		if e.complexity.Environment.RecordVersion == nil {
@@ -3546,6 +3571,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ImportedManagedResource.Name(childComplexity), true
 
+	case "ImportedManagedResource.onlineStatus":
+		if e.complexity.ImportedManagedResource.OnlineStatus == nil {
+			break
+		}
+
+		return e.complexity.ImportedManagedResource.OnlineStatus(childComplexity), true
+
 	case "ImportedManagedResource.recordVersion":
 		if e.complexity.ImportedManagedResource.RecordVersion == nil {
 			break
@@ -4511,6 +4543,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraUpdateClusterManagedService(childComplexity, args["service"].(entities.ClusterManagedService)), true
+
+	case "OnlineStatus.lastOnlineAt":
+		if e.complexity.OnlineStatus.LastOnlineAt == nil {
+			break
+		}
+
+		return e.complexity.OnlineStatus.LastOnlineAt(childComplexity), true
+
+	case "OnlineStatus.willBeOfflineAt":
+		if e.complexity.OnlineStatus.WillBeOfflineAt == nil {
+			break
+		}
+
+		return e.complexity.OnlineStatus.WillBeOfflineAt(childComplexity), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -5969,14 +6015,26 @@ type Build @key(fields: "id") {
 	id: ID! @isLoggedInAndVerified @hasAccount
 }
 
+type OnlineStatus {
+  lastOnlineAt: Date!
+  willBeOfflineAt: Date!
+}
+
+extend type Environment {
+  onlineStatus: OnlineStatus
+}
+
 extend type App {
 	build: Build
 	serviceHost: String
+  onlineStatus: OnlineStatus
 }
 
 extend type ImportedManagedResource {
   managedResource: ManagedResource
+  onlineStatus: OnlineStatus
 }
+
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/app.graphqls", Input: `type App @shareable {
   accountName: String!
@@ -10218,6 +10276,53 @@ func (ec *executionContext) fieldContext_App_serviceHost(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _App_onlineStatus(ctx context.Context, field graphql.CollectedField, obj *entities.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_onlineStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().OnlineStatus(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.OnlineStatus)
+	fc.Result = res
+	return ec.marshalOOnlineStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐOnlineStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_onlineStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "lastOnlineAt":
+				return ec.fieldContext_OnlineStatus_lastOnlineAt(ctx, field)
+			case "willBeOfflineAt":
+				return ec.fieldContext_OnlineStatus_willBeOfflineAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OnlineStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.AppEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppEdge_cursor(ctx, field)
 	if err != nil {
@@ -10341,6 +10446,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(_ context.Context, field g
 				return ec.fieldContext_App_build(ctx, field)
 			case "serviceHost":
 				return ec.fieldContext_App_serviceHost(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_App_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -14085,6 +14192,53 @@ func (ec *executionContext) fieldContext_Environment_updateTime(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Environment_onlineStatus(ctx context.Context, field graphql.CollectedField, obj *entities.Environment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Environment_onlineStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Environment().OnlineStatus(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.OnlineStatus)
+	fc.Result = res
+	return ec.marshalOOnlineStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐOnlineStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Environment_onlineStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Environment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "lastOnlineAt":
+				return ec.fieldContext_OnlineStatus_lastOnlineAt(ctx, field)
+			case "willBeOfflineAt":
+				return ec.fieldContext_OnlineStatus_willBeOfflineAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OnlineStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _EnvironmentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.EnvironmentEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_EnvironmentEdge_cursor(ctx, field)
 	if err != nil {
@@ -14202,6 +14356,8 @@ func (ec *executionContext) fieldContext_EnvironmentEdge_node(_ context.Context,
 				return ec.fieldContext_Environment_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Environment_updateTime(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_Environment_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Environment", field.Name)
 		},
@@ -24713,6 +24869,53 @@ func (ec *executionContext) fieldContext_ImportedManagedResource_managedResource
 	return fc, nil
 }
 
+func (ec *executionContext) _ImportedManagedResource_onlineStatus(ctx context.Context, field graphql.CollectedField, obj *entities.ImportedManagedResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImportedManagedResource_onlineStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ImportedManagedResource().OnlineStatus(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.OnlineStatus)
+	fc.Result = res
+	return ec.marshalOOnlineStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐOnlineStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImportedManagedResource_onlineStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImportedManagedResource",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "lastOnlineAt":
+				return ec.fieldContext_OnlineStatus_lastOnlineAt(ctx, field)
+			case "willBeOfflineAt":
+				return ec.fieldContext_OnlineStatus_willBeOfflineAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OnlineStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ImportedManagedResourceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.ImportedManagedResourceEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImportedManagedResourceEdge_cursor(ctx, field)
 	if err != nil {
@@ -24826,6 +25029,8 @@ func (ec *executionContext) fieldContext_ImportedManagedResourceEdge_node(_ cont
 				return ec.fieldContext_ImportedManagedResource_updateTime(ctx, field)
 			case "managedResource":
 				return ec.fieldContext_ImportedManagedResource_managedResource(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_ImportedManagedResource_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ImportedManagedResource", field.Name)
 		},
@@ -28184,6 +28389,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createEnvironment(ctx con
 				return ec.fieldContext_Environment_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Environment_updateTime(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_Environment_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Environment", field.Name)
 		},
@@ -28298,6 +28505,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateEnvironment(ctx con
 				return ec.fieldContext_Environment_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Environment_updateTime(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_Environment_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Environment", field.Name)
 		},
@@ -28493,6 +28702,8 @@ func (ec *executionContext) fieldContext_Mutation_core_cloneEnvironment(ctx cont
 				return ec.fieldContext_Environment_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Environment_updateTime(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_Environment_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Environment", field.Name)
 		},
@@ -29003,6 +29214,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createApp(ctx context.Con
 				return ec.fieldContext_App_build(ctx, field)
 			case "serviceHost":
 				return ec.fieldContext_App_serviceHost(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_App_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -29123,6 +29336,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateApp(ctx context.Con
 				return ec.fieldContext_App_build(ctx, field)
 			case "serviceHost":
 				return ec.fieldContext_App_serviceHost(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_App_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -31553,6 +31768,8 @@ func (ec *executionContext) fieldContext_Mutation_core_importManagedResource(ctx
 				return ec.fieldContext_ImportedManagedResource_updateTime(ctx, field)
 			case "managedResource":
 				return ec.fieldContext_ImportedManagedResource_managedResource(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_ImportedManagedResource_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ImportedManagedResource", field.Name)
 		},
@@ -31648,6 +31865,94 @@ func (ec *executionContext) fieldContext_Mutation_core_deleteImportedManagedReso
 	if fc.Args, err = ec.field_Mutation_core_deleteImportedManagedResource_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OnlineStatus_lastOnlineAt(ctx context.Context, field graphql.CollectedField, obj *model.OnlineStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OnlineStatus_lastOnlineAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastOnlineAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OnlineStatus_lastOnlineAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OnlineStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OnlineStatus_willBeOfflineAt(ctx context.Context, field graphql.CollectedField, obj *model.OnlineStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OnlineStatus_willBeOfflineAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WillBeOfflineAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OnlineStatus_willBeOfflineAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OnlineStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -32167,6 +32472,8 @@ func (ec *executionContext) fieldContext_Query_core_getEnvironment(ctx context.C
 				return ec.fieldContext_Environment_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Environment_updateTime(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_Environment_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Environment", field.Name)
 		},
@@ -32995,6 +33302,8 @@ func (ec *executionContext) fieldContext_Query_core_getApp(ctx context.Context, 
 				return ec.fieldContext_App_build(ctx, field)
 			case "serviceHost":
 				return ec.fieldContext_App_serviceHost(ctx, field)
+			case "onlineStatus":
+				return ec.fieldContext_App_onlineStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -45315,6 +45624,39 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "onlineStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_onlineStatus(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46458,6 +46800,39 @@ func (ec *executionContext) _Environment(ctx context.Context, sel ast.SelectionS
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "onlineStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Environment_onlineStatus(ctx, field, obj)
 				return res
 			}
 
@@ -49600,6 +49975,39 @@ func (ec *executionContext) _ImportedManagedResource(ctx context.Context, sel as
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "onlineStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ImportedManagedResource_onlineStatus(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -50872,6 +51280,50 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_deleteImportedManagedResource(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var onlineStatusImplementors = []string{"OnlineStatus"}
+
+func (ec *executionContext) _OnlineStatus(ctx context.Context, sel ast.SelectionSet, obj *model.OnlineStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, onlineStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OnlineStatus")
+		case "lastOnlineAt":
+			out.Values[i] = ec._OnlineStatus_lastOnlineAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "willBeOfflineAt":
+			out.Values[i] = ec._OnlineStatus_willBeOfflineAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -57263,6 +57715,13 @@ func (ec *executionContext) unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpk
 	}
 	res, err := ec.unmarshalInputMetadataIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOOnlineStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐOnlineStatus(ctx context.Context, sel ast.SelectionSet, v *model.OnlineStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OnlineStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORegistryImage2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImage(ctx context.Context, sel ast.SelectionSet, v *entities.RegistryImage) graphql.Marshaler {

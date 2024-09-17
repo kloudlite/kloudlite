@@ -33,6 +33,15 @@ tasks:
           out: "{{.binary}}-{{.GOARCH}}"
           GOARCH: "{{.GOARCH}}"
 
+  gen:constants:
+    cmds:
+      - go generate ./internal/entities/field-constants/gen.go
+
+  protobufs:
+    dir: ./protobufs/
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
+
   container:build-and-push:
     requires:
       vars:

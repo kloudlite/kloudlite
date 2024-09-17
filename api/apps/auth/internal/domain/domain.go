@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
@@ -38,7 +39,7 @@ type Domain interface {
 
 	CreateInviteCode(ctx context.Context, name string, inviteCode string) (*entities.InviteCode, error)
 	DeleteInviteCode(ctx context.Context, invCodeId string) error
-	//UpdateInviteCode(ctx context.Context, invCode entities.InviteCode) (*entities.InviteCode, error)
+	// UpdateInviteCode(ctx context.Context, invCode entities.InviteCode) (*entities.InviteCode, error)
 
 	VerifyInviteCode(ctx context.Context, userId repos.ID, invitationCode string) (bool, error)
 }

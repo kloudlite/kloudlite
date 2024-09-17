@@ -27,9 +27,9 @@ func NewLoggingMiddleware(logger logging.Logger) HttpMiddleware {
 			lrw := NewLoggingResponseWriter(w)
 
 			timestart := time.Now()
-			logger.Infof("👉 %s %s?%s", r.Method, r.URL.Path, r.URL.Query().Encode())
+			logger.Infof("➡️  %s %s?%s", r.Method, r.URL.Path, r.URL.Query().Encode())
 			defer func() {
-				logger.Infof("👈 %d %s %s?%s took %.2fs", lrw.statusCode, r.Method, r.URL.Path, r.URL.Query().Encode(), time.Since(timestart).Seconds())
+				logger.Infof("↩️  %d %s %s?%s took %.2fs", lrw.statusCode, r.Method, r.URL.Path, r.URL.Query().Encode(), time.Since(timestart).Seconds())
 			}()
 
 			next(w, r)
