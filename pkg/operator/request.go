@@ -441,7 +441,7 @@ func (r *Request[T]) PostReconcile() {
 	m := make(map[string]string, len(r.Object.GetAnnotations()))
 	maps.Copy(m, r.Object.GetAnnotations())
 
-	m[constants.AnnotationResourceReady] = func() string {
+	m[constants.KloudliteOperatorResourceReadyAnnotation] = func() string {
 		readyMsg := strconv.FormatBool(isReady)
 
 		generationMsg := fmt.Sprintf("%d", r.Object.GetStatus().LastReadyGeneration)
@@ -457,7 +457,7 @@ func (r *Request[T]) PostReconcile() {
 		return fmt.Sprintf("%s (%s%s)", readyMsg, generationMsg, deletionMsg)
 	}()
 
-	m["kloudlite.io/checks"] = func() string {
+	m[constants.KloudliteOperatorChecksAnnotation] = func() string {
 		checks := make([]string, 0, len(r.Object.GetStatus().Checks))
 		currentCheck := ""
 		keys := fn.MapKeys(r.Object.GetStatus().Checks)
@@ -542,9 +542,8 @@ func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
 	r.resourceRefs = append(r.resourceRefs, refs...)
 }
 
-/*
-DEPRECATED: use CleanupOwnedResourcesV2 instead
-*/
+// Deprecated: CleanupOwnedResources is deprecated
+// use CleanupOwnedResourcesV2 instead
 func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 	ctx, obj := r.Context(), r.Object
 
@@ -597,7 +596,7 @@ func (r *Request[T]) CleanupOwnedResourcesV2(check *checkWrapper[T]) stepResult.
 	}
 
 	if err := fn.DeleteAndWait(r.Context(), r.Logger, r.client, objects...); err != nil {
-		return check.Failed(err)
+		return check.Failed(err).RequeueAfter(2 * time.Second)
 	}
 
 	return check.Completed()
