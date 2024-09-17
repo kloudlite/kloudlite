@@ -4,24 +4,28 @@ on:
   workflow_dispatch:
 
   push:
-    branches:
-      - 'release-v*'
     tags:
-      - '*'
-    paths:
-      - api
-      - operator
-      - infrastructure-as-code
-      - kubelet-metrics-reexporter
-      - autoscaler
-      - "api/**"
-      - "operator/**"
-      - "infrastructure-as-code/**"
-      - "kubelet-metrics-reexporter/**"
-      - "autoscaler/**"
-      - "kl/**"
-      - "web/**"
-      - ".github/workflows/**"
+      - 'v*'
+
+  # push:
+  #   branches:
+  #     - 'release-v*'
+  #   tags:
+  #     - '*'
+  #   paths:
+  #     - api
+  #     - operator
+  #     - infrastructure-as-code
+  #     - kubelet-metrics-reexporter
+  #     - autoscaler
+  #     - "api/**"
+  #     - "operator/**"
+  #     - "infrastructure-as-code/**"
+  #     - "kubelet-metrics-reexporter/**"
+  #     - "autoscaler/**"
+  #     - "kl/**"
+  #     - "web/**"
+  #     - ".github/workflows/**"
 
 permissions:
   contents: write
