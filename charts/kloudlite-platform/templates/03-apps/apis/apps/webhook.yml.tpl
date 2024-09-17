@@ -69,6 +69,9 @@ spec:
         - key: DISCORD_WEBHOOK_URL
           value: "{{.Values.apps.webhooksApi.discordWebhookUrl}}"
 
+        - key: WEBHOOK_URL
+          value: "https://webhooks.{{.Values.baseDomain}}"
+
         - key: WEBHOOK_TOKEN_HASHING_SECRET
           value: "{{.Values.apps.webhooksApi.webhookAuthzTokenHashingSecret}}"
 

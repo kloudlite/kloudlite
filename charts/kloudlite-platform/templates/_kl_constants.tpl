@@ -41,6 +41,9 @@
 {{- define "apps.messageOffice.privateGrpcPort" -}} 3002 {{- end -}}
 {{- define "apps.messageOffice.publicGrpcPort" -}} 3001 {{- end -}}
 
+{{- define "apps.messageOffice.token-hasing.secret.name" -}} messaage-office-token-hashing {{- end -}}
+{{- define "apps.messageOffice.token-hasing.secret.key" -}} token {{- end -}}
+
 {{- define "apps.gatewayApi.name" -}} gateway-api {{- end -}}
 {{- define "apps.gatewayApi.httpPort" -}} 3000 {{- end -}}
 
@@ -68,6 +71,7 @@
 
 {{- define "apps.gatewayKubeReverseProxy.secret.name" -}} gvpn-gateway-reverse-proxy-authz {{- end -}}
 {{- define "apps.gatewayKubeReverseProxy.secret.key" -}} authz-token {{- end -}}
+
 
 
 {{- define "self-edge-gateway.public.host" -}} wg-gateways.{{.Values.baseDomain}} {{- end -}}
