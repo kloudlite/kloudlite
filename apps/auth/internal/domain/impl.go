@@ -7,10 +7,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/apps/auth/internal/entities"
-	"github.com/kloudlite/api/apps/auth/internal/env"
 	"strings"
 	"time"
+
+	"github.com/kloudlite/api/apps/auth/internal/entities"
+	"github.com/kloudlite/api/apps/auth/internal/env"
 
 	"github.com/kloudlite/api/constants"
 
@@ -146,7 +147,6 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 			return false, errors.Newf("unknown provider=%s, aborting request", provider)
 		}
 	}
-
 }
 
 func (d *domainI) GetUserById(ctx context.Context, id repos.ID) (*entities.User, error) {
@@ -179,17 +179,14 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 
 func (d *domainI) SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error) {
 	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
-
 	if err != nil {
 		if matched != nil {
 			return nil, errors.NewE(err)
 		}
 	}
 
-	if matched != nil {
-		if matched.Email == email {
-			return nil, errors.Newf("user(email=%s) already exists", email)
-		}
+	if matched != nil && matched.Email == email {
+		return nil, errors.Newf("user(email=%q) already exists", email)
 	}
 
 	salt := generateId("salt")
@@ -199,21 +196,22 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 			Name:         name,
 			Email:        email,
 			Password:     hex.EncodeToString(sum[:]),
-			Verified:     false,
+			Verified:     !d.envVars.UserEmailVerifactionEnabled,
 			Approved:     false,
 			Metadata:     nil,
 			Joined:       time.Now(),
 			PasswordSalt: salt,
 		},
 	)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	err = d.generateAndSendVerificationToken(ctx, user)
-	if err != nil {
-		return nil, errors.NewE(err)
+	if d.envVars.UserEmailVerifactionEnabled {
+		err = d.generateAndSendVerificationToken(ctx, user)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
 	}
 
 	return newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password"), nil
@@ -437,7 +435,6 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 			Token:    token,
 		},
 	)
-
 	if err != nil {
 		return nil, errors.NewEf(err, "could not store access token in repo")
 	}
