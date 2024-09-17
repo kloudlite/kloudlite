@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/kloudlite/operator/common"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -39,6 +40,7 @@ type Operator interface {
 }
 
 type operator struct {
+	startedAt  time.Time
 	mgrConfig  *rest.Config
 	mgrOptions ctrl.Options
 
@@ -55,6 +57,8 @@ type operator struct {
 }
 
 func New(name string) Operator {
+	common.PrintBuildInfo()
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -113,6 +117,7 @@ func New(name string) Operator {
 	}
 
 	return &operator{
+		startedAt:     time.Now(),
 		mgrConfig:     mgrConfig,
 		mgrOptions:    mgrOptions,
 		Logger:        logger,
@@ -202,7 +207,7 @@ func (op *operator) Start() {
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(op.startedAt))
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		panic(err)

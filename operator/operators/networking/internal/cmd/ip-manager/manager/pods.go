@@ -102,8 +102,9 @@ func (m *Manager) CreatePodBindings(ctx RequestContext, count int) error {
 		ctx.logger.Info("creating pod binding", "ip", s, "ip-offset", m.podIPOffset+podIPCounter+i+1)
 		pb := &networkingv1.PodBinding{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   sanitizePodIP(s),
-				Labels: unReservedPodsLabels,
+				Name:      sanitizePodIP(s),
+				Namespace: m.Env.IPManagerConfigNamespace,
+				Labels:    unReservedPodsLabels,
 			},
 			Spec: networkingv1.PodBindingSpec{
 				GlobalIP:     s,

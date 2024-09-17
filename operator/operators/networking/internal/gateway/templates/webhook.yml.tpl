@@ -25,9 +25,15 @@ webhooks:
 
   namespaceSelector:
     matchExpressions:
-      - key: {{.WebhookNamespaceSelectorKey}}
+      {{- range $key, $value := .WebhookNamespaceSelector }}
+      - key: {{$key}}
         operator: In
-        values: ["true"]
+        values: [{{$value | squote}}]
+      {{- end }}
+
+      {{- /* - key: {{.WebhookNamespaceSelectorKey}} */}}
+      {{- /*   operator: In */}}
+      {{- /*   values: ["{{.WebhookNamespaceSelectorValue}}"] */}}
   admissionReviewVersions: ["v1"]
   sideEffects: None
 
@@ -48,8 +54,13 @@ webhooks:
 
   namespaceSelector:
     matchExpressions:
-      - key: {{.WebhookNamespaceSelectorKey}}
+      {{- range $key, $value := .WebhookNamespaceSelector }}
+      - key: {{$key}}
         operator: In
-        values: ["true"]
+        values: [{{$value | squote}}]
+      {{- end }}
+      {{- /* - key: {{.WebhookNamespaceSelectorKey}} */}}
+      {{- /*   operator: In */}}
+      {{- /*   values: ["{{.WebhookNamespaceSelectorValue}}"] */}}
   admissionReviewVersions: ["v1"]
   sideEffects: None

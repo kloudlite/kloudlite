@@ -18,6 +18,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -187,24 +188,25 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResul
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ApplyK8sJob, req)
 
-	if v, ok := obj.Status.Checks[ApplyK8sJob]; ok && v.Generation == obj.Generation && (v.State == rApi.CompletedState || v.State == rApi.ErroredState) {
-		// if obj.Annotations[constants.KloudliteLifecycleRetry] != "true" {
-		return check.Completed()
-		// }
-		//
-		// delete(obj.Annotations, constants.KloudliteLifecycleRetry)
-		// if err := r.Update(ctx, obj); err != nil {
-		// 	return check.Failed(err)
-		// }
-		// if err := r.Delete(ctx, &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}); err != nil {
-		// 	if !apiErrors.IsNotFound(err) {
-		// 		return check.Failed(err)
-		// 	}
-		// }
-		// delete(obj.Annotations, constants.KloudliteLifecycleRetry)
-		// if err := r.Status().Update(ctx, obj); err != nil {
-		// 	return check.Failed(err)
-		// }
+	if v, ok := obj.Status.Checks[ApplyK8sJob]; ok && v.Generation == obj.Generation {
+		switch v.State {
+		case rApi.CompletedState:
+			return check.Completed()
+		case rApi.ErroredState:
+			if obj.Spec.RetryOnFailure {
+				if obj.Status.LastReconcileTime != nil {
+					if time.Since(obj.Status.LastReconcileTime.Time) > obj.Spec.RetryOnFailureDelay.Duration {
+						r.logger.Infof("re-creatingjob for lifecycle %s/%s, as it failed and is past the retry delay", obj.Namespace, obj.Name)
+						if err := r.Delete(ctx, &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}); err != nil {
+							if !apiErrors.IsNotFound(err) {
+								return check.Failed(err)
+							}
+						}
+					}
+				}
+			}
+			return check.Failed(fmt.Errorf("job failed"))
+		}
 	}
 
 	job := &batchv1.Job{}
@@ -212,7 +214,6 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResul
 		job = nil
 	}
 
-	// if job == nil || job.Status.Active > 0 {
 	if job == nil {
 		obj.Spec.OnApply.PodSpec.ServiceAccountName = getJobSvcAccountName()
 		if obj.Spec.OnApply.PodSpec.RestartPolicy == "" {
