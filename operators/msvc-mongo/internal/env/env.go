@@ -6,7 +6,7 @@ import (
 
 type Env struct {
 	IsDev                   bool
-	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
+	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES" default:"5"`
 
 	ClusterInternalDNS string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
 	GlobalVpnDNS       string `env:"GLOBAL_VPN_DNS"`

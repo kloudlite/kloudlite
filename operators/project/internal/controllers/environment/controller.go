@@ -53,6 +53,8 @@ const (
 	suspendEnvironment   string = "suspend-environment"
 
 	envFinalizing string = "env-finalizing"
+
+	envServiceAccount string = "kloudlite-env-sa"
 )
 
 var DestroyChecklist = []rApi.CheckMeta{
@@ -246,16 +248,16 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 		obj.Spec.Routing.Mode = crdsv1.EnvironmentRoutingModePrivate
 	}
 
-	if obj.Spec.Routing.PublicIngressClass == "" {
-		hasUpdated = true
-		obj.Spec.Routing.PublicIngressClass = r.Env.DefaultIngressClass
-	}
-
-	if obj.Spec.Routing.PrivateIngressClass == "" {
-		hasUpdated = true
-		// obj.Spec.Routing.PrivateIngressClass = fmt.Sprintf("%s-env-%s", obj.Spec.TargetNamespace, obj.Name)
-		obj.Spec.Routing.PrivateIngressClass = fmt.Sprintf("k-%s", fn.Md5([]byte(fmt.Sprintf("%s-env-%s", obj.Spec.TargetNamespace, obj.Name))))
-	}
+	// if obj.Spec.Routing.PublicIngressClass == "" {
+	// 	hasUpdated = true
+	// 	obj.Spec.Routing.PublicIngressClass = r.Env.DefaultIngressClass
+	// }
+	//
+	// if obj.Spec.Routing.PrivateIngressClass == "" {
+	// 	hasUpdated = true
+	// 	// obj.Spec.Routing.PrivateIngressClass = fmt.Sprintf("%s-env-%s", obj.Spec.TargetNamespace, obj.Name)
+	// 	obj.Spec.Routing.PrivateIngressClass = fmt.Sprintf("k-%s", fn.Md5([]byte(fmt.Sprintf("%s-env-%s", obj.Spec.TargetNamespace, obj.Name))))
+	// }
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
@@ -315,7 +317,7 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 
 	b, err := templates.ParseBytes(r.templateNamespaceRBAC, map[string]any{
 		"namespace":          obj.Spec.TargetNamespace,
-		"svc-account-name":   r.Env.SvcAccountName,
+		"svc-account-name":   envServiceAccount,
 		"image-pull-secrets": secretNames,
 	},
 	)

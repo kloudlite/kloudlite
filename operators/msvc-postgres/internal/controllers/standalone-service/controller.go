@@ -162,7 +162,7 @@ func (r *Reconciler) createService(req *rApi.Request[*postgresv1.Standalone]) st
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
 		fn.MapSet(&svc.Labels, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
-		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
 			fn.MapSet(&svc.Labels, k, v)
 		}
 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
@@ -174,7 +174,7 @@ func (r *Reconciler) createService(req *rApi.Request[*postgresv1.Standalone]) st
 					Port:     5432,
 				},
 			},
-			Selector: fn.MapMerge(fn.MapFilter(obj.GetLabels(), "kloudlite.io/"), map[string]string{kloudliteMsvcComponent: "statefulset"}),
+			Selector: fn.MapMerge(fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"), map[string]string{kloudliteMsvcComponent: "statefulset"}),
 			Type:     corev1.ServiceTypeClusterIP,
 		}
 		return nil
@@ -194,7 +194,7 @@ func (r *Reconciler) createPVC(req *rApi.Request[*postgresv1.Standalone]) stepRe
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, pvc, func() error {
 		pvc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
-		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
 			fn.MapSet(&pvc.Labels, k, v)
 		}
 		pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
@@ -220,7 +220,7 @@ func (r *Reconciler) createAccessCredentials(req *rApi.Request[*postgresv1.Stand
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
 		secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
-		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
 			fn.MapSet(&secret.Labels, k, v)
 		}
 
@@ -278,7 +278,7 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*postgresv1.Standalone]
 		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		selectorLabels := fn.MapMerge(
-			fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
+			fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
 			map[string]string{kloudliteMsvcComponent: "statefulset"},
 		)
 
