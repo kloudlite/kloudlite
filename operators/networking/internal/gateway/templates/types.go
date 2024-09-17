@@ -43,7 +43,9 @@ type WebhookTemplateArgs struct {
 	WebhookServerImage        string
 	WebhookServerCertCABundle string
 
-	WebhookNamespaceSelectorKey string
+	WebhookNamespaceSelector map[string]string
+	// WebhookNamespaceSelectorKey   string
+	// WebhookNamespaceSelectorValue string
 }
 
 type GatewayRBACTemplateArgs struct {

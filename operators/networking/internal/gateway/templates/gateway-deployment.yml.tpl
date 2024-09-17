@@ -52,7 +52,6 @@ spec:
             - |
               cat > /etc/wireguard/wg0.conf <<EOF
               [Interface]
-
               PostUp = ip -4 address add {{.GatewayInternalDNSNameserver}}/32 dev wg0
               PostDown = ip -4 address add {{.GatewayInternalDNSNameserver}}/32 dev wg0
               EOF
@@ -80,6 +79,8 @@ spec:
             capabilities:
               add:
                 - NET_ADMIN
+              drop:
+                - all
       containers:
       {{- /* # mutation webhook container */}}
       - name: webhook-server
@@ -246,7 +247,8 @@ spec:
         securityContext:
           capabilities:
             add:
-              - NET_BIND_SERVICE
+              {{- /* - NET_BIND_SERVICE */}}
+              - NET_RAW
             drop:
               - all
 
