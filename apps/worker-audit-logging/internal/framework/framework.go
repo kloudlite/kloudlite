@@ -1,10 +1,11 @@
 package framework
 
 import (
+	"log/slog"
+
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/app"
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
 	repos "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
@@ -27,7 +28,7 @@ var Module fx.Option = fx.Module("framework",
 		return &redpandaCfg{ev: ev}
 	}),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.JetstreamClient, error) {
 		name := "audit-worker:jetstream-client"
 		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,

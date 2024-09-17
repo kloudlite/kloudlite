@@ -1,7 +1,5 @@
 ---
-global:
-  envTargetNamespace: "nxtcoder17"
-  envName: "test-env"
+global: {}
 ---
 
 label: List Environments
@@ -41,6 +39,10 @@ query: |+ #graphql
             action
           }
           recordVersion
+          onlineStatus {
+            lastOnlineAt
+            willBeOfflineAt
+          }
         }
       }
       pageInfo {
@@ -62,7 +64,7 @@ query: |+ #graphql
       apiVersion
       kind
       spec {
-        targetNamespace
+       targetNamespace
       }
       syncStatus {
         state
@@ -78,9 +80,7 @@ variables:
     displayName: Display Name of a sample environment
     clusterName: "__kloudlite_enabled_cluster"
     metadata:
-      name: "{{.envName}}"
-    # spec:
-    # projectName: "{{.projectName}}"
+      name: "{{.envName}}8"
 ---
 
 label: resync environment
@@ -125,7 +125,7 @@ query: |+
     core_deleteEnvironment(envName: $envName)
   }
 variables:
-  envName: "{{.envName}}"
+  envName: "{{.envName}}4"
 ---
 
 ---

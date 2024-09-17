@@ -1,7 +1,7 @@
 ---
 global:
   name: sample-app
-  envName: "test-env"
+  envName: "test-env5"
 ---
 
 label: List Apps
@@ -85,7 +85,7 @@ variables:
   app:
     displayName: "sample app"
     metadata:
-      name: "{{.name}}"
+      name: "{{.name}}1"
     spec:
       services:
         - port: 80
@@ -144,4 +144,14 @@ query: |+ #graphql
 variables:
   envName: "{{.envName}}"
   appName: "{{.name}}"
+---
+
+label: Resync App
+query: |+
+  query Query($envName: String!, $name: String!) {
+    core_resyncApp(envName: $envName, name: $name)
+  }
+variables:
+  envName: "{{.envName}}"
+  name: "{{.name}}"
 ---
