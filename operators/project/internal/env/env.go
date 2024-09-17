@@ -6,10 +6,7 @@ import (
 
 type Env struct {
 	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
-
-	SvcAccountName string `env:"SVC_ACCOUNT_NAME" required:"true"`
-
-	DefaultIngressClass string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
+	// DefaultIngressClass     string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

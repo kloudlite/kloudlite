@@ -28,10 +28,10 @@ spec:
     - jsonPath: .spec.svcCIDR
       name: ServiceCIDR
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
       name: Ready
       type: string
     name: v1
@@ -54,8 +54,6 @@ spec:
           spec:
             description: GatewaySpec defines the desired state of Gateway
             properties:
-              adminNamespace:
-                type: string
               clusterCIDR:
                 type: string
               dnsSuffix:
@@ -110,12 +108,13 @@ spec:
                 type: string
               svcCIDR:
                 type: string
+              targetNamespace:
+                type: string
               wireguardKeysRef:
                 description: secret's data will be unmarshalled into WireguardKeys
                 properties:
                   name:
-                    type: string
-                  namespace:
+                    description: .metadata.name of the resource
                     type: string
                 required:
                 - name

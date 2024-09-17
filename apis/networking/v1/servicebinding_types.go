@@ -21,7 +21,6 @@ type ServiceBindingSpec struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
 //+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 //+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/servicebinding\\.reservation",name=Allocation,type=string

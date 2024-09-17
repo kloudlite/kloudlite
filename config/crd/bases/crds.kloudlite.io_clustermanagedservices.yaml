@@ -22,7 +22,7 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
       name: Ready
       type: string
     - jsonPath: .metadata.creationTimestamp

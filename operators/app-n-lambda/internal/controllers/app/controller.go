@@ -199,13 +199,17 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	b, err := templates.ParseBytes(
 		r.appDeploymentTemplate, map[string]any{
-			"object":             obj,
-			"volumes":            volumes,
-			"volume-mounts":      vMounts,
-			"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"account-name":       obj.GetAnnotations()[constants.AccountNameKey],
-			"pod-labels":         fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
-			"pod-annotations":    fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+			"object":        obj,
+			"volumes":       volumes,
+			"volume-mounts": vMounts,
+			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
+			"pod-labels":    fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
+			"pod-annotations": fn.MapFilter(obj.GetAnnotations(),
+				func(k string, _ string) bool {
+					return strings.HasPrefix(k, "kloudlite.io/") && !strings.HasPrefix(k, "kloudlite.io/operator.")
+				},
+			),
 			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
 		},
 	)
@@ -277,7 +281,7 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 			b, err := templates.ParseBytes(r.appInterceptTemplate, map[string]any{
 				"name":             podname,
 				"namespace":        podns,
-				"labels":           fn.MapMerge(fn.MapFilter(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
+				"labels":           fn.MapMerge(fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
 				"port-mappings":    portMappings,

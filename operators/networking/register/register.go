@@ -11,5 +11,6 @@ func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(networkingv1.AddToScheme)
 	mgr.RegisterControllers(
-		&gateway.Reconciler{Env: ev, Name: "gateway"})
+		&gateway.Reconciler{Env: ev, Name: "gateway"},
+	)
 }

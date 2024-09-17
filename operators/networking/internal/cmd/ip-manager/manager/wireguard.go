@@ -14,17 +14,22 @@ import (
 
 func genGatewayWgPodPeer(podbinding *networkingv1.PodBinding) string {
 	b := new(bytes.Buffer)
+	podComment := fmt.Sprintf("\n# podbinding: %s/%s", podbinding.GetNamespace(), podbinding.GetName())
+	if podbinding.Spec.PodRef != nil {
+		podComment += fmt.Sprintf("\n# pod: %s/%s", podbinding.Spec.PodRef.Namespace, podbinding.Spec.PodRef.Name)
+	}
+
 	fmt.Fprintf(b, `
-[Peer]
+[Peer]%s
 PublicKey = %s
 AllowedIPs = %s/32
-`, podbinding.Spec.WgPublicKey, podbinding.Spec.GlobalIP)
+`, podComment, podbinding.Spec.WgPublicKey, podbinding.Spec.GlobalIP)
 
 	if podbinding.Spec.PodIP != nil {
-		fmt.Fprintf(b, `
+		fmt.Fprintf(b, strings.TrimSpace(`
 Endpoint = %s:51820
 PersistentKeepalive = 25
-`, *podbinding.Spec.PodIP)
+`), *podbinding.Spec.PodIP)
 	}
 
 	return strings.TrimSpace(b.String())
@@ -53,7 +58,7 @@ PrivateKey = %s
 		m.Env.GatewayWGPrivateKey,
 		strings.Join(postUps, "\n"),
 		strings.Join(postDowns, "\n"),
-		strings.Join(fn.MapValues(m.podPeers), "\n"),
+		strings.Join(fn.MapValues(m.podPeers), "\n\n"),
 		m.gatewayWgExtraPeers,
 	)
 }
