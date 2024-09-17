@@ -36,8 +36,8 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GroupVersionKind(),
-			"accountName", errMsg.AccountName,
-			"clusterName", errMsg.ClusterName,
+			"accountName", em.AccountName,
+			"clusterName", em.ClusterName,
 		)
 
 		mLogger.Infof("[%d] received message", counter)
