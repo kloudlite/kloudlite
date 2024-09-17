@@ -2,7 +2,7 @@ import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { Dockerlogo, Plus } from '~/console/components/icons';
+import { Dockerlogo, Info } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -54,9 +54,10 @@ const Images = () => {
                 title: 'Images',
                 action: images.length > 0 && (
                   <Button
-                    variant="primary"
-                    content="Registry Image Instructions"
-                    prefix={<Plus />}
+                    variant="outline"
+                    size='md'
+                    content="Add your images"
+                    prefix={<Info />}
                     onClick={() => {
                       setVisible(true);
                     }}
@@ -69,8 +70,10 @@ const Images = () => {
                 title: 'This is where you’ll manage your registry images.',
                 content: <p>You will get all your registry images here.</p>,
                 action: {
-                  content: 'Registry Image Instructions',
-                  prefix: <Plus />,
+                  content: 'Add your images',
+                  size: 'md',
+                  variant: 'outline',
+                  prefix: <Info />,
                   onClick: () => {
                     setVisible(true);
                   },

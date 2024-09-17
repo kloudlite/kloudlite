@@ -8141,6 +8141,7 @@ export type AuthCli_CreateClusterReferenceMutation = {
   infra_createBYOKCluster?: {
     id: string;
     clusterToken: string;
+    displayName: string;
     metadata: { name: string };
   };
 };
@@ -8286,6 +8287,7 @@ export type AuthCli_ListByokClustersQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        clusterToken: string;
         displayName: string;
         id: string;
         updateTime: any;

@@ -76,7 +76,6 @@ const AppSelectItem = ({
         {registry !== '' && repository !== '' && (
           <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
         )}
-        {/* <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div> */}
       </div>
     </div>
   );
@@ -105,6 +104,7 @@ const AppDetail = () => {
 
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
+  // const [imageSearchText, setImageSearchText] = useState('');
 
   const getRegistryImages = useCallback(async () => {
     ensureAccountClientSide(params);
@@ -135,6 +135,16 @@ const AppDetail = () => {
   useEffect(() => {
     getRegistryImages();
   }, []);
+
+  // useDebounce(
+  //   () => {
+  //     if (imageSearchText) {
+  //       getRegistryImages();
+  //     }
+  //   },
+  //   300,
+  //   [imageSearchText]
+  // );
 
   const { values, errors, handleChange, handleSubmit, isLoading, setValues } =
     useForm({
@@ -342,6 +352,9 @@ const AppDetail = () => {
             onChange={({ value }) => {
               handleChange('imageUrl')(dummyEvent(value));
             }}
+            // onSearch={(text) => {
+            //   setImageSearchText(text);
+            // }}
             showclear
             noOptionMessage={
               <div className="p-2xl bodyMd text-center">
