@@ -24,12 +24,12 @@ func (g *grpcServer) ArchiveResourcesForCluster(ctx context.Context, in *console
 		AccountName: in.AccountName,
 	}
 
-	archiveStatus, err := g.d.ArchiveEnvironmentsForCluster(consoleCtx, in.ClusterName)
+	_, err := g.d.ArchiveEnvironmentsForCluster(consoleCtx, in.ClusterName)
 	if err != nil {
 		return &console.ArchiveResourcesForClusterOut{Archived: false}, err
 	}
 
-	archiveStatus, err = g.d.ArchiveClusterManagedServicesForCluster(consoleCtx, in.ClusterName)
+	archiveStatus, err := g.d.ArchiveClusterManagedServicesForCluster(consoleCtx, in.ClusterName)
 	if err != nil {
 		return &console.ArchiveResourcesForClusterOut{Archived: false}, err
 	}

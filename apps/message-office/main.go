@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log/slog"
 	"os"
 	"time"
 
@@ -26,10 +25,10 @@ func main() {
 
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "message-office", ShowDebugLog: isDev, HideCallerTrace: false})
-	if err != nil {
-		panic(err)
-	}
+	start := time.Now()
+	common.PrintBuildInfo()
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
 
 	app := fx.New(
 		fx.NopLogger,
@@ -39,18 +38,12 @@ func main() {
 		}),
 
 		fx.Provide(
-			func() logging.Logger {
-				return logger
+			func() (logging.Logger, error) {
+				return logging.New(&logging.Options{Name: "message-office", ShowDebugLog: isDev, HideCallerTrace: false})
 			},
 		),
 
-		fx.Provide(func() *slog.Logger {
-			return logging.NewSlogLogger(logging.SlogOptions{
-				ShowCaller:         true,
-				ShowDebugLogs:      debug,
-				SetAsDefaultLogger: true,
-			})
-		}),
+		fx.Supply(logger),
 
 		fx.Provide(func() (*rest.Config, error) {
 			if isDev {
@@ -73,11 +66,10 @@ func main() {
 
 	defer cancelFn()
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "message office startup errors")
-		logger.Infof("EXITING as errors encountered during startup")
+		logger.Error("failed to start message-office, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }

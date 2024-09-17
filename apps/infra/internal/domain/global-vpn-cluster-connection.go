@@ -66,7 +66,7 @@ func (d *domain) getGlobalVPNConnectionPeers(args getGlobalVPNConnectionPeersArg
 
 			if c.Visibility.Mode != entities.ClusterVisibilityModePrivate {
 				if c.Spec.LoadBalancer == nil {
-					d.logger.Infof("loadbalancer not available for gvpn %s", c.Name)
+					d.logger.Info("loadbalancer not available", "gvpn", c.Name)
 					continue
 				}
 
@@ -167,15 +167,18 @@ func (d *domain) reconGlobalVPNConnections(ctx InfraContext, vpnName string) err
 		}
 
 		xcc.Spec.Peers = peers
-		unp, err := d.gvpnConnRepo.Patch(
-			ctx,
-			repos.Filter{
-				fields.AccountName:  ctx.AccountName,
-				fields.ClusterName:  xcc.ClusterName,
-				fields.MetadataName: xcc.Name,
+		unp, err := d.gvpnConnRepo.PatchById(ctx, xcc.Id, common.PatchForUpdate(ctx, xcc, common.PatchOpts{
+			XPatch: map[string]any{
+				fc.GlobalVPNConnectionSpecPeers: peers,
 			},
-			common.PatchForUpdate(ctx, xcc, common.PatchOpts{XPatch: map[string]any{fc.GlobalVPNConnectionSpecPeers: peers}}),
-		)
+		}))
+		// unp, err := d.gvpnConnRepo.Patch(ctx, repos.Filter{
+		// 	fields.AccountName:  ctx.AccountName,
+		// 	fields.ClusterName:  xcc.ClusterName,
+		// 	fields.MetadataName: xcc.Name,
+		// },
+		// 	common.PatchForUpdate(ctx, xcc, common.PatchOpts{XPatch: map[string]any{fc.GlobalVPNConnectionSpecPeers: peers}}),
+		// )
 		if err != nil {
 			return errors.NewE(err)
 		}
@@ -228,6 +231,7 @@ func (d *domain) claimNextClusterCIDR(ctx InfraContext, clusterName string, gvpn
 				// FIXME: handle gracefully
 				continue
 			}
+
 			if _, err := d.gvpnRepo.PatchById(ctx, gvpn.Id, repos.Document{"$inc": map[string]any{fc.GlobalVPNNumAllocatedClusterCIDRs: 1}}); err != nil {
 				continue
 			}
@@ -255,7 +259,7 @@ func (d *domain) claimNextClusterCIDR(ctx InfraContext, clusterName string, gvpn
 			ClusterSvcCIDR:   cidr,
 			ClaimedByCluster: clusterName,
 		}); err != nil {
-			d.logger.Warnf("cluster svc CIDR %s, already claimed, trying another", cidr)
+			d.logger.Warn("cluster svc CIDR, already claimed, trying another", "CIDR", cidr)
 			if cidrFilter == nil {
 				cidrFilter = &repos.MatchFilter{}
 			}
@@ -281,9 +285,12 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 		return nil, err
 	}
 
-	// if gvpnConn.Spec.WgInterface == nil {
-	// 	gvpnConn.Spec.WgInterface = &gvpn.WgInterface
-	// }
+	if gvpnConn.DispatchAddr == nil {
+		gvpnConn.DispatchAddr = &entities.DispatchAddr{
+			AccountName: ctx.AccountName,
+			ClusterName: gvpnConn.ClusterName,
+		}
+	}
 
 	gvpnConn.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
@@ -385,7 +392,11 @@ func (d *domain) deleteGlobalVPNConnection(ctx InfraContext, clusterName string,
 	return nil
 }
 
-func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string) (*entities.GlobalVPNConnection, error) {
+func (d *domain) EnsureGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string, dispatchAddr *entities.DispatchAddr) (*entities.GlobalVPNConnection, error) {
+	return d.ensureGlobalVPNConnection(ctx, clusterName, groupName, dispatchAddr)
+}
+
+func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string, dispatchAddr *entities.DispatchAddr) (*entities.GlobalVPNConnection, error) {
 	gvpnConn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
 		fields.ClusterName:  clusterName,
@@ -402,7 +413,11 @@ func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string,
 		return gvpnConn, nil
 	}
 
-	gvpnGateway := networkingv1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: groupName}}
+	gvpnGateway := networkingv1.Gateway{ObjectMeta: metav1.ObjectMeta{
+		Name: groupName,
+		// Name: fmt.Sprintf("%s-%s", ctx.AccountName, groupName),
+		// Name: fmt.Sprintf("%s-%s", ctx.AccountName, groupName),
+	}}
 	gvpnGateway.EnsureGVK()
 
 	return d.createGlobalVPNConnection(ctx, entities.GlobalVPNConnection{
@@ -411,12 +426,13 @@ func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string,
 		ResourceMetadata: common.ResourceMetadata{DisplayName: groupName, CreatedBy: common.CreatedOrUpdatedByKloudlite, LastUpdatedBy: common.CreatedOrUpdatedByKloudlite},
 		AccountName:      ctx.AccountName,
 		ClusterName:      clusterName,
+		DispatchAddr:     dispatchAddr,
 		ParsedWgParams:   nil,
 	})
 }
 
 func (d *domain) applyGlobalVPNConnection(ctx InfraContext, gvpn *entities.GlobalVPNConnection) error {
-	return d.resDispatcher.ApplyToTargetCluster(ctx, gvpn.ClusterName, &gvpn.Gateway, gvpn.RecordVersion)
+	return d.resDispatcher.ApplyToTargetCluster(ctx, gvpn.DispatchAddr, &gvpn.Gateway, gvpn.RecordVersion)
 }
 
 func (d *domain) findGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string) (*entities.GlobalVPNConnection, error) {
@@ -462,25 +478,34 @@ func (d *domain) OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterNam
 	return err
 }
 
-func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterName string, gvpn entities.GlobalVPNConnection, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	xconn, err := d.findGlobalVPNConnection(ctx, clusterName, gvpn.Name)
+func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, dispatchAddr entities.DispatchAddr, gvpn entities.GlobalVPNConnection, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	// FIXME: need a way to find global vpn connection, receiving it from other clusters
+
+	xconn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		fc.GlobalVPNConnectionDispatchAddrAccountName: dispatchAddr.AccountName,
+		fc.GlobalVPNConnectionDispatchAddrClusterName: dispatchAddr.ClusterName,
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	// INFO: BYOK cluster does not have any status update message
-	if d.isBYOKCluster(ctx, xconn.ClusterName) {
-		if _, err := d.byokClusterRepo.PatchOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
-			fc.SyncStatusState:        t.SyncStateUpdatedAtAgent,
-			fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
-			fc.SyncStatusError:        nil,
-		}); err != nil {
-			return errors.NewE(err)
-		}
+	if xconn == nil {
+		return errors.ErrNotFound{Message: "global vpn connection not found"}
 	}
 
+	// INFO: BYOK cluster does not have any status update message
+	// if d.isBYOKCluster(ctx, xconn.ClusterName) {
+	// 	if _, err := d.byokClusterRepo.PatchOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
+	// 		fc.SyncStatusState:        t.SyncStateUpdatedAtAgent,
+	// 		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+	// 		fc.SyncStatusError:        nil,
+	// 	}); err != nil {
+	// 		return errors.NewE(err)
+	// 	}
+	// }
+
 	if _, err := d.matchRecordVersion(gvpn.Annotations, xconn.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, xconn.SyncStatus.Action, clusterName, &xconn.Gateway, xconn.RecordVersion)
+		return d.resyncToTargetCluster(ctx, xconn.SyncStatus.Action, xconn.DispatchAddr, &xconn.Gateway, xconn.RecordVersion)
 	}
 
 	recordVersion, err := d.matchRecordVersion(gvpn.Annotations, xconn.RecordVersion)
@@ -494,7 +519,7 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 
 	if gvpn.ParsedWgParams != nil {
 		patchDoc[fc.GlobalVPNConnectionParsedWgParams] = gvpn.ParsedWgParams
-		patchDoc[fc.GlobalVPNConnectionSpecAdminNamespace] = gvpn.Spec.AdminNamespace
+		patchDoc[fc.GlobalVPNConnectionSpecTargetNamespace] = gvpn.Spec.TargetNamespace
 		patchDoc[fc.GlobalVPNConnectionSpecLoadBalancer] = gvpn.Spec.LoadBalancer
 		patchDoc[fc.GlobalVPNConnectionSpecWireguardKeysRef] = gvpn.Spec.WireguardKeysRef
 	}
@@ -516,7 +541,7 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterConnection, ugvpn.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, dispatchAddr.ClusterName, ResourceTypeClusterConnection, ugvpn.Name, PublishUpdate)
 	return nil
 }
 

@@ -9,12 +9,12 @@ import (
 	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/apps/infra/internal/domain/ports"
 	"github.com/kloudlite/api/apps/infra/internal/domain/templates"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
-	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -33,6 +33,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 )
 
 const (
@@ -55,7 +56,7 @@ const (
 )
 
 func (d *domain) generateClusterToken(ctx InfraContext, clusterName string) (string, error) {
-	tout, err := d.messageOfficeInternalClient.GenerateClusterToken(ctx, &message_office_internal.GenerateClusterTokenIn{
+	tout, err := d.moSvc.GenerateClusterToken(ctx, &ports.GenerateClusterTokenIn{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
 	})
@@ -343,7 +344,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
 	// FIXME: removing public DNS host for now
-	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN)
+	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN, nil)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -378,23 +379,20 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) error {
 	t := time.Now()
 	defer func() {
-		d.logger.Infof("syncKloudliteGatewayDevice took %.2fs", time.Since(t).Seconds())
+		d.logger.Info("syncKloudliteGatewayDevice", "took", fmt.Sprintf("%.2fs", time.Since(t).Seconds()))
 	}()
-	// 1. parse deployment template
-	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
-	if err != nil {
-		return errors.NewE(err)
-	}
 
 	svcTemplate, err := templates.Read(templates.GatewayServiceTemplate)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx)
-	if err != nil {
-		return errors.NewE(err)
-	}
+	accNs := fmt.Sprintf("kl-%s", ctx.AccountName)
+
+	// accNs, err := d.getAccNamespace(ctx)
+	// if err != nil {
+	// 	return errors.NewE(err)
+	// }
 
 	gv, err := d.findGlobalVPN(ctx, gvpnName)
 	if err != nil {
@@ -448,7 +446,8 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		}
 	}
 
-	resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	// resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	resourceName := fmt.Sprintf("device-%s-egw", gv.Name)
 	resourceNamespace := accNs
 	selector := map[string]string{
 		"app": resourceName,
@@ -466,14 +465,26 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		return errors.Newf("invalid gateway region %q", gao.KloudliteGatewayRegion)
 	}
 
-	wgEndpoint := gwRegion.PublicDNSHost
+	var k8sRestConfig *rest.Config
 
-	c, err := k8s.RestConfigFromKubeConfig([]byte(gwRegion.Kubeconfig))
-	if err != nil {
-		return errors.NewE(err)
+	switch gwRegion.ID {
+	case "self":
+		k8sRestConfig, err = k8s.RestInclusterConfig()
+		if err != nil {
+			return errors.NewE(err)
+		}
+	default:
+		{
+			k8sRestConfig, err = k8s.RestConfigFromKubeConfig([]byte(gwRegion.Kubeconfig))
+			if err != nil {
+				return errors.NewE(err)
+			}
+		}
 	}
 
-	yc, err := kubectl.NewYAMLClient(c, kubectl.YAMLClientOpts{})
+	wgEndpoint := gwRegion.PublicDNSHost
+
+	yc, err := kubectl.NewYAMLClient(k8sRestConfig, kubectl.YAMLClientOpts{})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -532,6 +543,11 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		return err
 	}
 
+	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
 	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
 		Name:                   resourceName,
 		Namespace:              accNs,
@@ -549,6 +565,7 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		return err
 	}
 
+	d.logger.Info("applying yaml", "yaml", string(deploymentBytes))
 	if _, err := yc.ApplyYAML(ctx, deploymentBytes); err != nil {
 		return errors.NewE(err)
 	}
@@ -563,21 +580,17 @@ syncKloudliteDeviceOnPlatform:
   - we can read their logs, and everything on demand
 */
 func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string) error {
-	// 1. parse deployment template
-	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
 	svcTemplate, err := templates.Read(templates.GatewayServiceTemplate)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx)
-	if err != nil {
-		return errors.NewE(err)
-	}
+	accNs := fmt.Sprintf("kl-%s", ctx.AccountName)
+
+	// accNs, err := d.getAccNamespace(ctx)
+	// if err != nil {
+	// 	return errors.NewE(err)
+	// }
 
 	gv, err := d.findGlobalVPN(ctx, gvpnName)
 	if err != nil {
@@ -632,14 +645,20 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		}
 	}
 
-	resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	// resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	resourceName := fmt.Sprintf("device-%s-pl", gv.Name)
 	resourceNamespace := accNs
 	selector := map[string]string{
 		"app": resourceName,
 	}
 
 	service := &corev1.Service{}
-	ctx2, cf := context.WithTimeout(ctx, 5*time.Second)
+	ctx2, cf := func() (context.Context, context.CancelFunc) {
+		if d.env.IsDev {
+			return context.WithCancel(ctx)
+		}
+		return context.WithTimeout(ctx, 5*time.Second)
+	}()
 	defer cf()
 
 	wgEndpoint := d.env.KloudliteGlobalVPNDeviceHost
@@ -686,6 +705,11 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 	wgConfig, err := wgutils.GenerateWireguardConfig(*wgParams)
 	if err != nil {
 		return err
+	}
+
+	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
+	if err != nil {
+		return errors.NewE(err)
 	}
 
 	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
@@ -792,7 +816,7 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, 
 		return errors.NewE(err)
 	}
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, cluster.Name, &uhr.HelmChart, uhr.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, &entities.DispatchAddr{AccountName: ctx.AccountName, ClusterName: cluster.Name}, &uhr.HelmChart, uhr.RecordVersion); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -800,7 +824,7 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, 
 }
 
 func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error {
-	out, err := d.messageOfficeInternalClient.GetClusterToken(ctx, &message_office_internal.GetClusterTokenIn{
+	out, err := d.moSvc.GetClusterToken(ctx, &ports.GetClusterTokenIn{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
 	})

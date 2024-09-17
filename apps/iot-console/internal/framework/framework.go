@@ -3,6 +3,8 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/kloudlite/api/apps/iot-console/internal/app"
 	"github.com/kloudlite/api/apps/iot-console/internal/domain"
 	"github.com/kloudlite/api/apps/iot-console/internal/env"
@@ -32,7 +34,7 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.Client, error) {
 		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   "console",
 			Logger: logger,

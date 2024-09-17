@@ -2,11 +2,14 @@ package app
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/apps/infra/protobufs/infra"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/repos"
 	corev1 "k8s.io/api/core/v1"
@@ -15,7 +18,29 @@ import (
 type grpcServer struct {
 	d domain.Domain
 	infra.UnimplementedInfraServer
-	kcli k8s.Client
+	kcli   k8s.Client
+	logger *slog.Logger
+}
+
+// EnsureGlobalVPNConnection implements infra.InfraServer.
+func (g *grpcServer) EnsureGlobalVPNConnection(ctx context.Context, in *infra.EnsureGlobalVPNConnectionIn) (*infra.EnsureGlobalVPNConnectionOut, error) {
+	l := grpc.NewRequestLogger(g.logger, "EnsureGlobalVPNConnection")
+	defer l.End()
+	_, err := g.d.EnsureGlobalVPNConnection(domain.InfraContext{
+		Context:     ctx,
+		UserId:      repos.ID(in.UserId),
+		UserEmail:   in.UserEmail,
+		UserName:    in.UserName,
+		AccountName: in.AccountName,
+	}, in.ClusterName, in.GlobalVPNName, &entities.DispatchAddr{
+		AccountName: in.DispatchAddr_AccountName,
+		ClusterName: in.DispatchAddr_ClusterName,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return &infra.EnsureGlobalVPNConnectionOut{}, nil
 }
 
 // GetClusterKubeconfig implements infra.InfraServer.
@@ -138,9 +163,10 @@ func (g *grpcServer) MarkClusterOnlineAt(ctx context.Context, in *infra.MarkClus
 	return &infra.MarkClusterOnlineAtOut{}, nil
 }
 
-func newGrpcServer(d domain.Domain, kcli k8s.Client) infra.InfraServer {
+func newGrpcServer(d domain.Domain, kcli k8s.Client, logger *slog.Logger) infra.InfraServer {
 	return &grpcServer{
-		d:    d,
-		kcli: kcli,
+		d:      d,
+		kcli:   kcli,
+		logger: logger,
 	}
 }

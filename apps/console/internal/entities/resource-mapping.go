@@ -28,6 +28,8 @@ const (
 	ResourceHeirarchyEnvironment ResourceHeirarchy = "environment"
 )
 
+// ResourceMapping represents a relationship
+// between a resource (i.e. Environment, App, Router etc.) with it's {account, cluster and environment}
 type ResourceMapping struct {
 	repos.BaseEntity `bson:",inline"`
 
