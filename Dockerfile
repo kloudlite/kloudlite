@@ -3,8 +3,10 @@ FROM nixos/nix:latest AS nix
 WORKDIR /app
 COPY . ./
 
-RUN cat > /tmp/script.sh <<EOF
-  nix build .#container -o result
+RUN cat > /tmp/script.sh <<'EOF'
+  nix --extra-experimental-features "nix-command flakes" build .#container -o result
+  tar cf result.tar result
+
   mkdir -p /tmp/nix-store-closure
   cp -R $(nix-store -qR result/) /tmp/nix-store-closure
 
@@ -19,7 +21,7 @@ RUN cat > /tmp/script.sh <<EOF
   # tar cf - $tdir | zstd -12 --compress > tf.zst
   tar cf - $tdir | zstd --compress > tf.zst
 EOF
-RUN nix --experimental-features "nix-command flakes" develop --command bash /tmp/script.sh
+RUN nix --extra-experimental-features "nix-command flakes" develop --command bash /tmp/script.sh
 
 FROM busybox:latest
 
@@ -36,9 +38,11 @@ WORKDIR /app
 
 RUN mkdir -p /nix
 COPY --from=nix /tmp/nix-store-closure /nix/store
-COPY --from=nix /tmp/tf.zst /app/tf.zst
-COPY --from=nix /app/result/bin/* /usr/local/bin/
-
+COPY --from=nix /app/tf.zst /app/tf.zst
+RUN mkdir -p /usr/local/bin
+COPY --from=nix /app/result.tar /app/result.tar
+RUN tar xf result.tar  
+RUN ls -al && mv result/bin/* /usr/local/bin/ && rm result.tar && rm -rf result
 RUN adduser --disabled-password --home="/app" --uid 1717 nonroot
 COPY --chown=nonroot ./terraform ./terraform
 COPY --chown=nonroot ./infrastructure-templates ./infrastructure-templates
