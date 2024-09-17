@@ -625,6 +625,11 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 		// READ MORE @ https://www.mongodb.com/docs/manual/tutorial/manage-indexes/#modify-an-index
 		indexName := ""
 		for _, field := range f.Field {
+			if field.IsText {
+				b = append(b, bson.E{Key: field.Key, Value: "text"})
+				indexName = buildIndexName(indexName, field.Key, 1)
+				continue
+			}
 			switch field.Value {
 			case IndexAsc:
 				b = append(b, bson.E{Key: field.Key, Value: 1})
@@ -635,7 +640,9 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 			}
 		}
 
-		indexModel := mongo.IndexModel{Keys: b, Options: &options.IndexOptions{Unique: &f.Unique, Name: &indexName}}
+		indexModel := mongo.IndexModel{
+			Keys: b, Options: &options.IndexOptions{Unique: &f.Unique, Name: &indexName},
+		}
 
 		_, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, indexModel)
 		if err != nil {

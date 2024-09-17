@@ -1,6 +1,7 @@
 ---
 global:
   image: "imageName1:imageTag1"
+  query: "gitla"
 ---
 
 label: List Registry Images
@@ -70,3 +71,18 @@ variables:
     tag: "latest"
 
 ---
+
+label: Search Registry Images
+query: |+
+  query Core_searchRegistryImages($query: String!) {
+    core_searchRegistryImages(query: $query) {
+      accountName
+      imageName
+      imageTag
+      meta
+    }
+  }
+variables:
+  query: "{{.query}}"
+---
+    
