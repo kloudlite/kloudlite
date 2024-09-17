@@ -119,6 +119,7 @@ type Query {
 	core_getRegistryImageURL: RegistryImageURL! @isLoggedInAndVerified @hasAccount
 	core_getRegistryImage(image: String!,): RegistryImage @isLoggedInAndVerified @hasAccount
 	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_searchRegistryImages(query: String!): [RegistryImage!]! @isLoggedInAndVerified @hasAccount
 
 	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
