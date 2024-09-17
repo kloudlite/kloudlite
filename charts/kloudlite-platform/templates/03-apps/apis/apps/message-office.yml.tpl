@@ -76,7 +76,9 @@ spec:
           value: '{{ include "vector.grpc-addr" . }}'
 
         - key: TOKEN_HASHING_SECRET
-          value: {{.Values.apps.messageOfficeApi.tokenHashingSecret | squote}}
+          type: secret
+          refName: {{ include "apps.messageOffice.token-hasing.secret.name" . }}
+          refKey: {{ include "apps.messageOffice.token-hasing.secret.key" . }}
 
         - key: INFRA_GRPC_ADDR
           value: '{{ include "apps.infraApi.name" . }}:{{ include "apps.infraApi.grpcPort" . }}'

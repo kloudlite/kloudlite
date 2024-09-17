@@ -356,7 +356,7 @@ apps:
   webhooksApi:
     # -- image (with tag) for webhooks api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/webhooks
+      repository: ghcr.io/kloudlite/kloudlite/api/webhook
       tag: ""
 
     replicas: 1
@@ -385,7 +385,7 @@ apps:
   websocketApi:
     # -- image (with tag) for websocket api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/webhooks
+      repository: ghcr.io/kloudlite/kloudlite/api/websocket-server
       tag: ""
 
     replicas: 1
