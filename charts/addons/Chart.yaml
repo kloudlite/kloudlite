@@ -1,6 +1,0 @@
-apiVersion: v2
-name: addons
-description: A Helm chart for kloudlite k3s cluster addons
-type: application
-version: "v1.0.4"
-appVersion: "v1.0.4"
