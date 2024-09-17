@@ -16,7 +16,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kloudlite/operator v0.0.0-20240828110352-a9cc09ec2511
+	github.com/kloudlite/operator v0.0.0-20240917124613-0418df6214cf
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
