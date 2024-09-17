@@ -14,6 +14,8 @@ type Env struct {
 
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
+	UserEmailVerifactionEnabled bool `env:"USER_EMAIL_VERIFICATION_ENABLED" default:"true"`
+
 	OAuth2Enabled bool `env:"OAUTH2_ENABLED" required:"true"`
 
 	OAuth2GithubEnabled bool   `env:"OAUTH2_GITHUB_ENABLED" required:"false"`
