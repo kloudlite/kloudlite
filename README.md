@@ -26,7 +26,13 @@
 </div>
 <br/>
 
-Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments. It supports collaborative coding, real-time testing, and debugging.
+Kloudlite is an **open-source platform** designed to provide seamless and secure development environments for building distributed applications (microservices). It connects local workspaces with remote Kubernetes environments using a WireGuard network, allowing developers to access services and resources with production-level parity. With Kloudlite, there’s no need for build or deploy steps during development— with service intercepts your changes are reflected in real time, enhancing productivity and reducing the development loop.
+
+## Key Features:
+- Connected VPN Network: Directly syncs your local workspace with the remote environment.
+- Stateless & Lightweight: Run independent environments for each developer.
+- Seamless Integration: No separate build or deploy steps needed during development.
+- Collaboration: Multiple developers can work on the same environment simultaneously.
 
 ## Documentation
 - [Official Website](https://kloudlite.io)
