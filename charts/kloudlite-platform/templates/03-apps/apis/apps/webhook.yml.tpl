@@ -73,5 +73,6 @@ spec:
           value: "https://webhooks.{{.Values.baseDomain}}"
 
         - key: WEBHOOK_TOKEN_HASHING_SECRET
-          value: "{{.Values.apps.webhooksApi.webhookAuthzTokenHashingSecret}}"
-
+          type: secret
+          refName: {{ include "apps.webhooksApi.authenticationSecret.name" . }}
+          refKey: {{ include "apps.webhooksApi.authenticationSecret.token-key" . }}

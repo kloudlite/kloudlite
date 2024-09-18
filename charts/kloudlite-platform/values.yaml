@@ -366,7 +366,6 @@ apps:
       maxReplicas: 2
 
     discordWebhookUrl: ""
-    webhookAuthzTokenHashingSecret: ""
 
     authenticationSecrets:
       githubAuthzSecret: ""

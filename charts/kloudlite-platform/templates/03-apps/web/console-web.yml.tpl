@@ -27,8 +27,8 @@ spec:
       image: '{{.Values.apps.consoleWeb.image.repository}}:{{.Values.apps.consoleWeb.image.tag | default (include "image-tag" .) }}'
       imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
-        min: "100m"
-        max: "300m"
+        min: "200m"
+        max: "400m"
       resourceMemory:
         min: "300Mi"
         max: "500Mi"
