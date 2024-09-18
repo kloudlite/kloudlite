@@ -102,8 +102,9 @@ spec:
           value: /console.d/templates/managed-svc-templates.yml
 
         - key: WEBHOOK_TOKEN_HASHING_SECRET
-          {{- /* FIXME: this is a secret, that should be generated */}}
-          value: {{.Values.apps.webhooksApi.webhookAuthzTokenHashingSecret | squote}}
+          type: secret
+          refName: {{ include "apps.webhooksApi.authenticationSecret.name" . }}
+          refKey: {{ include "apps.webhooksApi.authenticationSecret.token-key" . }}
 
         - key: WEBHOOK_URL
           value: "https://webhooks.{{.Values.baseDomain}}"

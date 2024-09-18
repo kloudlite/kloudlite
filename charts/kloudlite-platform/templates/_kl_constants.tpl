@@ -53,6 +53,7 @@
 {{- define "apps.webhooksApi.name" -}} webhooks-api {{- end -}}
 {{- define "apps.webhooksApi.httpPort" -}} 3000 {{- end -}}
 {{- define "apps.webhooksApi.authenticationSecret.name" -}} webhook-authn-secrets {{- end -}}
+{{- define "apps.webhooksApi.authenticationSecret.token-key" -}} webhook-authn-secrets {{- end -}}
 
 {{- define "apps.websocketApi.name" -}} websocket-api {{- end -}}
 {{- define "apps.websocketApi.httpPort" -}} 3000 {{- end -}}

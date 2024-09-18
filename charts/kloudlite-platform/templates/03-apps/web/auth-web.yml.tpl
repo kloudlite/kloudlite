@@ -28,11 +28,11 @@ spec:
       imagePullPolicy: {{ include "image-pull-policy" .}}
 
       resourceCpu:
-        min: "100m"
-        max: "200m"
+        min: "200m"
+        max: "400m"
       resourceMemory:
         min: "200Mi"
-        max: "300Mi"
+        max: "400Mi"
       livenessProbe: &probe
         type: httpGet
         initialDelay: 5
