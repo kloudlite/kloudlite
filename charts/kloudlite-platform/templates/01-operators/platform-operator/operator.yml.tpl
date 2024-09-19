@@ -62,6 +62,7 @@ spec:
             {{ include "router-operator-env" . | nindent 12 }}
             {{ include "helmchart-operator-env" . | nindent 12 }}
 
+            {{- /* platform operator should not need it, though */}}
             - name: KLOUDLITE_DNS_SUFFIX
               value: ""
 
