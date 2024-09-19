@@ -63,7 +63,7 @@ spec:
           refKey: DB_NAME
 
         - key: KLOUDLITE_DNS_SUFFIX
-          value: "{{.Values.kloudliteDNSSuffix}}"
+          value: {{ include "kloudlite.dns-suffix" . }}
 
         - key: COOKIE_DOMAIN
           value: "{{- include "kloudlite.cookie-domain" . }}"
