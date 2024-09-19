@@ -3,7 +3,6 @@ import {expressMiddleware} from '@apollo/server/express4';
 import express from 'express';
 import {ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource} from '@apollo/gateway';
 import fs from 'fs/promises';
-import yaml from 'js-yaml';
 import assert from 'assert';
 
 const useEnv = (key) => {
@@ -26,7 +25,6 @@ class CustomDataSource extends RemoteGraphQLDataSource {
     return request;
   }
 
-}
   didReceiveResponse({ response, context }) {
     const x = response.http.headers.get('set-cookie');
     if (!x) return response;
@@ -87,8 +85,6 @@ app.listen(port, (err) => {
 
 console.log(String.raw`
                     ,                       
-
-`)
                   #####                 
                ########                 
              ########                   

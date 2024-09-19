@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"strings"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -12,7 +14,6 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
-	"strings"
 )
 
 type ImageHookPayload struct {
@@ -49,8 +50,8 @@ func (d *domain) GetRegistryImageURL(ctx ConsoleContext) (*entities.RegistryImag
 	encodedToken := encodeAccessToken(ctx.AccountName, d.envVars.WebhookTokenHashingSecret)
 
 	return &entities.RegistryImageURL{
-		URL:       fmt.Sprintf(`curl -X POST "%s" -H "Authorization: %s" -H "Content-Type: application/json" -d '{"image": "imageName:imageTag", "meta": {"repository": "github", "registry": "docker", "author":"kloudlite"}}'`, d.envVars.WebhookURL, encodedToken),
-		ScriptURL: fmt.Sprintf(`curl "%s" | authorization=%s image=imageName:imageTag meta="repository=github,registry=docker,author=kloudlite" sh`, d.envVars.WebhookURL, encodedToken),
+		URL:       fmt.Sprintf(`curl -X POST "%s/image-meta-push" -H "Authorization: %s" -H "Content-Type: application/json" -d '{"image": "imageName:imageTag", "meta": {"repository": "github", "registry": "docker", "author":"kloudlite"}}'`, d.envVars.WebhookURL, encodedToken),
+		ScriptURL: fmt.Sprintf(`curl "%s/image-meta-push" | authorization=%s image=imageName:imageTag meta="repository=github,registry=docker,author=kloudlite" sh`, d.envVars.WebhookURL, encodedToken),
 	}, nil
 }
 
@@ -72,7 +73,6 @@ func (d *domain) CreateRegistryImage(ctx context.Context, accountName string, im
 	}
 
 	return createdImage, nil
-
 }
 
 func (d *domain) DeleteRegistryImage(ctx ConsoleContext, image string) error {
@@ -83,7 +83,6 @@ func (d *domain) DeleteRegistryImage(ctx ConsoleContext, image string) error {
 		fc.RegistryImageImageName: imageName,
 		fc.RegistryImageImageTag:  imageTag,
 	})
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -97,7 +96,6 @@ func (d *domain) DeleteRegistryImage(ctx ConsoleContext, image string) error {
 		fc.RegistryImageImageName: imageName,
 		fc.RegistryImageImageTag:  imageTag,
 	})
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -112,7 +110,6 @@ func (d *domain) GetRegistryImage(ctx ConsoleContext, image string) (*entities.R
 		fc.RegistryImageImageName: imageName,
 		fc.RegistryImageImageTag:  imageTag,
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
