@@ -227,8 +227,8 @@ type AppSpec struct {
 	Freeze    bool       `json:"freeze,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default=kloudlite-svc-account
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
 	// +kubebuilder:default=1
 	Replicas   int            `json:"replicas,omitempty"`
 	Services   []AppSvc       `json:"services,omitempty"`
