@@ -5,6 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/apps/webhook/internal/domain"
 	"github.com/kloudlite/api/apps/webhook/internal/env"
@@ -15,11 +21,6 @@ import (
 	types2 "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/pkg/errors"
 	"go.uber.org/fx"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 )
 
 func validateAndDecodeAccessToken(accessToken string, tokenSecret string) (accountName string, err error) {
@@ -66,10 +67,9 @@ func validateAndDecodeAccessToken(accessToken string, tokenSecret string) (accou
 func LoadImageHook() fx.Option {
 	return fx.Invoke(
 		func(server httpServer.Server, envVars *env.Env, producer messaging.Producer, logr logging.Logger, d domain.Domain) error {
-
 			app := server.Raw()
 
-			app.Post("/image-metadata", func(ctx *fiber.Ctx) error {
+			app.Post("/image-meta-push", func(ctx *fiber.Ctx) error {
 				logger := logr.WithName("image-hook")
 
 				headers := ctx.GetReqHeaders()
@@ -103,15 +103,10 @@ func LoadImageHook() fx.Option {
 					return err
 				}
 
-				err = producer.Produce(ctx.Context(), types2.ProduceMsg{
+				if err = producer.Produce(ctx.Context(), types2.ProduceMsg{
 					Subject: string(common.ImageRegistryHookTopicName),
 					Payload: jsonPayload,
-				})
-				if err != nil {
-					return err
-				}
-
-				if err != nil {
+				}); err != nil {
 					errMsg := fmt.Sprintf("failed to produce message: %s", "webhook-provider")
 					logger.Errorf(err, errMsg)
 					return ctx.Status(http.StatusInternalServerError).JSON(errMsg)
@@ -121,19 +116,15 @@ func LoadImageHook() fx.Option {
 					"produced.timestamp", time.Now(),
 				).Infof("queued webhook")
 
-				err = producer.Produce(ctx.Context(), types2.ProduceMsg{
+				if err = producer.Produce(ctx.Context(), types2.ProduceMsg{
 					Subject: string(common.ImageUpdateRegistryHookTopicName),
 					Payload: jsonPayload,
-				})
-				if err != nil {
-					return err
-				}
-
-				if err != nil {
+				}); err != nil {
 					errMsg := fmt.Sprintf("failed to produce message: %s", "webhook-provider")
 					logger.Errorf(err, errMsg)
 					return ctx.Status(http.StatusInternalServerError).JSON(errMsg)
 				}
+
 				logger.WithKV(
 					"produced.subject", string(common.ImageUpdateRegistryHookTopicName),
 					"produced.timestamp", time.Now(),
@@ -141,7 +132,7 @@ func LoadImageHook() fx.Option {
 				return ctx.Status(http.StatusAccepted).JSON(map[string]string{"status": "ok"})
 			})
 
-			app.Get("/image-metadata", func(c *fiber.Ctx) error {
+			app.Get("/image-meta-push", func(c *fiber.Ctx) error {
 				f, err := os.Open("kl-image-script.sh")
 				if err != nil {
 					return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error opening script: %s", err.Error()))
@@ -152,7 +143,7 @@ func LoadImageHook() fx.Option {
 					return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error reading script: %s", err.Error()))
 				}
 				script := string(all)
-				script = strings.ReplaceAll(script, "$WEBHOOK_URL", envVars.WebhookURL)
+				script = strings.ReplaceAll(script, "$WEBHOOK_URL", fmt.Sprintf("%s/image-meta-push", envVars.WebhookURL))
 				return c.SendString(script)
 			})
 
