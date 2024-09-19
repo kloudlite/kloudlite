@@ -128,8 +128,9 @@ const (
 )
 
 type IndexKey struct {
-	Key   string
-	Value indexOrder
+	Key    string
+	Value  indexOrder
+	IsText bool
 }
 
 type IndexField struct {
