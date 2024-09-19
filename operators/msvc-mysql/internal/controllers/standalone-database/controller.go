@@ -268,7 +268,9 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*mysqlv1.Standalone
 			return err
 		}
 
-		lf.Spec = lfres.Spec
+		lf.Spec.OnApply = lfres.Spec.OnApply
+		lf.Spec.OnDelete = lfres.Spec.OnDelete
+
 		return nil
 	}); err != nil {
 		return check.Failed(err)
