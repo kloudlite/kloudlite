@@ -35,6 +35,30 @@ func encodeAccessToken(accountName string, tokenSecret string) string {
 	return base64.StdEncoding.EncodeToString([]byte(info))
 }
 
+func generatePartialWords(word string) []string {
+	var partials []string
+	for i := 3; i <= len(word); i++ {
+		partials = append(partials, word[:i])
+	}
+	return partials
+}
+
+func generateAutocompleteWords(meta map[string]any) string {
+	metaString := ""
+	for _, value := range meta {
+		metaString += fmt.Sprintf("%s ", value)
+	}
+
+	words := strings.Fields(metaString)
+	var autocompleteWords []string
+	for _, word := range words {
+		partials := generatePartialWords(word)
+		autocompleteWords = append(autocompleteWords, partials...)
+	}
+
+	return strings.Join(autocompleteWords, " ")
+}
+
 func getImageNameTag(image string) (string, string) {
 	parts := strings.Split(image, ":")
 
@@ -66,13 +90,34 @@ func (d *domain) CreateRegistryImage(ctx context.Context, accountName string, im
 		ImageName:   imageName,
 		ImageTag:    imageTag,
 		Meta:        meta,
+		MetaData:    generateAutocompleteWords(meta),
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return createdImage, nil
+}
 
+func (d *domain) SearchRegistryImages(ctx ConsoleContext, query string) ([]*entities.RegistryImage, error) {
+
+	if err := d.canPerformActionInAccount(ctx, iamT.ListRegistryImages); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	filters := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		"$text":            map[string]any{"$search": query},
+	}
+
+	searchedImages, err := d.registryImageRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Limit:  fn.New(int64(10)),
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return searchedImages, nil
 }
 
 func (d *domain) DeleteRegistryImage(ctx ConsoleContext, image string) error {
