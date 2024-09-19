@@ -26,6 +26,17 @@ type WebinarUIProps = {
     };
 };
 
+// {eventName, dyte-meeting-id, date-time}
+
+// check if event is live if live show join or else show register
+
+// kloudlite.io/events/code-unbound-webinar-event-1/join
+    // check if user is logged in . If not redirect to login page. After login redirect to kloudlite.io/events/code-unbound-webinar-event-1/join
+    // check if user is registered . if event is live take him to the event
+    // else send him the email thanking for registering, If possible calendar invite
+
+// kloudlite.io/events/code-unbound-webinar-event-1
+
 export const WebinarUI = ({ userDetails, meetingStatus, envVars }: WebinarUIProps) => {
 
     const { dyteOrgId, dyteApiKey, dyteMeetingId, marketApiUrl } = envVars;
