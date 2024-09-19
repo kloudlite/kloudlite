@@ -15,6 +15,7 @@ import { useState } from 'react';
 import Container from '../components/container';
 import { JoinWebinar } from '../components/join-webinar';
 
+
 type WebinarUIProps = {
     userDetails: any;
     meetingStatus: string;
@@ -31,9 +32,9 @@ type WebinarUIProps = {
 // check if event is live if live show join or else show register
 
 // kloudlite.io/events/code-unbound-webinar-event-1/join
-    // check if user is logged in . If not redirect to login page. After login redirect to kloudlite.io/events/code-unbound-webinar-event-1/join
-    // check if user is registered . if event is live take him to the event
-    // else send him the email thanking for registering, If possible calendar invite
+// check if user is logged in . If not redirect to login page. After login redirect to kloudlite.io/events/code-unbound-webinar-event-1/join
+// check if user is registered . if event is live take him to the event
+// else send him the email thanking for registering, If possible calendar invite
 
 // kloudlite.io/events/code-unbound-webinar-event-1
 
@@ -94,8 +95,13 @@ const HandleRegisterForm = ({ visible, setVisible, marketApiUrl }: { visible: bo
                 setVisible(false);
                 toast.success('Thank you for registering to kloudlite events');
             }
-        } catch (error) {
-            toast.error("Error while registering to kloudlite events");
+        } catch (error: any) {
+            if (error.response && error.response.status === 400) {
+                toast.error("You are already registered for this event.");
+            } else {
+                toast.error("Error while registering to Kloudlite events.");
+            }
+            // toast.error("Error while registering to kloudlite events");
         }
     }
 

@@ -13,7 +13,6 @@ type EnvVars = {
 
 export default async function Home() {
 
-  // console.log("all-env", process.env)
   const cookie = cookies().get("hotspot-session")
   const callbackUrl = process.env.CALLBACK_URL;
   const redirectUrl = `${process.env.REDIRECT_URL}?callback=${callbackUrl}`;
