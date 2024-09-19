@@ -11,7 +11,7 @@ type UesrData = {
     approved: boolean,
 }
 
-export const JoinWebinar = ({ userData, meetingStatus }: { userData: UesrData, meetingStatus: string }) => {
+export const JoinWebinar = ({ userData, meetingStatus, meetingId }: { userData: UesrData, meetingStatus: string, meetingId: string }) => {
 
     return (
         <div
@@ -24,7 +24,8 @@ export const JoinWebinar = ({ userData, meetingStatus }: { userData: UesrData, m
                 disabled={meetingStatus !== 'ACTIVE'}
                 block
                 onClick={() => {
-                    window.location.href = `/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${process.env.NEXT_PUBLIC_DYTE_MEETING_ID}`
+                    // window.location.href = `/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${process.env.NEXT_PUBLIC_DYTE_MEETING_ID}`
+                    window.location.href = `/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${meetingId}`
                 }}
             />
         </div>

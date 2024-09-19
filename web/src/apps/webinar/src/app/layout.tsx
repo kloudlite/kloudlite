@@ -1,6 +1,9 @@
 import 'kl-design-system/index.css';
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import 'react-toastify/dist/ReactToastify.css';
+import ToastifyContainer from './components/toastify-container';
 import "./globals.css";
 
 
@@ -18,7 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+        <ToastifyContainer />
+      </body>
 
       {/* <body className={inter.className}>
         <main>{children}</main>

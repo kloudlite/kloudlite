@@ -2,21 +2,33 @@
 //@ts-ignore
 import { Button } from 'kl-design-system/atoms/button';
 //@ts-ignore
-import { TextInput } from 'kl-design-system/atoms/input';
+import { TextArea, TextInput } from 'kl-design-system/atoms/input';
 //@ts-ignore
 import Popup from 'kl-design-system/molecule/popup';
 //@ts-ignore
 import { cn } from 'kl-design-system/utils';
-// import Yup from '~/root/lib/server/helpers/yup';
-// import { handleError } from '~/root/lib/utils/common';
+//@ts-ignore
+import axios from 'axios';
+//@ts-ignore
+import { toast } from 'kl-design-system/molecule/toast';
 import { useState } from 'react';
 import Container from '../components/container';
 import { JoinWebinar } from '../components/join-webinar';
 
+type WebinarUIProps = {
+    userDetails: any;
+    meetingStatus: string;
+    envVars: {
+        dyteOrgId: string,
+        dyteApiKey: string,
+        dyteMeetingId: string,
+        marketApiUrl: string,
+    };
+};
 
+export const WebinarUI = ({ userDetails, meetingStatus, envVars }: WebinarUIProps) => {
 
-export const WebinarUI = ({ userDetails, meetingStatus }: { userDetails: any, meetingStatus: string }) => {
-
+    const { dyteOrgId, dyteApiKey, dyteMeetingId, marketApiUrl } = envVars;
     const [visible, setVisible] = useState(false);
 
     return (
@@ -28,8 +40,6 @@ export const WebinarUI = ({ userDetails, meetingStatus }: { userDetails: any, me
                     onClick={() => {
                         setVisible(true);
                     }}
-                // linkComponent={Link}
-                // to="/login"
                 />
             }
         >
@@ -44,88 +54,42 @@ export const WebinarUI = ({ userDetails, meetingStatus }: { userDetails: any, me
                                 Join webinar and experience the power of Kloudlite
                             </div>
                         </div>
-                        <JoinWebinar userData={userDetails} meetingStatus={meetingStatus} />
-                        {visible && <HandleRegisterForm visible={visible} setVisible={setVisible} />}
+                        <JoinWebinar userData={userDetails} meetingStatus={meetingStatus} meetingId={dyteMeetingId} />
+                        {visible && <HandleRegisterForm visible={visible} setVisible={setVisible} marketApiUrl={marketApiUrl} />}
                     </div>
                 </div>
-                {/* {visible && <HandleRegisterForm visible={visible} setVisible={setVisible} />} */}
             </div>
         </Container>
     )
 }
 
-const HandleRegisterForm = ({ visible, setVisible }: { visible: boolean, setVisible: (v: boolean) => void }) => {
+const HandleRegisterForm = ({ visible, setVisible, marketApiUrl }: { visible: boolean, setVisible: (v: boolean) => void, marketApiUrl: string }) => {
+    const [formData, setFormData] = useState<any>({ name: '', companyName: '', email: '', country: '', mobileNo: '', message: '' });
 
-    // const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
-    //     useForm({
-    //         initialValues: {
-    //             name: '',
-    //             companyName: '',
-    //             email: '',
-    //         },
+    const handleInputChange = (e: any) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
 
-    //         // validationSchema: Yup.object({
-    //         //     // name: Yup.string().required('id is required'),
-    //         // }),
-    //         validationSchema: null,
+    const handleSubmit = async (e: any) => {
+        e.preventDefault();
+        try {
+            console.log("environment===", marketApiUrl);
+            const response = await axios.post(`${marketApiUrl}/events/register-user`, formData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (response.status === 200) {
+                setVisible(false);
+                toast.success('Thank you for registering to kloudlite events');
+            }
+        } catch (error) {
+            toast.error("Error while registering to kloudlite events");
+        }
+    }
 
-    //         onSubmit: async (val) => {
-    //             try {
-    //                 // if (!isUpdate) {
-    //                 //     const { errors: e } = await api.createIotDeployment({
-    //                 //         projectName: project.name,
-    //                 //         deployment: {
-    //                 //             name: val.name,
-    //                 //             displayName: val.displayName,
-    //                 //             CIDR: val.cidr,
-    //                 //             exposedIps: val.exposedIps,
-    //                 //             exposedDomains: val.exposedDomains,
-    //                 //             exposedServices: val.exposedServices.map((service) => {
-    //                 //                 return {
-    //                 //                     name: service.name,
-    //                 //                     ip: service.ip,
-    //                 //                 };
-    //                 //             }),
-    //                 //         },
-    //                 //     });
-    //                 //     if (e) {
-    //                 //         throw e[0];
-    //                 //     }
-    //                 // } else {
-    //                 //     const { errors: e } = await api.updateIotDeployment({
-    //                 //         projectName: project.name,
-    //                 //         deployment: {
-    //                 //             name: val.name,
-    //                 //             displayName: val.displayName,
-    //                 //             CIDR: val.cidr,
-    //                 //             exposedIps: val.exposedIps,
-    //                 //             exposedDomains: val.exposedDomains,
-    //                 //             exposedServices: val.exposedServices.map((service) => {
-    //                 //                 return {
-    //                 //                     name: service.name,
-    //                 //                     ip: service.ip,
-    //                 //                 };
-    //                 //             }),
-    //                 //         },
-    //                 //     });
-    //                 //     if (e) {
-    //                 //         throw e[0];
-    //                 //     }
-    //                 // }
-    //                 // reloadPage();
-    //                 resetValues();
-    //                 // toast.success(
-    //                 //     `deployment ${isUpdate ? 'updated' : 'created'} successfully`
-    //                 // );
-    //                 setVisible(false);
-    //             } catch (err) {
-    //                 // handleError(err);
-    //             }
-    //         },
-    //     });
 
     return (
-        // visible && (
         <Popup.Root show={!!visible} className="!w-[600px]">
             <Popup.Form>
                 <Popup.Content>
@@ -134,20 +98,69 @@ const HandleRegisterForm = ({ visible, setVisible }: { visible: boolean, setVisi
                             label="Full name"
                             size="lg"
                             placeholder="name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                         />
 
-                        <div className='flex flex-row justify-between gap-2xl'>
-                            <TextInput
-                                label="Company name"
-                                size="lg"
-                                placeholder="company name"
-                            />
-                            <TextInput
-                                label="Email"
-                                size="lg"
-                                placeholder="email"
-                            />
+                        <div className="flex flex-row justify-between gap-2xl">
+                            <div className='flex-grow'>
+                                <TextInput
+                                    label="Company name"
+                                    size="lg"
+                                    placeholder="company name"
+                                    name="companyName"
+                                    value={formData.companyName}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                            <div className='flex-grow'>
+                                <TextInput
+                                    label="Email"
+                                    size="lg"
+                                    placeholder="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
                         </div>
+
+                        <div className="flex flex-row justify-between gap-2xl">
+                            <div className='flex-grow'>
+                                <TextInput
+                                    label="Country"
+                                    size="lg"
+                                    placeholder="country"
+                                    name="country"
+                                    value={formData.country}
+                                    onChange={handleInputChange}
+                                // placeholder="company name"
+                                />
+                            </div>
+                            <div className='flex-grow'>
+                                <TextInput
+                                    label="Mobile"
+                                    size="lg"
+                                    placeholder="mobile"
+                                    name="mobileNo"
+                                    value={formData.mobileNo}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        </div>
+
+                        <TextArea
+                            placeholder="Write your messages..."
+                            label="Message"
+                            resize={false}
+                            rows="4"
+                            name="message"
+                            value={formData.message}
+                            onChange={handleInputChange}
+                        />
+
+
                     </div>
                 </Popup.Content>
                 <Popup.Footer>
@@ -161,11 +174,11 @@ const HandleRegisterForm = ({ visible, setVisible }: { visible: boolean, setVisi
                         type="submit"
                         variant="primary"
                         content="Register"
+                        onClick={handleSubmit}
                     />
                 </Popup.Footer>
             </Popup.Form>
         </Popup.Root>
-        // )
     )
 
 }
