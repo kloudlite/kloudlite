@@ -43,9 +43,10 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	EnsureJobRBAC string = "ensure-job-rbac"
-	ApplyK8sJob   string = "apply-k8s-job"
-	DeleteK8sJob  string = "delete-k8s-job"
+	defaultsPatched string = "defaults-patched"
+	EnsureJobRBAC   string = "ensure-job-rbac"
+	ApplyK8sJob     string = "apply-k8s-job"
+	DeleteK8sJob    string = "delete-k8s-job"
 )
 
 const (
@@ -101,9 +102,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: defaultsPatched, Title: "Defaults patched"},
 		{Name: EnsureJobRBAC, Title: "Ensures K8s Lifecycle RBACs"},
 		{Name: ApplyK8sJob, Title: "Apply Kubernetes Lifecycle"},
 	}); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -131,6 +137,26 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.R
 	}
 
 	return req.Finalize()
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(defaultsPatched, req)
+
+	hasUpdate := false
+
+	if obj.Spec.RetryOnFailureDelay.Duration == 0*time.Second {
+		hasUpdate = true
+		obj.Spec.RetryOnFailureDelay = metav1.Duration{Duration: 30 * time.Second}
+	}
+
+	if hasUpdate {
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
