@@ -830,6 +830,7 @@ type ComplexityRoot struct {
 		CoreResyncManagedResource            func(childComplexity int, msvcName string, name string) int
 		CoreResyncRouter                     func(childComplexity int, envName string, name string) int
 		CoreResyncSecret                     func(childComplexity int, envName string, name string) int
+		CoreSearchRegistryImages             func(childComplexity int, query string) int
 		InfraGetClusterManagedService        func(childComplexity int, name string) int
 		InfraListClusterManagedServices      func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
 		__resolve__service                   func(childComplexity int) int
@@ -1114,6 +1115,7 @@ type QueryResolver interface {
 	CoreGetRegistryImageURL(ctx context.Context) (*model.RegistryImageURL, error)
 	CoreGetRegistryImage(ctx context.Context, image string) (*entities.RegistryImage, error)
 	CoreListRegistryImages(ctx context.Context, pq *repos.CursorPagination) (*model.RegistryImagePaginatedRecords, error)
+	CoreSearchRegistryImages(ctx context.Context, query string) ([]*entities.RegistryImage, error)
 	CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
 	CoreGetApp(ctx context.Context, envName string, name string) (*entities.App, error)
 	CoreResyncApp(ctx context.Context, envName string, name string) (bool, error)
@@ -5003,6 +5005,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreResyncSecret(childComplexity, args["envName"].(string), args["name"].(string)), true
 
+	case "Query.core_searchRegistryImages":
+		if e.complexity.Query.CoreSearchRegistryImages == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_searchRegistryImages_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreSearchRegistryImages(childComplexity, args["query"].(string)), true
+
 	case "Query.infra_getClusterManagedService":
 		if e.complexity.Query.InfraGetClusterManagedService == nil {
 			break
@@ -5926,6 +5940,7 @@ type Query {
 	core_getRegistryImageURL: RegistryImageURL! @isLoggedInAndVerified @hasAccount
 	core_getRegistryImage(image: String!,): RegistryImage @isLoggedInAndVerified @hasAccount
 	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_searchRegistryImages(query: String!): [RegistryImage!]! @isLoggedInAndVerified @hasAccount
 
 	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
@@ -9249,6 +9264,21 @@ func (ec *executionContext) field_Query_core_resyncSecret_args(ctx context.Conte
 		}
 	}
 	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_searchRegistryImages_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["query"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["query"] = arg0
 	return args, nil
 }
 
@@ -33114,6 +33144,107 @@ func (ec *executionContext) fieldContext_Query_core_listRegistryImages(ctx conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_core_searchRegistryImages(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_searchRegistryImages(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CoreSearchRegistryImages(rctx, fc.Args["query"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*entities.RegistryImage); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/kloudlite/api/apps/console/internal/entities.RegistryImage`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.RegistryImage)
+	fc.Result = res
+	return ec.marshalNRegistryImage2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImageᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_searchRegistryImages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_RegistryImage_accountName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_RegistryImage_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_RegistryImage_id(ctx, field)
+			case "imageName":
+				return ec.fieldContext_RegistryImage_imageName(ctx, field)
+			case "imageTag":
+				return ec.fieldContext_RegistryImage_imageTag(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_RegistryImage_markedForDeletion(ctx, field)
+			case "meta":
+				return ec.fieldContext_RegistryImage_meta(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_RegistryImage_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_RegistryImage_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImage", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_searchRegistryImages_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_core_listApps(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_core_listApps(ctx, field)
 	if err != nil {
@@ -51651,6 +51782,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "core_searchRegistryImages":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_searchRegistryImages(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "core_listApps":
 			field := field
 
@@ -55228,6 +55381,50 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapi�
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRegistryImage2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImageᚄ(ctx context.Context, sel ast.SelectionSet, v []*entities.RegistryImage) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRegistryImage2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImage(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNRegistryImage2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImage(ctx context.Context, sel ast.SelectionSet, v *entities.RegistryImage) graphql.Marshaler {
