@@ -7,9 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -588,6 +587,19 @@ func (r *queryResolver) CoreListRegistryImages(ctx context.Context, pq *repos.Cu
 	return fn.JsonConvertP[model.RegistryImagePaginatedRecords](pImages)
 }
 
+// CoreSearchRegistryImages is the resolver for the core_searchRegistryImages field.
+func (r *queryResolver) CoreSearchRegistryImages(ctx context.Context, query string) ([]*entities.RegistryImage, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	images, err := r.Domain.SearchRegistryImages(cc, query)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return images, nil
+}
+
 // CoreListApps is the resolver for the core_listApps field.
 func (r *queryResolver) CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error) {
 	cc, err := toConsoleContext(ctx)
@@ -1060,7 +1072,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
