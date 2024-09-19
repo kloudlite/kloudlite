@@ -507,7 +507,8 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		if d.env.IsDev {
 			return context.WithCancel(ctx)
 		}
-		return context.WithTimeout(ctx, 5*time.Second)
+		// return context.WithTimeout(ctx, 10*time.Second)
+		return context.WithTimeout(context.TODO(), 45*time.Second)
 	}()
 	defer cf()
 
@@ -526,8 +527,20 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 			continue
 		}
 
-		if service.Spec.Ports[0].NodePort != 0 {
+		switch service.Spec.Type {
+		case "LoadBalancer":
+			if len(service.Status.LoadBalancer.Ingress) == 0 {
+				wgEndpoint = ""
+				break
+			}
+			wgEndpoint = service.Status.LoadBalancer.Ingress[0].IP + ":" + fmt.Sprintf("%d", wgParams.ListenPort)
+		case "NodePort":
 			wgEndpoint = fmt.Sprintf("%s:%d", wgEndpoint, service.Spec.Ports[0].NodePort)
+		default:
+			return errors.Newf("unknown service type %q", service.Spec.Type)
+		}
+
+		if wgEndpoint != "" {
 			break
 		}
 	}
@@ -657,7 +670,7 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		if d.env.IsDev {
 			return context.WithCancel(ctx)
 		}
-		return context.WithTimeout(ctx, 5*time.Second)
+		return context.WithTimeout(context.TODO(), 45*time.Second) // 45 seconds, as it might take a while for a cloud provider to allocate IP
 	}()
 	defer cf()
 
@@ -690,8 +703,20 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 			continue
 		}
 
-		if service.Spec.Ports[0].NodePort != 0 {
+		switch service.Spec.Type {
+		case "LoadBalancer":
+			if len(service.Status.LoadBalancer.Ingress) == 0 {
+				wgEndpoint = ""
+				break
+			}
+			wgEndpoint = service.Status.LoadBalancer.Ingress[0].IP + ":" + fmt.Sprintf("%d", wgParams.ListenPort)
+		case "NodePort":
 			wgEndpoint = fmt.Sprintf("%s:%d", wgEndpoint, service.Spec.Ports[0].NodePort)
+		default:
+			return errors.Newf("unknown service type %q", service.Spec.Type)
+		}
+
+		if wgEndpoint != "" {
 			break
 		}
 	}
