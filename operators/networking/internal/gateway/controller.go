@@ -175,7 +175,8 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*networkingv1.Gateway]) ste
 
 	if obj.Spec.TargetNamespace == "" {
 		hasUpdate = true
-		obj.Spec.TargetNamespace = fmt.Sprintf("kl-gateway-%s", obj.Name)
+		// obj.Spec.TargetNamespace = fmt.Sprintf("kl-gateway-%s", obj.Name)
+		obj.Spec.TargetNamespace = fmt.Sprintf("kl-gateway", obj.Name)
 	}
 
 	if obj.Spec.WireguardKeysRef.Name == "" {

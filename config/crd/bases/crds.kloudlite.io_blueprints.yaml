@@ -394,7 +394,6 @@ spec:
                           - domains
                           type: object
                         serviceAccount:
-                          default: kloudlite-svc-account
                           type: string
                         services:
                           items:
