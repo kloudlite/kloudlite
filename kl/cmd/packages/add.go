@@ -56,7 +56,7 @@ func addPackages(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.
 		return functions.Error("name is required")
 	}
 
-	p, hashpkg, err := Resolve(cmd.Context(), name)
+	name, hashpkg, err := Resolve(cmd.Context(), name)
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -72,13 +72,11 @@ func addPackages(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.
 	}
 
 	spinner.Client.Pause()
-	_, err = fn.Exec(fmt.Sprintf("nix shell nixpkgs/%s#%s --command echo downloaded", hashpkg, p), nil)
+	_, err = fn.Exec(fmt.Sprintf("nix shell nixpkgs/%s --command echo downloaded", hashpkg), nil)
 	if err != nil {
 		return functions.NewE(err)
 	}
 	spinner.Client.Resume()
-
-	name = p
 	if slices.Contains(klConf.Packages, name) {
 		return nil
 	}

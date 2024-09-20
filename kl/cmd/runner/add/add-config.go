@@ -238,7 +238,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	fn.Log(fmt.Sprintf("added config %s/%s to your kl-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key))
+	fn.Log(fmt.Sprintf("added config %s/%s to your kl-file", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key))
 
 	wpath, err := os.Getwd()
 	if err != nil {
@@ -251,7 +251,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 	c, err := boxpkg.NewClient(cmd, args)
 	if err != nil {
-		return err
+		return fn.NewE(err)
 	}
 
 	if err := c.ConfirmBoxRestart(); err != nil {

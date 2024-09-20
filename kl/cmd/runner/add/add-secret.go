@@ -214,7 +214,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return functions.NewE(err)
 	}
 
-	fn.Log(fmt.Sprintf("added secret %s/%s to your kl-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key))
+	fn.Log(fmt.Sprintf("added secret %s/%s to your kl-file", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key))
 
 	wpath, err := os.Getwd()
 	if err != nil {

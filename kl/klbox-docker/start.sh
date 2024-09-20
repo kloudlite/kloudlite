@@ -19,6 +19,7 @@ export KL_BASE_URL="$KL_BASE_URL"
 export MAIN_PATH=$PATH
 export KL_TMP_PATH="/kl-tmp"
 export KLCONFIG_PATH="$KLCONFIG_PATH"
+export PLATFORM_ARCH=$(uname -m)
 EOL
 
 # sudo dnsmasq --server=/.local/$KL_DNS --server=1.1.1.1
@@ -53,7 +54,7 @@ set -o pipefail
 vmounts=$(cat $KL_HASH_FILE | jq '.config.mounts | length')
 if [ \$vmounts -gt 0 ]; then
   eval $(cat $KL_HASH_FILE | jq '.config.mounts | to_entries | map_values(. = "mkdir -p $(dirname \(.key))") | .[]' -r)
-  eval $(cat $KL_HASH_FILE | jq '.config.mounts | to_entries | map_values(. = "echo \"\(.value)\" > \(.key)") | .[]' -r)
+  eval $(cat $KL_HASH_FILE | jq '.config.mounts | to_entries | map_values(. = "echo \"\(.value)\" | base64 -d > \(.key)") | .[]' -r)
 fi
 EOF
 sudo bash /tmp/mount.sh

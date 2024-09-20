@@ -6,13 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
 
 type PackageInfo struct {
@@ -69,9 +70,11 @@ func Search(ctx context.Context, query string) (*SearchResults, error) {
 	return caller[SearchResults](ctx, url)
 }
 
-func Resolve(ctx context.Context, name string) (string, string, error) {
-	if !strings.Contains(name, "@") {
-		sr, err := Search(ctx, name)
+func Resolve(ctx context.Context, pname string) (string, string, error) {
+	var name string
+	var v string
+	if !strings.Contains(pname, "@") {
+		sr, err := Search(ctx, pname)
 		if err != nil {
 			return "", "", fn.NewE(err)
 		}
@@ -91,22 +94,31 @@ func Resolve(ctx context.Context, name string) (string, string, error) {
 		if err != nil {
 			return "", "", fn.NewE(err)
 		}
+		name = version.Name
+		v = version.Version
+	} else {
+		splits := strings.Split(name, "@")
 
-		return version.Name, version.CommitHash, nil
+		if strings.TrimSpace(splits[0]) == "" || strings.TrimSpace(splits[1]) == "" {
+			return "", "", fmt.Errorf("package %s is invalid", name)
+		}
+		name = splits[0]
+		v = splits[1]
 	}
 
-	splits := strings.Split(name, "@")
-
-	if strings.TrimSpace(splits[0]) == "" || strings.TrimSpace(splits[1]) == "" {
-		return "", "", fmt.Errorf("package %s is invalid", name)
+	type System struct {
+		AttrPaths []string `json:"attr_paths"`
 	}
 
 	type Res struct {
-		CommitHash string `json:"commit_hash"`
-		Version    string `json:"version"`
+		CommitHash string            `json:"commit_hash"`
+		Version    string            `json:"version"`
+		Systems    map[string]System `json:"systems"`
 	}
 
-	sr, err := caller[Res](ctx, fmt.Sprintf("%s/v1/resolve?name=%s&version=%s", searchAPIEndpoint, splits[0], splits[1]))
+	platform := os.Getenv("PLATFORM_ARCH") + "-linux"
+	sr, err := caller[Res](ctx, fmt.Sprintf("%s/v1/resolve?name=%s&version=%s&platform=%s", searchAPIEndpoint, name, v, platform))
+
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return "", "", fmt.Errorf("package %s not found", name)
@@ -114,7 +126,7 @@ func Resolve(ctx context.Context, name string) (string, string, error) {
 		return "", "", fn.NewE(err)
 	}
 
-	return fmt.Sprintf("%s@%s", splits[0], sr.Version), sr.CommitHash, nil
+	return fmt.Sprintf("%s@%s", name, sr.Version), fmt.Sprintf("%s#%s", sr.CommitHash, sr.Systems[platform].AttrPaths[0]), nil
 }
 
 var ErrNotFound = fn.Error("not found")
@@ -130,6 +142,7 @@ func caller[T any](ctx context.Context, url string) (*T, error) {
 	}
 	defer response.Body.Close()
 	data, err := io.ReadAll(response.Body)
+
 	if err != nil {
 		return nil, fn.Errorf("GET %s: read respoonse body: %w", url, err)
 	}

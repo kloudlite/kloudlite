@@ -1,9 +1,8 @@
 package add
 
 import (
+	"bufio"
 	"fmt"
-	"os"
-
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -11,6 +10,9 @@ import (
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -45,16 +47,8 @@ var mountCommand = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		path := ""
 
-		if len(args) > 0 {
-			path = args[0]
-		} else {
-			fn.PrintError(fmt.Errorf("please specify the path of the config you want to add, example: kl add config-mount /tmp/sample"))
-			return
-		}
-
-		err = selectConfigMount(apic, fc, path, *klFile, cmd)
+		err = selectConfigMount(apic, fc, *klFile, cmd, args)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -62,7 +56,7 @@ var mountCommand = &cobra.Command{
 	},
 }
 
-func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path string, klFile fileclient.KLFileType, cmd *cobra.Command) error {
+func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, klFile fileclient.KLFileType, cmd *cobra.Command, args []string) error {
 
 	//TODO: add changes to the klbox-hash file
 	c := cmd.Flag("config").Value.String()
@@ -184,13 +178,6 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path 
 		selectedItem = *selectedItemVal
 	}
 
-	matchedIndex := -1
-	for i, fe := range klFile.Mounts {
-		if fe.Path == path {
-			matchedIndex = i
-		}
-	}
-
 	key, err := fzf.FindOne(func() []string {
 		res := make([]string, 0)
 		for k := range selectedItem.Entries {
@@ -203,6 +190,22 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path 
 
 	if err != nil {
 		return fn.NewE(err)
+	}
+
+	spinner.Client.Pause()
+	fn.Printf("path of the config file, (eg: /tmp/sample): ")
+	path, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		fn.PrintError(err)
+	}
+	path = strings.TrimSpace(path)
+	defer spinner.Client.Resume()
+
+	matchedIndex := -1
+	for i, fe := range klFile.Mounts {
+		if fe.Path == path {
+			matchedIndex = i
+		}
 	}
 
 	fe := klFile.Mounts.GetMounts()

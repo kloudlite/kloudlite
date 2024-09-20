@@ -12,7 +12,6 @@ import (
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/fjson"
 	"github.com/kloudlite/kl/pkg/functions"
-	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 type Packages map[string]string
@@ -63,7 +62,12 @@ func SyncLockfileWithNewConfig(config fileclient.KLFileType) (map[string]string,
 			continue
 		}
 
-		resp, err := http.Get(fmt.Sprintf("https://search.devbox.sh/v1/resolve?name=%s&version=%s", splits[0], splits[1]))
+		platform := os.Getenv("PLATFORM_ARCH") + "-linux"
+		if platform == "-linux" {
+			platform = "x86_64-linux"
+		}
+
+		resp, err := http.Get(fmt.Sprintf("https://search.devbox.sh/v1/resolve?name=%s&version=%s&platform=%s", splits[0], splits[1], platform))
 		if err != nil {
 			return nil, functions.NewE(err)
 		}
@@ -77,18 +81,23 @@ func SyncLockfileWithNewConfig(config fileclient.KLFileType) (map[string]string,
 			return nil, functions.NewE(err)
 		}
 
+		type System struct {
+			AttrPaths []string `json:"attr_paths"`
+		}
+
 		type Res struct {
-			CommitHash string `json:"commit_hash"`
-			Version    string `json:"version"`
+			CommitHash string            `json:"commit_hash"`
+			Version    string            `json:"version"`
+			Systems    map[string]System `json:"systems"`
 		}
 
 		var res Res
 		err = json.Unmarshal(all, &res)
 		if err != nil {
-			return nil, fn.NewE(err)
+			return nil, functions.NewE(err)
 		}
 
-		packages[splits[0]+"@"+res.Version] = fmt.Sprintf("nixpkgs/%s#%s", res.CommitHash, splits[0])
+		packages[splits[0]+"@"+res.Version] = fmt.Sprintf("nixpkgs/%s#%s", res.CommitHash, res.Systems[platform].AttrPaths[0])
 	}
 
 	for k := range packages {

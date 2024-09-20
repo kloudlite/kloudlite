@@ -2,6 +2,7 @@ package hashctrl
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -241,7 +242,7 @@ func generatePersistedEnv(apic apiclient.ApiClient, fc fileclient.FileClient, kf
 			pth = fe.Key
 		}
 
-		fm[pth] = mm[pth]
+		fm[pth] = base64.StdEncoding.EncodeToString([]byte(mm[pth]))
 	}
 
 	ev := map[string]string{}

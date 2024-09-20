@@ -15,4 +15,5 @@ func init() {
 	Command.AddCommand(mresCmd)
 	Command.AddCommand(secCmd)
 	Command.AddCommand(mountCommand)
+	Command.AddCommand(envvarCommand)
 }
