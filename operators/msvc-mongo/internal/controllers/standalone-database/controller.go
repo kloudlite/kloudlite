@@ -232,6 +232,7 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*mongov1.Standalone
 		return check.Failed(err)
 	}
 
+	// INFO: ManagedResource must be in namespace of managed service
 	lf := &crdsv1.Lifecycle{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lf, func() error {
