@@ -22,8 +22,8 @@ export const RegistryImageInstruction = ({
     'registry-image-instructions',
     async () => {
       return api.getRegistryImageUrl({
-        image: '<image_name:image_tag>',
-        meta: {},
+        // image: '<image_name:image_tag>',
+        // meta: {},
       });
     }
   );

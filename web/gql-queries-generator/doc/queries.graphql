@@ -4482,8 +4482,8 @@ query consoleGetRegistryImage($image: String!) {
   }
 }
 
-query consoleGetRegistryImageUrl($image: String!, $meta: Map!) {
-  core_getRegistryImageURL(image: $image, meta: $meta) {
+query consoleGetRegistryImageUrl {
+  core_getRegistryImageURL {
     scriptUrl
     url
   }

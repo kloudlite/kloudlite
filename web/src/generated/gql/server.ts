@@ -6114,8 +6114,7 @@ export type ConsoleGetRegistryImageQuery = {
 };
 
 export type ConsoleGetRegistryImageUrlQueryVariables = Exact<{
-  image: Scalars['String']['input'];
-  meta: Scalars['Map']['input'];
+  [key: string]: never;
 }>;
 
 export type ConsoleGetRegistryImageUrlQuery = {

@@ -192,7 +192,7 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
             }}
             size="sm"
             variant="outline"
-            // prefix={<ArrowClockwise size={16} />}
+          // prefix={<ArrowClockwise size={16} />}
           />
         </div>
       )}
@@ -481,7 +481,8 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                     </span>
                   ) : (
                     <GetByokClusterMessage
-                      lastOnlineAt={i.lastOnlineAt}
+                      // lastOnlineAt={i.lastOnlineAt}
+                      lastOnlineAt={clusters[id]?.lastOnlineAt}
                       item={i}
                     />
                   ),

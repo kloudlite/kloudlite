@@ -56,8 +56,8 @@ export const registryImagesQueries = (executor: IExecutor) => ({
   ),
   getRegistryImageUrl: executor(
     gql`
-      query Core_getRegistryImageURL($image: String!, $meta: Map!) {
-        core_getRegistryImageURL(image: $image, meta: $meta) {
+      query Core_getRegistryImageURL {
+        core_getRegistryImageURL {
           scriptUrl
           url
         }
