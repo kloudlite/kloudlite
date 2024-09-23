@@ -21,10 +21,7 @@ export const RegistryImageInstruction = ({
   const { data, isLoading, error } = useCustomSwr(
     'registry-image-instructions',
     async () => {
-      return api.getRegistryImageUrl({
-        image: '<image_name:image_tag>',
-        meta: {},
-      });
+      return api.getRegistryImageUrl();
     }
   );
 

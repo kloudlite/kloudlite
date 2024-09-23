@@ -6114,8 +6114,7 @@ export type ConsoleGetRegistryImageQuery = {
 };
 
 export type ConsoleGetRegistryImageUrlQueryVariables = Exact<{
-  image: Scalars['String']['input'];
-  meta: Scalars['Map']['input'];
+  [key: string]: never;
 }>;
 
 export type ConsoleGetRegistryImageUrlQuery = {
@@ -8133,6 +8132,23 @@ export type AuthCli_GetRemoteLoginQuery = {
   auth_getRemoteLogin?: { authHeader?: string; status: string };
 };
 
+export type AuthCli_ListAccountClustersQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListAccountClustersQuery = {
+  infra_listBYOKClusters?: {
+    edges: Array<{
+      node: {
+        clusterToken: string;
+        displayName: string;
+        id: string;
+        metadata: { name: string; labels?: any };
+      };
+    }>;
+  };
+};
+
 export type AuthCli_CreateClusterReferenceMutationVariables = Exact<{
   cluster: ByokClusterIn;
 }>;
@@ -8273,27 +8289,6 @@ export type AuthCli_ListImportedManagedResourcesQuery = {
       hasPrevPage?: boolean;
       startCursor?: string;
     };
-  };
-};
-
-export type AuthCli_ListByokClustersQueryVariables = Exact<{
-  search?: InputMaybe<SearchCluster>;
-  pagination?: InputMaybe<CursorPaginationIn>;
-}>;
-
-export type AuthCli_ListByokClustersQuery = {
-  infra_listBYOKClusters?: {
-    totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        clusterToken: string;
-        displayName: string;
-        id: string;
-        updateTime: any;
-        metadata: { name: string; namespace?: string };
-      };
-    }>;
   };
 };
 

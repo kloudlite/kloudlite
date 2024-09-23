@@ -1,3 +1,8 @@
+"""
+Indicates exactly one field must be supplied and this field must not be `null`.
+"""
+directive @oneOf on INPUT_OBJECT
+
 """Exposes a URL that specifies the behavior of this scalar."""
 directive @specifiedBy(
   """The URL that specifies the behavior of this scalar."""
@@ -3951,7 +3956,7 @@ type Query {
   core_getManagedResouceOutputKeyValues(envName: String, keyrefs: [ManagedResourceKeyRefIn], msvcName: String): [ManagedResourceKeyValueRef!]!
   core_getManagedResource(envName: String, msvcName: String, name: String!): ManagedResource
   core_getRegistryImage(image: String!): RegistryImage
-  core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL!
+  core_getRegistryImageURL: RegistryImageURL!
   core_getRouter(envName: String!, name: String!): Router
   core_getSecret(envName: String!, name: String!): Secret
   core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
