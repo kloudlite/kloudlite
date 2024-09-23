@@ -70,7 +70,7 @@ type DatabaseOutput struct {
 	DbName string `json:"DB_NAME"`
 
 	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
-	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
+	ClusterLocalURI   string `json:".CLUSTER_LOCAL_URI"`
 
 	// just an alias to ClusterLocalURI/GlobalVpnURI
 	URI string `json:"URI"`
