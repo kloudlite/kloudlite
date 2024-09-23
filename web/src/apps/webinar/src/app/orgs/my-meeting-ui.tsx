@@ -1,7 +1,6 @@
-
+"use client";
 import { DyteMeeting } from '@dytesdk/react-ui-kit';
 import { useDyteMeeting } from '@dytesdk/react-web-core';
-import React from 'react';
 
 export const MyMeetingUI = () => {
     const { meeting } = useDyteMeeting();

@@ -2,7 +2,6 @@ import { useParams } from '@remix-run/react';
 import { useCallback, useEffect, useState } from 'react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
 import { BottomNavigation } from '~/console/components/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useAppState } from '~/console/page-components/app-states';
@@ -64,12 +63,25 @@ import { handleError } from '~/root/lib/utils/common';
 //   return <ResourceExtraAction options={options} />;
 // };
 
-const AppSelectItem = ({ label, value }: { label: string; value: string }) => {
+const AppSelectItem = ({
+  label,
+  value,
+  registry,
+  repository,
+}: {
+  label: string;
+  value: string;
+  registry: string;
+  repository: string;
+}) => {
   return (
     <div>
       <div className="flex flex-col">
         <div>{label}</div>
-        <div className="bodySm text-text-soft">{value}</div>
+        {registry !== '' && repository !== '' && (
+          <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
+        )}
+        {/* <div className="bodySm text-text-soft">{value}</div> */}
       </div>
     </div>
   );
@@ -111,6 +123,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           <AppSelectItem
             label={`${i.imageName}:${i.imageTag}`}
             value={`${i.imageName}:${i.imageTag}`}
+            registry={i.meta.registry || ''}
+            repository={i.meta.repository || ''}
           />
         ),
       }));
@@ -303,7 +317,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           />
         )}
         <div className="flex flex-col gap-xl">
-          {/* <TextInput
+          <TextInput
             size="lg"
             label="Image name"
             placeholder="Enter Image name"
@@ -311,8 +325,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             onChange={handleChange('imageUrl')}
             error={!!errors.imageUrl}
             message={errors.imageUrl}
-          /> */}
-          <Select
+          />
+          {/* <Select
             label="Select Images"
             size="lg"
             value={values.imageUrl}
@@ -331,7 +345,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             error={!!errors.imageUrl}
             message={errors.imageUrl}
             loading={imageLoaded}
-          />
+            createLabel="Select"
+          /> */}
         </div>
 
         <Checkbox

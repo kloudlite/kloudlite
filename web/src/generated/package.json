@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "postinstall": "cd plugin && pnpm i",
+    "postinstall": "cd plugin && pnpm i --frozen-lockfile",
     "json": "esbuild test/index.ts --bundle --format=cjs --outfile=test/index.cjs --platform=node && node test/index.cjs",
     "build:plugin": "cd plugin && pnpm build",
     "tsgen": "gql-gen --config codegen-sdl.yml & gql-gen --config codegen.yml",

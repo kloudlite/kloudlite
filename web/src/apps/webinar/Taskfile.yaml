@@ -7,12 +7,20 @@ tasks:
       - task: start
 
   dev:
+    dotenv:
+      - .secrets/env
     cmds:
       - npm run dev
       
   build:
     cmds:
       - npm run build
+      
+  run:build:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - PORT=4000 pnpm start
 
   container:build:
     preconditions:

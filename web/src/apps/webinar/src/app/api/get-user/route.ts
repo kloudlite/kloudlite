@@ -4,6 +4,11 @@
 
 import { NextResponse } from "next/server";
 
+// export async function GET(request: NextRequest) {
+//     const url = request.url;
+//     return new Response(JSON.stringify({ url }), { status: 200 });
+// }
+
 
 // // To handle a GET request to /api
 // export async function GET(request) {
