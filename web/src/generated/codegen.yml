@@ -1,5 +1,5 @@
 overwrite: true
-schema: "http://gateway.kloudlite.svc.cluster.local:3000"
+schema: "http://gateway-api.kloudlite.svc.cluster.local:3000"
 generates:
   gql/server.ts:
     documents:
