@@ -6482,6 +6482,22 @@ query authCli_getRemoteLogin($loginId: String!, $secret: String!) {
   }
 }
 
+query authCli_listAccountClusters($pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(pagination: $pagination) {
+    edges {
+      node {
+        clusterToken
+        displayName
+        id
+        metadata {
+          name
+          labels
+        }
+      }
+    }
+  }
+}
+
 mutation authCli_createClusterReference($cluster: BYOKClusterIn!) {
   infra_createBYOKCluster(cluster: $cluster) {
     id
@@ -6621,25 +6637,6 @@ query authCli_listImportedManagedResources($envName: String!, $search: SearchImp
       hasNextPage
       hasPrevPage
       startCursor
-    }
-    totalCount
-  }
-}
-
-query authCli_listByokClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
-  infra_listBYOKClusters(search: $search, pagination: $pagination) {
-    edges {
-      cursor
-      node {
-        clusterToken
-        displayName
-        id
-        metadata {
-          name
-          namespace
-        }
-        updateTime
-      }
     }
     totalCount
   }

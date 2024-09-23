@@ -717,6 +717,29 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  cli_listAccountClusters: executor(
+    gql`
+      query Infra_listBYOKClusters($pagination: CursorPaginationIn) {
+        infra_listBYOKClusters(pagination: $pagination) {
+          edges {
+            node {
+              clusterToken
+              displayName
+              id
+              metadata {
+                name
+                labels
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_listBYOKClusters,
+      vars(_: any) {},
+    }
+  ),
   cli_createClusterReference: executor(
     gql`
       mutation Infra_createBYOKCluster($cluster: BYOKClusterIn!) {
@@ -902,37 +925,6 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listImportedManagedResources,
-      vars(_: any) {},
-    }
-  ),
-  cli_listByokClusters: executor(
-    gql`
-      query Infra_listBYOKClusters(
-        $search: SearchCluster
-        $pagination: CursorPaginationIn
-      ) {
-        infra_listBYOKClusters(search: $search, pagination: $pagination) {
-          edges {
-            cursor
-            node {
-              clusterToken
-              displayName
-              id
-              metadata {
-                name
-                namespace
-              }
-              updateTime
-            }
-          }
-          totalCount
-        }
-      }
-    `,
-    {
-      transformer: (data: any) => {
-        return data.infra_listBYOKClusters;
-      },
       vars(_: any) {},
     }
   ),

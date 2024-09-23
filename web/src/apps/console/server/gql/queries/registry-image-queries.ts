@@ -29,7 +29,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteRegistryImageMutation) =>
         data.core_deleteRegistryImage,
-      vars(_: ConsoleDeleteRegistryImageMutationVariables) { },
+      vars(_: ConsoleDeleteRegistryImageMutationVariables) {},
     }
   ),
   getRegistryImage: executor(
@@ -51,7 +51,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetRegistryImageQuery) =>
         data.core_getRegistryImage,
-      vars(_: ConsoleGetRegistryImageQueryVariables) { },
+      vars(_: ConsoleGetRegistryImageQueryVariables) {},
     }
   ),
   getRegistryImageUrl: executor(
@@ -66,7 +66,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetRegistryImageUrlQuery) =>
         data.core_getRegistryImageURL,
-      vars(_: ConsoleGetRegistryImageUrlQueryVariables) { },
+      vars(_: ConsoleGetRegistryImageUrlQueryVariables) {},
     }
   ),
   listRegistryImages: executor(
@@ -101,7 +101,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListRegistryImagesQuery) => {
         return data.core_listRegistryImages;
       },
-      vars(_: ConsoleListRegistryImagesQueryVariables) { },
+      vars(_: ConsoleListRegistryImagesQueryVariables) {},
     }
   ),
 });
