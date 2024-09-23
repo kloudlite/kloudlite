@@ -55,7 +55,7 @@ spec:
 
           {{- $imageTag := .Values.agentOperator.image.tag | default (include "image-tag" .) }}
           image: {{.Values.agentOperator.image.repository}}:{{$imageTag}}
-          imagePullPolicy: {{ .Values.agentOperator.image.pullPolicy | default (include "image-pull-policy" $imageTag) }}
+          imagePullPolicy: {{ .Values.agentOperator.image.pullPolicy | default (.Values.imagePullPolicy | default (include "image-pull-policy" $imageTag)) }}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
