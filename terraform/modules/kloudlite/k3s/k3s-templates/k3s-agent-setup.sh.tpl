@@ -13,7 +13,7 @@ ${jsonencode({
     ],
     flatten([ for k,v in tf_node_labels: ["--node-label", "${k}=${v}"] ]),
     flatten([ for taint in tf_node_taints: ["--node-taint", "${taint.key}=${taint.value}:${taint.effect}"] ]),
-    ["--kubelet-arg", "--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000"],
+    ["--kubelet-arg", "--system-reserved=cpu=250m,memory=300Mi,ephemeral-storage=5Gi,pid=1000"],
     tf_extra_agent_args,
   ),
 })}
