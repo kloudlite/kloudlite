@@ -20,6 +20,7 @@ spec:
 
   services:
     - port: {{ include "apps.commsApi.httpPort" . }}
+    - port: {{ include "apps.commsApi.grpcPort" . }}
 
   hpa:
     enabled: {{.Values.apps.commsApi.hpa.enabled}}

@@ -6,7 +6,7 @@ metadata:
   name: kl-installer
   namespace: {{.Release.Namespace}}
 spec:
-  ingressClass: {{ .Values.global.ingressClassName }}
+  ingressClass: {{ .Values.nginxIngress.ingressClass.name }}
   domains:
     - kl.{{.Values.baseDomain}}
   https:

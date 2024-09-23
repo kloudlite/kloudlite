@@ -11,9 +11,9 @@ spec:
       name: {{.Values.certManager.clusterIssuer.name}}
     server: https://acme-v02.api.letsencrypt.org/directory
     solvers:
-      {{- if .Values.certManager.solvers }}
-      {{- range $v := .Values.certManager.solvers }}
-      - {{$v}}
+      {{- if .Values.certManager.clusterIssuer.solvers }}
+      {{- range $v := .Values.certManager.clusterIssuer.solvers }}
+      - {{$v | toJson}}
       {{- end }}
       {{- else }}
       - http01:
