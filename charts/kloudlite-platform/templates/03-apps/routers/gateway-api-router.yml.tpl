@@ -22,7 +22,7 @@ spec:
     enabled: true
     username: admin
   routes:
-    - app: gateway
+    - app: {{ include "apps.gatewayApi.name" . }}
       path: /
       port: {{ include "apps.gatewayApi.httpPort" . }}
 

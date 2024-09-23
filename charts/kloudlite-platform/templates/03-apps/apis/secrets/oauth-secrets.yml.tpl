@@ -12,11 +12,9 @@ data:
 
 stringData:
   OAUTH2_ENABLED: {{.Values.apps.authApi.oAuth2.enabled | squote }}
-  OAUTH2_GITHUB_ENABLED: {{.Values.apps.authApi.oAuth2.providers.github.enabled | squote }}
-  OAUTH2_GITLAB_ENABLED: {{.Values.apps.authApi.oAuth2.providers.gitlab.enabled | squote }}
-  OAUTH2_GOOGLE_ENABLED: {{.Values.apps.authApi.oAuth2.providers.github.enabled | squote}}
 
   OAUTH2_GITHUB_ENABLED: {{.Values.apps.authApi.oAuth2.providers.github.enabled | squote}}
+
   {{- if .Values.apps.authApi.oAuth2.providers.github.enabled }}
   GITHUB_CALLBACK_URL: {{ .Values.apps.authApi.oAuth2.providers.github.callbackURL | squote }}
   GITHUB_CLIENT_ID: {{.Values.apps.authApi.oAuth2.providers.github.clientID |squote}}
@@ -27,6 +25,7 @@ stringData:
   {{- end }}
 
   OAUTH2_GITLAB_ENABLED: {{.Values.apps.authApi.oAuth2.providers.gitlab.enabled | squote}}
+
   {{- if .Values.apps.authApi.oAuth2.providers.gitlab.enabled }}
   GITLAB_CALLBACK_URL: {{ .Values.apps.authApi.oAuth2.providers.gitlab.callbackURL |squote }}
   GITLAB_CLIENT_ID: {{.Values.apps.authApi.oAuth2.providers.gitlab.clientID | squote}}
@@ -35,6 +34,7 @@ stringData:
   {{- end }}
 
   OAUTH2_GOOGLE_ENABLED: {{.Values.apps.authApi.oAuth2.providers.google.enabled | squote}}
+
   {{- if .Values.apps.authApi.oAuth2.providers.google.enabled }}
   GOOGLE_CALLBACK_URL: {{ .Values.apps.authApi.oAuth2.providers.google.callbackURL | squote }}
   GOOGLE_CLIENT_ID: {{.Values.apps.authApi.oAuth2.providers.google.clientID | squote}}

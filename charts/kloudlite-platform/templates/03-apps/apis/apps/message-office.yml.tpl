@@ -35,11 +35,11 @@ spec:
       image: '{{.Values.apps.messageOfficeApi.image.repository}}:{{.Values.apps.messageOfficeApi.image.tag | default (include "image-tag" .) }}'
       imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
-        min: "100m"
-        max: "150m"
+        min: "200m"
+        max: "300m"
       resourceMemory:
-        min: "100Mi"
-        max: "150Mi"
+        min: "200Mi"
+        max: "300Mi"
       env:
         - key: HTTP_PORT
           value: {{ include "apps.messageOffice.httpPort" . | quote }}

@@ -376,7 +376,7 @@ apps:
     install: false
     # -- image (with tag) for kl cli installer
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/kl-installer
+      repository: ghcr.io/kloudlite/bin-installer
       tag: ""
 
     replicas: 1
@@ -424,7 +424,7 @@ apps:
     install: false
     # -- image (with tag) for health api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/api/health
+      repository: ghcr.io/kloudlite/kloudlite/api/kube-svc-health
       tag: ""
 
     replicas: 1
