@@ -33,10 +33,11 @@ export const JoinWebinar = ({ userData, meetingStatus, meetingId }: { userData: 
                     block
                 // onClick={() => {
                 //     // window.location.href = `/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${process.env.NEXT_PUBLIC_DYTE_MEETING_ID}`
-                //     // window.location.href = `/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${meetingId}`
-                //     router.push(`/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${meetingId}`)
+                //     window.location.href = `/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${meetingId}`
+                //     // router.push(`/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${meetingId}`)
                 // }}
-                /></Link>
+                />
+            </Link>
         </div>
     )
 }

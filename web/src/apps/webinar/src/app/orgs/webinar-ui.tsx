@@ -64,7 +64,7 @@ export const WebinarUI = ({ userDetails, meetingStatus }: WebinarUIProps) => {
             <JoinWebinar
               userData={userDetails}
               meetingStatus={meetingStatus}
-              meetingId={env?.DYTE_ORG_ID}
+              meetingId={env?.DYTE_MEETING_ID}
             />
             {visible && (
               <HandleRegisterForm

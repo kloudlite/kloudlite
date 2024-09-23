@@ -4,12 +4,15 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { WebinarUI } from './orgs/webinar-ui';
 
-export default async function Home() {
+
+export default async function Home(props: any) {
 
   const cookie = cookies().get("hotspot-session")
-  const callbackUrl = process.env.CALLBACK_URL;
+  const callbackUrl = props.searchParams.eventHashUrl || process.env.CALLBACK_URL;
   const redirectUrl = `${process.env.REDIRECT_URL}?callback=${callbackUrl}`;
   const token = btoa(`${process.env.DYTE_ORG_ID}:${process.env.DYTE_API_KEY}`);
+
+  console.log("props", props.searchParams.eventHashUrl)
 
   try {
     const res = await axios({

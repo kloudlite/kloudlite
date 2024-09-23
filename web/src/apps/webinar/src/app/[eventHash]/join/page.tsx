@@ -5,6 +5,7 @@ import { EventsUi } from './components/events-ui';
 import { cookies } from 'next/headers';
 import { redirect } from "next/navigation";
 
+
 type EnvVars = {
     dyteOrgId: string,
     dyteApiKey: string,
@@ -12,13 +13,13 @@ type EnvVars = {
     marketApiUrl: string,
 }
 
-export default async function App() {
+export default async function App(props: any) {
 
     const dyteOrgId = process.env.DYTE_ORG_ID || "";
     const dyteApiKey = process.env.DYTE_API_KEY || "";
 
     const cookie = cookies().get("hotspot-session")
-    const callbackUrl = process.env.CALLBACK_URL;
+    const callbackUrl = props.searchParams.eventHashUrl || process.env.CALLBACK_URL;
     const redirectUrl = `${process.env.REDIRECT_URL}?callback=${callbackUrl}`;
     const token = btoa(`${process.env.DYTE_ORG_ID}:${process.env.DYTE_API_KEY}`);
 
