@@ -5,7 +5,7 @@
   "homepage": "https://kloudlite.github.io",
   "type": "module",
   "scripts": {
-    "postinstall": "cd src/generated && pnpm i",
+    "postinstall": "cd src/generated && ls -al && pnpm i --frozen-lockfile",
     "fake": "esbuild fake-data-generator/gen.ts --format=cjs --outfile=public/dist/fake-data-generator.cjs --platform=node && node public/dist/fake-data-generator.cjs",
     "dev": "remix dev",
     "serve": "remix-serve ./public/${APP}/server",
