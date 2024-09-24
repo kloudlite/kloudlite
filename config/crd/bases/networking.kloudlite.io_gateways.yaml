@@ -74,6 +74,16 @@ spec:
                 - hosts
                 - port
                 type: object
+              localOverrides:
+                description: secret's data must be serializable into LocalOverrides
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
               nodePort:
                 format: int32
                 type: integer
@@ -99,7 +109,6 @@ spec:
                     visibility:
                       type: string
                   required:
-                  - ip
                   - publicKey
                   type: object
                 type: array

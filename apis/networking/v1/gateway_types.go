@@ -19,7 +19,7 @@ type Peer struct {
 
 	PublicKey      string  `json:"publicKey"`
 	PublicEndpoint *string `json:"publicEndpoint,omitempty"`
-	IP             string  `json:"ip"`
+	IP             *string `json:"ip,omitempty"`
 
 	DNSSuffix  *string  `json:"dnsSuffix,omitempty"`
 	AllowedIPs []string `json:"allowedIPs,omitempty"`
@@ -52,6 +52,9 @@ type GatewaySpec struct {
 
 	Peers []Peer `json:"peers,omitempty"`
 
+	// secret's data must be serializable into LocalOverrides
+	LocalOverrides *ct.SecretRef `json:"localOverrides,omitempty"`
+
 	//+kubebuilder:default=LoadBalancer
 	ServiceType GatewayServiceType `json:"serviceType,omitempty"`
 
@@ -66,6 +69,10 @@ type GatewaySpec struct {
 type WireguardKeys struct {
 	PrivateKey string `json:"private_key"`
 	PublicKey  string `json:"public_key"`
+}
+
+type LocalOverrides struct {
+	Peers []Peer `json:"peers,omitempty"`
 }
 
 // +kubebuilder:object:root=true
