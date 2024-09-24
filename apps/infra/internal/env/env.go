@@ -59,6 +59,8 @@ type infraEnv struct {
 	AvailableKloudliteRegionsConfig string `env:"AVAILABLE_KLOUDLITE_REGIONS_CONFIG" required:"false"`
 	AvailableKloudliteRegions       map[string]AvailableKloudliteRegion
 
+	KloudliteEdgeGatewayServiceType string `env:"KLOUDLITE_EDGE_GATEWAY_SERVICE_TYPE" default:"LoadBalancer"`
+
 	EnableClusterCreation bool `env:"ENABLE_CLUSTER_CREATION" default:"false"`
 }
 

@@ -498,6 +498,7 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		Namespace:     resourceNamespace,
 		WireguardPort: wgParams.ListenPort,
 		Selector:      selector,
+		ServiceType:   d.env.KloudliteEdgeGatewayServiceType,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -682,6 +683,7 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		Namespace:     resourceNamespace,
 		WireguardPort: wgParams.ListenPort,
 		Selector:      selector,
+		ServiceType:   d.env.KloudliteEdgeGatewayServiceType,
 	})
 	if err != nil {
 		return errors.NewE(err)
