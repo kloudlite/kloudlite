@@ -60,7 +60,7 @@ func (d *domain) getGlobalVPNConnectionPeers(args getGlobalVPNConnectionPeersArg
 				Comments:    fmt.Sprintf("gateway/%s/%s", c.GlobalVPNName, c.ClusterName),
 				PublicKey:   c.ParsedWgParams.PublicKey,
 				AllowedIPs:  []string{c.ClusterCIDR, fmt.Sprintf("%s/32", c.DeviceRef.IPAddr)},
-				IP:          c.Spec.GlobalIP,
+				IP:          &c.Spec.GlobalIP,
 				DNSSuffix:   &c.Spec.DNSSuffix,
 			}
 
@@ -480,7 +480,6 @@ func (d *domain) OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterNam
 
 func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, dispatchAddr entities.DispatchAddr, gvpn entities.GlobalVPNConnection, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	// FIXME: need a way to find global vpn connection, receiving it from other clusters
-
 	xconn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName: ctx.AccountName,
 		fc.GlobalVPNConnectionDispatchAddrAccountName: dispatchAddr.AccountName,
