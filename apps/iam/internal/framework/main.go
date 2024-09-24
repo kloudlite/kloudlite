@@ -3,14 +3,15 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/kloudlite/api/apps/iam/internal/app"
 	"github.com/kloudlite/api/apps/iam/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/grpc"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"time"
 )
 
 type fm struct {
@@ -32,10 +33,8 @@ var Module fx.Option = fx.Module(
 	}),
 	repos.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(logger logging.Logger) (app.IAMGrpcServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{
-			Logger: logger,
-		})
+	fx.Provide(func(logger *slog.Logger) (app.IAMGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger})
 	}),
 
 	app.Module,

@@ -1,11 +1,12 @@
 package grpc
 
 import (
+	"context"
 	"log/slog"
 	"net"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/kloudlite/api/pkg/errors"
-	"github.com/kloudlite/api/pkg/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )
@@ -17,15 +18,12 @@ type Server interface {
 }
 
 type ServerOpts struct {
-	Logger  logging.Logger
-	Slogger *slog.Logger
+	Logger *slog.Logger
 }
 
 type grpcServer struct {
 	*grpc.Server
-	// Deprecated: use slogger
-	logger  logging.Logger
-	slogger *slog.Logger
+	logger *slog.Logger
 }
 
 func (g *grpcServer) Listen(addr string) error {
@@ -33,7 +31,7 @@ func (g *grpcServer) Listen(addr string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not listen to net/tcp server")
 	}
-	g.slogger.Info("grpc server listening", "at", addr)
+	g.logger.Info("grpc server listening", "at", addr)
 	return g.Serve(listen)
 }
 
@@ -42,11 +40,22 @@ func (g *grpcServer) Stop() {
 }
 
 func NewGrpcServer(opts ServerOpts) (Server, error) {
-	if opts.Slogger == nil {
-		opts.Slogger = slog.Default()
+	if opts.Logger == nil {
+		opts.Logger = slog.Default()
+	}
+
+	grpcLogger := logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
+		opts.Logger.Log(ctx, slog.Level(lvl), msg, fields...)
+	})
+
+	grpcLoggingOpts := []logging.Option{
+		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
 	}
 
 	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(grpcLogger, grpcLoggingOpts...)),
+		grpc.ChainStreamInterceptor(logging.StreamServerInterceptor(grpcLogger, grpcLoggingOpts...)),
+
 		grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 			p, ok := peer.FromContext(stream.Context())
 			if ok {
@@ -61,7 +70,7 @@ func NewGrpcServer(opts ServerOpts) (Server, error) {
 		}),
 	)
 
-	return &grpcServer{Server: server, logger: opts.Logger, slogger: opts.Slogger}, nil
+	return &grpcServer{Server: server, logger: opts.Logger}, nil
 }
 
 // Type guard to ensure grpcServer implements Server interface, at compile time
