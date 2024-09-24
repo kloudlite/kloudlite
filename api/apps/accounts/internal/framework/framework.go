@@ -102,10 +102,8 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Provide(func(logger logging.Logger) (app.AccountsGrpcServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{
-			Logger: logger.WithKV("component", "grpc-server"),
-		})
+	fx.Provide(func(logger *slog.Logger) (app.AccountsGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, server app.AccountsGrpcServer, ev *env.Env, logger logging.Logger) {

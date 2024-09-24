@@ -55,7 +55,7 @@ var Module = fx.Module("framework",
 	app.Module,
 
 	fx.Provide(func(logger *slog.Logger) (app.InternalGrpcServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{Slogger: logger.With(slog.String("component", "internal-grpc"))})
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger.With(slog.String("component", "internal-grpc"))})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, logr logging.Logger, server app.InternalGrpcServer, ev *env.Env) {
@@ -80,7 +80,7 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(logger *slog.Logger) (app.ExternalGrpcServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{Slogger: logger.With(slog.String("component", "external-grpc"))})
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger.With(slog.String("component", "external-grpc"))})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, logr logging.Logger, server app.ExternalGrpcServer, ev *env.Env) {

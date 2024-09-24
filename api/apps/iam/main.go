@@ -14,19 +14,26 @@ import (
 )
 
 func main() {
+	start := time.Now()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "iam", Dev: isDev})
-	if err != nil {
-		panic(err)
+	if isDev {
+		debug = true
 	}
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, SetAsDefaultLogger: true, ShowDebugLogs: debug})
 
 	app := fx.New(
 		fx.NopLogger,
-		fx.Provide(func() logging.Logger {
-			return logger
+		fx.Supply(logger),
+		fx.Provide(func() (logging.Logger, error) {
+			return logging.New(&logging.Options{Name: "iam", Dev: isDev})
 		}),
 
 		fx.Provide(func() (*env.Env, error) {
@@ -39,11 +46,10 @@ func main() {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFunc()
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "IAM api startup errors")
-		logger.Infof("EXITING as errors encountered during startup")
+		logger.Error("failed to start iam api, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }
