@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/networking/internal/env"
 	"github.com/kloudlite/operator/operators/networking/internal/gateway/templates"
@@ -27,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 )
 
 type Reconciler struct {
@@ -55,6 +57,11 @@ const (
 	setupGatewayDeployment string = "setup-gateway-deployment"
 	setupMutationWebhooks  string = "setup-mutation-webhooks"
 	trackLoadBalancer      string = "track-load-balancer"
+)
+
+const (
+	gatewayLocalOverrideConfigName      = "gateway-local-overrides"
+	gatewayLocalOverrideConfigNamespace = "kloudlite"
 )
 
 const (
@@ -176,12 +183,29 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*networkingv1.Gateway]) ste
 	if obj.Spec.TargetNamespace == "" {
 		hasUpdate = true
 		// obj.Spec.TargetNamespace = fmt.Sprintf("kl-gateway-%s", obj.Name)
-		obj.Spec.TargetNamespace = fmt.Sprintf("kl-gateway", obj.Name)
+		obj.Spec.TargetNamespace = "kl-gateway"
 	}
 
 	if obj.Spec.WireguardKeysRef.Name == "" {
 		hasUpdate = true
 		obj.Spec.WireguardKeysRef.Name = obj.Spec.TargetNamespace
+	}
+
+	if obj.Spec.LocalOverrides == nil {
+		cm, err := rApi.Get(ctx, r.Client, fn.NN(gatewayLocalOverrideConfigNamespace, gatewayLocalOverrideConfigName), &corev1.ConfigMap{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(err)
+			}
+		}
+
+		if cm != nil {
+			hasUpdate = true
+			obj.Spec.LocalOverrides = &ct.SecretRef{
+				Name:      gatewayLocalOverrideConfigName,
+				Namespace: gatewayLocalOverrideConfigNamespace,
+			}
+		}
 	}
 
 	if hasUpdate {
@@ -292,6 +316,22 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(setupGatewayDeployment, req)
 
+	var localOverridesCfg corev1.ConfigMap
+	if obj.Spec.LocalOverrides != nil {
+		if err := r.Get(ctx, fn.NN(obj.Spec.LocalOverrides.Namespace, obj.Spec.LocalOverrides.Name), &localOverridesCfg); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(err)
+			}
+		}
+	}
+
+	var lo networkingv1.LocalOverrides
+	if v, ok := localOverridesCfg.Data["peers"]; ok {
+		if err := yaml.Unmarshal([]byte(v), &lo.Peers); err != nil {
+			return check.Failed(err)
+		}
+	}
+
 	extraPeersCfg := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-wg-extra-peers", obj.Name), Namespace: obj.Spec.TargetNamespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, extraPeersCfg, func() error {
@@ -306,6 +346,15 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 			}
 			peers = append(peers, npeer)
 		}
+
+		for _, peer := range lo.Peers {
+			npeer := fmt.Sprintf("[Peer]\nPublicKey = %s\nAllowedIPs = %s\n PersistentKeepalive = 25\n", peer.PublicKey, strings.Join(peer.AllowedIPs, ", "))
+			if peer.PublicEndpoint != nil && *peer.PublicEndpoint != "" {
+				npeer = fmt.Sprintf("%s\nEndpoint = %s\n", npeer, *peer.PublicEndpoint)
+			}
+			peers = append(peers, npeer)
+		}
+
 		extraPeersCfg.Data["peers.conf"] = strings.Join(peers, "\n")
 		return nil
 	}); err != nil {
@@ -314,14 +363,17 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 
 	gatewayDNSServers := make([]string, 0, len(obj.Spec.Peers)+2)
 	for _, peer := range obj.Spec.Peers {
-		if peer.IP == obj.Spec.GlobalIP {
+		if peer.IP == nil {
+			continue
+		}
+		if *peer.IP == obj.Spec.GlobalIP {
 			continue
 		}
 		if peer.DNSSuffix != nil {
-			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", *peer.DNSSuffix, peer.IP))
+			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", *peer.DNSSuffix, *peer.IP))
 		}
 		if peer.DNSHostname == "kloudlite-global-vpn-device.device.local" {
-			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "device.local", peer.IP))
+			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "device.local", *peer.IP))
 		}
 	}
 
@@ -359,6 +411,8 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	if err != nil {
 		return check.Failed(err)
 	}
+
+	fmt.Printf("deployment:\n\n%s\n\n", b)
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
