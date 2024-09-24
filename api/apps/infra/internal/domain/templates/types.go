@@ -21,4 +21,5 @@ type GatewayServiceTemplateVars struct {
 	Namespace     string
 	WireguardPort uint16
 	Selector      map[string]string
+	ServiceType   string
 }
