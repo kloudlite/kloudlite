@@ -107,10 +107,8 @@ var Module = fx.Module("framework",
 	}),
 
 	// creates New GRPC server
-	fx.Provide(func(logger logging.Logger) (app.ContainerRegistryGRPCServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{
-			Logger: logger.WithName("GRPC server"),
-		})
+	fx.Provide(func(logger *slog.Logger) (app.ContainerRegistryGRPCServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger})
 	}),
 
 	// handles GRPC server lifecycle

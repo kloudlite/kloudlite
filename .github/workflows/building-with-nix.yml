@@ -30,7 +30,7 @@ permissions:
 jobs:
   build-images:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         images:
           - name: accounts-api
@@ -59,7 +59,7 @@ jobs:
         with:
           image_tag: ${{ inputs.image_tag }}
 
-          cachix_enabled: true
+          # cachix_enabled: true
           cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
           docker_enabled: true
