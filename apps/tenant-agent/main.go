@@ -321,7 +321,7 @@ func main() {
 		accessToken:      ev.AccessToken,
 	}
 
-	gs, err := libGrpc.NewGrpcServer(libGrpc.ServerOpts{Slogger: logger.With("component", "vector-grpc-proxy")})
+	gs, err := libGrpc.NewGrpcServer(libGrpc.ServerOpts{Logger: logger.With("component", "vector-grpc-proxy")})
 	if err != nil {
 		logger.Error("failed to create grpc server, got", "err", err)
 	}

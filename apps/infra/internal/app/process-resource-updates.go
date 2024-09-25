@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
@@ -111,10 +110,10 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: ru.AccountName}
 
-		if strings.HasPrefix(ru.AccountName, "kl-") {
-			// FIXME: this is a kloudlite account, so we should handle it differently, as it is definitely not a tenant account
-			dctx.AccountName = obj.GetLabels()[constants.AccountNameKey]
-		}
+		// if strings.HasPrefix(ru.AccountName, "kl-") {
+		// 	// FIXME: this is a kloudlite account, so we should handle it differently, as it is definitely not a tenant account
+		// 	dctx.AccountName = obj.GetLabels()[constants.AccountNameKey]
+		// }
 
 		mlogger.Debug("validated message")
 		defer func() {
