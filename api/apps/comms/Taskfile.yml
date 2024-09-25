@@ -39,7 +39,7 @@ tasks:
   run:
     dotenv: [".secrets/env"]
     cmds:
-      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+      - go run ./main.go --dev
 
   build:
     cmds:

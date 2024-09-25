@@ -11,7 +11,6 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/grpc"
-	rpc "github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
@@ -51,7 +50,7 @@ var Module = fx.Module(
 		return mail.NewSendgridMailer(ev.SendgridApiKey)
 	}),
 
-	fx.Provide(func(logger logging.Logger) (app.CommsGrpcServer, error) {
+	fx.Provide(func(logger *slog.Logger) (app.CommsGrpcServer, error) {
 		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger})
 	}),
 
@@ -81,7 +80,7 @@ var Module = fx.Module(
 	),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
+		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
 	mongoDb.NewMongoClientFx[*fm](),

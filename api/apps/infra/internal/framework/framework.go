@@ -90,10 +90,8 @@ var Module = fx.Module("framework",
 
 	app.Module,
 
-	fx.Provide(func(logr logging.Logger) (app.InfraGrpcServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{
-			Logger: logr,
-		})
+	fx.Provide(func(logger *slog.Logger) (app.InfraGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger})
 	}),
 
 	fx.Invoke(func(ev *env.Env, server app.InfraGrpcServer, lf fx.Lifecycle, logger logging.Logger) {
