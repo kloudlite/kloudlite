@@ -39,6 +39,7 @@ var RegistryImageIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: fields.AccountName, Value: repos.IndexAsc},
 			{Key: fc.Metadata, Value: repos.IndexAsc, IsText: true},
+			{Key: fc.RegistryImageImageName, Value: repos.IndexAsc, IsText: true},
 		},
 	},
 }
