@@ -105,6 +105,14 @@ func (d *domain) SearchRegistryImages(ctx ConsoleContext, query string) ([]*enti
 		return nil, errors.NewE(err)
 	}
 
+	if query == "" {
+		return d.registryImageRepo.Find(ctx, repos.Query{
+			Filter: repos.Filter{},
+			Sort:   map[string]any{"_id": -1},
+			Limit:  fn.New(int64(10)),
+		})
+	}
+
 	filters := repos.Filter{
 		fields.AccountName: ctx.AccountName,
 		"$text":            map[string]any{"$search": query},
