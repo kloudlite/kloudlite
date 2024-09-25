@@ -16,7 +16,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kloudlite/operator v0.0.0-20240917124613-0418df6214cf
+	github.com/kloudlite/operator v0.0.0-20240924122932-030f95a15613
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
@@ -29,7 +29,7 @@ require (
 	go.uber.org/zap v1.26.0
 	golang.org/x/oauth2 v0.16.0
 	golang.org/x/sync v0.7.0
-	google.golang.org/grpc v1.61.0
+	google.golang.org/grpc v1.61.1
 	google.golang.org/protobuf v1.34.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.29.0
@@ -45,6 +45,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/charmbracelet/log v0.4.0
 	github.com/go-chi/chi/v5 v5.0.10
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
 	github.com/miekg/dns v1.1.55
 	github.com/nats-io/nats.go v1.31.0
@@ -82,12 +83,12 @@ require (
 	github.com/seancfoley/bintree v1.2.1 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240213162025-012b6fc9bca9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
-	cloud.google.com/go/compute v1.23.3 // indirect
+	cloud.google.com/go/compute v1.23.4 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
