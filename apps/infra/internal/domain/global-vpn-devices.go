@@ -237,7 +237,10 @@ func (d *domain) buildPeerFromGlobalVPNDevice(_ InfraContext, gvpn *entities.Glo
 
 	if device.IPAddr == gvpn.KloudliteGatewayDevice.IPAddr {
 		// FIXME: this should not be used
-		allowedIPs = append(allowedIPs, gvpn.NonClusterUseAllowedIPs...)
+		// allowedIPs = append(allowedIPs, gvpn.NonClusterUseAllowedIPs...)
+
+		// NOTE: i don't even remember what is the use case of non-cluster-use allowed IPs
+		allowedIPs = append(allowedIPs, "100.64.0.0/10")
 		// allowedIPs = append(allowedIPs, privateCIDRs...)
 	}
 
