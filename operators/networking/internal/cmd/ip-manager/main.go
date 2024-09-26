@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/kloudlite/operator/operators/networking/internal/cmd/ip-manager/manager"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -90,6 +87,7 @@ func main() {
 
 	r.Put("/pod/{pod_namespace}/{pod_name}/{pod_ip}", func(w http.ResponseWriter, r *http.Request) {
 		podNamespace, podName, podIP := chi.URLParam(r, "pod_namespace"), chi.URLParam(r, "pod_name"), chi.URLParam(r, "pod_ip")
+
 		wgconfig, err := mg.GetWgConfigForReservedPod(r.Context(), manager.WgConfigForReservedPodArgs{
 			PodNamespace: podNamespace,
 			PodName:      podName,
@@ -114,21 +112,20 @@ func main() {
 
 	r.Post("/service/{svc_namespace}/{svc_name}", func(w http.ResponseWriter, r *http.Request) {
 		svcNamespace, svcName := chi.URLParam(r, "svc_namespace"), chi.URLParam(r, "svc_name")
-		b, err := io.ReadAll(r.Body)
-		defer r.Body.Close()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 
-		var svcPorts []corev1.ServicePort
-		if err := json.Unmarshal(b, &svcPorts); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if err := mg.ReserveService(r.Context(), svcNamespace, svcName, svcPorts); err != nil {
+		if err := mg.ReserveService(r.Context(), svcNamespace, svcName); err != nil {
 			logger.Error("reserving service", "err", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	r.Put("/service-binding/{namespace}/{name}", func(w http.ResponseWriter, r *http.Request) {
+		namespace, name := chi.URLParam(r, "namespace"), chi.URLParam(r, "name")
+		if err := mg.OnServiceBindingUpdates(r.Context(), namespace, name); err != nil {
+			logger.Error("while processing service binding updates, got", "err", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
