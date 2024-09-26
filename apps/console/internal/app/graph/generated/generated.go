@@ -800,6 +800,7 @@ type ComplexityRoot struct {
 		CoreGetApp                           func(childComplexity int, envName string, name string) int
 		CoreGetConfig                        func(childComplexity int, envName string, name string) int
 		CoreGetConfigValues                  func(childComplexity int, envName string, queries []*domain.ConfigKeyRef) int
+		CoreGetDNSHostSuffix                 func(childComplexity int) int
 		CoreGetEnvironment                   func(childComplexity int, name string) int
 		CoreGetExternalApp                   func(childComplexity int, envName string, name string) int
 		CoreGetImagePullSecret               func(childComplexity int, name string) int
@@ -1106,6 +1107,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	CoreCheckNameAvailability(ctx context.Context, envName *string, msvcName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
+	CoreGetDNSHostSuffix(ctx context.Context) (string, error)
 	CoreListEnvironments(ctx context.Context, search *model.SearchEnvironments, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error)
 	CoreGetEnvironment(ctx context.Context, name string) (*entities.Environment, error)
 	CoreResyncEnvironment(ctx context.Context, name string) (bool, error)
@@ -4650,6 +4652,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreGetConfigValues(childComplexity, args["envName"].(string), args["queries"].([]*domain.ConfigKeyRef)), true
 
+	case "Query.core_getDNSHostSuffix":
+		if e.complexity.Query.CoreGetDNSHostSuffix == nil {
+			break
+		}
+
+		return e.complexity.Query.CoreGetDNSHostSuffix(childComplexity), true
+
 	case "Query.core_getEnvironment":
 		if e.complexity.Query.CoreGetEnvironment == nil {
 			break
@@ -5927,6 +5936,8 @@ input CoreSearchVPNDevices {
 
 type Query {
 	core_checkNameAvailability(envName: String, msvcName: String ,resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+
+  core_getDNSHostSuffix: String!
 
 	core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
@@ -32320,6 +32331,50 @@ func (ec *executionContext) fieldContext_Query_core_checkNameAvailability(ctx co
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_core_getDNSHostSuffix(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_getDNSHostSuffix(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreGetDNSHostSuffix(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_getDNSHostSuffix(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_core_listEnvironments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_core_listEnvironments(ctx, field)
 	if err != nil {
@@ -51590,6 +51645,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_core_checkNameAvailability(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "core_getDNSHostSuffix":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getDNSHostSuffix(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
