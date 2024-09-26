@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
-	// fn "github.com/kloudlite/operator/pkg/functions"
+	fn "github.com/kloudlite/operator/pkg/functions"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -37,7 +37,15 @@ func RegisterNginxStreamConfig(svcBinding *networkingv1.ServiceBinding) []string
 		if port.TargetPort == intstr.FromString("") {
 			port.TargetPort = intstr.FromInt(int(port.Port))
 		}
-		result = append(result, genNginxStreamConfig(strings.ToLower(string(port.Protocol)), addr, fmt.Sprintf("%s.%s.svc.cluster.local:%d", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace, port.TargetPort.IntValue())))
+
+		if svcBinding.Spec.ServiceIP != nil {
+			result = append(result,
+				genNginxStreamConfig(
+					strings.ToLower(string(port.Protocol)),
+					addr,
+					// fmt.Sprintf("%s.%s.svc.cluster.local:%d", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace, port.TargetPort.IntValue()),
+					fmt.Sprintf("%s:%d", *svcBinding.Spec.ServiceIP, port.TargetPort.IntValue())))
+		}
 	}
 
 	return result
@@ -50,11 +58,21 @@ func (m *Manager) SyncNginxStreams() error {
 	}
 
 	b := strings.Join(streams, "\n")
+
+	newHash := fn.Md5([]byte(b))
+
+	if m.runningNginxStreamFileSize == len(b) && m.runningNginxStreamsMD5 == newHash {
+		m.logger.Info("nginx restart request received, but stream configuration is same")
+		return nil
+	}
+
 	if err := os.WriteFile(fmt.Sprintf("%s/streams.conf", m.Env.NginxStreamsDir), []byte(b), 0o644); err != nil {
 		return err
 	}
 
 	if !m.Env.IsDev {
+		m.runningNginxStreamsMD5 = newHash
+		m.runningNginxStreamFileSize = len(b)
 		return m.restartNginx()
 	}
 	return nil

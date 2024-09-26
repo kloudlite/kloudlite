@@ -44,6 +44,9 @@ type Manager struct {
 	podPeers        map[string]string
 	svcNginxStreams map[string][]string
 
+	runningNginxStreamsMD5     string
+	runningNginxStreamFileSize int
+
 	// svcBindingsMap      map[string]*ReserveServiceResponse
 	gatewayWgExtraPeers string
 }

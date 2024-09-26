@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
+	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
 func sanitizePodIP(podIP string) string {
@@ -28,7 +29,8 @@ func sanitizePodIP(podIP string) string {
 }
 
 const (
-	podReservationLabel = "kloudlite.io/podbinding.reservation"
+	podReservationLabel     = "kloudlite.io/podbinding.reservation"
+	podNetworkingAllowedIPs = "kloudlite.io/networking.pod.allowedIPs"
 )
 
 var unReservedPodsLabels = map[string]string{
@@ -111,7 +113,11 @@ func (m *Manager) CreatePodBindings(ctx RequestContext, count int) error {
 				WgPrivateKey: k.String(),
 				WgPublicKey:  k.PublicKey().String(),
 				PodRef:       nil,
-				AllowedIPs:   append(strings.Split(m.Env.PodAllowedIPs, ","), m.Env.GatewayInternalDNSNameserver, s),
+				AllowedIPs: append(
+					strings.Split(m.Env.PodAllowedIPs, ","),
+					m.Env.GatewayInternalDNSNameserver,
+					s,
+				),
 			},
 		}
 		pb.EnsureGVK()
@@ -257,6 +263,19 @@ func (m *Manager) GetWgConfigForReservedPod(ctx context.Context, args WgConfigFo
 
 	t.Stop()
 
+	allowedIPs := pb.Spec.AllowedIPs
+
+	var pod corev1.Pod
+	if err := m.kcli.Get(ctx, fn.NN(args.PodNamespace, args.PodName), &pod); err != nil {
+		return nil, NewError(err, fmt.Sprintf("failed to find pod (%s/%s)", args.PodNamespace, args.PodName))
+	}
+
+	if v, ok := pod.GetAnnotations()[podNetworkingAllowedIPs]; ok {
+		for _, item := range strings.Split(v, ",") {
+			allowedIPs = append(allowedIPs, strings.TrimSpace(item))
+		}
+	}
+
 	wgconfig := fmt.Sprintf(`[Interface]
 ListenPort = 51820
 Address = %s
@@ -268,6 +287,7 @@ DNS = %s
 PublicKey = %s
 Endpoint = %s
 AllowedIPs = %s
+PersistentKeepalive = 25
 `,
 		fmt.Sprintf("%s/32", pb.Spec.GlobalIP),
 		pb.Spec.WgPrivateKey,
@@ -276,7 +296,7 @@ AllowedIPs = %s
 
 		m.Env.GatewayWGPublicKey,
 		m.Env.GatewayWGEndpoint,
-		strings.Join(pb.Spec.AllowedIPs, ", "),
+		strings.Join(allowedIPs, ", "),
 	)
 
 	pb.Spec.PodRef = &ct.NamespacedResourceRef{
