@@ -96,7 +96,7 @@ func (d *domain) listGlobalVPNConnections(ctx InfraContext, vpnName string) ([]*
 
 func hashPeer(peer networkingv1.Peer) string {
 	sort.Strings(peer.AllowedIPs)
-	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s", peer.IP, peer.PublicKey, fn.DefaultIfNil(peer.PublicEndpoint), fn.DefaultIfNil(peer.DNSSuffix), strings.Join(peer.AllowedIPs, ",")))))
+	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s", fn.DefaultIfNil(peer.IP, ""), peer.PublicKey, fn.DefaultIfNil(peer.PublicEndpoint), fn.DefaultIfNil(peer.DNSSuffix), strings.Join(peer.AllowedIPs, ",")))))
 }
 
 func hashPeers(peers []networkingv1.Peer) string {
