@@ -105,8 +105,8 @@ const (
 	RecordVersionKey string = "kloudlite.io/observability.record-version"
 
 	// changes controller behaviour
-	ClearStatusKey string = "kloudlite.io/clear-status"
-	ResetCheckKey  string = "kloudlite.io/reset-check"
+	ClearStatusKey string = "kloudlite.io/operator.clear-status"
+	ResetCheckKey  string = "kloudlite.io/operator.reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
 	DoHelmUpgrade  string = "kloudlite.io/do-helm-upgrade"
 
@@ -141,7 +141,6 @@ const (
 const (
 	CacheNameKey                      string = "kloudlite.io/cache-key"
 	BuildNameKey                      string = "kloudlite.io/build.name"
-	AnnotationResourceReady           string = "kloudlite.io/resource.ready"
 	AnnotationReconcileScheduledAfter string = "kloudlite.io/reconcile.scheduled-after"
 )
 
@@ -323,6 +322,10 @@ const (
 )
 
 const (
+	KloudliteLifecycleRetry = "kloudlite.io/lifecycle.retry"
+)
+
+const (
 	DefaultWgGatewayImage = "ghcr.io/kloudlite/operator/components/multi-cluster-gateway:v1.0.5-nightly"
 	DefaultWgAgentImage   = "ghcr.io/kloudlite/operator/components/multi-cluster-agent:v1.0.5-nightly"
 
@@ -336,3 +339,23 @@ const (
 const KloudliteLabelPrefix = "kloudlite.io"
 
 const KloudliteGatewayEnabledLabel = "kloudlite.io/gateway.enabled"
+
+const (
+	KloudliteNamespaceForEnvironment           = "kloudlite.io/namespace.for.environment"
+	KloudliteNamespaceForClusterManagedService = "kloudlite.io/namespace.for.cmsvc"
+	KloudliteNamespaceForGateway               = "kloudlite.io/namespace.for.gateway"
+)
+
+// ServiceBinding constants
+const (
+	KloudliteServiceBindingReservation = "kloudlite.io/servicebinding.reservation"
+)
+
+const (
+	KloudliteDNSHostname = "kloudlite.io/dns.hostname"
+)
+
+const (
+	KloudliteOperatorResourceReadyAnnotation = "kloudlite.io/operator.resource.ready"
+	KloudliteOperatorChecksAnnotation        = "kloudlite.io/operator.checks"
+)

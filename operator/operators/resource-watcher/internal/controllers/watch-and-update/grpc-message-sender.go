@@ -21,8 +21,8 @@ type grpcMsgSender struct {
 	messageProtocolVersion string
 }
 
-func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error {
-	b, err := json.Marshal(stu)
+func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx MessageSenderContext, ru t.ResourceUpdate) error {
+	b, err := json.Marshal(ru)
 	if err != nil {
 		return err
 	}
@@ -38,6 +38,9 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Con
 		if _, err := g.msgDispatchCli.ReceiveContainerRegistryUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return
@@ -49,7 +52,7 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Con
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched container registry resource update to message office api")
+		ctx.logger.Infof("dispatched container registry resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -57,7 +60,7 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Con
 }
 
 // DispatchInfraResourceUpdates implements MessageSender.
-func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.ResourceUpdate) error {
+func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx MessageSenderContext, ru t.ResourceUpdate) error {
 	b, err := json.Marshal(ru)
 	if err != nil {
 		return err
@@ -74,6 +77,9 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.R
 		if _, err := g.msgDispatchCli.ReceiveInfraResourceUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return
@@ -85,7 +91,7 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.R
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched infra resource update to message office api")
+		ctx.logger.WithKV("timestamp", time.Now()).Infof("dispatched infra resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -93,7 +99,7 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.R
 }
 
 // DispatchConsoleResourceUpdates implements MessageSender.
-func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t.ResourceUpdate) error {
+func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx MessageSenderContext, ru t.ResourceUpdate) error {
 	b, err := json.Marshal(ru)
 	if err != nil {
 		return err
@@ -111,6 +117,9 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t
 		if _, err = g.msgDispatchCli.ReceiveConsoleResourceUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return
@@ -122,7 +131,7 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched console resource update to message office api")
+		ctx.logger.Infof("dispatched console resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -130,7 +139,7 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t
 }
 
 // DispatchIotConsoleResourceUpdates implements MessageSender.
-func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx context.Context, ru t.ResourceUpdate) error {
+func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx MessageSenderContext, ru t.ResourceUpdate) error {
 	b, err := json.Marshal(ru)
 	if err != nil {
 		return err
@@ -148,6 +157,9 @@ func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx context.Context, r
 		if _, err = g.msgDispatchCli.ReceiveIotConsoleResourceUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return
@@ -159,7 +171,7 @@ func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx context.Context, r
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched iot console resource update to message office api")
+		ctx.logger.Infof("dispatched iot console resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err

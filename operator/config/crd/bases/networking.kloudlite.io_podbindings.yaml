@@ -13,7 +13,7 @@ spec:
     listKind: PodBindingList
     plural: podbindings
     singular: podbinding
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.globalIP

@@ -2,13 +2,9 @@ package standalone
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"slices"
 
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
-	"github.com/kloudlite/operator/operators/msvc-redis/internal/controllers/standalone/templates"
 	"github.com/kloudlite/operator/operators/msvc-redis/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-redis/internal/types"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -19,15 +15,13 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type ServiceReconciler struct {
@@ -37,8 +31,6 @@ type ServiceReconciler struct {
 	Name       string
 	Env        *env.Env
 	yamlClient kubectl.YAMLClient
-
-	templateHelmRedisStandalone []byte
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -46,29 +38,16 @@ func (r *ServiceReconciler) GetName() string {
 }
 
 const (
-	HelmReady              string = "helm-ready"
-	StsReady               string = "sts-ready"
-	AccessCredsGenerated   string = "access-creds-generated"
-	RedisHelmApplied       string = `redis-helm-applied`
-	RedisHelmReady         string = `redis-helm-ready`
-	RedisHelmDeleted       string = `redis-helm-deleted`
-	RedisStatefulSetsReady string = `redis-statefulsets-ready`
+	patchDefaults           string = "patch-defaults"
+	createService           string = "create-service"
+	createPVC               string = "create-pvc"
+	createAccessCredentials string = "create-access-credentials"
+	createStatefulSet       string = "create-statefulset"
 )
 
 const (
-	KeyMsvcOutput string = "msvc-output"
+	kloudliteMsvcComponent string = "kloudlite.io/msvc.component"
 )
-
-var ApplyCheckList = []rApi.CheckMeta{
-	{Name: AccessCredsGenerated, Title: "Access Credentials Generated"},
-	{Name: RedisHelmApplied, Title: "Redis Helm Applied"},
-	{Name: RedisHelmReady, Title: "Redis Helm Ready"},
-	{Name: RedisStatefulSetsReady, Title: "Redis StatefulSets Ready"},
-}
-
-var DeleteCheckList = []rApi.CheckMeta{
-	{Name: RedisHelmDeleted, Title: "Redis Helm Deleted"},
-}
 
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices/status,verbs=get;update;patch
@@ -98,7 +77,13 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: patchDefaults, Title: "Patch Defaults"},
+		{Name: createService, Title: "Create Service"},
+		{Name: createPVC, Title: "Create PVC"},
+		{Name: createAccessCredentials, Title: "Create Access Credentials"},
+		{Name: createStatefulSet, Title: "Create StatefulSet"},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -106,19 +91,27 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.generateAccessCreds(req); !step.ShouldProceed() {
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.applyHelm(req); !step.ShouldProceed() {
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.checkHelmReady(req); !step.ShouldProceed() {
+	if step := r.createService(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.checkStsReady(req); !step.ShouldProceed() {
+	if step := r.createPVC(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.createAccessCredentials(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.createStatefulSet(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -132,12 +125,9 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneSe
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
 
-	obj := req.Object
-	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
-		obj.Status.CheckList = nil
-	}
-
-	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: "resources_deleted", Title: "resources deleted"},
+	}); !step.ShouldProceed() {
 		return step
 	}
 
@@ -148,154 +138,230 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneSe
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) generateAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(AccessCredsGenerated, req)
+	check := rApi.NewRunningCheck(patchDefaults, req)
 
-	accessCreds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
+	hasUpdate := false
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, accessCreds, func() error {
-		obj.SetLabels(obj.GetLabels())
-		obj.SetOwnerReferences(obj.GetOwnerReferences())
+	if obj.Output.CredentialsRef.Name == "" {
+		hasUpdate = true
+		obj.Output.CredentialsRef.Name = obj.Name
+	}
 
-		if accessCreds.Data != nil {
-			// means secret already exists, it is not getting created
-			return nil
+	if hasUpdate {
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	return check.Completed()
+}
+
+func getKloudliteDNSHostname(obj *redisMsvcv1.StandaloneService) string {
+	return fmt.Sprintf("%s.svc", obj.Name)
+}
+
+func (r *ServiceReconciler) createService(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createService, req)
+
+	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
+		fn.MapSet(&svc.Labels, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&svc.Labels, k, v)
 		}
 
-		rootPassword := fn.CleanerNanoid(40)
-		host := fmt.Sprintf("%s-headless.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
-		port := 6379
+		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		svc.Spec.Ports = []corev1.ServicePort{
+			{
+				Name:     "redis",
+				Protocol: corev1.ProtocolTCP,
+				Port:     6379,
+			},
+		}
+		svc.Spec.Selector = fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/")
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
 
-		var m map[string]string
+	return check.Completed()
+}
 
-		out := types.MsvcOutput{
-			Host:         host,
-			Port:         fmt.Sprintf("%d", port),
-			Addr:         fmt.Sprintf("%s:%d", host, port),
-			Uri:          fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, host),
-			RootPassword: rootPassword,
+func (r *ServiceReconciler) createPVC(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createPVC, req)
+
+	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, pvc, func() error {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&pvc.Labels, k, v)
 		}
 
-		m, err := out.ToMap()
-		if err != nil {
-			return err
+		pvc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+
+		if pvc.Spec.Resources.Requests == nil {
+			pvc.Spec.Resources.Requests = corev1.ResourceList{}
 		}
 
-		accessCreds.StringData = m
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Completed()
+}
+
+func (r *ServiceReconciler) createAccessCredentials(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createAccessCredentials, req)
+
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&secret.Labels, k, v)
+		}
+		secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+
+		if secret.Data == nil {
+			password := fn.CleanerNanoid(40)
+
+			clusterLocalHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
+			globalVPNHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
+			kloudliteDNSHostFQDN := fmt.Sprintf("%s.%s", getKloudliteDNSHostname(obj), r.Env.KloudliteDNSSuffix)
+			port := "6379"
+
+			out := types.StandaloneServiceOutput{
+				RootPassword: password,
+				Port:         port,
+
+				Host: kloudliteDNSHostFQDN,
+				Addr: fmt.Sprintf("%s:%s", kloudliteDNSHostFQDN, port),
+				URI:  fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", password, kloudliteDNSHostFQDN),
+
+				ClusterLocalHost: clusterLocalHost,
+				ClusterLocalAddr: fmt.Sprintf("%s:%s", clusterLocalHost, port),
+				ClusterLocalURI:  fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", password, globalVPNHost),
+
+				GlobalVpnHost: globalVPNHost,
+				GlobalVpnAddr: fmt.Sprintf("%s:%s", globalVPNHost, port),
+				GlobalVpnURI:  fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", password, globalVPNHost),
+			}
+
+			m, err := out.ToMap()
+			if err != nil {
+				return err
+			}
+
+			secret.StringData = m
+		}
 
 		return nil
 	}); err != nil {
 		return check.Failed(err)
 	}
 
-	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](accessCreds)
-	if err != nil {
-		return check.Failed(err).Err(nil)
-	}
-	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
-
 	return check.Completed()
 }
 
-func (r *ServiceReconciler) applyHelm(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+func (r *ServiceReconciler) createStatefulSet(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(RedisHelmApplied, req)
+	check := rApi.NewRunningCheck(createStatefulSet, req)
 
-	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
-	if !ok {
-		return check.Failed(rApi.ErrNotInReqLocals(KeyMsvcOutput)).Err(nil)
-	}
+	pvcName := obj.Name
 
-	b, err := templates.ParseBytes(r.templateHelmRedisStandalone, map[string]any{
-		"name":      obj.Name,
-		"namespace": obj.Namespace,
+	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
+		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
-		"labels":     map[string]string{constants.MsvcNameKey: obj.Name},
-		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		selectorLabels := fn.MapMerge(
+			fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
+			map[string]string{kloudliteMsvcComponent: "statefulset"},
+		)
 
-		"pod-labels":      obj.GetLabels(),
-		"pod-annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+		for k, v := range selectorLabels {
+			fn.MapSet(&sts.Labels, k, v)
+		}
 
-		"node-selector": obj.Spec.NodeSelector,
-		"tolerations":   obj.Spec.Tolerations,
-
-		"storage-size":  obj.Spec.Resources.Storage.Size,
-		"storage-class": obj.Spec.Resources.Storage.StorageClass,
-
-		"requests-cpu": obj.Spec.Resources.Cpu.Min,
-		"requests-mem": obj.Spec.Resources.Memory.Min,
-
-		"limits-cpu": obj.Spec.Resources.Cpu.Min,
-		"limits-mem": obj.Spec.Resources.Memory.Max,
-
-		"root-password": msvcOutput.RootPassword,
-	})
-	if err != nil {
-		return check.Failed(err).Err(nil)
-	}
-
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	req.AddToOwnedResources(rr...)
-
-	return check.Completed()
-}
-
-func (r *ServiceReconciler) checkHelmReady(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(RedisHelmReady, req)
-
-	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	if !hc.Status.IsReady {
-		return check.Failed(fmt.Errorf("waiting for helm installation to complete"))
-	}
-
-	return check.Completed()
-}
-
-func (r *ServiceReconciler) checkStsReady(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(RedisStatefulSetsReady, req)
-
-	sts, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name+"-master"), &appsv1.StatefulSet{})
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	if sts.Status.AvailableReplicas != sts.Status.Replicas {
-		check.Status = false
-
-		var podsList corev1.PodList
-		if err := r.List(
-			ctx, &podsList, &client.ListOptions{
-				LabelSelector: labels.SelectorFromValidatedSet(
-					map[string]string{constants.MsvcNameKey: obj.Name},
-				),
+		spec := appsv1.StatefulSetSpec{
+			Replicas: fn.New(int32(1)),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: selectorLabels,
 			},
-		); err != nil {
-			return check.Failed(err)
+			ServiceName: obj.Name,
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: selectorLabels,
+				},
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: pvcName,
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName: obj.Name,
+									ReadOnly:  false,
+								},
+							},
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "redis",
+							Image: "chainguard/redis@sha256:060a0d2c8000f1dc81d1eb3accef50eafc35d9e2584b08f997c532e0fc6178ee",
+							Args: []string{
+								"--requirepass",
+								"$(REDIS_PASSWORD)",
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      pvcName,
+									MountPath: "/data",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "REDIS_PASSWORD",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: obj.Output.CredentialsRef.Name,
+											},
+											Key: "ROOT_PASSWORD",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
-		messages := rApi.GetMessagesFromPods(podsList.Items...)
-		if len(messages) > 0 {
-			b, err := json.Marshal(messages)
-			if err != nil {
-				return check.Failed(err)
-			}
-			return check.Failed(fmt.Errorf(string(b)))
+		if sts.GetGeneration() > 0 {
+			// resource exists, and is being updated now
+			// INFO: k8s statefulsets forbids update to spec fields, other than "replicas", "template", "ordinals", "updateStrategy",  "persistentVolumeClaimRetentionPolicy" and "minReadySeconds",
+
+			sts.Spec.Replicas = spec.Replicas
+			sts.Spec.Template = spec.Template
+		} else {
+			sts.Spec = spec
 		}
-		return check.StillRunning(fmt.Errorf("waiting for statefulset pods to kick in"))
+		return nil
+	}); err != nil {
+		return check.Failed(err)
 	}
 
-	return check.Completed()
+	if sts.Status.Replicas > 0 && sts.Status.ReadyReplicas == sts.Status.Replicas {
+		return check.Completed()
+	}
+
+	return check.StillRunning(fmt.Errorf("waiting for statefulset pods to start"))
 }
 
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -304,30 +370,11 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
-	b, err := templates.Read(templates.HelmStandaloneRedisTemplate)
-	if err != nil {
-		return err
-	}
-	r.templateHelmRedisStandalone = b
-
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
-	builder.Owns(&redisMsvcv1.ACLConfigMap{})
-	builder.Owns(&crdsv1.HelmChart{})
-
-	builder.Watches(
-		&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(
-			func(_ context.Context, obj client.Object) []reconcile.Request {
-				value, ok := obj.GetLabels()[constants.MsvcNameKey]
-				if !ok {
-					return nil
-				}
-				return []reconcile.Request{
-					{NamespacedName: fn.NN(obj.GetNamespace(), value)},
-				}
-			},
-		),
-	)
+	builder.Owns(&corev1.Service{})
+	builder.Owns(&corev1.PersistentVolumeClaim{})
+	builder.Owns(&appsv1.StatefulSet{})
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())

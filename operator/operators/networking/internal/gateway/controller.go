@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/networking/internal/env"
 	"github.com/kloudlite/operator/operators/networking/internal/gateway/templates"
@@ -27,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 )
 
 type Reconciler struct {
@@ -49,11 +51,17 @@ func (r *Reconciler) GetName() string {
 const (
 	bindService            string = "bind-service"
 	patchDefaults          string = "patch-defaults"
+	createGatewayNamespace string = "create-gateway-namespace"
 	generateWireguardKeys  string = "generate-wireguard-keys"
 	setupDeploymentRBAC    string = "setup-deployment-rbac"
 	setupGatewayDeployment string = "setup-gateway-deployment"
 	setupMutationWebhooks  string = "setup-mutation-webhooks"
 	trackLoadBalancer      string = "track-load-balancer"
+)
+
+const (
+	gatewayLocalOverrideConfigName      = "gateway-local-overrides"
+	gatewayLocalOverrideConfigNamespace = "kloudlite"
 )
 
 const (
@@ -95,6 +103,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	if step := req.EnsureCheckList([]rApi.CheckMeta{
 		{Name: patchDefaults, Title: "Patch Defaults", Debug: true},
+		{Name: createGatewayNamespace, Title: "Create Gateway Namespace"},
 		{Name: generateWireguardKeys, Title: "Generate Wireguard Keys"},
 		{Name: setupDeploymentRBAC, Title: "Setup Deployment RBAC"},
 		{Name: setupGatewayDeployment, Title: "Setup Gateway Device Deployment"},
@@ -105,6 +114,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.createGatewayNamespace(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -133,8 +146,32 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*networkingv1.Gateway]) stepResult.Result {
-	rApi.NewRunningCheck("finalizing", req)
+	const finalizing = "finalizing"
+
+	if len(req.Object.Status.Checks) != 1 {
+		req.Object.Status.Checks = nil
+	}
+
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: finalizing, Title: "Cleaning up Gateway"},
+	}); !step.ShouldProceed() {
+		return step
+	}
+
+	check := rApi.NewRunningCheck(finalizing, req)
+
+	if step := req.CleanupOwnedResourcesV2(check); !step.ShouldProceed() {
+		return step
+	}
+
 	return req.Finalize()
+}
+
+func getAccountName(obj *networkingv1.Gateway) *string {
+	if v, ok := obj.GetLabels()[constants.AccountNameKey]; ok && v != "" {
+		return &v
+	}
+	return nil
 }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*networkingv1.Gateway]) stepResult.Result {
@@ -142,19 +179,33 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*networkingv1.Gateway]) ste
 	check := rApi.NewRunningCheck(patchDefaults, req)
 
 	hasUpdate := false
-	if obj.Spec.AdminNamespace == "" {
+
+	if obj.Spec.TargetNamespace == "" {
 		hasUpdate = true
-		obj.Spec.AdminNamespace = r.Env.GatewayAdminNamespace
+		// obj.Spec.TargetNamespace = fmt.Sprintf("kl-gateway-%s", obj.Name)
+		obj.Spec.TargetNamespace = "kl-gateway"
 	}
 
 	if obj.Spec.WireguardKeysRef.Name == "" {
 		hasUpdate = true
-		obj.Spec.WireguardKeysRef.Name = "gateway-wg"
+		obj.Spec.WireguardKeysRef.Name = obj.Spec.TargetNamespace
 	}
 
-	if obj.Spec.WireguardKeysRef.Namespace == "" {
-		hasUpdate = true
-		obj.Spec.WireguardKeysRef.Namespace = r.Env.GatewayAdminNamespace
+	if obj.Spec.LocalOverrides == nil {
+		cm, err := rApi.Get(ctx, r.Client, fn.NN(gatewayLocalOverrideConfigNamespace, gatewayLocalOverrideConfigName), &corev1.ConfigMap{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(err)
+			}
+		}
+
+		if cm != nil {
+			hasUpdate = true
+			obj.Spec.LocalOverrides = &ct.SecretRef{
+				Name:      gatewayLocalOverrideConfigName,
+				Namespace: gatewayLocalOverrideConfigNamespace,
+			}
+		}
 	}
 
 	if hasUpdate {
@@ -164,11 +215,42 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*networkingv1.Gateway]) ste
 		return check.StillRunning(fmt.Errorf("waiting for resource to be updated"))
 	}
 
-	adminNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.AdminNamespace}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, adminNamespace, func() error {
-		return nil
-	}); err != nil {
-		return check.Failed(err)
+	return check.Completed()
+}
+
+func (r *Reconciler) createGatewayNamespace(req *rApi.Request[*networkingv1.Gateway]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createGatewayNamespace, req)
+
+	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+
+		if err := r.Create(ctx, &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: obj.Spec.TargetNamespace,
+				Labels: map[string]string{
+					constants.KloudliteNamespaceForGateway: obj.Name,
+				},
+			},
+		}); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	v, ok := ns.Labels[constants.KloudliteNamespaceForGateway]
+	if !ok {
+		fn.MapSet(&ns.Labels, constants.KloudliteNamespaceForGateway, obj.Name)
+		if err := r.Update(ctx, ns); err != nil {
+			return check.Failed(err)
+		}
+		return check.StillRunning(fmt.Errorf("waiting for namespace to be updated with label"))
+	}
+
+	if v != obj.Name {
+		return check.Failed(fmt.Errorf("namespace %s/%s is not labeled with %s=%s, it might be because namespace already belongs to some other gateway", obj.Spec.TargetNamespace, obj.Name, constants.KloudliteNamespaceForGateway, obj.Name))
 	}
 
 	return check.Completed()
@@ -178,7 +260,7 @@ func (r *Reconciler) generateWireguardKeys(req *rApi.Request[*networkingv1.Gatew
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(generateWireguardKeys, req)
 
-	_, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.WireguardKeysRef.Namespace, obj.Spec.WireguardKeysRef.Name), &corev1.Secret{})
+	_, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, obj.Spec.WireguardKeysRef.Name), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return check.Failed(err)
@@ -192,7 +274,7 @@ func (r *Reconciler) generateWireguardKeys(req *rApi.Request[*networkingv1.Gatew
 		if err := r.Create(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      obj.Spec.WireguardKeysRef.Name,
-				Namespace: obj.Spec.WireguardKeysRef.Namespace,
+				Namespace: obj.Spec.TargetNamespace,
 			},
 			Data: map[string][]byte{
 				"private_key": []byte(key.String()),
@@ -213,7 +295,7 @@ func (r *Reconciler) setupDeploymentRBAC(req *rApi.Request[*networkingv1.Gateway
 	b, err := templates.ParseBytes(r.templateRBAC, templates.GatewayRBACTemplateArgs{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-svc-account", obj.Name),
-			Namespace: obj.Spec.AdminNamespace,
+			Namespace: obj.Spec.TargetNamespace,
 		},
 	})
 	if err != nil {
@@ -234,7 +316,23 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(setupGatewayDeployment, req)
 
-	extraPeersCfg := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-wg-extra-peers", obj.Name), Namespace: obj.Spec.AdminNamespace}}
+	var localOverridesCfg corev1.ConfigMap
+	if obj.Spec.LocalOverrides != nil {
+		if err := r.Get(ctx, fn.NN(obj.Spec.LocalOverrides.Namespace, obj.Spec.LocalOverrides.Name), &localOverridesCfg); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(err)
+			}
+		}
+	}
+
+	var lo networkingv1.LocalOverrides
+	if v, ok := localOverridesCfg.Data["peers"]; ok {
+		if err := yaml.Unmarshal([]byte(v), &lo.Peers); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	extraPeersCfg := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-wg-extra-peers", obj.Name), Namespace: obj.Spec.TargetNamespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, extraPeersCfg, func() error {
 		if extraPeersCfg.Data == nil {
@@ -248,6 +346,15 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 			}
 			peers = append(peers, npeer)
 		}
+
+		for _, peer := range lo.Peers {
+			npeer := fmt.Sprintf("[Peer]\nPublicKey = %s\nAllowedIPs = %s\n PersistentKeepalive = 25\n", peer.PublicKey, strings.Join(peer.AllowedIPs, ", "))
+			if peer.PublicEndpoint != nil && *peer.PublicEndpoint != "" {
+				npeer = fmt.Sprintf("%s\nEndpoint = %s\n", npeer, *peer.PublicEndpoint)
+			}
+			peers = append(peers, npeer)
+		}
+
 		extraPeersCfg.Data["peers.conf"] = strings.Join(peers, "\n")
 		return nil
 	}); err != nil {
@@ -256,14 +363,17 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 
 	gatewayDNSServers := make([]string, 0, len(obj.Spec.Peers)+2)
 	for _, peer := range obj.Spec.Peers {
-		if peer.IP == obj.Spec.GlobalIP {
+		if peer.IP == nil {
+			continue
+		}
+		if *peer.IP == obj.Spec.GlobalIP {
 			continue
 		}
 		if peer.DNSSuffix != nil {
-			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", *peer.DNSSuffix, peer.IP))
+			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", *peer.DNSSuffix, *peer.IP))
 		}
 		if peer.DNSHostname == "kloudlite-global-vpn-device.device.local" {
-			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "device.local", peer.IP))
+			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "device.local", *peer.IP))
 		}
 	}
 
@@ -277,36 +387,32 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "svc.cluster.local", dnsService.Spec.ClusterIP))
 
 	b, err := templates.ParseBytes(r.templateDeployment, templates.GatewayDeploymentArgs{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            obj.Name,
-			Namespace:       obj.Spec.AdminNamespace,
-			Labels:          map[string]string{"kloudlite.io/managed-by-gateway": "true"},
-			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		},
-
-		ServiceAccountName: fmt.Sprintf("%s-svc-account", obj.Name),
-
-		GatewayAdminAPIImage: "ghcr.io/kloudlite/operator/networking/cmd/ip-manager:v1.0.7-nightly",
-		WebhookServerImage:   "ghcr.io/kloudlite/operator/networking/cmd/webhook:v1.0.7-nightly",
-
+		ObjectMeta:                   metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace, Labels: map[string]string{"kloudlite.io/managed-by-gateway": "true"}, OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)}},
+		ServiceAccountName:           fmt.Sprintf("%s-svc-account", obj.Name),
 		GatewayWgSecretName:          obj.Spec.WireguardKeysRef.Name,
 		GatewayGlobalIP:              obj.Spec.GlobalIP,
 		GatewayDNSSuffix:             obj.Spec.DNSSuffix,
 		GatewayInternalDNSNameserver: gatewayInternalDNSNameServer,
 		GatewayWgExtraPeersHash:      fn.Md5([]byte(extraPeersCfg.Data["peers.conf"])),
 		GatewayDNSServers:            strings.Join(gatewayDNSServers, ","),
+		GatewayServiceType:           obj.Spec.ServiceType,
+		GatewayNodePort:              fn.DefaultIfNil(obj.Spec.NodePort),
+		ClusterCIDR:                  obj.Spec.ClusterCIDR,
+		ServiceCIDR:                  obj.Spec.SvcCIDR,
+		IPManagerConfigName:          "gateway-ip-manager",
+		IPManagerConfigNamespace:     obj.Spec.TargetNamespace,
 
-		ClusterCIDR:              obj.Spec.ClusterCIDR,
-		ServiceCIDR:              obj.Spec.SvcCIDR,
-		IPManagerConfigName:      "gateway-ip-manager",
-		IPManagerConfigNamespace: obj.Spec.AdminNamespace,
-
-		GatewayServiceType: obj.Spec.ServiceType,
-		GatewayNodePort:    fn.DefaultIfNil(obj.Spec.NodePort),
+		ImageWebhookServer:       r.Env.ImageWebhookServer,
+		ImageIPManager:           r.Env.ImageIPManager,
+		ImageIPBindingController: r.Env.ImageIPBindingController,
+		ImageDNS:                 r.Env.ImageDNS,
+		ImageLogsProxy:           r.Env.ImageLogsProxy,
 	})
 	if err != nil {
 		return check.Failed(err)
 	}
+
+	fmt.Printf("deployment:\n\n%s\n\n", b)
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
@@ -314,7 +420,7 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	}
 	req.AddToOwnedResources(rr...)
 
-	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AdminNamespace, obj.Name), &appsv1.Deployment{})
+	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, obj.Name), &appsv1.Deployment{})
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -325,7 +431,7 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 		}
 	}
 
-	return check.Failed(errors.Newf("deployment %s/%s is not available/ready yet", r.Env.GatewayAdminNamespace, obj.Name))
+	return check.Failed(errors.Newf("deployment %s/%s is not available/ready yet", obj.Spec.TargetNamespace, obj.Name))
 }
 
 func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gateway]) stepResult.Result {
@@ -333,7 +439,7 @@ func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gatew
 	check := rApi.NewRunningCheck(setupMutationWebhooks, req)
 
 	webhookCertSecretName := fmt.Sprintf("%s-webhook-cert", obj.Name)
-	webhookCertSecretNamespace := obj.Spec.AdminNamespace
+	webhookCertSecretNamespace := obj.Spec.TargetNamespace
 
 	webhookCert, err := rApi.Get(ctx, r.Client, fn.NN(webhookCertSecretNamespace, webhookCertSecretName), &corev1.Secret{})
 	if err != nil {
@@ -341,7 +447,7 @@ func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gatew
 			return check.Failed(err)
 		}
 
-		caBundle, cert, key, err := GenTLSCert([]string{fmt.Sprintf("%s.%s.svc", obj.Name, obj.Spec.AdminNamespace)})
+		caBundle, cert, key, err := GenTLSCert([]string{fmt.Sprintf("%s.%s.svc", obj.Name, obj.Spec.TargetNamespace)})
 		if err != nil {
 			return check.Failed(err)
 		}
@@ -364,14 +470,30 @@ func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gatew
 	}
 
 	b, err := templates.ParseBytes(r.templateWebhook, templates.WebhookTemplateArgs{
-		NamePrefix:                obj.Name,
-		Namespace:                 obj.Spec.AdminNamespace,
+		NamePrefix: func() string {
+			if v := getAccountName(obj); v != nil {
+				return fmt.Sprintf("%s-%s", *v, obj.Name)
+			}
+			return obj.Name
+		}(),
+		Namespace:                 obj.Spec.TargetNamespace,
 		OwnerReferences:           []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		WebhookServerImage:        "ghcr.io/kloudlite/operator/wireguard/apps/mutation-webhook:v1.0.7-nightly",
 		WebhookServerCertCABundle: string(webhookCert.Data["ca.crt"]),
 
-		WebhookNamespaceSelectorKey: constants.KloudliteGatewayEnabledLabel,
-		ServiceName:                 obj.Name,
+		WebhookNamespaceSelector: func() map[string]string {
+			selector := map[string]string{
+				constants.KloudliteGatewayEnabledLabel: "true",
+			}
+			if v := getAccountName(obj); v != nil {
+				selector[constants.AccountNameKey] = *v
+			}
+
+			return selector
+		}(),
+		// WebhookNamespaceSelectorKey:   constants.KloudliteGatewayEnabledLabel,
+		// WebhookNamespaceSelectorValue: "true",
+		ServiceName: obj.Name,
 	})
 	if err != nil {
 		return check.Failed(err)
@@ -408,7 +530,7 @@ func (r *Reconciler) trackLoadBalancer(req *rApi.Request[*networkingv1.Gateway])
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(trackLoadBalancer, req)
 
-	svc, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.GatewayAdminNamespace, fmt.Sprintf("%s-wg", obj.Name)), &corev1.Service{})
+	svc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, fmt.Sprintf("%s-wg", obj.Name)), &corev1.Service{})
 	if err != nil {
 		return check.Failed(err)
 	}

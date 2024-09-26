@@ -9,13 +9,14 @@ import (
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	MsvcRef      ct.MsvcRef `json:"msvcRef"`
-	ResourceName string     `json:"resourceName"`
+	MsvcRef ct.MsvcRef `json:"msvcRef"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Database is the Schema for the databases API
@@ -25,6 +26,8 @@ type Database struct {
 
 	Spec   DatabaseSpec `json:"spec"`
 	Status rApi.Status  `json:"status,omitempty"`
+
+	Output ct.ManagedResourceOutput `json:"output,omitempty"`
 }
 
 func (db *Database) EnsureGVK() {

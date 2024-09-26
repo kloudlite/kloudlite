@@ -102,4 +102,9 @@ resources:
 - networking_v1_podbinding.yaml
 - networking_v1_servicebinding.yaml
 - networking_v1_gateway.yaml
+- postgres.msvc_v1_standalone.yaml
+- postgres.msvc_v1_database.yaml
+- postgres.msvc_v1_standalonedatabase.yaml
+- mysql.msvc_v1_standalonedatabase.yaml
+- mongodb.msvc_v1_standalonedatabase.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

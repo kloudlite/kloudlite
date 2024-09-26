@@ -40,14 +40,11 @@ type AwsSpotPoolConfig struct {
 }
 
 type AWSNodePoolConfig struct {
-	// ImageId          string `json:"imageId"`
-	// ImageSSHUsername string `json:"imageSSHUsername"`
+	Region string `json:"region" graphql:"noinput"`
+	AvailabilityZone string `json:"availabilityZone"`
 
 	VPCId       string `json:"vpcId" graphql:"noinput"`
 	VPCSubnetID string `json:"vpcSubnetId" graphql:"noinput"`
-
-	// AvailabilityZone AwsAZ `json:"availabilityZone"`
-	AvailabilityZone string `json:"availabilityZone"`
 
 	NvidiaGpuEnabled bool   `json:"nvidiaGpuEnabled"`
 	RootVolumeType   string `json:"rootVolumeType" graphql:"noinput"`
@@ -118,7 +115,7 @@ type NodePoolSpec struct {
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.nodepool-min-max",name=Min/Max,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/nodepool\\.job-ref",name=JobRef,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // NodePool is the Schema for the nodepools API

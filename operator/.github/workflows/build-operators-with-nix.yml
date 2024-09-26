@@ -2,6 +2,12 @@ name: Build Operators With Nix Flakes
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag: 
+        type: string
+        description: "image_tag"
+        required: true
+        default: ""
 
   push:
     paths:
@@ -14,6 +20,7 @@ on:
       - "go.*"
       - ".github/workflows/**"
       - "apis/**/*.go"
+      - "needs-images/**"
 
 permissions:
   contents: read
@@ -29,11 +36,13 @@ jobs:
           - name: platform-operator
           - name: wireguard-operator
           - name: helm-charts-operator
+          - name: helm-charts-job-runner
           - name: networking-operator
           - name: networking/cmd/ip-binding-controller
           - name: networking/cmd/ip-manager
           - name: networking/cmd/webhook
           - name: networking/cmd/dns
+          - name: networking/cmd/logs-proxy
 
     runs-on: ubuntu-latest
     name: ${{ matrix.images.name }}
@@ -44,8 +53,8 @@ jobs:
       - name: build-and-push
         uses: ./.github/actions/build-operator-images/
         with:
-          cache_prefix: ${{ matrix.images.name }}
-          
+          image_tag: ${{github.event.inputs.image_tag}}
+
           cachix_enabled: true
           cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
@@ -58,10 +67,12 @@ jobs:
           agent-operator: ${{ matrix.images.name == 'agent-operator' }}
           wireguard-operator: ${{ matrix.images.name == 'wireguard-operator' }}
           helm-charts-operator: ${{ matrix.images.name == 'helm-charts-operator' }}
+          helm-charts-job-runner: ${{ matrix.images.name == 'helm-charts-job-runner' }}
           networking-operator: ${{ matrix.images.name == 'networking-operator' }}
 
           networking_ip-binding-controller: ${{ matrix.images.name == 'networking/cmd/ip-binding-controller' }}
           networking_ip-manager: ${{ matrix.images.name == 'networking/cmd/ip-manager' }}
           networking_dns: ${{ matrix.images.name == 'networking/cmd/dns' }}
           networking_webhook: ${{ matrix.images.name == 'networking/cmd/webhook' }}
+          networking_logs_proxy: ${{ matrix.images.name == 'networking/cmd/logs-proxy' }}
 
