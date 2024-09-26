@@ -107,6 +107,8 @@ input CoreSearchVPNDevices {
 type Query {
 	core_checkNameAvailability(envName: String, msvcName: String ,resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
+  core_getDNSHostSuffix: String!
+
 	core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
 	core_resyncEnvironment(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
