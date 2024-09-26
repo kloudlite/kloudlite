@@ -15,6 +15,5 @@ func RegisterInto(mgr operator.Operator) {
 	mgr.RegisterControllers(
 		&device.Reconciler{Name: "device-controller", Env: ev},
 		&globalvpn.Reconciler{Name: "globalvpn-controller", Env: ev},
-		// &statefulset_services.Reconciler{Name: "statefulset-services-manager", Env: ev},
 	)
 }

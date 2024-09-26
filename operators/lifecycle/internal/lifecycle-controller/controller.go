@@ -18,6 +18,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -42,9 +43,10 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	EnsureJobRBAC string = "ensure-job-rbac"
-	ApplyK8sJob   string = "apply-k8s-job"
-	DeleteK8sJob  string = "delete-k8s-job"
+	defaultsPatched string = "defaults-patched"
+	EnsureJobRBAC   string = "ensure-job-rbac"
+	ApplyK8sJob     string = "apply-k8s-job"
+	DeleteK8sJob    string = "delete-k8s-job"
 )
 
 const (
@@ -99,7 +101,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: defaultsPatched, Title: "Defaults patched"},
+		{Name: EnsureJobRBAC, Title: "Ensures K8s Lifecycle RBACs"},
+		{Name: ApplyK8sJob, Title: "Apply Kubernetes Lifecycle"},
+	}); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -127,6 +137,26 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.R
 	}
 
 	return req.Finalize()
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(defaultsPatched, req)
+
+	hasUpdate := false
+
+	if obj.Spec.RetryOnFailureDelay.Duration == 0*time.Second {
+		hasUpdate = true
+		obj.Spec.RetryOnFailureDelay = metav1.Duration{Duration: 30 * time.Second}
+	}
+
+	if hasUpdate {
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
@@ -184,8 +214,25 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResul
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ApplyK8sJob, req)
 
-	if v, ok := obj.Status.Checks[ApplyK8sJob]; ok && v.Generation == obj.Generation && (v.State == rApi.CompletedState || v.State == rApi.ErroredState) {
-		return check.Completed()
+	if v, ok := obj.Status.Checks[ApplyK8sJob]; ok && v.Generation == obj.Generation {
+		switch v.State {
+		case rApi.CompletedState:
+			return check.Completed()
+		case rApi.ErroredState:
+			if obj.Spec.RetryOnFailure {
+				if obj.Status.LastReconcileTime != nil {
+					if time.Since(obj.Status.LastReconcileTime.Time) > obj.Spec.RetryOnFailureDelay.Duration {
+						r.logger.Infof("re-creatingjob for lifecycle %s/%s, as it failed and is past the retry delay", obj.Namespace, obj.Name)
+						if err := r.Delete(ctx, &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}); err != nil {
+							if !apiErrors.IsNotFound(err) {
+								return check.Failed(err)
+							}
+						}
+					}
+				}
+			}
+			return check.Failed(fmt.Errorf("job failed"))
+		}
 	}
 
 	job := &batchv1.Job{}
@@ -357,7 +404,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Lifecycle{}).Owns(&batchv1.Job{})
-
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

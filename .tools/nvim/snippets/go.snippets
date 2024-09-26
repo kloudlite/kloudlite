@@ -74,7 +74,7 @@ snippet embed-templates
 	var ParseBytes = templates.ParseBytes
 
 snippet kubebuilder-printcolumns-default
-	// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+	// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 	// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\\\.io\\\\/checks",name=Checks,type=string
 	// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\\\.io\\\\/resource\\\\.ready",name=Ready,type=string
 	// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -86,17 +86,5 @@ snippet robj "creates template for recocilation step function"
   ${2://function-body}
   return check.Completed()
 
-snippet init-checklist "initializes controller check list"
-	const (
-		DefaultsPatched string = "defaults-patched"
-		Cleanup         string = "cleanup"
-	)
-
-	var ApplyCheckList = []rApi.CheckMeta{
-		{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
-	}
-
-	var DeleteCheckList = []rApi.CheckMeta{
-		{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
-		{Name: Cleanup, Title: "Cleanup" }
-	}
+snippet kubebuilder-scope-cluster
+  // +kubebuilder:resource:scope=Cluster

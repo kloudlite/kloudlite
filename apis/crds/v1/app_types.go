@@ -227,8 +227,8 @@ type AppSpec struct {
 	Freeze    bool       `json:"freeze,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default=kloudlite-svc-account
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
 	// +kubebuilder:default=1
 	Replicas   int            `json:"replicas,omitempty"`
 	Services   []AppSvc       `json:"services,omitempty"`
@@ -268,8 +268,8 @@ type JsonPatch struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/intercept\\.toDevice",name=Intercepted,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.displayVars.frozen",name=Frozen,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -322,6 +322,10 @@ func (app *App) LogRef() string {
 
 func (app *App) IsInterceptEnabled() bool {
 	return app.Spec.Intercept != nil && app.Spec.Intercept.Enabled
+}
+
+func (app *App) IsHPAEnabled() bool {
+	return app.Spec.Hpa != nil && app.Spec.Hpa.Enabled
 }
 
 // +kubebuilder:object:root=true

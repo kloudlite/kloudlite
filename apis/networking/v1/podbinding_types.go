@@ -20,7 +20,6 @@ type PodBindingSpec struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
 //+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/podbinding\\.reservation",name=Allocation,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -58,7 +57,7 @@ func (p *PodBinding) GetEnsuredAnnotations() map[string]string {
 }
 
 func (p *PodBinding) GetStatus() *rApi.Status {
-  return &p.Status
+	return &p.Status
 }
 
 //+kubebuilder:object:root=true

@@ -16,9 +16,15 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -39,6 +45,21 @@ spec:
             type: string
           metadata:
             type: object
+          output:
+            properties:
+              credentialsRef:
+                description: refers to a k8s secret that exists in the same namespace
+                  as managed resource
+                properties:
+                  name:
+                    description: .metadata.name of the resource
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - credentialsRef
+            type: object
           spec:
             description: DatabaseSpec defines the desired state of Database
             properties:
@@ -50,8 +71,6 @@ spec:
                       schemas to the latest internal value, and may reject unrecognized
                       values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
-                  clusterName:
-                    type: string
                   kind:
                     description: 'Kind is a string value representing the REST resource
                       this object represents. Servers may infer this from the endpoint
@@ -62,17 +81,12 @@ spec:
                     type: string
                   namespace:
                     type: string
-                  sharedSecret:
-                    type: string
                 required:
                 - name
                 - namespace
                 type: object
-              resourceName:
-                type: string
             required:
             - msvcRef
-            - resourceName
             type: object
           status:
             properties:

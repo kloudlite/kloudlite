@@ -46,14 +46,11 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	nodeFinalizer string = "kloudlite.io/nodepool-node-finalizer"
-)
-
-const (
 	annNodepoolJobRef = "kloudlite.io/nodepool.job-ref"
 )
 
 const (
+	defaultsPatched           = "defaults-patched"
 	updateNodeTaintsAndLabels = "update-node-taints-and-labels"
 	ensureJobNamespaceRBACs   = "ensure-job-namespace-rbacs"
 	syncNodepool              = "sync-nodepool"
@@ -61,16 +58,9 @@ const (
 	deletingNodepool = "delete-nodepool"
 )
 
-var (
-	ApplyChecklist = []rApi.CheckMeta{
-		{Name: updateNodeTaintsAndLabels, Title: "Update Node Taints and Labels"},
-		{Name: ensureJobNamespaceRBACs, Title: "Configure Lifecycle Namespace RBACs"},
-		{Name: syncNodepool, Title: "Syncing Nodepool"},
-	}
-	DeleteChecklist = []rApi.CheckMeta{
-		{Name: deletingNodepool, Title: "Deleting Nodepool"},
-	}
-)
+var DeleteChecklist = []rApi.CheckMeta{
+	{Name: deletingNodepool, Title: "Deleting Nodepool"},
+}
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.NodePool{})
@@ -100,7 +90,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(
+		[]rApi.CheckMeta{
+			{Name: defaultsPatched, Title: "Defaults Patched", Hide: true},
+			{Name: updateNodeTaintsAndLabels, Title: "Update Node Taints and Labels"},
+			{Name: ensureJobNamespaceRBACs, Title: "Configure Lifecycle Namespace RBACs"},
+			{Name: syncNodepool, Title: "Syncing Nodepool"},
+		}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -145,71 +141,37 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResul
 		return step
 	}
 
-	if err := deleteFinalizersOnNodes(ctx, r.Client, nodes, nodeFinalizer); err != nil {
-		return check.Failed(err)
-	}
-
 	return req.Finalize()
 }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := "patch-defaults"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(defaultsPatched, req)
 
 	hasUpdated := false
 
-	if v, ok := obj.Annotations[annNodepoolJobRef]; v != fmt.Sprintf("%s/kloudlite-nodepool-%s", r.Env.JobsNamespace, obj.Name) || !ok {
+	if _, ok := obj.Annotations[annNodepoolJobRef]; !ok {
 		hasUpdated = true
-		ann := obj.Annotations
-		if ann == nil {
-			ann = make(map[string]string, 1)
-		}
-		ann[annNodepoolJobRef] = fmt.Sprintf("%s/kloudlite-nodepool-%s", r.Env.JobsNamespace, obj.Name)
-		obj.SetAnnotations(ann)
+		fn.MapSet(&obj.Annotations, annNodepoolJobRef, fmt.Sprintf("%s/np-%s", r.Env.JobsNamespace, obj.Name))
 	}
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 		return req.Done()
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(updateNodeTaintsAndLabels)
-	defer req.LogPostCheck(updateNodeTaintsAndLabels)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(updateNodeTaintsAndLabels, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(updateNodeTaintsAndLabels, req)
 
 	nodes, err := realNodesBelongingToNodepool(ctx, r.Client, obj.Name)
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	for _, node := range nodes {
@@ -228,55 +190,30 @@ func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.Nod
 		}
 
 		if err := r.Update(ctx, &node); err != nil {
-			return fail(err).RequeueAfter(200 * time.Millisecond)
+			return check.Failed(err).RequeueAfter(200 * time.Millisecond)
 		}
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[updateNodeTaintsAndLabels] {
-		fn.MapSet(&obj.Status.Checks, updateNodeTaintsAndLabels, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(ensureJobNamespaceRBACs)
-	defer req.LogPostCheck(ensureJobNamespaceRBACs)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(ensureJobNamespaceRBACs, check, err.Error())
-	}
+	ctx := req.Context()
+	check := rApi.NewRunningCheck(ensureJobNamespaceRBACs, req)
 
 	b, err := templates.ParseBytes(r.templateNamespaceRBAC, map[string]any{
 		"namespace": r.Env.JobsNamespace,
 	})
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).NoRequeue()
 	}
 
 	_, err = r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[ensureJobNamespaceRBACs] {
-		fn.MapSet(&obj.Status.Checks, ensureJobNamespaceRBACs, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
@@ -285,10 +222,6 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 	nodes, err := nodesBelongingToNodepool(ctx, r.Client, obj.Name)
 	if err != nil {
-		return check.StillRunning(err)
-	}
-
-	if err := addFinalizersOnNodes(ctx, r.Client, nodes, nodeFinalizer); err != nil {
 		return check.StillRunning(err)
 	}
 
@@ -301,8 +234,6 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 			nodesMap[rawName] = clustersv1.NodeProps{}
 		}
 	}
-
-	// checksum := nodesChecksum(nodesMap)
 
 	varfileJson, err := r.parseSpecToVarFileJson(ctx, obj, nodesMap)
 	if err != nil {
@@ -322,7 +253,8 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 			Annotations:     fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		},
-		NodeSelector:         constants.K8sMasterNodeSelector,
+		NodeSelector:         r.Env.IACJobNodeSelector,
+		Tolerations:          r.Env.IACJobTolerations,
 		JobImage:             r.Env.IACJobImage,
 		TFWorkspaceName:      obj.Name,
 		TfWorkspaceNamespace: r.Env.TFStateSecretNamespace,
@@ -354,9 +286,6 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	}
 
 	if markedForDeletion != nil {
-		if err := deleteFinalizersOnNodes(ctx, r.Client, fn.MapValues(markedForDeletion), nodeFinalizer); err != nil {
-			return check.Failed(err)
-		}
 		if err := deleteNodes(ctx, r.Client, fn.MapValues(markedForDeletion)...); err != nil {
 			return check.Failed(err)
 		}
@@ -374,7 +303,6 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		return r.AwsJobValuesJson(obj, nodesMap)
-		// return r.toAWSVarfileJson(obj, nodesMap)
 	case ct.CloudProviderGCP:
 		return r.GCPJobValuesJson(obj, nodesMap)
 	default:

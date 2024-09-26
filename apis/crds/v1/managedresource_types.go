@@ -23,7 +23,7 @@ type mresKind struct {
 type MresResourceTemplate struct {
 	metav1.TypeMeta `json:",inline" graphql:"children-required"`
 	MsvcRef         ct.MsvcRef                      `json:"msvcRef"`
-	Spec            map[string]apiextensionsv1.JSON `json:"spec"`
+	Spec            map[string]apiextensionsv1.JSON `json:"spec,omitempty"`
 }
 
 // ManagedResourceSpec defines the desired state of ManagedResource
@@ -36,8 +36,8 @@ type ManagedResourceSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource-gvk",name=Resource_GVK,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ManagedResource is the Schema for the managedresources API

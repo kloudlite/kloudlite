@@ -139,14 +139,19 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
-	hasUpdated := false
+	hasUpdate := false
 
 	if obj.Spec.BasicAuth != nil && obj.Spec.BasicAuth.Enabled && obj.Spec.BasicAuth.SecretName == "" {
-		hasUpdated = true
+		hasUpdate = true
 		obj.Spec.BasicAuth.SecretName = obj.Name + "-basic-auth"
 	}
 
-	if hasUpdated {
+	if obj.Spec.IngressClass == "" {
+		hasUpdate = true
+		obj.Spec.IngressClass = r.Env.DefaultIngressClass
+	}
+
+	if hasUpdate {
 		if err := r.Update(ctx, obj); err != nil {
 			return check.Failed(err)
 		}
@@ -344,12 +349,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 				"wildcard-domains":     wcDomains,
 				"router-domains":       obj.Spec.Domains,
 
-				"ingress-class": func() string {
-					if obj.Spec.IngressClass != "" {
-						return obj.Spec.IngressClass
-					}
-					return r.Env.DefaultIngressClass
-				}(),
+				"ingress-class": obj.Spec.IngressClass,
 				"cluster-issuer": func() string {
 					if obj.Spec.Https != nil && obj.Spec.Https.ClusterIssuer != "" {
 						return obj.Spec.Https.ClusterIssuer

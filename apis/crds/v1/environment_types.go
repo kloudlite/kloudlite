@@ -26,6 +26,8 @@ type EnvironmentSpec struct {
 	TargetNamespace string `json:"targetNamespace,omitempty"`
 
 	Routing *EnvironmentRouting `json:"routing,omitempty"`
+
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -33,9 +35,9 @@ type EnvironmentSpec struct {
 // +kubebuilder:resource:scope=Cluster
 //+kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name="target-ns",type=string
 //+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
-//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
-//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/environment\\.routing",name=Routing,type=string
-//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
+//+kubebuilder:printcolumn:JSONPath=".spec.suspend",name=Suspend,type=boolean
+//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Environment is the Schema for the environments API
