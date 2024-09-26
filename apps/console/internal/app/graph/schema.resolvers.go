@@ -453,6 +453,11 @@ func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, envName *
 	return r.Domain.CheckNameAvailability(ctx, cc.AccountName, envName, msvcName, resType, name)
 }
 
+// CoreGetDNSHostSuffix is the resolver for the core_getDNSHostSuffix field.
+func (r *queryResolver) CoreGetDNSHostSuffix(ctx context.Context) (string, error) {
+	return r.EnvVars.KloudliteDNSSuffix, nil
+}
+
 // CoreListEnvironments is the resolver for the core_listEnvironments field.
 func (r *queryResolver) CoreListEnvironments(ctx context.Context, search *model.SearchEnvironments, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error) {
 	cc, err := toConsoleContext(ctx)
