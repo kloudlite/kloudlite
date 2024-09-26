@@ -85,6 +85,10 @@ func New(name string) Operator {
 	flag.StringVar(&devServerHost, "serverHost", "localhost:8080", "--serverHost <host:port>")
 	flag.Parse()
 
+	if debugLog {
+		os.Setenv("LOG_DEBUG", "true")
+	}
+
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	logger := logging.NewOrDie(&logging.Options{Dev: debugLog, CallerTrace: true})
 
