@@ -2,7 +2,7 @@ package node_controller
 
 import (
 	"context"
-	"slices"
+	"fmt"
 	"time"
 
 	"github.com/kloudlite/operator/operators/nodepool/internal/env"
@@ -15,7 +15,6 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/pkg/util/taints"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -43,20 +42,9 @@ const (
 	deleteAfterTimestamp = "kloudlite.io/delete-after-timestamp"
 	trackCorev1Node      = "track-corev1-node"
 
-	nodeFinalizer = "finalizers.kloudlite.io/node"
-	selfFinalizer = "kloudlite.io/node-controller-finalizer"
+	selfFinalizer = "kloudlite.io/node.finalizer"
 
 	finalizingNode = "finalizing-node"
-)
-
-var (
-	N_CHECKLIST = []rApi.CheckMeta{
-		{Name: trackCorev1Node, Title: "Update node status"},
-	}
-
-	N_DESTROY_CHECKLIST = []rApi.CheckMeta{
-		{Name: finalizingNode, Title: "cleaning up resources"},
-	}
 )
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -64,7 +52,7 @@ var (
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &clustersv1.Node{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.Node{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -83,7 +71,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(N_CHECKLIST); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: trackCorev1Node, Title: "Update node status"},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -109,173 +99,119 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(trackCorev1Node)
-	defer req.LogPostCheck(trackCorev1Node)
-
-	failWithErr := func(err error) stepResult.Result {
-		return req.CheckFailed(trackCorev1Node, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(trackCorev1Node, req)
 
 	cn := &corev1.Node{}
 	if err := r.Get(ctx, fn.NN("", obj.Name), cn); err != nil {
-		return failWithErr(err)
+		return check.Failed(err)
 	}
 
-	// if controllerutil.AddFinalizer(cn, nodeFinalizer) {
-	// 	if err := r.Update(ctx, cn); err != nil {
-	// 		return failWithErr(err)
-	// 	}
-	// }
+	if updated := controllerutil.AddFinalizer(cn, selfFinalizer); updated {
+		if err := r.Update(ctx, cn); err != nil {
+			return check.Failed(err)
+		}
+	}
 
 	if cn.GetDeletionTimestamp() != nil {
 		if err := r.Delete(ctx, obj); err != nil {
-			return failWithErr(err)
+			return check.Failed(err)
 		}
 		return req.Done()
 	}
 
 	for i := range cn.Status.Conditions {
 		if cn.Status.Conditions[i].Type == "Ready" {
-			check.Status = cn.Status.Conditions[i].Status == corev1.ConditionTrue
+			return check.Completed()
 		}
 	}
 
-	check.State = rApi.RunningState
-	check.Status = true
-	if check != obj.Status.Checks[trackCorev1Node] {
-		obj.Status.Checks[trackCorev1Node] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.StillRunning(fmt.Errorf("node is not ready"))
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	if !slices.Equal(obj.Status.CheckList, N_DESTROY_CHECKLIST) {
-		req.Object.Status.CheckList = N_DESTROY_CHECKLIST
-		if step := req.UpdateStatus(); !step.ShouldProceed() {
-			return step
-		}
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: finalizingNode, Title: "cleaning up resources"},
+	}); !step.ShouldProceed() {
+		return step
 	}
 
-	req.LogPreCheck(finalizingNode)
-	defer req.LogPostCheck(finalizingNode)
+	check := rApi.NewRunningCheck(finalizingNode, req)
 
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(finalizingNode, check, err.Error())
-	}
-
-	// function-body
 	node, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Name), &corev1.Node{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return fail(err)
+			return check.Failed(err)
 		}
 	}
 
-	if node != nil {
-		if err := drainNode(ctx, r.Client, node); err != nil {
-			return fail(err)
-		}
-	}
+	deleteAfterTimestamp := "kloudlite.io/node.delete-after"
 
-	if len(obj.Finalizers) == 1 && obj.Finalizers[0] == selfFinalizer {
-		// it's time to delete the underlying corev1.Node
-		if node != nil {
-			if err := r.Delete(ctx, node); err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return fail(err)
-				}
-			}
-		}
-
+	if node == nil {
 		controllerutil.RemoveFinalizer(obj, selfFinalizer)
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
+		}
+
+		return check.Completed()
+	}
+
+	taintKey := "kloudlite.io/node.deleting"
+
+	alreadyHasTaint := false
+
+	for i := range node.Spec.Taints {
+		if node.Spec.Taints[i].Key == taintKey {
+			alreadyHasTaint = true
+			break
 		}
 	}
 
-	return req.Done()
-}
-
-func (r *Reconciler) finalizeOld(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-
-	checkName := "finalizing"
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	realNode := &corev1.Node{}
-	if err := r.Get(ctx, fn.NN("", obj.Name), realNode); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(checkName, check, err.Error())
-		}
-		// INFO: as real corev1.Node not found
-		return req.Finalize()
-	}
-
-	hasUpdatedNode := false
-
-	v, ok := realNode.Annotations[deleteAfterTimestamp]
-	if !ok {
-		if realNode.Annotations == nil {
-			realNode.Annotations = make(map[string]string, 1)
-		}
-		realNode.Annotations[deleteAfterTimestamp] = time.Now().Add(1 * time.Minute).Format(time.RFC3339)
-	}
-
-	if !realNode.Spec.Unschedulable {
-		hasUpdatedNode = true
-
-		realNode.Spec.Unschedulable = true
-		taints.AddOrUpdateTaint(realNode, &corev1.Taint{
-			Key:       "kloudlite.io/node.deleting",
-			Value:     "true",
-			Effect:    "NoExecute",
-			TimeAdded: &metav1.Time{Time: time.Now()},
+	if !alreadyHasTaint {
+		node, _, err := taints.AddOrUpdateTaint(node, &corev1.Taint{
+			Key:    taintKey,
+			Value:  "true",
+			Effect: "NoExecute",
 		})
-	}
-
-	if hasUpdatedNode {
-		if err := r.Update(ctx, realNode); err != nil {
-			return req.CheckFailed(checkName, check, err.Error())
+		if err != nil {
+			return check.Failed(err)
 		}
-		return req.Done().RequeueAfter(1 * time.Minute)
+
+		node.Spec.Unschedulable = true
+		fn.MapSet(&node.Annotations, deleteAfterTimestamp, time.Now().Add(1*time.Minute).Format(time.RFC3339))
+		if err := r.Update(ctx, node); err != nil {
+			return check.Failed(err)
+		}
 	}
 
-	t, err := time.Parse(time.RFC3339, v)
+	t, err := time.Parse(time.RFC3339, node.Annotations[deleteAfterTimestamp])
 	if err != nil {
 		req.Logger.Infof("Failed to parse deleteAfterTimestamp: %v", err)
 		t = time.Now().Add(-1 * time.Minute)
 	}
 
-	if t.Before(time.Now()) {
-		controllerutil.RemoveFinalizer(realNode, nodeFinalizer)
-		if err := r.Update(ctx, realNode); err != nil {
-			return req.CheckFailed(checkName, check, err.Error())
+	if len(obj.Finalizers) == 1 && obj.Finalizers[0] == selfFinalizer && time.Now().After(t) {
+		// it's time to delete the underlying corev1.Node
+		controllerutil.RemoveFinalizer(node, selfFinalizer)
+		if err := r.Update(ctx, node); err != nil {
+			return check.Failed(err)
 		}
 
-		if err := r.Delete(ctx, realNode); err != nil {
+		if err := r.Delete(ctx, node); err != nil {
 			if !apiErrors.IsNotFound(err) {
-				return req.CheckFailed(checkName, check, err.Error())
+				return check.Failed(err)
 			}
 		}
-		if err := r.Delete(ctx, obj); err != nil {
-			return req.CheckFailed(checkName, check, err.Error())
+
+		controllerutil.RemoveFinalizer(obj, selfFinalizer)
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
 		}
-		return req.Finalize()
+		return check.Completed()
 	}
 
-	return req.Done()
+	return check.StillRunning(fmt.Errorf("node will be deleted at %s", t.Format(time.RFC3339))).NoRequeue().RequeueAfter(time.Since(t))
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -302,6 +238,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	// 		return nil
 	// 	}),
 	// )
+
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

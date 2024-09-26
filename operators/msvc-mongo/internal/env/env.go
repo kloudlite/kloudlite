@@ -6,23 +6,18 @@ import (
 
 type Env struct {
 	IsDev                   bool
-	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
+	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES" default:"5"`
 
-	ClusterInternalDNS string `env:"CLUSTER_INTERNAL_DNS"`
+	ClusterInternalDNS string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
 	GlobalVpnDNS       string `env:"GLOBAL_VPN_DNS"`
 
-	MsvcCredsSvcName        string `env:"MSVC_CREDS_SVC_NAME" required:"true"`
-	MsvcCredsSvcNamespace   string `env:"MSVC_CREDS_SVC_NAMESPACE" required:"true"`
-	MsvcCredsSvcRequestPath string `env:"MSVC_CREDS_SVC_REQUEST_PATH" required:"true"`
+	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
 	var ev Env
 	if err := env.Set(&ev); err != nil {
 		panic(err)
-	}
-	if ev.ClusterInternalDNS == "" {
-		ev.ClusterInternalDNS = "cluster.local"
 	}
 	return &ev
 }

@@ -7,12 +7,8 @@ spec:
   onApply:
     backOffLimit: 1
     podSpec:
-      tolerations: &tolerations
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/master
-          operator: Exists
-
-      nodeSelector: {{.NodeSelector | toYAML | nindent 10}}
+      tolerations: &tolerations {{.Tolerations | toYAML | nindent 8}}
+      nodeSelector: &node-selector {{.NodeSelector | toYAML | nindent 8}}
 
       resources:
         requests:
@@ -61,7 +57,7 @@ spec:
     backOffLimit: 1
     podSpec:
       tolerations: *tolerations
-      nodeSelector: {{.NodeSelector | toYAML | nindent 10}}
+      nodeSelector: *node-selector
 
       resources:
         requests:

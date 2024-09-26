@@ -2,32 +2,25 @@ package standalone_service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"time"
 
-	ct "github.com/kloudlite/operator/apis/common-types"
 	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mysql/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-mysql/internal/types"
-	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -46,19 +39,20 @@ func (r *ServiceReconciler) GetName() string {
 }
 
 const (
-	HelmReady        string = "helm-ready"
-	StsReady         string = "sts-ready"
-	AccessCredsReady string = "access-creds-ready"
-	HelmSecretReady  string = "helm-secret-ready"
-)
-
-const (
 	KeyMsvcOutput string = "msvc-output"
 )
 
-func getHelmSecretName(name string) string {
-	return "helm-" + name
-}
+const (
+	patchDefaults           string = "patch-defaults"
+	createService           string = "create-service"
+	createPVC               string = "create-pvc"
+	createAccessCredentials string = "create-access-credentials"
+	createStatefulSet       string = "create-statefulset"
+)
+
+const (
+	kloudliteMsvcComponent string = "kloudlite.io/msvc.component"
+)
 
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
@@ -97,265 +91,280 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconAccessCreds(req); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: patchDefaults, Title: "patch defaults"},
+		{Name: createService, Title: "create service"},
+		{Name: createPVC, Title: "create pvc"},
+		{Name: createAccessCredentials, Title: "create access credentials"},
+		{Name: createStatefulSet, Title: "create statefulset"},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconHelmSecret(req); !step.ShouldProceed() {
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconHelm(req); !step.ShouldProceed() {
+	if step := r.createService(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconSts(req); !step.ShouldProceed() {
+	if step := r.createPVC(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.createAccessCredentials(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.createStatefulSet(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{}, nil
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+	check := "finalizing"
+
+	req.LogPreCheck(check)
+	defer req.LogPostCheck(check)
+
+	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+		return result
+	}
+
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.NewRunningCheck(patchDefaults, req)
 
-	req.LogPreCheck(AccessCredsReady)
-	defer req.LogPostCheck(AccessCredsReady)
+	hasUpdate := false
 
-	secretName := "msvc-" + obj.Name
-	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
-	if err != nil {
-		req.Logger.Infof("secret %s does not exist yet, would be creating it ...", fn.NN(obj.Namespace, secretName).String())
+	if obj.Output.CredentialsRef.Name == "" {
+		hasUpdate = true
+		obj.Output.CredentialsRef.Name = obj.Name
 	}
 
-	if scrt == nil {
-		rootPassword := fn.CleanerNanoid(40)
-		mysqlHost := fmt.Sprintf("%s-headless.%s.svc.cluster.local:3306", obj.Name, obj.Namespace)
-		b, err := templates.Parse(
-			templates.Secret, map[string]any{
-				"name":       secretName,
-				"namespace":  obj.Namespace,
-				"labels":     obj.GetLabels(),
-				"owner-refs": obj.GetOwnerReferences(),
-				"string-data": types.MsvcOutput{
-					RootPassword: rootPassword,
-					Hosts:        mysqlHost,
-					URI:          fmt.Sprintf("mysql://%s:%s@%s/%s", "root", rootPassword, mysqlHost, "mysql"),
-					DSN:          fmt.Sprintf("mysql://%s:%s@tcp(%s:3306)/%s", "root", rootPassword, mysqlHost, "mysql"),
-				},
+	if hasUpdate {
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	return check.Completed()
+}
+
+func getKloudliteDNSHostname(obj *mysqlMsvcv1.StandaloneService) string {
+	return fmt.Sprintf("%s.svc", obj.Name)
+}
+
+func (r *ServiceReconciler) createService(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createService, req)
+
+	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
+		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+
+		fn.MapSet(&svc.Labels, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
+			svc.Labels[k] = v
+		}
+
+		svc.Spec.Ports = []corev1.ServicePort{
+			{
+				Name:     "mysql",
+				Protocol: corev1.ProtocolTCP,
+				Port:     3306,
 			},
+		}
+		svc.Spec.Selector = fn.MapMerge(fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"), map[string]string{kloudliteMsvcComponent: "statefulset"})
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Completed()
+}
+
+func (r *ServiceReconciler) createPVC(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createPVC, req)
+
+	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, pvc, func() error {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&pvc.Labels, k, v)
+		}
+		pvc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+
+		if pvc.Spec.Resources.Requests == nil {
+			pvc.Spec.Resources.Requests = corev1.ResourceList{}
+		}
+
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Completed()
+}
+
+func (r *ServiceReconciler) createAccessCredentials(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createAccessCredentials, req)
+
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&secret.Labels, k, v)
+		}
+		secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+
+		if secret.Data == nil {
+			username := "root"
+			password := fn.CleanerNanoid(40)
+
+			clusterLocalHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
+			globalVPNHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
+			kloudliteDNSHost := fmt.Sprintf("%s.%s", getKloudliteDNSHostname(obj), r.Env.KloudliteDNSSuffix)
+			port := "3306"
+
+			dbName := "mysql"
+
+			out := types.StandaloneServiceOutput{
+				Username: username,
+				Password: password,
+				Port:     port,
+				DbName:   dbName,
+
+				Host: kloudliteDNSHost,
+				URI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, kloudliteDNSHost, port, dbName),
+				DSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, kloudliteDNSHost, port, dbName),
+
+				ClusterLocalHost: clusterLocalHost,
+				ClusterLocalURI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, clusterLocalHost, port, dbName),
+				ClusterLocalDSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, clusterLocalHost, port, dbName),
+
+				GlobalVPNHost: globalVPNHost,
+				GlobalVPNURI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, globalVPNHost, port, dbName),
+				GlobalVPNDSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, globalVPNHost, port, dbName),
+			}
+
+			m, err := out.ToMap()
+			if err != nil {
+				return err
+			}
+
+			secret.StringData = m
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Completed()
+}
+
+func (r *ServiceReconciler) createStatefulSet(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(createStatefulSet, req)
+
+	pvcName := obj.Name
+
+	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
+		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+
+		selectorLabels := fn.MapMerge(
+			fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
+			map[string]string{kloudliteMsvcComponent: "statefulset"},
 		)
 
-		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+		for k, v := range selectorLabels {
+			fn.MapSet(&sts.Labels, k, v)
 		}
 
-		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
-		}
-	}
-
-	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
-		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error())
-		}
-		return req.Done().RequeueAfter(100 * time.Millisecond)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[AccessCredsReady] {
-		obj.Status.Checks[AccessCredsReady] = check
-		req.UpdateStatus()
-	}
-
-	output, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
-	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
-	}
-
-	if output == nil {
-		return req.CheckFailed(AccessCredsReady, check, "output secret is nil").Err(nil)
-	}
-
-	rApi.SetLocal(req, KeyMsvcOutput, *output)
-	return req.Next()
-}
-
-func (r *ServiceReconciler) reconHelmSecret(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(HelmSecretReady)
-	defer req.LogPostCheck(HelmSecretReady)
-
-	helmSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getHelmSecretName(obj.Name)), &corev1.Secret{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(HelmSecretReady, check, err.Error())
-		}
-		req.Logger.Infof("helm secret (%s) does not exist, will be creating now...", getHelmSecretName(obj.Name))
-		helmSecret = nil
-	}
-
-	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
-	if !ok {
-		return req.CheckFailed(HelmSecretReady, check, errors.NotInLocals(KeyMsvcOutput).Error()).Err(nil)
-	}
-
-	if helmSecret == nil {
-		if err := r.Create(
-			ctx, &corev1.Secret{
+		spec := appsv1.StatefulSetSpec{
+			Replicas: fn.New(int32(1)),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: selectorLabels,
+			},
+			ServiceName: obj.Name,
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:            getHelmSecretName(obj.Name),
-					Namespace:       obj.Namespace,
-					OwnerReferences: obj.GetOwnerReferences(),
+					Labels: selectorLabels,
 				},
-				StringData: map[string]string{
-					"mysql-root-password":        msvcOutput.RootPassword,
-					"mysql-replication-password": "",
-					"mysql-password":             "",
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: pvcName,
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName: obj.Name,
+									ReadOnly:  false,
+								},
+							},
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name: "mariadb",
+							// Image: "chainguard/mariadb@sha256:ca14ebcf9196ecfbea06afb6f46128b48f962bf6372b13b349275fad11c47954",
+							Image: "mariadb",
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      pvcName,
+									MountPath: "/var/lib/mysql",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "MARIADB_ROOT_PASSWORD",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: obj.Output.CredentialsRef.Name,
+											},
+											Key: "PASSWORD",
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
-		); err != nil {
-			return req.CheckFailed(HelmSecretReady, check, err.Error())
 		}
-	}
 
-	check.Status = true
-	if check != obj.Status.Checks[HelmSecretReady] {
-		obj.Status.Checks[HelmSecretReady] = check
-		req.UpdateStatus()
-	}
-	return req.Next()
-}
+		if sts.GetGeneration() > 0 {
+			// resource exists, and is being updated now
+			// INFO: k8s statefulsets forbids update to spec fields, other than "replicas", "template", "ordinals", "updateStrategy",  "persistentVolumeClaimRetentionPolicy" and "minReadySeconds",
 
-func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(HelmReady)
-	defer req.LogPostCheck(HelmReady)
-
-	helmRes, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMysqlType),
-	)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+			sts.Spec.Replicas = spec.Replicas
+			sts.Spec.Template = spec.Template
+		} else {
+			sts.Spec = spec
 		}
-		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+
+		return nil
+	}); err != nil {
+		return check.Failed(err)
 	}
 
-	b, err := templates.Parse(
-		templates.MySqlStandalone, map[string]any{
-			"obj":        obj,
-			"owner-refs": obj.GetOwnerReferences(),
-			"storage-class": func() string {
-				if obj.Spec.Resources.Storage.StorageClass != "" {
-					return obj.Spec.Resources.Storage.StorageClass
-				}
-				return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Ext4)
-			}(),
-			"existing-secret": getHelmSecretName(obj.Name),
-		},
-	)
-
-	if err != nil {
-		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	if sts.Status.Replicas > 0 && sts.Status.ReadyReplicas == sts.Status.Replicas {
+		return check.Completed()
 	}
 
-	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-	}
-
-	cds, err := conditions.FromObject(helmRes)
-	if err != nil {
-		return req.CheckFailed(HelmReady, check, err.Error())
-	}
-
-	deployedC := meta.FindStatusCondition(cds, "Deployed")
-	if deployedC == nil {
-		return req.Done()
-	}
-
-	if deployedC.Status == metav1.ConditionFalse {
-		return req.CheckFailed(HelmReady, check, deployedC.Message)
-	}
-
-	if deployedC.Status == metav1.ConditionTrue {
-		check.Status = true
-	}
-
-	if check != obj.Status.Checks[HelmReady] {
-		obj.Status.Checks[HelmReady] = check
-		req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-	var stsList appsv1.StatefulSetList
-
-	req.LogPreCheck(StsReady)
-	defer req.LogPostCheck(StsReady)
-
-	if err := r.List(
-		ctx, &stsList, &client.ListOptions{
-			LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.MsvcNameKey: obj.Name}),
-			Namespace:     obj.Namespace,
-		},
-	); err != nil {
-		return req.CheckFailed(StsReady, check, err.Error())
-	}
-
-	for i := range stsList.Items {
-		item := stsList.Items[i]
-		if item.Status.AvailableReplicas != item.Status.Replicas {
-			check.Status = false
-
-			var podsList corev1.PodList
-			if err := r.List(
-				ctx, &podsList, &client.ListOptions{
-					LabelSelector: labels.SelectorFromValidatedSet(
-						map[string]string{
-							constants.MsvcNameKey: obj.Name,
-						},
-					),
-				},
-			); err != nil {
-				return req.CheckFailed(StsReady, check, err.Error())
-			}
-
-			messages := rApi.GetMessagesFromPods(podsList.Items...)
-			if len(messages) > 0 {
-				b, err := json.Marshal(messages)
-				if err != nil {
-					return req.CheckFailed(StsReady, check, err.Error())
-				}
-				return req.CheckFailed(StsReady, check, string(b))
-			}
-			return req.CheckFailed(StsReady, check, "waiting for pod starting ...")
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[StsReady] {
-		obj.Status.Checks[StsReady] = check
-		req.UpdateStatus()
-	}
-
-	return req.Next()
+	return check.StillRunning(fmt.Errorf("waiting for statefulset pods to start"))
 }
 
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -367,7 +376,9 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&mysqlMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
-	builder.Owns(fn.NewUnstructured(constants.HelmMysqlType))
+	builder.Owns(&appsv1.StatefulSet{})
+	builder.Owns(&corev1.PersistentVolumeClaim{})
+	builder.Owns(&corev1.Service{})
 
 	builder.Watches(
 		&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(

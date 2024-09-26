@@ -50,15 +50,24 @@ spec:
             - sh
             - -c
             - |
-              set -e
               cat > /etc/wireguard/wg0.conf <<EOF
               [Interface]
-
               PostUp = ip -4 address add {{.GatewayInternalDNSNameserver}}/32 dev wg0
               PostDown = ip -4 address add {{.GatewayInternalDNSNameserver}}/32 dev wg0
               EOF
               wg-quick down wg0 || echo "starting wg0"
               wg-quick up wg0
+
+              while true; do
+                ip -4 addr | grep -i "{{.GatewayInternalDNSNameserver}}"
+                exit_code=$?
+
+                [ $exit_code -eq 0 ] && break
+                echo "waiting for wireguard to come up"
+                sleep 1
+              done
+          env:
+            {{include "pod-ip" . | nindent 12}}
           resources:
             requests:
               cpu: 50m
@@ -70,6 +79,8 @@ spec:
             capabilities:
               add:
                 - NET_ADMIN
+              drop:
+                - all
       containers:
       {{- /* # mutation webhook container */}}
       - name: webhook-server
@@ -85,7 +96,7 @@ spec:
             trap "eval kill -9 $pid || exit 0" EXIT SIGINT SIGTERM
             eval wait $pid
         {{ else }}
-        image: {{.WebhookServerImage}}
+        image: {{.ImageWebhookServer}}
         imagePullPolicy: Always
         env: 
           {{include "pod-ip" . | nindent 10}}
@@ -120,16 +131,27 @@ spec:
           - sh
           - -c
           - |+
-            (socat -dd tcp4-listen:8080,fork,reuseaddr tcp4:baby.default.svc.cluster.local:8090 2>&1 | grep -iE --line-buffered 'listening|exiting') &
+            (socat -dd tcp4-listen:8080,fork,reuseaddr tcp4:baby.device.local:8090 2>&1 | grep -iE --line-buffered 'listening|exiting') &
             pid="$pid $!"
 
             trap "eval kill -9 $pid || exit 0" EXIT SIGINT SIGTERM
             eval wait $pid
         {{- else }}
-        image: {{.GatewayAdminAPIImage}}
-        args:
+        image: {{.ImageIPManager}}
+        args: 
           - --addr
           - $(POD_IP):{{$gatewayAdminHttpPort}}
+        {{- /* command: */}}
+        {{- /*   - sh */}}
+        {{- /*   - -c */}}
+        {{- /*   - |+ */}}
+        {{- /*     while true; do */}}
+        {{- /*       ip -4 addr | grep -i $(POD_IP) */}}
+        {{- /*       exit_code=$? */}}
+        {{- /*       [ $exit_code -eq 0 ] && break */}}
+        {{- /*       sleep 1 */}}
+        {{- /*     done */}}
+        {{- /*     /ip-manager --addr $(POD_IP):{{$gatewayAdminHttpPort}} */}}
         {{- end }}
         imagePullPolicy: Always
         env:
@@ -192,13 +214,13 @@ spec:
             add:
               - NET_ADMIN
 
-      - name: service-bind-controller
+      - name: ip-binding-controller
         imagePullPolicy: Always
-        image: "ghcr.io/kloudlite/operator/networking/cmd/service-binding-controller:v1.0.7-nightly"
+        image: "{{.ImageIPBindingController}}"
         args:
-            - --health-probe-bind-address=$(POD_IP):8081
-            - --metrics-bind-address=$(POD_IP):9090
-            - --leader-elect
+          - --health-probe-bind-address=$(POD_IP):8081
+          - --metrics-bind-address=$(POD_IP):9090
+          - --leader-elect
         resources:
           requests:
             cpu: 100m
@@ -214,7 +236,6 @@ spec:
             value: "5"
 
           - name: GATEWAY_ADMIN_API_ADDR
-            {{- /* value: {{$gatewayAdminApiAddr}} */}}
             value: http://$(POD_IP):{{$gatewayAdminHttpPort}}
 
           - name: SERVICE_DNS_HTTP_ADDR
@@ -226,12 +247,13 @@ spec:
         securityContext:
           capabilities:
             add:
-              - NET_BIND_SERVICE
+              {{- /* - NET_BIND_SERVICE */}}
+              - NET_RAW
             drop:
               - all
 
       - name: dns
-        image: "ghcr.io/kloudlite/operator/networking/cmd/dns:v1.0.7-nightly"
+        image: "{{.ImageDNS}}"
         imagePullPolicy: Always
         args:
           - --wg-dns-addr
@@ -283,12 +305,26 @@ spec:
             {{- /* value: {{$gatewayAdminApiAddr}} */}}
             value: http://$(POD_IP):{{$gatewayAdminHttpPort}}
 
-      - name: kubectl-proxy
-        image: ghcr.io/kloudlite/api/cmd/pod-logs-proxy:v1.0.7-nightly
+      - name: logs-proxy
+        image: "{{.ImageLogsProxy}}"
         imagePullPolicy: Always
-        args:
-          - --addr
-          - {{.GatewayGlobalIP}}:{{$kubectlProxyHttpPort}}
+        command:
+          - sh
+          - -c
+          - |
+            while true; do
+              ip -4 addr | grep -i "{{.GatewayGlobalIP}}"
+              exit_code=$?
+
+              [ $exit_code -eq 0 ] && break
+              echo "waiting for ip-manager to be ready"
+              sleep 1
+            done
+
+            $EXECUTABLE --addr {{.GatewayGlobalIP}}:{{$kubectlProxyHttpPort}}
+        {{- /* args: */}}
+        {{- /*   - --addr */}}
+        {{- /*   - {{.GatewayGlobalIP}}:{{$kubectlProxyHttpPort}} */}}
         resources:
           limits:
             cpu: 100m

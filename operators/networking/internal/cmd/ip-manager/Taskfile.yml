@@ -15,12 +15,18 @@ tasks:
     cmds:
       - task: go:build
         vars:
+          GOARCH: "{{.GOARCH}}"
           Out: "./bin/{{.binary}}-{{.GOARCH}}"
 
   run:
+    vars:
+      GOARCH:
+        sh: go env GOARCH
     cmds:
       - task: build
-      - ./bin/{{.binary}} --addr :8090 --dev
+        vars:
+          GOARCH: "{{.GOARCH}}"
+      - ./bin/{{.binary}}-{{.GOARCH}} --addr :8090 --dev
 
   debug:
     dotenv: 
@@ -45,6 +51,7 @@ tasks:
       - task: build
         vars:
           GOARCH: amd64
+
       - task: build
         vars:
           GOARCH: arm64

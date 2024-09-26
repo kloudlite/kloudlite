@@ -441,7 +441,7 @@ func (r *Request[T]) PostReconcile() {
 	m := make(map[string]string, len(r.Object.GetAnnotations()))
 	maps.Copy(m, r.Object.GetAnnotations())
 
-	m[constants.AnnotationResourceReady] = func() string {
+	m[constants.KloudliteOperatorResourceReadyAnnotation] = func() string {
 		readyMsg := strconv.FormatBool(isReady)
 
 		generationMsg := fmt.Sprintf("%d", r.Object.GetStatus().LastReadyGeneration)
@@ -457,7 +457,7 @@ func (r *Request[T]) PostReconcile() {
 		return fmt.Sprintf("%s (%s%s)", readyMsg, generationMsg, deletionMsg)
 	}()
 
-	m["kloudlite.io/checks"] = func() string {
+	m[constants.KloudliteOperatorChecksAnnotation] = func() string {
 		checks := make([]string, 0, len(r.Object.GetStatus().Checks))
 		currentCheck := ""
 		keys := fn.MapKeys(r.Object.GetStatus().Checks)
@@ -542,10 +542,12 @@ func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
 	r.resourceRefs = append(r.resourceRefs, refs...)
 }
 
+// Deprecated: CleanupOwnedResources is deprecated
+// use CleanupOwnedResourcesV2 instead
 func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 	ctx, obj := r.Context(), r.Object
 
-	checkName := "cleanupLogic"
+	checkName := "cleanup"
 	check := Check{Generation: r.Object.GetGeneration()}
 
 	resources := r.Object.GetStatus().Resources
@@ -577,6 +579,57 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 		}
 	}
 	return r.Next()
+}
+
+func (r *Request[T]) CleanupOwnedResourcesV2(check *checkWrapper[T]) stepResult.Result {
+	resources := r.Object.GetStatus().Resources
+	objects := make([]client.Object, 0, len(resources))
+	for i := range resources {
+		objects = append(objects, &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": resources[i].APIVersion,
+			"kind":       resources[i].Kind,
+			"metadata": map[string]any{
+				"name":      resources[i].Name,
+				"namespace": resources[i].Namespace,
+			},
+		}})
+	}
+
+	if err := fn.DeleteAndWait(r.Context(), r.Logger, r.client, objects...); err != nil {
+		return check.Failed(err).RequeueAfter(2 * time.Second)
+	}
+
+	return check.Completed()
+}
+
+/*
+INFO: this should only be used for very specific cases, where there is no other way to cleanup owned resources
+Like, when deleting ManagedService
+  - all managed resources should be deleted, but since owner is already getting deleted, there is no point in their proper cleanup
+*/
+func (r *Request[T]) ForceCleanupOwnedResources(check *checkWrapper[T]) stepResult.Result {
+	ctx := r.Context()
+	resources := r.Object.GetStatus().Resources
+
+	objects := make([]client.Object, 0, len(resources))
+
+	for i := range resources {
+		res := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": resources[i].APIVersion,
+			"kind":       resources[i].Kind,
+			"metadata": map[string]any{
+				"name":      resources[i].Name,
+				"namespace": resources[i].Namespace,
+			},
+		}}
+		objects = append(objects, res)
+	}
+
+	if err := fn.ForceDelete(ctx, r.Logger, r.client, objects...); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Completed()
 }
 
 func ParseResourceRef(obj client.Object) ResourceRef {

@@ -14,17 +14,22 @@ import (
 
 func genGatewayWgPodPeer(podbinding *networkingv1.PodBinding) string {
 	b := new(bytes.Buffer)
+	podComment := fmt.Sprintf("\n# podbinding: %s/%s", podbinding.GetNamespace(), podbinding.GetName())
+	if podbinding.Spec.PodRef != nil {
+		podComment += fmt.Sprintf("\n# pod: %s/%s", podbinding.Spec.PodRef.Namespace, podbinding.Spec.PodRef.Name)
+	}
+
 	fmt.Fprintf(b, `
-[Peer]
+[Peer]%s
 PublicKey = %s
 AllowedIPs = %s/32
-`, podbinding.Spec.WgPublicKey, podbinding.Spec.GlobalIP)
+`, podComment, podbinding.Spec.WgPublicKey, podbinding.Spec.GlobalIP)
 
 	if podbinding.Spec.PodIP != nil {
-		fmt.Fprintf(b, `
+		fmt.Fprintf(b, strings.TrimSpace(`
 Endpoint = %s:51820
 PersistentKeepalive = 25
-`, *podbinding.Spec.PodIP)
+`), *podbinding.Spec.PodIP)
 	}
 
 	return strings.TrimSpace(b.String())
@@ -53,37 +58,51 @@ PrivateKey = %s
 		m.Env.GatewayWGPrivateKey,
 		strings.Join(postUps, "\n"),
 		strings.Join(postDowns, "\n"),
-		strings.Join(fn.MapValues(m.podPeers), "\n"),
+		strings.Join(fn.MapValues(m.podPeers), "\n\n"),
 		m.gatewayWgExtraPeers,
 	)
 }
 
 func (m *Manager) RestartWireguard() error {
+	t := TimerStart(m.logger, "generating wg config")
 	cfg := m.genGatewayWGConfig()
 	if err := os.WriteFile(fmt.Sprintf("%s/wg0.conf", m.Env.WireguardConfigDir), []byte(cfg), 0o644); err != nil {
 		return err
 	}
+	t.Stop()
 
 	if m.Env.IsDev {
-		m.logger.Infof("Restarting Wireguard")
+		m.logger.Debug("Restarting Wireguard")
 		return nil
 	}
 
+	t.Reset("wg-quick down wg0")
 	cmd := exec.Command("wg-quick", "down", "wg0")
+	b := new(bytes.Buffer)
+	cmd.Stdout = b
+	cmd.Stderr = b
 	if err := cmd.Run(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() != 1 { // 1 is the error code for "interface not found"
+				m.logger.Error(b.String(), "while", "running wg-quick down wg0")
 				return err
 			}
 		}
 	}
+	t.Stop()
 
+	t.Reset("wg-quick up wg0")
 	cmd = exec.Command("wg-quick", "up", "wg0")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	b2 := new(bytes.Buffer)
+	cmd.Stdout = b2
+	cmd.Stderr = b2
 	if err := cmd.Run(); err != nil {
+		m.logger.Error(b.String(), "while", "running wg-quick up wg0")
 		return err
 	}
+	t.Stop()
+
+	m.logger.Info("wireguard restart successfull")
 	return nil
 }
 
@@ -94,18 +113,24 @@ func (m *Manager) RestartWireguardInline() error {
 	}
 
 	if m.Env.IsDev {
-		m.logger.Infof("Restarting Wireguard")
+		m.logger.Debug("Restarting Wireguard")
 		return nil
 	}
 
 	cmd := exec.Command("sh", "-c", "wg syncconf wg0 <(wg-quick strip wg0)")
+	b := new(bytes.Buffer)
+	cmd.Stdout = b
+	cmd.Stderr = b
 	if err := cmd.Run(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() != 1 { // 1 is the error code for "interface not found"
+				log.Error(b.String(), "while", "running wg-quick syncconf wg0 <(wg-quick strip wg0)")
 				return err
 			}
 		}
 	}
+
+	m.logger.Info("wireguard restart successfull")
 	return nil
 }
 

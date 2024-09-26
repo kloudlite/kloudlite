@@ -3,13 +3,12 @@ package manager
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
-
-	"github.com/charmbracelet/log"
+	"time"
 
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
-	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/iputils"
 	json_patch "github.com/kloudlite/operator/pkg/json-patch"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -77,8 +76,14 @@ func (m *Manager) EnsureIPManagerConfigExists(ctx context.Context) (podIPCounter
 	return podIPCounter, svcIPCounter, nil
 }
 
-func (m *Manager) CreatePodBindings(ctx context.Context, count int) error {
+type RequestContext struct {
+	context.Context
+	logger *slog.Logger
+}
+
+func (m *Manager) CreatePodBindings(ctx RequestContext, count int) error {
 	podIPCounter, _, err := m.EnsureIPManagerConfigExists(ctx)
+	ctx.logger.Info("creating pod bindings", "pod-ip-counter", podIPCounter, "creation-count", count)
 	if err != nil {
 		return err
 	}
@@ -94,10 +99,12 @@ func (m *Manager) CreatePodBindings(ctx context.Context, count int) error {
 			return err
 		}
 
+		ctx.logger.Info("creating pod binding", "ip", s, "ip-offset", m.podIPOffset+podIPCounter+i+1)
 		pb := &networkingv1.PodBinding{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   sanitizePodIP(s),
-				Labels: unReservedPodsLabels,
+				Name:      sanitizePodIP(s),
+				Namespace: m.Env.IPManagerConfigNamespace,
+				Labels:    unReservedPodsLabels,
 			},
 			Spec: networkingv1.PodBindingSpec{
 				GlobalIP:     s,
@@ -109,19 +116,25 @@ func (m *Manager) CreatePodBindings(ctx context.Context, count int) error {
 		}
 		pb.EnsureGVK()
 		pb.SetAnnotations(pb.GetEnsuredAnnotations())
+		t := TimerStart(ctx.logger, "creating pod binding")
 		if err := m.kcli.Create(ctx, pb); err != nil {
 			if !apiErrors.IsAlreadyExists(err) {
 				return err
 			}
 			m.logger.Warn("pod binding already exists", "ip", s)
+			<-time.After(500 * time.Millisecond)
+			continue
 		}
+		t.Stop()
 
 		m.podPeers[pb.Spec.GlobalIP] = genGatewayWgPodPeer(pb)
 	}
 
-	if err := m.RestartWireguard(); err != nil {
-		return NewError(err, "while restarting wireguard")
+	t := TimerStart(ctx.logger, "restarting wireguard")
+	if err := m.RestartWireguardInline(); err != nil {
+		ctx.logger.Error("while restarting wireguard", "err", err)
 	}
+	t.Stop()
 
 	d := json_patch.Document{}
 	d.Add("replace", "/data/counter_pod_ip", strconv.Itoa(podIPCounter+count))
@@ -130,14 +143,19 @@ func (m *Manager) CreatePodBindings(ctx context.Context, count int) error {
 		return err
 	}
 
-	if _, err := m.kclientset.CoreV1().ConfigMaps(m.Env.IPManagerConfigNamespace).Patch(ctx, m.Env.IPManagerConfigName, types.JSONPatchType, b, metav1.PatchOptions{}); err != nil {
+	ctx2, cf := context.WithTimeout(context.TODO(), 5*time.Second)
+	defer cf()
+
+	t.Reset("patching configmap")
+	if _, err := m.kclientset.CoreV1().ConfigMaps(m.Env.IPManagerConfigNamespace).Patch(ctx2, m.Env.IPManagerConfigName, types.JSONPatchType, b, metav1.PatchOptions{}); err != nil {
 		return NewError(err, "patching configmap")
 	}
+	t.Stop()
 
 	return nil
 }
 
-func (m *Manager) PickFreePodBinding(ctx context.Context) (*networkingv1.PodBinding, error) {
+func (m *Manager) PickFreePodBinding(ctx context.Context, createIfNone bool) (*networkingv1.PodBinding, error) {
 	var pblist networkingv1.PodBindingList
 	if err := m.kcli.List(ctx, &pblist, &client.ListOptions{
 		Limit:         1,
@@ -146,59 +164,43 @@ func (m *Manager) PickFreePodBinding(ctx context.Context) (*networkingv1.PodBind
 		return nil, NewError(err, "k8s list pod bindings")
 	}
 
-	if len(pblist.Items) == 1 {
+	if len(pblist.Items) >= 1 {
 		return &pblist.Items[0], nil
 	}
 
-	if err := m.CreatePodBindings(ctx, 15); err != nil {
-		return nil, NewError(err, "creating pod bindings")
-	}
+	go func() {
+		c2, cf := context.WithTimeout(context.TODO(), 30*time.Second)
+		defer cf()
+		if err := m.CreatePodBindings(RequestContext{c2, m.logger}, 15); err != nil {
+			m.logger.Error("creating pod bindings", "err", err)
+		}
+	}()
 
-	return m.PickFreePodBinding(ctx)
+	<-time.After(100 * time.Millisecond)
+	return m.PickFreePodBinding(ctx, false)
 }
 
-func (m *Manager) RegisterPod(ctx context.Context) (*RegisterPodResult, error) {
+func (m *Manager) DeregisterPod(ctx context.Context, podNamespace, podName string) error {
 	m.Lock()
 	defer m.Unlock()
 
-	pb, err := m.PickFreePodBinding(ctx)
-	if err != nil {
-		return nil, NewError(err, "picking free pod binding")
-	}
+	reservationToken := fmt.Sprintf("%s.%s", podNamespace, podName)
 
-	reservationToken := fn.CleanerNanoid(40)
-
-	lb := pb.GetLabels()
-	if lb == nil {
-		lb = make(map[string]string, 1)
-	}
-
-	lb[podReservationLabel] = reservationToken
-	pb.SetLabels(lb)
-
-	if err := m.kcli.Update(ctx, pb); err != nil {
-		return nil, NewError(err, "updating pod binding")
-	}
-
-	return &RegisterPodResult{
-		PodBindingIP:     pb.Spec.GlobalIP,
-		ReservationToken: reservationToken,
-	}, nil
-}
-
-func (m *Manager) DeregisterPod(ctx context.Context, podBindingIP string, reservationToken string) error {
-	m.Lock()
-	defer m.Unlock()
-
-	var pb networkingv1.PodBinding
-	if err := m.kcli.Get(ctx, fn.NN("", sanitizePodIP(podBindingIP)), &pb); err != nil {
+	var pblist networkingv1.PodBindingList
+	if err := m.kcli.List(ctx, &pblist, &client.ListOptions{
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+			podReservationLabel: reservationToken,
+		}),
+	}); err != nil {
 		return NewError(err, "k8s get pod binding")
 	}
 
-	if pb.GetLabels()[podReservationLabel] != reservationToken {
-		log.Warn("pod reservation token mismatch", "ip", podBindingIP, "reservation-token", reservationToken)
+	if len(pblist.Items) == 0 {
+		m.logger.Info("pod binding not found", "reservation-token", reservationToken)
 		return nil
 	}
+
+	pb := pblist.Items[0]
 
 	pb.Spec.PodRef = nil
 	lb := pb.GetLabels()
@@ -208,40 +210,52 @@ func (m *Manager) DeregisterPod(ctx context.Context, podBindingIP string, reserv
 	}
 	pb.SetAnnotations(pb.GetEnsuredAnnotations())
 
+	// smp := client.MergeFrom(&pb)
 	if err := m.kcli.Update(ctx, &pb); err != nil {
 		return NewError(err, "k8s update pod binding")
 	}
 
-	delete(m.podPeers, pb.Spec.GlobalIP)
-	if err := m.RestartWireguardInline(); err != nil {
-		return NewError(err, "while restarting wireguard")
-	}
-
+	// if err := m.kcli.Patch(ctx, &pb, smp); err != nil {
+	// 	return NewError(err, "k8s update pod binding")
+	// }
 	return nil
 }
 
 type WgConfigForReservedPodArgs struct {
-	ReservationToken string
-	PodNamespace     string
-	PodName          string
-	PodIP            string
+	PodNamespace string
+	PodName      string
+	PodIP        string
 }
 
 func (m *Manager) GetWgConfigForReservedPod(ctx context.Context, args WgConfigForReservedPodArgs) ([]byte, error) {
+	reservationToken := fmt.Sprintf("%s.%s", args.PodNamespace, args.PodName)
+	logger := m.logger.With("pod", reservationToken)
+
+	m.Lock()
+	defer m.Unlock()
+
+	t := TimerStart(logger, "picking pod-binding")
 	var pblist networkingv1.PodBindingList
 	if err := m.kcli.List(ctx, &pblist, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-			podReservationLabel: args.ReservationToken,
-		}),
+		Limit:         1,
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{podReservationLabel: reservationToken}),
 	}); err != nil {
 		return nil, NewError(err, "k8s list pod bindings")
 	}
 
-	if len(pblist.Items) != 1 {
-		return nil, NewError(fmt.Errorf("expected 1 pod binding, got %d", len(pblist.Items)), "k8s list pod bindings")
+	var pb *networkingv1.PodBinding
+	var err error
+
+	if len(pblist.Items) == 1 {
+		pb = &pblist.Items[0]
+	} else {
+		pb, err = m.PickFreePodBinding(ctx, true)
+		if err != nil {
+			return nil, NewError(err, "picking free pod binding")
+		}
 	}
 
-	pb := pblist.Items[0]
+	t.Stop()
 
 	wgconfig := fmt.Sprintf(`[Interface]
 ListenPort = 51820
@@ -270,14 +284,19 @@ AllowedIPs = %s
 		Namespace: args.PodNamespace,
 	}
 	pb.Spec.PodIP = &args.PodIP
+	lb := pb.GetLabels()
+	if lb == nil {
+		lb = make(map[string]string, 1)
+	}
+	lb[podReservationLabel] = reservationToken
+	pb.SetLabels(lb)
+
 	pb.SetAnnotations(pb.GetEnsuredAnnotations())
-	if err := m.kcli.Update(ctx, &pb); err != nil {
+
+	if err := m.kcli.Update(ctx, pb); err != nil {
 		return nil, NewError(err, "updating pod binding")
 	}
 
-	m.podPeers[pb.Spec.GlobalIP] = genGatewayWgPodPeer(&pb)
-	if err := m.RestartWireguardInline(); err != nil {
-		return nil, NewError(err, "while restarting wireguard")
-	}
+	m.podPeers[pb.Spec.GlobalIP] = genGatewayWgPodPeer(pb)
 	return []byte(wgconfig), nil
 }

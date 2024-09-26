@@ -21,7 +21,6 @@ import (
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
-	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -62,7 +61,7 @@ const (
 	DispatchToKloudliteInfra string = "kloudlite.io/dispatch-to-infra"
 )
 
-func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstructured) error {
+func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, obj *unstructured.Unstructured) error {
 	mctx, cf := func() (context.Context, context.CancelFunc) {
 		if r.Env.IsDev {
 			return context.WithCancel(context.TODO())
@@ -84,8 +83,8 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 	switch gvk.String() {
 	case ProjectGVK.String(), AppGVK.String(), ExternalAppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), ConfigmapGVK.String():
 		{
-			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
+			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, r.logger}, t.ResourceUpdate{
+				Object: obj,
 			})
 		}
 
@@ -93,22 +92,22 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 		{
 			// we can also have BYOKCluster kubeconfig secret, which needs to be send to `kloudlite-infra`
 			if v, ok := obj.GetAnnotations()[DispatchToKloudliteInfra]; ok && v == "true" {
-				return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-					Object: obj.Object,
+				return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+					Object: obj,
 				})
 			}
 
-			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
+			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
 			})
 		}
 
-	case BlueprintGVK.String():
-		{
-			return r.MsgSender.DispatchIotConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
+	// case BlueprintGVK.String():
+	// 	{
+	// 		return r.MsgSender.DispatchIotConsoleResourceUpdates(mctx, t.ResourceUpdate{
+	// 			Object: obj.Object,
+	// 		})
+	// 	}
 
 	case ManagedResourceGVK.String():
 		{
@@ -127,8 +126,8 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyManagedResSecret] = mresSecret
 			}
 
-			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
+			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
 			})
 		}
 
@@ -149,8 +148,8 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyProjectManagedSvcSecret] = pmsvcSecret
 			}
 
-			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
+			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
 			})
 		}
 
@@ -162,7 +161,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			cmsvcSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), cmsvcSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, cmsvc.Output.CredentialsRef.Name), cmsvcSecret); err != nil {
 				r.logger.Infof("cmsvc secret for service (%s), not found", obj.GetName())
 				cmsvcSecret = nil
 			}
@@ -171,68 +170,68 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyClusterManagedSvcSecret] = cmsvcSecret
 			}
 
-			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
+			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
 			})
 		}
 
-	case BuildRunGVK.String():
-		{
-			return r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
+	// case BuildRunGVK.String():
+	// {
+	// 	return r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
+	// 		Object: obj.Object,
+	// 	})
+	// }
 
-	case DeviceGVK.String():
-		{
-			deviceConfig := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
-				r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
-				deviceConfig = nil
-			}
-
-			if deviceConfig != nil {
-				obj.Object[t.KeyVPNDeviceConfig] = map[string]any{
-					"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
-					"encoding": "base64",
-				}
-			}
-
-			if obj.GetNamespace() != r.Env.DeviceNamespace {
-				r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
-				return nil
-			}
-
-			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
-
-	case GlobalVPNGVK.String():
-		{
-			var gvpn wgv1.GlobalVPN
-			if err := unmarshalUnstructured(obj, &gvpn); err != nil {
-				return err
-			}
-
-			s, err := rApi.Get(ctx, r.Client, fn.NN(gvpn.Spec.WgRef.Namespace, gvpn.Spec.WgRef.Name), &corev1.Secret{})
-			if err != nil {
-				return err
-			}
-
-			wp, err := fn.ParseFromSecret[wgv1.WgParams](s)
-			if err != nil {
-				return err
-			}
-
-			if wp != nil {
-				obj.Object[t.KeyGlobalVPNWgParams] = wp
-			}
-
-			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
+	// case DeviceGVK.String():
+	// 	{
+	// 		deviceConfig := &corev1.Secret{}
+	// 		if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
+	// 			r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
+	// 			deviceConfig = nil
+	// 		}
+	//
+	// 		if deviceConfig != nil {
+	// 			obj.Object[t.KeyVPNDeviceConfig] = map[string]any{
+	// 				"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
+	// 				"encoding": "base64",
+	// 			}
+	// 		}
+	//
+	// 		// if obj.GetNamespace() != r.Env.DeviceNamespace {
+	// 		// 	r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
+	// 		// 	return nil
+	// 		// }
+	//
+	// 		return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+	// 			Object: obj.Object,
+	// 		})
+	// 	}
+	//
+	// case GlobalVPNGVK.String():
+	// 	{
+	// 		var gvpn wgv1.GlobalVPN
+	// 		if err := unmarshalUnstructured(obj, &gvpn); err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		s, err := rApi.Get(ctx, r.Client, fn.NN(gvpn.Spec.WgRef.Namespace, gvpn.Spec.WgRef.Name), &corev1.Secret{})
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		wp, err := fn.ParseFromSecret[wgv1.WgParams](s)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		if wp != nil {
+	// 			obj.Object[t.KeyGlobalVPNWgParams] = wp
+	// 		}
+	//
+	// 		return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+	// 			Object: obj.Object,
+	// 		})
+	// 	}
 
 	case GatewayGVK.String():
 		{
@@ -241,7 +240,14 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				return err
 			}
 
-			s, err := rApi.Get(ctx, r.Client, fn.NN(gateway.Spec.WireguardKeysRef.Namespace, gateway.Spec.WireguardKeysRef.Name), &corev1.Secret{})
+			if obj.GetDeletionTimestamp() != nil {
+				// INFO: when gateway is being deleted, we should just let it be deleted
+				return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+					Object: obj,
+				})
+			}
+
+			s, err := rApi.Get(ctx, r.Client, fn.NN(gateway.Spec.TargetNamespace, gateway.Spec.WireguardKeysRef.Name), &corev1.Secret{})
 			if err != nil {
 				return err
 			}
@@ -255,18 +261,23 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyGatewayWgParams] = wp
 			}
 
-			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
+			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
 			})
 		}
 
-	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
+	case ServiceBindingGVK.String():
+		{
+			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
+			})
+		}
+
+	case /*NodePoolGVK.String(),*/ PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
 		{
 			// dispatch to infra
-			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				// ClusterName: r.Env.ClusterName,
-				// AccountName: r.Env.AccountName,
-				Object: obj.Object,
+			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
 			})
 		}
 
@@ -289,7 +300,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 			obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleted
 		}
 
-		if err := r.dispatchEvent(ctx, obj); err != nil {
+		if err := r.dispatchEvent(ctx, logger, obj); err != nil {
 			if !errors.Is(err, ErrNoMsgSender) {
 				return ctrl.Result{}, err
 			}
@@ -314,7 +325,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 	}
 
 	obj.Object[t.ResourceStatusKey] = t.ResourceStatusUpdated
-	if err := r.dispatchEvent(ctx, obj); err != nil {
+	if err := r.dispatchEvent(ctx, logger, obj); err != nil {
 		if !errors.Is(err, ErrNoMsgSender) {
 			return ctrl.Result{}, err
 		}
@@ -390,15 +401,22 @@ var (
 	ExternalAppGVK = newGVK("crds.kloudlite.io/v1", "ExternalApp")
 
 	// ManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ManagedService")
-	BlueprintGVK             = newGVK("crds.kloudlite.io/v1", "Blueprint")
-	ManagedResourceGVK       = newGVK("crds.kloudlite.io/v1", "ManagedResource")
-	EnvironmentGVK           = newGVK("crds.kloudlite.io/v1", "Environment")
-	RouterGVK                = newGVK("crds.kloudlite.io/v1", "Router")
-	NodePoolGVK              = newGVK("clusters.kloudlite.io/v1", "NodePool")
-	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
-	GlobalVPNGVK             = newGVK("wireguard.kloudlite.io/v1", "GlobalVPN")
-	GatewayGVK               = newGVK("networking.kloudlite.io/v1", "Gateway")
-	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
+	// BlueprintGVK       = newGVK("crds.kloudlite.io/v1", "Blueprint")
+
+	ManagedResourceGVK = newGVK("crds.kloudlite.io/v1", "ManagedResource")
+	EnvironmentGVK     = newGVK("crds.kloudlite.io/v1", "Environment")
+	RouterGVK          = newGVK("crds.kloudlite.io/v1", "Router")
+
+	// NodePoolGVK        = newGVK("clusters.kloudlite.io/v1", "NodePool")
+
+	// DeviceGVK          = newGVK("wireguard.kloudlite.io/v1", "Device")
+	// GlobalVPNGVK       = newGVK("wireguard.kloudlite.io/v1", "GlobalVPN")
+
+	GatewayGVK        = newGVK("networking.kloudlite.io/v1", "Gateway")
+	ServiceBindingGVK = newGVK("networking.kloudlite.io/v1", "ServiceBinding")
+
+	// BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
+
 	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
 	ProjectManageServiceGVK  = newGVK("crds.kloudlite.io/v1", "ProjectManagedService")
@@ -431,15 +449,18 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		EnvironmentGVK,
 		RouterGVK,
 
-		GlobalVPNGVK,
-		GatewayGVK,
-		BuildRunGVK,
+		// GlobalVPNGVK,
+		// BuildRunGVK,
 
-		DeviceGVK,
+		// DeviceGVK,
+
+		// networking resources
+		GatewayGVK,
+		ServiceBindingGVK,
 
 		ClusterManagedServiceGVK,
 		ProjectManageServiceGVK,
-		NodePoolGVK,
+		// NodePoolGVK,
 		HelmChartGVK,
 
 		// native resources

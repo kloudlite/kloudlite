@@ -48,10 +48,14 @@ resources:
 - bases/clusters.kloudlite.io_virtualmachines.yaml
 - bases/crds.kloudlite.io_refertomanagedresources.yaml
 - bases/crds.kloudlite.io_externalapps.yaml
-- bases/networking.kloudlite.io_ipbinds.yaml
 - bases/networking.kloudlite.io_podbindings.yaml
 - bases/networking.kloudlite.io_servicebindings.yaml
 - bases/networking.kloudlite.io_gateways.yaml
+- bases/postgres.msvc.kloudlite.io_standalones.yaml
+- bases/postgres.msvc.kloudlite.io_databases.yaml
+- bases/postgres.msvc.kloudlite.io_standalonedatabases.yaml
+- bases/mysql.msvc.kloudlite.io_standalonedatabases.yaml
+- bases/mongodb.msvc.kloudlite.io_standalonedatabases.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -78,6 +82,9 @@ patchesStrategicMerge:
 #- patches/webhook_in_podbindings.yaml
 #- patches/webhook_in_servicebindings.yaml
 #- patches/webhook_in_gateways.yaml
+#- patches/webhook_in_standalones.yaml
+#- patches/webhook_in_databases.yaml
+#- patches/webhook_in_standalonedatabases.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
@@ -98,10 +105,12 @@ patchesStrategicMerge:
 #- patches/webhook_in_virtualmachines.yaml
 #- patches/webhook_in_refertomanagedresources.yaml
 #- patches/webhook_in_externalapps.yaml
-#- patches/webhook_in_ipbinds.yaml
 #- patches/webhook_in_podbindings.yaml
 #- patches/webhook_in_servicebindings.yaml
 #- patches/webhook_in_gateways.yaml
+#- patches/webhook_in_standalones.yaml
+#- patches/webhook_in_databases.yaml
+#- patches/webhook_in_standalonedatabases.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 # - patches/serverless.kloudlite.io_lambdas.yaml
 # - patches/cainjection_in_lambdas.yaml
@@ -125,6 +134,9 @@ patchesStrategicMerge:
 #- patches/cainjection_in_podbindings.yaml
 #- patches/cainjection_in_servicebindings.yaml
 #- patches/cainjection_in_gateways.yaml
+#- patches/cainjection_in_standalones.yaml
+#- patches/cainjection_in_databases.yaml
+#- patches/cainjection_in_standalonedatabases.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

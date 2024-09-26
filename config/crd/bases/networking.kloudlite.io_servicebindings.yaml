@@ -13,7 +13,7 @@ spec:
     listKind: ServiceBindingList
     plural: servicebindings
     singular: servicebinding
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
@@ -22,18 +22,12 @@ spec:
     - jsonPath: .spec.globalIP
       name: GlobalIP
       type: string
-    - jsonPath: .spec.serviceIP
-      name: ServiceIP
+    - jsonPath: .metadata.annotations.kloudlite\.io\/servicebinding\.reservation
+      name: Allocation
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/global\.hostname
+    - jsonPath: .spec.hostname
       name: Host
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
-      name: Ready
-      type: string
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
     name: v1
     schema:
       openAPIV3Schema:
@@ -56,6 +50,8 @@ spec:
             properties:
               globalIP:
                 type: string
+              hostname:
+                type: string
               ports:
                 items:
                   description: ServicePort contains information on service's port.
@@ -68,7 +64,7 @@ spec:
                         protocol names - reserved for IANA standard service names
                         (as per RFC-6335 and https://www.iana.org/assignments/service-names).
                         \n * Kubernetes-defined prefixed names: * 'kubernetes.io/h2c'
-                        - HTTP/2 over cleartext as described in https://www.rfc-editor.org/rfc/rfc7540
+                        - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-
                         * 'kubernetes.io/ws'  - WebSocket over cleartext as described
                         in https://www.rfc-editor.org/rfc/rfc6455 * 'kubernetes.io/wss'
                         - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455

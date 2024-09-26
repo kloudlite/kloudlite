@@ -13,7 +13,6 @@ import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/templates"
-	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -24,7 +23,6 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -96,10 +94,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureCheckList([]rApi.CheckMeta{
-		{Name: DeploymentSvcCreated, Title: "Deployment And Service Created"},
+		{Name: DeploymentSvcCreated, Title: func() string {
+			if len(req.Object.Spec.Services) > 0 {
+				return "Deployment And Service Created"
+			}
+			return "Deployment Created"
+		}(), Hide: req.Object.IsInterceptEnabled()},
 		{Name: DeploymentReady, Title: "Deployment Ready", Hide: req.Object.IsInterceptEnabled()},
-		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled()},
-		// {Name: ServicesReady, Title: "Services Ready", Hide: len(req.Object.Spec.Services) == 0},
+		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled() || req.Object.IsHPAEnabled()},
+		{Name: AppInterceptCreated, Title: "App Intercept Created", Hide: !req.Object.IsInterceptEnabled()},
 		{Name: AppRouterReady, Title: "App Router Ready", Hide: req.Object.Spec.Router == nil},
 	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -196,13 +199,17 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	b, err := templates.ParseBytes(
 		r.appDeploymentTemplate, map[string]any{
-			"object":             obj,
-			"volumes":            volumes,
-			"volume-mounts":      vMounts,
-			"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"account-name":       obj.GetAnnotations()[constants.AccountNameKey],
-			"pod-labels":         fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
-			"pod-annotations":    fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+			"object":        obj,
+			"volumes":       volumes,
+			"volume-mounts": vMounts,
+			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
+			"pod-labels":    fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
+			"pod-annotations": fn.MapFilter(obj.GetAnnotations(),
+				func(k string, _ string) bool {
+					return strings.HasPrefix(k, "kloudlite.io/") && !strings.HasPrefix(k, "kloudlite.io/operator.")
+				},
+			),
 			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
 		},
 	)
@@ -223,11 +230,11 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
+	check := rApi.NewRunningCheck(AppInterceptCreated, req)
+
 	podname := obj.Name + "-intercept"
 	podns := obj.Namespace
 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podname, Namespace: podns}}
-
-	check := rApi.NewRunningCheck(AppInterceptCreated, req)
 
 	if obj.Spec.Intercept == nil || !obj.Spec.Intercept.Enabled {
 		if err := r.Delete(ctx, pod); err != nil {
@@ -274,7 +281,7 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 			b, err := templates.ParseBytes(r.appInterceptTemplate, map[string]any{
 				"name":             podname,
 				"namespace":        podns,
-				"labels":           fn.MapMerge(fn.MapFilter(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
+				"labels":           fn.MapMerge(fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
 				"port-mappings":    portMappings,
@@ -305,123 +312,14 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 	return check.Completed()
 }
 
-// func (r *Reconciler) createAppService(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-// 	ctx, obj := req.Context(), req.Object
-// 	check := rApi.NewRunningCheck(ServicesReady, req)
-//
-// 	if len(obj.Spec.Services) == 0 {
-// 		return check.Completed()
-// 	}
-//
-// 	ports := func() []corev1.ServicePort {
-// 		mappings := make([]corev1.ServicePort, 0, len(obj.Spec.Services))
-//
-// 		if obj.IsInterceptEnabled() {
-// 			for i := range obj.Spec.Intercept.PortMappings {
-// 				protocol := corev1.ProtocolTCP
-// 				// if obj.Spec.Intercept.PortMappings[i] != nil {
-// 				// 	protocol = corev1.Protocol(*obj.Spec.Services[i].Protocol)
-// 				// }
-// 				mappings = append(mappings, corev1.ServicePort{
-// 					Name:       fmt.Sprintf("p-%d", obj.Spec.Intercept.PortMappings[i].AppPort),
-// 					Protocol:   protocol,
-// 					Port:       int32(obj.Spec.Intercept.PortMappings[i].AppPort),
-// 					TargetPort: intstr.FromInt32(int32(obj.Spec.Intercept.PortMappings[i].DevicePort)),
-// 				})
-// 			}
-//
-// 			return mappings
-// 		}
-//
-// 		for i := range obj.Spec.Services {
-// 			protocol := corev1.ProtocolTCP
-// 			if obj.Spec.Services[i].Protocol != nil {
-// 				protocol = corev1.Protocol(*obj.Spec.Services[i].Protocol)
-// 			}
-// 			mappings = append(mappings, corev1.ServicePort{
-// 				Name:       fmt.Sprintf("p-%d", obj.Spec.Services[i].Port),
-// 				Protocol:   protocol,
-// 				Port:       int32(obj.Spec.Services[i].Port),
-// 				TargetPort: intstr.FromInt32(int32(obj.Spec.Services[i].Port)),
-// 			})
-// 		}
-//
-// 		return mappings
-// 	}()
-//
-// 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
-// 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
-// 		svc.SetLabels(obj.GetLabels())
-// 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-//
-// 		if !obj.IsInterceptEnabled() {
-// 			svc.Spec.Selector = obj.GetLabels()
-// 		}
-//
-// 		svc.Spec.Ports = ports
-// 		svc.Spec.Type = corev1.ServiceTypeClusterIP
-// 		return nil
-// 	}); err != nil {
-// 		return check.Failed(err)
-// 	}
-//
-// 	if !obj.IsInterceptEnabled() {
-// 		return check.Completed()
-// 	}
-//
-// 	deviceHostSuffix := "device.local"
-// 	if obj.Spec.Intercept.DeviceHostSuffix != nil {
-// 		deviceHostSuffix = *obj.Spec.Intercept.DeviceHostSuffix
-// 	}
-//
-// 	deviceHost := fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix)
-//
-// 	endpointslice := &discoveryv1.EndpointSlice{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
-// 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, endpointslice, func() error {
-// 		endpointslice.SetLabels(map[string]string{"kubernetes.io/service-name": obj.Name})
-//
-// 		endpointslice.AddressType = discoveryv1.AddressTypeIPv4
-// 		endpointslice.Ports = func() []discoveryv1.EndpointPort {
-// 			m := make([]discoveryv1.EndpointPort, 0, len(ports))
-// 			for i := range ports {
-// 				m = append(m, discoveryv1.EndpointPort{
-// 					Name:     &ports[i].Name,
-// 					Protocol: &ports[i].Protocol,
-// 					Port:     fn.New(int32(ports[i].TargetPort.IntValue())),
-// 				})
-// 			}
-// 			return m
-// 		}()
-// 		endpointslice.Endpoints = func() []discoveryv1.Endpoint {
-// 			addrs, err := net.LookupHost(deviceHost)
-// 			if err != nil {
-// 				return nil
-// 			}
-//
-// 			m := make([]discoveryv1.Endpoint, 0, len(addrs))
-// 			for i := range addrs {
-// 				m = append(m, discoveryv1.Endpoint{
-// 					Addresses: []string{addrs[i]},
-// 				})
-// 			}
-// 			return m
-// 		}()
-// 		return nil
-// 	}); err != nil {
-// 		return check.Failed(err)
-// 	}
-//
-// 	return check.Completed()
-// }
-
 func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
 	check := rApi.NewRunningCheck(HPAConfigured, req)
 
-	if obj.IsInterceptEnabled() {
-		return check.Completed()
-	}
+	// if obj.IsInterceptEnabled() {
+	// 	return check.Completed()
+	// }
 
 	hpaVars := templates.HPATemplateVars{
 		Metadata: metav1.ObjectMeta{
@@ -434,7 +332,17 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 		HPA: obj.Spec.Hpa,
 	}
 
-	if obj.Spec.Hpa == nil || !obj.Spec.Hpa.Enabled {
+	// if obj.Spec.Intercept != nil && obj.Spec.Intercept.Enabled {
+	// 	if obj.Spec.Hpa != nil && obj.Spec.Hpa.Enabled {
+	// 		hpaVars.HPA.MinReplicas = 0
+	// 		hpaVars.HPA.MaxReplicas = 0
+	// 	}
+	// }
+
+	isInterceptEnabled := obj.Spec.Intercept != nil && obj.Spec.Intercept.Enabled
+	isHPAEnabled := obj.Spec.Hpa != nil && obj.Spec.Hpa.Enabled
+
+	if isInterceptEnabled || !isHPAEnabled {
 		hpa, err := rApi.Get(ctx, r.Client, fn.NN(hpaVars.Metadata.Namespace, hpaVars.Metadata.Name), &autoscalingv2.HorizontalPodAutoscaler{})
 		if err != nil {
 			if apiErrors.IsNotFound(err) {
@@ -477,30 +385,34 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 		return check.Failed(err)
 	}
 
-	cds, err := conditions.FromObject(deployment)
-	if err != nil {
-		return check.StillRunning(err)
-	}
+	for _, c := range deployment.Status.Conditions {
+		switch c.Type {
+		case appsv1.DeploymentAvailable:
+			if c.Status != corev1.ConditionTrue {
+				var podList corev1.PodList
+				if err := r.List(
+					ctx, &podList, &client.ListOptions{
+						LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
+						Namespace:     obj.Namespace,
+					},
+				); err != nil {
+					return check.StillRunning(err)
+				}
 
-	isReady := meta.IsStatusConditionTrue(cds, "Available")
-
-	if !isReady {
-		var podList corev1.PodList
-		if err := r.List(
-			ctx, &podList, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
-				Namespace:     obj.Namespace,
-			},
-		); err != nil {
-			return check.StillRunning(err)
+				if len(podList.Items) > 0 {
+					pMessages := rApi.GetMessagesFromPods(podList.Items...)
+					bMsg, err := json.Marshal(pMessages)
+					if err != nil {
+						return check.StillRunning(err)
+					}
+					return check.StillRunning(fmt.Errorf(string(bMsg)))
+				}
+			}
+		case appsv1.DeploymentReplicaFailure:
+			if c.Status == corev1.ConditionTrue {
+				return check.Failed(fmt.Errorf(c.Message))
+			}
 		}
-
-		pMessages := rApi.GetMessagesFromPods(podList.Items...)
-		bMsg, err := json.Marshal(pMessages)
-		if err != nil {
-			return check.StillRunning(err)
-		}
-		return check.StillRunning(fmt.Errorf(string(bMsg)))
 	}
 
 	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {

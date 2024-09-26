@@ -469,4 +469,44 @@ resources:
   kind: Gateway
   path: github.com/kloudlite/operator/apis/networking/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: postgres.msvc
+  kind: Standalone
+  path: github.com/kloudlite/operator/apis/postgres.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: postgres.msvc
+  kind: Database
+  path: github.com/kloudlite/operator/apis/postgres.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: postgres.msvc
+  kind: StandaloneDatabase
+  path: github.com/kloudlite/operator/apis/postgres.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mysql.msvc
+  kind: StandaloneDatabase
+  path: github.com/kloudlite/operator/apis/mysql.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: mongodb.msvc
+  kind: StandaloneDatabase
+  path: github.com/kloudlite/operator/apis/mongodb.msvc/v1
+  version: v1
 version: "3"
