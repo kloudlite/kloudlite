@@ -18,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/pkg/repos"
@@ -134,9 +135,29 @@ func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) 
 }
 
 func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.CreateEnvironment); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	if strings.TrimSpace(env.ClusterName) == "" {
 		return nil, fmt.Errorf("clustername must be set while creating environments")
 	}
+
+	ownedBy, err := d.infraSvc.GetByokClusterOwnedBy(ctx, ports.IsClusterLabelsIn{
+		UserId:      string(ctx.UserId),
+		UserEmail:   ctx.UserEmail,
+		UserName:    ctx.UserName,
+		AccountName: ctx.AccountName,
+		ClusterName: env.ClusterName,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if ownedBy != "" && ownedBy != string(ctx.UserId) {
+		return nil, fmt.Errorf("it's owned cluster, but you are not the owner")
+	}
+	env.Labels[constants.ClusterLabelOwnedBy] = string(ctx.UserId)
 
 	env.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
@@ -160,6 +181,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
+
 	env.LastUpdatedBy = env.CreatedBy
 
 	env.AccountName = ctx.AccountName
