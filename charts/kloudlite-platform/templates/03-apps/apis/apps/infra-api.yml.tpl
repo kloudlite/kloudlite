@@ -115,6 +115,9 @@ spec:
         - key: AVAILABLE_KLOUDLITE_REGIONS_CONFIG
           value: "/kloudlite/gateways.yml"
 
+        - key: KLOUDLITE_EDGE_GATEWAY_SERVICE_TYPE
+          value: {{.Values.apps.infraApi.edgeGatewayServiceType }}
+
       volumes:
         - mountPath: /infra.d/templates
           type: config
