@@ -27,6 +27,9 @@ tasks:
     vars:
       output_dir: ./result
       nix_store_closure: /tmp/nix-store-closure
+    requires:
+      vars:
+        - Image
     cmds:
       - echo OUTPUT DIR is "{{.output_dir}}"
       - sudo rm -rf {{.output_dir}}
@@ -58,7 +61,8 @@ tasks:
         tar cf context.tar .
         popd
         mv $dir/context.tar .
-      - nerdctl build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} .
+
+      - docker buildx build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
       - rm ./context.tar
 
   container:build-and-push:
