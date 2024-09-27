@@ -123,6 +123,11 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn struct {
 	Mode GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode `json:"mode"`
 }
 
+type GithubComKloudliteAPIAppsInfraInternalEntitiesDispatchAddr struct {
+	AccountName string `json:"accountName"`
+	ClusterName string `json:"clusterName"`
+}
+
 type GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials struct {
 	ServiceAccountJSON string `json:"serviceAccountJSON"`
 }
@@ -769,6 +774,16 @@ type K8sIoAPICoreV1LocalVolumeSourceIn struct {
 	Path   string  `json:"path"`
 }
 
+type K8sIoAPICoreV1ModifyVolumeStatus struct {
+	Status                          K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus `json:"status"`
+	TargetVolumeAttributesClassName *string                                               `json:"targetVolumeAttributesClassName,omitempty"`
+}
+
+type K8sIoAPICoreV1ModifyVolumeStatusIn struct {
+	Status                          K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus `json:"status"`
+	TargetVolumeAttributesClassName *string                                               `json:"targetVolumeAttributesClassName,omitempty"`
+}
+
 type K8sIoAPICoreV1NFSVolumeSource struct {
 	Path     string `json:"path"`
 	ReadOnly *bool  `json:"readOnly,omitempty"`
@@ -894,43 +909,49 @@ type K8sIoAPICoreV1PersistentVolumeClaimConditionIn struct {
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimSpec struct {
-	AccessModes      []string                                     `json:"accessModes,omitempty"`
-	DataSource       *K8sIoAPICoreV1TypedLocalObjectReference     `json:"dataSource,omitempty"`
-	DataSourceRef    *K8sIoAPICoreV1TypedObjectReference          `json:"dataSourceRef,omitempty"`
-	Resources        *K8sIoAPICoreV1ResourceRequirements          `json:"resources,omitempty"`
-	Selector         *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"selector,omitempty"`
-	StorageClassName *string                                      `json:"storageClassName,omitempty"`
-	VolumeMode       *string                                      `json:"volumeMode,omitempty"`
-	VolumeName       *string                                      `json:"volumeName,omitempty"`
+	AccessModes               []string                                     `json:"accessModes,omitempty"`
+	DataSource                *K8sIoAPICoreV1TypedLocalObjectReference     `json:"dataSource,omitempty"`
+	DataSourceRef             *K8sIoAPICoreV1TypedObjectReference          `json:"dataSourceRef,omitempty"`
+	Resources                 *K8sIoAPICoreV1VolumeResourceRequirements    `json:"resources,omitempty"`
+	Selector                  *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"selector,omitempty"`
+	StorageClassName          *string                                      `json:"storageClassName,omitempty"`
+	VolumeAttributesClassName *string                                      `json:"volumeAttributesClassName,omitempty"`
+	VolumeMode                *string                                      `json:"volumeMode,omitempty"`
+	VolumeName                *string                                      `json:"volumeName,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimSpecIn struct {
-	AccessModes      []string                                       `json:"accessModes,omitempty"`
-	DataSource       *K8sIoAPICoreV1TypedLocalObjectReferenceIn     `json:"dataSource,omitempty"`
-	DataSourceRef    *K8sIoAPICoreV1TypedObjectReferenceIn          `json:"dataSourceRef,omitempty"`
-	Resources        *K8sIoAPICoreV1ResourceRequirementsIn          `json:"resources,omitempty"`
-	Selector         *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"selector,omitempty"`
-	StorageClassName *string                                        `json:"storageClassName,omitempty"`
-	VolumeMode       *string                                        `json:"volumeMode,omitempty"`
-	VolumeName       *string                                        `json:"volumeName,omitempty"`
+	AccessModes               []string                                       `json:"accessModes,omitempty"`
+	DataSource                *K8sIoAPICoreV1TypedLocalObjectReferenceIn     `json:"dataSource,omitempty"`
+	DataSourceRef             *K8sIoAPICoreV1TypedObjectReferenceIn          `json:"dataSourceRef,omitempty"`
+	Resources                 *K8sIoAPICoreV1VolumeResourceRequirementsIn    `json:"resources,omitempty"`
+	Selector                  *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"selector,omitempty"`
+	StorageClassName          *string                                        `json:"storageClassName,omitempty"`
+	VolumeAttributesClassName *string                                        `json:"volumeAttributesClassName,omitempty"`
+	VolumeMode                *string                                        `json:"volumeMode,omitempty"`
+	VolumeName                *string                                        `json:"volumeName,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatus struct {
-	AccessModes               []string                                        `json:"accessModes,omitempty"`
-	AllocatedResources        map[string]interface{}                          `json:"allocatedResources,omitempty"`
-	AllocatedResourceStatuses map[string]interface{}                          `json:"allocatedResourceStatuses,omitempty"`
-	Capacity                  map[string]interface{}                          `json:"capacity,omitempty"`
-	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
-	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
+	AccessModes                      []string                                        `json:"accessModes,omitempty"`
+	AllocatedResources               map[string]interface{}                          `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses        map[string]interface{}                          `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                         map[string]interface{}                          `json:"capacity,omitempty"`
+	Conditions                       []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
+	CurrentVolumeAttributesClassName *string                                         `json:"currentVolumeAttributesClassName,omitempty"`
+	ModifyVolumeStatus               *K8sIoAPICoreV1ModifyVolumeStatus               `json:"modifyVolumeStatus,omitempty"`
+	Phase                            *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatusIn struct {
-	AccessModes               []string                                          `json:"accessModes,omitempty"`
-	AllocatedResources        map[string]interface{}                            `json:"allocatedResources,omitempty"`
-	AllocatedResourceStatuses map[string]interface{}                            `json:"allocatedResourceStatuses,omitempty"`
-	Capacity                  map[string]interface{}                            `json:"capacity,omitempty"`
-	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
-	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
+	AccessModes                      []string                                          `json:"accessModes,omitempty"`
+	AllocatedResources               map[string]interface{}                            `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses        map[string]interface{}                            `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                         map[string]interface{}                            `json:"capacity,omitempty"`
+	Conditions                       []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
+	CurrentVolumeAttributesClassName *string                                           `json:"currentVolumeAttributesClassName,omitempty"`
+	ModifyVolumeStatus               *K8sIoAPICoreV1ModifyVolumeStatusIn               `json:"modifyVolumeStatus,omitempty"`
+	Phase                            *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeSpec struct {
@@ -962,6 +983,7 @@ type K8sIoAPICoreV1PersistentVolumeSpec struct {
 	ScaleIo                       *K8sIoAPICoreV1ScaleIOPersistentVolumeSource    `json:"scaleIO,omitempty"`
 	StorageClassName              *string                                         `json:"storageClassName,omitempty"`
 	Storageos                     *K8sIoAPICoreV1StorageOSPersistentVolumeSource  `json:"storageos,omitempty"`
+	VolumeAttributesClassName     *string                                         `json:"volumeAttributesClassName,omitempty"`
 	VolumeMode                    *string                                         `json:"volumeMode,omitempty"`
 	VsphereVolume                 *K8sIoAPICoreV1VsphereVirtualDiskVolumeSource   `json:"vsphereVolume,omitempty"`
 }
@@ -995,6 +1017,7 @@ type K8sIoAPICoreV1PersistentVolumeSpecIn struct {
 	ScaleIo                       *K8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn    `json:"scaleIO,omitempty"`
 	StorageClassName              *string                                           `json:"storageClassName,omitempty"`
 	Storageos                     *K8sIoAPICoreV1StorageOSPersistentVolumeSourceIn  `json:"storageos,omitempty"`
+	VolumeAttributesClassName     *string                                           `json:"volumeAttributesClassName,omitempty"`
 	VolumeMode                    *string                                           `json:"volumeMode,omitempty"`
 	VsphereVolume                 *K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn   `json:"vsphereVolume,omitempty"`
 }
@@ -1035,6 +1058,8 @@ type K8sIoAPICoreV1PodAffinityIn struct {
 
 type K8sIoAPICoreV1PodAffinityTerm struct {
 	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"labelSelector,omitempty"`
+	MatchLabelKeys    []string                                     `json:"matchLabelKeys,omitempty"`
+	MismatchLabelKeys []string                                     `json:"mismatchLabelKeys,omitempty"`
 	Namespaces        []string                                     `json:"namespaces,omitempty"`
 	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"namespaceSelector,omitempty"`
 	TopologyKey       string                                       `json:"topologyKey"`
@@ -1042,6 +1067,8 @@ type K8sIoAPICoreV1PodAffinityTerm struct {
 
 type K8sIoAPICoreV1PodAffinityTermIn struct {
 	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"labelSelector,omitempty"`
+	MatchLabelKeys    []string                                       `json:"matchLabelKeys,omitempty"`
+	MismatchLabelKeys []string                                       `json:"mismatchLabelKeys,omitempty"`
 	Namespaces        []string                                       `json:"namespaces,omitempty"`
 	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"namespaceSelector,omitempty"`
 	TopologyKey       string                                         `json:"topologyKey"`
@@ -1117,26 +1144,6 @@ type K8sIoAPICoreV1RBDPersistentVolumeSourceIn struct {
 	ReadOnly  *bool                            `json:"readOnly,omitempty"`
 	SecretRef *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
 	User      *string                          `json:"user,omitempty"`
-}
-
-type K8sIoAPICoreV1ResourceClaim struct {
-	Name string `json:"name"`
-}
-
-type K8sIoAPICoreV1ResourceClaimIn struct {
-	Name string `json:"name"`
-}
-
-type K8sIoAPICoreV1ResourceRequirements struct {
-	Claims   []*K8sIoAPICoreV1ResourceClaim `json:"claims,omitempty"`
-	Limits   map[string]interface{}         `json:"limits,omitempty"`
-	Requests map[string]interface{}         `json:"requests,omitempty"`
-}
-
-type K8sIoAPICoreV1ResourceRequirementsIn struct {
-	Claims   []*K8sIoAPICoreV1ResourceClaimIn `json:"claims,omitempty"`
-	Limits   map[string]interface{}           `json:"limits,omitempty"`
-	Requests map[string]interface{}           `json:"requests,omitempty"`
 }
 
 type K8sIoAPICoreV1ScaleIOPersistentVolumeSource struct {
@@ -1253,6 +1260,16 @@ type K8sIoAPICoreV1VolumeNodeAffinity struct {
 
 type K8sIoAPICoreV1VolumeNodeAffinityIn struct {
 	Required *K8sIoAPICoreV1NodeSelectorIn `json:"required,omitempty"`
+}
+
+type K8sIoAPICoreV1VolumeResourceRequirements struct {
+	Limits   map[string]interface{} `json:"limits,omitempty"`
+	Requests map[string]interface{} `json:"requests,omitempty"`
+}
+
+type K8sIoAPICoreV1VolumeResourceRequirementsIn struct {
+	Limits   map[string]interface{} `json:"limits,omitempty"`
+	Requests map[string]interface{} `json:"requests,omitempty"`
 }
 
 type K8sIoAPICoreV1VsphereVirtualDiskVolumeSource struct {
@@ -1971,17 +1988,21 @@ type K8sIoAPICoreV1PersistentVolumeClaimConditionType string
 
 const (
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending K8sIoAPICoreV1PersistentVolumeClaimConditionType = "FileSystemResizePending"
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume         K8sIoAPICoreV1PersistentVolumeClaimConditionType = "ModifyingVolume"
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError       K8sIoAPICoreV1PersistentVolumeClaimConditionType = "ModifyVolumeError"
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing                K8sIoAPICoreV1PersistentVolumeClaimConditionType = "Resizing"
 )
 
 var AllK8sIoAPICoreV1PersistentVolumeClaimConditionType = []K8sIoAPICoreV1PersistentVolumeClaimConditionType{
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending,
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume,
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError,
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing,
 }
 
 func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) IsValid() bool {
 	switch e {
-	case K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing:
+	case K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing:
 		return true
 	}
 	return false
@@ -2005,6 +2026,49 @@ func (e *K8sIoAPICoreV1PersistentVolumeClaimConditionType) UnmarshalGQL(v interf
 }
 
 func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus string
+
+const (
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInfeasible K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = "Infeasible"
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInProgress K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = "InProgress"
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusPending    K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = "Pending"
+)
+
+var AllK8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = []K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus{
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInfeasible,
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInProgress,
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusPending,
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInfeasible, K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInProgress, K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusPending:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

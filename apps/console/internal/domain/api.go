@@ -183,7 +183,7 @@ type Domain interface {
 	GetRegistryImageURL(ctx ConsoleContext) (*entities.RegistryImageURL, error)
 	GetRegistryImage(ctx ConsoleContext, image string) (*entities.RegistryImage, error)
 	DeleteRegistryImage(ctx ConsoleContext, image string) error
-	CreateRegistryImage(ctx context.Context, accountName string, image string, meta map[string]any) (*entities.RegistryImage, error)
+	UpsertRegistryImage(ctx context.Context, accountName string, image string, meta map[string]any) (*entities.RegistryImage, error)
 	ListRegistryImages(ctx ConsoleContext, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.RegistryImage], error)
 	SearchRegistryImages(ctx ConsoleContext, query string) ([]*entities.RegistryImage, error)
 
@@ -204,6 +204,7 @@ type Domain interface {
 	OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	ResyncApp(ctx ResourceContext, name string) error
+	RolloutAppsByImage(ctx ConsoleContext, imageName string) error
 
 	ListConfigs(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error)
 	GetConfig(ctx ResourceContext, name string) (*entities.Config, error)

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -23,6 +24,11 @@ func (r *nodePoolResolver) CreationTime(ctx context.Context, obj *entities.NodeP
 		return "", errors.Newf("nodepool is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
+}
+
+// DispatchAddr is the resolver for the dispatchAddr field.
+func (r *nodePoolResolver) DispatchAddr(ctx context.Context, obj *entities.NodePool) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesDispatchAddr, error) {
+	panic(fmt.Errorf("not implemented: DispatchAddr - dispatchAddr"))
 }
 
 // ID is the resolver for the id field.

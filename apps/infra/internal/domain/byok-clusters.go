@@ -10,6 +10,7 @@ import (
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -61,6 +62,14 @@ func (d *domain) CreateBYOKCluster(ctx InfraContext, cluster entities.BYOKCluste
 	accNs, err := d.getAccNamespace(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
+	}
+
+	if s, ok := cluster.GetLabels()[constants.ClusterLabelOwnedBy]; ok {
+		if s != string(ctx.UserId) {
+			return nil, errors.Newf("provided wrong owner for cluster %q, expected %q", cluster.Name, ctx.UserId)
+		}
+
+		cluster.OwnedBy = &s
 	}
 
 	cluster.Namespace = accNs
@@ -147,7 +156,15 @@ func (d *domain) ListBYOKCluster(ctx InfraContext, search map[string]repos.Match
 		return nil, errors.NewE(err)
 	}
 
-	pRecords, err := d.byokClusterRepo.FindPaginated(ctx, d.byokClusterRepo.MergeMatchFilters(entities.ListBYOKClusterFilter(ctx.AccountName), search), pagination)
+	f := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		"$or": []map[string]any{
+			{fc.BYOKClusterOwnedBy: ctx.UserId},
+			{fc.BYOKClusterOwnedBy: nil},
+		},
+	}
+
+	pRecords, err := d.byokClusterRepo.FindPaginated(ctx, d.byokClusterRepo.MergeMatchFilters(f, search), pagination)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

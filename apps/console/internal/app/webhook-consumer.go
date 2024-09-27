@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
@@ -18,25 +20,29 @@ func processWebhooks(consumer WebhookConsumer, d domain.Domain, logger logging.L
 			logger.Infof("finished processing message")
 		}()
 
-		webhook := &domain.ImageHookPayload{}
-		if err := json.Unmarshal(msg.Payload, &webhook); err != nil {
+		hook := &domain.ImageHookPayload{}
+		if err := json.Unmarshal(msg.Payload, &hook); err != nil {
 			logger.Errorf(err, "could not unmarshal into *ImageHookPayload")
 			return errors.NewE(err)
 		}
-		if webhook.Image == "" || webhook.AccountName == "" {
+		if hook.Image == "" || hook.AccountName == "" {
 			return errors.Newf("invalid webhook payload")
 		}
-		hook := &domain.ImageHookPayload{
-			Image:       webhook.Image,
-			AccountName: webhook.AccountName,
-			Meta:        webhook.Meta,
-		}
 
-		_, err := d.CreateRegistryImage(context.TODO(), hook.AccountName, hook.Image, hook.Meta)
+		_, err := d.UpsertRegistryImage(context.TODO(), hook.AccountName, hook.Image, hook.Meta)
 		if err != nil {
 			logger.Errorf(err, "could not process image hook")
 			return errors.NewE(err)
 		}
+
+		// domain.NewConsoleContext(ctx, userId repos.ID, accountName string)
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", hook.AccountName)
+
+		if err := d.RolloutAppsByImage(dctx, fmt.Sprintf("%s:%s", hook.Image, hook.Image)); err != nil {
+			logger.Errorf(err, "could not rollout apps by image")
+			return errors.NewE(err)
+		}
+
 		return nil
 	}, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
