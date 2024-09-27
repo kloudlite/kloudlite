@@ -233,6 +233,32 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 	return true, nil
 }
 
+// InterceptApp implements Domain.
+func (d *domain) InterceptAppOnLocalCluster(ctx ResourceContext, appName string, clusterName string, ipAddr string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	patch := repos.Document{
+		fc.AppSpecInterceptEnabled:  intercept,
+		fc.AppSpecInterceptToDevice: clusterName,
+		fc.AppSpecInterceptToIPAddr: ipAddr,
+	}
+
+	if portMappings != nil {
+		patch[fc.AppSpecInterceptPortMappings] = portMappings
+	}
+
+	uApp, err := d.appRepo.Patch(ctx, ctx.DBFilters().Add(fields.MetadataName, appName), patch)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := d.applyApp(ctx, uApp); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
 func (d *domain) RestartApp(ctx ResourceContext, appName string) error {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)

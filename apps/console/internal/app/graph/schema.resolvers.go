@@ -207,6 +207,23 @@ func (r *mutationResolver) CoreInterceptApp(ctx context.Context, envName string,
 	return r.Domain.InterceptApp(newResourceContext(cc, envName), appname, deviceName, intercept, pmappings)
 }
 
+// CoreInterceptAppOnLocalCluster is the resolver for the core_interceptAppOnLocalCluster field.
+func (r *mutationResolver) CoreInterceptAppOnLocalCluster(ctx context.Context, envName string, appname string, clusterName string, ipAddr string, intercept bool, portMappings []*v11.AppInterceptPortMappings) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	pmappings := make([]v11.AppInterceptPortMappings, 0, len(portMappings))
+	for i := range portMappings {
+		if portMappings[i] != nil {
+			pmappings = append(pmappings, *portMappings[i])
+		}
+	}
+
+	return r.Domain.InterceptAppOnLocalCluster(newResourceContext(cc, envName), appname, clusterName, ipAddr, intercept, pmappings)
+}
+
 // CoreRemoveDeviceIntercepts is the resolver for the core_removeDeviceIntercepts field.
 func (r *mutationResolver) CoreRemoveDeviceIntercepts(ctx context.Context, envName string, deviceName string) (bool, error) {
 	cc, err := toConsoleContext(ctx)
