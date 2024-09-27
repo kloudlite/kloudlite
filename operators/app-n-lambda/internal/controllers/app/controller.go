@@ -278,13 +278,19 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 				deviceHostSuffix = *obj.Spec.Intercept.DeviceHostSuffix
 			}
 
+			deviceHost := fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix)
+			if obj.Spec.Intercept.ToIPAddr != "" {
+				deviceHost = obj.Spec.Intercept.ToIPAddr
+			}
+
 			b, err := templates.ParseBytes(r.appInterceptTemplate, map[string]any{
 				"name":             podname,
 				"namespace":        podns,
 				"labels":           fn.MapMerge(fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
-				"port-mappings":    portMappings,
+				// "device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
+				"device-host":   deviceHost,
+				"port-mappings": portMappings,
 			})
 			if err != nil {
 				return check.Failed(err).NoRequeue()
