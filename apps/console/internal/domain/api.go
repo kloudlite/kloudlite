@@ -195,6 +195,7 @@ type Domain interface {
 	DeleteApp(ctx ResourceContext, name string) error
 
 	InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error)
+	InterceptAppOnLocalCluster(ctx ResourceContext, appName string, clusterName string, ipAddr string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error)
 	RestartApp(ctx ResourceContext, appName string) error
 	RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) error
 
