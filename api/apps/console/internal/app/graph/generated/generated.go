@@ -762,6 +762,7 @@ type ComplexityRoot struct {
 		CoreDeleteSecret                  func(childComplexity int, envName string, secretName string) int
 		CoreImportManagedResource         func(childComplexity int, envName string, msvcName string, mresName string, importName string) int
 		CoreInterceptApp                  func(childComplexity int, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
+		CoreInterceptAppOnLocalCluster    func(childComplexity int, envName string, appname string, clusterName string, ipAddr string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreInterceptExternalApp          func(childComplexity int, envName string, externalAppName string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreRemoveDeviceIntercepts        func(childComplexity int, envName string, deviceName string) int
 		CoreUpdateApp                     func(childComplexity int, envName string, app entities.App) int
@@ -1081,6 +1082,7 @@ type MutationResolver interface {
 	CoreUpdateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreDeleteApp(ctx context.Context, envName string, appName string) (bool, error)
 	CoreInterceptApp(ctx context.Context, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) (bool, error)
+	CoreInterceptAppOnLocalCluster(ctx context.Context, envName string, appname string, clusterName string, ipAddr string, intercept bool, portMappings []*v1.AppInterceptPortMappings) (bool, error)
 	CoreRemoveDeviceIntercepts(ctx context.Context, envName string, deviceName string) (bool, error)
 	CoreCreateExternalApp(ctx context.Context, envName string, externalApp entities.ExternalApp) (*entities.ExternalApp, error)
 	CoreUpdateExternalApp(ctx context.Context, envName string, externalApp entities.ExternalApp) (*entities.ExternalApp, error)
@@ -4380,6 +4382,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreInterceptApp(childComplexity, args["envName"].(string), args["appname"].(string), args["deviceName"].(string), args["intercept"].(bool), args["portMappings"].([]*v1.AppInterceptPortMappings)), true
 
+	case "Mutation.core_interceptAppOnLocalCluster":
+		if e.complexity.Mutation.CoreInterceptAppOnLocalCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_interceptAppOnLocalCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreInterceptAppOnLocalCluster(childComplexity, args["envName"].(string), args["appname"].(string), args["clusterName"].(string), args["ipAddr"].(string), args["intercept"].(bool), args["portMappings"].([]*v1.AppInterceptPortMappings)), true
+
 	case "Mutation.core_interceptExternalApp":
 		if e.complexity.Mutation.CoreInterceptExternalApp == nil {
 			break
@@ -6005,6 +6019,7 @@ type Mutation {
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
+	core_interceptAppOnLocalCluster(envName: String!, appname: String!, clusterName: String!, ipAddr: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
 	core_removeDeviceIntercepts(envName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp @isLoggedInAndVerified @hasAccount
@@ -8021,6 +8036,66 @@ func (ec *executionContext) field_Mutation_core_importManagedResource_args(ctx c
 		}
 	}
 	args["importName"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["appname"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appname"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["appname"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["ipAddr"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ipAddr"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ipAddr"] = arg3
+	var arg4 bool
+	if tmp, ok := rawArgs["intercept"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
+		arg4, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["intercept"] = arg4
+	var arg5 []*v1.AppInterceptPortMappings
+	if tmp, ok := rawArgs["portMappings"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
+		arg5, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["portMappings"] = arg5
 	return args, nil
 }
 
@@ -29553,6 +29628,87 @@ func (ec *executionContext) fieldContext_Mutation_core_interceptApp(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_core_interceptApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_interceptAppOnLocalCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_interceptAppOnLocalCluster(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreInterceptAppOnLocalCluster(rctx, fc.Args["envName"].(string), fc.Args["appname"].(string), fc.Args["clusterName"].(string), fc.Args["ipAddr"].(string), fc.Args["intercept"].(bool), fc.Args["portMappings"].([]*v1.AppInterceptPortMappings))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_interceptAppOnLocalCluster(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_interceptAppOnLocalCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -51346,6 +51502,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "core_interceptApp":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_interceptApp(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "core_interceptAppOnLocalCluster":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_interceptAppOnLocalCluster(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

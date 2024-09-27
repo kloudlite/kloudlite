@@ -21,6 +21,7 @@ const (
 	AppSpecInterceptEnabled           = "spec.intercept.enabled"
 	AppSpecInterceptPortMappings      = "spec.intercept.portMappings"
 	AppSpecInterceptToDevice          = "spec.intercept.toDevice"
+	AppSpecInterceptToIPAddr          = "spec.intercept.toIPAddr"
 	AppSpecNodeSelector               = "spec.nodeSelector"
 	AppSpecRegion                     = "spec.region"
 	AppSpecReplicas                   = "spec.replicas"
@@ -122,6 +123,7 @@ const (
 	ExternalAppSpecInterceptEnabled          = "spec.intercept.enabled"
 	ExternalAppSpecInterceptPortMappings     = "spec.intercept.portMappings"
 	ExternalAppSpecInterceptToDevice         = "spec.intercept.toDevice"
+	ExternalAppSpecInterceptToIPAddr         = "spec.intercept.toIPAddr"
 	ExternalAppSpecRecord                    = "spec.record"
 	ExternalAppSpecRecordType                = "spec.recordType"
 )
