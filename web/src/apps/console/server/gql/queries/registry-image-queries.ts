@@ -10,6 +10,8 @@ import {
   ConsoleGetRegistryImageUrlQueryVariables,
   ConsoleListRegistryImagesQuery,
   ConsoleListRegistryImagesQueryVariables,
+  ConsoleSearchRegistryImagesQuery,
+  ConsoleSearchRegistryImagesQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IRegistryImages = NN<
@@ -56,8 +58,8 @@ export const registryImagesQueries = (executor: IExecutor) => ({
   ),
   getRegistryImageUrl: executor(
     gql`
-      query Core_getRegistryImageURL($image: String!, $meta: Map!) {
-        core_getRegistryImageURL(image: $image, meta: $meta) {
+      query Core_getRegistryImageURL {
+        core_getRegistryImageURL {
           scriptUrl
           url
         }
@@ -67,6 +69,29 @@ export const registryImagesQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleGetRegistryImageUrlQuery) =>
         data.core_getRegistryImageURL,
       vars(_: ConsoleGetRegistryImageUrlQueryVariables) { },
+    }
+  ),
+  searchRegistryImages: executor(
+    gql`
+      query Core_searchRegistryImages($query: String!) {
+        core_searchRegistryImages(query: $query) {
+          accountName
+          creationTime
+          id
+          imageName
+          imageTag
+          markedForDeletion
+          meta
+          recordVersion
+          updateTime
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleSearchRegistryImagesQuery) => {
+        return data.core_searchRegistryImages;
+      },
+      vars(_: ConsoleSearchRegistryImagesQueryVariables) { },
     }
   ),
   listRegistryImages: executor(

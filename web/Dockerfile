@@ -12,8 +12,10 @@ COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
 # typecheck
 ARG APP
 ENV APP=${APP}
-COPY ./src/generated/package.json ./src/generated/package.json
-COPY ./src/generated/plugin/package.json ./src/generated/plugin/package.json
+# COPY ./src/generated/package.json ./src/generated/package.json
+# COPY ./src/generated/plugin/package.json ./src/generated/plugin/package.json
+COPY ./src/generated/package.json ./src/generated/pnpm-lock.yaml ./src/generated/
+COPY ./src/generated/plugin/package.json  ./src/generated/plugin/pnpm-lock.yaml ./src/generated/plugin/
 
 RUN pnpm i -p --frozen-lockfile
 

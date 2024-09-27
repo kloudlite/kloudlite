@@ -41,9 +41,6 @@ export const pvcQueries = (executor: IExecutor) => ({
               namespace
             }
             resources {
-              claims {
-                name
-              }
               limits
               requests
             }
@@ -81,7 +78,7 @@ export const pvcQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetPvcQuery) {
         return data.infra_getPVC;
       },
-      vars(_: ConsoleGetPvcQueryVariables) {},
+      vars(_: ConsoleGetPvcQueryVariables) { },
     }
   ),
   listPvcs: executor(
@@ -121,9 +118,6 @@ export const pvcQueries = (executor: IExecutor) => ({
                   namespace
                 }
                 resources {
-                  claims {
-                    name
-                  }
                   limits
                   requests
                 }
@@ -168,7 +162,7 @@ export const pvcQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListPvcsQuery) => data.infra_listPVCs,
-      vars(_: ConsoleListPvcsQueryVariables) {},
+      vars(_: ConsoleListPvcsQueryVariables) { },
     }
   ),
 });

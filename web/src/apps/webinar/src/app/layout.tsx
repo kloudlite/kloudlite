@@ -21,14 +21,22 @@ const getServerEnv = () => {
     ...(process.env.DYTE_ORG_ID
       ? { DYTE_ORG_ID: process.env.DYTE_ORG_ID }
       : {}),
+    ...(process.env.DYTE_API_KEY
+      ? { DYTE_API_KEY: process.env.DYTE_API_KEY }
+      : {}),
+    ...(process.env.DYTE_MEETING_ID
+      ? { DYTE_MEETING_ID: process.env.DYTE_MEETING_ID }
+      : {}),
   };
 };
 
 const getClientEnv = (env: any) => {
-  const { DYTE_ORG_ID, MARKETING_API_URL } = env;
+  const { DYTE_ORG_ID, MARKETING_API_URL, DYTE_API_KEY, DYTE_MEETING_ID } = env;
   return `
 ${MARKETING_API_URL ? `window.MARKETING_API_URL = ${`'${MARKETING_API_URL}'`}` : ''}
-${DYTE_ORG_ID ? `window.DYTE_ORG_ID = ${`'${DYTE_ORG_ID}'`}` : ''}`;
+${DYTE_ORG_ID ? `window.DYTE_ORG_ID = ${`'${DYTE_ORG_ID}'`}` : ''}
+${DYTE_API_KEY ? `window.DYTE_API_KEY = ${`'${DYTE_API_KEY}'`}` : ''}
+${DYTE_MEETING_ID ? `window.DYTE_MEETING_ID = ${`'${DYTE_MEETING_ID}'`}` : ''}`;
 };
 
 export default function RootLayout({

@@ -21,16 +21,13 @@ export const RegistryImageInstruction = ({
   const { data, isLoading, error } = useCustomSwr(
     'registry-image-instructions',
     async () => {
-      return api.getRegistryImageUrl({
-        image: '<image_name:image_tag>',
-        meta: {},
-      });
+      return api.getRegistryImageUrl();
     }
   );
 
   return (
     <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
-      <Popup.Header>Instructions to add image on registry</Popup.Header>
+      <Popup.Header>Instructions to Add Image on registry</Popup.Header>
       <Popup.Content>
         <form className="flex flex-col gap-2xl">
           {error && (
@@ -44,12 +41,21 @@ export const RegistryImageInstruction = ({
             data && (
               <div className="flex flex-col gap-sm text-start ">
                 <span className="flex flex-wrap items-center gap-md py-lg">
-                  Please follow below instruction for further steps
+                  1. Using URL:
                 </span>
                 <CodeView
                   preClassName="!overflow-none text-wrap break-words"
                   copy
                   data={data.url || ''}
+                />
+
+                <span className="flex flex-wrap items-center gap-md py-lg">
+                  2. Using Script URL:
+                </span>
+                <CodeView
+                  preClassName="!overflow-none text-wrap break-words"
+                  copy
+                  data={data.scriptUrl || ''}
                 />
 
                 {/* {data.url} */}

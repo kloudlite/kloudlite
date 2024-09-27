@@ -16,6 +16,7 @@ import Container from '../components/container';
 import { JoinWebinar } from '../components/join-webinar';
 import useEnv from '../utils/use-env';
 
+
 type WebinarUIProps = {
   userDetails: any;
   meetingStatus: string;
@@ -63,7 +64,7 @@ export const WebinarUI = ({ userDetails, meetingStatus }: WebinarUIProps) => {
             <JoinWebinar
               userData={userDetails}
               meetingStatus={meetingStatus}
-              meetingId={env?.DYTE_ORG_ID}
+              meetingId={env?.DYTE_MEETING_ID}
             />
             {visible && (
               <HandleRegisterForm
@@ -118,8 +119,13 @@ const HandleRegisterForm = ({
         setVisible(false);
         toast.success('Thank you for registering to kloudlite events');
       }
-    } catch (error) {
-      toast.error('Error while registering to kloudlite events');
+    } catch (error: any) {
+      if (error.response && error.response.status === 400) {
+        toast.error("You are already registered for this event.");
+      } else {
+        toast.error("Error while registering to Kloudlite events.");
+      }
+      // toast.error('Error while registering to kloudlite events');
     }
   };
 
@@ -169,7 +175,7 @@ const HandleRegisterForm = ({
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  // placeholder="company name"
+                // placeholder="company name"
                 />
               </div>
               <div className="flex-grow">

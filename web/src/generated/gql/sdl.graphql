@@ -1,3 +1,8 @@
+"""
+Indicates exactly one field must be supplied and this field must not be `null`.
+"""
+directive @oneOf on INPUT_OBJECT
+
 """Exposes a URL that specifies the behavior of this scalar."""
 directive @specifiedBy(
   """The URL that specifies the behavior of this scalar."""
@@ -191,6 +196,7 @@ type BYOKCluster {
   markedForDeletion: Boolean
   messageQueueTopicName: String!
   metadata: Metadata!
+  ownedBy: String
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
@@ -205,6 +211,7 @@ type BYOKClusterEdge {
 input BYOKClusterIn {
   displayName: String!
   metadata: MetadataIn!
+  ownedBy: String
   visibility: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn!
 }
 
@@ -284,6 +291,7 @@ type Cluster {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
+  ownedBy: String
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -302,6 +310,7 @@ input ClusterIn {
   globalVPN: String
   kind: String
   metadata: MetadataIn!
+  ownedBy: String
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
 }
 
@@ -896,6 +905,11 @@ input Github__com___kloudlite___api___apps___infra___internal___entities__Cluste
 enum Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode {
   private
   public
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr {
+  accountName: String!
+  clusterName: String!
 }
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials {
@@ -2131,6 +2145,7 @@ type HelmRelease {
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  dispatchAddr: Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr
   displayName: String!
   id: ID!
   kind: String
@@ -2722,6 +2737,16 @@ input K8s__io___api___core___v1__LocalVolumeSourceIn {
   path: String!
 }
 
+type K8s__io___api___core___v1__ModifyVolumeStatus {
+  status: K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus!
+  targetVolumeAttributesClassName: String
+}
+
+input K8s__io___api___core___v1__ModifyVolumeStatusIn {
+  status: K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus!
+  targetVolumeAttributesClassName: String
+}
+
 type K8s__io___api___core___v1__NamespaceCondition {
   lastTransitionTime: Date
   message: String
@@ -2870,7 +2895,15 @@ input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {
 
 enum K8s__io___api___core___v1__PersistentVolumeClaimConditionType {
   FileSystemResizePending
+  ModifyingVolume
+  ModifyVolumeError
   Resizing
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus {
+  Infeasible
+  InProgress
+  Pending
 }
 
 enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
@@ -2883,9 +2916,10 @@ type K8s__io___api___core___v1__PersistentVolumeClaimSpec {
   accessModes: [String!]
   dataSource: K8s__io___api___core___v1__TypedLocalObjectReference
   dataSourceRef: K8s__io___api___core___v1__TypedObjectReference
-  resources: K8s__io___api___core___v1__ResourceRequirements
+  resources: K8s__io___api___core___v1__VolumeResourceRequirements
   selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
   storageClassName: String
+  volumeAttributesClassName: String
   volumeMode: String
   volumeName: String
 }
@@ -2894,9 +2928,10 @@ input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
   accessModes: [String!]
   dataSource: K8s__io___api___core___v1__TypedLocalObjectReferenceIn
   dataSourceRef: K8s__io___api___core___v1__TypedObjectReferenceIn
-  resources: K8s__io___api___core___v1__ResourceRequirementsIn
+  resources: K8s__io___api___core___v1__VolumeResourceRequirementsIn
   selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
   storageClassName: String
+  volumeAttributesClassName: String
   volumeMode: String
   volumeName: String
 }
@@ -2907,6 +2942,8 @@ type K8s__io___api___core___v1__PersistentVolumeClaimStatus {
   allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
+  currentVolumeAttributesClassName: String
+  modifyVolumeStatus: K8s__io___api___core___v1__ModifyVolumeStatus
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
@@ -2916,6 +2953,8 @@ input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
+  currentVolumeAttributesClassName: String
+  modifyVolumeStatus: K8s__io___api___core___v1__ModifyVolumeStatusIn
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
@@ -2962,6 +3001,7 @@ type K8s__io___api___core___v1__PersistentVolumeSpec {
   scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
   storageClassName: String
   storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  volumeAttributesClassName: String
   volumeMode: String
   vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
 }
@@ -2995,6 +3035,7 @@ input K8s__io___api___core___v1__PersistentVolumeSpecIn {
   scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
   storageClassName: String
   storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  volumeAttributesClassName: String
   volumeMode: String
   vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
 }
@@ -3035,6 +3076,8 @@ input K8s__io___api___core___v1__PodAffinityIn {
 
 type K8s__io___api___core___v1__PodAffinityTerm {
   labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  matchLabelKeys: [String!]
+  mismatchLabelKeys: [String!]
   namespaces: [String!]
   namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
   topologyKey: String!
@@ -3042,6 +3085,8 @@ type K8s__io___api___core___v1__PodAffinityTerm {
 
 input K8s__io___api___core___v1__PodAffinityTermIn {
   labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  matchLabelKeys: [String!]
+  mismatchLabelKeys: [String!]
   namespaces: [String!]
   namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
   topologyKey: String!
@@ -3117,26 +3162,6 @@ input K8s__io___api___core___v1__RBDPersistentVolumeSourceIn {
   readOnly: Boolean
   secretRef: K8s__io___api___core___v1__SecretReferenceIn
   user: String
-}
-
-type K8s__io___api___core___v1__ResourceClaim {
-  name: String!
-}
-
-input K8s__io___api___core___v1__ResourceClaimIn {
-  name: String!
-}
-
-type K8s__io___api___core___v1__ResourceRequirements {
-  claims: [K8s__io___api___core___v1__ResourceClaim!]
-  limits: Map
-  requests: Map
-}
-
-input K8s__io___api___core___v1__ResourceRequirementsIn {
-  claims: [K8s__io___api___core___v1__ResourceClaimIn!]
-  limits: Map
-  requests: Map
 }
 
 type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource {
@@ -3312,6 +3337,16 @@ type K8s__io___api___core___v1__VolumeNodeAffinity {
 
 input K8s__io___api___core___v1__VolumeNodeAffinityIn {
   required: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+type K8s__io___api___core___v1__VolumeResourceRequirements {
+  limits: Map
+  requests: Map
+}
+
+input K8s__io___api___core___v1__VolumeResourceRequirementsIn {
+  limits: Map
+  requests: Map
 }
 
 type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource {
@@ -3735,6 +3770,7 @@ type NodePool {
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  dispatchAddr: Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr
   displayName: String!
   id: ID!
   kind: String
@@ -3944,6 +3980,7 @@ type Query {
   core_getApp(envName: String!, name: String!): App
   core_getConfig(envName: String!, name: String!): Config
   core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
+  core_getDNSHostSuffix: String!
   core_getEnvironment(name: String!): Environment
   core_getExternalApp(envName: String!, name: String!): ExternalApp
   core_getImagePullSecret(name: String!): ImagePullSecret
@@ -3951,7 +3988,7 @@ type Query {
   core_getManagedResouceOutputKeyValues(envName: String, keyrefs: [ManagedResourceKeyRefIn], msvcName: String): [ManagedResourceKeyValueRef!]!
   core_getManagedResource(envName: String, msvcName: String, name: String!): ManagedResource
   core_getRegistryImage(image: String!): RegistryImage
-  core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL!
+  core_getRegistryImageURL: RegistryImageURL!
   core_getRouter(envName: String!, name: String!): Router
   core_getSecret(envName: String!, name: String!): Secret
   core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
@@ -3974,6 +4011,7 @@ type Query {
   core_resyncManagedResource(msvcName: String!, name: String!): Boolean!
   core_resyncRouter(envName: String!, name: String!): Boolean!
   core_resyncSecret(envName: String!, name: String!): Boolean!
+  core_searchRegistryImages(query: String!): [RegistryImage!]!
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
   cr_getBuild(id: ID!): Build
   cr_getBuildRun(buildID: ID!, buildRunName: String!): BuildRun

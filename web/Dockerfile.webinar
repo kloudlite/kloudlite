@@ -6,13 +6,16 @@ COPY ./package.json ./package.json
 COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
 
 RUN mkdir -p ./src/generated/plugin
-COPY ./src/generated/package.json ./src/generated/pnpm-lock.yaml ./src/generated
-COPY ./src/generated/plugin/package.json  ./src/generated/plugin/pnpm-lock.yaml ./src/generated/plugin
+COPY ./src/generated/package.json ./src/generated/pnpm-lock.yaml ./src/generated/
+COPY ./src/generated/plugin/package.json  ./src/generated/plugin/pnpm-lock.yaml ./src/generated/plugin/
 
 RUN --mount=type=bind,source=package.json,target=package.json \
   --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
   --mount=type=cache,target=/root/.local/share/pnpm/store \
   pnpm i --frozen-lockfile
+
+# lib
+COPY ./lib ./lib
 
 # design system
 COPY ./src/design-system/ ./src/design-system/

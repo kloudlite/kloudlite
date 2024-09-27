@@ -1,20 +1,28 @@
 "use client";
 import { DyteProvider, useDyteClient } from '@dytesdk/react-web-core';
 import axios from 'axios';
-import { useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import eventsData from '~/root/lib/shared-statics/events.json';
 import { MyMeetingUI } from '../../../orgs/my-meeting-ui';
+//@ts-ignore
 
+type UesrData = {
+    id: string,
+    email: string,
+    verified: boolean,
+    name: string,
+    approved: boolean,
+}
 
-export const Meeting = ({ dyteOrgId, dyteApiKey }: { dyteOrgId: string, dyteApiKey: string }) => {
+export const EventsUi = ({ userData, dyteOrgId, dyteApiKey }: { userData: UesrData, dyteOrgId: string, dyteApiKey: string }) => {
     const [meeting, initMeeting] = useDyteClient();
     const [authToken, setAuthToken] = useState('');
 
-    const params = useSearchParams();
+    const params = useParams();
+    const selectedEventHash = params.eventHash as string;
 
     const handleJoinMeeting = async ({ name, email, meetingId }: { name: string, email: string, meetingId: string }) => {
-
-        // const token = btoa(`${process.env.NEXT_PUBLIC_DYTE_ORG_ID}:${process.env.NEXT_PUBLIC_DYTE_API_KEY}`);
         const token = btoa(`${dyteOrgId}:${dyteApiKey}`);
         try {
             const { data: { success, data } } = await axios.post(
@@ -41,9 +49,11 @@ export const Meeting = ({ dyteOrgId, dyteApiKey }: { dyteOrgId: string, dyteApiK
     };
 
     useEffect(() => {
-        const meetingId = params.get('meetingId');
-        const name = params.get('name');
-        const email = params.get('email');
+        //@ts-ignore
+        const selectedEvents = eventsData[selectedEventHash];
+        const meetingId = selectedEvents.dyteMeetingId;
+        const name = userData.name;
+        const email = userData.email;
 
         if (meetingId && name && email) {
             (async () => {
@@ -63,6 +73,7 @@ export const Meeting = ({ dyteOrgId, dyteApiKey }: { dyteOrgId: string, dyteApiK
             });
         }
     }, [authToken]);
+
 
     return (
         <DyteProvider value={meeting}>

@@ -1,21 +1,21 @@
-import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
-import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { parseNodes } from '~/console/server/r-utils/common';
-import { getPagination, getSearch } from '~/console/server/utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
-import fake from '~/root/fake-data-generator/fake';
+import { Button } from '~/components/atoms/button.jsx';
 import { EmptyClusterImage } from '~/console/components/empty-resource-images';
-import Tools from './tools';
-import ClusterResourcesV2 from './cluster-resources-v2';
+import { Plus } from '~/console/components/icons';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import Wrapper from '~/console/components/wrapper';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { parseNodes } from '~/console/server/r-utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { getPagination, getSearch } from '~/console/server/utils/common';
+import fake from '~/root/fake-data-generator/fake';
+import { IRemixCtx } from '~/root/lib/types/common';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
+import ClusterResourcesV2 from './cluster-resources-v2';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -44,7 +44,7 @@ const CreateClusterButton = () => {
   return (
     <>
       <Button
-        content="Attach cluster"
+        content="Attach compute"
         variant="primary"
         prefix={<Plus />}
         onClick={() => {
@@ -88,9 +88,21 @@ const ClusterComponent = ({
       return {
         image: <EmptyClusterImage />,
         is: true,
-        title: 'This is where you’ll manage your cluster.',
+        title: 'This is where you’ll attach your compute or local devices.',
         content: (
-          <p>You can create a new cluster and manage the listed cluster.</p>
+          <p>
+            You can attach a new compute and manage the listed compute.
+            <br />
+            Follow the instructions to attach your{' '}
+            <Link
+              to="https://github.com/kloudlite/kl"
+              className="text-text-default"
+            >
+              <span className="bodyMd-semibold underline underline-offset-1 text-text-default">
+                local device
+              </span>
+            </Link>{' '}
+          </p>
         ),
         action: <CreateClusterButton />,
       };
@@ -100,7 +112,7 @@ const ClusterComponent = ({
       is: false,
       title: 'This is where you’ll manage your cluster.',
       content: (
-        <p>You can create a new cluster and manage the listed cluster.</p>
+        <p>You can create a new compute and manage the listed compute.</p>
       ),
       action: <CreateClusterButton />,
     };
@@ -112,7 +124,7 @@ const ClusterComponent = ({
   return (
     <Wrapper
       secondaryHeader={{
-        title: 'Clusters',
+        title: 'Attached Computes',
         action: byokClusters.length > 0 && <CreateClusterButton />,
       }}
       empty={getEmptyState({

@@ -8,7 +8,6 @@ export async function GET() {
     const dyteMeetingId = process.env.NEXT_PUBLIC_DYTE_MEETING_ID;
     const marketApiUrl = process.env.NEXT_PUBLIC_MARKETING_API_URL;
 
-    console.log("hello=====>>>", dyteOrgId, dyteApiKey, dyteMeetingId, marketApiUrl)
 
 
     return NextResponse.json({

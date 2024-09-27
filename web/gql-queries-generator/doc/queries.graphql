@@ -135,6 +135,7 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
       cursor
       node {
         accountName
+        ownedBy
         clusterSvcCIDR
         lastOnlineAt
         createdBy {
@@ -2438,9 +2439,6 @@ query consoleGetPvc($clusterName: String!, $name: String!) {
         namespace
       }
       resources {
-        claims {
-          name
-        }
         limits
         requests
       }
@@ -2505,9 +2503,6 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
             namespace
           }
           resources {
-            claims {
-              name
-            }
             limits
             requests
           }
@@ -3386,6 +3381,7 @@ query consoleGetBYOKClusterInstructions($name: String!, $onlyHelmValues: Boolean
 query consoleGetByokCluster($name: String!) {
   infra_getBYOKCluster(name: $name) {
     accountName
+    ownedBy
     createdBy {
       userEmail
       userId
@@ -3430,6 +3426,7 @@ query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginat
       cursor
       node {
         accountName
+        ownedBy
         clusterSvcCIDR
         lastOnlineAt
         createdBy {
@@ -4482,10 +4479,24 @@ query consoleGetRegistryImage($image: String!) {
   }
 }
 
-query consoleGetRegistryImageUrl($image: String!, $meta: Map!) {
-  core_getRegistryImageURL(image: $image, meta: $meta) {
+query consoleGetRegistryImageUrl {
+  core_getRegistryImageURL {
     scriptUrl
     url
+  }
+}
+
+query consoleSearchRegistryImages($query: String!) {
+  core_searchRegistryImages(query: $query) {
+    accountName
+    creationTime
+    id
+    imageName
+    imageTag
+    markedForDeletion
+    meta
+    recordVersion
+    updateTime
   }
 }
 
@@ -6482,6 +6493,22 @@ query authCli_getRemoteLogin($loginId: String!, $secret: String!) {
   }
 }
 
+query authCli_listAccountClusters($pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(pagination: $pagination) {
+    edges {
+      node {
+        clusterToken
+        displayName
+        id
+        metadata {
+          name
+          labels
+        }
+      }
+    }
+  }
+}
+
 mutation authCli_createClusterReference($cluster: BYOKClusterIn!) {
   infra_createBYOKCluster(cluster: $cluster) {
     id
@@ -6621,25 +6648,6 @@ query authCli_listImportedManagedResources($envName: String!, $search: SearchImp
       hasNextPage
       hasPrevPage
       startCursor
-    }
-    totalCount
-  }
-}
-
-query authCli_listByokClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
-  infra_listBYOKClusters(search: $search, pagination: $pagination) {
-    edges {
-      cursor
-      node {
-        clusterToken
-        displayName
-        id
-        metadata {
-          name
-          namespace
-        }
-        updateTime
-      }
     }
     totalCount
   }

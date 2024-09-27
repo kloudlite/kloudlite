@@ -314,7 +314,12 @@ export type K8s__Io___Api___Core___V1__PersistentVolumePhase =
 
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionType =
   | 'FileSystemResizePending'
+  | 'ModifyingVolume'
+  | 'ModifyVolumeError'
   | 'Resizing';
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeClaimModifyVolumeStatus =
+  'Infeasible' | 'InProgress' | 'Pending';
 
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase =
   | 'Bound'
@@ -931,6 +936,7 @@ export type RepositoryIn = {
 export type ByokClusterIn = {
   displayName: Scalars['String']['input'];
   metadata: MetadataIn;
+  ownedBy?: InputMaybe<Scalars['String']['input']>;
   visibility: Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__ClusterVisbilityIn;
 };
 
@@ -945,6 +951,7 @@ export type ClusterIn = {
   globalVPN?: InputMaybe<Scalars['String']['input']>;
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
+  ownedBy?: InputMaybe<Scalars['String']['input']>;
   spec: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecIn;
 };
 
@@ -1122,6 +1129,8 @@ export type K8s__Io___Api___Core___V1__WeightedPodAffinityTermIn = {
 
 export type K8s__Io___Api___Core___V1__PodAffinityTermIn = {
   labelSelector?: InputMaybe<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn>;
+  matchLabelKeys?: InputMaybe<Array<Scalars['String']['input']>>;
+  mismatchLabelKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   namespaces?: InputMaybe<Array<Scalars['String']['input']>>;
   namespaceSelector?: InputMaybe<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn>;
   topologyKey: Scalars['String']['input'];
@@ -1497,6 +1506,11 @@ export type K8s__Io___Api___Core___V1__LocalVolumeSourceIn = {
   path: Scalars['String']['input'];
 };
 
+export type K8s__Io___Api___Core___V1__ModifyVolumeStatusIn = {
+  status: K8s__Io___Api___Core___V1__PersistentVolumeClaimModifyVolumeStatus;
+  targetVolumeAttributesClassName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type K8s__Io___Api___Core___V1__NamespaceConditionIn = {
   lastTransitionTime?: InputMaybe<Scalars['Date']['input']>;
   message?: InputMaybe<Scalars['String']['input']>;
@@ -1545,9 +1559,10 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimSpecIn = {
   accessModes?: InputMaybe<Array<Scalars['String']['input']>>;
   dataSource?: InputMaybe<K8s__Io___Api___Core___V1__TypedLocalObjectReferenceIn>;
   dataSourceRef?: InputMaybe<K8s__Io___Api___Core___V1__TypedObjectReferenceIn>;
-  resources?: InputMaybe<K8s__Io___Api___Core___V1__ResourceRequirementsIn>;
+  resources?: InputMaybe<K8s__Io___Api___Core___V1__VolumeResourceRequirementsIn>;
   selector?: InputMaybe<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn>;
   storageClassName?: InputMaybe<Scalars['String']['input']>;
+  volumeAttributesClassName?: InputMaybe<Scalars['String']['input']>;
   volumeMode?: InputMaybe<Scalars['String']['input']>;
   volumeName?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1565,14 +1580,9 @@ export type K8s__Io___Api___Core___V1__TypedObjectReferenceIn = {
   namespace?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type K8s__Io___Api___Core___V1__ResourceRequirementsIn = {
-  claims?: InputMaybe<Array<K8s__Io___Api___Core___V1__ResourceClaimIn>>;
+export type K8s__Io___Api___Core___V1__VolumeResourceRequirementsIn = {
   limits?: InputMaybe<Scalars['Map']['input']>;
   requests?: InputMaybe<Scalars['Map']['input']>;
-};
-
-export type K8s__Io___Api___Core___V1__ResourceClaimIn = {
-  name: Scalars['String']['input'];
 };
 
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimStatusIn = {
@@ -1583,6 +1593,8 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimStatusIn = {
   conditions?: InputMaybe<
     Array<K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionIn>
   >;
+  currentVolumeAttributesClassName?: InputMaybe<Scalars['String']['input']>;
+  modifyVolumeStatus?: InputMaybe<K8s__Io___Api___Core___V1__ModifyVolumeStatusIn>;
   phase?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase>;
 };
 
@@ -1615,6 +1627,7 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeSpecIn = {
   scaleIO?: InputMaybe<K8s__Io___Api___Core___V1__ScaleIoPersistentVolumeSourceIn>;
   storageClassName?: InputMaybe<Scalars['String']['input']>;
   storageos?: InputMaybe<K8s__Io___Api___Core___V1__StorageOsPersistentVolumeSourceIn>;
+  volumeAttributesClassName?: InputMaybe<Scalars['String']['input']>;
   volumeMode?: InputMaybe<Scalars['String']['input']>;
   vsphereVolume?: InputMaybe<K8s__Io___Api___Core___V1__VsphereVirtualDiskVolumeSourceIn>;
 };
@@ -1968,6 +1981,7 @@ export type ConsoleListAllClustersQuery = {
       cursor: string;
       node: {
         accountName: string;
+        ownedBy?: string;
         clusterSvcCIDR: string;
         lastOnlineAt?: any;
         creationTime: any;
@@ -4186,11 +4200,7 @@ export type ConsoleGetPvcQuery = {
         name: string;
         namespace?: string;
       };
-      resources?: {
-        limits?: any;
-        requests?: any;
-        claims?: Array<{ name: string }>;
-      };
+      resources?: { limits?: any; requests?: any };
       selector?: {
         matchLabels?: any;
         matchExpressions?: Array<{
@@ -4254,11 +4264,7 @@ export type ConsoleListPvcsQuery = {
             name: string;
             namespace?: string;
           };
-          resources?: {
-            limits?: any;
-            requests?: any;
-            claims?: Array<{ name: string }>;
-          };
+          resources?: { limits?: any; requests?: any };
           selector?: {
             matchLabels?: any;
             matchExpressions?: Array<{
@@ -5051,6 +5057,7 @@ export type ConsoleGetByokClusterQueryVariables = Exact<{
 export type ConsoleGetByokClusterQuery = {
   infra_getBYOKCluster?: {
     accountName: string;
+    ownedBy?: string;
     creationTime: any;
     displayName: string;
     id: string;
@@ -5093,6 +5100,7 @@ export type ConsoleListByokClustersQuery = {
       cursor: string;
       node: {
         accountName: string;
+        ownedBy?: string;
         clusterSvcCIDR: string;
         lastOnlineAt?: any;
         creationTime: any;
@@ -6114,12 +6122,29 @@ export type ConsoleGetRegistryImageQuery = {
 };
 
 export type ConsoleGetRegistryImageUrlQueryVariables = Exact<{
-  image: Scalars['String']['input'];
-  meta: Scalars['Map']['input'];
+  [key: string]: never;
 }>;
 
 export type ConsoleGetRegistryImageUrlQuery = {
   core_getRegistryImageURL: { scriptUrl: string; url: string };
+};
+
+export type ConsoleSearchRegistryImagesQueryVariables = Exact<{
+  query: Scalars['String']['input'];
+}>;
+
+export type ConsoleSearchRegistryImagesQuery = {
+  core_searchRegistryImages: Array<{
+    accountName: string;
+    creationTime: any;
+    id: string;
+    imageName: string;
+    imageTag: string;
+    markedForDeletion?: boolean;
+    meta: any;
+    recordVersion: number;
+    updateTime: any;
+  }>;
 };
 
 export type ConsoleListRegistryImagesQueryVariables = Exact<{
@@ -8133,6 +8158,23 @@ export type AuthCli_GetRemoteLoginQuery = {
   auth_getRemoteLogin?: { authHeader?: string; status: string };
 };
 
+export type AuthCli_ListAccountClustersQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListAccountClustersQuery = {
+  infra_listBYOKClusters?: {
+    edges: Array<{
+      node: {
+        clusterToken: string;
+        displayName: string;
+        id: string;
+        metadata: { name: string; labels?: any };
+      };
+    }>;
+  };
+};
+
 export type AuthCli_CreateClusterReferenceMutationVariables = Exact<{
   cluster: ByokClusterIn;
 }>;
@@ -8273,27 +8315,6 @@ export type AuthCli_ListImportedManagedResourcesQuery = {
       hasPrevPage?: boolean;
       startCursor?: string;
     };
-  };
-};
-
-export type AuthCli_ListByokClustersQueryVariables = Exact<{
-  search?: InputMaybe<SearchCluster>;
-  pagination?: InputMaybe<CursorPaginationIn>;
-}>;
-
-export type AuthCli_ListByokClustersQuery = {
-  infra_listBYOKClusters?: {
-    totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        clusterToken: string;
-        displayName: string;
-        id: string;
-        updateTime: any;
-        metadata: { name: string; namespace?: string };
-      };
-    }>;
   };
 };
 
