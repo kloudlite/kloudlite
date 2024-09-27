@@ -2,8 +2,8 @@ import { BottomNavigation, GitDetailRaw } from '~/console/components/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from '~/console/page-components/util';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import useForm from '~/root/lib/client/hooks/use-form';
+import { parseName } from '~/console/server/r-utils/common';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 // import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext, useParams } from '@remix-run/react';
@@ -13,7 +13,7 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 // import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import {
   ArrowClockwise,
@@ -24,6 +24,7 @@ import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { handleError } from '~/root/lib/utils/common';
 import { IEnvironmentContext } from '../_layout';
 import BuildSelectionDialog from './app-build-selection-dialog';
@@ -58,24 +59,52 @@ const ExtraButton = ({
   );
 };
 
-const AppSelectItem = ({
+const valueRenderer = ({ value }: { value: string }) => {
+  return <div>{value}</div>;
+};
+
+export const AppSelectItem = ({
   label,
-  value,
-  registry,
-  repository,
+  meta,
+  imageSearchText,
 }: {
   label: string;
-  value: string;
-  registry: string;
-  repository: string;
+  meta: any;
+  imageSearchText: string;
 }) => {
+  const getHighlightedText = (text: string, highlight: string) => {
+    if (!highlight) return text;
+
+    const regex = new RegExp(`(${highlight})`, 'gi');
+    const parts = text.split(regex);
+
+    return parts.map((part, index) =>
+      part.toLowerCase() === highlight.toLowerCase() ? (
+        // eslint-disable-next-line react/no-array-index-key
+        <span key={index} className="bodySm-semibold text-text-soft">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   return (
     <div>
-      <div className="flex flex-col">
-        <div>{label}</div>
-        {registry !== '' && repository !== '' && (
-          <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
-        )}
+      <div className="flex flex-col gap-md">
+        <div className="bodyMd-semibold ">{label}</div>
+        <div className="flex flex-row gap-md">
+          {meta &&
+            Object.keys(meta).length > 0 &&
+            Object.keys(meta).map((key) => (
+              <div key={key} className="bodySm text-text-soft px-xs">
+                {`${key}: `}
+                {getHighlightedText(meta[key], imageSearchText)}
+                {' |'}
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );
@@ -104,47 +133,51 @@ const AppDetail = () => {
 
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
-  // const [imageSearchText, setImageSearchText] = useState('');
+  const [imageSearchText, setImageSearchText] = useState('');
 
-  const getRegistryImages = useCallback(async () => {
-    ensureAccountClientSide(params);
-    setImageLoaded(true);
-    try {
-      const registrayImages = await api.listRegistryImages({});
-      const data = parseNodes(registrayImages.data).map((i) => ({
-        label: `${i.imageName}:${i.imageTag}`,
-        value: `${i.imageName}:${i.imageTag}`,
-        ready: true,
-        render: () => (
-          <AppSelectItem
-            label={`${i.imageName}:${i.imageTag}`}
-            value={`${i.imageName}:${i.imageTag}`}
-            registry={i.meta.registry || ''}
-            repository={i.meta.repository || ''}
-          />
-        ),
-      }));
-      setImageList(data);
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setImageLoaded(false);
-    }
-  }, []);
+  const getRegistryImages = useCallback(
+    async ({ query }: { query: string }) => {
+      ensureAccountClientSide(params);
+      setImageLoaded(true);
+      try {
+        const registrayImages = await api.searchRegistryImages({
+          query,
+        });
+        const data = registrayImages.data.map((i) => ({
+          label: `${i.imageName}:${i.imageTag}/${i.meta.author}/${i.meta.registry}:${i.meta.repository}`,
+          value: `${i.imageName}:${i.imageTag}`,
+          ready: true,
+          render: () => (
+            <AppSelectItem
+              label={`${i.imageName}:${i.imageTag}`}
+              meta={i.meta}
+              imageSearchText={query}
+            />
+          ),
+        }));
+        setImageList(data);
+      } catch (err) {
+        handleError(err);
+      } finally {
+        setImageLoaded(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    getRegistryImages();
+    getRegistryImages({ query: '' });
   }, []);
 
-  // useDebounce(
-  //   () => {
-  //     if (imageSearchText) {
-  //       getRegistryImages();
-  //     }
-  //   },
-  //   300,
-  //   [imageSearchText]
-  // );
+  useDebounce(
+    () => {
+      if (imageSearchText) {
+        getRegistryImages({ query: imageSearchText });
+      }
+    },
+    300,
+    [imageSearchText]
+  );
 
   const { values, errors, handleChange, handleSubmit, isLoading, setValues } =
     useForm({
@@ -332,7 +365,7 @@ const AppDetail = () => {
             size="sm"
           /> */}
 
-          <TextInput
+          {/* <TextInput
             size="lg"
             label="Image name"
             placeholder="Enter Image name"
@@ -340,21 +373,22 @@ const AppDetail = () => {
             onChange={handleChange('imageUrl')}
             error={!!errors.imageUrl}
             message={errors.imageUrl}
-          />
+          /> */}
 
-          {/* <Select
+          <Select
             label="Select Images"
             size="lg"
             value={values.imageUrl}
             placeholder="Select a image"
             creatable
+            searchable
             options={async () => imageList}
             onChange={({ value }) => {
               handleChange('imageUrl')(dummyEvent(value));
             }}
-            // onSearch={(text) => {
-            //   setImageSearchText(text);
-            // }}
+            onSearch={(text) => {
+              setImageSearchText(text);
+            }}
             showclear
             noOptionMessage={
               <div className="p-2xl bodyMd text-center">
@@ -365,7 +399,8 @@ const AppDetail = () => {
             message={errors.imageUrl}
             loading={imageLoaded}
             createLabel="Select"
-          /> */}
+            valueRender={valueRenderer}
+          />
 
           {/* {values.imageMode === 'default' && (
             <RepoSelector

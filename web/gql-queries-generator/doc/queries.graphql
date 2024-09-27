@@ -135,6 +135,7 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
       cursor
       node {
         accountName
+        ownedBy
         clusterSvcCIDR
         lastOnlineAt
         createdBy {
@@ -2438,9 +2439,6 @@ query consoleGetPvc($clusterName: String!, $name: String!) {
         namespace
       }
       resources {
-        claims {
-          name
-        }
         limits
         requests
       }
@@ -2505,9 +2503,6 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
             namespace
           }
           resources {
-            claims {
-              name
-            }
             limits
             requests
           }
@@ -3386,6 +3381,7 @@ query consoleGetBYOKClusterInstructions($name: String!, $onlyHelmValues: Boolean
 query consoleGetByokCluster($name: String!) {
   infra_getBYOKCluster(name: $name) {
     accountName
+    ownedBy
     createdBy {
       userEmail
       userId
@@ -3430,6 +3426,7 @@ query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginat
       cursor
       node {
         accountName
+        ownedBy
         clusterSvcCIDR
         lastOnlineAt
         createdBy {
@@ -4486,6 +4483,20 @@ query consoleGetRegistryImageUrl {
   core_getRegistryImageURL {
     scriptUrl
     url
+  }
+}
+
+query consoleSearchRegistryImages($query: String!) {
+  core_searchRegistryImages(query: $query) {
+    accountName
+    creationTime
+    id
+    imageName
+    imageTag
+    markedForDeletion
+    meta
+    recordVersion
+    updateTime
   }
 }
 

@@ -10,6 +10,8 @@ import {
   ConsoleGetRegistryImageUrlQueryVariables,
   ConsoleListRegistryImagesQuery,
   ConsoleListRegistryImagesQueryVariables,
+  ConsoleSearchRegistryImagesQuery,
+  ConsoleSearchRegistryImagesQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IRegistryImages = NN<
@@ -29,7 +31,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteRegistryImageMutation) =>
         data.core_deleteRegistryImage,
-      vars(_: ConsoleDeleteRegistryImageMutationVariables) {},
+      vars(_: ConsoleDeleteRegistryImageMutationVariables) { },
     }
   ),
   getRegistryImage: executor(
@@ -51,7 +53,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetRegistryImageQuery) =>
         data.core_getRegistryImage,
-      vars(_: ConsoleGetRegistryImageQueryVariables) {},
+      vars(_: ConsoleGetRegistryImageQueryVariables) { },
     }
   ),
   getRegistryImageUrl: executor(
@@ -66,7 +68,30 @@ export const registryImagesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetRegistryImageUrlQuery) =>
         data.core_getRegistryImageURL,
-      vars(_: ConsoleGetRegistryImageUrlQueryVariables) {},
+      vars(_: ConsoleGetRegistryImageUrlQueryVariables) { },
+    }
+  ),
+  searchRegistryImages: executor(
+    gql`
+      query Core_searchRegistryImages($query: String!) {
+        core_searchRegistryImages(query: $query) {
+          accountName
+          creationTime
+          id
+          imageName
+          imageTag
+          markedForDeletion
+          meta
+          recordVersion
+          updateTime
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleSearchRegistryImagesQuery) => {
+        return data.core_searchRegistryImages;
+      },
+      vars(_: ConsoleSearchRegistryImagesQueryVariables) { },
     }
   ),
   listRegistryImages: executor(
@@ -101,7 +126,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListRegistryImagesQuery) => {
         return data.core_listRegistryImages;
       },
-      vars(_: ConsoleListRegistryImagesQueryVariables) {},
+      vars(_: ConsoleListRegistryImagesQueryVariables) { },
     }
   ),
 });

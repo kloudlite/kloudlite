@@ -2,16 +2,19 @@ import { useParams } from '@remix-run/react';
 import { useCallback, useEffect, useState } from 'react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
 import { BottomNavigation } from '~/console/components/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from '~/console/page-components/util';
+import { AppSelectItem } from '~/console/routes/_main+/$account+/env+/$environment+/new-app/app-detail';
 import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -63,28 +66,8 @@ import { handleError } from '~/root/lib/utils/common';
 //   return <ResourceExtraAction options={options} />;
 // };
 
-const AppSelectItem = ({
-  label,
-  value,
-  registry,
-  repository,
-}: {
-  label: string;
-  value: string;
-  registry: string;
-  repository: string;
-}) => {
-  return (
-    <div>
-      <div className="flex flex-col">
-        <div>{label}</div>
-        {registry !== '' && repository !== '' && (
-          <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
-        )}
-        {/* <div className="bodySm text-text-soft">{value}</div> */}
-      </div>
-    </div>
-  );
+const valueRenderer = ({ value }: { value: string }) => {
+  return <div>{value}</div>;
 };
 
 const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
@@ -109,38 +92,49 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
 
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageSearchText, setImageSearchText] = useState('');
 
-  const getRegistryImages = useCallback(async () => {
-    ensureAccountClientSide(params);
-    setImageLoaded(true);
-    try {
-      const registrayImages = await api.listRegistryImages({});
-      const data = parseNodes(registrayImages.data).map((i) => ({
-        label: `${i.imageName}:${i.imageTag}`,
-        value: `${i.imageName}:${i.imageTag}`,
-        ready: true,
-        render: () => (
-          <AppSelectItem
-            label={`${i.imageName}:${i.imageTag}`}
-            value={`${i.imageName}:${i.imageTag}`}
-            registry={i.meta.registry || ''}
-            repository={i.meta.repository || ''}
-          />
-        ),
-      }));
-      setImageList(data);
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setImageLoaded(false);
-    }
-  }, []);
+  const getRegistryImages = useCallback(
+    async ({ query }: { query: string }) => {
+      ensureAccountClientSide(params);
+      setImageLoaded(true);
+      try {
+        const registrayImages = await api.searchRegistryImages({ query });
+        const data = registrayImages.data.map((i) => ({
+          label: `${i.imageName}:${i.imageTag}/${i.meta.author}/${i.meta.registry}:${i.meta.repository}`,
+          value: `${i.imageName}:${i.imageTag}`,
+          ready: true,
+          render: () => (
+            <AppSelectItem
+              label={`${i.imageName}:${i.imageTag}`}
+              meta={i.meta}
+              imageSearchText={query}
+            />
+          ),
+        }));
+        setImageList(data);
+      } catch (err) {
+        handleError(err);
+      } finally {
+        setImageLoaded(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    getRegistryImages();
+    getRegistryImages({ query: '' });
   }, []);
 
-  // const api = useConsoleApi();
+  useDebounce(
+    () => {
+      if (imageSearchText) {
+        getRegistryImages({ query: imageSearchText });
+      }
+    },
+    300,
+    [imageSearchText]
+  );
 
   const {
     values,
@@ -317,7 +311,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           />
         )}
         <div className="flex flex-col gap-xl">
-          <TextInput
+          {/* <TextInput
             size="lg"
             label="Image name"
             placeholder="Enter Image name"
@@ -325,16 +319,21 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             onChange={handleChange('imageUrl')}
             error={!!errors.imageUrl}
             message={errors.imageUrl}
-          />
-          {/* <Select
+          /> */}
+
+          <Select
             label="Select Images"
             size="lg"
             value={values.imageUrl}
             placeholder="Select a image"
             creatable
+            searchable
             options={async () => imageList}
             onChange={({ value }) => {
               handleChange('imageUrl')(dummyEvent(value));
+            }}
+            onSearch={(text) => {
+              setImageSearchText(text);
             }}
             showclear
             noOptionMessage={
@@ -346,7 +345,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             message={errors.imageUrl}
             loading={imageLoaded}
             createLabel="Select"
-          /> */}
+            valueRender={valueRenderer}
+          />
         </div>
 
         <Checkbox

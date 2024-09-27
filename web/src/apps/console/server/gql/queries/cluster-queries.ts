@@ -11,16 +11,16 @@ import {
   ConsoleGetClusterQuery,
   ConsoleGetClusterQueryVariables,
   ConsoleGetKubeConfigQuery,
-  ConsoleListClustersQuery,
-  ConsoleListClustersQueryVariables,
-  ConsoleListDnsHostsQuery,
-  ConsoleUpdateClusterMutation,
-  ConsoleUpdateClusterMutationVariables,
-  ConsoleListDnsHostsQueryVariables,
   ConsoleListAllClustersQuery,
   ConsoleListAllClustersQueryVariables,
+  ConsoleListClustersQuery,
+  ConsoleListClustersQueryVariables,
   ConsoleListClusterStatusQuery,
   ConsoleListClusterStatusQueryVariables,
+  ConsoleListDnsHostsQuery,
+  ConsoleListDnsHostsQueryVariables,
+  ConsoleUpdateClusterMutation,
+  ConsoleUpdateClusterMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
@@ -54,8 +54,8 @@ export const clusterQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListDnsHostsQuery) => {
         return data.infra_listClusters;
       },
-      vars(_: ConsoleListDnsHostsQueryVariables) {},
-    },
+      vars(_: ConsoleListDnsHostsQueryVariables) { },
+    }
   ),
 
   createCluster: executor(
@@ -69,8 +69,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateClusterMutation) =>
         data.infra_createCluster,
-      vars(_: ConsoleCreateClusterMutationVariables) {},
-    },
+      vars(_: ConsoleCreateClusterMutationVariables) { },
+    }
   ),
   deleteCluster: executor(
     gql`
@@ -81,8 +81,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteClusterMutation) =>
         data.infra_deleteCluster,
-      vars(_: ConsoleDeleteClusterMutationVariables) {},
-    },
+      vars(_: ConsoleDeleteClusterMutationVariables) { },
+    }
   ),
   clustersCount: executor(
     gql`
@@ -94,8 +94,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleClustersCountQuery) => data.infra_listClusters,
-      vars(_: ConsoleClustersCountQueryVariables) {},
-    },
+      vars(_: ConsoleClustersCountQueryVariables) { },
+    }
   ),
 
   listAllClusters: executor(
@@ -112,6 +112,7 @@ export const clusterQueries = (executor: IExecutor) => ({
             cursor
             node {
               accountName
+              ownedBy
               clusterSvcCIDR
               lastOnlineAt
               createdBy {
@@ -275,8 +276,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListAllClustersQuery) => data.byok_clusters,
-      vars(_: ConsoleListAllClustersQueryVariables) {},
-    },
+      vars(_: ConsoleListAllClustersQueryVariables) { },
+    }
   ),
   listClusters: executor(
     gql`
@@ -399,8 +400,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListClustersQuery) => data.infra_listClusters,
-      vars(_: ConsoleListClustersQueryVariables) {},
-    },
+      vars(_: ConsoleListClustersQueryVariables) { },
+    }
   ),
   getCluster: executor(
     gql`
@@ -505,8 +506,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetClusterQuery) => data.infra_getCluster,
-      vars(_: ConsoleGetClusterQueryVariables) {},
-    },
+      vars(_: ConsoleGetClusterQueryVariables) { },
+    }
   ),
   listClusterStatus: executor(
     gql`
@@ -526,8 +527,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListClusterStatusQuery) =>
         data.infra_listBYOKClusters,
-      vars(_: ConsoleListClusterStatusQueryVariables) {},
-    },
+      vars(_: ConsoleListClusterStatusQueryVariables) { },
+    }
   ),
   getKubeConfig: executor(
     gql`
@@ -542,8 +543,8 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetKubeConfigQuery) => data.infra_getCluster,
-      vars(_: ConsoleGetClusterQueryVariables) {},
-    },
+      vars(_: ConsoleGetClusterQueryVariables) { },
+    }
   ),
   updateCluster: executor(
     gql`
@@ -556,7 +557,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateClusterMutation) =>
         data.infra_updateCluster,
-      vars(_: ConsoleUpdateClusterMutationVariables) {},
-    },
+      vars(_: ConsoleUpdateClusterMutationVariables) { },
+    }
   ),
 });

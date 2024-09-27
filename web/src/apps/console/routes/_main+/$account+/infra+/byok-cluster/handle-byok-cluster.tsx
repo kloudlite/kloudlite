@@ -1,17 +1,18 @@
 /* eslint-disable react/destructuring-assignment */
 import { toast } from 'react-toastify';
+import { Button } from '~/components/atoms/button';
+import { Checkbox } from '~/components/atoms/checkbox';
+import Banner from '~/components/molecule/banner';
 import Popup from '~/components/molecule/popup';
+import { NameIdView } from '~/console/components/name-id-view';
+import { IDialogBase } from '~/console/components/types.d';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { IDialogBase } from '~/console/components/types.d';
-import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
-import { NameIdView } from '~/console/components/name-id-view';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
-import { Checkbox } from '~/components/atoms/checkbox';
-import Banner from '~/components/molecule/banner';
 
 type IDialog = IDialogBase<ExtractNodeType<IByocClusters>>;
 
@@ -25,17 +26,17 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            displayName: props.data.displayName,
-            name: parseName(props.data),
-            visibilityMode: false,
-            isNameError: false,
-          }
+          displayName: props.data.displayName,
+          name: parseName(props.data),
+          visibilityMode: false,
+          isNameError: false,
+        }
         : {
-            name: '',
-            displayName: '',
-            visibilityMode: false,
-            isNameError: false,
-          },
+          name: '',
+          displayName: '',
+          visibilityMode: false,
+          isNameError: false,
+        },
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
         displayName: Yup.string().required('name is required'),
@@ -69,7 +70,7 @@ const Root = (props: IDialog) => {
           reloadPage();
           resetValues();
           toast.success(
-            `cluster ${isUpdate ? 'updated' : 'created'} successfully`
+            `compute ${isUpdate ? 'updated' : 'created'} successfully`
           );
           setVisible(false);
         } catch (err) {
@@ -123,6 +124,20 @@ const Root = (props: IDialog) => {
                   </div>
                 }
               />
+              <Button
+                target="_blank"
+                size="sm"
+                content={
+                  <span className="truncate text-left">
+                    Attach your local device
+                  </span>
+                }
+                variant="primary-plain"
+                className="truncate justify-center"
+                onClick={() => {
+                  window.location.href = 'https://github.com/kloudlite/kl';
+                }}
+              />
             </>
           )}
         </div>
@@ -146,7 +161,7 @@ const HandleByokCluster = (props: IDialog) => {
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>
-        {isUpdate ? 'Edit Cluster' : 'Attach Cluster'}
+        {isUpdate ? 'Edit Compute' : 'Attach Compute'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
