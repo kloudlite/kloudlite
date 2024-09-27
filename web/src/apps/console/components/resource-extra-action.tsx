@@ -1,4 +1,4 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { DotsThreeVerticalFill } from '~/console/components/icons';
 import { Link } from '@remix-run/react';
 import { Key, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';

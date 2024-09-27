@@ -1,5 +1,5 @@
-import { IMiddlewareResponse, withRPC } from '../server/helpers/rpc';
-import { IGQLServerProps, IRemixCtx } from '../types/common';
+import { IMiddlewareResponse, withRPC } from "../server/helpers/rpc";
+import { IGQLServerProps, IRemixCtx } from "../types/common";
 
 export const RootAPIAction =
   (
@@ -8,11 +8,11 @@ export const RootAPIAction =
     }
   ) =>
   async (ctx: IRemixCtx) => {
-    if (ctx.request.method !== 'POST') {
-      return new Response(JSON.stringify({ message: 'Not Found' }), {
+    if (ctx.request.method !== "POST") {
+      return new Response(JSON.stringify({ message: "Not Found" }), {
         status: 404,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
     }
@@ -38,11 +38,10 @@ export const RootAPIAction =
         );
       }
     );
-
     return new Response(JSON.stringify({ data, errors }), {
       headers: {
-        'Content-Type': 'application/json',
-        ...(cookie ? { 'set-cookie': cookie } : {}),
+        "Content-Type": "application/json",
+        ...(cookie ? { "set-cookie": cookie } : {}),
       },
     });
   };

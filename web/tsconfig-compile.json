@@ -1,9 +1,19 @@
 {
-  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx","**/*.js", "**/*.jsx"],
+  "include": [
+    "remix.env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx"
+  ],
   "compilerOptions": {
     "incremental": true,
     "skipLibCheck": true,
-    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2019"
+    ],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -22,6 +32,9 @@
       ],
       "~/auth/*": [
         "./src/apps/auth/*"
+      ],
+      "~/iotconsole/*": [
+        "./src/apps/iot-console/*"
       ],
       "~/console/*": [
         "./src/apps/console/*"
@@ -45,7 +58,6 @@
         "lib/*"
       ]
     },
-
     "noEmit": true
   },
   "exclude": [
@@ -53,7 +65,9 @@
     "./src/design-system/node_modules/**/*",
     "public",
     "src/apps/devdoc",
+    "src/apps/webinar",
     "./src/design-system/node_modules/**/*",
-    "./src/design-system/dist/**/*"
+    "./src/design-system/dist/**/*",
+    "./src/apps/iot-console/**/*"
   ]
 }

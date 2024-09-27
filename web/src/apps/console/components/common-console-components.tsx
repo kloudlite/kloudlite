@@ -4,7 +4,8 @@ import { cn } from '~/components/utils';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { toast } from '~/components/molecule/toast';
 import { Copy, Check } from '~/console/components/icons';
-import { ListBody } from './console-list-components';
+import { Truncate } from '~/root/lib/utils/common';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 
 interface IDeleteContainer {
   title: ReactNode;
@@ -47,7 +48,7 @@ export const Box = ({ children, title, className }: IBox) => {
     <div
       className={cn(
         'rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ',
-        className
+        className,
       )}
     >
       <div className="text-text-strong headingLg">{title}</div>
@@ -59,9 +60,11 @@ export const Box = ({ children, title, className }: IBox) => {
 export const CopyContentToClipboard = ({
   content,
   toastMessage,
+  truncateLength = 20,
 }: {
   content: string;
   toastMessage: string;
+  truncateLength?: number;
 }) => {
   const iconSize = 16;
   const { copy } = useClipboard({});
@@ -78,30 +81,36 @@ export const CopyContentToClipboard = ({
   };
 
   return (
-    <ListBody
-      data={
-        <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!copied) {
-              handleCopy();
-            }
-          }}
-        >
-          <span className="truncate">{content}</span>
-          {copied ? (
-            <span>
-              <Check size={iconSize} />
-            </span>
-          ) : (
-            <span>
-              <Copy size={iconSize} />
-            </span>
-          )}
-        </div>
-      }
-    />
+    <div
+      className="flex flex-row items-center flex-1 cursor-pointer group"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!copied) {
+          handleCopy();
+        }
+      }}
+    >
+      <span className="bodyMd-medium text-text-strong">
+        {content.length >= truncateLength ? (
+          <TooltipV2 content={content}>
+            <Truncate length={truncateLength}>{content}</Truncate>
+          </TooltipV2>
+        ) : (
+          content
+        )}
+      </span>
+      <div className="shrink-0 ml-md">
+        {copied ? (
+          <span>
+            <Check size={iconSize} />
+          </span>
+        ) : (
+          <span>
+            <Copy size={iconSize} />
+          </span>
+        )}
+      </div>
+    </div>
   );
 };

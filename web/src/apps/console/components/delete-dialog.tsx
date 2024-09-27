@@ -42,14 +42,14 @@ const DeleteDialog = ({
             )}
           </div>
           <div className="flex flex-col gap-md">
-            <div className="flex flex-row items-center text-text-default">
+            <div className="inline text-text-default">
               {customMessages?.prompt || (
                 <>
-                  <div className="bodyMd">Enter the {resourceType} name</div>
-                  <div className="bodyMd-semibold">
-                    &nbsp;{resourceName}&nbsp;
+                  <div className="bodyMd inline">
+                    Enter the {resourceType} name
                   </div>
-                  <div className="bodyMd">to continue:</div>
+                  <div className="bodyMd-semibold inline"> {resourceName} </div>
+                  <div className="bodyMd inline">to continue:</div>
                 </>
               )}
             </div>

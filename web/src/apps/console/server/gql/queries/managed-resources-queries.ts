@@ -25,25 +25,50 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   getManagedResource: executor(
     gql`
       query Core_getManagedResource(
-        $projectName: String!
-        $envName: String!
         $name: String!
+        $msvcName: String
+        $envName: String
       ) {
         core_getManagedResource(
-          projectName: $projectName
-          envName: $envName
           name: $name
+          msvcName: $msvcName
+          envName: $envName
         ) {
+          accountName
+          apiVersion
+          clusterName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          creationTime
           displayName
           enabled
           environmentName
+          id
+          isImported
+          kind
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          managedServiceName
           markedForDeletion
           metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
             name
             namespace
           }
-          projectName
+          mresRef
+          recordVersion
           spec {
+            resourceNamePrefix
             resourceTemplate {
               apiVersion
               kind
@@ -53,8 +78,48 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              spec
             }
+          }
+          status {
+            checkList {
+              debug
+              description
+              hide
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncedOutputSecretRef {
+            metadata {
+              name
+            }
+            apiVersion
+            data
+            immutable
+            kind
+            stringData
+            type
+          }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
           }
           updateTime
         }
@@ -70,15 +135,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   createManagedResource: executor(
     gql`
       mutation Core_createManagedResource(
-        $projectName: String!
-        $envName: String!
+        $msvcName: String!
         $mres: ManagedResourceIn!
       ) {
-        core_createManagedResource(
-          projectName: $projectName
-          envName: $envName
-          mres: $mres
-        ) {
+        core_createManagedResource(msvcName: $msvcName, mres: $mres) {
           id
         }
       }
@@ -92,15 +152,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   updateManagedResource: executor(
     gql`
       mutation Core_updateManagedResource(
-        $projectName: String!
-        $envName: String!
+        $msvcName: String!
         $mres: ManagedResourceIn!
       ) {
-        core_updateManagedResource(
-          projectName: $projectName
-          envName: $envName
-          mres: $mres
-        ) {
+        core_updateManagedResource(msvcName: $msvcName, mres: $mres) {
           id
         }
       }
@@ -114,20 +169,16 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   listManagedResources: executor(
     gql`
       query Core_listManagedResources(
-        $projectName: String!
-        $envName: String!
         $search: SearchManagedResources
         $pq: CursorPaginationIn
       ) {
-        core_listManagedResources(
-          projectName: $projectName
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listManagedResources(search: $search, pq: $pq) {
           edges {
             cursor
             node {
+              accountName
+              apiVersion
+              clusterName
               createdBy {
                 userEmail
                 userId
@@ -135,11 +186,17 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
+              enabled
+              environmentName
+              id
+              isImported
+              kind
               lastUpdatedBy {
                 userEmail
                 userId
                 userName
               }
+              managedServiceName
               markedForDeletion
               metadata {
                 annotations
@@ -150,8 +207,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
+              mresRef
               recordVersion
               spec {
+                resourceNamePrefix
                 resourceTemplate {
                   apiVersion
                   kind
@@ -161,17 +220,17 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                     name
                     namespace
                   }
-                  spec
                 }
               }
               status {
-                checks
                 checkList {
-                  description
                   debug
+                  description
+                  hide
                   name
                   title
                 }
+                checks
                 isReady
                 lastReadyGeneration
                 lastReconcileTime
@@ -188,8 +247,13 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               syncedOutputSecretRef {
                 metadata {
                   name
-                  namespace
                 }
+                apiVersion
+                data
+                immutable
+                kind
+                stringData
+                type
               }
               syncStatus {
                 action
@@ -204,8 +268,8 @@ export const managedResourceQueries = (executor: IExecutor) => ({
           }
           pageInfo {
             endCursor
+            hasPrevPage
             hasNextPage
-            hasPreviousPage
             startCursor
           }
           totalCount
@@ -221,15 +285,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   deleteManagedResource: executor(
     gql`
       mutation Core_deleteManagedResource(
-        $projectName: String!
-        $envName: String!
+        $msvcName: String!
         $mresName: String!
       ) {
-        core_deleteManagedResource(
-          projectName: $projectName
-          envName: $envName
-          mresName: $mresName
-        )
+        core_deleteManagedResource(msvcName: $msvcName, mresName: $mresName)
       }
     `,
     {

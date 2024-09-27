@@ -60,7 +60,6 @@ export const buildQueries = (executor: IExecutor) => ({
                 webhookId
               }
               spec {
-                accountName
                 buildOptions {
                   buildArgs
                   buildContexts
@@ -69,7 +68,6 @@ export const buildQueries = (executor: IExecutor) => ({
                   dockerfilePath
                   targetPlatforms
                 }
-                cacheKeyName
                 registry {
                   repo {
                     name
@@ -79,6 +77,10 @@ export const buildQueries = (executor: IExecutor) => ({
                 resource {
                   cpu
                   memoryInMb
+                }
+                caches {
+                  name
+                  path
                 }
               }
               status
@@ -121,7 +123,7 @@ export const buildQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount

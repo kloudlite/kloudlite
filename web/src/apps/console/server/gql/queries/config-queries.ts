@@ -20,56 +20,32 @@ export type IConfigs = NN<ConsoleListConfigsQuery['core_listConfigs']>;
 export const configQueries = (executor: IExecutor) => ({
   updateConfig: executor(
     gql`
-      mutation Core_updateConfig(
-        $projectName: String!
-        $envName: String!
-        $config: ConfigIn!
-      ) {
-        core_updateConfig(
-          projectName: $projectName
-          envName: $envName
-          config: $config
-        ) {
+      mutation Core_updateConfig($envName: String!, $config: ConfigIn!) {
+        core_updateConfig(envName: $envName, config: $config) {
           id
         }
       }
     `,
     {
       transformer: (data: ConsoleUpdateConfigMutation) => data,
-      vars(_: ConsoleUpdateConfigMutationVariables) { },
+      vars(_: ConsoleUpdateConfigMutationVariables) {},
     }
   ),
   deleteConfig: executor(
     gql`
-      mutation Core_deleteConfig(
-        $projectName: String!
-        $envName: String!
-        $configName: String!
-      ) {
-        core_deleteConfig(
-          projectName: $projectName
-          envName: $envName
-          configName: $configName
-        )
+      mutation Core_deleteConfig($envName: String!, $configName: String!) {
+        core_deleteConfig(envName: $envName, configName: $configName)
       }
     `,
     {
       transformer: (data: ConsoleDeleteConfigMutation) => data,
-      vars(_: ConsoleDeleteConfigMutationVariables) { },
+      vars(_: ConsoleDeleteConfigMutationVariables) {},
     }
   ),
   getConfig: executor(
     gql`
-      query Core_getConfig(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getConfig(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getConfig($envName: String!, $name: String!) {
+        core_getConfig(envName: $envName, name: $name) {
           binaryData
           data
           displayName
@@ -84,29 +60,22 @@ export const configQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
         }
       }
     `,
     {
       transformer: (data: ConsoleGetConfigQuery) => data.core_getConfig,
-      vars(_: ConsoleGetConfigQueryVariables) { },
+      vars(_: ConsoleGetConfigQueryVariables) {},
     }
   ),
   listConfigs: executor(
     gql`
       query Core_listConfigs(
-        $projectName: String!
         $envName: String!
         $search: SearchConfigs
         $pq: CursorPaginationIn
       ) {
-        core_listConfigs(
-          projectName: $projectName
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listConfigs(envName: $envName, search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -135,14 +104,13 @@ export const configQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               updateTime
             }
           }
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount
@@ -151,21 +119,13 @@ export const configQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListConfigsQuery) => data.core_listConfigs,
-      vars(_: ConsoleListConfigsQueryVariables) { },
+      vars(_: ConsoleListConfigsQueryVariables) {},
     }
   ),
   createConfig: executor(
     gql`
-      mutation Core_createConfig(
-        $projectName: String!
-        $envName: String!
-        $config: ConfigIn!
-      ) {
-        core_createConfig(
-          projectName: $projectName
-          envName: $envName
-          config: $config
-        ) {
+      mutation Core_createConfig($envName: String!, $config: ConfigIn!) {
+        core_createConfig(envName: $envName, config: $config) {
           id
         }
       }
@@ -173,7 +133,7 @@ export const configQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateConfigMutation) =>
         data.core_createConfig,
-      vars(_: ConsoleCreateConfigMutationVariables) { },
+      vars(_: ConsoleCreateConfigMutationVariables) {},
     }
   ),
 });

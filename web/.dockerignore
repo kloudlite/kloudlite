@@ -20,3 +20,5 @@ src/generated/plugin/node_modules
 src/design-system/node_modules
 src/apps/devdoc/node_modules
 src/apps/devdoc/.next
+src/apps/webinar/.env
+

@@ -10,6 +10,7 @@ import {
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { getPagination, getSearch } from '~/console/server/utils/common';
+import { EmptyStorageImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import StorageResourcesV2 from './storage-resources-v2';
 
@@ -55,9 +56,15 @@ const ClusterStorage = () => {
               title: 'Storage',
             }}
             empty={{
+              image: <EmptyStorageImage />,
               is: storages.length === 0,
-              title: 'This is where you’ll manage your storage',
-              content: '',
+              title: '',
+              content: (
+                <p>
+                  This area displays the list of information automatically
+                  redirected from your cluster storage.
+                </p>
+              ),
             }}
             pagination={{
               pageInfo,

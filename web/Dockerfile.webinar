@@ -1,0 +1,40 @@
+FROM node:20.8.1-alpine AS base
+RUN apk add g++ make py3-pip
+RUN npm i -g pnpm
+WORKDIR /app
+COPY ./package.json ./package.json
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+
+RUN mkdir -p ./src/generated/plugin
+COPY ./src/generated/package.json ./src/generated/pnpm-lock.yaml ./src/generated/
+COPY ./src/generated/plugin/package.json  ./src/generated/plugin/pnpm-lock.yaml ./src/generated/plugin/
+
+RUN --mount=type=bind,source=package.json,target=package.json \
+  --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+  --mount=type=cache,target=/root/.local/share/pnpm/store \
+  pnpm i --frozen-lockfile
+
+# lib
+COPY ./lib ./lib
+
+# design system
+COPY ./src/design-system/ ./src/design-system/
+WORKDIR /app/src/design-system
+RUN pnpm i --frozen-lockfile
+RUN pnpm local:release
+
+# webinar
+WORKDIR /app
+COPY ./src/apps/webinar ./src/apps/webinar
+WORKDIR /app/src/apps/webinar
+RUN pnpm i --frozen-lockfile
+RUN pnpm build
+
+FROM node:20.8.1-alpine
+WORKDIR /app
+COPY --from=base /app/src/apps/webinar/.next ./.next
+COPY --from=base /app/src/apps/webinar/public ./public
+COPY --from=base /app/src/apps/webinar/package.json ./package.json
+COPY --from=base /app/src/apps/webinar/node_modules ./node_modules
+
+ENTRYPOINT npm run start

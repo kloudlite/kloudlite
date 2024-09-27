@@ -2,7 +2,7 @@ import { toast } from '~/components/molecule/toast';
 import logger from '../client/helpers/log';
 
 export const handleError = (
-  e: unknown
+  e: unknown,
 ): {
   error?: {
     message: string;
@@ -11,6 +11,7 @@ export const handleError = (
   const err = e as Error;
 
   if (typeof window === 'undefined') {
+    logger.error(e);
     return {
       error: {
         message: err.message,
@@ -40,7 +41,11 @@ export const Truncate = ({
   length: number;
 }) => {
   const newStr = str?.length > length ? `${str.substring(0, length)}...` : str;
-  return <span title={str}>{newStr}</span>;
+  return (
+    <span title={str} className="truncate">
+      {newStr}
+    </span>
+  );
 };
 
 export function sleep(time: number) {

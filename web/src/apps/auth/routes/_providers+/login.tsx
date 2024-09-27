@@ -1,23 +1,23 @@
 /* eslint-disable jsx-a11y/tabindex-no-positive */
 import {
-  ArrowRight,
   Envelope,
-  EnvelopeFill,
   GithubLogoFill,
   GitlabLogoFill,
   GoogleLogo,
 } from '@jengaicons/react';
-import { useSearchParams, Link, useOutletContext } from '@remix-run/react';
+import { Link, useOutletContext, useSearchParams } from '@remix-run/react';
+import { useEffect } from 'react';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
+import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
-import { BrandLogo } from '~/components/branding/brand-logo.jsx';
+import { ArrowLeft, ArrowRight } from '~/components/icons';
+import { toast } from '~/components/molecule/toast';
+import { cn } from '~/components/utils';
+import { getCookie } from '~/root/lib/app-setup/cookies';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
-import { Button } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
-import { useAuthApi } from '~/auth/server/gql/api-provider';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
 
@@ -27,6 +27,7 @@ const CustomGoogleIcon = (props: any) => {
 
 const LoginWithEmail = () => {
   const api = useAuthApi();
+  const [searchParams, _setSearchParams] = useSearchParams();
 
   const reloadPage = useReload();
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
@@ -48,6 +49,12 @@ const LoginWithEmail = () => {
           throw _errors[0];
         }
         toast.success('logged in success fully');
+
+        const callback = searchParams.get('callback');
+        if (callback) {
+          window.location.href = callback;
+          return;
+        }
         reloadPage();
       } catch (err) {
         handleError(err);
@@ -68,37 +75,35 @@ const LoginWithEmail = () => {
         label="Email"
         placeholder="ex: john@company.com"
         size="lg"
-        tabIndex={1}
+        className="h-[48px]"
       />
-      <PasswordInput
-        value={values.password}
-        error={!!errors.password}
-        message={errors.ram}
-        onChange={handleChange('password')}
-        label="Password"
-        placeholder="XXXXXX"
-        size="lg"
-        tabIndex={2}
-        extra={
-          <Button
-            size="md"
-            variant="primary-plain"
-            content="Forgot password"
-            to="/forgot-password"
-            LinkComponent={Link}
-            tabIndex={4}
-          />
-        }
-      />
+      <div className="flex flex-col gap-md">
+        <PasswordInput
+          value={values.password}
+          error={!!errors.password}
+          message={errors.ram}
+          onChange={handleChange('password')}
+          label="Password"
+          placeholder="XXXXXX"
+          size="lg"
+          className="h-[48px]"
+        />
+        <Button
+          content={<span className="text-text-soft">Forgot password</span>}
+          size="sm"
+          variant="plain"
+          to="/forgot-password"
+          linkComponent={Link}
+        />
+      </div>
       <Button
         loading={isLoading}
-        size="2xl"
+        size="lg"
         variant="primary"
-        content={<span className="bodyLg-medium">Continue with Email</span>}
-        prefix={<EnvelopeFill />}
+        content={<span className="bodyLg-medium">Continue with email</span>}
+        suffix={<ArrowRight />}
         block
         type="submit"
-        tabIndex={3}
       />
     </form>
   );
@@ -108,107 +113,108 @@ const Login = () => {
   const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } =
     useOutletContext<IProviderContext>();
   const [searchParams, _setSearchParams] = useSearchParams();
+  const callback = searchParams.get('callback');
+
+  const loginUrl = callback
+    ? `/login?mode=email&callback=${callback}`
+    : `/login?mode=email`;
+
+  useEffect(() => {
+    if (callback) {
+      getCookie().set('callback_url', callback, {
+        expires: new Date(Date.now() + 1000 * 60),
+      });
+    }
+  }, [callback]);
 
   return (
     <Container
-      footer={{
-        message: 'Don’t have an account?',
-        to: '/signup',
-        buttonText: 'Signup',
-      }}
+      headerExtra={
+        <Button
+          variant="outline"
+          content="Sign up"
+          linkComponent={Link}
+          to="/signup"
+        />
+      }
     >
-      <div className="flex flex-col items-stretch justify-center gap-7xl md:w-[400px]">
-        <div className="flex flex-col gap-5xl">
-          <BrandLogo darkBg={false} size={60} />
-          <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
-            <div className="flex flex-col items-center md:px-7xl">
-              <div className={cn('text-text-strong heading3xl text-center')}>
-                Login to Kloudlite
-              </div>
+      <div className="flex flex-col gap-3xl md:w-[500px] px-3xl py-5xl md:px-9xl">
+        <div className="flex flex-col items-stretch">
+          <div className="flex flex-col gap-lg items-center pb-6xl text-center">
+            <div className={cn('text-text-strong headingXl text-center')}>
+              Sign in to Kloudlite.io
             </div>
-            {searchParams.get('mode') === 'email' ? (
-              <LoginWithEmail />
-            ) : (
-              <div className="flex flex-col items-stretch gap-3xl">
-                <Button
-                  size="2xl"
-                  variant="tertiary"
-                  content={
-                    <span className="bodyLg-medium">Continue with GitHub</span>
-                  }
-                  prefix={<GithubLogoFill />}
-                  to={githubLoginUrl}
-                  disabled={!githubLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-                <Button
-                  size="2xl"
-                  variant="purple"
-                  content={
-                    <span className="bodyLg-medium">Continue with GitLab</span>
-                  }
-                  prefix={<GitlabLogoFill />}
-                  to={gitlabLoginUrl}
-                  disabled={!gitlabLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-                <Button
-                  size="2xl"
-                  variant="primary"
-                  content={
-                    <span className="bodyLg-medium">Continue with Google</span>
-                  }
-                  prefix={<CustomGoogleIcon />}
-                  to={googleLoginUrl}
-                  disabled={!googleLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-              </div>
-            )}
+            <div className="bodyMd-medium text-text-soft">
+              Start integrating local coding with remote power
+            </div>
           </div>
           {searchParams.get('mode') === 'email' ? (
-            <Button
-              size="2xl"
-              variant="outline"
-              content={
-                <span className="bodyLg-medium">Other Login options</span>
-              }
-              suffix={<ArrowRight />}
-              to="/login"
-              block
-              LinkComponent={Link}
-            />
+            <LoginWithEmail />
           ) : (
-            <Button
-              size="2xl"
-              variant="outline"
-              content={
-                <span className="bodyLg-medium">Continue with email</span>
-              }
-              prefix={<Envelope />}
-              to="/login/?mode=email"
-              block
-              LinkComponent={Link}
-            />
+            <div className="flex flex-col items-stretch gap-3xl">
+              <Button
+                size="lg"
+                variant="tertiary"
+                content={
+                  <span className="bodyLg-medium">Continue with GitHub</span>
+                }
+                prefix={<GithubLogoFill />}
+                to={githubLoginUrl}
+                disabled={!githubLoginUrl}
+                block
+                linkComponent={Link}
+              />
+              <Button
+                size="lg"
+                variant="purple"
+                content={
+                  <span className="bodyLg-medium">Continue with GitLab</span>
+                }
+                prefix={<GitlabLogoFill />}
+                to={gitlabLoginUrl}
+                disabled={!gitlabLoginUrl}
+                block
+                linkComponent={Link}
+              />
+              <Button
+                size="lg"
+                variant="primary"
+                content={
+                  <span className="bodyLg-medium">Continue with Google</span>
+                }
+                prefix={<CustomGoogleIcon />}
+                to={googleLoginUrl}
+                disabled={!googleLoginUrl}
+                block
+                linkComponent={Link}
+              />
+            </div>
           )}
         </div>
-        <div className="bodyMd text-text-soft text-center">
-          By signing up, you agree to the{' '}
-          <Link
-            to="https://kloudlite.io/terms-and-conditions"
-            className="underline"
-          >
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link className="underline" to="https://kloudlite.io/privacy-policy">
-            Privacy Policy
-          </Link>
-          .
-        </div>
+        {searchParams.get('mode') === 'email' ? (
+          <Button
+            size="lg"
+            variant="plain"
+            content={
+              <span className="bodyLg-medium">Other sign in options</span>
+            }
+            prefix={<ArrowLeft />}
+            to="/login"
+            block
+            linkComponent={Link}
+          />
+        ) : (
+          <Button
+            size="lg"
+            variant="outline"
+            content={<span className="bodyLg-medium">Continue with email</span>}
+            prefix={<Envelope />}
+            // to="/login/?mode=email"
+            to={loginUrl}
+            block
+            linkComponent={Link}
+          />
+        )}
       </div>
     </Container>
   );

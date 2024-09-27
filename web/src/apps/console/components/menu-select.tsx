@@ -2,7 +2,8 @@ import React, { ReactNode, useState } from 'react';
 import * as Select from '@radix-ui/react-select';
 import { cn } from '~/components/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronUp } from '@jengaicons/react';
+import { ChevronDown, ChevronUp } from '~/console/components/icons';
+import logger from '~/root/lib/client/helpers/log';
 
 interface ISelectItem {
   children: ReactNode;
@@ -76,7 +77,7 @@ const MenuSelect = ({
                 </Select.ScrollUpButton>
                 <Select.Viewport
                   onClick={(e) => {
-                    console.log(e);
+                    logger.log(e);
                   }}
                 >
                   {items.map((item) => (

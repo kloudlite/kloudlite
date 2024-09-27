@@ -1,10 +1,126 @@
 /* eslint-disable camelcase */
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { vpnQueries } from './queries/device-queries';
+import { AuthCli_ListAppsQuery } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
-  ...vpnQueries(executor),
+  cli_createGlobalVPNDevice: executor(
+    gql`
+      mutation Infra_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+        infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+          accountName
+          creationTime
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          displayName
+          globalVPNName
+          id
+          ipAddr
+          lastUpdatedBy {
+            userName
+            userId
+            userEmail
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          privateKey
+          publicKey
+          recordVersion
+          updateTime
+          wireguardConfig {
+            value
+            encoding
+          }
+        }
+      }
+    `,
+    {
+      transformer(data: any) {
+        return data.infra_createGlobalVPNDevice;
+      },
+      vars(_: any) {},
+    }
+  ),
+
+  cli_getMresOutputKeyValues: executor(
+    gql`
+      query Core_getManagedResouceOutputKeyValues(
+        $msvcName: String!
+        $keyrefs: [ManagedResourceKeyRefIn]
+      ) {
+        core_getManagedResouceOutputKeyValues(
+          msvcName: $msvcName
+          keyrefs: $keyrefs
+        ) {
+          key
+          mresName
+          value
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getManagedResouceOutputKeyValues,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getGlobalVpnDevice: executor(
+    gql`
+      query Infra_getGlobalVPNDevice($gvpn: String!, $deviceName: String!) {
+        infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+          accountName
+          creationTime
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          displayName
+          globalVPNName
+          id
+          ipAddr
+          lastUpdatedBy {
+            userName
+            userId
+            userEmail
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          privateKey
+          publicKey
+          recordVersion
+          updateTime
+          wireguardConfig {
+            value
+            encoding
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_getGlobalVPNDevice,
+      vars: (_: any) => {},
+    }
+  ),
 
   cli_coreCheckNameAvailability: executor(
     gql`
@@ -27,15 +143,10 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_getMresKeys: executor(
     gql`
       query Core_getManagedResouceOutputKeyValues(
-        $projectName: String!
-        $envName: String!
         $name: String!
+        $envName: String
       ) {
-        core_getManagedResouceOutputKeys(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        )
+        core_getManagedResouceOutputKeys(name: $name, envName: $envName)
       }
     `,
     {
@@ -47,15 +158,10 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_listMreses: executor(
     gql`
       query Core_listManagedResources(
-        $projectName: String!
-        $envName: String!
         $pq: CursorPaginationIn
+        $search: SearchManagedResources
       ) {
-        core_listManagedResources(
-          projectName: $projectName
-          envName: $envName
-          pq: $pq
-        ) {
+        core_listManagedResources(pq: $pq, search: $search) {
           edges {
             node {
               displayName
@@ -78,13 +184,11 @@ export const cliQueries = (executor: IExecutor) => ({
     gql`
       query Core_getManagedResouceOutputKeyValues(
         $keyrefs: [ManagedResourceKeyRefIn]
-        $envName: String!
-        $projectName: String!
+        $envName: String
       ) {
         core_getManagedResouceOutputKeyValues(
           keyrefs: $keyrefs
           envName: $envName
-          projectName: $projectName
         ) {
           key
           mresName
@@ -124,14 +228,12 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_getConfigSecretMap: executor(
     gql`
       query Core_getConfigValues(
-        $projectName: String!
         $envName: String!
-        $configQueries: [ConfigKeyRefIn]
+        $configQueries: [ConfigKeyRefIn!]
         $secretQueries: [SecretKeyRefIn!]
-        $mresQueries: [ManagedResourceKeyRefIn]
+        $mresQueries: [SecretKeyRefIn!]
       ) {
         configs: core_getConfigValues(
-          projectName: $projectName
           envName: $envName
           queries: $configQueries
         ) {
@@ -140,7 +242,6 @@ export const cliQueries = (executor: IExecutor) => ({
           value
         }
         secrets: core_getSecretValues(
-          projectName: $projectName
           envName: $envName
           queries: $secretQueries
         ) {
@@ -148,13 +249,9 @@ export const cliQueries = (executor: IExecutor) => ({
           secretName
           value
         }
-        mreses: core_getManagedResouceOutputKeyValues(
-          keyrefs: $mresQueries
-          envName: $envName
-          projectName: $projectName
-        ) {
+        mreses: core_getSecretValues(envName: $envName, queries: $mresQueries) {
           key
-          mresName
+          secretName
           value
         }
       }
@@ -170,21 +267,45 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+
+  cli_intercepExternalApp: executor(
+    gql`
+      mutation Core_interceptExternalApp(
+        $envName: String!
+        $appName: String!
+        $deviceName: String!
+        $intercept: Boolean!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
+      ) {
+        core_interceptExternalApp(
+          envName: $envName
+          externalAppName: $appName
+          deviceName: $deviceName
+          intercept: $intercept
+          portMappings: $portMappings
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_interceptExternalApp,
+      vars: (_: any) => {},
+    }
+  ),
   cli_interceptApp: executor(
     gql`
       mutation Core_interceptApp(
-        $projectName: String!
-        $envName: String!
-        $appname: String!
-        $deviceName: String!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
+        $deviceName: String!
+        $appName: String!
+        $envName: String!
       ) {
         core_interceptApp(
-          projectName: $projectName
-          envName: $envName
-          appname: $appname
-          deviceName: $deviceName
+          portMappings: $portMappings
           intercept: $intercept
+          deviceName: $deviceName
+          appname: $appName
+          envName: $envName
         )
       }
     `,
@@ -193,10 +314,35 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  cli_removeDeviceIntercepts: executor(
+    gql`
+      mutation Core_removeDeviceIntercepts(
+        $envName: String!
+        $deviceName: String!
+      ) {
+        core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_removeDeviceIntercepts,
+      vars(_: any) {},
+    }
+  ),
   cli_getEnvironment: executor(
     gql`
-      query Core_getEnvironment($projectName: String!, $name: String!) {
-        core_getEnvironment(projectName: $projectName, name: $name) {
+      query Core_getEnvironment($name: String!) {
+        core_getEnvironment(name: $name) {
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+          metadata {
+            name
+          }
+          displayName
+          clusterName
           spec {
             targetNamespace
           }
@@ -208,18 +354,50 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  cli_cloneEnvironment: executor(
+    gql`
+      mutation Core_cloneEnvironment(
+        $clusterName: String!
+        $sourceEnvName: String!
+        $destinationEnvName: String!
+        $displayName: String!
+        $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!
+      ) {
+        core_cloneEnvironment(
+          clusterName: $clusterName
+          sourceEnvName: $sourceEnvName
+          destinationEnvName: $destinationEnvName
+          displayName: $displayName
+          environmentRoutingMode: $environmentRoutingMode
+        ) {
+          id
+          displayName
+          clusterName
+          metadata {
+            name
+            namespace
+          }
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+          spec {
+            targetNamespace
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_cloneEnvironment,
+      vars(_: any) {},
+    }
+  ),
   cli_getSecret: executor(
     gql`
-      query Core_getSecret(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getSecret(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getSecret($envName: String!, $name: String!) {
+        core_getSecret(envName: $envName, name: $name) {
           displayName
           metadata {
             name
@@ -236,16 +414,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_getConfig: executor(
     gql`
-      query Core_getConfig(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getConfig(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getConfig($envName: String!, $name: String!) {
+        core_getConfig(envName: $envName, name: $name) {
           data
           displayName
           metadata {
@@ -263,10 +433,40 @@ export const cliQueries = (executor: IExecutor) => ({
 
   cli_listApps: executor(
     gql`
-      query Core_listApps($projectName: String!, $envName: String!) {
-        core_listApps(projectName: $projectName, envName: $envName) {
+      query Core_listApps($pq: CursorPaginationIn, $envName: String!) {
+        apps: core_listExternalApps(pq: $pq, envName: $envName) {
           edges {
-            cursor
+            node {
+              spec {
+                intercept {
+                  enabled
+                  portMappings {
+                    devicePort
+                    appPort
+                  }
+                  toDevice
+                }
+              }
+              displayName
+              environmentName
+              markedForDeletion
+              metadata {
+                name
+                annotations
+                namespace
+              }
+              status {
+                checks
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+            }
+          }
+        }
+        mapps: core_listApps(pq: $pq, envName: $envName) {
+          edges {
             node {
               displayName
               environmentName
@@ -276,39 +476,18 @@ export const cliQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               spec {
                 displayName
-                containers {
-                  args
-                  command
-                  env {
-                    key
-                    optional
-                    refKey
-                    refName
-                    type
-                    value
-                  }
-                  envFrom {
-                    refName
-                    type
-                  }
-                  image
-                  name
-                }
                 intercept {
                   enabled
                   toDevice
+                  portMappings {
+                    devicePort
+                    appPort
+                  }
                 }
-                nodeSelector
-                replicas
-                serviceAccount
                 services {
-                  name
                   port
-                  targetPort
-                  type
                 }
               }
               status {
@@ -324,14 +503,34 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: any) => data.core_listApps,
+      transformer: (data: AuthCli_ListAppsQuery) => {
+        if (data.apps) {
+          data.apps.edges = data.apps.edges.map((edge) => ({
+            node: {
+              ...edge.node,
+              mapp: false,
+            },
+          }));
+        }
+
+        if (data.mapps) {
+          data.mapps.edges = data.mapps.edges.map((edge) => ({
+            node: {
+              ...edge.node,
+              mapp: true,
+            },
+          }));
+        }
+        data.apps?.edges.push(...(data.mapps?.edges || []));
+        return data.apps;
+      },
       vars: (_: any) => {},
     }
   ),
   cli_listConfigs: executor(
     gql`
-      query Core_listConfigs($projectName: String!, $envName: String!) {
-        core_listConfigs(projectName: $projectName, envName: $envName) {
+      query Core_listConfigs($pq: CursorPaginationIn, $envName: String!) {
+        core_listConfigs(pq: $pq, envName: $envName) {
           totalCount
           edges {
             node {
@@ -353,16 +552,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_listSecrets: executor(
     gql`
-      query Core_listSecrets(
-        $projectName: String!
-        $envName: String!
-        $pq: CursorPaginationIn
-      ) {
-        core_listSecrets(
-          projectName: $projectName
-          envName: $envName
-          pq: $pq
-        ) {
+      query Core_listSecrets($envName: String!, $pq: CursorPaginationIn) {
+        core_listSecrets(envName: $envName, pq: $pq) {
           edges {
             cursor
             node {
@@ -372,6 +563,7 @@ export const cliQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
+              isReadyOnly
               stringData
             }
           }
@@ -386,22 +578,19 @@ export const cliQueries = (executor: IExecutor) => ({
 
   cli_listEnvironments: executor(
     gql`
-      query Core_listEnvironments(
-        $projectName: String!
-        $pq: CursorPaginationIn
-      ) {
-        core_listEnvironments(projectName: $projectName, pq: $pq) {
+      query Core_listEnvironments($pq: CursorPaginationIn) {
+        core_listEnvironments(pq: $pq) {
           edges {
             cursor
             node {
               displayName
               markedForDeletion
+              clusterName
               metadata {
                 name
                 namespace
               }
               spec {
-                projectName
                 targetNamespace
               }
               status {
@@ -415,7 +604,7 @@ export const cliQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount
@@ -424,35 +613,6 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listEnvironments,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_listProjects: executor(
-    gql`
-      query Core_listProjects($pq: CursorPaginationIn) {
-        core_listProjects(pq: $pq) {
-          edges {
-            node {
-              displayName
-              markedForDeletion
-              metadata {
-                name
-                namespace
-              }
-              status {
-                isReady
-                message {
-                  RawMessage
-                }
-              }
-            }
-          }
-        }
-      }
-    `,
-    {
-      transformer: (data: any) => data.core_listProjects,
       vars: (_: any) => {},
     }
   ),
@@ -555,6 +715,217 @@ export const cliQueries = (executor: IExecutor) => ({
     {
       transformer: (data: any) => data.auth_getRemoteLogin,
       vars: (_: any) => {},
+    }
+  ),
+  cli_listAccountClusters: executor(
+    gql`
+      query Infra_listBYOKClusters($pagination: CursorPaginationIn) {
+        infra_listBYOKClusters(pagination: $pagination) {
+          edges {
+            node {
+              clusterToken
+              displayName
+              id
+              metadata {
+                name
+                labels
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_listBYOKClusters,
+      vars(_: any) {},
+    }
+  ),
+  cli_createClusterReference: executor(
+    gql`
+      mutation Infra_createBYOKCluster($cluster: BYOKClusterIn!) {
+        infra_createBYOKCluster(cluster: $cluster) {
+          id
+          clusterToken
+          displayName
+          metadata {
+            name
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_createBYOKCluster,
+      vars(_: any) {},
+    }
+  ),
+  cli_deleteClusterReference: executor(
+    gql`
+      mutation Infra_deleteBYOKCluster($name: String!) {
+        infra_deleteBYOKCluster(name: $name)
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_deleteBYOKCluster,
+      vars(_: any) {},
+    }
+  ),
+  cli_clusterReferenceInstructions: executor(
+    gql`
+      query Infrat_getBYOKClusterSetupInstructions($name: String!) {
+        infrat_getBYOKClusterSetupInstructions(
+          name: $name
+          onlyHelmValues: true
+        ) {
+          command
+          title
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => {
+        const instructions = JSON.parse(
+          data.infrat_getBYOKClusterSetupInstructions[0].command
+        );
+        return instructions;
+      },
+      vars(_: any) {},
+    }
+  ),
+  cli_listImportedManagedResources: executor(
+    gql`
+      query Core_listImportedManagedResources(
+        $envName: String!
+        $search: SearchImportedManagedResources
+        $pq: CursorPaginationIn
+      ) {
+        core_listImportedManagedResources(
+          envName: $envName
+          search: $search
+          pq: $pq
+        ) {
+          edges {
+            cursor
+            node {
+              accountName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              displayName
+              environmentName
+              id
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              managedResourceRef {
+                id
+                name
+                namespace
+              }
+              markedForDeletion
+              name
+              recordVersion
+              secretRef {
+                name
+                namespace
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              updateTime
+              managedResource {
+                accountName
+                apiVersion
+                creationTime
+                displayName
+                enabled
+                environmentName
+                id
+                isImported
+                kind
+                managedServiceName
+                markedForDeletion
+                metadata {
+                  annotations
+                  creationTimestamp
+                  deletionTimestamp
+                  generation
+                  labels
+                  name
+                  namespace
+                }
+                mresRef
+                recordVersion
+                spec {
+                  resourceNamePrefix
+                  resourceTemplate {
+                    apiVersion
+                    kind
+                    msvcRef {
+                      apiVersion
+                      kind
+                      name
+                      namespace
+                    }
+                    spec
+                  }
+                }
+                status {
+                  checkList {
+                    debug
+                    description
+                    hide
+                    name
+                    title
+                  }
+                  checks
+                  isReady
+                  lastReadyGeneration
+                  lastReconcileTime
+                  message {
+                    RawMessage
+                  }
+                  resources {
+                    apiVersion
+                    kind
+                    name
+                    namespace
+                  }
+                }
+                syncedOutputSecretRef {
+                  apiVersion
+                  data
+                  immutable
+                  kind
+                  stringData
+                  type
+                }
+                updateTime
+              }
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPrevPage
+            startCursor
+          }
+          totalCount
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listImportedManagedResources,
+      vars(_: any) {},
     }
   ),
 });

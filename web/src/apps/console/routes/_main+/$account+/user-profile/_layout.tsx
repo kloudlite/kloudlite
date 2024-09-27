@@ -15,7 +15,7 @@ const Logo = () => {
   const { user } = useLoaderData();
   return (
     <div className="flex flex-row items-center gap-md">
-      <LogoWrapper to={`/${account}/projects`}>
+      <LogoWrapper to={`/${account}/environments`}>
         <BrandLogo />
       </LogoWrapper>
       <Button
@@ -43,7 +43,7 @@ const UserProfile = () => {
     <SidebarLayout
       navItems={[
         { label: 'Account', value: 'account' },
-        { label: 'Notifications', value: 'notifications' },
+        // { label: 'Notifications', value: 'notifications' },
         { label: 'Login connections', value: 'login-connections' },
       ]}
       parentPath="/user-profile"

@@ -7,6 +7,8 @@ import {
   useParams,
 } from '@remix-run/react';
 import { cloneElement, useCallback } from 'react';
+import { Avatar } from '~/components/atoms/avatar';
+import { Button, IconButton } from '~/components/atoms/button';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -15,29 +17,39 @@ import { TopBar } from '~/components/organisms/top-bar';
 import { generateKey, titleCase } from '~/components/utils';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import {
+  BackingServices,
+  BellFill,
+  GearSix,
+  InfraAsCode,
+  Project,
+  Sliders,
+} from '~/console/components/icons';
+import { LoadingPlaceHolder } from '~/console/components/loading';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { ViewModeProvider } from '~/console/components/view-mode';
+import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v2';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
+import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
+import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
 import { setupAccountContext } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
+import logger from '~/root/lib/client/helpers/log';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useMatches, {
   useHandleFromMatches,
 } from '~/root/lib/client/hooks/use-custom-matches';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { UnsavedChangesProvider } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
-import { IExtRemixCtx } from '~/root/lib/types/common';
-import {
-  InfraAsCode,
-  Container as ContainerIcon,
-  GearSix,
-  Project,
-} from '~/console/components/icons';
+import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -52,9 +64,9 @@ export type IConsoleRootContext = {
   accounts: IAccounts;
 };
 
-export const meta = () => {
+export const meta = (c: IRemixCtx) => {
   return [
-    { title: 'Projects' },
+    { title: `Account ${constants.metadot} ${c.params?.account || ''}` },
     { name: 'theme-color', content: LightTitlebarColor },
   ];
 };
@@ -70,11 +82,21 @@ const AccountTabs = () => {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <Project size={iconSize} />
-              Projects
+              Environments
             </span>
           ),
-          to: '/projects',
-          value: '/projects',
+          to: '/environments',
+          value: '/environments',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <BackingServices size={iconSize} />
+              Managed Services
+            </span>
+          ),
+          to: '/managed-services',
+          value: '/managed-services',
         },
         {
           label: (
@@ -86,16 +108,26 @@ const AccountTabs = () => {
           to: '/infra',
           value: '/infra',
         },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <ContainerIcon size={iconSize} />
-              Packages
-            </span>
-          ),
-          to: '/packages/repos',
-          value: '/packages',
-        },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <ContainerIcon size={iconSize} />
+        //       Packages
+        //     </span>
+        //   ),
+        //   to: '/packages/repos',
+        //   value: '/packages',
+        // },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <WireGuardlogo size={iconSize} />
+        //       Vpn Devices
+        //     </span>
+        //   ),
+        //   to: '/vpn-devices',
+        //   value: '/vpn-devices',
+        // },
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
@@ -114,7 +146,7 @@ const AccountTabs = () => {
 const Logo = () => {
   const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/projects`}>
+    <LogoWrapper to={`/${account}/environments`}>
       <BrandLogo />
     </LogoWrapper>
   );
@@ -167,8 +199,15 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
           Profile Settings
         </OptionList.Link>
 
-        <OptionList.Item>Notifications</OptionList.Item>
-        <OptionList.Item>Support</OptionList.Item>
+        {/* <OptionList.Item>Notifications</OptionList.Item> */}
+        {/* <OptionList.Item>Support</OptionList.Item> */}
+        <OptionList.Link
+          LinkComponent={Link}
+          target="_blank"
+          to="https://kloudlite.io/contact-us"
+        >
+          Support
+        </OptionList.Link>
         <OptionList.Separator />
         <OptionList.Item
           onClick={() => {
@@ -178,6 +217,222 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
         >
           Sign Out
         </OptionList.Item>
+      </OptionList.Content>
+    </OptionList.Root>
+  );
+};
+
+// type INotificationMessage = {
+//   id: string;
+//   name: string;
+//   message: string;
+//   time: string;
+//   isRead: boolean;
+//   isInvited: boolean;
+// };
+
+type INotificationBaseType = ExtractNodeType<ICommsNotifications>;
+
+const NotificationMessageView = ({
+  notificationMessage,
+}: {
+  // notificationMessage: INotificationMessage;
+  notificationMessage: INotificationBaseType;
+}) => {
+  const avatar = notificationMessage.read ? (
+    <Avatar size="xs" />
+  ) : (
+    <Avatar size="xs" dot />
+  );
+
+  return (
+    <div className="flex flex-row gap-lg">
+      {avatar}
+      <div className="flex flex-col gap-xl">
+        <div className="flex flex-col gap-md">
+          <span className="flex">
+            <span className="bodySm-medium">
+              {notificationMessage.accountName}&nbsp;
+            </span>
+            <span className="bodySm text-text-soft">
+              {notificationMessage.content.title}
+            </span>
+          </span>
+          <span className="bodySm text-text-disabled">
+            {notificationMessage.creationTime}
+          </span>
+        </div>
+        {/* {notificationMessage.isInvited && (
+          <BottomNavigation
+            secondaryButton={{
+              variant: 'outline',
+              content: 'Decline',
+              prefix: undefined,
+              size: 'sm',
+              // onClick: () => {
+              //   navigate(`/${accountName}/environments`);
+              // },
+            }}
+            primaryButton={{
+              variant: 'primary',
+              content: 'Acceept',
+              // loading: isLoading,
+              type: 'submit',
+              size: 'sm',
+            }}
+          />
+        )} */}
+      </div>
+    </div>
+  );
+};
+
+const NotificationMenu = () => {
+  // const { user } = useLoaderData();
+  // const cookie = getCookie();
+  // const { pathname } = useLocation();
+  // const eNavigate = useExternalRedirect();
+  // const { account } = useParams();
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
+  const { data: notificationsData, isLoading: notificationIsLoading } =
+    useCustomSwr(
+      'notifications',
+      async () =>
+        api.listNotifications({
+          pagination: {
+            first: 100,
+          },
+        }),
+      true
+    );
+
+  const notifications = parseNodes(notificationsData);
+
+  // const notificationMessage: INotificationMessage[] = [
+  //   {
+  //     id: '1',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  //   {
+  //     id: '3',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '4',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  //   {
+  //     id: '5',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '6',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  //   {
+  //     id: '7',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '8',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  // ];
+
+  return (
+    <OptionList.Root>
+      <OptionList.Trigger>
+        <IconButton icon={<BellFill />} variant="plain" />
+      </OptionList.Trigger>
+      <OptionList.Content className="w-[360px] !max-w-[360px] !py-0 ">
+        <div className="flex flex-row items-center justify-between p-2xl bg-surface-basic-active">
+          <span className="headingMd">Notifications</span>
+          <div className="flex flex-row">
+            <Button
+              size="sm"
+              content={
+                <span className="truncate text-left">Mark all as read</span>
+              }
+              variant="primary-plain"
+              className="truncate"
+              onClick={async () => {
+                try {
+                  const { errors: e } = await api.markAllNotificationAsRead();
+                  if (e) {
+                    throw e[0];
+                  }
+                  reloadPage();
+                } catch (error) {
+                  logger.log(error);
+                }
+              }}
+            />
+            <IconButton icon={<Sliders />} variant="plain" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-3xl p-3xl max-h-[425px] overflow-y-scroll">
+          {notificationIsLoading && <LoadingPlaceHolder />}
+          {notifications.length === 0 ? (
+            <div className="flex items-center justify-center bodyMd-medium text-text-soft">
+              You dont have any notifications yet
+            </div>
+          ) : (
+            notifications.map((data) => {
+              return (
+                <NotificationMessageView
+                  key={data.id}
+                  notificationMessage={data}
+                />
+              );
+            })
+          )}
+          {/* {notifications.map((data) => {
+            return (
+              <NotificationMessageView
+                key={data.id}
+                notificationMessage={data}
+              />
+            );
+          })} */}
+        </div>
       </OptionList.Content>
     </OptionList.Root>
   );
@@ -193,7 +448,7 @@ const Console = () => {
 
   const noMainLayout = useHandleFromMatches('noMainLayout', null);
 
-  const _devicesMenu = useHandleFromMatches('devicesMenu', null);
+  const devicesMenu = useHandleFromMatches('devicesMenu', null);
   const noBreadCrum = useHandleFromMatches('noBreadCrum', false);
   const hideProfileName = useHandleFromMatches('hideProfileName', false);
 
@@ -233,25 +488,28 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {/* {!!devicesMenu && devicesMenu()} */}
+            {!!devicesMenu && devicesMenu()}
             {!!headerExtra && headerExtra()}
+            {/* <NotificationMenu /> */}
             <ProfileMenu hideProfileName={hideProfileName} />
           </div>
         }
       />
-      <ViewModeProvider>
-        <SubNavDataProvider>
-          <UnsavedChangesProvider>
-            <Container className="pb-5xl">
-              <Outlet
-                context={{
-                  ...loaderData,
-                }}
-              />
-            </Container>
-          </UnsavedChangesProvider>
-        </SubNavDataProvider>
-      </ViewModeProvider>
+      <ClusterStatusProvider>
+        <ViewModeProvider>
+          <SubNavDataProvider>
+            <UnsavedChangesProvider>
+              <Container className="pb-5xl">
+                <Outlet
+                  context={{
+                    ...loaderData,
+                  }}
+                />
+              </Container>
+            </UnsavedChangesProvider>
+          </SubNavDataProvider>
+        </ViewModeProvider>
+      </ClusterStatusProvider>
     </div>
   );
 };

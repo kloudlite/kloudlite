@@ -1,8 +1,5 @@
-import { BrandLogo } from '~/components/branding/brand-logo.jsx';
 import { Button } from '~/components/atoms/button';
-import { ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
-import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link } from '@remix-run/react';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -10,6 +7,7 @@ import { toast } from '~/components/molecule/toast';
 import { cn } from '~/components/utils';
 import { handleError } from '~/root/lib/utils/common';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
+import { ArrowRight } from '~/components/icons';
 import Container from '../../components/container';
 
 const ForgetPassword = () => {
@@ -37,56 +35,64 @@ const ForgetPassword = () => {
   });
   return (
     <Container
-      footer={{
-        message: 'Remember password?',
-        buttonText: 'Login',
-        to: '/login',
-      }}
+      headerExtra={
+        <Button
+          variant="outline"
+          content="Sign in"
+          linkComponent={Link}
+          to="/login"
+        />
+      }
     >
       <form
-        className={cn(
-          'flex flex-col items-center self-stretch justify-center '
-        )}
+        className="flex flex-col gap-6xl md:w-[500px] px-3xl py-5xl md:px-9xl"
         onSubmit={handleSubmit}
       >
-        <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
-          <BrandLogo darkBg={false} size={60} />
-          <div className="flex flex-col items-stretch gap-5xl pb-5xl">
-            <div className="flex flex-col gap-lg items-center md:px-7xl">
-              <div className={cn('text-text-strong heading3xl text-center')}>
-                Forgot password
-              </div>
-              <div className="text-text-soft bodySm text-center">
-                Enter your registered email below to receive password reset
-                instruction.
-              </div>
-            </div>
-            <div className="flex flex-col items-stretch gap-3xl">
-              <TextInput
-                label="Email"
-                placeholder="ex: john@company.com"
-                size="lg"
-                value={values.email}
-                error={!!errors.email}
-                message={errors.email}
-                onChange={handleChange('email')}
-              />
-              <Button
-                size="2xl"
-                variant="primary"
-                content={
-                  <span className="bodyLg-medium">Send instructions</span>
-                }
-                suffix={<ArrowRight />}
-                block
-                type="submit"
-                LinkComponent={Link}
-                loading={isLoading}
-              />
-            </div>
+        <div className="flex flex-col gap-lg items-center text-center">
+          <div className={cn('text-text-strong headingXl text-center')}>
+            Forgot password
+          </div>
+          <div className="bodyMd-medium text-text-soft">
+            Enter your registered email below to receive password reset
+            instruction
           </div>
         </div>
-        <GoogleReCaptcha onVerify={() => {}} />
+        <div className="flex flex-col items-stretch gap-3xl">
+          <TextInput
+            label="Email"
+            placeholder="ex: john@company.com"
+            size="lg"
+            className="h-[48px]"
+            value={values.email}
+            error={!!errors.email}
+            message={errors.email}
+            onChange={handleChange('email')}
+          />
+          <Button
+            size="lg"
+            variant="primary"
+            content={<span className="bodyLg-medium">Send instructions</span>}
+            suffix={<ArrowRight />}
+            block
+            type="submit"
+            linkComponent={Link}
+            loading={isLoading}
+          />
+        </div>
+        <div className="text-center">
+          <span className="text-text-soft bodyLg">
+            Remember password?{' '}
+            <Button
+              variant="plain"
+              className="!inline-block align-bottom"
+              content={
+                <span className="bodyLg-underline text-text-strong">Login</span>
+              }
+              to="/login"
+              linkComponent={Link}
+            />
+          </span>
+        </div>
       </form>
     </Container>
   );

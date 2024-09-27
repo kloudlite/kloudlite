@@ -1,4 +1,4 @@
-import { PencilSimple, Trash } from '@jengaicons/react';
+import { PencilSimple, Trash } from '~/console/components/icons';
 import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';
@@ -6,7 +6,9 @@ import { toast } from '~/components/molecule/toast';
 import { titleCase } from '~/components/utils';
 import {
   ListBody,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import List from '~/console/components/list';
@@ -100,16 +102,19 @@ const ListView = ({ items = [], onAction, isInvite }: IResource) => {
               key: 1,
               className: 'flex-1',
               render: () => (
-                <ListTitle
+                <ListTitleV2
                   avatar={<Avatar size="sm" />}
                   subtitle={item.email}
                   title={item.name}
+                  truncateLength={30}
                 />
               ),
             },
             {
               key: 2,
-              render: () => <ListBody data={mapRoleToDisplayName(item.role)} />,
+              render: () => (
+                <ListItemV2 data={mapRoleToDisplayName(item.role)} />
+              ),
             },
             {
               key: 3,
@@ -136,7 +141,7 @@ const UserAccessResources = ({
   isPendingInvitation: boolean;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [showUserInvite, setShowUserInvite] = useState<BaseType | null>(null);
 

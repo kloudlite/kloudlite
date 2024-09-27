@@ -1,10 +1,9 @@
-import { Plus } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import SubNavAction from '~/console/components/sub-nav-action';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
@@ -13,9 +12,9 @@ import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
-import CredResources from './cred-resources';
 import HandleCrCred from './handle-cr-cred';
 import Tools from './tools';
+import CredResourcesV2 from './cred-resources-V2';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -87,7 +86,7 @@ const ContainerRegistryAccessManagement = () => {
                 }}
                 tools={<Tools />}
               >
-                <CredResources items={creds} />
+                <CredResourcesV2 items={creds} />
               </Wrapper>
             </div>
           );

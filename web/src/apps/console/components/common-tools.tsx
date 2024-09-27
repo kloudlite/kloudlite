@@ -1,6 +1,10 @@
-import { ArrowDown, ArrowUp, ArrowsDownUp, Plus } from '@jengaicons/react';
-import { useSearchParams } from '@remix-run/react';
-import { useState } from 'react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowsDownUp,
+  Plus,
+} from '~/console/components/icons';
+import { ReactNode, useCallback, useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
 import { cn } from '~/components/utils';
@@ -25,16 +29,25 @@ interface ISortbyOptionList {
 }
 
 const SortbyOptionList = (_: ISortbyOptionList) => {
-  const { setQueryParameters } = useQueryParameters();
-  const [searchparams] = useSearchParams();
-  const page = decodeUrl(searchparams.get('page')) || {};
+  const { setQueryParameters, sparams } = useQueryParameters();
+
+  const page = useCallback(
+    () => decodeUrl(sparams.get('page')) || '',
+    [sparams]
+  )();
 
   const { orderBy = 'updateTime', sortDirection = 'DESC' } = page || {};
 
   const updateOrder = ({ order, direction }: any) => {
+    const po = { ...page };
+    delete po.first;
+    delete po.after;
+    delete po.last;
+    delete po.before;
+
     setQueryParameters({
       page: encodeUrl({
-        ...page,
+        ...po,
         orderBy: order,
         sortDirection: direction,
       }),
@@ -116,15 +129,20 @@ interface ICommonTools extends IModeProps {
   options: FilterType[];
   noViewMode?: boolean;
   noSort?: boolean;
+  commonToolPrefix?: ReactNode;
 }
 
 const CommonTools = ({
   options,
   noViewMode = false,
   noSort = false,
+  commonToolPrefix,
 }: ICommonTools) => {
   const [appliedFilters, setAppliedFilters] = useState<IAppliedFilters>({});
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
+
+  // eslint-disable-next-line no-param-reassign
+  noViewMode = true;
 
   useSetAppliedFilters({
     setAppliedFilters,
@@ -138,6 +156,7 @@ const CommonTools = ({
         <div className="hidden md:flex">
           <Toolbar.Root>
             <SearchBox />
+            {commonToolPrefix}
             <CommonFilterOptions options={options} />
             {!noSort && (
               <SortbyOptionList

@@ -51,7 +51,7 @@ export const providerSecretQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount
@@ -68,6 +68,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
                 authMechanism
               }
               creationTime
+              gcp {
+                serviceAccountJSON
+              }
               displayName
               lastUpdatedBy {
                 userEmail

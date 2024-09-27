@@ -1,4 +1,3 @@
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import usePersistState from '~/root/lib/client/hooks/use-persist-state';
 import { useEffect, useState } from 'react';
 import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
@@ -8,16 +7,19 @@ import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Button } from '~/components/atoms/button';
-import { ArrowRight } from '@jengaicons/react';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { ArrowLeft } from '~/components/icons';
+import { cn } from '~/components/utils';
+import Container from '~/auth/components/container';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();
   const navigate = useNavigate();
   const { token } = query;
-  const api = useAPIClient();
+  const api = useAuthApi();
 
   const [rateLimiter, setRateLimiter] = usePersistState('rateLimiter', {});
 
@@ -25,7 +27,7 @@ const VerifyEmail = () => {
     (async () => {
       try {
         if (!token) return;
-        const { _, errors } = await api.verifyEmail({
+        const { errors } = await api.verifyEmail({
           token,
         });
         if (errors) {
@@ -66,7 +68,7 @@ const VerifyEmail = () => {
 
         setSending(true);
 
-        const { errors } = await api.resendVerificationEmail({ email });
+        const { errors } = await api.resendVerificationEmail();
 
         setSending(false);
 
@@ -90,47 +92,48 @@ const VerifyEmail = () => {
 
   if (token) {
     return (
-      <div className="flex flex-col items-center justify-center gap-7xl h-full">
-        <BrandLogo detailed={false} size={100} />
-        <span className="heading2xl text-text-strong">
-          Verifying details...
-        </span>
+      <div className="flex flex-col items-center justify-center gap-3xl h-full">
+        <BrandLogo detailed={false} size={56} />
+        <span className="headingLg text-text-strong">Verifying details...</span>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full flex items-center justify-center px-3xl">
-      <div className="flex flex-col items-center gap-5xl md:w-[360px]">
-        <BrandLogo detailed={false} size={60} />
-        <div className="flex flex-col gap-5xl pb-5xl">
-          <div className="flex flex-col items-center gap-2xl">
-            <h3 className="heading3xl text-text-strong">Email verification</h3>
-            <div className="bodyMd text-text-soft text-center">
-              Please check your <span className="bodyMd-semibold">{email}</span>{' '}
-              inbox to verify your account to get started.
-            </div>
+    <Container>
+      <div className="flex flex-col gap-6xl md:w-[500px] px-3xl py-5xl md:px-9xl">
+        <div className="flex flex-col gap-lg items-center text-center">
+          <div className={cn('text-text-strong headingXl text-center')}>
+            Email verification
           </div>
-          <Button
-            LinkComponent={Link}
-            to="/logout"
-            content="Go back to Login"
-            size="2xl"
-            suffix={<ArrowRight />}
-            block
-          />
+          <div className="bodyMd-medium text-text-soft">
+            Please check your <span className="text-text-default">{email}</span>{' '}
+            inbox to verify your account to get started.
+          </div>
         </div>
-        <div className="text-center">
-          Didn’t get the email? Check your spam folder or{' '}
+        <div className="flex flex-col gap-3xl">
           <Button
-            variant="primary-plain"
-            content="Send it again"
+            size="lg"
+            block
+            variant="primary"
+            content={
+              <span className="bodyLg-medium">Resend verification link</span>
+            }
             onClick={resendVerificationEmail}
-            className="!inline-block"
+          />
+          <Button
+            size="lg"
+            variant="basic"
+            content={<span className="bodyLg-medium">Go back to login</span>}
+            prefix={<ArrowLeft />}
+            block
+            type="submit"
+            linkComponent={Link}
+            to="/logout"
           />
         </div>
       </div>
-    </div>
+    </Container>
   );
 };
 

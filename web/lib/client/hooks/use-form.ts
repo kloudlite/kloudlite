@@ -3,6 +3,7 @@ import { useImmer } from 'use-immer';
 import Yup from '../../server/helpers/yup';
 import { FlatMapType } from '../../types/common';
 import { parseError } from '../../utils/common';
+import logger from '../helpers/log';
 
 interface useFormProps<T = any> {
   initialValues: T;
@@ -153,7 +154,7 @@ function useForm<T>({
         return false;
       }
     } catch (err) {
-      console.log(parseError(err).message);
+      logger.log(parseError(err).message);
       (err as Yup.ValidationError).inner.map((item) => {
         setErrors((d: any) => {
           d[item.path || ''] = item.message;

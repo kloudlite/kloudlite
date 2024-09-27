@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
@@ -13,9 +13,11 @@ import {
 import { IRemixCtx } from '~/root/lib/types/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import fake from '~/root/fake-data-generator/fake';
+import { EmptyNodepoolImage } from '~/console/components/empty-resource-images';
+import logger from '~/root/lib/client/helpers/log';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
-import NodepoolResources from './nodepool-resources';
+import NodepoolResourcesV2 from './nodepool-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -30,7 +32,7 @@ export const loader = async (ctx: IRemixCtx) => {
     });
 
     if (errors) {
-      console.log(errors);
+      logger.log(errors);
 
       throw errors[0];
     }
@@ -68,7 +70,7 @@ const Nodepools = () => {
                   <Button
                     variant="primary"
                     content="Create Nodepool"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}
@@ -76,6 +78,7 @@ const Nodepools = () => {
                 ),
               }}
               empty={{
+                image: <EmptyNodepoolImage />,
                 is: nodepools.length === 0,
                 title: 'This is where you’ll manage your nodepools',
                 content: (
@@ -87,7 +90,7 @@ const Nodepools = () => {
                 action: {
                   content: 'Create Nodepool',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   onClick: () => {
                     setVisible(true);
                   },
@@ -99,7 +102,7 @@ const Nodepools = () => {
               }}
               tools={<Tools />}
             >
-              <NodepoolResources items={nodepools} />
+              <NodepoolResourcesV2 items={nodepools} />
             </Wrapper>
           );
         }}

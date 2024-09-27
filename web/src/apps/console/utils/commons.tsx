@@ -1,5 +1,9 @@
 /* eslint-disable guard-for-in */
-import { AWSlogoFill, ChevronRight } from '@jengaicons/react';
+import {
+  AWSlogoFill,
+  ChevronRight,
+  GoogleCloudlogo,
+} from '~/console/components/icons';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import { cn } from '~/components/utils';
 import yup from '~/root/lib/server/helpers/yup';
@@ -21,6 +25,15 @@ export const getManagedTemplate = ({
   return templates
     ?.flatMap((t) => t.items.flat())
     .find((t) => t.kind === kind && t.apiVersion === apiVersion);
+};
+
+export const getManagedTemplateLogo = (
+  templates: IMSvTemplates,
+  msvcApiVersion: string
+) => {
+  return templates
+    ?.flatMap((t) => t.items.flat())
+    .find((t) => t.apiVersion === msvcApiVersion)?.logoUrl;
 };
 
 export const DIALOG_TYPE = Object.freeze({
@@ -108,7 +121,10 @@ export const downloadFile = ({
 };
 
 export const providerIcons = (iconsSize = 16) => {
-  return { aws: <AWSlogoFill size={iconsSize} /> };
+  return {
+    aws: <AWSlogoFill className="inline" size={iconsSize} />,
+    gcp: <GoogleCloudlogo className="inline" size={iconsSize} />,
+  };
 };
 
 export const renderCloudProvider = ({
@@ -120,10 +136,17 @@ export const renderCloudProvider = ({
   switch (cloudprovider) {
     case 'aws':
       return (
-        <div className="flex flex-row gap-xl items-center">
+        <span>
           {providerIcons(iconSize).aws}
-          <span>{cloudprovider}</span>
-        </div>
+          <span className="pl-lg bodySm-semibold">{cloudprovider}</span>
+        </span>
+      );
+    case 'gcp':
+      return (
+        <span>
+          {providerIcons(iconSize).gcp}
+          <span className="pl-lg bodyMd-semibold">{cloudprovider}</span>
+        </span>
       );
     default:
       return cloudprovider;
@@ -273,7 +296,6 @@ export const flatMapValidations = (obj: Record<string, any>) => {
   for (const key in obj) {
     const parts = key.split('.');
     const temp: Record<string, any> = flatJson;
-    // console.log('validations', obj[key]);
     if (parts.length === 1) {
       temp[key] = (() => {
         let returnYup;
@@ -329,4 +351,25 @@ export const flatMapValidations = (obj: Record<string, any>) => {
   }
 
   return flatJson;
+};
+
+export const getClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
+  if (!item || !item.lastOnlineAt) {
+    return false;
+  }
+
+  const lastTime = new Date(item.lastOnlineAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  console.log(timeDifference, window.location.href);
+
+  switch (true) {
+    case timeDifference <= 2:
+      return true;
+    default:
+      return false;
+  }
 };

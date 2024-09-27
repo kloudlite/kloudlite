@@ -1,4 +1,8 @@
-import { ChevronLeft, ChevronRight, SmileySad } from '@jengaicons/react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  SmileySad,
+} from '~/console/components/icons';
 import { ReactNode } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
@@ -23,7 +27,7 @@ export const DynamicPaginationHeader = ({
   return (
     <div
       className={cn(
-        'flex flex-row items-center pr-xl border-b border-border-disabled',
+        'flex flex-row items-center pr-xl border-b border-border-default',
         {
           'flex flex-row items-center px-xl py-lg bg-surface-basic-subdued rounded-t':
             typeof children === 'string',

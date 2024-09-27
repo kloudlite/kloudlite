@@ -19,7 +19,7 @@ import axios from 'axios';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Select from '~/components/atoms/select';
-import { CircleWavyCheckFill } from '@jengaicons/react';
+import { CircleWavyCheckFill } from '~/console/components/icons';
 import { cn, useMapper } from '~/components/utils';
 import Pulsable from 'react-pulsable';
 import { NameIdView } from '~/console/components/name-id-view';
@@ -27,6 +27,7 @@ import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { toast } from '~/components/molecule/toast';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import logger from '~/root/lib/client/helpers/log';
 
 const LOGO_URL = 'https://artifacthub.io/image/';
 
@@ -189,7 +190,7 @@ const Root = (props: IDialog) => {
         }))
       );
     } catch (error) {
-      console.log(error);
+      logger.log(error);
       setRepoErrors(true);
     } finally {
       setHelmChartsLoading(false);
@@ -423,7 +424,6 @@ const Root = (props: IDialog) => {
     () => {
       if (values.chartRepoURL) {
         fetchHelmCharts(values.chartRepoURL);
-        console.log('fetchHelmCharts');
       }
     },
     300,

@@ -11,7 +11,7 @@ import {
   GitMerge,
   NoOps,
   Nodeless,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 
@@ -26,7 +26,7 @@ const LocalBreadcrum = () => {
     <div className="flex flex-row items-center">
       <Breadcrum.Button
         to={`/${account}/packages`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
             <ChevronRight size={14} />{' '}
@@ -39,7 +39,7 @@ const LocalBreadcrum = () => {
       />
       <Breadcrum.Button
         to={`/${account}/repo/${repo}`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={<span>{atob(repo || '')}</span>}
       />
     </div>
@@ -53,6 +53,10 @@ const Tabs = () => {
   const iconSize = 16;
   return (
     <CommonTabs
+      backButton={{
+        to: `/${account}/packages/repos`,
+        label: 'Repos',
+      }}
       baseurl={`/${account}/repo/${repo}`}
       tabs={[
         {
@@ -79,7 +83,7 @@ const Tabs = () => {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <NoOps size={iconSize} />
-              Build Runs
+              Buildruns
             </span>
           ),
           value: '/buildruns',

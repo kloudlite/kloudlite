@@ -5,10 +5,7 @@ const Settings = () => {
   const rootContext = useOutletContext<any>();
   return (
     <SidebarLayout
-      navItems={[
-        { label: 'General', value: 'general' },
-        // { label: 'Build caches', value: 'buildcaches' },
-      ]}
+      navItems={[{ label: 'General', value: 'general' }]}
       parentPath="/settings"
     >
       <Outlet context={{ ...rootContext }} />

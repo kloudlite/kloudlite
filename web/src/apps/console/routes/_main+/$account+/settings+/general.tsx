@@ -1,4 +1,4 @@
-import { Buildings, CopySimple } from '@jengaicons/react';
+import { Buildings, CopySimple } from '~/console/components/icons';
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';
@@ -46,6 +46,7 @@ export const updateAccount = async ({
           name: parseName(data),
         },
         contactEmail: data.contactEmail,
+        kloudliteGatewayRegion: data.kloudliteGatewayRegion,
       },
     });
     if (e) {
@@ -128,11 +129,37 @@ const SettingGeneral = () => {
             <Avatar size="lg" color="one" image={<Buildings />} />{' '}
             <Button content="Upload photo" variant="basic" />
           </div>
-          <TextInput
-            label="Account name"
-            value={values.displayName}
-            onChange={handleChange('displayName')}
-          />
+          <div className="flex flex-row gap-3xl">
+            <div className="flex-1">
+              <TextInput
+                label="Account name"
+                value={values.displayName}
+                onChange={handleChange('displayName')}
+              />
+            </div>
+            <div className="flex-1">
+              <TextInput
+                value={account.kloudliteGatewayRegion}
+                label="Kloudlite gateway region"
+                suffix={
+                  <div
+                    className="flex justify-center items-center"
+                    title="Copy"
+                  >
+                    <button
+                      onClick={() => copy(account.kloudliteGatewayRegion)}
+                      className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
+                      tabIndex={-1}
+                      aria-label="copy account id"
+                    >
+                      <CopySimple size={16} />
+                    </button>
+                  </div>
+                }
+                disabled
+              />
+            </div>
+          </div>
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
               <TextInput

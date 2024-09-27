@@ -7,7 +7,7 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useSearchParams } from '@remix-run/react';
 import Toolbar from '~/components/atoms/toolbar';
 import { useState } from 'react';
-import { Search } from '@jengaicons/react';
+import { Search } from '~/console/components/icons';
 import { isValidRegex } from '../server/utils/common';
 
 export const SearchBox = ({ InputElement = Toolbar.TextInput }) => {
@@ -46,7 +46,7 @@ export const SearchBox = ({ InputElement = Toolbar.TextInput }) => {
       }
     },
     300,
-    [search]
+    [search],
   );
 
   return (

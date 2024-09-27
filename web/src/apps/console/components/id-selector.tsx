@@ -1,5 +1,5 @@
-import { PencilLine } from '@jengaicons/react';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { PencilLine } from '~/console/components/icons';
+import { useParams } from '@remix-run/react';
 import { ChangeEvent, useEffect, useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import Chips from '~/components/atoms/chips';
@@ -55,12 +55,11 @@ export const IdSelector = ({
 
   const api = useAPIClient();
   const params = useParams();
-  const { cluster, project } = params;
+  const { cluster } = params;
 
   const checkApi = (() => {
     switch (resType) {
       case 'app':
-      case 'project':
       case 'config':
       case 'environment':
       case 'managed_service':
@@ -105,11 +104,7 @@ export const IdSelector = ({
             resType,
             name: `${name}`,
             // eslint-disable-next-line no-nested-ternary
-            ...(resType === 'environment' || resType === 'app'
-              ? {
-                  projectName: project,
-                }
-              : {}),
+            ...(resType === 'environment' || resType === 'app' ? {} : {}),
             ...(resType === 'nodepool' || resType === 'vpn_device'
               ? {
                   clusterName: cluster,
@@ -125,7 +120,6 @@ export const IdSelector = ({
           if (errors) {
             throw errors[0];
           }
-          // console.log(data, errors);
           if (data.result) {
             setId(`${name}`);
             setPopupId(`${name}`);

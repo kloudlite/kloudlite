@@ -52,7 +52,7 @@ const MultiStepProgressWrapper = ({
               size="sm"
               content={backButton.content}
               to={backButton.to}
-              LinkComponent={Link}
+              linkComponent={Link}
             />
           )}
           <TitleSection title={title} subTitle={subTitle} action={action} />

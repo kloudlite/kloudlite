@@ -4,6 +4,7 @@ import { authBaseUrl, consoleBaseUrl } from '../../configs/base-url.cjs';
 import { getCookie } from '../../app-setup/cookies';
 import { redirectWithContext } from '../../app-setup/with-contxt';
 import { IExtRemixCtx, MapType, IRemixReq } from '../../types/common';
+import logger from '../../client/helpers/log';
 
 export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
   const whoAmI = await GQLServerHandler({
@@ -29,6 +30,10 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
     whoAmI.errors[0].message === 'input: auth_me Unauthorized'
   ) {
     return redirect(`${authBaseUrl}/login`);
+  }
+
+  if (whoAmI.errors) {
+    logger.log('whoAmI.errors', whoAmI.errors);
   }
 
   if (!(whoAmI.data && whoAmI.data)) {

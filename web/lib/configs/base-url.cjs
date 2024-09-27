@@ -1,16 +1,34 @@
-// @ts-ignore
+// @ts-nocheck
 const getClientEnv = (env) => {
-  const { BASE_URL, NODE_ENV, URL_SUFFIX, DEVELOPER, REGISTRY_URL } = env;
+  const {
+    BASE_URL,
+    NODE_ENV,
+    URL_SUFFIX,
+    DEVELOPER,
+    REGISTRY_URL,
+    MANAGE_GITLAB_URL,
+    MANAGE_GITHUB_URL,
+    GITHUB_APP_NAME,
+    COOKIE_DOMAIN,
+  } = env;
   return `
 ${BASE_URL ? `window.BASE_URL = ${`'${BASE_URL}'`}` : ''}
-${
-  NODE_ENV === 'development'
-    ? `window.DEVELOPER = ${`'${DEVELOPER}'`}`
-    : `window.NODE_ENV = ${`'${NODE_ENV}'`}`
-}
+${NODE_ENV === 'development'
+      ? `window.DEVELOPER = ${`'${DEVELOPER}'`}`
+      : `window.NODE_ENV = ${`'${NODE_ENV}'`}`
+    }
 ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
 ${REGISTRY_URL ? `window.REGISTRY_URL = ${`'${REGISTRY_URL}'`}` : ''}
-`;
+${MANAGE_GITHUB_URL
+      ? `window.MANAGE_GITHUB_URL = ${`'${MANAGE_GITHUB_URL}'`}`
+      : ''
+    }
+${MANAGE_GITLAB_URL
+      ? `window.MANAGE_GITLAB_URL = ${`'${MANAGE_GITLAB_URL}'`}`
+      : ''
+    }
+${GITHUB_APP_NAME ? `window.GITHUB_APP_NAME = ${`'${GITHUB_APP_NAME}'`}` : ''}
+${COOKIE_DOMAIN ? `window.COOKIE_DOMAIN = ${`'${COOKIE_DOMAIN}'`}` : ''} `;
 };
 
 const getServerEnv = () => {
@@ -29,6 +47,18 @@ const getServerEnv = () => {
     ...(process.env.REGISTRY_URL
       ? { REGISTRY_URL: process.env.REGISTRY_URL }
       : {}),
+    ...(process.env.MANAGE_GITHUB_URL
+      ? { MANAGE_GITHUB_URL: process.env.MANAGE_GITHUB_URL }
+      : {}),
+    ...(process.env.MANAGE_GITLAB_URL
+      ? { MANAGE_GITLAB_URL: process.env.MANAGE_GITLAB_URL }
+      : {}),
+    ...(process.env.GITHUB_APP_NAME
+      ? { GITHUB_APP_NAME: process.env.GITHUB_APP_NAME }
+      : {}),
+    ...(process.env.COOKIE_DOMAIN
+      ? { COOKIE_DOMAIN: process.env.COOKIE_DOMAIN }
+      : {}),
   };
 };
 
@@ -36,7 +66,6 @@ const baseUrls = () => {
   const bUrl =
     (() => {
       if (typeof window !== 'undefined') {
-        // @ts-ignore
         return window.BASE_URL;
       }
       return process.env.BASE_URL;
@@ -45,7 +74,6 @@ const baseUrls = () => {
   const postFix =
     (() => {
       if (typeof window !== 'undefined') {
-        // @ts-ignore
         return window.URL_SUFFIX;
       }
       return process.env.URL_SUFFIX;
@@ -54,7 +82,6 @@ const baseUrls = () => {
   const cookieDomain =
     (() => {
       if (typeof window !== 'undefined') {
-        // @ts-ignore
         return window.COOKIE_DOMAIN;
       }
       return process.env.COOKIE_DOMAIN;
@@ -63,7 +90,6 @@ const baseUrls = () => {
   const gatewayUrl =
     (() => {
       if (typeof window !== 'undefined') {
-        // @ts-ignore
         return window.GATEWAY_URL;
       }
       return process.env.GATEWAY_URL;
@@ -72,11 +98,25 @@ const baseUrls = () => {
   const registryHost =
     (() => {
       if (typeof window !== 'undefined') {
-        // @ts-ignore
         return window.REGISTRY_URL;
       }
       return process.env.REGISTRY_URL;
-    })() || `registry.${bUrl}`;
+    })() || `registry.${bUrl} `;
+
+  const gitEnvs = (() => {
+    if (typeof window !== 'undefined') {
+      return {
+        githubAppName: window.GITHUB_APP_NAME,
+      };
+    }
+    return {
+      githubAppName: process.env.GITHUB_APP_NAME,
+    };
+  })() || {
+    githubManageUrl: '',
+    gitlabManageUrl: '',
+    githubAppName: '',
+  };
 
   return {
     gatewayUrl,
@@ -85,9 +125,9 @@ const baseUrls = () => {
     registryHost,
     cookieDomain,
     baseUrl: bUrl,
-    githubAppName: 'kloudlite-dev',
     socketUrl: `wss://websocket.${bUrl}`,
     observeUrl: `https://observe.${bUrl}`,
+    gitEnvs,
   };
 };
 
@@ -97,12 +137,12 @@ const defaultConfig = {
   consoleBaseUrl: baseUrls().consoleBaseUrl,
   cookieDomain: baseUrls().cookieDomain,
   baseUrl: baseUrls().baseUrl,
-  githubAppName: baseUrls().githubAppName,
   socketUrl: baseUrls().socketUrl,
   registryHost: baseUrls().registryHost,
   observeUrl: baseUrls().observeUrl,
   getServerEnv,
   getClientEnv,
+  gitEnvs: baseUrls().gitEnvs,
 };
 
 module.exports = defaultConfig;

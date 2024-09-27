@@ -1,6 +1,6 @@
-import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { redirect } from 'react-router-dom';
 import { getCookie } from '~/root/lib/app-setup/cookies';
+import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { IExtRemixCtx, IRemixCtx, MapType } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../gql/saved-queries';
 

@@ -1,8 +1,9 @@
-import { CopySimple } from '@jengaicons/react';
+import { CopySimple } from '~/console/components/icons';
 import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
 import { toast } from '~/components/molecule/toast';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
+import { cn } from '~/components/utils';
 
 interface ICodeView {
   data: string;
@@ -10,6 +11,8 @@ interface ICodeView {
   showShellPrompt?: boolean;
   language?: string;
   title?: string;
+  preClassName?: string;
+  isMultilineData?: boolean;
 }
 const CodeView = ({
   data,
@@ -17,6 +20,8 @@ const CodeView = ({
   showShellPrompt: _,
   language = 'shell',
   title,
+  preClassName,
+  isMultilineData,
 }: ICodeView) => {
   const { copy: cpy } = useClipboard({
     onSuccess() {
@@ -49,20 +54,40 @@ const CodeView = ({
         <div className="bodyMd-medium text-text-default">{title}</div>
       )}
       <div className="bodyMd text-text-strong">
-        <div
-          onClick={() => {
-            if (copy) cpy(data);
-          }}
-          className="group/sha cursor-pointer p-lg rounded-md bodyMd flex flex-row gap-xl items-center hljs w-full"
-        >
-          <pre className="flex-1 overflow-auto">
-            <code ref={ref}>{data}</code>
-          </pre>
-
-          <span className="invisible group-hover/sha:visible">
-            <CopySimple size={14} />
-          </span>
-        </div>
+        {isMultilineData ? (
+          <div
+            onClick={() => {
+              if (copy) cpy(data);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (copy) cpy(data);
+              }
+            }}
+            className="group/sha cursor-pointer hljs p-lg relative"
+          >
+            <pre className={cn('flex-1 overflow-auto', preClassName)}>
+              <code ref={ref}>{data}</code>
+            </pre>
+            <span className="absolute mr-2xl mt-2xl top-0 right-0">
+              <CopySimple size={14} />
+            </span>
+          </div>
+        ) : (
+          <div
+            onClick={() => {
+              if (copy) cpy(data);
+            }}
+            className="group/sha cursor-pointer p-lg rounded-md bodyMd flex flex-row gap-xl items-center hljs w-full"
+          >
+            <pre className={cn('flex-1 overflow-auto', preClassName)}>
+              <code ref={ref}>{data}</code>
+            </pre>
+            <span className="invisible group-hover/sha:visible">
+              <CopySimple size={14} />
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

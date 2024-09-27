@@ -2,18 +2,18 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
+  ConsoleCloneEnvironmentMutation,
+  ConsoleCloneEnvironmentMutationVariables,
   ConsoleCreateEnvironmentMutation,
   ConsoleCreateEnvironmentMutationVariables,
+  ConsoleDeleteEnvironmentMutation,
+  ConsoleDeleteEnvironmentMutationVariables,
   ConsoleGetEnvironmentQuery,
   ConsoleGetEnvironmentQueryVariables,
   ConsoleListEnvironmentsQuery,
   ConsoleListEnvironmentsQueryVariables,
   ConsoleUpdateEnvironmentMutation,
   ConsoleUpdateEnvironmentMutationVariables,
-  ConsoleDeleteEnvironmentMutation,
-  ConsoleDeleteEnvironmentMutationVariables,
-  ConsoleCloneEnvironmentMutation,
-  ConsoleCloneEnvironmentMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IEnvironment = NN<
@@ -27,8 +27,8 @@ export type IEnvironments = NN<
 export const environmentQueries = (executor: IExecutor) => ({
   getEnvironment: executor(
     gql`
-      query Core_getEnvironment($projectName: String!, $name: String!) {
-        core_getEnvironment(projectName: $projectName, name: $name) {
+      query Core_getEnvironment($name: String!) {
+        core_getEnvironment(name: $name) {
           createdBy {
             userEmail
             userId
@@ -36,12 +36,15 @@ export const environmentQueries = (executor: IExecutor) => ({
           }
           creationTime
           displayName
+          clusterName
+          isArchived
           lastUpdatedBy {
             userEmail
             userId
             userName
           }
           markedForDeletion
+          clusterName
           metadata {
             annotations
             creationTimestamp
@@ -51,14 +54,13 @@ export const environmentQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           spec {
-            projectName
             routing {
               mode
               privateIngressClass
               publicIngressClass
             }
+            suspend
             targetNamespace
           }
           status {
@@ -94,11 +96,8 @@ export const environmentQueries = (executor: IExecutor) => ({
   ),
   createEnvironment: executor(
     gql`
-      mutation Core_createEnvironment(
-        $projectName: String!
-        $env: EnvironmentIn!
-      ) {
-        core_createEnvironment(projectName: $projectName, env: $env) {
+      mutation Core_createEnvironment($env: EnvironmentIn!) {
+        core_createEnvironment(env: $env) {
           id
         }
       }
@@ -111,11 +110,8 @@ export const environmentQueries = (executor: IExecutor) => ({
   ),
   updateEnvironment: executor(
     gql`
-      mutation Core_updateEnvironment(
-        $projectName: String!
-        $env: EnvironmentIn!
-      ) {
-        core_updateEnvironment(projectName: $projectName, env: $env) {
+      mutation Core_updateEnvironment($env: EnvironmentIn!) {
+        core_updateEnvironment(env: $env) {
           id
         }
       }
@@ -129,11 +125,8 @@ export const environmentQueries = (executor: IExecutor) => ({
   ),
   deleteEnvironment: executor(
     gql`
-      mutation Core_deleteEnvironment(
-        $projectName: String!
-        $envName: String!
-      ) {
-        core_deleteEnvironment(projectName: $projectName, envName: $envName)
+      mutation Core_deleteEnvironment($envName: String!) {
+        core_deleteEnvironment(envName: $envName)
       }
     `,
     {
@@ -146,15 +139,10 @@ export const environmentQueries = (executor: IExecutor) => ({
   listEnvironments: executor(
     gql`
       query Core_listEnvironments(
-        $projectName: String!
         $search: SearchEnvironments
         $pq: CursorPaginationIn
       ) {
-        core_listEnvironments(
-          projectName: $projectName
-          search: $search
-          pq: $pq
-        ) {
+        core_listEnvironments(search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -165,6 +153,8 @@ export const environmentQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
+              clusterName
+              isArchived
               lastUpdatedBy {
                 userEmail
                 userId
@@ -176,15 +166,14 @@ export const environmentQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               recordVersion
               spec {
-                projectName
                 routing {
                   mode
                   privateIngressClass
                   publicIngressClass
                 }
+                suspend
                 targetNamespace
               }
               status {
@@ -222,7 +211,7 @@ export const environmentQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount
@@ -238,14 +227,14 @@ export const environmentQueries = (executor: IExecutor) => ({
   cloneEnvironment: executor(
     gql`
       mutation Core_cloneEnvironment(
-        $projectName: String!
+        $clusterName: String!
         $sourceEnvName: String!
         $destinationEnvName: String!
         $displayName: String!
         $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!
       ) {
         core_cloneEnvironment(
-          projectName: $projectName
+          clusterName: $clusterName
           sourceEnvName: $sourceEnvName
           destinationEnvName: $destinationEnvName
           displayName: $displayName

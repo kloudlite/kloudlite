@@ -1,0 +1,8 @@
+{
+  "git@2.45.2": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#git",
+  "gnumake@4.4.1": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#gnumake",
+  "neovim@0.10.1": "nixpkgs/60dfaff009e440faefbaeb20d8dda3239ba4a439#neovim",
+  "nodePackages.node-gyp@10.2.0": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#nodePackages.node-gyp",
+  "nodejs@22.4.1": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#nodejs",
+  "pnpm@9.7.0": "nixpkgs/8987be1fef03440514ebf3b0b60e0c44fc13eb6c#pnpm"
+}

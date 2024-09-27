@@ -21,17 +21,11 @@ export const secretQueries = (executor: IExecutor) => ({
   listSecrets: executor(
     gql`
       query Core_listSecrets(
-        $projectName: String!
         $envName: String!
         $search: SearchSecrets
         $pq: CursorPaginationIn
       ) {
-        core_listSecrets(
-          projectName: $projectName
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listSecrets(envName: $envName, search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -61,7 +55,6 @@ export const secretQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               type
               updateTime
             }
@@ -69,7 +62,7 @@ export const secretQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount
@@ -83,16 +76,8 @@ export const secretQueries = (executor: IExecutor) => ({
   ),
   createSecret: executor(
     gql`
-      mutation Core_createSecret(
-        $projectName: String!
-        $envName: String!
-        $secret: SecretIn!
-      ) {
-        core_createSecret(
-          projectName: $projectName
-          envName: $envName
-          secret: $secret
-        ) {
+      mutation Core_createSecret($envName: String!, $secret: SecretIn!) {
+        core_createSecret(envName: $envName, secret: $secret) {
           id
         }
       }
@@ -106,16 +91,8 @@ export const secretQueries = (executor: IExecutor) => ({
 
   getSecret: executor(
     gql`
-      query Core_getSecret(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getSecret(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getSecret($envName: String!, $name: String!) {
+        core_getSecret(envName: $envName, name: $name) {
           data
           displayName
           environmentName
@@ -130,7 +107,6 @@ export const secretQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           stringData
           type
         }
@@ -143,16 +119,8 @@ export const secretQueries = (executor: IExecutor) => ({
   ),
   updateSecret: executor(
     gql`
-      mutation Core_updateSecret(
-        $projectName: String!
-        $envName: String!
-        $secret: SecretIn!
-      ) {
-        core_updateSecret(
-          projectName: $projectName
-          envName: $envName
-          secret: $secret
-        ) {
+      mutation Core_updateSecret($envName: String!, $secret: SecretIn!) {
+        core_updateSecret(envName: $envName, secret: $secret) {
           id
         }
       }
@@ -164,16 +132,8 @@ export const secretQueries = (executor: IExecutor) => ({
   ),
   deleteSecret: executor(
     gql`
-      mutation Core_deleteSecret(
-        $projectName: String!
-        $envName: String!
-        $secretName: String!
-      ) {
-        core_deleteSecret(
-          projectName: $projectName
-          envName: $envName
-          secretName: $secretName
-        )
+      mutation Core_deleteSecret($envName: String!, $secretName: String!) {
+        core_deleteSecret(envName: $envName, secretName: $secretName)
       }
     `,
     {

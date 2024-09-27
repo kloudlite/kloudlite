@@ -13,6 +13,7 @@ import logger from '~/root/lib/client/helpers/log';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
 import { sleep } from '~/root/lib/utils/common';
+import { usePulsableLoading } from '../../components/pulsable';
 
 type IFor = 'logs' | 'resource-update';
 
@@ -68,6 +69,8 @@ export const useSubscribe = <T extends IData>(
     clear,
   } = useContext(Context);
 
+  const isPulsableLoading = usePulsableLoading();
+
   const [resp, setResp] = useState<ISocketResp[]>([]);
   const [subscribed, setSubscribed] = useState(false);
   const [errors, setErrors] = useState<ISocketResp[]>([]);
@@ -115,6 +118,10 @@ export const useSubscribe = <T extends IData>(
 
   useDebounce(
     () => {
+      if (isPulsableLoading) {
+        return () => {};
+      }
+
       logger.log('subscribing');
       if (Array.isArray(msg)) {
         msg.forEach((m) => {
@@ -214,6 +221,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
           setInfo(m);
           break;
         case 'error':
+          logger.error('error from socket:', m);
           setError(m);
           break;
         default:
@@ -221,6 +229,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
       }
     } catch (err) {
       console.error(err);
+      logger.log('error parsing:', msg.data);
     }
   }, []);
 

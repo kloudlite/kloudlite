@@ -2,7 +2,7 @@ import {
   GitBranchFill,
   GithubLogoFill,
   GitlabLogoFill,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import { ReviewComponent } from '~/console/components/commons';
 
 interface IReviewBuild {

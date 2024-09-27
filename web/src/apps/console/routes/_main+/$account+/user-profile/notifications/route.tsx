@@ -1,4 +1,3 @@
-import { useOutletContext } from '@remix-run/react';
 import Wrapper from '~/console/components/wrapper';
 import ProfileNotification from '~/console/page-components/profile/profile-notification';
 

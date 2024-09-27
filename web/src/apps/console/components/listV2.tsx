@@ -119,7 +119,6 @@ const RowBase = ({
   headers,
   disabled,
   detail,
-  hideDetailSeperator,
 }: IRowBase) => {
   let Component: any = linkComponent;
 
@@ -137,7 +136,7 @@ const RowBase = ({
     {
       'bg-surface-basic-default': !pressed,
       'cursor-pointer hover:bg-surface-basic-hovered':
-        (!!onClick || linkComponent !== 'div') && !pressed && !disabled,
+        (!!onClick || !!to) && !pressed && !disabled,
       'bg-surface-basic-pressed': pressed,
       'cursor-default': !!disabled,
     },
@@ -182,7 +181,7 @@ const RowBase = ({
 
   return (
     <div className={cn(css, commonCss, 'p-2xl')}>
-      <div role="row">
+      <div role="row" className="flex flex-row">
         {headers?.map((item) => (
           <div key={item.name} className={cn(item.className)}>
             {columns?.[item.name]?.render()}

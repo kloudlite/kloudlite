@@ -16,8 +16,7 @@ import {
   Database,
   GearSix,
   HouseLine,
-  WireGuardlogo,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import {
   ICluster,
   IClusters,
@@ -31,15 +30,35 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { BreadcrumSlash } from '~/console/utils/commons';
 import { IAccountContext } from '../../_layout';
 
 export interface IClusterContext extends IAccountContext {
   cluster: ICluster;
 }
 
+export const loader = async (ctx: IExtRemixCtx) => {
+  const { account, cluster } = ctx.params;
+  ensureAccountSet(ctx);
+  try {
+    const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
+      name: cluster,
+    });
+    if (errors) {
+      throw errors[0];
+    }
+    ensureClusterSet(ctx);
+    return withContext(ctx, {
+      cluster: data,
+    });
+  } catch (err) {
+    return redirect(`/${account}/environments`);
+  }
+};
+
 const Cluster = () => {
   const rootContext = useOutletContext<IAccountContext>();
-  const { cluster } = useLoaderData();
+  const { cluster } = useLoaderData<typeof loader>();
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
 
@@ -48,6 +67,10 @@ const ClusterTabs = () => {
   const iconSize = 16;
   return (
     <CommonTabs
+      backButton={{
+        to: `/${account}/infra`,
+        label: 'Infra',
+      }}
       tabs={[
         {
           label: (
@@ -69,6 +92,16 @@ const ClusterTabs = () => {
           to: '/nodepools',
           value: '/nodepools',
         },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <BackingServices size={iconSize} />
+        //       Managed Services
+        //     </span>
+        //   ),
+        //   to: '/managed-services',
+        //   value: '/managed-services',
+        // },
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
@@ -114,18 +147,20 @@ const NetworkBreadcrum = ({
   const { account } = useParams();
   return (
     <div className="flex flex-row items-center">
+      <BreadcrumSlash />
+      <span className="mx-md" />
       <Breadcrum.Button
         to={`/${account}/infra/clusters`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
-            <ChevronRight size={14} /> Clusters <ChevronRight size={14} />{' '}
+            Clusters <ChevronRight size={14} />{' '}
           </div>
         }
       />
       <Breadcrum.Button
         to={`/${account}/infra/${parseName(cluster)}/overview/info`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={<span>{displayName}</span>}
       />
     </div>
@@ -152,25 +187,6 @@ export const handle = ({
     logo: <Logo />,
     noLayout: true,
   };
-};
-
-export const loader = async (ctx: IExtRemixCtx) => {
-  const { account, cluster } = ctx.params;
-  ensureAccountSet(ctx);
-  try {
-    const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
-      name: cluster,
-    });
-    if (errors) {
-      throw errors[0];
-    }
-    ensureClusterSet(ctx);
-    return withContext(ctx, {
-      cluster: data,
-    });
-  } catch (err) {
-    return redirect(`/${account}/projects`);
-  }
 };
 
 export default Cluster;

@@ -2,7 +2,7 @@ export const constDatas = {
   cloudProviders: [{ value: 'aws', label: 'Amazon Web Services' }],
   availabilityModes: [
     { value: 'dev', label: 'Development' },
-    { value: 'HA', label: 'High Availabilty' },
+    // { value: 'HA', label: 'High Availabilty' },
   ],
 };
 

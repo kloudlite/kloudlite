@@ -16,6 +16,8 @@ import {
   ConsoleInterceptAppMutationVariables,
   ConsoleRestartAppQuery,
   ConsoleRestartAppQueryVariables,
+  ConsoleRemoveDeviceInterceptsMutation,
+  ConsoleRemoveDeviceInterceptsMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IApp = NN<ConsoleGetAppQuery['core_getApp']>;
@@ -24,12 +26,8 @@ export type IApps = NN<ConsoleListAppsQuery['core_listApps']>;
 export const appQueries = (executor: IExecutor) => ({
   restartApp: executor(
     gql`
-      query Query($projectName: String!, $envName: String!, $appName: String!) {
-        core_restartApp(
-          projectName: $projectName
-          envName: $envName
-          appName: $appName
-        )
+      query Query($envName: String!, $appName: String!) {
+        core_restartApp(envName: $envName, appName: $appName)
       }
     `,
     {
@@ -39,16 +37,8 @@ export const appQueries = (executor: IExecutor) => ({
   ),
   createApp: executor(
     gql`
-      mutation Core_createApp(
-        $projectName: String!
-        $envName: String!
-        $app: AppIn!
-      ) {
-        core_createApp(
-          projectName: $projectName
-          envName: $envName
-          app: $app
-        ) {
+      mutation Core_createApp($envName: String!, $app: AppIn!) {
+        core_createApp(envName: $envName, app: $app) {
           id
         }
       }
@@ -61,16 +51,8 @@ export const appQueries = (executor: IExecutor) => ({
 
   updateApp: executor(
     gql`
-      mutation Core_updateApp(
-        $projectName: String!
-        $envName: String!
-        $app: AppIn!
-      ) {
-        core_updateApp(
-          projectName: $projectName
-          envName: $envName
-          app: $app
-        ) {
+      mutation Core_updateApp($envName: String!, $app: AppIn!) {
+        core_updateApp(envName: $envName, app: $app) {
           id
         }
       }
@@ -85,18 +67,18 @@ export const appQueries = (executor: IExecutor) => ({
   interceptApp: executor(
     gql`
       mutation Core_interceptApp(
-        $projectName: String!
-        $envName: String!
-        $appname: String!
-        $deviceName: String!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
+        $deviceName: String!
+        $appname: String!
+        $envName: String!
       ) {
         core_interceptApp(
-          projectName: $projectName
-          envName: $envName
-          appname: $appname
-          deviceName: $deviceName
+          portMappings: $portMappings
           intercept: $intercept
+          deviceName: $deviceName
+          appname: $appname
+          envName: $envName
         )
       }
     `,
@@ -106,18 +88,25 @@ export const appQueries = (executor: IExecutor) => ({
       vars(_: ConsoleInterceptAppMutationVariables) {},
     }
   ),
+  removeDeviceIntercepts: executor(
+    gql`
+      mutation Core_removeDeviceIntercepts(
+        $envName: String!
+        $deviceName: String!
+      ) {
+        core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
+      }
+    `,
+    {
+      transformer: (data: ConsoleRemoveDeviceInterceptsMutation) =>
+        data.core_removeDeviceIntercepts,
+      vars(_: ConsoleRemoveDeviceInterceptsMutationVariables) {},
+    }
+  ),
   deleteApp: executor(
     gql`
-      mutation Core_deleteApp(
-        $projectName: String!
-        $envName: String!
-        $appName: String!
-      ) {
-        core_deleteApp(
-          projectName: $projectName
-          envName: $envName
-          appName: $appName
-        )
+      mutation Core_deleteApp($envName: String!, $appName: String!) {
+        core_deleteApp(envName: $envName, appName: $appName)
       }
     `,
     {
@@ -127,12 +116,8 @@ export const appQueries = (executor: IExecutor) => ({
   ),
   getApp: executor(
     gql`
-      query Core_getApp(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getApp(projectName: $projectName, envName: $envName, name: $name) {
+      query Core_getApp($envName: String!, $name: String!) {
+        core_getApp(envName: $envName, name: $name) {
           id
           recordVersion
           createdBy {
@@ -155,8 +140,10 @@ export const appQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           spec {
+            router {
+              domains
+            }
             containers {
               args
               command
@@ -228,16 +215,17 @@ export const appQueries = (executor: IExecutor) => ({
             intercept {
               enabled
               toDevice
+              portMappings {
+                devicePort
+                appPort
+              }
             }
             nodeSelector
             region
             replicas
             serviceAccount
             services {
-              name
               port
-              targetPort
-              type
             }
             tolerations {
               effect
@@ -268,7 +256,38 @@ export const appQueries = (executor: IExecutor) => ({
               namespace
             }
           }
+          ciBuildId
           updateTime
+          build {
+            id
+            buildClusterName
+            name
+            source {
+              branch
+              provider
+              repository
+            }
+            spec {
+              buildOptions {
+                buildArgs
+                buildContexts
+                contextDir
+                dockerfileContent
+                dockerfilePath
+                targetPlatforms
+              }
+              registry {
+                repo {
+                  name
+                  tags
+                }
+              }
+              resource {
+                cpu
+                memoryInMb
+              }
+            }
+          }
         }
       }
     `,
@@ -282,20 +301,17 @@ export const appQueries = (executor: IExecutor) => ({
   listApps: executor(
     gql`
       query Core_listApps(
-        $projectName: String!
         $envName: String!
-        $search: SearchApps
         $pq: CursorPaginationIn
+        $search: SearchApps
       ) {
-        core_listApps(
-          projectName: $projectName
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listApps(envName: $envName, pq: $pq, search: $search) {
           edges {
             cursor
             node {
+              accountName
+              apiVersion
+              ciBuildId
               createdBy {
                 userEmail
                 userId
@@ -305,6 +321,8 @@ export const appQueries = (executor: IExecutor) => ({
               displayName
               enabled
               environmentName
+              id
+              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -312,11 +330,14 @@ export const appQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
                 generation
+                labels
                 name
                 namespace
               }
-              projectName
               recordVersion
               spec {
                 containers {
@@ -336,6 +357,23 @@ export const appQueries = (executor: IExecutor) => ({
                   }
                   image
                   imagePullPolicy
+                  livenessProbe {
+                    failureThreshold
+                    httpGet {
+                      httpHeaders
+                      path
+                      port
+                    }
+                    initialDelay
+                    interval
+                    shell {
+                      command
+                    }
+                    tcp {
+                      port
+                    }
+                    type
+                  }
                   name
                   readinessProbe {
                     failureThreshold
@@ -351,6 +389,15 @@ export const appQueries = (executor: IExecutor) => ({
                     max
                     min
                   }
+                  volumes {
+                    items {
+                      fileName
+                      key
+                    }
+                    mountPath
+                    refName
+                    type
+                  }
                 }
                 displayName
                 freeze
@@ -363,17 +410,52 @@ export const appQueries = (executor: IExecutor) => ({
                 }
                 intercept {
                   enabled
+                  portMappings {
+                    appPort
+                    devicePort
+                  }
                   toDevice
                 }
                 nodeSelector
                 region
                 replicas
+                router {
+                  backendProtocol
+                  basicAuth {
+                    enabled
+                    secretName
+                    username
+                  }
+                  cors {
+                    allowCredentials
+                    enabled
+                    origins
+                  }
+                  domains
+                  https {
+                    clusterIssuer
+                    enabled
+                    forceRedirect
+                  }
+                  ingressClass
+                  maxBodySizeInMB
+                  rateLimit {
+                    connections
+                    enabled
+                    rpm
+                    rps
+                  }
+                  routes {
+                    app
+                    path
+                    port
+                    rewrite
+                  }
+                }
                 serviceAccount
                 services {
-                  name
                   port
-                  targetPort
-                  type
+                  protocol
                 }
                 tolerations {
                   effect
@@ -382,8 +464,32 @@ export const appQueries = (executor: IExecutor) => ({
                   tolerationSeconds
                   value
                 }
+                topologySpreadConstraints {
+                  labelSelector {
+                    matchExpressions {
+                      key
+                      operator
+                      values
+                    }
+                    matchLabels
+                  }
+                  matchLabelKeys
+                  maxSkew
+                  minDomains
+                  nodeAffinityPolicy
+                  nodeTaintsPolicy
+                  topologyKey
+                  whenUnsatisfiable
+                }
               }
               status {
+                checkList {
+                  debug
+                  description
+                  hide
+                  name
+                  title
+                }
                 checks
                 isReady
                 lastReadyGeneration
@@ -397,12 +503,6 @@ export const appQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
-                checkList {
-                  description
-                  debug
-                  title
-                  name
-                }
               }
               syncStatus {
                 action
@@ -413,12 +513,73 @@ export const appQueries = (executor: IExecutor) => ({
                 syncScheduledAt
               }
               updateTime
+              build {
+                id
+                buildClusterName
+                creationTime
+                credUser {
+                  userEmail
+                  userId
+                  userName
+                }
+                errorMessages
+                markedForDeletion
+                name
+                recordVersion
+                source {
+                  branch
+                  provider
+                  repository
+                  webhookId
+                }
+                spec {
+                  accountName
+                  buildOptions {
+                    buildArgs
+                    buildContexts
+                    contextDir
+                    dockerfileContent
+                    dockerfilePath
+                    targetPlatforms
+                  }
+                  caches {
+                    name
+                    path
+                  }
+                  registry {
+                    repo {
+                      name
+                      tags
+                    }
+                  }
+                  resource {
+                    cpu
+                    memoryInMb
+                  }
+                }
+                status
+                updateTime
+                latestBuildRun {
+                  accountName
+                  apiVersion
+                  buildId
+                  clusterName
+                  creationTime
+                  displayName
+                  id
+                  kind
+                  markedForDeletion
+                  recordVersion
+                  updateTime
+                }
+              }
+              serviceHost
             }
           }
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount

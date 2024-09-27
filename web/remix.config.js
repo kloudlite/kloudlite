@@ -14,7 +14,7 @@ export default {
   tailwind: true,
   ignoredRouteFiles: ['**/.*'],
   serverModuleFormat: 'cjs',
-  watchPaths: ['./src/design-system/**', 'lib/**'],
+  watchPaths: ['./src/design-system/**', 'lib/**', './src/generated/**'],
   future: {
     v2_routeConvention: true,
     v2_headers: true,

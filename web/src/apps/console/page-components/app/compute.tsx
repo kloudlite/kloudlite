@@ -1,23 +1,17 @@
-import { NumberInput } from '~/components/atoms/input';
-import Slider from '~/components/atoms/slider';
-import { useAppState } from '~/console/page-components/app-states';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { FadeIn, parseValue } from '~/console/page-components/util';
-import Select from '~/components/atoms/select';
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useMapper } from '~/components/utils';
-import { BottomNavigation } from '~/console/components/commons';
-import { useOutletContext } from '@remix-run/react';
-import { Checkbox } from '~/components/atoms/checkbox';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
-import { plans } from './datas';
+import { NumberInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
+import Slider from '~/components/atoms/slider';
+import { BottomNavigation } from '~/console/components/commons';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { useAppState } from '~/console/page-components/app-states';
+import { FadeIn, parseValue } from '~/console/page-components/util';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
+import Yup from '~/root/lib/server/helpers/yup';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
+import { plans } from './datas';
 
 const valueRender = ({
   label,
@@ -41,51 +35,60 @@ const valueRender = ({
 };
 
 const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
-  const { app, setApp, setPage, markPageAsCompleted, getContainer } =
-    useAppState();
-  const api = useConsoleApi();
-  const { cluster } = useOutletContext<IProjectContext>();
-  const [advancedOptions, setAdvancedOptions] = useState(false);
-
   const {
-    data: nodepoolData,
-    isLoading: nodepoolLoading,
-    error: nodepoolLoadingError,
-  } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({
-      clusterName: parseName(cluster),
-      pagination: {
-        first: 100,
-        orderBy: 'updateTime',
-        sortDirection: 'DESC',
+    app,
+    readOnlyApp,
+    setApp,
+    setPage,
+    markPageAsCompleted,
+    getReadOnlyContainer,
+    getContainer,
+  } = useAppState();
+  // const api = useConsoleApi();
+  // const { cluster } = useOutletContext<IEnvironmentContext>();
+  const [advancedOptions, setAdvancedOptions] = useState(false);
+  const { performAction } = useUnsavedChanges();
+
+  // const {
+  //   data: nodepoolData,
+  //   isLoading: nodepoolLoading,
+  //   error: nodepoolLoadingError,
+  // } = useCustomSwr('/nodepools', async () => {
+  //   return api.listNodePools({
+  //     clusterName: parseName(cluster),
+  //     pagination: {
+  //       first: 100,
+  //       orderBy: 'updateTime',
+  //       sortDirection: 'DESC',
+  //     },
+  //   });
+  // });
+
+  const { values, errors, handleChange, isLoading, submit, resetValues } =
+    useForm({
+      initialValues: appInitialFormValues({
+        app: mode === 'edit' ? readOnlyApp : app,
+        getContainer: mode === 'edit' ? getReadOnlyContainer : getContainer,
+      }),
+      validationSchema: Yup.object({
+        pullSecret: Yup.string(),
+        cpuMode: Yup.string().required(),
+        selectedPlan: Yup.string().required(),
+      }),
+      onSubmit: (val) => {
+        setApp((s) =>
+          mapFormValuesToApp({
+            appIn: val,
+            oldAppIn: s,
+          })
+        );
       },
     });
-  });
 
-  const { values, errors, handleChange, isLoading, submit } = useForm({
-    initialValues: appInitialFormValues({
-      app,
-      getContainer,
-    }),
-    validationSchema: Yup.object({
-      pullSecret: Yup.string(),
-      cpuMode: Yup.string().required(),
-      selectedPlan: Yup.string().required(),
-    }),
-    onSubmit: (val) => {
-      setApp((s) =>
-        mapFormValuesToApp({
-          appIn: val,
-          oldAppIn: s,
-        })
-      );
-    },
-  });
-
-  const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
-    label: val.metadata?.name || '',
-    value: val.metadata?.name || '',
-  }));
+  // const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
+  //   label: val.metadata?.name || '',
+  //   value: val.metadata?.name || '',
+  // }));
 
   /** ---- Only for edit mode in settings ----* */
   useEffect(() => {
@@ -93,6 +96,12 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       submit();
     }
   }, [values, mode]);
+
+  useEffect(() => {
+    if (performAction === 'discard-changes') {
+      resetValues();
+    }
+  }, [performAction]);
 
   return (
     <FadeIn
@@ -260,7 +269,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             }}
           />
 
-          {advancedOptions && (
+          {/* {advancedOptions && (
             <Select
               label="Nodepool Name"
               size="lg"
@@ -278,18 +287,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               loading={nodepoolLoading}
               showclear
             />
-          )}
-
-          {advancedOptions && (
-            <Checkbox
-              label="Always pull image on restart"
-              checked={values.imagePullPolicy === 'Always'}
-              onChange={(val) => {
-                const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
-                handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
-              }}
-            />
-          )}
+          )} */}
         </div>
       </div>
       {mode === 'new' && (

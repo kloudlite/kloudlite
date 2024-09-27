@@ -26,12 +26,12 @@ query consoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clu
   }
 }
 
-query consoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $projectName: String, $envName: String) {
+query consoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $envName: String, $msvcName: String) {
   core_checkNameAvailability(
     resType: $resType
     name: $name
-    projectName: $projectName
     envName: $envName
+    msvcName: $msvcName
   ) {
     result
   }
@@ -53,6 +53,13 @@ mutation consoleCreateAccount($account: AccountIn!) {
   }
 }
 
+query consoleGetAvailableKloudliteRegions {
+  accounts_availableKloudliteRegions {
+    displayName
+    id
+  }
+}
+
 query consoleListAccounts {
   accounts_listAccounts {
     id
@@ -62,6 +69,7 @@ query consoleListAccounts {
     }
     updateTime
     displayName
+    kloudliteGatewayRegion
   }
 }
 
@@ -81,6 +89,7 @@ query consoleGetAccount($accountName: String!) {
     updateTime
     contactEmail
     displayName
+    kloudliteGatewayRegion
   }
 }
 
@@ -88,154 +97,19 @@ mutation consoleDeleteAccount($accountName: String!) {
   accounts_deleteAccount(accountName: $accountName)
 }
 
-mutation consoleDeleteProject($name: String!) {
-  core_deleteProject(name: $name)
-}
-
-mutation consoleCreateProject($project: ProjectIn!) {
-  core_createProject(project: $project) {
-    id
-  }
-}
-
-mutation consoleUpdateProject($project: ProjectIn!) {
-  core_updateProject(project: $project) {
-    id
-  }
-}
-
-query consoleGetProject($name: String!) {
-  core_getProject(name: $name) {
-    clusterName
-    displayName
-    metadata {
-      name
-      namespace
-    }
-    spec {
-      targetNamespace
-    }
-    accountName
-    apiVersion
-    createdBy {
-      userEmail
-      userId
-      userName
-    }
-    creationTime
-    id
-    kind
-    lastUpdatedBy {
-      userEmail
-      userId
-      userName
-    }
-    markedForDeletion
-    recordVersion
-    status {
-      checks
-      checkList {
-        description
-        debug
-        name
-        title
-      }
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
-        name
-        namespace
-      }
-    }
-    syncStatus {
-      action
-      error
-      lastSyncedAt
-      recordVersion
-      state
-      syncScheduledAt
-    }
-    updateTime
-  }
-}
-
-query consoleListProjects($search: SearchProjects, $pq: CursorPaginationIn) {
-  core_listProjects(search: $search, pq: $pq) {
+query consoleListDnsHosts {
+  infra_listClusters {
     edges {
-      cursor
       node {
-        clusterName
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        markedForDeletion
         metadata {
-          annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
           name
           namespace
         }
-        recordVersion
         spec {
-          targetNamespace
+          publicDNSHost
         }
-        status {
-          checks
-          checkList {
-            description
-            debug
-            name
-            title
-          }
-          isReady
-          lastReadyGeneration
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
-        syncStatus {
-          action
-          error
-          lastSyncedAt
-          recordVersion
-          state
-          syncScheduledAt
-        }
-        updateTime
       }
     }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
   }
 }
 
@@ -255,12 +129,67 @@ query consoleClustersCount {
   }
 }
 
+query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+  byok_clusters: infra_listBYOKClusters(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        ownedBy
+        clusterSvcCIDR
+        lastOnlineAt
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        globalVPN
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
   infra_listClusters(search: $search, pagination: $pagination) {
     totalCount
     pageInfo {
       startCursor
-      hasPreviousPage
+      hasPrevPage
       hasNextPage
       endCursor
     }
@@ -270,6 +199,7 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         id
         displayName
         markedForDeletion
+        lastOnlineAt
         metadata {
           name
           annotations
@@ -341,6 +271,14 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
             region
             spotNodePools
           }
+          gcp {
+            credentialsRef {
+              name
+              namespace
+            }
+            gcpProjectID
+            region
+          }
           cloudProvider
           backupToS3Enabled
           cloudflareEnabled
@@ -363,6 +301,7 @@ query consoleGetCluster($name: String!) {
   infra_getCluster(name: $name) {
     accountName
     apiVersion
+    lastOnlineAt
     createdBy {
       userEmail
       userId
@@ -456,6 +395,19 @@ query consoleGetCluster($name: String!) {
   }
 }
 
+query consoleListClusterStatus($pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(pagination: $pagination) {
+    edges {
+      node {
+        lastOnlineAt
+        metadata {
+          name
+        }
+      }
+    }
+  }
+}
+
 query consoleGetKubeConfig($name: String!) {
   infra_getCluster(name: $name) {
     adminKubeconfig {
@@ -483,7 +435,7 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -500,6 +452,9 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
           authMechanism
         }
         creationTime
+        gcp {
+          serviceAccountJSON
+        }
         displayName
         lastUpdatedBy {
           userEmail
@@ -588,6 +543,11 @@ query consoleGetNodePool($clusterName: String!, $poolName: String!) {
       namespace
     }
     spec {
+      gcp {
+        availabilityZone
+        machineType
+        poolType
+      }
       aws {
         availabilityZone
         ec2Pool {
@@ -684,6 +644,11 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
         }
         recordVersion
         spec {
+          gcp {
+            availabilityZone
+            machineType
+            poolType
+          }
           aws {
             availabilityZone
             ec2Pool {
@@ -744,7 +709,7 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -755,8 +720,8 @@ mutation consoleDeleteNodePool($clusterName: String!, $poolName: String!) {
   infra_deleteNodePool(clusterName: $clusterName, poolName: $poolName)
 }
 
-query consoleGetEnvironment($projectName: String!, $name: String!) {
-  core_getEnvironment(projectName: $projectName, name: $name) {
+query consoleGetEnvironment($name: String!) {
+  core_getEnvironment(name: $name) {
     createdBy {
       userEmail
       userId
@@ -764,12 +729,15 @@ query consoleGetEnvironment($projectName: String!, $name: String!) {
     }
     creationTime
     displayName
+    clusterName
+    isArchived
     lastUpdatedBy {
       userEmail
       userId
       userName
     }
     markedForDeletion
+    clusterName
     metadata {
       annotations
       creationTimestamp
@@ -779,14 +747,13 @@ query consoleGetEnvironment($projectName: String!, $name: String!) {
       name
       namespace
     }
-    projectName
     spec {
-      projectName
       routing {
         mode
         privateIngressClass
         publicIngressClass
       }
+      suspend
       targetNamespace
     }
     status {
@@ -814,24 +781,24 @@ query consoleGetEnvironment($projectName: String!, $name: String!) {
   }
 }
 
-mutation consoleCreateEnvironment($projectName: String!, $env: EnvironmentIn!) {
-  core_createEnvironment(projectName: $projectName, env: $env) {
+mutation consoleCreateEnvironment($env: EnvironmentIn!) {
+  core_createEnvironment(env: $env) {
     id
   }
 }
 
-mutation consoleUpdateEnvironment($projectName: String!, $env: EnvironmentIn!) {
-  core_updateEnvironment(projectName: $projectName, env: $env) {
+mutation consoleUpdateEnvironment($env: EnvironmentIn!) {
+  core_updateEnvironment(env: $env) {
     id
   }
 }
 
-mutation consoleDeleteEnvironment($projectName: String!, $envName: String!) {
-  core_deleteEnvironment(projectName: $projectName, envName: $envName)
+mutation consoleDeleteEnvironment($envName: String!) {
+  core_deleteEnvironment(envName: $envName)
 }
 
-query consoleListEnvironments($projectName: String!, $search: SearchEnvironments, $pq: CursorPaginationIn) {
-  core_listEnvironments(projectName: $projectName, search: $search, pq: $pq) {
+query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPaginationIn) {
+  core_listEnvironments(search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -842,6 +809,8 @@ query consoleListEnvironments($projectName: String!, $search: SearchEnvironments
         }
         creationTime
         displayName
+        clusterName
+        isArchived
         lastUpdatedBy {
           userEmail
           userId
@@ -853,15 +822,14 @@ query consoleListEnvironments($projectName: String!, $search: SearchEnvironments
           name
           namespace
         }
-        projectName
         recordVersion
         spec {
-          projectName
           routing {
             mode
             privateIngressClass
             publicIngressClass
           }
+          suspend
           targetNamespace
         }
         status {
@@ -899,16 +867,16 @@ query consoleListEnvironments($projectName: String!, $search: SearchEnvironments
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation consoleCloneEnvironment($projectName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
+mutation consoleCloneEnvironment($clusterName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
   core_cloneEnvironment(
-    projectName: $projectName
+    clusterName: $clusterName
     sourceEnvName: $sourceEnvName
     destinationEnvName: $destinationEnvName
     displayName: $displayName
@@ -918,38 +886,42 @@ mutation consoleCloneEnvironment($projectName: String!, $sourceEnvName: String!,
   }
 }
 
-query consoleRestartApp($projectName: String!, $envName: String!, $appName: String!) {
-  core_restartApp(projectName: $projectName, envName: $envName, appName: $appName)
+query consoleRestartApp($envName: String!, $appName: String!) {
+  core_restartApp(envName: $envName, appName: $appName)
 }
 
-mutation consoleCreateApp($projectName: String!, $envName: String!, $app: AppIn!) {
-  core_createApp(projectName: $projectName, envName: $envName, app: $app) {
+mutation consoleCreateApp($envName: String!, $app: AppIn!) {
+  core_createApp(envName: $envName, app: $app) {
     id
   }
 }
 
-mutation consoleUpdateApp($projectName: String!, $envName: String!, $app: AppIn!) {
-  core_updateApp(projectName: $projectName, envName: $envName, app: $app) {
+mutation consoleUpdateApp($envName: String!, $app: AppIn!) {
+  core_updateApp(envName: $envName, app: $app) {
     id
   }
 }
 
-mutation consoleInterceptApp($projectName: String!, $envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
+mutation consoleInterceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appname: String!, $envName: String!) {
   core_interceptApp(
-    projectName: $projectName
-    envName: $envName
-    appname: $appname
-    deviceName: $deviceName
+    portMappings: $portMappings
     intercept: $intercept
+    deviceName: $deviceName
+    appname: $appname
+    envName: $envName
   )
 }
 
-mutation consoleDeleteApp($projectName: String!, $envName: String!, $appName: String!) {
-  core_deleteApp(projectName: $projectName, envName: $envName, appName: $appName)
+mutation consoleRemoveDeviceIntercepts($envName: String!, $deviceName: String!) {
+  core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
 }
 
-query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
-  core_getApp(projectName: $projectName, envName: $envName, name: $name) {
+mutation consoleDeleteApp($envName: String!, $appName: String!) {
+  core_deleteApp(envName: $envName, appName: $appName)
+}
+
+query consoleGetApp($envName: String!, $name: String!) {
+  core_getApp(envName: $envName, name: $name) {
     id
     recordVersion
     createdBy {
@@ -972,8 +944,10 @@ query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
       name
       namespace
     }
-    projectName
     spec {
+      router {
+        domains
+      }
       containers {
         args
         command
@@ -1045,16 +1019,17 @@ query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
       intercept {
         enabled
         toDevice
+        portMappings {
+          devicePort
+          appPort
+        }
       }
       nodeSelector
       region
       replicas
       serviceAccount
       services {
-        name
         port
-        targetPort
-        type
       }
       tolerations {
         effect
@@ -1085,20 +1060,49 @@ query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
         namespace
       }
     }
+    ciBuildId
     updateTime
+    build {
+      id
+      buildClusterName
+      name
+      source {
+        branch
+        provider
+        repository
+      }
+      spec {
+        buildOptions {
+          buildArgs
+          buildContexts
+          contextDir
+          dockerfileContent
+          dockerfilePath
+          targetPlatforms
+        }
+        registry {
+          repo {
+            name
+            tags
+          }
+        }
+        resource {
+          cpu
+          memoryInMb
+        }
+      }
+    }
   }
 }
 
-query consoleListApps($projectName: String!, $envName: String!, $search: SearchApps, $pq: CursorPaginationIn) {
-  core_listApps(
-    projectName: $projectName
-    envName: $envName
-    search: $search
-    pq: $pq
-  ) {
+query consoleListApps($envName: String!, $pq: CursorPaginationIn, $search: SearchApps) {
+  core_listApps(envName: $envName, pq: $pq, search: $search) {
     edges {
       cursor
       node {
+        accountName
+        apiVersion
+        ciBuildId
         createdBy {
           userEmail
           userId
@@ -1108,6 +1112,8 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
         displayName
         enabled
         environmentName
+        id
+        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -1115,11 +1121,14 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
           generation
+          labels
           name
           namespace
         }
-        projectName
         recordVersion
         spec {
           containers {
@@ -1139,6 +1148,23 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             }
             image
             imagePullPolicy
+            livenessProbe {
+              failureThreshold
+              httpGet {
+                httpHeaders
+                path
+                port
+              }
+              initialDelay
+              interval
+              shell {
+                command
+              }
+              tcp {
+                port
+              }
+              type
+            }
             name
             readinessProbe {
               failureThreshold
@@ -1154,6 +1180,15 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
               max
               min
             }
+            volumes {
+              items {
+                fileName
+                key
+              }
+              mountPath
+              refName
+              type
+            }
           }
           displayName
           freeze
@@ -1166,17 +1201,52 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
           }
           intercept {
             enabled
+            portMappings {
+              appPort
+              devicePort
+            }
             toDevice
           }
           nodeSelector
           region
           replicas
+          router {
+            backendProtocol
+            basicAuth {
+              enabled
+              secretName
+              username
+            }
+            cors {
+              allowCredentials
+              enabled
+              origins
+            }
+            domains
+            https {
+              clusterIssuer
+              enabled
+              forceRedirect
+            }
+            ingressClass
+            maxBodySizeInMB
+            rateLimit {
+              connections
+              enabled
+              rpm
+              rps
+            }
+            routes {
+              app
+              path
+              port
+              rewrite
+            }
+          }
           serviceAccount
           services {
-            name
             port
-            targetPort
-            type
+            protocol
           }
           tolerations {
             effect
@@ -1185,8 +1255,32 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             tolerationSeconds
             value
           }
+          topologySpreadConstraints {
+            labelSelector {
+              matchExpressions {
+                key
+                operator
+                values
+              }
+              matchLabels
+            }
+            matchLabelKeys
+            maxSkew
+            minDomains
+            nodeAffinityPolicy
+            nodeTaintsPolicy
+            topologyKey
+            whenUnsatisfiable
+          }
         }
         status {
+          checkList {
+            debug
+            description
+            hide
+            name
+            title
+          }
           checks
           isReady
           lastReadyGeneration
@@ -1200,11 +1294,256 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             name
             namespace
           }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+        build {
+          id
+          buildClusterName
+          creationTime
+          credUser {
+            userEmail
+            userId
+            userName
+          }
+          errorMessages
+          markedForDeletion
+          name
+          recordVersion
+          source {
+            branch
+            provider
+            repository
+            webhookId
+          }
+          spec {
+            accountName
+            buildOptions {
+              buildArgs
+              buildContexts
+              contextDir
+              dockerfileContent
+              dockerfilePath
+              targetPlatforms
+            }
+            caches {
+              name
+              path
+            }
+            registry {
+              repo {
+                name
+                tags
+              }
+            }
+            resource {
+              cpu
+              memoryInMb
+            }
+          }
+          status
+          updateTime
+          latestBuildRun {
+            accountName
+            apiVersion
+            buildId
+            clusterName
+            creationTime
+            displayName
+            id
+            kind
+            markedForDeletion
+            recordVersion
+            updateTime
+          }
+        }
+        serviceHost
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleCreateExternalApp($envName: String!, $externalApp: ExternalAppIn!) {
+  core_createExternalApp(envName: $envName, externalApp: $externalApp) {
+    id
+  }
+}
+
+mutation consoleUpdateExternalApp($envName: String!, $externalApp: ExternalAppIn!) {
+  core_updateExternalApp(envName: $envName, externalApp: $externalApp) {
+    id
+  }
+}
+
+mutation consoleInterceptExternalApp($envName: String!, $externalAppName: String!, $deviceName: String!, $intercept: Boolean!, $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]) {
+  core_interceptExternalApp(
+    envName: $envName
+    externalAppName: $externalAppName
+    deviceName: $deviceName
+    intercept: $intercept
+    portMappings: $portMappings
+  )
+}
+
+mutation consoleDeleteExternalApp($envName: String!, $externalAppName: String!) {
+  core_deleteExternalApp(envName: $envName, externalAppName: $externalAppName)
+}
+
+query consoleGetExternalApp($envName: String!, $name: String!) {
+  core_getExternalApp(envName: $envName, name: $name) {
+    accountName
+    apiVersion
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    environmentName
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    spec {
+      intercept {
+        enabled
+        portMappings {
+          appPort
+          devicePort
+        }
+        toDevice
+      }
+      record
+      recordType
+    }
+    status {
+      checkList {
+        debug
+        description
+        hide
+        name
+        title
+      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
+query consoleListExternalApps($envName: String!, $search: SearchExternalApps, $pq: CursorPaginationIn) {
+  core_listExternalApps(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        apiVersion
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        spec {
+          intercept {
+            enabled
+            portMappings {
+              appPort
+              devicePort
+            }
+            toDevice
+          }
+          record
+          recordType
+        }
+        status {
           checkList {
-            description
             debug
-            title
+            description
+            hide
             name
+            title
+          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
           }
         }
         syncStatus {
@@ -1221,40 +1560,31 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation consoleCreateRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
-  core_createRouter(projectName: $projectName, envName: $envName, router: $router) {
+mutation consoleCreateRouter($envName: String!, $router: RouterIn!) {
+  core_createRouter(envName: $envName, router: $router) {
     id
   }
 }
 
-mutation consoleUpdateRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
-  core_updateRouter(projectName: $projectName, envName: $envName, router: $router) {
+mutation consoleUpdateRouter($envName: String!, $router: RouterIn!) {
+  core_updateRouter(envName: $envName, router: $router) {
     id
   }
 }
 
-mutation consoleDeleteRouter($projectName: String!, $envName: String!, $routerName: String!) {
-  core_deleteRouter(
-    projectName: $projectName
-    envName: $envName
-    routerName: $routerName
-  )
+mutation consoleDeleteRouter($envName: String!, $routerName: String!) {
+  core_deleteRouter(envName: $envName, routerName: $routerName)
 }
 
-query consoleListRouters($projectName: String!, $envName: String!, $search: SearchRouters, $pq: CursorPaginationIn) {
-  core_listRouters(
-    projectName: $projectName
-    envName: $envName
-    search: $search
-    pq: $pq
-  ) {
+query consoleListRouters($envName: String!, $search: SearchRouters, $pq: CursorPaginationIn) {
+  core_listRouters(envName: $envName, search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -1278,7 +1608,6 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
           name
           namespace
         }
-        projectName
         recordVersion
         spec {
           backendProtocol
@@ -1348,15 +1677,15 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-query consoleGetRouter($projectName: String!, $envName: String!, $name: String!) {
-  core_getRouter(projectName: $projectName, envName: $envName, name: $name) {
+query consoleGetRouter($envName: String!, $name: String!) {
+  core_getRouter(envName: $envName, name: $name) {
     createdBy {
       userEmail
       userId
@@ -1376,7 +1705,6 @@ query consoleGetRouter($projectName: String!, $envName: String!, $name: String!)
       name
       namespace
     }
-    projectName
     spec {
       backendProtocol
       basicAuth {
@@ -1424,22 +1752,18 @@ query consoleGetRouter($projectName: String!, $envName: String!, $name: String!)
   }
 }
 
-mutation consoleUpdateConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
-  core_updateConfig(projectName: $projectName, envName: $envName, config: $config) {
+mutation consoleUpdateConfig($envName: String!, $config: ConfigIn!) {
+  core_updateConfig(envName: $envName, config: $config) {
     id
   }
 }
 
-mutation consoleDeleteConfig($projectName: String!, $envName: String!, $configName: String!) {
-  core_deleteConfig(
-    projectName: $projectName
-    envName: $envName
-    configName: $configName
-  )
+mutation consoleDeleteConfig($envName: String!, $configName: String!) {
+  core_deleteConfig(envName: $envName, configName: $configName)
 }
 
-query consoleGetConfig($projectName: String!, $envName: String!, $name: String!) {
-  core_getConfig(projectName: $projectName, envName: $envName, name: $name) {
+query consoleGetConfig($envName: String!, $name: String!) {
+  core_getConfig(envName: $envName, name: $name) {
     binaryData
     data
     displayName
@@ -1454,17 +1778,11 @@ query consoleGetConfig($projectName: String!, $envName: String!, $name: String!)
       name
       namespace
     }
-    projectName
   }
 }
 
-query consoleListConfigs($projectName: String!, $envName: String!, $search: SearchConfigs, $pq: CursorPaginationIn) {
-  core_listConfigs(
-    projectName: $projectName
-    envName: $envName
-    search: $search
-    pq: $pq
-  ) {
+query consoleListConfigs($envName: String!, $search: SearchConfigs, $pq: CursorPaginationIn) {
+  core_listConfigs(envName: $envName, search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -1493,33 +1811,27 @@ query consoleListConfigs($projectName: String!, $envName: String!, $search: Sear
           name
           namespace
         }
-        projectName
         updateTime
       }
     }
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation consoleCreateConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
-  core_createConfig(projectName: $projectName, envName: $envName, config: $config) {
+mutation consoleCreateConfig($envName: String!, $config: ConfigIn!) {
+  core_createConfig(envName: $envName, config: $config) {
     id
   }
 }
 
-query consoleListSecrets($projectName: String!, $envName: String!, $search: SearchSecrets, $pq: CursorPaginationIn) {
-  core_listSecrets(
-    projectName: $projectName
-    envName: $envName
-    search: $search
-    pq: $pq
-  ) {
+query consoleListSecrets($envName: String!, $search: SearchSecrets, $pq: CursorPaginationIn) {
+  core_listSecrets(envName: $envName, search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -1549,7 +1861,6 @@ query consoleListSecrets($projectName: String!, $envName: String!, $search: Sear
           name
           namespace
         }
-        projectName
         type
         updateTime
       }
@@ -1557,21 +1868,21 @@ query consoleListSecrets($projectName: String!, $envName: String!, $search: Sear
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation consoleCreateSecret($projectName: String!, $envName: String!, $secret: SecretIn!) {
-  core_createSecret(projectName: $projectName, envName: $envName, secret: $secret) {
+mutation consoleCreateSecret($envName: String!, $secret: SecretIn!) {
+  core_createSecret(envName: $envName, secret: $secret) {
     id
   }
 }
 
-query consoleGetSecret($projectName: String!, $envName: String!, $name: String!) {
-  core_getSecret(projectName: $projectName, envName: $envName, name: $name) {
+query consoleGetSecret($envName: String!, $name: String!) {
+  core_getSecret(envName: $envName, name: $name) {
     data
     displayName
     environmentName
@@ -1586,24 +1897,19 @@ query consoleGetSecret($projectName: String!, $envName: String!, $name: String!)
       name
       namespace
     }
-    projectName
     stringData
     type
   }
 }
 
-mutation consoleUpdateSecret($projectName: String!, $envName: String!, $secret: SecretIn!) {
-  core_updateSecret(projectName: $projectName, envName: $envName, secret: $secret) {
+mutation consoleUpdateSecret($envName: String!, $secret: SecretIn!) {
+  core_updateSecret(envName: $envName, secret: $secret) {
     id
   }
 }
 
-mutation consoleDeleteSecret($projectName: String!, $envName: String!, $secretName: String!) {
-  core_deleteSecret(
-    projectName: $projectName
-    envName: $envName
-    secretName: $secretName
-  )
+mutation consoleDeleteSecret($envName: String!, $secretName: String!) {
+  core_deleteSecret(envName: $envName, secretName: $secretName)
 }
 
 query consoleListInvitationsForAccount($accountName: String!) {
@@ -1715,7 +2021,7 @@ query consoleListCred($search: SearchCreds, $pagination: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1759,7 +2065,7 @@ query consoleListRepo($search: SearchRepos, $pagination: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1781,7 +2087,7 @@ query consoleListDigest($repoName: String!, $search: SearchRepos, $pagination: C
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1802,6 +2108,16 @@ query consoleListDigest($repoName: String!, $search: SearchRepos, $pagination: C
 
 mutation consoleDeleteDigest($repoName: String!, $digest: String!) {
   cr_deleteDigest(repoName: $repoName, digest: $digest)
+}
+
+query consoleGetGitConnections($state: String) {
+  auth_me {
+    providerGitlab
+    providerGithub
+    providerGoogle
+  }
+  githubLoginUrl: oAuth_requestLogin(provider: "github", state: $state)
+  gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab", state: $state)
 }
 
 query consoleGetLogins {
@@ -1945,7 +2261,7 @@ query consoleListDomains($search: SearchDomainEntry, $pagination: CursorPaginati
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2005,7 +2321,6 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
           webhookId
         }
         spec {
-          accountName
           buildOptions {
             buildArgs
             buildContexts
@@ -2014,7 +2329,6 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
             dockerfilePath
             targetPlatforms
           }
-          cacheKeyName
           registry {
             repo {
               name
@@ -2024,6 +2338,10 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
           resource {
             cpu
             memoryInMb
+          }
+          caches {
+            name
+            path
           }
         }
         status
@@ -2066,7 +2384,7 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2091,58 +2409,6 @@ mutation consoleDeleteBuild($crDeleteBuildId: ID!) {
 
 mutation consoleTriggerBuild($crTriggerBuildId: ID!) {
   cr_triggerBuild(id: $crTriggerBuildId)
-}
-
-query consoleListBuildCaches($pq: CursorPaginationIn, $search: SearchBuildCacheKeys) {
-  cr_listBuildCacheKeys(pq: $pq, search: $search) {
-    edges {
-      cursor
-      node {
-        id
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        name
-        updateTime
-        volumeSizeInGB
-      }
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
-  }
-}
-
-mutation consoleCreateBuildCache($buildCacheKey: BuildCacheKeyIn!) {
-  cr_addBuildCacheKey(buildCacheKey: $buildCacheKey) {
-    id
-  }
-}
-
-mutation consoleUpdateBuildCaches($crUpdateBuildCacheKeyId: ID!, $buildCacheKey: BuildCacheKeyIn!) {
-  cr_updateBuildCacheKey(
-    id: $crUpdateBuildCacheKeyId
-    buildCacheKey: $buildCacheKey
-  ) {
-    id
-  }
-}
-
-mutation consoleDeleteBuildCache($crDeleteBuildCacheKeyId: ID!) {
-  cr_deleteBuildCacheKey(id: $crDeleteBuildCacheKeyId)
 }
 
 query consoleGetPvc($clusterName: String!, $name: String!) {
@@ -2173,9 +2439,6 @@ query consoleGetPvc($clusterName: String!, $name: String!) {
         namespace
       }
       resources {
-        claims {
-          name
-        }
         limits
         requests
       }
@@ -2240,9 +2503,6 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
             namespace
           }
           resources {
-            claims {
-              name
-            }
             limits
             requests
           }
@@ -2278,7 +2538,7 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2762,7 +3022,7 @@ query consoleListPvs($clusterName: String!, $search: SearchPersistentVolumes, $p
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2773,8 +3033,8 @@ mutation consoleDeletePV($clusterName: String!, $pvName: String!) {
   infra_deletePV(clusterName: $clusterName, pvName: $pvName)
 }
 
-query consoleListBuildRuns($buildID: ID!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
-  cr_listBuildRuns(buildID: $buildID, search: $search, pq: $pq) {
+query consoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn) {
+  cr_listBuildRuns(search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -2802,7 +3062,6 @@ query consoleListBuildRuns($buildID: ID!, $search: SearchBuildRuns, $pq: CursorP
             dockerfilePath
             targetPlatforms
           }
-          cacheKeyName
           registry {
             repo {
               name
@@ -2849,15 +3108,15 @@ query consoleListBuildRuns($buildID: ID!, $search: SearchBuildRuns, $pq: CursorP
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-query consoleGetBuildRun($buildID: ID!, $buildRunName: String!) {
-  cr_getBuildRun(buildID: $buildID, buildRunName: $buildRunName) {
+query consoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
+  cr_getBuildRun(buildID: $buildId, buildRunName: $buildRunName) {
     clusterName
     creationTime
     markedForDeletion
@@ -2881,7 +3140,6 @@ query consoleGetBuildRun($buildID: ID!, $buildRunName: String!) {
         dockerfilePath
         targetPlatforms
       }
-      cacheKeyName
       registry {
         repo {
           name
@@ -2926,120 +3184,14 @@ query consoleGetBuildRun($buildID: ID!, $buildRunName: String!) {
   }
 }
 
-query consoleGetClusterMSv($clusterName: String!, $name: String!) {
-  infra_getClusterManagedService(clusterName: $clusterName, name: $name) {
+query consoleGetClusterMSv($name: String!) {
+  infra_getClusterManagedService(name: $name) {
     clusterName
-    displayName
-    metadata {
-      annotations
-      creationTimestamp
-      deletionTimestamp
-      generation
-      labels
-      name
-      namespace
-    }
-    spec {
-      msvcSpec {
-        serviceTemplate {
-          apiVersion
-          kind
-          spec
-        }
-      }
-      targetNamespace
-    }
-  }
-}
-
-mutation consoleCreateClusterMSv($clusterName: String!, $service: ClusterManagedServiceIn!) {
-  infra_createClusterManagedService(clusterName: $clusterName, service: $service) {
-    id
-  }
-}
-
-mutation consoleUpdateClusterMSv($clusterName: String!, $service: ClusterManagedServiceIn!) {
-  infra_updateClusterManagedService(clusterName: $clusterName, service: $service) {
-    id
-  }
-}
-
-query consoleListClusterMSvs($clusterName: String!) {
-  infra_listClusterManagedServices(clusterName: $clusterName) {
-    edges {
-      cursor
-      node {
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        markedForDeletion
-        metadata {
-          name
-        }
-        spec {
-          msvcSpec {
-            serviceTemplate {
-              apiVersion
-              kind
-              spec
-            }
-          }
-        }
-        status {
-          checks
-          isReady
-          lastReadyGeneration
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
-        updateTime
-      }
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
-  }
-}
-
-mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
-  infra_deleteClusterManagedService(
-    clusterName: $clusterName
-    serviceName: $serviceName
-  )
-}
-
-query consoleGetProjectMSv($projectName: String!, $name: String!) {
-  core_getProjectManagedService(projectName: $projectName, name: $name) {
-    id
-    recordVersion
-    createdBy {
-      userEmail
-      userId
-      userName
-    }
     creationTime
     displayName
+    isArchived
+    id
+    kind
     lastUpdatedBy {
       userEmail
       userId
@@ -3055,62 +3207,61 @@ query consoleGetProjectMSv($projectName: String!, $name: String!) {
       name
       namespace
     }
+    recordVersion
     spec {
       msvcSpec {
+        nodeSelector
         serviceTemplate {
           apiVersion
           kind
           spec
         }
+        tolerations {
+          effect
+          key
+          operator
+          tolerationSeconds
+          value
+        }
       }
       targetNamespace
-    }
-    status {
-      checks
-      checkList {
-        description
-        debug
-        title
-        name
-      }
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
-        name
-        namespace
-      }
     }
     updateTime
   }
 }
 
-mutation consoleCreateProjectMSv($projectName: String!, $pmsvc: ProjectManagedServiceIn!) {
-  core_createProjectManagedService(projectName: $projectName, pmsvc: $pmsvc) {
+mutation consoleCreateClusterMSv($service: ClusterManagedServiceIn!) {
+  infra_createClusterManagedService(service: $service) {
     id
   }
 }
 
-mutation consoleUpdateProjectMSv($projectName: String!, $pmsvc: ProjectManagedServiceIn!) {
-  core_updateProjectManagedService(projectName: $projectName, pmsvc: $pmsvc) {
-    id
-  }
-}
-
-query consoleListProjectMSvs($projectName: String!, $search: SearchProjectManagedService, $pq: CursorPaginationIn) {
-  core_listProjectManagedServices(
-    projectName: $projectName
-    search: $search
-    pq: $pq
+mutation consoleCloneClusterMSv($clusterName: String!, $sourceMsvcName: String!, $destinationMsvcName: String!, $displayName: String!) {
+  infra_cloneClusterManagedService(
+    clusterName: $clusterName
+    sourceMsvcName: $sourceMsvcName
+    destinationMsvcName: $destinationMsvcName
+    displayName: $displayName
   ) {
+    id
+  }
+}
+
+mutation consoleUpdateClusterMSv($service: ClusterManagedServiceIn!) {
+  infra_updateClusterManagedService(service: $service) {
+    id
+  }
+}
+
+query consoleListClusterMSvs($pagination: CursorPaginationIn, $search: SearchClusterManagedService) {
+  infra_listClusterManagedServices(pagination: $pagination, search: $search) {
     edges {
       cursor
       node {
+        accountName
+        apiVersion
+        clusterName
+        isArchived
         createdBy {
           userEmail
           userId
@@ -3118,6 +3269,8 @@ query consoleListProjectMSvs($projectName: String!, $search: SearchProjectManage
         }
         creationTime
         displayName
+        id
+        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -3133,26 +3286,34 @@ query consoleListProjectMSvs($projectName: String!, $search: SearchProjectManage
           name
           namespace
         }
-        projectName
         recordVersion
         spec {
           msvcSpec {
+            nodeSelector
             serviceTemplate {
               apiVersion
               kind
               spec
             }
+            tolerations {
+              effect
+              key
+              operator
+              tolerationSeconds
+              value
+            }
           }
           targetNamespace
         }
         status {
-          checks
           checkList {
-            description
             debug
-            title
+            description
+            hide
             name
+            title
           }
+          checks
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -3180,18 +3341,138 @@ query consoleListProjectMSvs($projectName: String!, $search: SearchProjectManage
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation consoleDeleteProjectMSv($projectName: String!, $pmsvcName: String!) {
-  core_deleteProjectManagedService(
-    projectName: $projectName
-    pmsvcName: $pmsvcName
-  )
+mutation consoleDeleteClusterMSv($name: String!) {
+  infra_deleteClusterManagedService(name: $name)
+}
+
+mutation consoleDeleteByokCluster($name: String!) {
+  infra_deleteBYOKCluster(name: $name)
+}
+
+mutation consoleCreateBYOKCluster($cluster: BYOKClusterIn!) {
+  infra_createBYOKCluster(cluster: $cluster) {
+    id
+  }
+}
+
+mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) {
+  infra_updateBYOKCluster(clusterName: $clusterName, displayName: $displayName) {
+    id
+  }
+}
+
+query consoleGetBYOKClusterInstructions($name: String!, $onlyHelmValues: Boolean) {
+  infrat_getBYOKClusterSetupInstructions(
+    name: $name
+    onlyHelmValues: $onlyHelmValues
+  ) {
+    command
+    title
+  }
+}
+
+query consoleGetByokCluster($name: String!) {
+  infra_getBYOKCluster(name: $name) {
+    accountName
+    ownedBy
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+    clusterSvcCIDR
+    globalVPN
+  }
+}
+
+query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        ownedBy
+        clusterSvcCIDR
+        lastOnlineAt
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        globalVPN
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
 }
 
 query consoleGetMSvTemplate($category: String!, $name: String!) {
@@ -3294,22 +3575,43 @@ query consoleListMSvTemplates {
   }
 }
 
-query consoleGetManagedResource($projectName: String!, $envName: String!, $name: String!) {
-  core_getManagedResource(
-    projectName: $projectName
-    envName: $envName
-    name: $name
-  ) {
+query consoleGetManagedResource($name: String!, $msvcName: String, $envName: String) {
+  core_getManagedResource(name: $name, msvcName: $msvcName, envName: $envName) {
+    accountName
+    apiVersion
+    clusterName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
     displayName
     enabled
     environmentName
+    id
+    isImported
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    managedServiceName
     markedForDeletion
     metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
       name
       namespace
     }
-    projectName
+    mresRef
+    recordVersion
     spec {
+      resourceNamePrefix
       resourceTemplate {
         apiVersion
         kind
@@ -3319,43 +3621,73 @@ query consoleGetManagedResource($projectName: String!, $envName: String!, $name:
           name
           namespace
         }
-        spec
       }
+    }
+    status {
+      checkList {
+        debug
+        description
+        hide
+        name
+        title
+      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncedOutputSecretRef {
+      metadata {
+        name
+      }
+      apiVersion
+      data
+      immutable
+      kind
+      stringData
+      type
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
     }
     updateTime
   }
 }
 
-mutation consoleCreateManagedResource($projectName: String!, $envName: String!, $mres: ManagedResourceIn!) {
-  core_createManagedResource(
-    projectName: $projectName
-    envName: $envName
-    mres: $mres
-  ) {
+mutation consoleCreateManagedResource($msvcName: String!, $mres: ManagedResourceIn!) {
+  core_createManagedResource(msvcName: $msvcName, mres: $mres) {
     id
   }
 }
 
-mutation consoleUpdateManagedResource($projectName: String!, $envName: String!, $mres: ManagedResourceIn!) {
-  core_updateManagedResource(
-    projectName: $projectName
-    envName: $envName
-    mres: $mres
-  ) {
+mutation consoleUpdateManagedResource($msvcName: String!, $mres: ManagedResourceIn!) {
+  core_updateManagedResource(msvcName: $msvcName, mres: $mres) {
     id
   }
 }
 
-query consoleListManagedResources($projectName: String!, $envName: String!, $search: SearchManagedResources, $pq: CursorPaginationIn) {
-  core_listManagedResources(
-    projectName: $projectName
-    envName: $envName
-    search: $search
-    pq: $pq
-  ) {
+query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPaginationIn) {
+  core_listManagedResources(search: $search, pq: $pq) {
     edges {
       cursor
       node {
+        accountName
+        apiVersion
+        clusterName
         createdBy {
           userEmail
           userId
@@ -3363,11 +3695,17 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         creationTime
         displayName
+        enabled
+        environmentName
+        id
+        isImported
+        kind
         lastUpdatedBy {
           userEmail
           userId
           userName
         }
+        managedServiceName
         markedForDeletion
         metadata {
           annotations
@@ -3378,8 +3716,10 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
           name
           namespace
         }
+        mresRef
         recordVersion
         spec {
+          resourceNamePrefix
           resourceTemplate {
             apiVersion
             kind
@@ -3389,17 +3729,17 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
               name
               namespace
             }
-            spec
           }
         }
         status {
-          checks
           checkList {
-            description
             debug
+            description
+            hide
             name
             title
           }
+          checks
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -3416,8 +3756,13 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         syncedOutputSecretRef {
           metadata {
             name
-            namespace
           }
+          apiVersion
+          data
+          immutable
+          kind
+          stringData
+          type
         }
         syncStatus {
           action
@@ -3432,20 +3777,16 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
     }
     pageInfo {
       endCursor
+      hasPrevPage
       hasNextPage
-      hasPreviousPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation consoleDeleteManagedResource($projectName: String!, $envName: String!, $mresName: String!) {
-  core_deleteManagedResource(
-    projectName: $projectName
-    envName: $envName
-    mresName: $mresName
-  )
+mutation consoleDeleteManagedResource($msvcName: String!, $mresName: String!) {
+  core_deleteManagedResource(msvcName: $msvcName, mresName: $mresName)
 }
 
 query consoleGetHelmChart($clusterName: String!, $name: String!) {
@@ -3573,7 +3914,7 @@ query consoleListHelmChart($clusterName: String!, $search: SearchHelmRelease, $p
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -3638,111 +3979,32 @@ query consoleListNamespaces($clusterName: String!) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation consoleCreateConsoleVpnDevice($vpnDevice: ConsoleVPNDeviceIn!) {
-  core_createVPNDevice(vpnDevice: $vpnDevice) {
+mutation consoleCreateImagePullSecret($pullSecret: ImagePullSecretIn!) {
+  core_createImagePullSecret(pullSecret: $pullSecret) {
     id
   }
 }
 
-mutation consoleUpdateConsoleVpnDevice($vpnDevice: ConsoleVPNDeviceIn!) {
-  core_updateVPNDevice(vpnDevice: $vpnDevice) {
+mutation consoleUpdateImagePullSecret($pullSecret: ImagePullSecretIn!) {
+  core_updateImagePullSecret(pullSecret: $pullSecret) {
     id
   }
 }
 
-query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPaginationIn) {
-  core_listVPNDevices(search: $search, pq: $pq) {
-    edges {
-      cursor
-      node {
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        environmentName
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        markedForDeletion
-        metadata {
-          generation
-          name
-          namespace
-        }
-        projectName
-        recordVersion
-        spec {
-          cnameRecords {
-            host
-            target
-          }
-          activeNamespace
-          disabled
-          nodeSelector
-          ports {
-            port
-            targetPort
-          }
-        }
-        updateTime
-      }
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
-  }
+mutation consoleDeleteImagePullSecrets($name: String!) {
+  core_deleteImagePullSecret(name: $name)
 }
 
-query consoleGetConsoleVpnDevice($name: String!) {
-  core_getVPNDevice(name: $name) {
-    displayName
-    environmentName
-    metadata {
-      name
-      namespace
-    }
-    projectName
-    recordVersion
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      activeNamespace
-      disabled
-      nodeSelector
-      ports {
-        port
-        targetPort
-      }
-    }
-    wireguardConfig {
-      encoding
-      value
-    }
-  }
-}
-
-query consoleListConsoleVpnDevicesForUser {
-  core_listVPNDevicesForUser {
+query consoleGetImagePullSecret($name: String!) {
+  core_getImagePullSecret(name: $name) {
     accountName
-    apiVersion
     createdBy {
       userEmail
       userId
@@ -3750,9 +4012,10 @@ query consoleListConsoleVpnDevicesForUser {
     }
     creationTime
     displayName
-    environmentName
+    dockerConfigJson
+    environments
+    format
     id
-    kind
     lastUpdatedBy {
       userEmail
       userId
@@ -3768,53 +4031,28 @@ query consoleListConsoleVpnDevicesForUser {
       name
       namespace
     }
-    projectName
     recordVersion
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      activeNamespace
-      disabled
-      nodeSelector
-      ports {
-        port
-        targetPort
-      }
+    registryPassword
+    registryURL
+    registryUsername
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
     }
     updateTime
-    wireguardConfig {
-      encoding
-      value
-    }
   }
 }
 
-mutation consoleDeleteConsoleVpnDevice($deviceName: String!) {
-  core_deleteVPNDevice(deviceName: $deviceName)
-}
-
-mutation consoleCreateImagePullSecret($projectName: String!, $envName: String!, $imagePullSecretIn: ImagePullSecretIn!) {
-  core_createImagePullSecret(
-    projectName: $projectName
-    envName: $envName
-    imagePullSecretIn: $imagePullSecretIn
-  ) {
-    id
-  }
-}
-
-query consoleListImagePullSecrets($projectName: String!, $envName: String!, $search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
-  core_listImagePullSecrets(
-    projectName: $projectName
-    envName: $envName
-    search: $search
-    pq: $pq
-  ) {
+query consoleListImagePullSecrets($search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
+  core_listImagePullSecrets(search: $search, pq: $pq) {
     edges {
       cursor
       node {
+        accountName
         createdBy {
           userEmail
           userId
@@ -3823,8 +4061,8 @@ query consoleListImagePullSecrets($projectName: String!, $envName: String!, $sea
         creationTime
         displayName
         dockerConfigJson
-        environmentName
         format
+        id
         lastUpdatedBy {
           userEmail
           userId
@@ -3832,11 +4070,14 @@ query consoleListImagePullSecrets($projectName: String!, $envName: String!, $sea
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
           generation
+          labels
           name
           namespace
         }
-        projectName
         recordVersion
         registryPassword
         registryURL
@@ -3855,95 +4096,2053 @@ query consoleListImagePullSecrets($projectName: String!, $envName: String!, $sea
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
   }
 }
 
-mutation authCli_updateDeviceCluster($deviceName: String!, $clusterName: String!) {
-  core_updateVpnClusterName(deviceName: $deviceName, clusterName: $clusterName)
+mutation consoleDeleteGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_deleteGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName)
 }
 
-mutation authCli_updateDeviceNs($deviceName: String!, $ns: String!) {
-  core_updateVpnDeviceNs(deviceName: $deviceName, ns: $ns)
+mutation consoleCreateGlobalVpnDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    id
+  }
 }
 
-mutation authCli_updateDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
-  core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
+mutation consoleUpdateGlobalVpnDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_updateGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    id
+  }
 }
 
-mutation authCli_updateDeviceEnv($deviceName: String!, $projectName: String!, $envName: String!) {
-  core_updateVPNDeviceEnv(
-    deviceName: $deviceName
-    projectName: $projectName
+query consoleGetGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publicKey
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
+    }
+  }
+}
+
+query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevices, $pagination: CursorPaginationIn) {
+  infra_listGlobalVPNDevices(
+    gvpn: $gvpn
+    search: $search
+    pagination: $pagination
+  ) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationMethod
+        creationTime
+        displayName
+        globalVPNName
+        id
+        ipAddr
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        privateKey
+        publicKey
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleUpdateNotificationConfig($config: NotificationConfIn!) {
+  comms_updateNotificationConfig(config: $config) {
+    id
+  }
+}
+
+mutation consoleUpdateSubscriptionConfig($config: SubscriptionIn!, $commsUpdateSubscriptionConfigId: ID!) {
+  comms_updateSubscriptionConfig(
+    config: $config
+    id: $commsUpdateSubscriptionConfigId
+  ) {
+    id
+  }
+}
+
+mutation consoleMarkAllNotificationAsRead {
+  comms_markAllNotificationAsRead
+}
+
+query consoleGetNotificationConfig {
+  comms_getNotificationConfig {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    email {
+      enabled
+      mailAddress
+    }
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    recordVersion
+    slack {
+      enabled
+      url
+    }
+    telegram {
+      chatId
+      enabled
+      token
+    }
+    updateTime
+    webhook {
+      enabled
+      url
+    }
+  }
+}
+
+query consoleGetSubscriptionConfig($commsGetSubscriptionConfigId: ID!) {
+  comms_getSubscriptionConfig(id: $commsGetSubscriptionConfigId) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    enabled
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    mailAddress
+    markedForDeletion
+    recordVersion
+    updateTime
+  }
+}
+
+query consoleListNotifications($pagination: CursorPaginationIn) {
+  comms_listNotifications(pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        content {
+          body
+          image
+          link
+          subject
+          title
+        }
+        creationTime
+        id
+        markedForDeletion
+        notificationType
+        priority
+        read
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleImportManagedResource($envName: String!, $mresName: String!, $msvcName: String!, $importName: String!) {
+  core_importManagedResource(
     envName: $envName
+    mresName: $mresName
+    msvcName: $msvcName
+    importName: $importName
+  ) {
+    id
+  }
+}
+
+mutation consoleDeleteImportedManagedResource($envName: String!, $importName: String!) {
+  core_deleteImportedManagedResource(envName: $envName, importName: $importName)
+}
+
+query consoleListImportedManagedResources($envName: String!, $search: SearchImportedManagedResources, $pq: CursorPaginationIn) {
+  core_listImportedManagedResources(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        managedResourceRef {
+          id
+          name
+          namespace
+        }
+        markedForDeletion
+        name
+        recordVersion
+        secretRef {
+          name
+          namespace
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+        managedResource {
+          accountName
+          apiVersion
+          clusterName
+          creationTime
+          displayName
+          enabled
+          environmentName
+          id
+          isImported
+          kind
+          managedServiceName
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          mresRef
+          recordVersion
+          spec {
+            resourceNamePrefix
+            resourceTemplate {
+              apiVersion
+              kind
+              msvcRef {
+                apiVersion
+                kind
+                name
+                namespace
+              }
+              spec
+            }
+          }
+          status {
+            checkList {
+              debug
+              description
+              hide
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncedOutputSecretRef {
+            apiVersion
+            data
+            immutable
+            kind
+            stringData
+            type
+          }
+          updateTime
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleDeleteRegistryImage($image: String!) {
+  core_deleteRegistryImage(image: $image)
+}
+
+query consoleGetRegistryImage($image: String!) {
+  core_getRegistryImage(image: $image) {
+    accountName
+    creationTime
+    id
+    imageName
+    imageTag
+    markedForDeletion
+    meta
+    recordVersion
+    updateTime
+  }
+}
+
+query consoleGetRegistryImageUrl {
+  core_getRegistryImageURL {
+    scriptUrl
+    url
+  }
+}
+
+query consoleSearchRegistryImages($query: String!) {
+  core_searchRegistryImages(query: $query) {
+    accountName
+    creationTime
+    id
+    imageName
+    imageTag
+    markedForDeletion
+    meta
+    recordVersion
+    updateTime
+  }
+}
+
+query consoleListRegistryImages($pq: CursorPaginationIn) {
+  core_listRegistryImages(pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        creationTime
+        id
+        imageName
+        imageTag
+        markedForDeletion
+        meta
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query iotconsoleAccountCheckNameAvailability($name: String!) {
+  accounts_checkNameAvailability(name: $name) {
+    result
+    suggestedNames
+  }
+}
+
+query iotconsoleCrCheckNameAvailability($name: String!) {
+  cr_checkUserNameAvailability(name: $name) {
+    result
+    suggestedNames
+  }
+}
+
+query iotconsoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clusterName: String) {
+  infra_checkNameAvailability(
+    resType: $resType
+    name: $name
+    clusterName: $clusterName
+  ) {
+    suggestedNames
+    result
+  }
+}
+
+query iotconsoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $projectName: String, $envName: String) {
+  core_checkNameAvailability(resType: $resType, name: $name, envName: $envName) {
+    result
+  }
+}
+
+query iotconsoleWhoAmI {
+  auth_me {
+    id
+    email
+    providerGitlab
+    providerGithub
+    providerGoogle
+  }
+}
+
+mutation iotconsoleCreateAccount($account: AccountIn!) {
+  accounts_createAccount(account: $account) {
+    displayName
+  }
+}
+
+query iotconsoleListAccounts {
+  accounts_listAccounts {
+    id
+    metadata {
+      name
+      annotations
+    }
+    updateTime
+    displayName
+  }
+}
+
+mutation iotconsoleUpdateAccount($account: AccountIn!) {
+  accounts_updateAccount(account: $account) {
+    id
+  }
+}
+
+query iotconsoleGetAccount($accountName: String!) {
+  accounts_getAccount(accountName: $accountName) {
+    metadata {
+      name
+      annotations
+    }
+    targetNamespace
+    updateTime
+    contactEmail
+    displayName
+  }
+}
+
+mutation iotconsoleDeleteAccount($accountName: String!) {
+  accounts_deleteAccount(accountName: $accountName)
+}
+
+mutation iotconsoleDeleteIotProject($name: String!) {
+  iot_deleteProject(name: $name)
+}
+
+mutation iotconsoleCreateIotProject($project: IOTProjectIn!) {
+  iot_createProject(project: $project) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotProject($project: IOTProjectIn!) {
+  iot_updateProject(project: $project) {
+    id
+  }
+}
+
+query iotconsoleGetIotProject($name: String!) {
+  iot_getProject(name: $name) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    name
+    recordVersion
+    updateTime
+  }
+}
+
+query iotconsoleListIotProjects($search: SearchIOTProjects, $pq: CursorPaginationIn) {
+  iot_listProjects(search: $search, pq: $pq) {
+    edges {
+      node {
+        displayName
+        name
+        creationTime
+        markedForDeletion
+        updateTime
+        createdBy {
+          userEmail
+          userName
+          userId
+        }
+        lastUpdatedBy {
+          userEmail
+          userName
+          userId
+        }
+      }
+      cursor
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotDeviceBlueprint($projectName: String!, $name: String!) {
+  iot_deleteDeviceBlueprint(projectName: $projectName, name: $name)
+}
+
+mutation iotconsoleCreateIotDeviceBlueprint($deviceBlueprint: IOTDeviceBlueprintIn!, $projectName: String!) {
+  iot_createDeviceBlueprint(
+    projectName: $projectName
+    deviceBlueprint: $deviceBlueprint
+  ) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotDeviceBlueprint($deviceBlueprint: IOTDeviceBlueprintIn!, $projectName: String!) {
+  iot_updateDeviceBlueprint(
+    projectName: $projectName
+    deviceBlueprint: $deviceBlueprint
+  ) {
+    id
+  }
+}
+
+query iotconsoleGetIotDeviceBlueprint($projectName: String!, $name: String!) {
+  iot_getDeviceBlueprint(projectName: $projectName, name: $name) {
+    accountName
+    bluePrintType
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    name
+    recordVersion
+    updateTime
+    version
+  }
+}
+
+query iotconsoleListIotDeviceBlueprints($search: SearchIOTDeviceBlueprints, $pq: CursorPaginationIn, $projectName: String!) {
+  iot_listDeviceBlueprints(projectName: $projectName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        bluePrintType
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+        version
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotDeployment($projectName: String!, $name: String!) {
+  iot_deleteDeployment(projectName: $projectName, name: $name)
+}
+
+mutation iotconsoleCreateIotDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+  iot_createDeployment(projectName: $projectName, deployment: $deployment) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+  iot_updateDeployment(projectName: $projectName, deployment: $deployment) {
+    id
+  }
+}
+
+query iotconsoleGetIotDeployment($projectName: String!, $name: String!) {
+  iot_getDeployment(projectName: $projectName, name: $name) {
+    accountName
+    CIDR
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    exposedServices {
+      ip
+      name
+    }
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    name
+    recordVersion
+    updateTime
+  }
+}
+
+query iotconsoleListIotDeployments($search: SearchIOTDeployments, $pq: CursorPaginationIn, $projectName: String!) {
+  iot_listDeployments(projectName: $projectName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        CIDR
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        exposedServices {
+          ip
+          name
+        }
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotApp($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+  iot_deleteApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    name: $name
   )
 }
 
-query authCli_listDevices {
-  core_listVPNDevicesForUser {
-    displayName
-    environmentName
-    metadata {
-      name
+mutation iotconsoleCreateIotApp($deviceBlueprintName: String!, $app: IOTAppIn!, $projectName: String!) {
+  iot_createApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    app: $app
+  ) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotApp($projectName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
+  iot_updateApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    app: $app
+  ) {
+    id
+  }
+}
+
+query iotconsoleGetIotApp($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+  iot_getApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    name: $name
+  ) {
+    accountName
+    apiVersion
+    createdBy {
+      userEmail
+      userId
+      userName
     }
-    projectName
-    clusterName
+    creationTime
+    deviceBlueprintName
+    displayName
+    enabled
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    spec {
+      containers {
+        args
+        command
+        env {
+          key
+          optional
+          refKey
+          refName
+          type
+          value
+        }
+        envFrom {
+          refName
+          type
+        }
+        image
+        imagePullPolicy
+        livenessProbe {
+          failureThreshold
+          httpGet {
+            httpHeaders
+            path
+            port
+          }
+          initialDelay
+          interval
+          shell {
+            command
+          }
+          tcp {
+            port
+          }
+          type
+        }
+        name
+        readinessProbe {
+          failureThreshold
+          initialDelay
+          interval
+          type
+        }
+        resourceCpu {
+          max
+          min
+        }
+        resourceMemory {
+          max
+          min
+        }
+        volumes {
+          items {
+            fileName
+            key
+          }
+          mountPath
+          refName
+          type
+        }
+      }
+      displayName
+      freeze
+      hpa {
+        enabled
+        maxReplicas
+        minReplicas
+        thresholdCpu
+        thresholdMemory
+      }
+      intercept {
+        enabled
+        toDevice
+      }
+      nodeSelector
+      region
+      replicas
+      serviceAccount
+      services {
+        port
+      }
+      tolerations {
+        effect
+        key
+        operator
+        tolerationSeconds
+        value
+      }
+      topologySpreadConstraints {
+        labelSelector {
+          matchExpressions {
+            key
+            operator
+            values
+          }
+          matchLabels
+        }
+        matchLabelKeys
+        maxSkew
+        minDomains
+        nodeAffinityPolicy
+        nodeTaintsPolicy
+        topologyKey
+        whenUnsatisfiable
+      }
+    }
     status {
+      checkList {
+        debug
+        description
+        name
+        title
+      }
+      checks
       isReady
+      lastReadyGeneration
+      lastReconcileTime
       message {
         RawMessage
       }
-    }
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      activeNamespace
-      disabled
-      ports {
-        port
-        targetPort
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
       }
     }
+    updateTime
   }
 }
 
-query authCli_getDevice($name: String!) {
-  core_getVPNDevice(name: $name) {
+query iotconsoleListIotApps($deviceBlueprintName: String!, $search: SearchIOTApps, $pq: CursorPaginationIn, $projectName: String!) {
+  iot_listApps(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        accountName
+        apiVersion
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        deviceBlueprintName
+        displayName
+        enabled
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        spec {
+          containers {
+            args
+            command
+            env {
+              key
+              optional
+              refKey
+              refName
+              type
+              value
+            }
+            envFrom {
+              refName
+              type
+            }
+            image
+            imagePullPolicy
+            livenessProbe {
+              failureThreshold
+              httpGet {
+                httpHeaders
+                path
+                port
+              }
+              initialDelay
+              interval
+              shell {
+                command
+              }
+              tcp {
+                port
+              }
+              type
+            }
+            name
+            readinessProbe {
+              failureThreshold
+              initialDelay
+              interval
+              type
+            }
+            resourceCpu {
+              max
+              min
+            }
+            resourceMemory {
+              max
+              min
+            }
+            volumes {
+              items {
+                fileName
+                key
+              }
+              mountPath
+              refName
+              type
+            }
+          }
+          displayName
+          freeze
+          hpa {
+            enabled
+            maxReplicas
+            minReplicas
+            thresholdCpu
+            thresholdMemory
+          }
+          intercept {
+            enabled
+            toDevice
+          }
+          nodeSelector
+          region
+          replicas
+          serviceAccount
+          services {
+            port
+          }
+          tolerations {
+            effect
+            key
+            operator
+            tolerationSeconds
+            value
+          }
+          topologySpreadConstraints {
+            labelSelector {
+              matchExpressions {
+                key
+                operator
+                values
+              }
+              matchLabels
+            }
+            matchLabelKeys
+            maxSkew
+            minDomains
+            nodeAffinityPolicy
+            nodeTaintsPolicy
+            topologyKey
+            whenUnsatisfiable
+          }
+        }
+        status {
+          checkList {
+            debug
+            description
+            name
+            title
+          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotDevice($projectName: String!, $deploymentName: String!, $name: String!) {
+  iot_deleteDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    name: $name
+  )
+}
+
+mutation iotconsoleCreateIotDevice($deploymentName: String!, $device: IOTDeviceIn!, $projectName: String!) {
+  iot_createDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    device: $device
+  ) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotDevice($deploymentName: String!, $device: IOTDeviceIn!, $projectName: String!) {
+  iot_updateDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    device: $device
+  ) {
+    id
+  }
+}
+
+query iotconsoleGetIotDevice($projectName: String!, $deploymentName: String!, $name: String!) {
+  iot_getDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    name: $name
+  ) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    deploymentName
     displayName
-    metadata {
-      name
+    id
+    ip
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
     }
-    clusterName
-    projectName
-    environmentName
-    spec {
-      activeNamespace
-      disabled
-      ports {
-        port
-        targetPort
+    markedForDeletion
+    name
+    podCIDR
+    publicKey
+    recordVersion
+    serviceCIDR
+    updateTime
+    version
+  }
+}
+
+query iotconsoleListIotDevices($deploymentName: String!, $search: SearchIOTDevices, $pq: CursorPaginationIn, $projectName: String!) {
+  iot_listDevices(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        deploymentName
+        displayName
+        id
+        ip
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        podCIDR
+        publicKey
+        recordVersion
+        serviceCIDR
+        updateTime
+        version
       }
     }
-    wireguardConfig {
-      encoding
-      value
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query iotconsoleListRepo($search: SearchRepos, $pagination: CursorPaginationIn) {
+  cr_listRepos(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateRepo($repository: RepositoryIn!) {
+  cr_createRepo(repository: $repository) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteRepo($name: String!) {
+  cr_deleteRepo(name: $name)
+}
+
+query iotconsoleListDigest($repoName: String!, $search: SearchRepos, $pagination: CursorPaginationIn) {
+  cr_listDigests(repoName: $repoName, search: $search, pagination: $pagination) {
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        url
+        updateTime
+        tags
+        size
+        repository
+        digest
+        creationTime
+      }
     }
   }
 }
 
-mutation authCli_createDevice($vpnDevice: ConsoleVPNDeviceIn!) {
-  core_createVPNDevice(vpnDevice: $vpnDevice) {
+mutation iotconsoleDeleteDigest($repoName: String!, $digest: String!) {
+  cr_deleteDigest(repoName: $repoName, digest: $digest)
+}
+
+mutation iotconsoleUpdateConfig($envName: String!, $config: ConfigIn!) {
+  core_updateConfig(envName: $envName, config: $config) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteConfig($envName: String!, $configName: String!) {
+  core_deleteConfig(envName: $envName, configName: $configName)
+}
+
+query iotconsoleGetConfig($envName: String!, $name: String!) {
+  core_getConfig(envName: $envName, name: $name) {
+    binaryData
+    data
+    displayName
+    environmentName
+    immutable
     metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
       name
+      namespace
     }
+  }
+}
+
+query iotconsoleListConfigs($envName: String!, $search: SearchConfigs, $pq: CursorPaginationIn) {
+  core_listConfigs(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        data
+        environmentName
+        immutable
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateConfig($envName: String!, $config: ConfigIn!) {
+  core_createConfig(envName: $envName, config: $config) {
+    id
+  }
+}
+
+query iotconsoleListSecrets($envName: String!, $search: SearchSecrets, $pq: CursorPaginationIn) {
+  core_listSecrets(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        stringData
+        environmentName
+        isReadyOnly
+        immutable
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        type
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateSecret($envName: String!, $secret: SecretIn!) {
+  core_createSecret(envName: $envName, secret: $secret) {
+    id
+  }
+}
+
+query iotconsoleGetSecret($envName: String!, $name: String!) {
+  core_getSecret(envName: $envName, name: $name) {
+    data
+    displayName
+    environmentName
+    immutable
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    stringData
+    type
+  }
+}
+
+mutation iotconsoleUpdateSecret($envName: String!, $secret: SecretIn!) {
+  core_updateSecret(envName: $envName, secret: $secret) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteSecret($envName: String!, $secretName: String!) {
+  core_deleteSecret(envName: $envName, secretName: $secretName)
+}
+
+query iotconsoleGetCredToken($username: String!) {
+  cr_getCredToken(username: $username)
+}
+
+query iotconsoleListCred($search: SearchCreds, $pagination: CursorPaginationIn) {
+  cr_listCreds(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        access
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        expiration {
+          unit
+          value
+        }
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+        username
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateCred($credential: CredentialIn!) {
+  cr_createCred(credential: $credential) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteCred($username: String!) {
+  cr_deleteCred(username: $username)
+}
+
+query iotconsoleGetGitConnections($state: String) {
+  auth_me {
+    providerGitlab
+    providerGithub
+    providerGoogle
+  }
+  githubLoginUrl: oAuth_requestLogin(provider: "github", state: $state)
+  gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab", state: $state)
+}
+
+query iotconsoleGetLogins {
+  auth_me {
+    providerGithub
+    providerGitlab
+  }
+}
+
+query iotconsoleLoginUrls {
+  githubLoginUrl: oAuth_requestLogin(
+    provider: "github"
+    state: "redirect:add-provider"
+  )
+  gitlabLoginUrl: oAuth_requestLogin(
+    provider: "gitlab"
+    state: "redirect:add-provider"
+  )
+}
+
+query iotconsoleListGithubRepos($installationId: Int!, $pagination: PaginationIn) {
+  cr_listGithubRepos(installationId: $installationId, pagination: $pagination) {
+    repositories {
+      cloneUrl
+      defaultBranch
+      fullName
+      private
+      updatedAt
+    }
+    totalCount
+  }
+}
+
+query iotconsoleListGithubInstalltions($pagination: PaginationIn) {
+  cr_listGithubInstallations(pagination: $pagination) {
+    account {
+      avatarUrl
+      id
+      login
+      nodeId
+      type
+    }
+    appId
+    id
+    nodeId
+    repositoriesUrl
+    targetId
+    targetType
+  }
+}
+
+query iotconsoleListGithubBranches($repoUrl: String!, $pagination: PaginationIn) {
+  cr_listGithubBranches(repoUrl: $repoUrl, pagination: $pagination) {
+    name
+  }
+}
+
+query iotconsoleSearchGithubRepos($organization: String!, $search: String!, $pagination: PaginationIn) {
+  cr_searchGithubRepos(
+    organization: $organization
+    search: $search
+    pagination: $pagination
+  ) {
+    repositories {
+      cloneUrl
+      defaultBranch
+      fullName
+      private
+      updatedAt
+    }
+  }
+}
+
+query iotconsoleListGitlabGroups($query: String, $pagination: PaginationIn) {
+  cr_listGitlabGroups(query: $query, pagination: $pagination) {
+    fullName
+    id
+  }
+}
+
+query iotconsoleListGitlabRepos($query: String, $pagination: PaginationIn, $groupId: String!) {
+  cr_listGitlabRepositories(
+    query: $query
+    pagination: $pagination
+    groupId: $groupId
+  ) {
+    createdAt
+    name
+    id
+    public
+    httpUrlToRepo
+  }
+}
+
+query iotconsoleListGitlabBranches($repoId: String!, $query: String, $pagination: PaginationIn) {
+  cr_listGitlabBranches(repoId: $repoId, query: $query, pagination: $pagination) {
+    name
+    protected
+  }
+}
+
+query iotconsoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: CursorPaginationIn) {
+  cr_listBuilds(repoName: $repoName, search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        buildClusterName
+        credUser {
+          userEmail
+          userId
+          userName
+        }
+        errorMessages
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        source {
+          branch
+          provider
+          repository
+          webhookId
+        }
+        spec {
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+          caches {
+            name
+            path
+          }
+        }
+        status
+        updateTime
+        latestBuildRun {
+          recordVersion
+          status {
+            checkList {
+              debug
+              description
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          markedForDeletion
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateBuild($build: BuildIn!) {
+  cr_addBuild(build: $build) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateBuild($crUpdateBuildId: ID!, $build: BuildIn!) {
+  cr_updateBuild(id: $crUpdateBuildId, build: $build) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteBuild($crDeleteBuildId: ID!) {
+  cr_deleteBuild(id: $crDeleteBuildId)
+}
+
+mutation iotconsoleTriggerBuild($crTriggerBuildId: ID!) {
+  cr_triggerBuild(id: $crTriggerBuildId)
+}
+
+query iotconsoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn) {
+  cr_listBuildRuns(search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        id
+        clusterName
+        creationTime
+        markedForDeletion
+        recordVersion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        spec {
+          accountName
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+        }
+        status {
+          checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query iotconsoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
+  cr_getBuildRun(buildID: $buildId, buildRunName: $buildRunName) {
+    clusterName
+    creationTime
+    markedForDeletion
+    recordVersion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    spec {
+      accountName
+      buildOptions {
+        buildArgs
+        buildContexts
+        contextDir
+        dockerfileContent
+        dockerfilePath
+        targetPlatforms
+      }
+      registry {
+        repo {
+          name
+          tags
+        }
+      }
+      resource {
+        cpu
+        memoryInMb
+      }
+    }
+    status {
+      checks
+      checkList {
+        description
+        debug
+        name
+        title
+      }
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
+query iotconsoleListInvitationsForAccount($accountName: String!) {
+  accounts_listInvitations(accountName: $accountName) {
+    accepted
+    accountName
+    creationTime
+    id
+    inviteToken
+    invitedBy
+    markedForDeletion
+    recordVersion
+    rejected
+    updateTime
+    userEmail
+    userName
+    userRole
+  }
+}
+
+query iotconsoleListMembershipsForAccount($accountName: String!) {
+  accounts_listMembershipsForAccount(accountName: $accountName) {
+    user {
+      verified
+      name
+      joined
+      email
+    }
+    role
+  }
+}
+
+mutation iotconsoleDeleteAccountInvitation($accountName: String!, $invitationId: String!) {
+  accounts_deleteInvitation(
+    accountName: $accountName
+    invitationId: $invitationId
+  )
+}
+
+mutation iotconsoleInviteMembersForAccount($accountName: String!, $invitations: [InvitationIn!]!) {
+  accounts_inviteMembers(accountName: $accountName, invitations: $invitations) {
+    id
+  }
+}
+
+query iotconsoleListInvitationsForUser($onlyPending: Boolean!) {
+  accounts_listInvitationsForUser(onlyPending: $onlyPending) {
+    accountName
+    id
+    updateTime
+    inviteToken
+  }
+}
+
+mutation iotconsoleAcceptInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_acceptInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
+mutation iotconsoleRejectInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_rejectInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
+mutation iotconsoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Github__com___kloudlite___api___apps___iam___types__Role!) {
+  accounts_updateAccountMembership(
+    accountName: $accountName
+    memberId: $memberId
+    role: $role
+  )
+}
+
+mutation iotconsoleDeleteAccountMembership($accountName: String!, $memberId: ID!) {
+  accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
+}
+
+mutation authCli_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    accountName
+    creationTime
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userName
+      userId
+      userEmail
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publicKey
+    recordVersion
+    updateTime
     wireguardConfig {
-      encoding
       value
+      encoding
+    }
+  }
+}
+
+query authCli_getMresOutputKeyValues($msvcName: String!, $keyrefs: [ManagedResourceKeyRefIn]) {
+  core_getManagedResouceOutputKeyValues(msvcName: $msvcName, keyrefs: $keyrefs) {
+    key
+    mresName
+    value
+  }
+}
+
+query authCli_getGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+    accountName
+    creationTime
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userName
+      userId
+      userEmail
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publicKey
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
     }
   }
 }
@@ -3955,16 +6154,12 @@ query authCli_coreCheckNameAvailability($resType: ConsoleResType!, $name: String
   }
 }
 
-query authCli_getMresKeys($projectName: String!, $envName: String!, $name: String!) {
-  core_getManagedResouceOutputKeys(
-    projectName: $projectName
-    envName: $envName
-    name: $name
-  )
+query authCli_getMresKeys($name: String!, $envName: String) {
+  core_getManagedResouceOutputKeys(name: $name, envName: $envName)
 }
 
-query authCli_listMreses($projectName: String!, $envName: String!, $pq: CursorPaginationIn) {
-  core_listManagedResources(projectName: $projectName, envName: $envName, pq: $pq) {
+query authCli_listMreses($pq: CursorPaginationIn, $search: SearchManagedResources) {
+  core_listManagedResources(pq: $pq, search: $search) {
     edges {
       node {
         displayName
@@ -3977,12 +6172,8 @@ query authCli_listMreses($projectName: String!, $envName: String!, $pq: CursorPa
   }
 }
 
-query authCli_getMresConfigsValues($keyrefs: [ManagedResourceKeyRefIn], $envName: String!, $projectName: String!) {
-  core_getManagedResouceOutputKeyValues(
-    keyrefs: $keyrefs
-    envName: $envName
-    projectName: $projectName
-  ) {
+query authCli_getMresConfigsValues($keyrefs: [ManagedResourceKeyRefIn], $envName: String) {
+  core_getManagedResouceOutputKeyValues(keyrefs: $keyrefs, envName: $envName) {
     key
     mresName
     value
@@ -4000,56 +6191,96 @@ query authCli_infraCheckNameAvailability($resType: ResType!, $name: String!, $cl
   }
 }
 
-query authCli_getConfigSecretMap($projectName: String!, $envName: String!, $configQueries: [ConfigKeyRefIn], $secretQueries: [SecretKeyRefIn!], $mresQueries: [ManagedResourceKeyRefIn]) {
-  configs: core_getConfigValues(
-    projectName: $projectName
-    envName: $envName
-    queries: $configQueries
-  ) {
+query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRefIn!], $secretQueries: [SecretKeyRefIn!], $mresQueries: [SecretKeyRefIn!]) {
+  configs: core_getConfigValues(envName: $envName, queries: $configQueries) {
     configName
     key
     value
   }
-  secrets: core_getSecretValues(
-    projectName: $projectName
-    envName: $envName
-    queries: $secretQueries
-  ) {
+  secrets: core_getSecretValues(envName: $envName, queries: $secretQueries) {
     key
     secretName
     value
   }
-  mreses: core_getManagedResouceOutputKeyValues(
-    keyrefs: $mresQueries
-    envName: $envName
-    projectName: $projectName
-  ) {
+  mreses: core_getSecretValues(envName: $envName, queries: $mresQueries) {
     key
-    mresName
+    secretName
     value
   }
 }
 
-mutation authCli_interceptApp($projectName: String!, $envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
-  core_interceptApp(
-    projectName: $projectName
+mutation authCli_intercepExternalApp($envName: String!, $appName: String!, $deviceName: String!, $intercept: Boolean!, $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]) {
+  core_interceptExternalApp(
     envName: $envName
-    appname: $appname
+    externalAppName: $appName
     deviceName: $deviceName
     intercept: $intercept
+    portMappings: $portMappings
   )
 }
 
-query authCli_getEnvironment($projectName: String!, $name: String!) {
-  core_getEnvironment(projectName: $projectName, name: $name) {
+mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appName: String!, $envName: String!) {
+  core_interceptApp(
+    portMappings: $portMappings
+    intercept: $intercept
+    deviceName: $deviceName
+    appname: $appName
+    envName: $envName
+  )
+}
+
+mutation authCli_removeDeviceIntercepts($envName: String!, $deviceName: String!) {
+  core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
+}
+
+query authCli_getEnvironment($name: String!) {
+  core_getEnvironment(name: $name) {
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+    }
+    metadata {
+      name
+    }
+    displayName
+    clusterName
     spec {
       targetNamespace
     }
   }
 }
 
-query authCli_getSecret($projectName: String!, $envName: String!, $name: String!) {
-  core_getSecret(projectName: $projectName, envName: $envName, name: $name) {
+mutation authCli_cloneEnvironment($clusterName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
+  core_cloneEnvironment(
+    clusterName: $clusterName
+    sourceEnvName: $sourceEnvName
+    destinationEnvName: $destinationEnvName
+    displayName: $displayName
+    environmentRoutingMode: $environmentRoutingMode
+  ) {
+    id
+    displayName
+    clusterName
+    metadata {
+      name
+      namespace
+    }
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+    }
+    spec {
+      targetNamespace
+    }
+  }
+}
+
+query authCli_getSecret($envName: String!, $name: String!) {
+  core_getSecret(envName: $envName, name: $name) {
     displayName
     metadata {
       name
@@ -4059,8 +6290,8 @@ query authCli_getSecret($projectName: String!, $envName: String!, $name: String!
   }
 }
 
-query authCli_getConfig($projectName: String!, $envName: String!, $name: String!) {
-  core_getConfig(projectName: $projectName, envName: $envName, name: $name) {
+query authCli_getConfig($envName: String!, $name: String!) {
+  core_getConfig(envName: $envName, name: $name) {
     data
     displayName
     metadata {
@@ -4070,10 +6301,40 @@ query authCli_getConfig($projectName: String!, $envName: String!, $name: String!
   }
 }
 
-query authCli_listApps($projectName: String!, $envName: String!) {
-  core_listApps(projectName: $projectName, envName: $envName) {
+query authCli_listApps($pq: CursorPaginationIn, $envName: String!) {
+  apps: core_listExternalApps(pq: $pq, envName: $envName) {
     edges {
-      cursor
+      node {
+        spec {
+          intercept {
+            enabled
+            portMappings {
+              devicePort
+              appPort
+            }
+            toDevice
+          }
+        }
+        displayName
+        environmentName
+        markedForDeletion
+        metadata {
+          name
+          annotations
+          namespace
+        }
+        status {
+          checks
+          isReady
+          message {
+            RawMessage
+          }
+        }
+      }
+    }
+  }
+  mapps: core_listApps(pq: $pq, envName: $envName) {
+    edges {
       node {
         displayName
         environmentName
@@ -4083,39 +6344,18 @@ query authCli_listApps($projectName: String!, $envName: String!) {
           name
           namespace
         }
-        projectName
         spec {
           displayName
-          containers {
-            args
-            command
-            env {
-              key
-              optional
-              refKey
-              refName
-              type
-              value
-            }
-            envFrom {
-              refName
-              type
-            }
-            image
-            name
-          }
           intercept {
             enabled
             toDevice
+            portMappings {
+              devicePort
+              appPort
+            }
           }
-          nodeSelector
-          replicas
-          serviceAccount
           services {
-            name
             port
-            targetPort
-            type
           }
         }
         status {
@@ -4130,8 +6370,8 @@ query authCli_listApps($projectName: String!, $envName: String!) {
   }
 }
 
-query authCli_listConfigs($projectName: String!, $envName: String!) {
-  core_listConfigs(projectName: $projectName, envName: $envName) {
+query authCli_listConfigs($pq: CursorPaginationIn, $envName: String!) {
+  core_listConfigs(pq: $pq, envName: $envName) {
     totalCount
     edges {
       node {
@@ -4146,8 +6386,8 @@ query authCli_listConfigs($projectName: String!, $envName: String!) {
   }
 }
 
-query authCli_listSecrets($projectName: String!, $envName: String!, $pq: CursorPaginationIn) {
-  core_listSecrets(projectName: $projectName, envName: $envName, pq: $pq) {
+query authCli_listSecrets($envName: String!, $pq: CursorPaginationIn) {
+  core_listSecrets(envName: $envName, pq: $pq) {
     edges {
       cursor
       node {
@@ -4157,25 +6397,26 @@ query authCli_listSecrets($projectName: String!, $envName: String!, $pq: CursorP
           name
           namespace
         }
+        isReadyOnly
         stringData
       }
     }
   }
 }
 
-query authCli_listEnvironments($projectName: String!, $pq: CursorPaginationIn) {
-  core_listEnvironments(projectName: $projectName, pq: $pq) {
+query authCli_listEnvironments($pq: CursorPaginationIn) {
+  core_listEnvironments(pq: $pq) {
     edges {
       cursor
       node {
         displayName
         markedForDeletion
+        clusterName
         metadata {
           name
           namespace
         }
         spec {
-          projectName
           targetNamespace
         }
         status {
@@ -4189,31 +6430,10 @@ query authCli_listEnvironments($projectName: String!, $pq: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
-  }
-}
-
-query authCli_listProjects($pq: CursorPaginationIn) {
-  core_listProjects(pq: $pq) {
-    edges {
-      node {
-        displayName
-        markedForDeletion
-        metadata {
-          name
-          namespace
-        }
-        status {
-          isReady
-          message {
-            RawMessage
-          }
-        }
-      }
-    }
   }
 }
 
@@ -4273,6 +6493,166 @@ query authCli_getRemoteLogin($loginId: String!, $secret: String!) {
   }
 }
 
+query authCli_listAccountClusters($pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(pagination: $pagination) {
+    edges {
+      node {
+        clusterToken
+        displayName
+        id
+        metadata {
+          name
+          labels
+        }
+      }
+    }
+  }
+}
+
+mutation authCli_createClusterReference($cluster: BYOKClusterIn!) {
+  infra_createBYOKCluster(cluster: $cluster) {
+    id
+    clusterToken
+    displayName
+    metadata {
+      name
+    }
+  }
+}
+
+mutation authCli_deleteClusterReference($name: String!) {
+  infra_deleteBYOKCluster(name: $name)
+}
+
+query authCli_clusterReferenceInstructions($name: String!) {
+  infrat_getBYOKClusterSetupInstructions(name: $name, onlyHelmValues: true) {
+    command
+    title
+  }
+}
+
+query authCli_listImportedManagedResources($envName: String!, $search: SearchImportedManagedResources, $pq: CursorPaginationIn) {
+  core_listImportedManagedResources(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        managedResourceRef {
+          id
+          name
+          namespace
+        }
+        markedForDeletion
+        name
+        recordVersion
+        secretRef {
+          name
+          namespace
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+        managedResource {
+          accountName
+          apiVersion
+          creationTime
+          displayName
+          enabled
+          environmentName
+          id
+          isImported
+          kind
+          managedServiceName
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          mresRef
+          recordVersion
+          spec {
+            resourceNamePrefix
+            resourceTemplate {
+              apiVersion
+              kind
+              msvcRef {
+                apiVersion
+                kind
+                name
+                namespace
+              }
+              spec
+            }
+          }
+          status {
+            checkList {
+              debug
+              description
+              hide
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncedOutputSecretRef {
+            apiVersion
+            data
+            immutable
+            kind
+            stringData
+            type
+          }
+          updateTime
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 mutation authSetRemoteAuthHeader($loginId: String!, $authHeader: String) {
   auth_setRemoteAuthHeader(loginId: $loginId, authHeader: $authHeader)
 }
@@ -4308,6 +6688,10 @@ mutation authVerifyEmail($token: String!) {
   }
 }
 
+mutation authResendVerificationEmail {
+  auth_resendVerificationEmail
+}
+
 query authLoginPageInitUrls {
   githubLoginUrl: oAuth_requestLogin(provider: "github")
   gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab")
@@ -4335,6 +6719,8 @@ query authWhoAmI {
     id
     email
     verified
+    name
+    approved
   }
 }
 
@@ -4344,6 +6730,7 @@ query libWhoAmI {
     name
     id
     email
+    approved
     providerGitlab
     providerGithub
     providerGoogle

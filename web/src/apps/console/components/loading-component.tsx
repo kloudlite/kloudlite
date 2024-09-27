@@ -1,4 +1,4 @@
-import { Spinner } from '@jengaicons/react';
+import { Spinner } from '~/console/components/icons';
 import { SerializeFrom } from '@remix-run/node';
 import { useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
@@ -7,7 +7,7 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { FlatMapType, NN } from '~/root/lib/types/common';
 import { parseError, sleep } from '~/root/lib/utils/common';
-import Pulsable from './pulsable';
+import Pulsable from '~/root/lib/client/components/pulsable';
 
 interface SetCookieProps {
   _cookie: FlatMapType<string>[] | undefined;
@@ -99,6 +99,10 @@ interface LoadingCompProps<T = any> {
   skeleton?: ReactNode;
   skeletonData?: NN<T>;
   errorComp?: (err: Error) => ReactNode;
+}
+
+export function parsePWData<T>(data: SerializeFrom<AwaitRespProps & T>) {
+  return data as NN<T>;
 }
 
 export function LoadingComp<T>({

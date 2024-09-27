@@ -1,4 +1,4 @@
-import { Plus } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
@@ -13,8 +13,8 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import HandleRepo from './handle-repo';
-import RepoResources from './repo-resources';
 import Tools from './tools';
+import RepoResourcesV2 from './repo-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -88,7 +88,7 @@ const ContainerRegistryRepos = () => {
                 }}
                 tools={<Tools />}
               >
-                <RepoResources items={repos} />
+                <RepoResourcesV2 items={repos} />
               </Wrapper>
             </div>
           );

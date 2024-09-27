@@ -12,6 +12,8 @@ import {
   ConsoleUpdateClusterMSvMutationVariables,
   ConsoleDeleteClusterMSvMutation,
   ConsoleDeleteClusterMSvMutationVariables,
+  ConsoleCloneClusterMSvMutation,
+  ConsoleCloneClusterMSvMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IClusterMSv = NN<
@@ -21,16 +23,25 @@ export type IClusterMSvs = NN<
   ConsoleListClusterMSvsQuery['infra_listClusterManagedServices']
 >;
 
+export type InClusterMSvs = ConsoleUpdateClusterMSvMutationVariables;
+
 export const clusterManagedServicesQueries = (executor: IExecutor) => ({
   getClusterMSv: executor(
     gql`
-      query Infra_getClusterManagedService(
-        $clusterName: String!
-        $name: String!
-      ) {
-        infra_getClusterManagedService(clusterName: $clusterName, name: $name) {
+      query Infra_getClusterManagedService($name: String!) {
+        infra_getClusterManagedService(name: $name) {
           clusterName
+          creationTime
           displayName
+          isArchived
+          id
+          kind
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          markedForDeletion
           metadata {
             annotations
             creationTimestamp
@@ -40,16 +51,26 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
             name
             namespace
           }
+          recordVersion
           spec {
             msvcSpec {
+              nodeSelector
               serviceTemplate {
                 apiVersion
                 kind
                 spec
               }
+              tolerations {
+                effect
+                key
+                operator
+                tolerationSeconds
+                value
+              }
             }
             targetNamespace
           }
+          updateTime
         }
       }
     `,
@@ -63,13 +84,9 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
   createClusterMSv: executor(
     gql`
       mutation Infra_createClusterManagedService(
-        $clusterName: String!
         $service: ClusterManagedServiceIn!
       ) {
-        infra_createClusterManagedService(
-          clusterName: $clusterName
-          service: $service
-        ) {
+        infra_createClusterManagedService(service: $service) {
           id
         }
       }
@@ -80,16 +97,36 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
       vars(_: ConsoleCreateClusterMSvMutationVariables) {},
     }
   ),
+  cloneClusterMSv: executor(
+    gql`
+      mutation Infra_cloneClusterManagedService(
+        $clusterName: String!
+        $sourceMsvcName: String!
+        $destinationMsvcName: String!
+        $displayName: String!
+      ) {
+        infra_cloneClusterManagedService(
+          clusterName: $clusterName
+          sourceMsvcName: $sourceMsvcName
+          destinationMsvcName: $destinationMsvcName
+          displayName: $displayName
+        ) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleCloneClusterMSvMutation) =>
+        data.infra_cloneClusterManagedService,
+      vars(_: ConsoleCloneClusterMSvMutationVariables) {},
+    }
+  ),
   updateClusterMSv: executor(
     gql`
       mutation Infra_updateClusterManagedService(
-        $clusterName: String!
         $service: ClusterManagedServiceIn!
       ) {
-        infra_updateClusterManagedService(
-          clusterName: $clusterName
-          service: $service
-        ) {
+        infra_updateClusterManagedService(service: $service) {
           id
         }
       }
@@ -102,11 +139,21 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
   ),
   listClusterMSvs: executor(
     gql`
-      query Infra_listClusterManagedServices($clusterName: String!) {
-        infra_listClusterManagedServices(clusterName: $clusterName) {
+      query Infra_listClusterManagedServices(
+        $pagination: CursorPaginationIn
+        $search: SearchClusterManagedService
+      ) {
+        infra_listClusterManagedServices(
+          pagination: $pagination
+          search: $search
+        ) {
           edges {
             cursor
             node {
+              accountName
+              apiVersion
+              clusterName
+              isArchived
               createdBy {
                 userEmail
                 userId
@@ -114,6 +161,8 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
+              id
+              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -121,18 +170,41 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
                 name
+                namespace
               }
+              recordVersion
               spec {
                 msvcSpec {
+                  nodeSelector
                   serviceTemplate {
                     apiVersion
                     kind
                     spec
                   }
+                  tolerations {
+                    effect
+                    key
+                    operator
+                    tolerationSeconds
+                    value
+                  }
                 }
+                targetNamespace
               }
               status {
+                checkList {
+                  debug
+                  description
+                  hide
+                  name
+                  title
+                }
                 checks
                 isReady
                 lastReadyGeneration
@@ -147,13 +219,21 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
                   namespace
                 }
               }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
               updateTime
             }
           }
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount
@@ -168,14 +248,8 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
   ),
   deleteClusterMSv: executor(
     gql`
-      mutation Infra_deleteClusterManagedService(
-        $clusterName: String!
-        $serviceName: String!
-      ) {
-        infra_deleteClusterManagedService(
-          clusterName: $clusterName
-          serviceName: $serviceName
-        )
+      mutation Infra_deleteClusterManagedService($name: String!) {
+        infra_deleteClusterManagedService(name: $name)
       }
     `,
     {

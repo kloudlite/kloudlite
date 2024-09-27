@@ -150,7 +150,7 @@ const Accounts = () => {
       inviteToken,
       api: api.acceptInvitation,
       success: () => {
-        navigate(`/${accountName}/projects`);
+        navigate(`/${accountName}/environments`);
       },
     });
   };
@@ -214,11 +214,11 @@ const Accounts = () => {
                 const { isInvite, displayName, inviteToken } = account;
                 return (
                   <List.Row
-                    {...(isInvite ? {} : { to: `/${name}/projects` })}
+                    {...(isInvite ? {} : { to: `/${name}/environments` })}
                     key={name}
                     plain
                     className={cn(
-                      'group/team p-3xl [&:not(:last-child)]:border-b border-border-disabled last:rounded',
+                      'group/team p-3xl [&:not(:last-child)]:border-b border-border-default last:rounded',
                       {
                         '!cursor-default': isInvite,
                       }
@@ -228,11 +228,15 @@ const Accounts = () => {
                         key: generateKey(name, index),
                         className: 'flex-1',
                         render: () => (
-                          <div className="flex flex-row items-center gap-lg">
+                          <div className="group flex flex-row items-center gap-lg">
                             <ConsoleAvatar name={name} />
-                            <div className="text-text-default headingMd flex-1">
-                              {displayName}{' '}
-                              <span className="opacity-60">#{name}</span>
+                            <div className="text-text-default  flex-1">
+                              <span className="capitalize headingMd">
+                                {displayName}
+                              </span>{' '}
+                              <span className=" group-hover:text-text-soft text-text-disabled ">
+                                #{name}
+                              </span>
                             </div>
                           </div>
                         ),
@@ -302,7 +306,7 @@ const Accounts = () => {
               content={
                 accounts.length ? 'Create another team' : 'Create new team'
               }
-              LinkComponent={Link}
+              linkComponent={Link}
               to="/new-team"
             />
           </div>
@@ -312,7 +316,7 @@ const Accounts = () => {
             </span>
             <Button
               to={`${authBaseUrl}/logout`}
-              LinkComponent={Link}
+              linkComponent={Link}
               variant="primary-plain"
               content="Try a different email"
             />

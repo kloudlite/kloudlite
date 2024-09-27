@@ -26,6 +26,9 @@
       "~/console/*": [
         "./src/apps/console/*"
       ],
+      "~/iotconsole/*": [
+        "./src/apps/iot-console/*"
+      ],
       "~/accounts/*": [
         "./src/apps/accounts/*"
       ],
@@ -34,6 +37,9 @@
       ],
       "~/components/*": [
         "./src/design-system/components/*"
+      ],
+      "~/components/icons/*": [
+        "./src/design-system/components/icons"
       ],
       "~/design-system/*": [
         "./src/design-system/*"
@@ -53,6 +59,7 @@
     "node_modules",
     "public",
     "./src/design-system/node_modules/**/*",
+    "./src/design-system/dist/**/*",
     "./src/design-system/dist/**/*"
   ]
 }

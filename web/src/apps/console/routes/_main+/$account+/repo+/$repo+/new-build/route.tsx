@@ -47,6 +47,7 @@ const NewBuild = () => {
       dockerfilePath: '',
       dockerfileContent: '',
       isGitLoading: false,
+      caches: [],
     },
     validationSchema: Yup.object({
       source: Yup.object()
@@ -110,6 +111,9 @@ const NewBuild = () => {
                   cpu: 500,
                   memoryInMb: 1000,
                 },
+                caches: val.caches.map((c: any) => {
+                  return { name: c.name, path: c.path };
+                }),
               },
             },
           });

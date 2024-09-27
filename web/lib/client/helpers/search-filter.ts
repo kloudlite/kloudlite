@@ -57,7 +57,6 @@ export const searchFilter = <T>({
     ignoreLocation: true,
     shouldSort: !remainOrder,
     // sortFn: (a, b) => {
-    //   // console.log(a, b);
     //   return -1;
     // },
   });

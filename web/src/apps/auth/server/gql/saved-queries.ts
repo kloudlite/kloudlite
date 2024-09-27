@@ -25,6 +25,8 @@ import {
   AuthCheckOauthEnabledQueryVariables,
   AuthSetRemoteAuthHeaderMutation,
   AuthSetRemoteAuthHeaderMutationVariables,
+  AuthResendVerificationEmailMutation,
+  AuthResendVerificationEmailMutationVariables,
 } from '~/root/src/generated/gql/server';
 import { cliQueries } from './cli-queries';
 
@@ -138,6 +140,19 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       }
     ),
 
+    resendVerificationEmail: executor(
+      gql`
+        mutation Mutation {
+          auth_resendVerificationEmail
+        }
+      `,
+      {
+        transformer: (data: AuthResendVerificationEmailMutation) =>
+          data.auth_resendVerificationEmail,
+        vars(_: AuthResendVerificationEmailMutationVariables) {},
+      }
+    ),
+
     loginPageInitUrls: executor(
       gql`
         query Query {
@@ -203,6 +218,8 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
             id
             email
             verified
+            name
+            approved
           }
         }
       `,

@@ -1,4 +1,4 @@
-import { SmileySad } from '@jengaicons/react';
+import { SmileySad } from '~/console/components/icons';
 import { Link, useSearchParams } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { IButton } from '~/components/atoms/button';
@@ -14,7 +14,7 @@ interface WrapperProps {
   empty?: {
     image?: ReactNode;
     title: string;
-    action?: IButton;
+    action?: IButton | ReactNode;
     is: boolean;
     content: ReactNode;
   };
@@ -27,7 +27,15 @@ interface WrapperProps {
     title: ReactNode;
     action?: ReactNode;
   };
-  pagination?: any;
+  pagination?: {
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPrevPage?: boolean;
+      startCursor?: string;
+    };
+    totalCount: number;
+  };
   tools?: ReactNode;
   noResultFound?: INoResultsFound;
 }
@@ -37,7 +45,7 @@ const Wrapper = ({
   empty,
   header,
   secondaryHeader,
-  pagination = null,
+  pagination,
   tools,
   noResultFound,
 }: WrapperProps) => {
@@ -87,7 +95,7 @@ const Wrapper = ({
                       y="0.970703"
                       width="226"
                       height="226"
-                      fill="#F4F4F5"
+                      className="fill-surface-basic-subdued"
                     />
                   </svg>
                 )

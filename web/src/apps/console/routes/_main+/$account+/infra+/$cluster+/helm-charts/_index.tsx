@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
@@ -9,6 +9,7 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import { EmptyHelmReleaseImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import HandleHelmChart from './handle-helm-chart';
 import HelmChartResourcesV2 from './helm-chart-resources-v2';
@@ -55,7 +56,7 @@ const HelmCharts = () => {
                   <Button
                     variant="primary"
                     content="Install helm chart"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}
@@ -63,6 +64,7 @@ const HelmCharts = () => {
                 ),
               }}
               empty={{
+                image: <EmptyHelmReleaseImage />,
                 is: helmCharts.length === 0,
                 title: 'This is where you’ll manage your Helm charts.',
                 content: (

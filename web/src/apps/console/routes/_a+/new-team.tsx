@@ -1,7 +1,7 @@
 import { useNavigate } from '@remix-run/react';
 import { toast } from '~/components/molecule/toast';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -13,11 +13,12 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCreateTeam from '~/console/assets/filler-create-team';
-import { SignOut } from '@jengaicons/react';
+import { SignOut } from '~/console/components/icons';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import Select from '~/components/atoms/select';
 
 const NewAccount = () => {
   const api = useConsoleApi();
@@ -28,10 +29,30 @@ const NewAccount = () => {
     return api.listAccounts({});
   });
 
+  const { data: kloudliteRegionsData, isLoading: klRegionIsLoading } =
+    useCustomSwr(
+      'kloudliteRegions',
+      async () => api.getAvailableKloudliteRegions({}),
+      true
+    );
+
+  const klRegionData = kloudliteRegionsData?.map((d) => {
+    return {
+      label: d.displayName,
+      value: d.id,
+      render: () => (
+        <div className="flex flex-row gap-lg items-center">
+          <div>{d.displayName}</div>
+        </div>
+      ),
+    };
+  });
+
   const { values, handleChange, errors, isLoading, handleSubmit } = useForm({
     initialValues: {
       name: '',
       displayName: '',
+      region: '',
       isNameError: false,
     },
     validationSchema: Yup.object({
@@ -45,13 +66,14 @@ const NewAccount = () => {
             metadata: { name: v.name },
             displayName: v.displayName,
             contactEmail: user.email,
+            kloudliteGatewayRegion: v.region,
           },
         });
         if (_errors) {
           throw _errors[0];
         }
         toast.success('account created');
-        navigate(`/onboarding/${v.name}/new-cloud-provider`);
+        navigate(`/onboarding/${v.name}/attach-new-cluster`);
       } catch (err) {
         handleError(err);
       }
@@ -84,6 +106,14 @@ const NewAccount = () => {
         }
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
+        {...(accountsData?.length === 0
+          ? {}
+          : {
+              backButton: {
+                content: 'Back to teams',
+                to: `/teams`,
+              },
+            })}
       >
         <MultiStepProgress.Root
           currentStep={currentStep}
@@ -102,6 +132,21 @@ const NewAccount = () => {
                 handleChange={handleChange}
                 nameErrorLabel="isNameError"
               />
+              <Select
+                size="lg"
+                value={values.region}
+                label="Region"
+                placeholder="Select region"
+                onChange={(_, value) => {
+                  handleChange('region')(dummyEvent(value));
+                }}
+                options={async () => [
+                  ...((klRegionData && klRegionData) || []),
+                ]}
+                error={!!errors.region}
+                message={errors.region}
+                loading={klRegionIsLoading}
+              />
               <BottomNavigation
                 primaryButton={{
                   variant: 'primary',
@@ -112,9 +157,14 @@ const NewAccount = () => {
               />
             </div>
           </MultiStepProgress.Step>
-          <MultiStepProgress.Step step={2} label="Add your cloud provider" />
-          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
-          <MultiStepProgress.Step step={4} label="Setup first cluster" />
+          {/* <MultiStepProgress.Step step={2} label="Add your cloud provider" /> */}
+          {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" />
+          <MultiStepProgress.Step step={4} label="Setup first cluster" /> */}
+          <MultiStepProgress.Step step={2} label="Attach Kubernetes Cluster" />
+          <MultiStepProgress.Step
+            step={3}
+            label="Verify Your Attached Kubernetes Cluster"
+          />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>
     </form>

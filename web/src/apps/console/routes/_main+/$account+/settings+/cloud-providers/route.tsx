@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
@@ -12,9 +12,10 @@ import fake from '~/root/fake-data-generator/fake';
 import { useState } from 'react';
 
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { EmptyCloudProviderImage } from '~/console/components/empty-resource-images';
 import HandleProvider from './handle-provider';
-import ProviderResources from './provider-resources';
 import Tools from './tools';
+import ProviderResourcesV2 from './provider-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -63,7 +64,7 @@ const CloudProvidersIndex = () => {
                   <Button
                     variant="primary"
                     content="Add Cloud Provider"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}
@@ -71,17 +72,19 @@ const CloudProvidersIndex = () => {
                 ),
               }}
               empty={{
+                image: <EmptyCloudProviderImage />,
                 is: providers.length === 0,
-                title: 'you have not added any cloud provider yet.',
+                title: 'This is where you’ll manage your cloud providers.',
                 content: (
                   <p>
-                    please add some cloud providers to start creating cluster.
+                    You can create a new cloud provider and manage the listed
+                    cloud providers.
                   </p>
                 ),
                 action: {
                   content: 'Add Cloud Provider',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   onClick: () => {
                     setVisible(true);
                   },
@@ -93,7 +96,7 @@ const CloudProvidersIndex = () => {
               }}
               tools={<Tools />}
             >
-              <ProviderResources items={providers} />
+              <ProviderResourcesV2 items={providers} />
             </Wrapper>
           );
         }}

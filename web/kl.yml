@@ -1,0 +1,13 @@
+version: v1
+defaultEnv: master
+packages:
+- neovim
+- git
+- pnpm
+- nodejs
+- gnumake
+- nodePackages.node-gyp
+envVars: []
+mounts: []
+ports: []
+accountName: demoaccount

@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
-import { CircleNotch } from '@jengaicons/react';
+import { CircleNotch } from '~/console/components/icons';
 import { ReactNode, forwardRef, useEffect, useState } from 'react';
-import { TextInput } from '~/components/atoms/input';
+import { ITextInputBase, TextInput } from '~/components/atoms/input';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
@@ -22,7 +22,6 @@ interface INameIdView {
     | ResType
     | 'account'
     | 'username'
-    | 'console_vpn_device'
     | NonNullableString;
   onChange?: ({ name, id }: { name: string; id: string }) => void;
   prefix?: ReactNode;
@@ -37,6 +36,7 @@ interface INameIdView {
     };
   }) => void;
   nameErrorLabel: string;
+  size?: ITextInputBase['size'];
 }
 
 export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
@@ -54,8 +54,9 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       isUpdate,
       handleChange,
       nameErrorLabel,
+      size = 'lg',
     },
-    ref
+    ref,
   ) => {
     const [nameValid, setNameValid] = useState(false);
     const [nameLoading, setNameLoading] = useState(true);
@@ -66,26 +67,27 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
     const checkApi = (() => {
       switch (resType) {
         case 'app':
-        case 'project':
         case 'config':
         case 'environment':
-        case 'managed_service':
-        case 'project_managed_service':
         case 'managed_resource':
         case 'router':
-        case 'console_vpn_device':
         case 'secret':
+        case 'imported_managed_resource':
           ensureAccountClientSide(params);
           ensureClusterClientSide(params);
           return api.coreCheckNameAvailability;
 
         case 'cluster':
         case 'providersecret':
+        case 'global_vpn_device':
           ensureAccountClientSide(params);
           return api.infraCheckNameAvailability;
         case 'helm_release':
+        case 'cluster_managed_service':
         case 'vpn_device':
         case 'nodepool':
+          ensureAccountClientSide(params);
+          ensureClusterClientSide(params);
           return api.infraCheckNameAvailability;
 
         case 'account':
@@ -147,13 +149,10 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       return error;
     };
 
-    const { cluster, environment, project } = params;
+    const { cluster, environment, msv } = params;
     useDebounce(
       async () => {
-        let tempResType = resType;
-        if (resType === 'console_vpn_device') {
-          tempResType = 'vpn_device';
-        }
+        const tempResType = resType;
         if (!isUpdate)
           if (displayName) {
             setNameLoading(true);
@@ -161,34 +160,36 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
             try {
               // @ts-ignore
               const { data, errors } = await checkApi({
-                // @ts-ignore
                 resType: tempResType,
                 name: `${name}`,
                 ...([
-                  'project',
                   'app',
                   'environment',
                   'config',
                   'secret',
-                  'project_managed_service',
                   'console_vpn_device',
                   'router',
+                  'imported_managed_resource',
                 ].includes(tempResType)
                   ? {
-                      projectName: project,
                       envName: environment,
                     }
                   : {}),
-                ...(['nodepool', 'vpn_device', 'helm_release'].includes(
-                  tempResType
-                )
+                ...(['managed_resource'].includes(tempResType)
                   ? {
-                      clusterName: cluster,
+                      msvcName: msv,
                     }
                   : {}),
-                ...(tempResType === 'managed_resource'
+
+                ...([
+                  'nodepool',
+                  'vpn_device',
+                  'helm_release',
+                  'managed_service',
+                  'cluster_managed_service',
+                ].includes(tempResType)
                   ? {
-                      namespace: '',
+                      clusterName: cluster,
                     }
                   : {}),
               });
@@ -213,7 +214,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
           }
       },
       500,
-      [displayName, name, isUpdate]
+      [displayName, name, isUpdate],
     );
 
     return (
@@ -243,7 +244,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
           }
         }}
         placeholder={placeholder}
-        size="lg"
+        size={size}
         error={
           (!nameLoading || !isUpdate) &&
           ((!nameValid && !!name && !nameLoading) || !!errors)
@@ -255,5 +256,5 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
         focusRing
       />
     );
-  }
+  },
 );

@@ -1,99 +1,110 @@
-import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData, useParams } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { parseNodes } from '~/console/server/r-utils/common';
-import { getPagination, getSearch } from '~/console/server/utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
+import { EmptyClusterImage } from '~/console/components/empty-resource-images';
+import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import Wrapper from '~/console/components/wrapper';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import Tools from './tools';
+import { parseNodes } from '~/console/server/r-utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { getPagination, getSearch } from '~/console/server/utils/common';
+import fake from '~/root/fake-data-generator/fake';
+import { IRemixCtx } from '~/root/lib/types/common';
+import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 import ClusterResourcesV2 from './cluster-resources-v2';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { data, errors } = await GQLServerHandler(ctx.request).listClusters({
+    const { data, errors } = await GQLServerHandler(
+      ctx.request
+    ).listAllClusters({
       pagination: getPagination(ctx),
       search: getSearch(ctx),
     });
-    console.log(errors);
 
     if (errors) {
       throw errors[0];
     }
-
-    if (data.edges.length === 0) {
-      const { data: secrets, errors: sErrors } = await GQLServerHandler(
-        ctx.request
-      ).listProviderSecrets({});
-
-      if (sErrors) {
-        throw sErrors[0];
-      }
-
-      return {
-        clustersData: data || {},
-        secretsCount: secrets.edges.length,
-      };
-    }
-
     return {
       clustersData: data,
-      secretsCount: -1,
     };
   });
 
   return defer({ promise });
 };
 
-const Clusters = () => {
-  const { promise } = useLoaderData<typeof loader>();
+const CreateClusterButton = () => {
+  const [visible, setVisible] = useState(false);
 
-  const { account } = useParams();
+  return (
+    <>
+      <Button
+        content="Attach compute"
+        variant="primary"
+        prefix={<Plus />}
+        onClick={() => {
+          setVisible(true);
+        }}
+      />
+      <HandleByokCluster
+        {...{
+          visible,
+          setVisible,
+          isUpdate: false,
+        }}
+      />
+    </>
+  );
+};
+
+const ClusterComponent = ({
+  clustersData,
+}: {
+  clustersData: IByocClusters;
+}) => {
+  const [clusterType, setClusterType] = useState('All');
+  const byokClusters = parseNodes(clustersData);
 
   const getEmptyState = ({
-    clustersCount,
-    cloudProviderSecretsCount,
+    byokClustersCount,
   }: {
-    clustersCount: number;
-    cloudProviderSecretsCount: number;
+    byokClustersCount: number;
   }) => {
-    if (cloudProviderSecretsCount === 0) {
+    if (byokClustersCount > 0) {
       return {
-        is: true,
-        title: 'please setup your cloud provider first',
-        content: (
-          <p>
-            you need to setup your add at least one cloud provider first, before
-            starting working with clusters
-          </p>
-        ),
-        action: {
-          content: 'Setup Cloud Provider and Cluster',
-          prefix: <Plus />,
-          LinkComponent: Link,
-          to: `/onboarding/${account}/new-cloud-provider`,
-        },
+        is: false,
+        title: '',
+        content: null,
+        action: null,
       };
     }
 
-    if (clustersCount === 0) {
+    if (byokClustersCount === 0) {
       return {
+        image: <EmptyClusterImage />,
         is: true,
-        title: 'This is where you’ll manage your cluster.',
+        title: 'This is where you’ll attach your compute or local devices.',
         content: (
-          <p>You can create a new cluster and manage the listed cluster.</p>
+          <p>
+            You can attach a new compute and manage the listed compute.
+            <br />
+            Follow the instructions to attach your{' '}
+            <Link
+              to="https://github.com/kloudlite/kl"
+              className="text-text-default"
+            >
+              <span className="bodyMd-semibold underline underline-offset-1 text-text-default">
+                local device
+              </span>
+            </Link>{' '}
+          </p>
         ),
-        action: {
-          content: 'Create new cluster',
-          prefix: <Plus />,
-          LinkComponent: Link,
-          to: `/${account}/new-cluster`,
-        },
+        action: <CreateClusterButton />,
       };
     }
 
@@ -101,60 +112,53 @@ const Clusters = () => {
       is: false,
       title: 'This is where you’ll manage your cluster.',
       content: (
-        <p>You can create a new cluster and manage the listed cluster.</p>
+        <p>You can create a new compute and manage the listed compute.</p>
       ),
-      action: {
-        content: 'Create new cluster',
-        prefix: <Plus />,
-        LinkComponent: Link,
-        to: `/${account}/new-cluster`,
-      },
+      action: <CreateClusterButton />,
     };
   };
+
+  if (!byokClusters) {
+    return null;
+  }
+  return (
+    <Wrapper
+      secondaryHeader={{
+        title: 'Attached Computes',
+        action: byokClusters.length > 0 && <CreateClusterButton />,
+      }}
+      empty={getEmptyState({
+        byokClustersCount: byokClusters.length,
+      })}
+      tools={
+        <Tools
+          onChange={(type) => {
+            setClusterType(type);
+          }}
+          value={clusterType}
+        />
+      }
+      pagination={clustersData}
+    >
+      <ClusterResourcesV2
+        byokItems={clusterType !== 'Normal' ? byokClusters : []}
+      />
+    </Wrapper>
+  );
+};
+
+const Clusters = () => {
+  const { promise } = useLoaderData<typeof loader>();
 
   return (
     <LoadingComp
       data={promise}
       skeletonData={{
-        clustersData: fake.ConsoleListClustersQuery.infra_listClusters as any,
-        secretsCount: 1,
+        clustersData: fake.ConsoleListAllClustersQuery.byok_clusters as any,
       }}
     >
-      {({ clustersData, secretsCount }) => {
-        const clusters = parseNodes(clustersData);
-
-        if (!clusters) {
-          return null;
-        }
-
-        const { pageInfo, totalCount } = clustersData;
-        return (
-          <Wrapper
-            header={{
-              title: 'Clusters',
-              action: clusters.length > 0 && (
-                <Button
-                  content="Create cluster"
-                  variant="primary"
-                  prefix={<Plus />}
-                  LinkComponent={Link}
-                  to={`/${account}/new-cluster`}
-                />
-              ),
-            }}
-            empty={getEmptyState({
-              clustersCount: clusters.length,
-              cloudProviderSecretsCount: secretsCount,
-            })}
-            pagination={{
-              pageInfo,
-              totalCount,
-            }}
-            tools={<Tools />}
-          >
-            <ClusterResourcesV2 items={clusters} />
-          </Wrapper>
-        );
+      {({ clustersData }) => {
+        return <ClusterComponent clustersData={clustersData} />;
       }}
     </LoadingComp>
   );

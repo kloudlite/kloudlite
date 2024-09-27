@@ -12,6 +12,8 @@ import {
   ConsoleUpdateAccountMutationVariables,
   ConsoleDeleteAccountMutation,
   ConsoleDeleteAccountMutationVariables,
+  ConsoleGetAvailableKloudliteRegionsQuery,
+  ConsoleGetAvailableKloudliteRegionsQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IAccounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
@@ -32,6 +34,21 @@ export const accountQueries = (executor: IExecutor) => ({
       vars(_: ConsoleCreateAccountMutationVariables) {},
     }
   ),
+  getAvailableKloudliteRegions: executor(
+    gql`
+      query Accounts_availableKloudliteRegions {
+        accounts_availableKloudliteRegions {
+          displayName
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleGetAvailableKloudliteRegionsQuery) =>
+        data.accounts_availableKloudliteRegions,
+      vars(_: ConsoleGetAvailableKloudliteRegionsQueryVariables) {},
+    }
+  ),
 
   listAccounts: executor(
     gql`
@@ -44,6 +61,7 @@ export const accountQueries = (executor: IExecutor) => ({
           }
           updateTime
           displayName
+          kloudliteGatewayRegion
         }
       }
     `,
@@ -79,6 +97,7 @@ export const accountQueries = (executor: IExecutor) => ({
           updateTime
           contactEmail
           displayName
+          kloudliteGatewayRegion
         }
       }
     `,

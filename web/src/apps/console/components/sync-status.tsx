@@ -7,13 +7,13 @@ import {
   CircleFill,
   WarningCircleFill,
 } from '~/console/components/icons';
-import Tooltip from '~/components/atoms/tooltip';
 import {
   Github__Com___Kloudlite___Api___Pkg___Types__SyncState as ISyncState,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as ISyncAction,
   Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn as ICheckList,
 } from '~/root/src/generated/gql/server';
 import { Badge } from '~/components/atoms/badge';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 
 interface IStatusMetaV2 {
   recordVersion: number;
@@ -69,7 +69,8 @@ const state = ({
   const textData = () => {
     switch (state) {
       case 'in-progress':
-        return 'In progress';
+        // return 'In progress';
+        return 'Syncing...';
       case 'error':
         return 'Error';
       case 'ready':
@@ -221,12 +222,16 @@ const parseOverallState = (item: IStatusMetaV2): OverallStates => {
   return (mainStatus?.value as OverallStates) || 'idle';
 };
 
+type IResourceType = 'byok' | 'normal';
+
 export const SyncStatusV2 = ({
   item,
   type,
+  resourceType,
 }: {
   item: IStatusMetaV2;
   type?: IStatusViewType;
+  resourceType?: IResourceType;
 }) => {
   const parseStage = (check: OverallStates) => {
     const iconSize = 12;
@@ -280,67 +285,84 @@ export const SyncStatusV2 = ({
       return [];
     }
 
-    const items = checkList?.reduce(
-      (acc, curr) => {
-        const k = checks[curr.name];
-        if (acc.progress === 'done') {
-          acc.items.push({
-            ...curr,
-            result: 'idle',
-          });
-          return acc;
-        }
-
-        const res = ((): { value: OverallStates; progress: string } => {
-          if (k) {
-            if (acc.value === 'idle' && k.state === 'yet-to-be-reconciled') {
-              return {
-                value: 'idle',
-                progress: 'done',
-              };
-            }
-
-            if (k.state === 'under-reconcilation') {
-              return {
-                value: 'in-progress',
-                progress: 'done',
-              };
-            }
-
-            if (k.state === 'errored-during-reconcilation') {
-              return {
-                value: 'error',
-                progress: 'done',
-              };
-            }
-
-            if (k.state === 'finished-reconcilation') {
-              return {
-                value: 'ready',
-                progress: 'init',
-              };
-            }
+    const items = checkList
+      ?.filter((cl) => !cl.hide)
+      .reduce(
+        (acc, curr) => {
+          const k = checks[curr.name];
+          if (acc.progress === 'done') {
+            acc.items.push({
+              ...curr,
+              result: 'idle',
+              message: '',
+            });
+            return acc;
           }
 
+          const res = ((): {
+            value: OverallStates;
+            progress: string;
+            message: string;
+          } => {
+            if (k) {
+              if (acc.value === 'idle' && k.state === 'yet-to-be-reconciled') {
+                return {
+                  value: 'idle',
+                  message: k.message,
+                  progress: 'done',
+                };
+              }
+
+              if (k.state === 'under-reconcilation') {
+                return {
+                  value: 'in-progress',
+
+                  message: k.message,
+                  progress: 'done',
+                };
+              }
+
+              if (k.state === 'errored-during-reconcilation') {
+                return {
+                  value: 'error',
+                  message: k.message,
+                  progress: 'done',
+                };
+              }
+
+              if (k.state === 'finished-reconcilation') {
+                return {
+                  value: 'ready',
+                  message: k.message,
+                  progress: 'init',
+                };
+              }
+            }
+
+            return acc;
+          })();
+
+          acc.items.push({
+            ...curr,
+            result: res?.value,
+            message: res.message,
+          });
+
+          acc.value = res.value;
+          acc.progress = res.progress;
+
           return acc;
-        })();
-
-        acc.items.push({
-          ...curr,
-          result: res?.value,
-        });
-
-        acc.value = res.value;
-        acc.progress = res.progress;
-
-        return acc;
-      },
-      {
-        value: 'idle' as OverallStates,
-        items: [] as ({ result: OverallStates } & ICheckList)[],
-        progress: 'init',
-      }
-    );
+        },
+        {
+          value: 'idle' as OverallStates,
+          items: [] as ({
+            result: OverallStates;
+            message: string;
+          } & ICheckList)[],
+          message: '',
+          progress: 'init',
+        }
+      );
 
     return items?.items;
   };
@@ -371,39 +393,65 @@ export const SyncStatusV2 = ({
   const k = parseOverallState(item);
   const ic = getProgressItems(item);
 
+  const isByok =
+    resourceType === 'byok' && item.syncStatus.state === 'UPDATED_AT_AGENT';
+
   return (
     <div>
-      <Tooltip.Root
-        align="center"
-        className="!max-w-[300px]"
+      <TooltipV2
+        className="max-w-[300px]"
+        place="right"
+        offset={5}
         content={
-          <div className="p-md flex flex-col gap-lg">
-            <div className="bodyMd-medium">
-              {state({ state: k, type: type || 'full' }).text}
-            </div>
-            <div className="flex flex-col gap-lg">
-              {ic?.map((cl) => (
-                <div
-                  key={cl.name}
-                  className="bodySm flex flex-row gap-xl items-center"
-                >
-                  <span>{parseStage(cl.result).icon}</span>
-                  <span>{cl.title}</span>
+          isByok ? (
+            <div className="p-md flex flex-col gap-lg">
+              <div className="bodyMd-medium">Ready</div>
+              <div className="flex flex-col gap-lg">
+                <div className="bodySm flex flex-row gap-xl items-center">
+                  <span>{parseStage('ready').icon}</span>
+                  <span>Updated at agent</span>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-md flex flex-col gap-lg">
+              <div className="bodyMd-medium">
+                {state({ state: k, type: type || 'full' }).text}
+              </div>
+              <div className="flex flex-col gap-lg">
+                {k === 'idle' && (
+                  <div className="bodySm">
+                    Please wait while we are operating on this resource
+                  </div>
+                )}
+
+                {ic?.map((cl) => (
+                  <div key={cl.name} className="flex flex-col">
+                    <div className="bodySm flex flex-row gap-xl items-center">
+                      <span>{parseStage(cl.result).icon}</span>
+                      <span>{cl.title}</span>
+                    </div>
+                    {cl.message && (
+                      <div className="bodySm max-w-full break-words overflow-x-auto hljs rounded-md my-md p-lg">
+                        {cl.message}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
         }
       >
-        <div className="cursor-pointer">
+        <div className="cursor-pointer w-fit">
           {
             state({
-              state: k,
+              state: isByok ? 'ready' : k,
               type: type || 'full',
             }).component
           }
         </div>
-      </Tooltip.Root>
+      </TooltipV2>
     </div>
   );
 };
