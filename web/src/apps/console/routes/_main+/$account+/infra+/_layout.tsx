@@ -13,10 +13,10 @@ const Infra = () => {
   return (
     <SidebarLayout
       navItems={[
-        { label: 'Clusters', value: 'clusters' },
+        { label: 'Attached Computes', value: 'clusters' },
         // { label: 'Helm Repos', value: 'helm-repos' },
         // { label: 'Bring your own Kubernetes', value: 'byok-cluster' },
-        { label: 'Devices', value: 'vpn-devices' },
+        { label: 'Wireguard Devices', value: 'vpn-devices' },
       ]}
       parentPath="/infra"
     >

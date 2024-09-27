@@ -1,20 +1,20 @@
-import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
+import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
-import { getPagination, getSearch } from '~/console/server/utils/common';
-import logger from '~/root/lib/client/helpers/log';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { IRemixCtx } from '~/root/lib/types/common';
 import { parseNodes } from '~/console/server/r-utils/common';
-import { useState } from 'react';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import fake from '~/root/fake-data-generator/fake';
-import Tools from './tools';
-import HandleByokCluster from './handle-byok-cluster';
+import logger from '~/root/lib/client/helpers/log';
+import { IRemixCtx } from '~/root/lib/types/common';
 import ByokClusterResource from './byok-cluster-resource';
+import HandleByokCluster from './handle-byok-cluster';
+import Tools from './tools';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -74,11 +74,12 @@ const ByocClusters = () => {
               }}
               empty={{
                 is: byocClusterData.length === 0,
-                title: 'This is where you’ll manage your kuberenetes cluster.',
+                title:
+                  'This is where you’ll attach your cluster or local devices.',
                 content: (
                   <p>
                     You can create a new kubernetes cluster and manage the
-                    listed kubernetes clusters.
+                    listed kubernetes clusters or attach local devices.
                   </p>
                 ),
                 action: {
@@ -91,9 +92,9 @@ const ByocClusters = () => {
                 },
               }}
               tools={<Tools />}
-              // pagination={{
-              //   pageInfo: byokClusterData.pageInfo,
-              // }}
+            // pagination={{
+            //   pageInfo: byokClusterData.pageInfo,
+            // }}
             >
               <ByokClusterResource items={byocClusterData} />
             </Wrapper>

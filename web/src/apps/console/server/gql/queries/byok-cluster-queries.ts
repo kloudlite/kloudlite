@@ -33,7 +33,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteByokClusterMutation) =>
         data.infra_deleteBYOKCluster,
-      vars(_: ConsoleDeleteByokClusterMutationVariables) {},
+      vars(_: ConsoleDeleteByokClusterMutationVariables) { },
     }
   ),
   createBYOKCluster: executor(
@@ -47,7 +47,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateByokClusterMutation) =>
         data.infra_createBYOKCluster,
-      vars(_: ConsoleCreateByokClusterMutationVariables) {},
+      vars(_: ConsoleCreateByokClusterMutationVariables) { },
     }
   ),
   updateByokCluster: executor(
@@ -67,7 +67,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateByokClusterMutation) =>
         data.infra_updateBYOKCluster,
-      vars(_: ConsoleUpdateByokClusterMutationVariables) {},
+      vars(_: ConsoleUpdateByokClusterMutationVariables) { },
     }
   ),
   getBYOKClusterInstructions: executor(
@@ -88,7 +88,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetByokClusterInstructionsQuery) =>
         data.infrat_getBYOKClusterSetupInstructions,
-      vars(_: ConsoleGetByokClusterInstructionsQueryVariables) {},
+      vars(_: ConsoleGetByokClusterInstructionsQueryVariables) { },
     }
   ),
   getByokCluster: executor(
@@ -96,6 +96,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
       query Infra_getBYOKCluster($name: String!) {
         infra_getBYOKCluster(name: $name) {
           accountName
+          ownedBy
           createdBy {
             userEmail
             userId
@@ -137,7 +138,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetByokClusterQuery) =>
         data.infra_getBYOKCluster,
-      vars(_: ConsoleGetByokClusterQueryVariables) {},
+      vars(_: ConsoleGetByokClusterQueryVariables) { },
     }
   ),
   listByokClusters: executor(
@@ -151,6 +152,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
             cursor
             node {
               accountName
+              ownedBy
               clusterSvcCIDR
               lastOnlineAt
               createdBy {
@@ -203,7 +205,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListByokClustersQuery) => {
         return data.infra_listBYOKClusters;
       },
-      vars(_: ConsoleListByokClustersQueryVariables) {},
+      vars(_: ConsoleListByokClustersQueryVariables) { },
     }
   ),
 });

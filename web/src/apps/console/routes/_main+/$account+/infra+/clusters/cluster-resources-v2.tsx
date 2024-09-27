@@ -221,7 +221,7 @@ const GetByokClusterMessage = ({
     case timeDifference <= 2:
       return (
         <div className="flex flex-row gap-sm bodyMd-medium text-text-strong pulsable">
-          <span>Attached Cluster</span>
+          <span>Attached Compute</span>
         </div>
       );
     default:
@@ -473,19 +473,22 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                 ),
               },
               provider: {
-                render: () =>
-                  i.type === 'normal' ? (
-                    <span className="bodyMd-medium text-text-strong pulsable">
-                      <span className="pr-lg">Managed by kloudlite on</span>{' '}
-                      {provider}
-                    </span>
-                  ) : (
+                render: () => {
+                  if (i.type === 'byok' && i.ownedBy !== null) {
+                    return (
+                      <div className="flex flex-row gap-sm bodyMd-medium text-text-strong pulsable">
+                        <span>Local Device</span>
+                      </div>
+                    );
+                  }
+                  return (
                     <GetByokClusterMessage
                       // lastOnlineAt={i.lastOnlineAt}
                       lastOnlineAt={clusters[id]?.lastOnlineAt}
                       item={i}
                     />
-                  ),
+                  );
+                },
               },
               status: {
                 render: () => (

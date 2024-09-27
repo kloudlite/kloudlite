@@ -1,19 +1,19 @@
-import { Globe, Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { parseNodes } from '~/console/server/r-utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { Globe, Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { parseNodes } from '~/console/server/r-utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import fake from '~/root/fake-data-generator/fake';
-import { useState } from 'react';
+import { IRemixCtx } from '~/root/lib/types/common';
+import HandleGlobalVpnDevice from './handle-vpn-device';
 import Tools from './tools';
 import VPNResourcesV2 from './vpn-resources-v2';
-import HandleGlobalVpnDevice from './handle-vpn-device';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -99,7 +99,7 @@ const Devices = () => {
           return (
             <Wrapper
               secondaryHeader={{
-                title: 'Devices',
+                title: 'Wireguard Devices',
                 action: vpnDevices.length > 0 && (
                   <Button
                     content="Create device"
@@ -108,7 +108,7 @@ const Devices = () => {
                     onClick={() => {
                       setVisible(true);
                     }}
-                    // LinkComponent={Link}
+                  // LinkComponent={Link}
                   />
                 ),
               }}

@@ -4,14 +4,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { WebinarUI } from './orgs/webinar-ui';
 
-
-export default async function Home() {
-
+async function getUserDetails() {
   const cookie = cookies().get("hotspot-session")
-  const callbackUrl = process.env.CALLBACK_URL;
-  const redirectUrl = `${process.env.REDIRECT_URL}?callback=${callbackUrl}`;
-  const token = btoa(`${process.env.DYTE_ORG_ID}:${process.env.DYTE_API_KEY}`);
-
 
   try {
     const res = await axios({
@@ -27,7 +21,22 @@ export default async function Home() {
         cookie: 'hotspot-session=' + cookie?.value + ';',
       },
     });
+    if (!res.status) {
+      console.log("failed to get user details");
+    }
+    return res.data.data;
 
+  } catch (error) {
+    console.log("error", error);
+    return null;
+  }
+
+}
+
+async function getMeetingDetails() {
+  const token = btoa(`${process.env.DYTE_ORG_ID}:${process.env.DYTE_API_KEY}`);
+
+  try {
     const {
       data: { success, data },
     } = await axios.get(
@@ -38,20 +47,32 @@ export default async function Home() {
         },
       },
     );
-    if (!success) {
-      throw new Error('Failed to get meeting details');
-    }
 
-    const userDetails = res.data.data;
-    if (userDetails) {
-      return (
-        <main className="flex flex-col h-full">
-          <WebinarUI userDetails={userDetails} meetingStatus={data.status} />
-        </main>
-      );
+    if (!success) {
+      console.log("failed to get meeting details");
     }
-    redirect(redirectUrl);
-  } catch (e) {
-    redirect(redirectUrl);
+    return data;
+  } catch (error) {
+    console.log("error", error);
+    return null;
   }
+}
+
+
+export default async function Home() {
+  const callbackUrl = process.env.CALLBACK_URL;
+  const redirectUrl = `${process.env.REDIRECT_URL}?callback=${callbackUrl}`;
+
+  const userDetails = await getUserDetails();
+  const meetingDetails = await getMeetingDetails();
+
+  if (userDetails) {
+    return (
+      <main className="flex flex-col h-full">
+        <WebinarUI userDetails={userDetails} meetingStatus={meetingDetails.status} />
+      </main>
+    );
+  }
+  redirect(redirectUrl);
+
 }
