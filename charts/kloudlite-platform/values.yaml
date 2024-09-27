@@ -317,6 +317,8 @@ apps:
       repository: ghcr.io/kloudlite/kloudlite/api/infra
       tag: ""
 
+    edgeGatewayServiceType: "LoadBalancer"
+
     # -- image for gateway kube reverse proxy
     imageGatewayKubeProxy:
       repository: ghcr.io/kloudlite/kloudlite/api/cmd/gateway-kube-proxy
