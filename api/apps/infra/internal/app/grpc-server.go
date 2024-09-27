@@ -70,6 +70,34 @@ func (g *grpcServer) GetClusterKubeconfig(ctx context.Context, in *infra.GetClus
 }
 
 // GetCluster implements infra.InfraServer.
+func (g *grpcServer) GetByokCluster(ctx context.Context, in *infra.GetClusterIn) (*infra.GetClusterOut, error) {
+	infraCtx := domain.InfraContext{
+		Context:     ctx,
+		UserId:      repos.ID(in.UserId),
+		UserEmail:   in.UserEmail,
+		UserName:    in.UserName,
+		AccountName: in.AccountName,
+	}
+	c, err := g.d.GetBYOKCluster(infraCtx, in.ClusterName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if c == nil {
+		return nil, errors.Newf("cluster %s not found", in.ClusterName)
+	}
+
+	return &infra.GetClusterOut{
+		OwnedBy: func() string {
+			if c.OwnedBy != nil {
+				return *c.OwnedBy
+			}
+			return ""
+		}(),
+	}, nil
+}
+
+// GetCluster implements infra.InfraServer.
 func (g *grpcServer) GetCluster(ctx context.Context, in *infra.GetClusterIn) (*infra.GetClusterOut, error) {
 	infraCtx := domain.InfraContext{
 		Context:     ctx,
@@ -100,6 +128,12 @@ func (g *grpcServer) GetCluster(ctx context.Context, in *infra.GetClusterIn) (*i
 		IACJobNamespace: func() string {
 			if c.Spec.Output != nil {
 				return c.Spec.Output.JobNamespace
+			}
+			return ""
+		}(),
+		OwnedBy: func() string {
+			if c.OwnedBy != nil {
+				return *c.OwnedBy
 			}
 			return ""
 		}(),

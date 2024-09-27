@@ -79,7 +79,7 @@ func (d *domain) GetRegistryImageURL(ctx ConsoleContext) (*entities.RegistryImag
 	}, nil
 }
 
-func (d *domain) CreateRegistryImage(ctx context.Context, accountName string, image string, meta map[string]any) (*entities.RegistryImage, error) {
+func (d *domain) UpsertRegistryImage(ctx context.Context, accountName string, image string, meta map[string]any) (*entities.RegistryImage, error) {
 	imageName, imageTag := getImageNameTag(image)
 
 	createdImage, err := d.registryImageRepo.Upsert(ctx, repos.Filter{
