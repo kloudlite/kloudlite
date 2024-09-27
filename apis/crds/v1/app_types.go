@@ -254,6 +254,7 @@ type Intercept struct {
 
 	// +kubebuilder:validation:MinLength=1
 	ToDevice string `json:"toDevice"`
+	ToIPAddr string `json:"toIPAddr,omitempty"`
 
 	DeviceHostSuffix *string `json:"deviceHostSuffix,omitempty" graphql:"ignore"`
 
