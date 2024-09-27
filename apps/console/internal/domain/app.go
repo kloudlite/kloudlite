@@ -371,3 +371,48 @@ func (d *domain) ResyncApp(ctx ResourceContext, name string) error {
 	}
 	return d.resyncK8sResource(ctx, a.EnvironmentName, a.SyncStatus.Action, &a.App, a.RecordVersion)
 }
+
+func (d *domain) listAppsByImage(ctx ConsoleContext, image string) ([]*entities.App, error) {
+	apps, err := d.appRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			fields.AccountName: ctx.AccountName,
+			fmt.Sprintf("%s.image", fc.AppSpecContainers):           image,
+			fmt.Sprintf("%s.imagePullPolicy", fc.AppSpecContainers): "Always",
+		},
+		Sort: nil,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return apps, nil
+}
+
+func (d *domain) RolloutAppsByImage(ctx ConsoleContext, imageName string) error {
+
+	iName, iTag := getImageNameTag(imageName)
+
+	apps, err := d.listAppsByImage(ctx, fmt.Sprintf("%s:%s", iName, iTag))
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	// for the latest
+	apps2, err := d.listAppsByImage(ctx, iName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	for _, app := range apps {
+		if err := d.resyncK8sResource(ctx, app.EnvironmentName, app.SyncStatus.Action, &app.App, app.RecordVersion); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	for _, app := range apps2 {
+		if err := d.resyncK8sResource(ctx, app.EnvironmentName, app.SyncStatus.Action, &app.App, app.RecordVersion); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	return nil
+}

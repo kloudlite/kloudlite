@@ -25,6 +25,11 @@ type Github__com___kloudlite___api___apps___infra___internal___entities__Cluster
   publicEndpoint: String
 }
 
+type Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr @shareable {
+  accountName: String!
+  clusterName: String!
+}
+
 type Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials @shareable {
   serviceAccountJSON: String!
 }
@@ -453,6 +458,11 @@ type K8s__io___api___core___v1__LocalVolumeSource @shareable {
   path: String!
 }
 
+type K8s__io___api___core___v1__ModifyVolumeStatus @shareable {
+  status: K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus!
+  targetVolumeAttributesClassName: String
+}
+
 type K8s__io___api___core___v1__NFSVolumeSource @shareable {
   path: String!
   readOnly: Boolean
@@ -519,9 +529,10 @@ type K8s__io___api___core___v1__PersistentVolumeClaimSpec @shareable {
   accessModes: [String!]
   dataSource: K8s__io___api___core___v1__TypedLocalObjectReference
   dataSourceRef: K8s__io___api___core___v1__TypedObjectReference
-  resources: K8s__io___api___core___v1__ResourceRequirements
+  resources: K8s__io___api___core___v1__VolumeResourceRequirements
   selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
   storageClassName: String
+  volumeAttributesClassName: String
   volumeMode: String
   volumeName: String
 }
@@ -532,6 +543,8 @@ type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
   allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
+  currentVolumeAttributesClassName: String
+  modifyVolumeStatus: K8s__io___api___core___v1__ModifyVolumeStatus
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
@@ -564,6 +577,7 @@ type K8s__io___api___core___v1__PersistentVolumeSpec @shareable {
   scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
   storageClassName: String
   storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  volumeAttributesClassName: String
   volumeMode: String
   vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
 }
@@ -587,6 +601,8 @@ type K8s__io___api___core___v1__PodAffinity @shareable {
 
 type K8s__io___api___core___v1__PodAffinityTerm @shareable {
   labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  matchLabelKeys: [String!]
+  mismatchLabelKeys: [String!]
   namespaces: [String!]
   namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
   topologyKey: String!
@@ -626,16 +642,6 @@ type K8s__io___api___core___v1__RBDPersistentVolumeSource @shareable {
   readOnly: Boolean
   secretRef: K8s__io___api___core___v1__SecretReference
   user: String
-}
-
-type K8s__io___api___core___v1__ResourceClaim @shareable {
-  name: String!
-}
-
-type K8s__io___api___core___v1__ResourceRequirements @shareable {
-  claims: [K8s__io___api___core___v1__ResourceClaim!]
-  limits: Map
-  requests: Map
 }
 
 type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource @shareable {
@@ -694,6 +700,11 @@ type K8s__io___api___core___v1__TypedObjectReference @shareable {
 
 type K8s__io___api___core___v1__VolumeNodeAffinity @shareable {
   required: K8s__io___api___core___v1__NodeSelector
+}
+
+type K8s__io___api___core___v1__VolumeResourceRequirements @shareable {
+  limits: Map
+  requests: Map
 }
 
 type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource @shareable {
@@ -1013,6 +1024,11 @@ input K8s__io___api___core___v1__LocalVolumeSourceIn {
   path: String!
 }
 
+input K8s__io___api___core___v1__ModifyVolumeStatusIn {
+  status: K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus!
+  targetVolumeAttributesClassName: String
+}
+
 input K8s__io___api___core___v1__NFSVolumeSourceIn {
   path: String!
   readOnly: Boolean
@@ -1079,9 +1095,10 @@ input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
   accessModes: [String!]
   dataSource: K8s__io___api___core___v1__TypedLocalObjectReferenceIn
   dataSourceRef: K8s__io___api___core___v1__TypedObjectReferenceIn
-  resources: K8s__io___api___core___v1__ResourceRequirementsIn
+  resources: K8s__io___api___core___v1__VolumeResourceRequirementsIn
   selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
   storageClassName: String
+  volumeAttributesClassName: String
   volumeMode: String
   volumeName: String
 }
@@ -1092,6 +1109,8 @@ input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
+  currentVolumeAttributesClassName: String
+  modifyVolumeStatus: K8s__io___api___core___v1__ModifyVolumeStatusIn
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
@@ -1124,6 +1143,7 @@ input K8s__io___api___core___v1__PersistentVolumeSpecIn {
   scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
   storageClassName: String
   storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  volumeAttributesClassName: String
   volumeMode: String
   vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
 }
@@ -1147,6 +1167,8 @@ input K8s__io___api___core___v1__PodAffinityIn {
 
 input K8s__io___api___core___v1__PodAffinityTermIn {
   labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  matchLabelKeys: [String!]
+  mismatchLabelKeys: [String!]
   namespaces: [String!]
   namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
   topologyKey: String!
@@ -1186,16 +1208,6 @@ input K8s__io___api___core___v1__RBDPersistentVolumeSourceIn {
   readOnly: Boolean
   secretRef: K8s__io___api___core___v1__SecretReferenceIn
   user: String
-}
-
-input K8s__io___api___core___v1__ResourceClaimIn {
-  name: String!
-}
-
-input K8s__io___api___core___v1__ResourceRequirementsIn {
-  claims: [K8s__io___api___core___v1__ResourceClaimIn!]
-  limits: Map
-  requests: Map
 }
 
 input K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn {
@@ -1254,6 +1266,11 @@ input K8s__io___api___core___v1__TypedObjectReferenceIn {
 
 input K8s__io___api___core___v1__VolumeNodeAffinityIn {
   required: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+input K8s__io___api___core___v1__VolumeResourceRequirementsIn {
+  limits: Map
+  requests: Map
 }
 
 input K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn {
@@ -1404,7 +1421,15 @@ enum K8s__io___api___core___v1__NodeSelectorOperator {
 
 enum K8s__io___api___core___v1__PersistentVolumeClaimConditionType {
   FileSystemResizePending
+  ModifyingVolume
+  ModifyVolumeError
   Resizing
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus {
+  Infeasible
+  InProgress
+  Pending
 }
 
 enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {

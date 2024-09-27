@@ -25,6 +25,8 @@ type Cluster struct {
 	SyncStatus  t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 
 	LastOnlineAt *time.Time `json:"lastOnlineAt,omitempty" graphql:"noinput"`
+
+	OwnedBy *string `json:"ownedBy,omitempty", graphql:"noinput"`
 }
 
 func (c *Cluster) GetDisplayName() string {
@@ -56,5 +58,11 @@ var ClusterIndices = []repos.IndexField{
 			{Key: fc.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: fc.ClusterOwnedBy, Value: repos.IndexAsc},
+		},
+		Unique: false,
 	},
 }

@@ -6,6 +6,7 @@ option go_package = "./infra";
 
 service Infra {
   rpc GetCluster(GetClusterIn) returns (GetClusterOut);
+  rpc GetByokCluster(GetClusterIn) returns (GetClusterOut);
   rpc GetNodepool(GetNodepoolIn) returns (GetNodepoolOut);
   rpc ClusterExists(ClusterExistsIn) returns (ClusterExistsOut);
   rpc GetClusterKubeconfig(GetClusterIn) returns (GetClusterKubeconfigOut);
@@ -29,6 +30,7 @@ message GetClusterOut {
 
   string IACJobName = 3;
   string IACJobNamespace = 4;
+  string OwnedBy = 5;
 }
 
 message GetNodepoolIn {
