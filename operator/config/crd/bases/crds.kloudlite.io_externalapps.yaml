@@ -69,9 +69,12 @@ spec:
                   toDevice:
                     minLength: 1
                     type: string
+                  toIPAddr:
+                    type: string
                 required:
                 - enabled
                 - toDevice
+                - toIPAddr
                 type: object
               record:
                 type: string
