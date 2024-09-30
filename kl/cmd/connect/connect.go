@@ -19,10 +19,10 @@ var Command = &cobra.Command{
 }
 
 func startWg() error {
-	k3s, err := k3s.NewClient()
+	k3sClient, err := k3s.NewClient()
 	if err != nil {
 		return err
 	}
 
-	return k3s.RestartWgProxyContainer()
+	return k3sClient.RestartWgProxyContainer()
 }
