@@ -12,9 +12,15 @@ type InviteCode struct {
 	InviteCode string   `json:"inviteCode"`
 }
 
+type Mutation struct {
+}
+
 type OAuthProviderStatus struct {
 	Provider string `json:"provider"`
 	Enabled  bool   `json:"enabled"`
+}
+
+type Query struct {
 }
 
 type RemoteLogin struct {
