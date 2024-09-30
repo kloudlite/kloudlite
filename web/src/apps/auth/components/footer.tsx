@@ -36,15 +36,15 @@ const menu = [
   },
   {
     title: 'Changelog',
-    to: '/',
+    to: 'https://github.com/kloudlite/kloudlite/releases',
   },
   {
     title: 'Pricing',
-    to: '/',
+    to: `${mainUrl}/pricing`,
   },
   {
     title: 'Legal',
-    to: '/',
+    to: `${mainUrl}/legal/privacy-policy`,
   },
 ];
 
@@ -71,7 +71,7 @@ const Footer = () => {
       <Wrapper className="py-6xl flex flex-col gap-4xl">
         <div className="flex flex-row items-center justify-between">
           <div className="flex flex-col md:flex-row md:items-center gap-lg">
-            <a href="/" aria-label="kloudlite">
+            <a href={mainUrl} aria-label="kloudlite">
               <BrandLogo size={24} detailed />
             </a>
             <span className="text-text-soft bodyMd">
