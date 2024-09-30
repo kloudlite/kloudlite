@@ -34,9 +34,6 @@ func init() {
 	rootCmd.AddCommand(get.Cmd)
 	rootCmd.AddCommand(auth.Cmd)
 	rootCmd.AddCommand(box.BoxCmd)
-	rootCmd.AddCommand(auth.Cmd)
-	rootCmd.AddCommand(box.BoxCmd)
-	rootCmd.AddCommand(use.Cmd)
 
 	rootCmd.AddCommand(use.Cmd)
 	rootCmd.AddCommand(clone.Cmd)
