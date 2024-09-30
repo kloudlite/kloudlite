@@ -45,7 +45,12 @@ type Env struct {
 	SessionKVBucket            string `env:"SESSION_KV_BUCKET" required:"true"`
 	VerifyTokenKVBucket        string `env:"VERIFY_TOKEN_KV_BUCKET" required:"true"`
 	ResetPasswordTokenKVBucket string `env:"RESET_PASSWORD_TOKEN_KV_BUCKET" required:"true"`
-	IsDev                      bool
+
+	GoogleCloudProjectId         string `env:"GOOGLE_CLOUD_PROJECT_ID" required:"true"`
+	RecaptchaSiteKey             string `env:"RECAPTCHA_SITE_KEY" required:"true"`
+	GoogleApplicationCredentials string `env:"GOOGLE_APPLICATION_CREDENTIALS" required:"true"`
+
+	IsDev bool
 }
 
 func (ev *Env) validateEnv() error {

@@ -1,6 +1,8 @@
 package domain
 
 import (
+	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
+	recaptchapb "cloud.google.com/go/recaptchaenterprise/v2/apiv1/recaptchaenterprisepb"
 	"context"
 	"crypto/md5"
 	b64 "encoding/base64"
@@ -56,6 +58,7 @@ type domainI struct {
 	gitlab          Gitlab
 	google          Google
 	remoteLoginRepo repos.DbRepo[*entities.RemoteLogin]
+	recaptchaClient *recaptchaenterprise.Client
 
 	envVars *env.Env
 }
@@ -177,7 +180,38 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 	return session, nil
 }
 
-func (d *domainI) SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error) {
+func (d *domainI) verifyCaptcha(ctx context.Context, token string) (bool, error) {
+	req := &recaptchapb.CreateAssessmentRequest{
+		Parent: fmt.Sprintf("projects/%s", d.envVars.GoogleCloudProjectId), // Project path in the format 'projects/{project-id}'
+		Assessment: &recaptchapb.Assessment{
+			Event: &recaptchapb.Event{
+				Token:   token,
+				SiteKey: d.envVars.RecaptchaSiteKey,
+			},
+		},
+	}
+
+	resp, err := d.recaptchaClient.CreateAssessment(ctx, req)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if !resp.TokenProperties.Valid {
+		return false, errors.Newf("CAPTCHA token is invalid: %s", resp.TokenProperties.InvalidReason)
+	}
+	return true, nil
+}
+
+func (d *domainI) SignUp(ctx context.Context, name string, email string, password string, captchaToken string) (*common.AuthSession, error) {
+	isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
+	if err != nil {
+		return nil, errors.Newf("failed to verify CAPTCHA: %v", err)
+	}
+
+	if !isValidCaptcha {
+		return nil, errors.New("CAPTCHA verification failed")
+	}
+
 	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		if matched != nil {
@@ -307,7 +341,16 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	return true, nil
 }
 
-func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool, error) {
+func (d *domainI) RequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error) {
+	isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
+	if err != nil {
+		return false, errors.Newf("failed to verify CAPTCHA: %v", err)
+	}
+
+	if !isValidCaptcha {
+		return false, errors.New("CAPTCHA verification failed")
+	}
+
 	resetToken := generateId("reset")
 	one, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
@@ -669,6 +712,7 @@ func fxDomain(
 	google Google,
 	logger logging.Logger,
 	commsClient comms.CommsClient,
+	recaptchaClient *recaptchaenterprise.Client,
 	ev *env.Env,
 ) Domain {
 	return &domainI{
@@ -683,6 +727,7 @@ func fxDomain(
 		gitlab:          gitlab,
 		google:          google,
 		logger:          logger,
+		recaptchaClient: recaptchaClient,
 		envVars:         ev,
 	}
 }
