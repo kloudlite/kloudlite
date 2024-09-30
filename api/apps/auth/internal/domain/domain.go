@@ -14,7 +14,7 @@ type Domain interface {
 	CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error)
 
 	Login(ctx context.Context, email string, password string) (*common.AuthSession, error)
-	SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error)
+	SignUp(ctx context.Context, name string, email string, password string, captchaToken string) (*common.AuthSession, error)
 	EnsureUserByEmail(ctx context.Context, email string) (*entities.User, error)
 	GetUserById(ctx context.Context, id repos.ID) (*entities.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*entities.User, error)
@@ -22,7 +22,7 @@ type Domain interface {
 	ClearUserMetadata(ctx context.Context, id repos.ID) (*entities.User, error)
 	VerifyEmail(ctx context.Context, token string) (*common.AuthSession, error)
 	ResetPassword(ctx context.Context, token string, password string) (bool, error)
-	RequestResetPassword(ctx context.Context, email string) (bool, error)
+	RequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error)
 	ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error)
 	ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error)
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)
