@@ -352,6 +352,15 @@ kubectl apply -f /tmp/service-device-router.yml
 	return c.runScriptInContainer(script.String())
 }
 
+func (c *client) RestartWgProxyContainer() error {
+	defer spinner.Client.UpdateMessage("restarting kloudlite-gateway")()
+	script := `
+kubectl delete pod $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -n kl-gateway
+kubectl delete pod $(kubectl get pods -n wg-proxy | grep -i default- | awk '{print $1}') -n wg-proxy
+`
+	return c.runScriptInContainer(script)
+}
+
 func (c *client) runScriptInContainer(script string) error {
 	existingContainers, err := c.c.ContainerList(context.Background(), container.ListOptions{
 		All: true,
@@ -365,7 +374,7 @@ func (c *client) runScriptInContainer(script string) error {
 	}
 
 	if len(existingContainers) == 0 {
-		return fmt.Errorf("no containers found")
+		return fmt.Errorf("no k3s container found")
 	}
 
 	execID, err := c.c.ContainerExecCreate(context.Background(), existingContainers[0].ID, container.ExecOptions{

@@ -54,6 +54,10 @@ var configCmd = &cobra.Command{
 				fn.PrintError(err)
 				return
 			}
+			if len(configs) == 0 {
+fn.PrintError(fn.Error("no configs found"))
+				return
+			}
 			selectedConfig, err := fzf.FindOne(configs, func(config apiclient.Config) string {
 				return config.DisplayName
 			}, fzf.WithPrompt("select config > "))

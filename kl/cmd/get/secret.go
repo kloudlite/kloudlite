@@ -54,6 +54,10 @@ var secretCmd = &cobra.Command{
 				fn.PrintError(err)
 				return
 			}
+			if len(secrets) == 0 {
+				fn.PrintError(fn.Error("no secrets created yet on server"))
+				return
+			}
 			selectedSecret, err := fzf.FindOne(secrets, func(secret apiclient.Secret) string {
 				return secret.Metadata.Name
 			}, fzf.WithPrompt("select secret > "))
