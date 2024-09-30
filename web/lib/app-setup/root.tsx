@@ -34,7 +34,6 @@ import Page404 from '~/components/organisms/page-404';
 import { getClientEnv, getServerEnv } from '~/root/lib/configs/base-url.cjs';
 import { useDataFromMatches } from '../client/hooks/use-custom-matches';
 import { TooltipContainer } from '~/components/atoms/tooltipV2';
-import { RECAPTCHA_SITE_KEY } from '~/auth/consts';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesUrl },
