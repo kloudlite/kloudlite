@@ -2,7 +2,7 @@ declare global {
   interface Window {
     grecaptcha: {
       enterprise: {
-        ready: (callback: Promise<void>) => void;
+        ready: (callback: () => Promise<void>) => void;
         execute: (
           sitekey: string,
           action: {
@@ -14,7 +14,7 @@ declare global {
   }
 }
 
-export const onReady = (callback: Promise<void>) => {
+export const onReady = (callback: () => Promise<void>) => {
   if (
     !window.grecaptcha ||
     !window.grecaptcha.enterprise ||

@@ -20,6 +20,8 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
+import grecaptcha from '~/root/lib/client/helpers/g-recaptcha';
+import { RECAPTCHA_SITE_KEY } from '~/auth/consts';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -41,14 +43,19 @@ const LoginWithEmail = () => {
     }),
     onSubmit: async (v) => {
       try {
+        const token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, {
+          action: 'login',
+        });
         const { errors: _errors } = await api.login({
           email: v.email,
           password: v.password,
+          //@ts-ignore
+          token,
         });
         if (_errors) {
           throw _errors[0];
         }
-        toast.success('logged in success fully');
+        toast.success('Logged in successfully');
 
         const callback = searchParams.get('callback');
         if (callback) {
