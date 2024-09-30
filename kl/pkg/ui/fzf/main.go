@@ -1,6 +1,7 @@
 package fzf
 
 import (
+	//fzf "github.com/junegunn/fzf/src"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/koki-develop/go-fzf"
 	mfzf "github.com/koki-develop/go-fzf"

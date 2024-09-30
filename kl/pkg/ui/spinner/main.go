@@ -136,11 +136,16 @@ func (s *sclient) UpdateMessage(msg string) func() {
 
 	return func() {
 		if s.isPopable() {
+
 			s2 := s.popMessage()
 			s.spinner.Suffix = fmt.Sprintf(" %s...", s2)
 
 			if !s.verbose {
 				s.spinner.Restart()
+			}
+
+			if len(s.message) == 0 {
+				s.stop()
 			}
 		} else {
 			s.stop()

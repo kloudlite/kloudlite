@@ -4,15 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/kloudlite/kl/cmd/use"
-	"github.com/kloudlite/kl/domain/fileclient"
-	"os"
-	"strings"
-
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
+	"os"
+	"strings"
 )
 
 var loginCmd = &cobra.Command{

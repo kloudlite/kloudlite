@@ -34,14 +34,14 @@ func searchPackages(cmd *cobra.Command, args []string) error {
 		return functions.Error("name is required")
 	}
 
-	stopSp := spinner.Client.UpdateMessage(fmt.Sprintf("searching for package %s", name))
-	defer stopSp()
+	defer spinner.Client.UpdateMessage(fmt.Sprintf("searching for package %s", name))()
 
 	sr, err := Search(cmd.Context(), name)
 	if err != nil {
 		return functions.NewE(err)
 	}
-	stopSp()
+
+	spinner.Client.Pause()
 
 	header := table.Row{table.HeaderText("#"), table.HeaderText("name"), table.HeaderText("versions")}
 	rows := make([]table.Row, 0)

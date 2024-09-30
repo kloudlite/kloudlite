@@ -2,13 +2,12 @@ package apiclient
 
 import (
 	"encoding/json"
-	"net/http"
-	"time"
-
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	nanoid "github.com/matoous/go-nanoid/v2"
+	"net/http"
+	"time"
 )
 
 func (apic *apiClient) GetCurrentUser() (*User, error) {
@@ -95,9 +94,9 @@ func (apic *apiClient) Login(loginId string) error {
 			return functions.Error("remote login failed")
 		}
 		if loginStatusResponse.RemoteLogin.Status == "pending" {
-			spinner.Client.UpdateMessage("waiting for login to complete")
+			f := spinner.Client.UpdateMessage("waiting for login to complete")
 			time.Sleep(time.Second * 2)
-			spinner.Client.Pause()
+			f()
 			continue
 		}
 	}

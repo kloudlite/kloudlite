@@ -21,6 +21,7 @@ var accountCmd = &cobra.Command{
 
 func UseAccount() error {
 	apic, err := apiclient.New()
+
 	if err != nil {
 		return fn.NewE(err)
 	}

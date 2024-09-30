@@ -4,20 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
-
-	"github.com/kloudlite/kl/constants"
 )
 
 func klFetch(method string, variables map[string]any, cookie *string, verbose ...bool) ([]byte, error) {
+	defer spinner.Client.UpdateMessage("loading please wait")()
+
 	url := constants.ServerURL
 
 	marshal, err := json.Marshal(map[string]any{
@@ -73,9 +74,9 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 		req.Header.Add("cookie", *cookie)
 	}
 
-	f := spinner.Client.UpdateMessage("loading please wait")
+	//f := spinner.Client.UpdateMessage("loading please wait")
 	res, err := client.Do(req)
-	f()
+	//f()
 	if err != nil || res.StatusCode != 200 {
 		if err != nil {
 			return nil, functions.NewE(err)
