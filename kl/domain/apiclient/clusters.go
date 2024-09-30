@@ -15,7 +15,7 @@ func (apic *apiClient) ListBYOKClusters(accountName string) ([]BYOKCluster, erro
 		return nil, fn.NewE(err)
 	}
 
-	respData, err := klFetch("cli_listByokClusters", map[string]any{
+	respData, err := klFetch("cli_listAccountClusters", map[string]any{
 		"pq": map[string]any{
 			"orderBy":       "updateTime",
 			"sortDirection": "ASC",

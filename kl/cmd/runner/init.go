@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
@@ -120,7 +121,10 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, accountName s
 		if selectedEnv, err := fzf.FindOne(
 			envs,
 			func(env apiclient.Env) string {
-				return env.Metadata.Name + " #" + env.Metadata.Name
+				if env.ClusterName == "" {
+					return fmt.Sprintf("%s (%s) template-env", env.DisplayName, env.Metadata.Name)
+				}
+				return fmt.Sprintf("%s (%s) compute-env", env.DisplayName, env.Metadata.Name)
 			},
 			fzf.WithPrompt("select environment > "),
 		); err != nil {

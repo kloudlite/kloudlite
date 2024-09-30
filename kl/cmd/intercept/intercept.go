@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/k3s"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -112,6 +113,14 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 	err = apic.InterceptApp(selectedApp.App, true, ports, currentEnv.Name, []fn.Option{
 		fn.MakeOption("appName", selectedApp.Name),
 	}...)
+
+	k3sClient, err := k3s.NewClient()
+	if err != nil {
+		return err
+	}
+	if err = k3sClient.StartAppInterceptService(ports); err != nil {
+		return err
+	}
 
 	if err != nil {
 		return err

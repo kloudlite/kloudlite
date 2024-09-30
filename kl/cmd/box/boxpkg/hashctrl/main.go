@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/flags"
 	"os"
 	"path"
 	"slices"
@@ -258,13 +257,18 @@ func generatePersistedEnv(apic apiclient.ApiClient, fc fileclient.FileClient, kf
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, ">")
-	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.khost.dev", e.Name, kf.AccountName)
-	ev["KL_DEV"] = "false"
-	if flags.IsDev() {
-		ev["KL_DEV"] = "true"
-		ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.AccountName)
+
+	extraData, err := fileclient.GetExtraData()
+	if err != nil {
+		return nil, fn.NewE(err)
 	}
+	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, ">")
+	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.%s", e.Name, kf.AccountName, extraData.DnsHostSuffix)
+	//ev["KL_DEV"] = "false"
+	//if flags.IsDev() {
+	//	ev["KL_DEV"] = "true"
+	//	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.AccountName)
+	//}
 
 	klConfhash, err := GenerateKLConfigHash(kf)
 	if err != nil {

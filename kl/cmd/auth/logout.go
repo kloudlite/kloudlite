@@ -53,9 +53,7 @@ func stopAllContainers(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	for _, c := range crlist {
-		if err := cli.ContainerStop(cmd.Context(), c.ID, container.StopOptions{
-			Signal: "SIGKILL",
-		}); err != nil {
+		if err := cli.ContainerStop(cmd.Context(), c.ID, container.StopOptions{}); err != nil {
 			return err
 		}
 		if err := cli.ContainerRemove(cmd.Context(), c.ID, container.RemoveOptions{

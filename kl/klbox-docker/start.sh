@@ -22,6 +22,10 @@ export KLCONFIG_PATH="$KLCONFIG_PATH"
 export PLATFORM_ARCH=$(uname -m)
 EOL
 
+sudo mkdir -p /etc/wireguard
+sudo cp /.cache/kl/kl-workspace-wg.conf /etc/wireguard/kl-workspace-wg.conf
+sudo wg-quick up kl-workspace-wg
+
 # sudo dnsmasq --server=/.local/$KL_DNS --server=1.1.1.1
 
 sudo chown kl /var/run/docker.sock

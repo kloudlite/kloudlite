@@ -7,10 +7,17 @@ type fclient struct {
 }
 
 type FileClient interface {
+	GetHostWgConfig() (string, error)
+	GetWGConfig() (*WGConfig, error)
+	SetWGConfig(config string) error
 	CurrentAccountName() (string, error)
 	Logout() error
 	GetVpnAccountConfig(account string) (*AccountVpnConfig, error)
 	SetVpnAccountConfig(account string, config *AccountVpnConfig) error
+	GetClusterConfig(account string) (*AccountClusterConfig, error)
+	SetClusterConfig(account string, accClusterConfig *AccountClusterConfig) error
+	GetDevice() (*DeviceContext, error)
+	SetDevice(device *DeviceContext) error
 
 	WriteKLFile(fileObj KLFileType) error
 	GetKlFile(filePath string) (*KLFileType, error)

@@ -3,7 +3,8 @@ package fileclient
 import (
 	"errors"
 	"fmt"
-	"net"
+	uuid "github.com/nu7hatch/gouuid"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"os"
 	"path"
 	"runtime"
@@ -18,10 +19,31 @@ import (
 )
 
 const (
-	SessionFileName   string = "kl-session.yaml"
-	ExtraDataFileName string = "kl-extra-data.yaml"
-	CompleteFileName  string = "kl-completion"
+	SessionFileName                  string = "kl-session.yaml"
+	ExtraDataFileName                string = "kl-extra-data.yaml"
+	CompleteFileName                 string = "kl-completion"
+	DeviceFileName                   string = "kl-device.yaml"
+	WGConfigFileName                 string = "kl-wg.yaml"
+	WorkspaceWireguardConfigFileName string = "kl-workspace-wg.conf"
+
+	KLWGProxyIp   = "198.18.0.1"
+	KLHostIp      = "198.18.0.2"
+	KLWorkspaceIp = "198.18.0.3"
+	KLWGAllowedIp = "100.64.0.0/10"
+	HostIp        = "172.18.0.2"
 )
+
+type Keys struct {
+	PrivateKey string `json:"privateKey"`
+	PublicKey  string `json:"publicKey"`
+}
+
+type WGConfig struct {
+	UUID      string `json:"uuid"`
+	Host      Keys   `json:"host"`
+	Workspace Keys   `json:"workspace"`
+	Proxy     Keys   `json:"wg-proxy"`
+}
 
 type Env struct {
 	Name    string `json:"name"`
@@ -37,13 +59,8 @@ type MainContext struct {
 }
 
 type DeviceContext struct {
-	DeviceName string `json:"deviceName"`
-
-	// PrivateKey []byte `json:"privateKey"`
-	DeviceIp  net.IP   `json:"deviceIp"`
-	DeviceDns []string `json:"deviceDns"`
-
-	SearchDomain string `json:"searchDomain"`
+	DisplayName string `json:"display_name"`
+	DeviceName  string `json:"device_name"`
 }
 
 type InfraContext struct {
@@ -59,8 +76,9 @@ type InfraContexts struct {
 }
 
 type ExtraData struct {
-	BaseUrl      string          `json:"baseUrl"`
-	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
+	BaseUrl       string          `json:"baseUrl"`
+	DnsHostSuffix string          `json:"dnsHostSuffix"`
+	SelectedEnvs  map[string]*Env `json:"selectedEnvs"`
 }
 
 func GetUserHomeDir() (string, error) {
@@ -186,6 +204,150 @@ func GetExtraData() (*ExtraData, error) {
 	return &extraData, nil
 }
 
+func (fc *fclient) SetDevice(device *DeviceContext) error {
+	file, err := yaml.Marshal(device)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	return writeOnUserScope(DeviceFileName, file)
+}
+
+func (fc *fclient) GetDevice() (*DeviceContext, error) {
+	file, err := ReadFile(DeviceFileName)
+	device := DeviceContext{}
+
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			b, err := yaml.Marshal(device)
+
+			if err != nil {
+				return nil, functions.NewE(err)
+			}
+
+			if err := writeOnUserScope(DeviceFileName, b); err != nil {
+				return nil, functions.NewE(err)
+			}
+		}
+
+		return &device, nil
+	}
+
+	if err = yaml.Unmarshal(file, &device); err != nil {
+		return nil, functions.NewE(err)
+	}
+
+	return &device, nil
+}
+
+func GenerateWireGuardKeys() (wgtypes.Key, wgtypes.Key, error) {
+	privateKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		return wgtypes.Key{}, wgtypes.Key{}, fmt.Errorf("failed to generate private key: %w", err)
+	}
+	publicKey := privateKey.PublicKey()
+
+	return privateKey, publicKey, nil
+}
+
+func (c *fclient) GetHostWgConfig() (string, error) {
+
+	config, err := c.GetWGConfig()
+	if err != nil {
+		return "", fn.NewE(err)
+	}
+
+	wgConfig := fmt.Sprintf(`[Interface]
+PrivateKey = %s
+Address = %s/24
+
+[Peer]
+PublicKey = %s
+AllowedIPs = %s/32, %s
+PersistentKeepalive = 25
+Endpoint = %s:51820
+`, config.Host.PrivateKey, KLHostIp, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp, HostIp)
+	return wgConfig, nil
+}
+
+func (fc *fclient) SetWGConfig(config string) error {
+
+	if err := writeOnUserScope("kl-host-wg.conf", []byte(config)); err != nil {
+		return fn.NewE(err)
+	}
+
+	return nil
+}
+
+func (fc *fclient) generateWGConfig(config *WGConfig) string {
+	return fmt.Sprintf(`[Interface]
+Address = %s/24
+PrivateKey = %s
+
+[Peer]
+PublicKey = %s
+AllowedIPs = %s/32, %s
+Endpoint = k3s-cluster.local:51820
+`, KLWorkspaceIp, config.Workspace.PrivateKey, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp)
+}
+
+func (fc *fclient) GetWGConfig() (*WGConfig, error) {
+	file, err := ReadFile(WGConfigFileName)
+	if err != nil {
+		u, err := uuid.NewV4()
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		wgProxyPrivateKey, wgProxyPublicKey, err := GenerateWireGuardKeys()
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		hostPrivateKey, hostPublicKey, err := GenerateWireGuardKeys()
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		workSpacePrivateKey, workSpacePublicKey, err := GenerateWireGuardKeys()
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		wgConfig := WGConfig{
+			UUID: u.String(),
+			Proxy: Keys{
+				PrivateKey: wgProxyPrivateKey.String(),
+				PublicKey:  wgProxyPublicKey.String(),
+			},
+			Host: Keys{
+				PrivateKey: hostPrivateKey.String(),
+				PublicKey:  hostPublicKey.String(),
+			},
+			Workspace: Keys{
+				PrivateKey: workSpacePrivateKey.String(),
+				PublicKey:  workSpacePublicKey.String(),
+			},
+		}
+		file, err := yaml.Marshal(wgConfig)
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		if err := writeOnUserScope(WGConfigFileName, file); err != nil {
+			return nil, fn.NewE(err)
+		}
+		config := fc.generateWGConfig(&wgConfig)
+		if err := writeOnUserScope(WorkspaceWireguardConfigFileName, []byte(config)); err != nil {
+			return nil, fn.NewE(err)
+		}
+		return &wgConfig, nil
+	}
+
+	wgConfig := WGConfig{}
+
+	if err = yaml.Unmarshal(file, &wgConfig); err != nil {
+		return nil, fn.NewE(err)
+	}
+
+	return &wgConfig, nil
+}
+
 func GetCookieString(options ...fn.Option) (string, error) {
 
 	accName := fn.GetOption(options, "accountName")
@@ -290,3 +452,37 @@ func ReadFile(name string) ([]byte, error) {
 
 	return file, nil
 }
+
+//func writeInTmpDir(name string, data []byte) error {
+//	dir := ""
+//	s := strings.Split(name, "/")
+//
+//	for i := range s {
+//		if i == len(s)-1 {
+//			continue
+//		}
+//		dir = path.Join(dir, s[i])
+//	}
+//	if _, er := os.Stat(dir); errors.Is(er, os.ErrNotExist) {
+//		er := os.MkdirAll(dir, os.ModePerm)
+//		if er != nil {
+//			return er
+//		}
+//	}
+//
+//	filePath := path.Join(dir, s[len(s)-1])
+//
+//	if err := os.WriteFile(filePath, data, 0644); err != nil {
+//		return functions.NewE(err)
+//	}
+//
+//	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+//		if err := fn.ExecCmd(
+//			fmt.Sprintf("chown %s %s", usr, filePath), nil, false,
+//		); err != nil {
+//			return functions.NewE(err)
+//		}
+//	}
+//
+//	return nil
+//}

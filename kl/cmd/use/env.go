@@ -119,7 +119,10 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.E
 	env, err := fzf.FindOne(
 		envs,
 		func(env apiclient.Env) string {
-			return fmt.Sprintf("%s (%s)", env.DisplayName, env.Metadata.Name)
+			if env.ClusterName == "" {
+				return fmt.Sprintf("%s (%s) template-env", env.DisplayName, env.Metadata.Name)
+			}
+			return fmt.Sprintf("%s (%s) compute-env", env.DisplayName, env.Metadata.Name)
 		},
 		fzf.WithPrompt("Select Environment > "),
 	)

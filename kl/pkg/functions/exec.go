@@ -30,7 +30,6 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	for k, v := range env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
-
 	cmd.Stderr = os.Stderr
 	// s.Start()
 	err = cmd.Run()

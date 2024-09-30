@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/kloudlite/kl/domain/fileclient"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -23,7 +24,7 @@ var errContainerNotStarted = fmt.Errorf("container not started")
 func (c *client) Start() error {
 	defer spinner.Client.UpdateMessage("initiating container please wait")()
 
-	if err := c.ensureKloudliteNetwork(); err != nil {
+	if err := c.k3s.EnsureKloudliteNetwork(); err != nil {
 		return fn.NewE(err)
 	}
 
@@ -58,6 +59,11 @@ func (c *client) Start() error {
 			return fn.NewE(err)
 		}
 	}
+
+	if err = c.k3s.CreateClustersAccounts(c.klfile.AccountName); err != nil {
+		return fn.NewE(err)
+	}
+
 	_, err = c.startContainer(boxHash.KLConfHash)
 	if err != nil {
 		return fn.NewE(err)
@@ -70,10 +76,10 @@ func (c *client) Start() error {
 		return fn.NewE(err)
 	}
 
-	err = c.StartWgContainer()
-	if err != nil {
-		return fn.NewE(err)
-	}
+	// err = c.StartWgContainer()
+	// if err != nil {
+	// 	return fn.NewE(err)
+	// }
 
 	if c.env.SSHPort == 0 {
 		existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
@@ -113,6 +119,32 @@ func (c *client) Start() error {
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(c.env.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
+	return nil
+}
+
+func (c *client) StartClusterContainer() error {
+	defer spinner.Client.UpdateMessage("starting k3s cluster")()
+	_, err := c.apic.GetClusterConfig(c.klfile.AccountName)
+	if err != nil {
+		return fn.NewE(err)
+	}
+	err = c.EnsureK3SCluster(c.klfile.AccountName)
+	if err != nil {
+		return fn.NewE(err)
+	}
+	config, err := c.fc.GetClusterConfig(c.klfile.AccountName)
+	if config.Installed {
+		return nil
+	}
+	err = c.ConnectClusterToAccount(config)
+	if err != nil {
+		return fn.NewE(err)
+	}
+	config.Installed = true
+	err = c.fc.SetClusterConfig(c.klfile.AccountName, config)
+	if err != nil {
+		return fn.NewE(err)
+	}
 	return nil
 }
 

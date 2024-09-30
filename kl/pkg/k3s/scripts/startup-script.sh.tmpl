@@ -1,0 +1,118 @@
+echo "checking whether k3s server is accepting connections"
+while true; do
+  lines=$(kubectl get nodes | wc -l)
+  if [ "$lines" -lt 2 ]; then
+    echo "k3s server is not accepting connections yet, retrying in 1s ..."
+    sleep 1
+    continue
+  fi
+  echo "successful, k3s server is now accepting connections"
+  break
+done
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wg-proxy
+  labels:
+    kloudlite.io/gateway.enabled: "false"
+EOF
+
+cat > /tmp/deployment.yaml <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: default
+  namespace: wg-proxy
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: wg-proxy
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: wg-proxy
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: wg-proxy
+          image: ghcr.io/kloudlite/kl/box/wireguard:v1.0.0-nightly
+          imagePullPolicy: Always
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          env:
+            - name: PRIVATE_KEY
+              value: {{.WGConfig.Proxy.PrivateKey}}
+            - name: WORKSPACE_PUBLIC_KEY
+              value: {{.WGConfig.Workspace.PublicKey}}
+            - name: HOST_PUBLIC_KEY
+              value: {{.WGConfig.Host.PublicKey}}
+EOF
+
+kubectl apply -f /tmp/deployment.yaml
+
+cat > /tmp/service.yml <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: wg-proxy
+  namespace: wg-proxy
+spec:
+  type: LoadBalancer
+  selector:
+    app: wg-proxy
+  ports:
+    - protocol: UDP
+      port: 51820
+      targetPort: 31820
+EOF
+
+kubectl apply -f /tmp/service.yml
+
+kubectl apply -f {{.InstallCommand.CRDsURL}} --server-side
+kubectl create ns kloudlite
+
+cat > /tmp/helm-chart.yml <<EOF
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kloudlite
+  namespace: kube-system
+spec:
+  repo: {{.InstallCommand.ChartRepo}}
+  chart: kloudlite-agent
+  version: {{.InstallCommand.ChartVersion}}
+  targetNamespace: kloudlite
+  valuesContent: |-
+    accountName: {{.InstallCommand.HelmValues.AccountName}}
+    clusterName: {{.InstallCommand.HelmValues.ClusterName}}
+    clusterToken: {{.InstallCommand.HelmValues.ClusterToken}}
+    kloudliteDNSSuffix: {{.InstallCommand.HelmValues.KloudliteDNSSuffix}}
+    messageOfficeGRPCAddr: {{.InstallCommand.HelmValues.MessageOfficeGRPCAddr}}
+    agentOperator:
+      image:
+        repository: ghcr.io/kloudlite/operator/agent
+        tag: v1.0.8-alpha
+      configuration:
+        gateway:
+          imageIPBindingController:
+            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller
+            tag: v1.0.8-alpha
+          imageIPManager:
+            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-manager
+            tag: v1.0.8-alpha
+EOF
+
+kubectl apply -f /tmp/helm-chart.yml
+
+kubectl label namespace/wg-proxy kloudlite.io/gateway.enabled="true" --overwrite
+
+#kubectl rollout restart deploy/default -n kl-gateway

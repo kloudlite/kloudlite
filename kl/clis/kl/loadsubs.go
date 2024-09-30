@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/kl/cmd/connect"
 	"github.com/kloudlite/kl/cmd/expose"
 	"github.com/kloudlite/kl/cmd/get"
+	"github.com/kloudlite/kl/cmd/intercept"
 	"github.com/kloudlite/kl/cmd/list"
 	"github.com/kloudlite/kl/cmd/packages"
 	"github.com/kloudlite/kl/cmd/runner"
@@ -14,7 +15,7 @@ import (
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
 	"github.com/kloudlite/kl/cmd/status"
 	"github.com/kloudlite/kl/cmd/use"
-	"github.com/kloudlite/kl/cmd/vpn/intercept"
+	"github.com/kloudlite/kl/cmd/vpn"
 	"github.com/kloudlite/kl/flags"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +43,7 @@ func init() {
 	rootCmd.AddCommand(set_base_url.Cmd)
 
 	rootCmd.AddCommand(intercept.Cmd)
+	rootCmd.AddCommand(vpn.Cmd)
 
 	rootCmd.AddCommand(expose.Command)
 

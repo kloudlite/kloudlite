@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/pkg/k3s"
+
 	"io"
 	"os"
 
@@ -32,6 +34,7 @@ type client struct {
 	fc     fileclient.FileClient
 	apic   apiclient.ApiClient
 	klfile *fileclient.KLFileType
+	k3s    k3s.K3sClient
 }
 
 type BoxClient interface {
@@ -83,6 +86,11 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		return nil, fn.NewE(err)
 	}
 
+	k3sClient, err := k3s.NewClient()
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+
 	env, err := fc.EnvOfPath(cwd)
 	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
 		environment, err := apic.GetEnvironment(klFile.AccountName, klFile.DefaultEnv)
@@ -123,5 +131,6 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		fc:            fc,
 		apic:          apic,
 		klfile:        klFile,
+		k3s:           k3sClient,
 	}, nil
 }

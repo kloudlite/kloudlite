@@ -125,3 +125,19 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	return body, nil
 
 }
+
+func (apic *apiClient) GetHostDNSSuffix() (string, error) {
+	cookie, err := getCookie()
+	if err != nil {
+		return "", fn.NewE(err)
+	}
+	respData, err := klFetch("cli_getDNSHostSuffix", map[string]any{}, &cookie)
+	if err != nil {
+		return "", fn.NewE(err)
+	}
+	hostDNSSuffix, err := GetFromResp[string](respData)
+	if err != nil {
+		return "", fn.NewE(err)
+	}
+	return *hostDNSSuffix, nil
+}

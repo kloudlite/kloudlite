@@ -2,6 +2,7 @@ package apiclient
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -107,7 +108,6 @@ func (apic *apiClient) ListApps(accountName string, envName string) ([]App, erro
 
 func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envName string, options ...fn.Option) error {
 
-	devName := fn.GetOption(options, "deviceName")
 	accountName := fn.GetOption(options, "accountName")
 
 	fc, err := fileclient.New()
@@ -127,19 +127,6 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 
 		accountName = kt.AccountName
 		options = append(options, fn.MakeOption("accountName", accountName))
-	}
-
-	if devName == "" {
-		avc, err := fc.GetVpnAccountConfig(accountName)
-		if err != nil {
-			return functions.NewE(err)
-		}
-
-		if avc.DeviceName == "" {
-			return fmt.Errorf("device name is required")
-		}
-
-		devName = avc.DeviceName
 	}
 
 	cookie, err := getCookie([]fn.Option{
@@ -166,15 +153,26 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 		return fmt.Errorf("no ports provided to intercept")
 	}
 
+	user, err := apic.GetCurrentUser()
+	if err != nil {
+		return err
+	}
+	hostName, err := os.Hostname()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	query := "cli_interceptApp"
 	if !app.IsMainApp {
 		query = "cli_interceptExternalApp"
 	}
 
 	respData, err := klFetch(query, map[string]any{
-		"appName":      app.Metadata.Name,
-		"envName":      envName,
-		"deviceName":   devName,
+		"appName": app.Metadata.Name,
+		"envName": envName,
+		"ipAddr":  constants.InterceptWorkspaceServiceIp,
+		//"userName":  fmt.Sprintf("%s-%s", user.Name, hostName),
+		"clusterName":  fmt.Sprintf("%s-%s", user.Name, hostName),
 		"intercept":    status,
 		"portMappings": ports,
 	}, &cookie)

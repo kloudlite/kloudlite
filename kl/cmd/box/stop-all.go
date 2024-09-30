@@ -54,9 +54,9 @@ func stopAllContainers() error {
 	}
 
 	for _, d := range existingContainers {
-
 		timeOut := 0
 		if err := c.ContainerStop(context.Background(), d.ID, container.StopOptions{
+			Signal:  "SIGKILL",
 			Timeout: &timeOut,
 		}); err != nil {
 			return fn.NewE(err)

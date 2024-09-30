@@ -57,6 +57,10 @@ func Yellow(text interface{}) string {
 	return Colored(text, 3)
 }
 
+func Gray(text interface{}) string {
+	return Colored(text, 7)
+}
+
 func RemoveColors(text string) string {
 	return fmt.Sprintf("\033[0m%v\033[0m", text)
 }

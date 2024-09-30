@@ -2,22 +2,29 @@ package constants
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/flags"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 )
 
 const (
-	DefaultBaseURL = "https://auth.kloudlite.io"
-	RuntimeLinux   = "linux"
-	RuntimeDarwin  = "darwin"
-	RuntimeWindows = "windows"
-	SocatImage     = "ghcr.io/kloudlite/hub/socat:latest"
-	KLDNS          = "100.64.0.1"
+	DefaultBaseURL              = "https://auth.kloudlite.io"
+	RuntimeLinux                = "linux"
+	RuntimeDarwin               = "darwin"
+	RuntimeWindows              = "windows"
+	SocatImage                  = "ghcr.io/kloudlite/hub/socat:latest"
+	KLDNS                       = "100.64.0.1"
+	InterceptWorkspaceServiceIp = "172.18.0.3"
+	HostIp                      = "172.18.0.2"
 )
 
 func GetWireguardImageName() string {
 	return fmt.Sprintf("ghcr.io/kloudlite/kl/box/wireguard:%s", flags.Version)
+}
+
+func GetK3SImageName() string {
+	return "docker.io/rancher/k3s:v1.27.5-k3s1"
 }
 
 var (

@@ -11,6 +11,7 @@ type apiClient struct {
 
 type ApiClient interface {
 	ListAccounts() ([]Account, error)
+	GetHostDNSSuffix() (string, error)
 
 	ListApps(accountName string, envName string) ([]App, error)
 	InterceptApp(app *App, status bool, ports []AppPort, envName string, options ...fn.Option) (err error)
@@ -25,6 +26,10 @@ type ApiClient interface {
 	GetVPNDevice(accountName string, devName string) (*Device, error)
 	CheckDeviceStatus() bool
 	GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error)
+	CreateVpnForAccount(account string) (*Device, error)
+	CreateDevice(devName, displayName, account string) (*Device, error)
+
+	GetClusterConfig(account string) (*fileclient.AccountClusterConfig, error)
 
 	ListEnvs(accountName string) ([]Env, error)
 	GetEnvironment(accountName, envName string) (*Env, error)

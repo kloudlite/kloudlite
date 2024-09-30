@@ -19,3 +19,7 @@ tasks:
       - docker buildx build --platform linux/amd64,linux/arm64 -t {{.ImageRegistry}}:{{.tag}} --build-arg VERSION={{.tag}} --build-context project=.. . --push
 #      - docker buildx rm klbuilder
       # - docker buildx build -t {{.ImageRegistry}}:{{.tag}} . --push
+
+  wg:run:
+    cmds:
+      - go build main.go -o ./bin/wireguard

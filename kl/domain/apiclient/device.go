@@ -66,32 +66,31 @@ func (apic *apiClient) GetVPNDevice(accountName string, devName string) (*Device
 	return GetFromResp[Device](respData)
 }
 
-func createDevice(devName string) (*Device, error) {
-	cn, err := getDeviceName(devName)
-	if err != nil {
-		return nil, fn.NewE(err)
-	}
+func (apic *apiClient) CreateDevice(devName, displayName, account string) (*Device, error) {
+	//cn, err := getDeviceName(devName)
+	//if err != nil {
+	//	return nil, fn.NewE(err)
+	//}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(fn.MakeOption("accountName", account))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
 	dn := devName
-	if !cn.Result {
-		if len(cn.SuggestedNames) == 0 {
-			return nil, fmt.Errorf("no suggested names for device %s", devName)
-		}
-
-		dn = cn.SuggestedNames[0]
-	}
-
+	//if !cn.Result {
+	//	if len(cn.SuggestedNames) == 0 {
+	//		return nil, fmt.Errorf("no suggested names for device %s", devName)
+	//	}
+	//
+	//	dn = cn.SuggestedNames[0]
+	//}
 	fn.Logf("creating new device %s\n", dn)
 	respData, err := klFetch("cli_createGlobalVPNDevice", map[string]any{
 		"gvpnDevice": map[string]any{
 			"metadata":       map[string]string{"name": dn},
 			"globalVPNName":  Default_GVPN,
-			"displayName":    dn,
+			"displayName":    displayName,
 			"creationMethod": "kl",
 		},
 	}, &cookie)
@@ -114,6 +113,7 @@ type CheckName struct {
 
 const (
 	VPNDeviceType = "global_vpn_device"
+	ClusterType   = "byok_cluster"
 )
 
 func (apic *apiClient) CheckDeviceStatus() bool {
@@ -179,7 +179,7 @@ func getDeviceName(devName string) (*CheckName, error) {
 	}
 }
 
-func createVpnForAccount() (*Device, error) {
+func (apic *apiClient) CreateVpnForAccount(account string) (*Device, error) {
 	devName, err := os.Hostname()
 	if err != nil {
 		return nil, fn.NewE(err)
@@ -194,7 +194,7 @@ func createVpnForAccount() (*Device, error) {
 		}
 		devName = checkNames.SuggestedNames[0]
 	}
-	device, err := createDevice(devName)
+	device, err := apic.CreateDevice(devName, devName, account)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -206,7 +206,7 @@ func (apic *apiClient) GetAccVPNConfig(account string) (*fileclient.AccountVpnCo
 	avc, err := apic.fc.GetVpnAccountConfig(account)
 
 	if err != nil && os.IsNotExist(err) {
-		dev, err := createVpnForAccount()
+		dev, err := apic.CreateVpnForAccount(account)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
