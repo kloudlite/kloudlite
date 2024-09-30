@@ -55,7 +55,7 @@ var configCmd = &cobra.Command{
 				return
 			}
 			if len(configs) == 0 {
-				fn.PrintError(fn.Error("no configs created yet on server"))
+fn.PrintError(fn.Error("no configs found"))
 				return
 			}
 			selectedConfig, err := fzf.FindOne(configs, func(config apiclient.Config) string {
