@@ -157,10 +157,8 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 	if err != nil {
 		return err
 	}
-	hostName, err := os.Hostname()
-	if err != nil {
-		return fn.NewE(err)
-	}
+
+	hostName := os.Getenv("KL_HOST_USER")
 
 	query := "cli_interceptApp"
 	if !app.IsMainApp {
@@ -168,10 +166,9 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 	}
 
 	respData, err := klFetch(query, map[string]any{
-		"appName": app.Metadata.Name,
-		"envName": envName,
-		"ipAddr":  constants.InterceptWorkspaceServiceIp,
-		//"userName":  fmt.Sprintf("%s-%s", user.Name, hostName),
+		"appName":      app.Metadata.Name,
+		"envName":      envName,
+		"ipAddr":       constants.InterceptWorkspaceServiceIp,
 		"clusterName":  fmt.Sprintf("%s-%s", user.Name, hostName),
 		"intercept":    status,
 		"portMappings": ports,

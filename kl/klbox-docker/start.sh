@@ -20,6 +20,7 @@ export MAIN_PATH=$PATH
 export KL_TMP_PATH="/kl-tmp"
 export KLCONFIG_PATH="$KLCONFIG_PATH"
 export PLATFORM_ARCH=$(uname -m)
+export KL_HOST_USER="$KL_HOST_USER"
 EOL
 
 sudo mkdir -p /etc/wireguard

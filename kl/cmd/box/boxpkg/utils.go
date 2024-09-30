@@ -246,6 +246,11 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 		return "", fn.NewE(err)
 	}
 
+	hostName, err := os.Hostname()
+	if err != nil {
+		return "", fn.NewE(err)
+	}
+
 	resp, err := c.cli.ContainerCreate(context.Background(), &container.Config{
 		Image: GetImageName(),
 		Labels: map[string]string{
@@ -262,6 +267,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 			"KLCONFIG_PATH=/workspace/kl.yml",
 			fmt.Sprintf("KL_DNS=%s", constants.KLDNS),
 			fmt.Sprintf("KL_BASE_URL=%s", constants.BaseURL),
+			fmt.Sprintf("KL_HOST_USER=%s", hostName),
 		},
 		Hostname:     "box",
 		ExposedPorts: nat.PortSet{nat.Port(fmt.Sprintf("%d/tcp", sshPort)): {}},
