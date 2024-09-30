@@ -7,6 +7,7 @@ import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { findClusterStatus } from '~/console/hooks/use-cluster-status';
+import { ClusterSelectItem } from '~/console/page-components/handle-environment';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
 import {
@@ -21,22 +22,22 @@ import { handleError } from '~/root/lib/utils/common';
 
 type IDialog = IDialogBase<ExtractNodeType<IEnvironments>>;
 
-const ClusterSelectItem = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => {
-  return (
-    <div>
-      <div className="flex flex-col">
-        <div>{label}</div>
-        <div className="bodySm text-text-soft">{value}</div>
-      </div>
-    </div>
-  );
-};
+// const ClusterSelectItem = ({
+//   label,
+//   value,
+// }: {
+//   label: string;
+//   value: string;
+// }) => {
+//   return (
+//     <div>
+//       <div className="flex flex-col">
+//         <div>{label}</div>
+//         <div className="bodySm text-text-soft">{value}</div>
+//       </div>
+//     </div>
+//   );
+// };
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
@@ -52,8 +53,13 @@ const Root = (props: IDialog) => {
         label: c.displayName,
         value: parseName(c),
         ready: findClusterStatus(c),
+        disabled: !findClusterStatus(c),
         render: () => (
-          <ClusterSelectItem label={c.displayName} value={parseName(c)} />
+          <ClusterSelectItem
+            label={c.displayName}
+            value={parseName(c)}
+            disabled={!findClusterStatus(c)}
+          />
         ),
       }));
       setClusterList(data);
@@ -150,13 +156,14 @@ const Root = (props: IDialog) => {
             size="lg"
             value={values.clusterName}
             placeholder="Select a Cluster"
-            options={async () => [
-              ...((clusterList &&
-                clusterList.filter((d) => {
-                  return d.ready;
-                })) ||
-                []),
-            ]}
+            options={async () => clusterList}
+            // options={async () => [
+            //   ...((clusterList &&
+            //     clusterList.filter((d) => {
+            //       return d.ready;
+            //     })) ||
+            //     []),
+            // ]}
             onChange={({ value }) => {
               handleChange('clusterName')(dummyEvent(value));
             }}

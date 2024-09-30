@@ -1,5 +1,5 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -258,12 +258,21 @@ const ListView = ({ items, onAction }: IResource) => {
                 ),
               },
               cluster: {
-                render: () => (
-                  <ListItemV2 data={i.isArchived ? '' : i.clusterName} />
-                ),
+                render: () => {
+                  // if (i.clusterName === '') {
+                  //   return <ListItemV2 data="template" />;
+                  // }
+                  return (
+                    <ListItemV2 data={i.isArchived ? '' : i.clusterName} />
+                  );
+                },
               },
               status: {
                 render: () => {
+                  if (i.clusterName === '') {
+                    return <Badge type="success">TEMPLATE</Badge>;
+                  }
+
                   if (i.isArchived) {
                     return <Badge type="neutral">Archived</Badge>;
                   }
@@ -312,7 +321,7 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.environment:${parseName(i)}`;
-    }),
+    })
   );
 
   const suspendEnvironment = async (item: BaseType, suspend: boolean) => {
@@ -334,11 +343,10 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
         throw errors[0];
       }
       toast.success(
-        `${
-          suspend
-            ? 'Environment suspended successfully'
-            : 'Environment resumed successfully'
-        }`,
+        `${suspend
+          ? 'Environment suspended successfully'
+          : 'Environment resumed successfully'
+        }`
       );
       reloadPage();
     } catch (err) {
@@ -347,7 +355,7 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   };
 
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
 
