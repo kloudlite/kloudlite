@@ -1,6 +1,7 @@
 package app
 
 import (
+	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -46,6 +47,16 @@ var Module = fx.Module(
 	fx.Provide(
 		func(conn CommsClientConnection) comms.CommsClient {
 			return comms.NewCommsClient((*grpc.ClientConn)(conn))
+		},
+	),
+
+	fx.Provide(
+		func(ev *env.Env) (*recaptchaenterprise.Client, error) {
+			client, err := recaptchaenterprise.NewClient(context.TODO())
+			if err != nil {
+				return nil, err
+			}
+			return client, nil
 		},
 	),
 
