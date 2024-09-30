@@ -6100,6 +6100,10 @@ mutation authCli_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
   }
 }
 
+query authCli_getDNSHostSuffix {
+  core_getDNSHostSuffix
+}
+
 query authCli_getMresOutputKeyValues($msvcName: String!, $keyrefs: [ManagedResourceKeyRefIn]) {
   core_getManagedResouceOutputKeyValues(msvcName: $msvcName, keyrefs: $keyrefs) {
     key
@@ -6219,11 +6223,12 @@ mutation authCli_intercepExternalApp($envName: String!, $appName: String!, $devi
   )
 }
 
-mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appName: String!, $envName: String!) {
-  core_interceptApp(
+mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $clusterName: String!, $ipAddr: String!, $appName: String!, $envName: String!) {
+  core_interceptAppOnLocalCluster(
     portMappings: $portMappings
     intercept: $intercept
-    deviceName: $deviceName
+    clusterName: $clusterName
+    ipAddr: $ipAddr
     appname: $appName
     envName: $envName
   )

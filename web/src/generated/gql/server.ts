@@ -7752,6 +7752,12 @@ export type AuthCli_CreateGlobalVpnDeviceMutation = {
   };
 };
 
+export type AuthCli_GetDnsHostSuffixQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthCli_GetDnsHostSuffixQuery = { core_getDNSHostSuffix: string };
+
 export type AuthCli_GetMresOutputKeyValuesQueryVariables = Exact<{
   msvcName: Scalars['String']['input'];
   keyrefs?: InputMaybe<
@@ -7901,12 +7907,15 @@ export type AuthCli_InterceptAppMutationVariables = Exact<{
     | Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn
   >;
   intercept: Scalars['Boolean']['input'];
-  deviceName: Scalars['String']['input'];
+  clusterName: Scalars['String']['input'];
+  ipAddr: Scalars['String']['input'];
   appName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
 }>;
 
-export type AuthCli_InterceptAppMutation = { core_interceptApp: boolean };
+export type AuthCli_InterceptAppMutation = {
+  core_interceptAppOnLocalCluster: boolean;
+};
 
 export type AuthCli_RemoveDeviceInterceptsMutationVariables = Exact<{
   envName: Scalars['String']['input'];

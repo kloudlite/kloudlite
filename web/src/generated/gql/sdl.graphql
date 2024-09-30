@@ -3624,6 +3624,7 @@ type Mutation {
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_importManagedResource(envName: String!, importName: String!, mresName: String!, msvcName: String!): ImportedManagedResource
   core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
+  core_interceptAppOnLocalCluster(appname: String!, clusterName: String!, envName: String!, intercept: Boolean!, ipAddr: String!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_interceptExternalApp(deviceName: String!, envName: String!, externalAppName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_removeDeviceIntercepts(deviceName: String!, envName: String!): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
