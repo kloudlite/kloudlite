@@ -11,6 +11,7 @@ type K3sClient interface {
 	EnsureKloudliteNetwork() error
 	StartAppInterceptService(ports []apiclient.AppPort) error
 	EnsureImage(i string) error
+	RestartWgProxyContainer() error
 }
 
 type client struct {

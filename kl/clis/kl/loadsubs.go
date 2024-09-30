@@ -4,7 +4,6 @@ import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/box"
 	"github.com/kloudlite/kl/cmd/clone"
-	"github.com/kloudlite/kl/cmd/connect"
 	"github.com/kloudlite/kl/cmd/expose"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/intercept"
@@ -35,7 +34,7 @@ func init() {
 	rootCmd.AddCommand(get.Cmd)
 	rootCmd.AddCommand(auth.Cmd)
 	rootCmd.AddCommand(box.BoxCmd)
-	rootCmd.AddCommand(connect.Command)
+	//rootCmd.AddCommand(connect.Command)
 
 	rootCmd.AddCommand(use.Cmd)
 	rootCmd.AddCommand(clone.Cmd)
