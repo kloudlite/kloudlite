@@ -66,13 +66,13 @@ tasks:
         cp -r ./static/{{.app}}/. ./public/
 
         case "{{.tscheck}}" in
-          "no")
-            GATEWAY_URL=$GATEWAY_URL URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
-            ;;
-
-          *)
+          "yes")
             GATEWAY_URL=$GATEWAY_URL URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
            ;;
+
+          *)
+            GATEWAY_URL=$GATEWAY_URL URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+            ;;
 
         esac
 

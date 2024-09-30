@@ -19,9 +19,10 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { ArrowLeft, ArrowRight } from '~/components/icons';
 import { cn } from '~/components/utils';
-import { mainUrl } from '~/auth/consts';
+import { RECAPTCHA_SITE_KEY, mainUrl } from '~/auth/consts';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
+import grecaptcha from '~/root/lib/client/helpers/g-recaptcha';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -47,10 +48,14 @@ const SignUpWithEmail = () => {
     }),
     onSubmit: async (v) => {
       try {
+        const token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, {
+          action: 'login',
+        });
         const { errors: _errors } = await api.signUpWithEmail({
           email: v.email,
           name: v.name,
           password: v.password,
+          token,
         });
         if (_errors) {
           throw _errors[0];
@@ -229,7 +234,7 @@ const Signup = () => {
           <br />
           <span>
             <Button
-              to={`${mainUrl}/terms-of-services`}
+              to={`${mainUrl}/legal/terms-of-services`}
               linkComponent={Link}
               className="!inline-block align-bottom"
               variant="plain"
@@ -241,7 +246,7 @@ const Signup = () => {
             />
             <span> and </span>
             <Button
-              to={`${mainUrl}/privacy-policy`}
+              to={`${mainUrl}/legal/privacy-policy`}
               linkComponent={Link}
               className="!inline-block align-bottom"
               variant="plain"

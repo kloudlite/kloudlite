@@ -9,6 +9,8 @@ import { handleError } from '~/root/lib/utils/common';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { ArrowRight } from '~/components/icons';
 import Container from '../../components/container';
+import grecaptcha from '~/root/lib/client/helpers/g-recaptcha';
+import { RECAPTCHA_SITE_KEY } from '~/auth/consts';
 
 const ForgetPassword = () => {
   const api = useAuthApi();
@@ -21,8 +23,13 @@ const ForgetPassword = () => {
     }),
     onSubmit: async (val) => {
       try {
+        const token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, {
+          action: 'login',
+        });
         const { errors: e } = await api.requestResetPassword({
           email: val.email,
+          //@ts-ignore
+          token,
         });
         if (e) {
           throw e[0];
