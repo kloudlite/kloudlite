@@ -24,7 +24,7 @@ func GetWireguardImageName() string {
 }
 
 func GetK3SImageName() string {
-	return "docker.io/rancher/k3s:v1.27.5-k3s1"
+	return "rancher/k3s:v1.27.5-k3s1"
 }
 
 var (

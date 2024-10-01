@@ -76,9 +76,10 @@ type InfraContexts struct {
 }
 
 type ExtraData struct {
-	BaseUrl       string          `json:"baseUrl"`
-	DnsHostSuffix string          `json:"dnsHostSuffix"`
-	SelectedEnvs  map[string]*Env `json:"selectedEnvs"`
+	BaseUrl         string          `json:"baseUrl"`
+	SelectedAccount string          `json:"selectedAccount"`
+	DnsHostSuffix   string          `json:"dnsHostSuffix"`
+	SelectedEnvs    map[string]*Env `json:"selectedEnvs"`
 }
 
 func GetUserHomeDir() (string, error) {

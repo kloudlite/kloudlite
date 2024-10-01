@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/kl/cmd/expose"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/intercept"
+	"github.com/kloudlite/kl/cmd/k3s"
 	"github.com/kloudlite/kl/cmd/list"
 	"github.com/kloudlite/kl/cmd/packages"
 	"github.com/kloudlite/kl/cmd/runner"
@@ -15,6 +16,7 @@ import (
 	"github.com/kloudlite/kl/cmd/status"
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/cmd/vpn"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/flags"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +44,11 @@ func init() {
 
 	rootCmd.AddCommand(intercept.Cmd)
 	rootCmd.AddCommand(vpn.Cmd)
+
+	fileclient.OnlyOutsideBox(k3s.UpCmd)
+	fileclient.OnlyOutsideBox(k3s.DownCmd)
+	rootCmd.AddCommand(k3s.UpCmd)
+	rootCmd.AddCommand(k3s.DownCmd)
 
 	rootCmd.AddCommand(expose.Command)
 

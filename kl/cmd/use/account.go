@@ -2,6 +2,7 @@ package use
 
 import (
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/k3s"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -43,6 +44,18 @@ func UseAccount() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	data, err := fileclient.GetExtraData()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	data.SelectedAccount = selectedAccount.Metadata.Name
+
+	err = fileclient.SaveExtraData(data)
+	if err != nil {
+		return fn.NewE(err)
 	}
 
 	k, err := k3s.NewClient()

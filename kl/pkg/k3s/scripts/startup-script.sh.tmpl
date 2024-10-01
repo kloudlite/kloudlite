@@ -1,3 +1,5 @@
+{{- /*gotype: github.com/kloudlite/kl/domain/fileclient.AccountClusterConfig */ -}}
+{{- with . }}
 echo "checking whether k3s server is accepting connections"
 while true; do
   lines=$(kubectl get nodes | wc -l)
@@ -12,70 +14,42 @@ done
 
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
-kind: Namespace
+kind: Secret
 metadata:
-  name: wg-proxy
-  labels:
-    kloudlite.io/gateway.enabled: "false"
-EOF
+  name: include-wg-interfaces
+  namespace: kl-gateway
+stringData:
+  wg-extra.conf: |+
+    [Interface]
+    PrivateKey = {{.WGConfig.Proxy.PrivateKey}}
+    Address = 198.18.0.1/32
+    ListenPort = 31820
+    PostUp = iptables -t nat -I POSTROUTING -o kloudlite-wg -j MASQUERADE
 
-cat > /tmp/deployment.yaml <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: default
-  namespace: wg-proxy
-spec:
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
-  selector:
-    matchLabels:
-      app: wg-proxy
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: wg-proxy
-    spec:
-      restartPolicy: Always
-      containers:
-        - name: wg-proxy
-          image: ghcr.io/kloudlite/kl/box/wireguard:v1.0.0-nightly
-          imagePullPolicy: Always
-          securityContext:
-            capabilities:
-              add: ["NET_ADMIN"]
-          env:
-            - name: PRIVATE_KEY
-              value: {{.WGConfig.Proxy.PrivateKey}}
-            - name: WORKSPACE_PUBLIC_KEY
-              value: {{.WGConfig.Workspace.PublicKey}}
-            - name: HOST_PUBLIC_KEY
-              value: {{.WGConfig.Host.PublicKey}}
-EOF
+    [Peer]
+    PublicKey = {{.WGConfig.Host.PublicKey}}
+    AllowedIPs = 198.18.0.2/32
 
-kubectl apply -f /tmp/deployment.yaml
+    [Peer]
+    PublicKey = {{.WGConfig.Workspace.PublicKey}}
+    AllowedIPs = 198.18.0.3/32
+EOF
 
 cat > /tmp/service.yml <<EOF
 apiVersion: v1
 kind: Service
 metadata:
-  name: wg-proxy
-  namespace: wg-proxy
+  name: kl-local-proxy
+  namespace: kl-gateway
 spec:
   type: LoadBalancer
   selector:
-    app: wg-proxy
+    kloudlite.io/gateway.name: "default"
   ports:
     - protocol: UDP
       port: 51820
       targetPort: 31820
 EOF
-
-kubectl apply -f /tmp/service.yml
 
 kubectl apply -f {{.InstallCommand.CRDsURL}} --server-side
 kubectl create ns kloudlite
@@ -100,19 +74,27 @@ spec:
     agentOperator:
       image:
         repository: ghcr.io/kloudlite/operator/agent
-        tag: v1.0.8-alpha
+        tag: v1.0.8-nightly
       configuration:
         gateway:
           imageIPBindingController:
             repository: ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller
-            tag: v1.0.8-alpha
+            tag: v1.0.8-nightly
           imageIPManager:
             repository: ghcr.io/kloudlite/operator/networking/cmd/ip-manager
-            tag: v1.0.8-alpha
+            tag: v1.0.8-nightly
 EOF
 
 kubectl apply -f /tmp/helm-chart.yml
 
-kubectl label namespace/wg-proxy kloudlite.io/gateway.enabled="true" --overwrite
+checksum=$(kubectl get secret/include-wg-interfaces -n kl-gateway -o jsonpath='{.data.wg-extra\.conf}' | base64 -d |md5sum)
+cat > /tmp/patch.yml <<EOF
+spec:
+  template:
+    metadata:
+      annotations:
+        kloudlite.io/checksum.include-wg-interfaces: "$checksum"
+EOF
+kubectl patch deployment deploy/default -n kl-gateway --patch-file /tmp/patch.yml
 
-#kubectl rollout restart deploy/default -n kl-gateway
+{{- end }}
