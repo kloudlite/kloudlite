@@ -7,9 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -68,6 +67,19 @@ func (r *importedManagedResourceResolver) OnlineStatus(ctx context.Context, obj 
 		LastOnlineAt:    time.Now().Format(time.RFC3339),
 		WillBeOfflineAt: time.Now().Add(2 * time.Minute).Format(time.RFC3339),
 	}, nil
+}
+
+// CoreSetupDefaultEnvironment is the resolver for the core_setupDefaultEnvironment field.
+func (r *mutationResolver) CoreSetupDefaultEnvironment(ctx context.Context) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.SetupDefaultEnvTemplate(cc); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
 }
 
 // CoreCreateEnvironment is the resolver for the core_createEnvironment field.
@@ -1095,7 +1107,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

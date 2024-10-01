@@ -464,6 +464,7 @@ type ComplexityRoot struct {
 		Enabled      func(childComplexity int) int
 		PortMappings func(childComplexity int) int
 		ToDevice     func(childComplexity int) int
+		ToIPAddr     func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec struct {
@@ -765,6 +766,7 @@ type ComplexityRoot struct {
 		CoreInterceptAppOnLocalCluster    func(childComplexity int, envName string, appname string, clusterName string, ipAddr string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreInterceptExternalApp          func(childComplexity int, envName string, externalAppName string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreRemoveDeviceIntercepts        func(childComplexity int, envName string, deviceName string) int
+		CoreSetupDefaultEnvironment       func(childComplexity int) int
 		CoreUpdateApp                     func(childComplexity int, envName string, app entities.App) int
 		CoreUpdateConfig                  func(childComplexity int, envName string, config entities.Config) int
 		CoreUpdateEnvironment             func(childComplexity int, env entities.Environment) int
@@ -1070,6 +1072,7 @@ type MetadataResolver interface {
 	Labels(ctx context.Context, obj *v12.ObjectMeta) (map[string]interface{}, error)
 }
 type MutationResolver interface {
+	CoreSetupDefaultEnvironment(ctx context.Context) (bool, error)
 	CoreCreateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error)
 	CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error)
 	CoreDeleteEnvironment(ctx context.Context, envName string) (bool, error)
@@ -2905,6 +2908,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Intercept.ToDevice(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___crds___v1__Intercept.toIPAddr":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Intercept.ToIPAddr == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Intercept.ToIPAddr(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.resourceNamePrefix":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ResourceNamePrefix == nil {
 			break
@@ -4417,6 +4427,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreRemoveDeviceIntercepts(childComplexity, args["envName"].(string), args["deviceName"].(string)), true
+
+	case "Mutation.core_setupDefaultEnvironment":
+		if e.complexity.Mutation.CoreSetupDefaultEnvironment == nil {
+			break
+		}
+
+		return e.complexity.Mutation.CoreSetupDefaultEnvironment(childComplexity), true
 
 	case "Mutation.core_updateApp":
 		if e.complexity.Mutation.CoreUpdateApp == nil {
@@ -6003,6 +6020,7 @@ type Query {
 }
 
 type Mutation {
+  core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -6344,6 +6362,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
   enabled: Boolean!
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
   toDevice: String!
+  toIPAddr: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
@@ -6678,6 +6697,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   enabled: Boolean!
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
   toDevice: String!
+  toIPAddr: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
@@ -17928,6 +17948,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_portMappings(ctx, field)
 			case "toDevice":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(ctx, field)
+			case "toIPAddr":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__Intercept", field.Name)
 		},
@@ -19728,6 +19750,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_portMappings(ctx, field)
 			case "toDevice":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(ctx, field)
+			case "toIPAddr":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__Intercept", field.Name)
 		},
@@ -20409,6 +20433,47 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Intercept",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1Intercept) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ToIPAddr, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Intercept",
 		Field:      field,
@@ -28404,6 +28469,76 @@ func (ec *executionContext) fieldContext_Metadata_namespace(_ context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_setupDefaultEnvironment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_setupDefaultEnvironment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreSetupDefaultEnvironment(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_setupDefaultEnvironment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -43424,7 +43559,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"enabled", "portMappings", "toDevice"}
+	fieldsInOrder := [...]string{"enabled", "portMappings", "toDevice", "toIPAddr"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -43452,6 +43587,13 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.ToDevice = data
+		case "toIPAddr":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toIPAddr"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToIPAddr = data
 		}
 	}
 
@@ -48887,6 +49029,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "toIPAddr":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51443,6 +51587,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "core_setupDefaultEnvironment":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_setupDefaultEnvironment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "core_createEnvironment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_createEnvironment(ctx, field)
