@@ -387,7 +387,15 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "svc.cluster.local", dnsService.Spec.ClusterIP))
 
 	b, err := templates.ParseBytes(r.templateDeployment, templates.GatewayDeploymentArgs{
-		ObjectMeta:                   metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace, Labels: map[string]string{"kloudlite.io/managed-by-gateway": "true"}, OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)}},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      obj.Name,
+			Namespace: obj.Spec.TargetNamespace,
+			Labels: map[string]string{
+				"kloudlite.io/managed-by-gateway": "true",
+				"kloudlite.io/gateway.name":       obj.Name,
+			},
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
 		ServiceAccountName:           fmt.Sprintf("%s-svc-account", obj.Name),
 		GatewayWgSecretName:          obj.Spec.WireguardKeysRef.Name,
 		GatewayGlobalIP:              obj.Spec.GlobalIP,
