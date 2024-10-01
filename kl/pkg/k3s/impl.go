@@ -110,7 +110,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			"--node-name", clusterConfig.ClusterName,
 		},
 		ExposedPorts: nat.PortSet{
-			"51820/udp": struct{}{},
+			"33820/udp": struct{}{},
 			"6443/tcp":  struct{}{},
 		},
 	}, &container.HostConfig{
