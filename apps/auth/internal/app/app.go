@@ -52,11 +52,14 @@ var Module = fx.Module(
 
 	fx.Provide(
 		func(ev *env.Env) (*recaptchaenterprise.Client, error) {
-			client, err := recaptchaenterprise.NewClient(context.TODO())
-			if err != nil {
-				return nil, err
+			if ev.GoogleRecaptchaEnabled {
+				client, err := recaptchaenterprise.NewClient(context.TODO())
+				if err != nil {
+					return nil, err
+				}
+				return client, nil
 			}
-			return client, nil
+			return nil, nil
 		},
 	),
 
