@@ -74,10 +74,10 @@ const NewAccount = () => {
         if (_errors) {
           throw _errors[0];
         }
-        const { errors: e } = await api.setupDefaultEnvironment({});
-        if (e) {
-          throw e[0];
-        }
+        // const { errors: e } = await api.setupDefaultEnvironment({});
+        // if (e) {
+        //   throw e[0];
+        // }
         toast.success('account created');
         // navigate(`/onboarding/${v.name}/attach-new-cluster`);
         navigate(`/${v.name}/environments`);
