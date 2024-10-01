@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/constants"
@@ -10,8 +9,6 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
-	"os"
-	"strings"
 )
 
 var loginCmd = &cobra.Command{
@@ -40,23 +37,23 @@ var loginCmd = &cobra.Command{
 		fmt.Println(text.Colored(text.Blue(link), 21))
 		fn.Log("\n")
 
-		go func() {
-			fn.Log("press enter to open link in browser")
-			reader, err := bufio.NewReader(os.Stdin).ReadString('\n')
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-			if strings.Contains(reader, "\n") {
-				err := fn.OpenUrl(link)
-				if err != nil {
-					fn.PrintError(err)
-					return
-				}
-			} else {
-				fn.Log("Invalid input\n")
-			}
-		}()
+		//go func() {
+		//	fn.Log("press enter to open link in browser")
+		//	reader, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		//	if err != nil {
+		//		fn.PrintError(err)
+		//		return
+		//	}
+		//	if strings.Contains(reader, "\n") {
+		//		err := fn.OpenUrl(link)
+		//		if err != nil {
+		//			fn.PrintError(err)
+		//			return
+		//		}
+		//	} else {
+		//		fn.Log("Invalid input\n")
+		//	}
+		//}()
 
 		if err = apic.Login(loginId); err != nil {
 			fn.PrintError(err)
