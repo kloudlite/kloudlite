@@ -213,8 +213,8 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
                 handleChange('radioType')(dummyEvent(value));
               }}
             >
-              <Radio.Item value="compute">Use Compute</Radio.Item>
-              <Radio.Item value="template">Use Template</Radio.Item>
+              <Radio.Item value="compute">Environment</Radio.Item>
+              <Radio.Item value="template">Environment Template</Radio.Item>
             </Radio.Root>
 
             {values.radioType === 'compute' && (

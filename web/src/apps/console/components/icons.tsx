@@ -138,4 +138,5 @@ export {
   Play,
   Pause,
   Dockerlogo,
+  Note,
 } from '@jengaicons/react';

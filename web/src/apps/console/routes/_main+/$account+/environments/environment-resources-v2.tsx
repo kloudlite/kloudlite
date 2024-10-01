@@ -20,6 +20,7 @@ import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
+import TemplateAvatar from '~/console/components/template-avatar';
 import { findClusterStatus } from '~/console/hooks/use-cluster-status';
 import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
@@ -253,15 +254,22 @@ const ListView = ({ items, onAction }: IResource) => {
                   <ListTitleV2
                     title={name}
                     subtitle={id}
-                    avatar={<ConsoleAvatar name={id} />}
+                    avatar={
+                      i.clusterName === '' ? (
+                        // <TemplateAvatar />
+                        <TemplateAvatar name="{.}" color="text-white" />
+                      ) : (
+                        <ConsoleAvatar name={id} />
+                      )
+                    }
                   />
                 ),
               },
               cluster: {
                 render: () => {
-                  // if (i.clusterName === '') {
-                  //   return <ListItemV2 data="template" />;
-                  // }
+                  if (i.clusterName === '') {
+                    return <ListItemV2 className="px-4xl" data="-" />;
+                  }
                   return (
                     <ListItemV2 data={i.isArchived ? '' : i.clusterName} />
                   );
@@ -270,7 +278,9 @@ const ListView = ({ items, onAction }: IResource) => {
               status: {
                 render: () => {
                   if (i.clusterName === '') {
-                    return <Badge type="success">TEMPLATE</Badge>;
+                    // return <Badge type="success">TEMPLATE</Badge>;
+                    // return <Note className="items-center" size={16} />;
+                    return <ListItemV2 className="px-4xl" data="-" />;
                   }
 
                   if (i.isArchived) {

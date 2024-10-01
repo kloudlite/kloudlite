@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from '@remix-run/react';
+import { useNavigate } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
@@ -25,7 +25,7 @@ const NewAccount = () => {
   const navigate = useNavigate();
   const user = useDataFromMatches<UserMe>('user', {});
 
-  const { a: accountName } = useParams();
+  // const { a: accountName } = useParams();
 
   const { data: accountsData } = useCustomSwr('/list_accounts', async () => {
     return api.listAccounts({});
@@ -74,6 +74,10 @@ const NewAccount = () => {
         if (_errors) {
           throw _errors[0];
         }
+        const { errors: e } = await api.setupDefaultEnvironment({});
+        if (e) {
+          throw e[0];
+        }
         toast.success('account created');
         // navigate(`/onboarding/${v.name}/attach-new-cluster`);
         navigate(`/${v.name}/environments`);
@@ -119,6 +123,7 @@ const NewAccount = () => {
           })}
       >
         <MultiStepProgress.Root
+          hasPages={false}
           currentStep={currentStep}
           editable={false}
           noJump={() => true}
