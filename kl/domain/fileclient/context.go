@@ -266,7 +266,7 @@ Address = %s/24
 PublicKey = %s
 AllowedIPs = %s/32, %s
 PersistentKeepalive = 25
-Endpoint = %s:51820
+Endpoint = %s:33820
 `, config.Host.PrivateKey, KLHostIp, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp, HostIp)
 	return wgConfig, nil
 }
@@ -288,7 +288,7 @@ PrivateKey = %s
 [Peer]
 PublicKey = %s
 AllowedIPs = %s/32, %s
-Endpoint = k3s-cluster.local:51820
+Endpoint = k3s-cluster.local:33820
 `, KLWorkspaceIp, config.Workspace.PrivateKey, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp)
 }
 

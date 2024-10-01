@@ -12,7 +12,7 @@ while true; do
   break
 done
 
-cat <<EOF | kubectl apply -f -
+cat > /tmp/secrets.yml <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
@@ -24,16 +24,22 @@ stringData:
     PrivateKey = {{.WGConfig.Proxy.PrivateKey}}
     Address = 198.18.0.1/32
     ListenPort = 31820
-    PostUp = iptables -t nat -I POSTROUTING -o kloudlite-wg -j MASQUERADE
+    PostUp = iptables -t nat -I POSTROUTING -o wg0 -j MASQUERADE
+    PostDown = iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE
+
 
     [Peer]
+    # HOST
     PublicKey = {{.WGConfig.Host.PublicKey}}
     AllowedIPs = 198.18.0.2/32
 
     [Peer]
+    # WORKSPACE
     PublicKey = {{.WGConfig.Workspace.PublicKey}}
     AllowedIPs = 198.18.0.3/32
 EOF
+
+kubectl apply -f /tmp/secrets.yml
 
 cat > /tmp/service.yml <<EOF
 apiVersion: v1
@@ -47,9 +53,11 @@ spec:
     kloudlite.io/gateway.name: "default"
   ports:
     - protocol: UDP
-      port: 51820
+      port: 33820
       targetPort: 31820
 EOF
+
+kubectl apply -f /tmp/service.yml
 
 kubectl apply -f {{.InstallCommand.CRDsURL}} --server-side
 kubectl create ns kloudlite
@@ -74,15 +82,15 @@ spec:
     agentOperator:
       image:
         repository: ghcr.io/kloudlite/operator/agent
-        tag: v1.0.8-nightly
+        tag: {{.Version}}
       configuration:
         gateway:
           imageIPBindingController:
             repository: ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller
-            tag: v1.0.8-nightly
+            tag: {{.Version}}
           imageIPManager:
             repository: ghcr.io/kloudlite/operator/networking/cmd/ip-manager
-            tag: v1.0.8-nightly
+            tag: {{.Version}}
 EOF
 
 kubectl apply -f /tmp/helm-chart.yml
