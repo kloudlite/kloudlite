@@ -159,6 +159,7 @@ type Query {
 }
 
 type Mutation {
+  	core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount

@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -83,6 +82,7 @@ func (d *domain) getClusterAttachedToEnvironment(ctx K8sContext, name string) (*
 	if env == nil {
 		return nil, errors.Newf("no cluster attached to this environment")
 	}
+
 	return &env.ClusterName, nil
 }
 
@@ -134,30 +134,56 @@ func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) 
 	return w, nil
 }
 
+func (d *domain) SetupDefaultEnvTemplate(ctx ConsoleContext) error {
+	if d.envVars.DefaultEnvTemplateAccountName == "" && d.envVars.DefaultEnvTemplateName == "" {
+		return nil
+	}
+
+	if _, err := d.CloneEnvTemplate(ctx, CloneEnvironmentTemplateArgs{
+		SourceAccountName:  d.envVars.DefaultEnvTemplateAccountName,
+		SourceEnvName:      d.envVars.DefaultEnvTemplateName,
+		DestinationEnvName: d.envVars.DefaultEnvTemplateName,
+		DisplayName:        "Default Environment",
+		EnvRoutingMode:     crdsv1.EnvironmentRoutingModePublic,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
 func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateEnvironment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if strings.TrimSpace(env.ClusterName) == "" {
-		return nil, fmt.Errorf("clustername must be set while creating environments")
+	dEnvTempName := d.envVars.DefaultEnvTemplateName
+	if dEnvTempName != "" && dEnvTempName == env.Name {
+		return nil, fmt.Errorf("name already reserved by default environment template")
 	}
 
-	ownedBy, err := d.infraSvc.GetByokClusterOwnedBy(ctx, ports.IsClusterLabelsIn{
-		UserId:      string(ctx.UserId),
-		UserEmail:   ctx.UserEmail,
-		UserName:    ctx.UserName,
-		AccountName: ctx.AccountName,
-		ClusterName: env.ClusterName,
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	if env.ClusterName != "" {
+		ownedBy, err := d.infraSvc.GetByokClusterOwnedBy(ctx, ports.IsClusterLabelsIn{
+			UserId:      string(ctx.UserId),
+			UserEmail:   ctx.UserEmail,
+			UserName:    ctx.UserName,
+			AccountName: ctx.AccountName,
+			ClusterName: env.ClusterName,
+		})
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
 
-	if ownedBy != "" && ownedBy != string(ctx.UserId) {
-		return nil, fmt.Errorf("it's owned cluster, but you are not the owner")
+		if ownedBy != "" && ownedBy != string(ctx.UserId) {
+			return nil, fmt.Errorf("it's owned cluster, but you are not the owner")
+		}
+
+		if env.Labels == nil {
+			env.Labels = map[string]string{}
+		}
+
+		env.Labels[constants.ClusterLabelOwnedBy] = string(ctx.UserId)
 	}
-	env.Labels[constants.ClusterLabelOwnedBy] = string(ctx.UserId)
 
 	env.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
