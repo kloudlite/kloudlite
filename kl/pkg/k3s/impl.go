@@ -14,6 +14,7 @@ import (
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -169,9 +170,9 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		return fn.Error("failed to start exec")
 	}
 
-	//if err := c.ensureK3sServerIsReady(); err != nil {
-	//	return fn.NewE(err, "failed to ensure k3s server is ready")
-	//}
+	if err := c.ensureK3sServerIsReady(); err != nil {
+		return fn.NewE(err, "failed to ensure k3s server is ready")
+	}
 
 	return nil
 }
@@ -183,6 +184,12 @@ func generateConnectionScript(clusterConfig *fileclient.AccountClusterConfig) (s
 	if err != nil {
 		return "", fn.NewE(err)
 	}
+
+	clusterConfig.Version = flags.Version
+	if clusterConfig.Version == "" || clusterConfig.Version == "v1.0.0-nightly" {
+		clusterConfig.Version = "v1.0.8-nightly"
+	}
+
 	b := new(bytes.Buffer)
 	err = p.Execute(b, clusterConfig)
 	if err != nil {
@@ -196,7 +203,7 @@ func (c *client) ensureK3sServerIsReady() error {
 
 	pingScript := `
 	cat > /tmp/ping.sh <<EOF
-	echo "Checking if 100.64.0.1 is reachable from wg-proxy pod..."
+	echo "Checking if 100.64.0.1 is reachable from kl-gateway pod..."
 	while true; do
 	  if timeout 1 kubectl exec -n kl-gateway deploy/default -c ip-manager -- ping -c 1 100.64.0.1 &> /dev/null; then
 	    echo "100.64.0.1 is reachable!"
@@ -300,11 +307,11 @@ func (c *client) StartAppInterceptService(ports []apiclient.AppPort) error {
 
 	if len(ports) == 0 {
 		script := `
-kubectl get svc/device-router -n wg-proxy
+kubectl get svc/device-router -n kl-gateway
 exit_code=$?
 
 if [ $exit_code -eq 0 ]; then
-  kubectl delete svc device-router -n wg-proxy
+  kubectl delete svc device-router -n kl-gateway
 fi
 `
 		return c.runScriptInContainer(script)
@@ -316,7 +323,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: device-router
-  namespace: wg-proxy
+  namespace: kl-gateway
   annotations:
     kloudlite.io/networking.proxy.to: "172.18.0.3"
 spec:
@@ -355,7 +362,7 @@ func (c *client) RestartWgProxyContainer() error {
 	defer spinner.Client.UpdateMessage("restarting kloudlite-gateway")()
 	script := `
 kubectl delete pod $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -n kl-gateway
-kubectl delete pod $(kubectl get pods -n wg-proxy | grep -i default- | awk '{print $1}') -n wg-proxy
+kubectl delete pod $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -n kl-gateway
 `
 	return c.runScriptInContainer(script)
 }

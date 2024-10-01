@@ -14,6 +14,7 @@ type AccountClusterConfig struct {
 	InstallCommand InstallCommand
 	Installed      bool
 	WGConfig       WGConfig
+	Version        string
 }
 
 type InstallHelmValues struct {
