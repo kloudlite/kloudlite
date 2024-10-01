@@ -1,44 +1,30 @@
-package auth
+package k3s
 
 import (
 	"fmt"
-
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
-	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	"github.com/kloudlite/kl/domain/fileclient"
-	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/k3s"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )
 
-var logoutCmd = &cobra.Command{
-	Use:   "logout",
-	Short: "logout from kloudlite",
-	Example: `# Logout from kloudlite
-{cmd} auth logout`,
+var DownCmd = &cobra.Command{
+	Use:   "down",
+	Short: "Stops the k3s server",
+	Long:  `Stops the k3s server`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		fc, err := fileclient.New()
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-		err = stopAllContainers(cmd)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if err := fc.Logout(); err != nil {
-			fn.PrintError(err)
+		if err := stopK3sServer(cmd); err != nil {
+			functions.PrintError(err)
 			return
 		}
 	},
 }
 
-func stopAllContainers(cmd *cobra.Command) error {
-	defer spinner.Client.UpdateMessage("stopping container please wait")()
+func stopK3sServer(cmd *cobra.Command) error {
+	defer spinner.Client.UpdateMessage("stopping k3s server")()
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
@@ -46,7 +32,7 @@ func stopAllContainers(cmd *cobra.Command) error {
 
 	crlist, err := cli.ContainerList(cmd.Context(), container.ListOptions{
 		Filters: filters.NewArgs(
-			filters.KeyValuePair{Key: "label", Value: fmt.Sprintf("%s=%s", boxpkg.CONT_MARK_KEY, "true")},
+			filters.Arg("label", fmt.Sprintf("%s=%s", k3s.CONT_MARK_KEY, "true")),
 		),
 		All: true,
 	})
@@ -68,5 +54,6 @@ func stopAllContainers(cmd *cobra.Command) error {
 			return err
 		}
 	}
+
 	return nil
 }

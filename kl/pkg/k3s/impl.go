@@ -38,7 +38,6 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		All: true,
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
-			//filters.Arg("label", fmt.Sprintf("%s=%s", "kl-k3s", "true")),
 		),
 	})
 	if err != nil {
@@ -108,7 +107,6 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			"server",
 			"--disable", "traefik",
 			"--node-name", clusterConfig.ClusterName,
-			//fmt.Sprintf("%s.kcluster.local.khost.dev", account.Metadata.Name),
 		},
 		ExposedPorts: nat.PortSet{
 			"51820/udp": struct{}{},
@@ -171,9 +169,9 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		return fn.Error("failed to start exec")
 	}
 
-	if err = c.ensureK3sServerIsReady(); err != nil {
-		return fn.NewE(err)
-	}
+	//if err := c.ensureK3sServerIsReady(); err != nil {
+	//	return fn.NewE(err, "failed to ensure k3s server is ready")
+	//}
 
 	return nil
 }
@@ -200,12 +198,12 @@ func (c *client) ensureK3sServerIsReady() error {
 	cat > /tmp/ping.sh <<EOF
 	echo "Checking if 100.64.0.1 is reachable from wg-proxy pod..."
 	while true; do
-	  if kubectl exec -n wg-proxy deploy/default -- ping -c 1 100.64.0.1 &> /dev/null; then
+	  if timeout 1 kubectl exec -n kl-gateway deploy/default -c ip-manager -- ping -c 1 100.64.0.1 &> /dev/null; then
 	    echo "100.64.0.1 is reachable!"
 	    break
 	  else
 	    echo "Cannot reach 100.64.0.1 from $POD_NAME, retrying in 3 seconds..."
-	    sleep 2
+	    sleep 0.5
 	  fi
 	done
 EOF
@@ -230,8 +228,8 @@ func (c *client) imageExists(imageName string) (bool, error) {
 		return false, err
 	}
 
-	for _, image := range images {
-		for _, tag := range image.RepoTags {
+	for _, i := range images {
+		for _, tag := range i.RepoTags {
 			if tag == imageName {
 				return true, nil
 			}
@@ -243,7 +241,8 @@ func (c *client) imageExists(imageName string) (bool, error) {
 func (c *client) EnsureImage(i string) error {
 	defer spinner.Client.UpdateMessage(fmt.Sprintf("checking image %s", i))()
 
-	if imageExists, err := c.imageExists(i); err == nil && imageExists {
+	imageExists, err := c.imageExists(i)
+	if err == nil && imageExists {
 		return nil
 	}
 
