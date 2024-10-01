@@ -181,6 +181,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
   enabled: Boolean!
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
   toDevice: String!
+  toIPAddr: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
@@ -515,6 +516,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   enabled: Boolean!
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
   toDevice: String!
+  toIPAddr: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {

@@ -409,12 +409,14 @@ type GithubComKloudliteOperatorApisCrdsV1Intercept struct {
 	Enabled      bool                                                            `json:"enabled"`
 	PortMappings []*GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings `json:"portMappings,omitempty"`
 	ToDevice     string                                                          `json:"toDevice"`
+	ToIPAddr     *string                                                         `json:"toIPAddr,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
 	Enabled      bool                           `json:"enabled"`
 	PortMappings []*v1.AppInterceptPortMappings `json:"portMappings,omitempty"`
 	ToDevice     string                         `json:"toDevice"`
+	ToIPAddr     *string                        `json:"toIPAddr,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
