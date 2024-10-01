@@ -128,9 +128,9 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 					HostPort: "6443",
 				},
 			},
-			"51820/udp": {
+			"33820/udp": {
 				{
-					HostPort: "51820",
+					HostPort: "33820",
 				},
 			},
 		},
