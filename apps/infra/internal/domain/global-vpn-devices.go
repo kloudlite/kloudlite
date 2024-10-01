@@ -2,6 +2,8 @@ package domain
 
 import (
 	"fmt"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -13,6 +15,7 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common/fields"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 )
@@ -217,7 +220,7 @@ func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 	return gv, nil
 }
 
-func (d *domain) buildPeerFromGlobalVPNDevice(_ InfraContext, gvpn *entities.GlobalVPN, device *entities.GlobalVPNDevice) *networkingv1.Peer {
+func (d *domain) buildPeerFromGlobalVPNDevice(ctx InfraContext, gvpn *entities.GlobalVPN, device *entities.GlobalVPNDevice) *networkingv1.Peer {
 	allowedIPs := []string{fmt.Sprintf("%s/32", device.IPAddr)}
 
 	// privateConns, err := d.gvpnConnRepo.Find(ctx, repos.Query{
@@ -225,6 +228,8 @@ func (d *domain) buildPeerFromGlobalVPNDevice(_ InfraContext, gvpn *entities.Glo
 	// 		fc.GlobalVPNConnectionGlobalVPNName:  gvpn.Name,
 	// 		fc.GlobalVPNConnectionVisibilityMode: entities.ClusterVisibilityModePrivate,
 	// 	},
+	{
+	}
 	// })
 	// if err != nil {
 	// 	return nil
@@ -236,19 +241,41 @@ func (d *domain) buildPeerFromGlobalVPNDevice(_ InfraContext, gvpn *entities.Glo
 	// }
 
 	if device.IPAddr == gvpn.KloudliteGatewayDevice.IPAddr {
-		// FIXME: this should not be used
 		// allowedIPs = append(allowedIPs, gvpn.NonClusterUseAllowedIPs...)
-
-		// NOTE: i don't even remember what is the use case of non-cluster-use allowed IPs
 		allowedIPs = append(allowedIPs, "100.64.0.0/10")
 		// allowedIPs = append(allowedIPs, privateCIDRs...)
 	}
+
+	publicEndpoint := func() *string {
+		if device.PublicEndpoint == nil {
+			return nil
+		}
+
+		host := *device.PublicEndpoint
+
+		sp := strings.SplitN(host, ":", 2)
+		if len(sp) == 2 {
+			host = sp[0]
+		}
+
+		addrs, err := net.DefaultResolver.LookupHost(ctx, host)
+		if err != nil {
+			d.logger.Warn("failed to lookup", "host", host)
+		}
+
+		if len(addrs) == 0 {
+			return nil
+		}
+
+		d.logger.Info("net.Lookup, for", "host", host, "got", addrs[0])
+		return fn.New(fmt.Sprintf("%s:%s", addrs[0], sp[1]))
+	}()
 
 	return &networkingv1.Peer{
 		Comments:       fmt.Sprintf("device/%s/%s", device.GlobalVPNName, device.Name),
 		DNSHostname:    fmt.Sprintf("%s.device.local", device.Name),
 		PublicKey:      device.PublicKey,
-		PublicEndpoint: device.PublicEndpoint,
+		PublicEndpoint: publicEndpoint,
 		IP:             &device.IPAddr,
 		DNSSuffix:      nil,
 		AllowedIPs:     allowedIPs,
@@ -285,11 +312,36 @@ func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (
 				allowedIPs = append(allowedIPs, gv.NonClusterUseAllowedIPs...)
 			}
 
+			publicEndpoint := func() *string {
+				if devices[i].PublicEndpoint == nil {
+					return nil
+				}
+
+				host := *devices[i].PublicEndpoint
+
+				sp := strings.SplitN(host, ":", 2)
+				if len(sp) == 2 {
+					host = sp[0]
+				}
+
+				addrs, err := net.DefaultResolver.LookupHost(ctx, host)
+				if err != nil {
+					d.logger.Warn("failed to lookup", "host", host)
+				}
+
+				if len(addrs) == 0 {
+					return nil
+				}
+
+				d.logger.Info("net.Lookup, for", "host", host, "got", addrs[0])
+				return fn.New(fmt.Sprintf("%s:%s", addrs[0], sp[1]))
+			}()
+
 			publicPeers = append(publicPeers, networkingv1.Peer{
 				Comments:       fmt.Sprintf("device/%s/%s", devices[i].GlobalVPNName, devices[i].Name),
 				DNSHostname:    fmt.Sprintf("%s.device.local", devices[i].Name),
 				PublicKey:      devices[i].PublicKey,
-				PublicEndpoint: devices[i].PublicEndpoint,
+				PublicEndpoint: publicEndpoint,
 				IP:             &devices[i].IPAddr,
 				DNSSuffix:      nil,
 				AllowedIPs:     allowedIPs,
