@@ -203,13 +203,16 @@ func (d *domainI) verifyCaptcha(ctx context.Context, token string) (bool, error)
 }
 
 func (d *domainI) SignUp(ctx context.Context, name string, email string, password string, captchaToken string) (*common.AuthSession, error) {
-	isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
-	if err != nil {
-		return nil, errors.Newf("failed to verify CAPTCHA: %v", err)
-	}
 
-	if !isValidCaptcha {
-		return nil, errors.New("CAPTCHA verification failed")
+	if d.envVars.GoogleRecaptchaEnabled {
+		isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
+		if err != nil {
+			return nil, errors.Newf("failed to verify CAPTCHA: %v", err)
+		}
+
+		if !isValidCaptcha {
+			return nil, errors.New("CAPTCHA verification failed")
+		}
 	}
 
 	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
@@ -342,13 +345,16 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 }
 
 func (d *domainI) RequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error) {
-	isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
-	if err != nil {
-		return false, errors.Newf("failed to verify CAPTCHA: %v", err)
-	}
 
-	if !isValidCaptcha {
-		return false, errors.New("CAPTCHA verification failed")
+	if d.envVars.GoogleRecaptchaEnabled {
+		isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
+		if err != nil {
+			return false, errors.Newf("failed to verify CAPTCHA: %v", err)
+		}
+
+		if !isValidCaptcha {
+			return false, errors.New("CAPTCHA verification failed")
+		}
 	}
 
 	resetToken := generateId("reset")
