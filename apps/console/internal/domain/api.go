@@ -168,6 +168,7 @@ type Domain interface {
 	ListEnvironments(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Environment], error)
 	GetEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error)
 
+	SetupDefaultEnvTemplate(ctx ConsoleContext) error
 	CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
 	CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs) (*entities.Environment, error)
 	UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
