@@ -67,7 +67,7 @@ func (apic *apiClient) ListApps(accountName string, envName string) ([]App, erro
 // 	}
 
 // 	if len(a) == 0 {
-// 		return nil, fmt.Errorf("no app found")
+// 		return nil, fn.Errorf("no app found")
 // 	}
 
 // 	if appName != "" {
@@ -77,7 +77,7 @@ func (apic *apiClient) ListApps(accountName string, envName string) ([]App, erro
 // 			}
 // 		}
 
-// 		return nil, fmt.Errorf("app not found")
+// 		return nil, fn.Errorf("app not found")
 // 	}
 
 // 	app, err := fzf.FindOne(a, func(item App) string {
@@ -122,7 +122,7 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 		}
 
 		if kt.AccountName == "" {
-			return fmt.Errorf("account name is required")
+			return fn.Errorf("account name is required")
 		}
 
 		accountName = kt.AccountName
@@ -150,7 +150,7 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 	}
 
 	if len(ports) == 0 {
-		return fmt.Errorf("no ports provided to intercept")
+		return fn.Errorf("no ports provided to intercept")
 	}
 
 	user, err := apic.GetCurrentUser()
@@ -206,7 +206,7 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 		}
 
 		if kt.AccountName == "" {
-			return fmt.Errorf("account name is required")
+			return fn.Errorf("account name is required")
 		}
 
 		accountName = kt.AccountName
@@ -222,7 +222,7 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 		}
 
 		if avc.DeviceName == "" {
-			return fmt.Errorf("device name is required")
+			return fn.Errorf("device name is required")
 		}
 
 		devName = avc.DeviceName

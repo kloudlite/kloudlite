@@ -2,7 +2,6 @@ package get
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -55,7 +54,7 @@ var configCmd = &cobra.Command{
 				return
 			}
 			if len(configs) == 0 {
-fn.PrintError(fn.Error("no configs found"))
+				fn.PrintError(fn.Error("no configs found"))
 				return
 			}
 			selectedConfig, err := fzf.FindOne(configs, func(config apiclient.Config) string {
@@ -123,7 +122,7 @@ func printConfig(config *apiclient.Config, cmd *cobra.Command) error {
 			})
 		}
 
-		fmt.Println(table.Table(&header, rows))
+		fn.Println(table.Table(&header, rows))
 
 		table.KVOutput("Showing entries of config:", config.Metadata.Name, true)
 

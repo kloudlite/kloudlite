@@ -2,7 +2,8 @@ package hashctrl
 
 import (
 	"encoding/json"
-	"fmt"
+
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 type PersistedEnv struct {
@@ -15,7 +16,7 @@ type PersistedEnv struct {
 
 func (k *PersistedEnv) ToJson() ([]byte, error) {
 	if k == nil {
-		return nil, fmt.Errorf("kl file is nil")
+		return nil, fn.Errorf("kl file is nil")
 	}
 
 	return json.Marshal(*k)
@@ -23,7 +24,7 @@ func (k *PersistedEnv) ToJson() ([]byte, error) {
 
 func (k *PersistedEnv) ParseJson(b []byte) error {
 	if k == nil {
-		return fmt.Errorf("kl file is nil")
+		return fn.Errorf("kl file is nil")
 	}
 
 	return json.Unmarshal(b, k)

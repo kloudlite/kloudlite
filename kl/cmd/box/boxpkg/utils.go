@@ -45,7 +45,7 @@ const (
 	NO_RUNNING_CONTAINERS = "no container running"
 )
 
-var UserCanceled = fmt.Errorf("user canceled")
+var UserCanceled = fn.Errorf("user canceled")
 
 type Container struct {
 	Name string
@@ -865,7 +865,7 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 					logs += l + "\n"
 				}
 
-				return fn.NewE(fmt.Errorf("failed to start container"), logs)
+				return fn.NewE(fn.Errorf("failed to start container"), logs)
 			}
 
 			return fn.Errorf("container is not running")

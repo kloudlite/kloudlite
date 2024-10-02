@@ -1,10 +1,10 @@
 package apiclient
 
 import (
-	"fmt"
+	"os"
+
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"os"
 )
 
 type Cluster struct {
@@ -162,7 +162,7 @@ func (apic *apiClient) createCluster(hostName, account string) (*Cluster, error)
 	dn := userName
 	if !cn.Result {
 		if len(cn.SuggestedNames) == 0 {
-			return nil, fmt.Errorf("no suggested names for cluster %s", userName)
+			return nil, fn.Errorf("no suggested names for cluster %s", userName)
 		}
 		dn = cn.SuggestedNames[0]
 	}
@@ -188,7 +188,7 @@ func (apic *apiClient) createCluster(hostName, account string) (*Cluster, error)
 		},
 	}, &cookie)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create vpn: %s", err.Error())
+		return nil, fn.Errorf("failed to create vpn: %s", err.Error())
 	}
 	d, err := GetFromResp[Cluster](respData)
 	if err != nil {

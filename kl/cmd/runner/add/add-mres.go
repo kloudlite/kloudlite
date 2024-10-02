@@ -152,7 +152,7 @@ func selectMres(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.
 		return nil, fn.NewE(err)
 	}
 	if len(m) == 0 {
-		return nil, fmt.Errorf("no managed resources created yet on server")
+		return nil, fn.Errorf("no managed resources created yet on server")
 	}
 
 	mres, err := fzf.FindOne(m, func(item apiclient.Mres) string {

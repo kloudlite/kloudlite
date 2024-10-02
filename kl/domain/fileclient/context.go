@@ -244,7 +244,7 @@ func (fc *fclient) GetDevice() (*DeviceContext, error) {
 func GenerateWireGuardKeys() (wgtypes.Key, wgtypes.Key, error) {
 	privateKey, err := wgtypes.GeneratePrivateKey()
 	if err != nil {
-		return wgtypes.Key{}, wgtypes.Key{}, fmt.Errorf("failed to generate private key: %w", err)
+		return wgtypes.Key{}, wgtypes.Key{}, fn.Errorf("failed to generate private key: %w", err)
 	}
 	publicKey := privateKey.PublicKey()
 
@@ -359,7 +359,7 @@ func GetCookieString(options ...fn.Option) (string, error) {
 	}
 
 	if session == "" {
-		return "", fmt.Errorf("no session found")
+		return "", fn.Errorf("no session found")
 	}
 
 	if accName != "" {
@@ -442,7 +442,7 @@ func ReadFile(name string) ([]byte, error) {
 	filePath := path.Join(dir, name)
 
 	if _, er := os.Stat(filePath); errors.Is(er, os.ErrNotExist) {
-		return nil, fmt.Errorf("file not found")
+		return nil, fn.Errorf("file not found")
 	}
 
 	file, err := os.ReadFile(filePath)

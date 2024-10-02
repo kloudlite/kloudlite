@@ -62,7 +62,7 @@ func printSecrets(apic apiclient.ApiClient, cmd *cobra.Command, secrets []apicli
 	}
 
 	if len(secrets) == 0 {
-		return fmt.Errorf("[#] no secrets found in environemnt: %s", text.Blue(e.Name))
+		return fn.Errorf("[#] no secrets found in environemnt: %s", text.Blue(e.Name))
 	}
 
 	header := table.Row{
@@ -77,7 +77,7 @@ func printSecrets(apic apiclient.ApiClient, cmd *cobra.Command, secrets []apicli
 		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name, fmt.Sprintf("%d", len(a.StringData))})
 	}
 
-	fmt.Println(table.Table(&header, rows))
+	fn.Println(table.Table(&header, rows))
 	table.TotalResults(len(secrets), true)
 	return nil
 }

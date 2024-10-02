@@ -34,7 +34,7 @@ var loginCmd = &cobra.Command{
 		link := fmt.Sprintf("%s/%s%s", constants.LoginUrl, "?loginId=", loginId)
 
 		fn.Log(text.Colored("Opening browser for login in the browser to authenticate your account\n", 2))
-		fmt.Println(text.Colored(text.Blue(link), 21))
+		fn.Println(text.Colored(text.Blue(link), 21))
 		fn.Log("\n")
 
 		//go func() {

@@ -47,14 +47,14 @@ func (pf *portFowarder) forward(ctx context.Context, localConn net.Conn) error {
 	sshConn, err := ssh.Dial("tcp", sshAddr, pf.sshConfig)
 	if err != nil {
 		localConn.Close()
-		return fmt.Errorf("failed to dial SSH: %v [%s]", err, sshAddr)
+		return fn.Errorf("failed to dial SSH: %v [%s]", err, sshAddr)
 	}
 
 	// Establish connection to the remote address
 	remoteConn, err := sshConn.Dial("tcp", net.JoinHostPort(pf.SSHHost, pf.RemotePort))
 	if err != nil {
 		localConn.Close()
-		return fmt.Errorf("failed to dial remote address: %v", err)
+		return fn.Errorf("failed to dial remote address: %v", err)
 	}
 
 	// Forward data between local and remote connections
@@ -73,12 +73,12 @@ func (pf *portFowarder) forward(ctx context.Context, localConn net.Conn) error {
 func publicKeyFile(file string) (ssh.AuthMethod, error) {
 	buffer, err := os.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read private key: %v", err)
+		return nil, fn.Errorf("unable to read private key: %v", err)
 	}
 
 	key, err := ssh.ParsePrivateKey(buffer)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse private key: %v", err)
+		return nil, fn.Errorf("unable to parse private key: %v", err)
 	}
 
 	return ssh.PublicKeys(key), nil
@@ -116,7 +116,7 @@ func (pf *portFowarder) start(ctx context.Context) error {
 
 	l, err := net.Listen("tcp", ":"+pf.LocalPort)
 	if err != nil {
-		return fmt.Errorf("failed to listen on %s: %v", pf.LocalPort, err)
+		return fn.Errorf("failed to listen on %s: %v", pf.LocalPort, err)
 	}
 
 	pf.listener = l

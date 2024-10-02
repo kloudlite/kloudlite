@@ -63,7 +63,7 @@ func searchPackages(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows, cmd))
+	fn.Println(table.Table(&header, rows, cmd))
 
 	return nil
 }

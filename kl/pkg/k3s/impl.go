@@ -42,7 +42,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		),
 	})
 	if err != nil {
-		return fn.Error("failed to list containers")
+		return fn.NewE(err, "failed to list containers")
 	}
 	stopAll := false
 	if (existingContainers != nil) && (len(existingContainers) > 0) {
@@ -59,10 +59,10 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		if stopAll {
 			for _, ec := range existingContainers {
 				if err := c.c.ContainerStop(context.Background(), ec.ID, container.StopOptions{}); err != nil {
-					return fn.Error("failed to stop container")
+					return fn.NewE(err, "failed to stop container")
 				}
 				if err := c.c.ContainerRemove(context.Background(), ec.ID, container.RemoveOptions{}); err != nil {
-					return fn.Error("failed to remove container")
+					return fn.NewE(err, "failed to remove container")
 				}
 			}
 		}
@@ -76,13 +76,13 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		),
 	})
 	if err != nil {
-		return fn.Error("failed to list containers")
+		return fn.NewE(err, "failed to list containers")
 	}
 
 	if existingContainers != nil && len(existingContainers) > 0 {
 		if existingContainers[0].State != "running" {
 			if err := c.c.ContainerStart(context.Background(), existingContainers[0].ID, container.StartOptions{}); err != nil {
-				return fn.Error("failed to start container")
+				return fn.NewE(err, "failed to start container")
 			}
 		}
 		return nil
@@ -145,16 +145,16 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 	}, nil, "")
 
 	if err != nil {
-		return fn.Error("failed to create container")
+		return fn.NewE(err, "failed to create container")
 	}
 
 	if err := c.c.ContainerStart(context.Background(), createdConatiner.ID, container.StartOptions{}); err != nil {
-		return fn.Error("failed to start container")
+		return fn.NewE(err, "failed to start container")
 	}
 
 	script, err := generateConnectionScript(clusterConfig)
 	if err != nil {
-		return fn.Error("failed to generate connection script")
+		return fn.NewE(err, "failed to generate connection script")
 	}
 	execConfig := container.ExecOptions{
 		Cmd: []string{"sh", "-c", script},
@@ -162,12 +162,12 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 
 	resp, err := c.c.ContainerExecCreate(context.Background(), createdConatiner.ID, execConfig)
 	if err != nil {
-		return fn.Error("failed to create exec")
+		return fn.NewE(err, "failed to create exec")
 	}
 
 	err = c.c.ContainerExecStart(context.Background(), resp.ID, container.ExecStartOptions{})
 	if err != nil {
-		return fn.Error("failed to start exec")
+		return fn.NewE(err, "failed to start exec")
 	}
 
 	if err := c.ensureK3sServerIsReady(); err != nil {
@@ -345,7 +345,7 @@ kubectl apply -f /tmp/service-device-router.yml
 
 	t, err := template.New("script").Parse(tmpl)
 	if err != nil {
-		return fmt.Errorf("failed to parse template: %w", err)
+		return fn.Errorf("failed to parse template: %w", err)
 	}
 
 	data := struct {
@@ -356,7 +356,7 @@ kubectl apply -f /tmp/service-device-router.yml
 
 	var script bytes.Buffer
 	if err := t.Execute(&script, data); err != nil {
-		return fmt.Errorf("failed to execute template: %w", err)
+		return fn.Errorf("failed to execute template: %w", err)
 	}
 
 	return c.runScriptInContainer(script.String())
@@ -380,11 +380,11 @@ func (c *client) runScriptInContainer(script string) error {
 		),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to list containers: %w", err)
+		return fn.Errorf("failed to list containers: %w", err)
 	}
 
 	if len(existingContainers) == 0 {
-		return fmt.Errorf("no k3s container found")
+		return fn.Errorf("no k3s container found")
 	}
 
 	execID, err := c.c.ContainerExecCreate(context.Background(), existingContainers[0].ID, container.ExecOptions{
@@ -393,29 +393,29 @@ func (c *client) runScriptInContainer(script string) error {
 		AttachStderr: true,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create exec instance for container: %w", err)
+		return fn.Errorf("failed to create exec instance for container: %w", err)
 	}
 
 	resp, err := c.c.ContainerExecAttach(context.Background(), execID.ID, container.ExecStartOptions{
 		Detach: false,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to attach to exec instance: %w", err)
+		return fn.Errorf("failed to attach to exec instance: %w", err)
 	}
 	defer resp.Close()
 
 	output := new(strings.Builder)
 	if _, err := io.Copy(output, resp.Reader); err != nil {
-		return fmt.Errorf("failed to read exec output: %w", err)
+		return fn.Errorf("failed to read exec output: %w", err)
 	}
 
 	execInspect, err := c.c.ContainerExecInspect(context.Background(), execID.ID)
 	if err != nil {
-		return fmt.Errorf("failed to inspect exec instance: %w", err)
+		return fn.Errorf("failed to inspect exec instance: %w", err)
 	}
 
 	if execInspect.ExitCode != 0 {
-		return fmt.Errorf("script exited with error, exit code: %d", execInspect.ExitCode)
+		return fn.Errorf("script exited with error, exit code: %d", execInspect.ExitCode)
 	}
 
 	return nil

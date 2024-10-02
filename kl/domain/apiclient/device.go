@@ -1,9 +1,9 @@
 package apiclient
 
 import (
-	"fmt"
-	"github.com/kloudlite/kl/constants"
 	"os"
+
+	"github.com/kloudlite/kl/constants"
 
 	"time"
 
@@ -80,7 +80,7 @@ func (apic *apiClient) CreateDevice(devName, displayName, account string) (*Devi
 	dn := devName
 	//if !cn.Result {
 	//	if len(cn.SuggestedNames) == 0 {
-	//		return nil, fmt.Errorf("no suggested names for device %s", devName)
+	//		return nil, fn.Errorf("no suggested names for device %s", devName)
 	//	}
 	//
 	//	dn = cn.SuggestedNames[0]
@@ -95,7 +95,7 @@ func (apic *apiClient) CreateDevice(devName, displayName, account string) (*Devi
 		},
 	}, &cookie)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create vpn: %s", err.Error())
+		return nil, fn.Errorf("failed to create vpn: %s", err.Error())
 	}
 
 	d, err := GetFromResp[Device](respData)
@@ -190,7 +190,7 @@ func (apic *apiClient) CreateVpnForAccount(account string) (*Device, error) {
 	}
 	if !checkNames.Result {
 		if len(checkNames.SuggestedNames) == 0 {
-			return nil, fmt.Errorf("no suggested names for device %s", devName)
+			return nil, fn.Errorf("no suggested names for device %s", devName)
 		}
 		devName = checkNames.SuggestedNames[0]
 	}

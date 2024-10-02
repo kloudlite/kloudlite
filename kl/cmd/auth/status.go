@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/kl/domain/apiclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -22,7 +20,7 @@ var authStatusCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		} else {
-			fmt.Printf("You are logged in as %s (%s)\n",
+			fn.Printf("You are logged in as %s (%s)\n",
 				text.Bold(text.Green(u.Name)),
 				text.Blue(u.Email),
 			)

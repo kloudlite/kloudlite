@@ -58,7 +58,7 @@ func startVPN() error {
 	//	return fn.NewE(err)
 	//}
 	//if current.Uid != "0" {
-	//	return fmt.Errorf("root permission required to start vpn")
+	//	return fn.Errorf("root permission required to start vpn")
 	//}
 
 	//var errBuf strings.Builder
@@ -67,7 +67,7 @@ func startVPN() error {
 	//
 	//err = cmd.Run()
 	//if err != nil {
-	//	return fmt.Errorf(errBuf.String())
+	//	return fn.Errorf(errBuf.String())
 	//}
 
 	if err := startWireguard(wgConfig, false); err != nil {
@@ -172,13 +172,11 @@ wait $pid
 	}, &network.NetworkingConfig{}, nil, "")
 
 	if err != nil {
-		fmt.Println(err)
-		return fn.Error("failed to create container")
+		return fn.NewE(err, "failed to create container")
 	}
 
 	if err := dockerClient.ContainerStart(context.Background(), createdContainer.ID, container.StartOptions{}); err != nil {
-		fmt.Println(err)
-		return fn.Error("failed to start container")
+		return fn.NewE(err, "failed to start container")
 	}
 
 	return nil

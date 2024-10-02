@@ -103,7 +103,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(selectedConfigGroup.Data) == 0 {
-		return fmt.Errorf("no configs added yet to %s config", selectedConfigGroup.Metadata.Name)
+		return fn.Errorf("no configs added yet to %s config", selectedConfigGroup.Metadata.Name)
 	}
 
 	type KV struct {
@@ -166,10 +166,10 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	currConfigs := klFile.EnvVars.GetConfigs()
 
 	//for i, ret := range currConfigs {
-	//	fmt.Println(ret.Name, selectedConfigGroup.Metadata.Name)
+	//	fn.Println(ret.Name, selectedConfigGroup.Metadata.Name)
 	//	if ret.Name == selectedConfigGroup.Metadata.Name {
 	//		for j, rt := range currConfigs[i].Env {
-	//			fmt.Println(rt.RefKey, selectedConfigKey.Key, j)
+	//			fn.Println(rt.RefKey, selectedConfigKey.Key, j)
 	//			if rt.RefKey == selectedConfigKey.Key {
 	//				//if len(currConfigs) >= 1 {
 	//				//	currConfigs = []fileclient.ResType{}
@@ -190,7 +190,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	//		return functions.NewE(err)
 	//	}
 	//}
-	//fmt.Println(currConfigs, matchedGroupIndex)
+	//fn.Println(currConfigs, matchedGroupIndex)
 
 	if matchedGroupIndex != -1 {
 		matchedKeyIndex := -1

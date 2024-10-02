@@ -1,14 +1,13 @@
 package fileclient
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/kloudlite/kl/domain/envclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-var NoEnvSelected = fmt.Errorf("no selected environment")
+var NoEnvSelected = fn.Errorf("no selected environment")
 
 func (f *fclient) SelectEnv(ev Env) error {
 	k, err := GetExtraData()

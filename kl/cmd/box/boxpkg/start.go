@@ -19,7 +19,7 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
-var errContainerNotStarted = fmt.Errorf("container not started")
+var errContainerNotStarted = fn.Errorf("container not started")
 
 func (c *client) Start() error {
 	defer spinner.Client.UpdateMessage("initiating container please wait")()

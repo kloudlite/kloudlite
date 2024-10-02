@@ -29,12 +29,12 @@ func Prompt(o Options) (string, error) {
 
 	tm, err := p.StartReturningModel()
 	if err != nil {
-		return "", fmt.Errorf("failed to run input: %w", err)
+		return "", fn.Errorf("failed to run input: %w", err)
 	}
 	m := tm.(model)
 
 	if m.aborted {
-		return "", fmt.Errorf("aborted the program")
+		return "", fn.Errorf("aborted the program")
 	}
 
 	return m.textinput.Value(), nil

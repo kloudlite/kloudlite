@@ -60,7 +60,7 @@ func printConfigs(apic apiclient.ApiClient, cmd *cobra.Command, configs []apicli
 	}
 
 	if len(configs) == 0 {
-		return fmt.Errorf("[#] no configs found in environemnt: %s", text.Blue(e.Name))
+		return fn.Errorf("[#] no configs found in environemnt: %s", text.Blue(e.Name))
 	}
 
 	header := table.Row{
@@ -75,7 +75,7 @@ func printConfigs(apic apiclient.ApiClient, cmd *cobra.Command, configs []apicli
 		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name, fmt.Sprintf("%d", len(a.Data))})
 	}
 
-	fmt.Println(table.Table(&header, rows, cmd))
+	fn.Println(table.Table(&header, rows, cmd))
 
 	table.TotalResults(len(configs), true)
 	return nil

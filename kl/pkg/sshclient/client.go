@@ -2,8 +2,9 @@ package sshclient
 
 import (
 	"context"
-	"fmt"
 	"log"
+
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 type StartCh struct {
@@ -24,24 +25,24 @@ func GetForwardController(sshUser, sshHost, keyPath string) (startCh, cancelCh c
 		for {
 			select {
 			case <-exitCh:
-				fmt.Println("closing all port proxy...")
+				fn.Println("closing all port proxy...")
 
 				for _, sc := range lports {
 					if cancel, exists := ctxs[sc.GetId()]; exists {
 						cancel()
 						delete(ctxs, sc.GetId())
 						delete(lports, sc.LocalPort)
-						fmt.Printf("[-] %s\n", sc.GetId())
+						fn.Printf("[-] %s\n", sc.GetId())
 					}
 				}
 
-				fmt.Println("closing ports done")
+				fn.Println("closing ports done")
 
 				return
 			case i := <-startCh:
 
 				if !portAvailable(i.LocalPort) {
-					fmt.Printf("port %s already in use: %s\n", i.LocalPort, lports[i.LocalPort])
+					fn.Printf("port %s already in use: %s\n", i.LocalPort, lports[i.LocalPort])
 					continue
 				}
 
@@ -58,18 +59,18 @@ func GetForwardController(sshUser, sshHost, keyPath string) (startCh, cancelCh c
 				lports[i.LocalPort] = i
 				go func() {
 					if err := pf.start(ctx); err != nil {
-						fmt.Println(err)
+						fn.PrintError(err)
 					}
 				}()
-				fmt.Printf("[+] %s\n", i.GetId())
+				fn.Printf("[+] %s\n", i.GetId())
 			case i := <-cancelCh:
 				if cancel, exists := ctxs[i.GetId()]; exists {
 					cancel()
 					delete(ctxs, i.GetId())
 					delete(lports, i.LocalPort)
-					fmt.Printf("[-] %s\n", i.GetId())
+					fn.Printf("[-] %s\n", i.GetId())
 				} else {
-					fmt.Printf("no forwarding to cancel %s\n", i.GetId())
+					fn.Printf("no forwarding to cancel %s\n", i.GetId())
 				}
 			}
 		}

@@ -31,14 +31,14 @@ func DoSSH(sc SSHConfig) error {
 
 	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", sc.Host, sc.SSHPort), config)
 	if err != nil {
-		return fmt.Errorf("failed to dial: %s, please ensure container is running `%s`", err, text.Blue("kl box ps"))
+		return fn.Errorf("failed to dial: %s, please ensure container is running `%s`", err, text.Blue("kl box ps"))
 	}
 	defer client.Close()
 
 	// Create a new SSH session
 	session, err := client.NewSession()
 	if err != nil {
-		return fmt.Errorf("failed to create session: %s, please try again", err)
+		return fn.Errorf("failed to create session: %s, please try again", err)
 	}
 	defer session.Close()
 
@@ -47,7 +47,7 @@ func DoSSH(sc SSHConfig) error {
 	// Allocate a pseudo-terminal (pty) for the session
 	ptmx, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		return fmt.Errorf("failed to create pseudo-terminal: %s, please try again", err)
+		return fn.Errorf("failed to create pseudo-terminal: %s, please try again", err)
 	}
 	defer term.Restore(int(os.Stdin.Fd()), ptmx)
 
@@ -64,12 +64,12 @@ func DoSSH(sc SSHConfig) error {
 
 	// Start the session with a pseudo-terminal
 	if err := session.RequestPty("xterm", height, width, ssh.TerminalModes{}); err != nil {
-		return fmt.Errorf("failed to start pseudo-terminal: %s, please try again", err)
+		return fn.Errorf("failed to start pseudo-terminal: %s, please try again", err)
 	}
 
 	// Start the remote shell
 	if err := session.Shell(); err != nil {
-		return fmt.Errorf("failed to start shell: %s, please try again", err)
+		return fn.Errorf("failed to start shell: %s, please try again", err)
 
 	}
 
@@ -88,7 +88,7 @@ var ErrSSHNotReady = fn.Error("ssh is not ready")
 func CheckSSHConnection(sc SSHConfig) error {
 	pkFile, err := publicKeyFile(sc.KeyPath)
 	if err != nil {
-		return fmt.Errorf("failed to parse private key: %s, please ensure you have the correct key", err)
+		return fn.Errorf("failed to parse private key: %s, please ensure you have the correct key", err)
 	}
 	config := &ssh.ClientConfig{
 		User: sc.User,

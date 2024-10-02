@@ -76,7 +76,7 @@ func JsonConversion(from any, to any) error {
 	}
 
 	if to == nil {
-		return fmt.Errorf("receiver (to) is nil")
+		return Errorf("receiver (to) is nil")
 	}
 
 	b, err := json.Marshal(from)
