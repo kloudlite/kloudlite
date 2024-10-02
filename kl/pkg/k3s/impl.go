@@ -97,55 +97,104 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		return fn.NewE(err)
 	}
 
-	createdConatiner, err := c.c.ContainerCreate(context.Background(), &container.Config{
-		Labels: map[string]string{
-			CONT_MARK_KEY: "true",
-			"kl-k3s":      "true",
-			"kl-account":  accountName,
-		},
-		Image: constants.GetK3SImageName(),
-		Cmd: []string{
-			"server",
-			"--disable", "traefik",
-			"--node-name", clusterConfig.ClusterName,
-		},
-		ExposedPorts: nat.PortSet{
-			"33820/udp": struct{}{},
-			"6443/tcp":  struct{}{},
-		},
-	}, &container.HostConfig{
-		Privileged:  true,
-		NetworkMode: "kloudlite",
-		RestartPolicy: container.RestartPolicy{
-			Name: "always",
-		},
-		Binds: []string{
-			fmt.Sprintf("kl-k3s-%s-cache:/var/lib/rancher/k3s", clusterConfig.ClusterName),
-		},
-		PortBindings: map[nat.Port][]nat.PortBinding{
-			"6443/tcp": {
-				{
-					HostPort: "6443",
-				},
-			},
-			"33820/udp": {
-				{
-					HostPort: "33820",
-				},
-			},
-		},
-	}, &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			"kloudlite": {
-				IPAMConfig: &network.EndpointIPAMConfig{
-					IPv4Address: constants.HostIp,
-				},
-			},
-		},
-	}, nil, "")
+	createdConatiner := container.CreateResponse{}
 
-	if err != nil {
-		return fn.NewE(err, "failed to create container")
+	if flags.IsDev() {
+		createdConatiner, err = c.c.ContainerCreate(context.Background(), &container.Config{
+			Labels: map[string]string{
+				CONT_MARK_KEY: "true",
+				"kl-k3s":      "true",
+				"kl-account":  accountName,
+			},
+			Image: constants.GetK3SImageName(),
+			Cmd: []string{
+				"server",
+				"--disable", "traefik",
+				"--node-name", clusterConfig.ClusterName,
+			},
+			ExposedPorts: nat.PortSet{
+				"33820/udp": struct{}{},
+				"6443/tcp":  struct{}{},
+			},
+		}, &container.HostConfig{
+			Privileged:  true,
+			NetworkMode: "kloudlite",
+			RestartPolicy: container.RestartPolicy{
+				Name: "always",
+			},
+			Binds: []string{
+				fmt.Sprintf("kl-k3s-%s-cache:/var/lib/rancher/k3s", clusterConfig.ClusterName),
+			},
+			PortBindings: map[nat.Port][]nat.PortBinding{
+				"6443/tcp": {
+					{
+						HostPort: "6443",
+					},
+				},
+				"33820/udp": {
+					{
+						HostPort: "33820",
+					},
+				},
+			},
+		}, &network.NetworkingConfig{
+			EndpointsConfig: map[string]*network.EndpointSettings{
+				"kloudlite": {
+					IPAMConfig: &network.EndpointIPAMConfig{
+						IPv4Address: constants.HostIp,
+					},
+				},
+			},
+		}, nil, "")
+
+		if err != nil {
+			return fn.NewE(err, "failed to create container")
+		}
+	} else {
+		createdConatiner, err = c.c.ContainerCreate(context.Background(), &container.Config{
+			Labels: map[string]string{
+				CONT_MARK_KEY: "true",
+				"kl-k3s":      "true",
+				"kl-account":  accountName,
+			},
+			Image: constants.GetK3SImageName(),
+			Cmd: []string{
+				"server",
+				"--disable", "traefik",
+				"--node-name", clusterConfig.ClusterName,
+			},
+			ExposedPorts: nat.PortSet{
+				"33820/udp": struct{}{},
+			},
+		}, &container.HostConfig{
+			Privileged:  true,
+			NetworkMode: "kloudlite",
+			RestartPolicy: container.RestartPolicy{
+				Name: "always",
+			},
+			Binds: []string{
+				fmt.Sprintf("kl-k3s-%s-cache:/var/lib/rancher/k3s", clusterConfig.ClusterName),
+			},
+			PortBindings: map[nat.Port][]nat.PortBinding{
+				"33820/udp": {
+					{
+						HostPort: "33820",
+					},
+				},
+			},
+		}, &network.NetworkingConfig{
+			EndpointsConfig: map[string]*network.EndpointSettings{
+				"kloudlite": {
+					IPAMConfig: &network.EndpointIPAMConfig{
+						IPv4Address: constants.HostIp,
+					},
+				},
+			},
+		}, nil, "")
+
+		if err != nil {
+			return fn.NewE(err, "failed to create container")
+		}
 	}
 
 	if err := c.c.ContainerStart(context.Background(), createdConatiner.ID, container.StartOptions{}); err != nil {
