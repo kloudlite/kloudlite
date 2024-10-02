@@ -209,7 +209,7 @@ func (c *client) ensureK3sServerIsReady() error {
 	    echo "100.64.0.1 is reachable!"
 	    break
 	  else
-	    echo "Cannot reach 100.64.0.1 from $POD_NAME, retrying in 3 seconds..."
+	    echo "Cannot reach 100.64.0.1 from $POD_NAME, retrying in 0.5 seconds..."
 	    sleep 0.5
 	  fi
 	done
@@ -327,11 +327,15 @@ metadata:
   annotations:
     kloudlite.io/networking.proxy.to: "172.18.0.3"
 spec:
-  type: LoadBalancer
   ports:
   {{range .Ports}}
     - protocol: UDP
-      port: {{.AppPort}}
+      name: udp-{{.AppPort}}
+      port: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
+      targetPort: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
+    - protocol: TCP
+      name: tcp-{{.AppPort}}
+      port: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
       targetPort: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
   {{end}}
 EOF
