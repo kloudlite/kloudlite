@@ -11,6 +11,7 @@ import MultiStepProgress, {
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
@@ -74,10 +75,11 @@ const NewAccount = () => {
         if (_errors) {
           throw _errors[0];
         }
-        // const { errors: e } = await api.setupDefaultEnvironment({});
-        // if (e) {
-        //   throw e[0];
-        // }
+        ensureAccountClientSide({ account: v.name });
+        const { errors: e } = await api.setupDefaultEnvironment({});
+        if (e) {
+          throw e[0];
+        }
         toast.success('account created');
         // navigate(`/onboarding/${v.name}/attach-new-cluster`);
         navigate(`/${v.name}/environments`);

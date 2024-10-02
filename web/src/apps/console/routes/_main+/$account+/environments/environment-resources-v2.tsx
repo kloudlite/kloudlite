@@ -257,7 +257,7 @@ const ListView = ({ items, onAction }: IResource) => {
                     avatar={
                       i.clusterName === '' ? (
                         // <TemplateAvatar />
-                        <TemplateAvatar name="{.}" color="text-white" />
+                        <TemplateAvatar name="{ }" color="white" />
                       ) : (
                         <ConsoleAvatar name={id} />
                       )
