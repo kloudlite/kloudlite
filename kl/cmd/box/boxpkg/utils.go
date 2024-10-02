@@ -372,11 +372,9 @@ func (c *client) stopContainer(_ string) error {
 		timeOut := 0
 		if err := c.cli.ContainerStop(context.Background(), c2.ID, container.StopOptions{
 			Timeout: &timeOut,
+			Signal:  "SIGKILL",
 		}); err != nil {
 			return fn.NewE(err)
-		}
-		if c2.Labels["kl-k3s"] == "true" {
-			continue
 		}
 		if err := c.cli.ContainerRemove(context.Background(), c2.ID, container.RemoveOptions{
 			Force: true,
