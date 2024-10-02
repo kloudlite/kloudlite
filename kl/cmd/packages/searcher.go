@@ -53,14 +53,14 @@ const searchAPIEndpoint = "https://search.devbox.sh"
 
 func Search(ctx context.Context, query string) (*SearchResults, error) {
 	if query == "" {
-		return nil, fmt.Errorf("query should not be empty")
+		return nil, fn.Errorf("query should not be empty")
 	}
 	defer spinner.Client.UpdateMessage(fmt.Sprintf("searching for package %s", query))()
 
 	endpoint, err := url.JoinPath(searchAPIEndpoint, "v1/search")
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			return nil, fmt.Errorf("package %s not found", query)
+			return nil, fn.Errorf("package %s not found", query)
 		}
 
 		return nil, fn.NewE(err)
@@ -100,7 +100,7 @@ func Resolve(ctx context.Context, pname string) (string, string, error) {
 		splits := strings.Split(name, "@")
 
 		if strings.TrimSpace(splits[0]) == "" || strings.TrimSpace(splits[1]) == "" {
-			return "", "", fmt.Errorf("package %s is invalid", name)
+			return "", "", fn.Errorf("package %s is invalid", name)
 		}
 		name = splits[0]
 		v = splits[1]
@@ -121,7 +121,7 @@ func Resolve(ctx context.Context, pname string) (string, string, error) {
 
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			return "", "", fmt.Errorf("package %s not found", name)
+			return "", "", fn.Errorf("package %s not found", name)
 		}
 		return "", "", fn.NewE(err)
 	}

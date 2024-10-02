@@ -32,7 +32,7 @@ func stopVPN() error {
 	//}
 	//
 	//if current.Uid != "0" {
-	//	return fmt.Errorf("root permission required")
+	//	return fn.Errorf("root permission required")
 	//}
 	//
 	//var errBuf strings.Builder
@@ -41,7 +41,7 @@ func stopVPN() error {
 	//
 	//err = cmd.Run()
 	//if err != nil {
-	//	return fmt.Errorf(errBuf.String())
+	//	return fn.Errorf(errBuf.String())
 	//}
 
 	if err := startWireguard("", true); err != nil {

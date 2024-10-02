@@ -2,7 +2,6 @@ package get
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -118,7 +117,7 @@ func printSecret(secret *apiclient.Secret, cmd *cobra.Command) error {
 			})
 		}
 
-		fmt.Println(table.Table(&header, rows))
+		fn.Println(table.Table(&header, rows))
 		table.KVOutput("Showing entries of secret:", secret.Metadata.Name, true)
 		table.TotalResults(len(secret.StringData), true)
 	}

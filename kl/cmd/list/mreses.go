@@ -1,7 +1,6 @@
 package list
 
 import (
-	"fmt"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/domain/fileclient"
@@ -60,7 +59,7 @@ func printMres(apic apiclient.ApiClient, cmd *cobra.Command, mres []apiclient.Mr
 		return fn.NewE(err)
 	}
 	if len(mres) == 0 {
-		return fmt.Errorf("[#] no managed resources found in environemnt: %s", text.Blue(e.Name))
+		return fn.Errorf("[#] no managed resources found in environemnt: %s", text.Blue(e.Name))
 	}
 
 	header := table.Row{
@@ -75,7 +74,7 @@ func printMres(apic apiclient.ApiClient, cmd *cobra.Command, mres []apiclient.Mr
 		rows = append(rows, table.Row{a.DisplayName, a.Name, a.SecretRefName.Name})
 	}
 
-	fmt.Println(table.Table(&header, rows))
+	fn.Println(table.Table(&header, rows))
 	table.TotalResults(len(mres), true)
 	return nil
 }

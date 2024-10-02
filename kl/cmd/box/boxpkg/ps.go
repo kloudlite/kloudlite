@@ -1,8 +1,6 @@
 package boxpkg
 
 import (
-	"fmt"
-
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -39,7 +37,7 @@ func (c *client) PrintBoxes(conts []Cntr) error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows, c.cmd))
+	fn.Println(table.Table(&header, rows, c.cmd))
 
 	table.TotalResults(len(conts), true)
 

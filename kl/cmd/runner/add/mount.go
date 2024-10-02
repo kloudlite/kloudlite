@@ -141,7 +141,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, klFil
 	}
 
 	if len(items) == 0 {
-		return fmt.Errorf("no %ss created yet on server ", cOrs)
+		return fn.Errorf("no %ss created yet on server ", cOrs)
 	}
 
 	selectedItem := apiclient.ConfigORSecret{}
@@ -161,7 +161,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, klFil
 			}
 		}
 
-		return fmt.Errorf("provided %s name not found", cOrs)
+		return fn.Errorf("provided %s name not found", cOrs)
 	} else {
 		selectedItemVal, err := fzf.FindOne(
 			items,

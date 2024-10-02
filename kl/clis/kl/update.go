@@ -42,7 +42,7 @@ kl update
 func ExecUpdateCmd(version string) error {
 
 	if runtime.GOOS == constants.RuntimeWindows {
-		return fmt.Errorf("update is not supported on windows, please update manually using %q", text.Blue("iwr 'https://kl.kloudlite.io/kloudlite!?select=kl' | iex"))
+		return fn.Errorf("update is not supported on windows, please update manually using %q", text.Blue("iwr 'https://kl.kloudlite.io/kloudlite!?select=kl' | iex"))
 	}
 
 	var cmd *exec.Cmd
@@ -53,7 +53,7 @@ func ExecUpdateCmd(version string) error {
 	} else if wgetAvailable {
 		cmd = exec.Command("bash", "-c", fmt.Sprintf("wget -qO - %s%s!?select=%s | bash", constants.UpdateURL, version, flags.CliName))
 	} else {
-		return fmt.Errorf("curl and wget not found")
+		return fn.Errorf("curl and wget not found")
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

@@ -73,7 +73,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(secrets) == 0 {
-		return fmt.Errorf("no secrets created yet on server")
+		return fn.Errorf("no secrets created yet on server")
 	}
 
 	selectedSecretGroup := apiclient.Secret{}
@@ -103,7 +103,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(selectedSecretGroup.StringData) == 0 {
-		return fmt.Errorf("no secrets added yet to %s secret", selectedSecretGroup.Metadata.Name)
+		return fn.Errorf("no secrets added yet to %s secret", selectedSecretGroup.Metadata.Name)
 	}
 
 	type KV struct {

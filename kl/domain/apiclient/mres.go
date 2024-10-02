@@ -1,8 +1,6 @@
 package apiclient
 
 import (
-	"fmt"
-
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -76,7 +74,7 @@ func (apic *apiClient) GetMresConfigValues(accountName string) (map[string]strin
 	}
 
 	if kt.EnvVars.GetMreses() == nil {
-		return nil, fmt.Errorf("no managed resource selected")
+		return nil, fn.Errorf("no managed resource selected")
 	}
 
 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))

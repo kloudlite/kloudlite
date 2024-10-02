@@ -34,12 +34,12 @@ package del
 // 	if err != nil {
 // 		fn.PrintError(err)
 // 		es := "please run 'kl init' if you are not initialized the file already"
-// 		fn.PrintError(fmt.Errorf(es))
+// 		fn.PrintError(fn.Errorf(es))
 // 	}
 
 // 	if len(klFile.Configs) == 0 {
 // 		es := "no configs added yet in your file"
-// 		return fmt.Errorf(es)
+// 		return fn.Errorf(es)
 // 	}
 
 // 	selectedConfig, err := fzf.FindOne(

@@ -1,7 +1,6 @@
 package list
 
 import (
-	"fmt"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -47,7 +46,7 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(envs) == 0 {
-		return fmt.Errorf("[#] no environments found in account: %s", text.Blue(currentAccount))
+		return fn.Errorf("[#] no environments found in account: %s", text.Blue(currentAccount))
 	}
 
 	env, _ := apic.EnsureEnv()
@@ -67,7 +66,7 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows, cmd))
+	fn.Println(table.Table(&header, rows, cmd))
 
 	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
 		table.TotalResults(len(envs), true)

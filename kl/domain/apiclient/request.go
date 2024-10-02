@@ -3,7 +3,6 @@ package apiclient
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
 	"net"
@@ -110,7 +109,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		fn.PrintError(fmt.Errorf("some issue with apiclient:\n%s", string(body)))
+		fn.PrintError(fn.Errorf("some issue with apiclient:\n%s", string(body)))
 		return nil, functions.NewE(err)
 	}
 
@@ -120,7 +119,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 			errorMessages = append(errorMessages, e.Message)
 		}
 
-		return nil, fmt.Errorf(strings.Join(errorMessages, "\n"))
+		return nil, fn.Errorf(strings.Join(errorMessages, "\n"))
 	}
 
 	return body, nil

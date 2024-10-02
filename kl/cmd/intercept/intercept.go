@@ -76,7 +76,7 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 	}
 
 	if len(apps) == 0 {
-		return fmt.Errorf("no apps found")
+		return fn.Errorf("no apps found")
 	}
 
 	selectedApp, err := fzf.FindOne[app](apps, func(item app) string {

@@ -35,12 +35,12 @@ package del
 // 	if err != nil {
 // 		fn.PrintError(err)
 // 		es := "please run 'kl init' if you are not initialized the file already"
-// 		return fmt.Errorf(es)
+// 		return fn.Errorf(es)
 // 	}
 
 // 	if len(klFile.Mres) == 0 {
 // 		es := "no managed resouce added yet in your file"
-// 		return fmt.Errorf(es)
+// 		return fn.Errorf(es)
 // 	}
 
 // 	selectedMres, err := fzf.FindOne(

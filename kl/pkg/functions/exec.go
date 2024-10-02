@@ -46,7 +46,7 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
-	// fmt.Println(cmd.String(), cmdString)
+	// fn.Println(cmd.String(), cmdString)
 	cmd.Stderr = os.Stderr
 
 	if env == nil {

@@ -2,7 +2,6 @@ package fileclient
 
 import (
 	"encoding/json"
-	"fmt"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
@@ -73,13 +72,13 @@ func (fc *fclient) Logout() error {
 
 			modifiedContent, err := json.Marshal(data)
 			if err != nil {
-				fmt.Println(err)
+				fn.PrintError(err)
 				continue
 			}
 
 			err = os.WriteFile(path.Join(vpnConfigPath, file.Name()), modifiedContent, 0644)
 			if err != nil {
-				fmt.Println(err)
+				fn.PrintError(err)
 			}
 		}
 	}
