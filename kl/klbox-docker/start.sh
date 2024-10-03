@@ -37,6 +37,7 @@ if [ ! -f "$entrypoint_executed" ]; then
     cp /tmp/.zshrc /home/kl/.zshrc
     cp /tmp/.bashrc /home/kl/.bashrc
     cp /tmp/.profile /home/kl/.profile
+    cp /tmp/.check-online /home/kl/.check-online
     ln -sf /home/kl/.profile /home/kl/.zprofile
     cp /tmp/aliasrc /home/kl/.config/aliasrc
     echo "successfully initialized .profile and .bashrc" >> $entrypoint_executed
@@ -111,6 +112,8 @@ fi
 # if [ -f "/tmp/gitconfig/.gitconfig" ]; then
 #     cp /tmp/gitconfig/.gitconfig /home/kl/.gitconfig
 # fi
+
+bash ~/.check-online > /dev/null 2>&1 &
 
 trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint:SETUP_COMPLETE"
