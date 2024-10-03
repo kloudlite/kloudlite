@@ -163,10 +163,10 @@ func (d *domain) ListBYOKCluster(ctx InfraContext, search map[string]repos.Match
 
 	f := repos.Filter{
 		fields.AccountName: ctx.AccountName,
-		"$or": []map[string]any{
-			{fc.BYOKClusterOwnedBy: ctx.UserId},
-			{fc.BYOKClusterOwnedBy: nil},
-		},
+		// "$or": []map[string]any{
+		// 	{fc.BYOKClusterOwnedBy: ctx.UserId},
+		// 	{fc.BYOKClusterOwnedBy: nil},
+		// },
 	}
 
 	pRecords, err := d.byokClusterRepo.FindPaginated(ctx, d.byokClusterRepo.MergeMatchFilters(f, search), pagination)
