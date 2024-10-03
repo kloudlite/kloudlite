@@ -3,11 +3,7 @@ package status
 import (
 	"errors"
 	"fmt"
-
 	"github.com/kloudlite/kl/domain/apiclient"
-
-	"github.com/kloudlite/kl/domain/envclient"
-
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -55,22 +51,5 @@ var Cmd = &cobra.Command{
 			}
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), klFile.DefaultEnv))
 		}
-
-		if envclient.InsideBox() {
-			b := apic.CheckDeviceStatus()
-			avc, err := fc.GetVpnAccountConfig(acc)
-			if err != nil {
-				return
-			}
-
-			fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), avc.DeviceName, func() string {
-				if b {
-					return text.Bold(text.Green(" (Connected) "))
-				} else {
-					return text.Bold(text.Red(" (Disconnected) "))
-				}
-			}()))
-		}
-
 	},
 }

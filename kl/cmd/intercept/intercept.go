@@ -3,9 +3,7 @@ package intercept
 import (
 	"bufio"
 	"fmt"
-	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/domain/apiclient"
-	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/k3s"
@@ -14,7 +12,6 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -123,48 +120,6 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 	}
 
 	if err != nil {
-		return err
-	}
-
-	bc, err := boxpkg.NewClient(cmd, args)
-	if err != nil {
-		return err
-	}
-
-	kt, err := fc.GetKlFile("")
-	if err != nil {
-		return err
-	}
-
-	s, err := envclient.GetWorkspacePath()
-	if err != nil {
-		return err
-	}
-
-	eports := []int{}
-	eports = append(eports, kt.Ports...)
-
-	for _, v := range ports {
-		if !slices.Contains(eports, v.DevicePort) {
-			eports = append(eports, v.DevicePort)
-		}
-	}
-
-	if err := bc.SyncProxy(boxpkg.ProxyConfig{
-		TargetContainerPath: s,
-		ExposedPorts:        eports,
-	}); err != nil {
-		return err
-	}
-
-	p := kt.Ports
-	for _, v := range ports {
-		if !slices.Contains(p, v.DevicePort) {
-			p = append(p, v.DevicePort)
-		}
-	}
-	kt.Ports = p
-	if err = fc.WriteKLFile(*kt); err != nil {
 		return err
 	}
 

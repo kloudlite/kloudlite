@@ -4,7 +4,7 @@ import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/box"
 	"github.com/kloudlite/kl/cmd/clone"
-	"github.com/kloudlite/kl/cmd/expose"
+	"github.com/kloudlite/kl/cmd/connect"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/intercept"
 	"github.com/kloudlite/kl/cmd/k3s"
@@ -50,9 +50,10 @@ func init() {
 	rootCmd.AddCommand(k3s.UpCmd)
 	rootCmd.AddCommand(k3s.DownCmd)
 
-	rootCmd.AddCommand(expose.Command)
-
 	rootCmd.AddCommand(add.Command)
 	rootCmd.AddCommand(status.Cmd)
 	rootCmd.AddCommand(packages.Cmd)
+
+	fileclient.OnlyInsideBox(connect.Command)
+	rootCmd.AddCommand(connect.Command)
 }

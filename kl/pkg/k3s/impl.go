@@ -219,7 +219,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		return fn.NewE(err, "failed to start exec")
 	}
 
-	if err := c.ensureK3sServerIsReady(); err != nil {
+	if err := c.EnsureK3sServerIsReady(); err != nil {
 		return fn.NewE(err, "failed to ensure k3s server is ready")
 	}
 
@@ -247,7 +247,7 @@ func generateConnectionScript(clusterConfig *fileclient.AccountClusterConfig) (s
 	return b.String(), nil
 }
 
-func (c *client) ensureK3sServerIsReady() error {
+func (c *client) EnsureK3sServerIsReady() error {
 	defer spinner.Client.UpdateMessage("ensuring k3s server is ready")()
 
 	pingScript := `
@@ -258,7 +258,7 @@ func (c *client) ensureK3sServerIsReady() error {
 	    echo "100.64.0.1 is reachable!"
 	    break
 	  else
-	    echo "Cannot reach 100.64.0.1 from $POD_NAME, retrying in 0.5 seconds..."
+	    echo "Cannot reach 100.64.0.1, retrying in 0.5 seconds..."
 	    sleep 0.5
 	  fi
 	done
@@ -414,8 +414,8 @@ kubectl apply -f /tmp/service-device-router.yml
 func (c *client) RestartWgProxyContainer() error {
 	defer spinner.Client.UpdateMessage("restarting kloudlite-gateway")()
 	script := `
-kubectl delete pod $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -n kl-gateway
-kubectl delete pod $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -n kl-gateway
+	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick down wg0
+	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick up wg0
 `
 	return c.runScriptInContainer(script)
 }

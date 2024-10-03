@@ -69,18 +69,6 @@ func (c *client) Start() error {
 		return fn.NewE(err)
 	}
 
-	if err = c.SyncProxy(ProxyConfig{
-		ExposedPorts:        c.klfile.Ports,
-		TargetContainerPath: c.cwd,
-	}); err != nil {
-		return fn.NewE(err)
-	}
-
-	// err = c.StartWgContainer()
-	// if err != nil {
-	// 	return fn.NewE(err)
-	// }
-
 	if c.env.SSHPort == 0 {
 		existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
 			Filters: filters.NewArgs(

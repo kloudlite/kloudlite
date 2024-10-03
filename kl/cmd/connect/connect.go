@@ -21,7 +21,17 @@ var Command = &cobra.Command{
 func startWg() error {
 	k3sClient, err := k3s.NewClient()
 	if err != nil {
-		return err
+		return fn.NewE(err)
+	}
+
+	err = fn.ExecNoOutput("wg-quick down kl-workspace-wg")
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	err = fn.ExecNoOutput("wg-quick up kl-workspace-wg")
+	if err != nil {
+		return fn.NewE(err)
 	}
 
 	return k3sClient.RestartWgProxyContainer()
