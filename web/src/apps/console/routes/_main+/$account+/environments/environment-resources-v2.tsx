@@ -1,6 +1,7 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
+import { Chip } from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
@@ -225,14 +226,14 @@ const ListView = ({ items, onAction }: IResource) => {
             className: listClass.title,
           },
           {
-            render: () => 'Cluster',
-            name: 'cluster',
-            className: listClass.item,
-          },
-          {
             render: () => '',
             name: 'flex-post',
             className: listClass.flex,
+          },
+          {
+            render: () => 'Cluster',
+            name: 'cluster',
+            className: 'w-[260px] flex',
           },
           {
             render: () => 'Status',
@@ -258,55 +259,37 @@ const ListView = ({ items, onAction }: IResource) => {
             columns: {
               name: {
                 render: () => (
-                  <ListTitleV2
-                    title={name}
-                    subtitle={id}
-                    avatar={
-                      i.clusterName === '' ? (
-                        <ConsoleAvatar
-                          name={id}
-                          color="none"
-                          isAvatar
-                          icon={<EnvTemplateIconComponent size={20} />}
-                          className="border border-dashed !bg-surface-basic-subdued "
-                        />
-                      ) : (
-                        <ConsoleAvatar
-                          name={id}
-                          color="white"
-                          isAvatar
-                          icon={<EnvIconComponent size={20} />}
-                        />
-                      )
-                    }
-                  />
-                  // <div className="flex flex-row gap-md">
-                  //   <ListTitleV2
-                  //     title={name}
-                  //     subtitle={id}
-                  //     avatar={
-                  //       i.clusterName === '' ? (
-                  //         <ConsoleAvatar
-                  //           name={id}
-                  //           color="none"
-                  //           isAvatar
-                  //           icon={<EnvTemplateIconComponent size={20} />}
-                  //           className="border border-dashed !bg-surface-basic-subdued "
-                  //         />
-                  //       ) : (
-                  //         <ConsoleAvatar
-                  //           name={id}
-                  //           color="white"
-                  //           isAvatar
-                  //           icon={<EnvIconComponent size={20} />}
-                  //         />
-                  //       )
-                  //     }
-                  //   />
-                  //   {i.clusterName === '' && (
-                  //     <Chip item={{ name: 'template' }} label="Template" />
-                  //   )}
-                  // </div>
+                  <div className="flex flex-row gap-lg">
+                    <ListTitleV2
+                      title={name}
+                      subtitle={id}
+                      avatar={
+                        i.clusterName === '' ? (
+                          <ConsoleAvatar
+                            name={id}
+                            color="none"
+                            isAvatar
+                            icon={<EnvTemplateIconComponent size={20} />}
+                            className="border border-dashed !bg-surface-basic-subdued "
+                          />
+                        ) : (
+                          <ConsoleAvatar
+                            name={id}
+                            color="white"
+                            isAvatar
+                            icon={<EnvIconComponent size={20} />}
+                          />
+                        )
+                      }
+                    />
+                    {i.clusterName === '' && (
+                      <Chip
+                        item={{ name: 'template' }}
+                        label="Template"
+                        type="SM"
+                      />
+                    )}
+                  </div>
                 ),
               },
               cluster: {
