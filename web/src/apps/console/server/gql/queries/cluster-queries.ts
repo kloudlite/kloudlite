@@ -10,6 +10,7 @@ import {
   ConsoleDeleteClusterMutationVariables,
   ConsoleGetClusterQuery,
   ConsoleGetClusterQueryVariables,
+  ConsoleGetClusterStatusQuery,
   ConsoleGetKubeConfigQuery,
   ConsoleListAllClustersQuery,
   ConsoleListAllClustersQueryVariables,
@@ -21,6 +22,7 @@ import {
   ConsoleListDnsHostsQueryVariables,
   ConsoleUpdateClusterMutation,
   ConsoleUpdateClusterMutationVariables,
+  ConsoleGetClusterStatusQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
@@ -54,7 +56,7 @@ export const clusterQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListDnsHostsQuery) => {
         return data.infra_listClusters;
       },
-      vars(_: ConsoleListDnsHostsQueryVariables) { },
+      vars(_: ConsoleListDnsHostsQueryVariables) {},
     }
   ),
 
@@ -69,7 +71,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateClusterMutation) =>
         data.infra_createCluster,
-      vars(_: ConsoleCreateClusterMutationVariables) { },
+      vars(_: ConsoleCreateClusterMutationVariables) {},
     }
   ),
   deleteCluster: executor(
@@ -81,7 +83,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteClusterMutation) =>
         data.infra_deleteCluster,
-      vars(_: ConsoleDeleteClusterMutationVariables) { },
+      vars(_: ConsoleDeleteClusterMutationVariables) {},
     }
   ),
   clustersCount: executor(
@@ -94,7 +96,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleClustersCountQuery) => data.infra_listClusters,
-      vars(_: ConsoleClustersCountQueryVariables) { },
+      vars(_: ConsoleClustersCountQueryVariables) {},
     }
   ),
 
@@ -276,7 +278,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListAllClustersQuery) => data.byok_clusters,
-      vars(_: ConsoleListAllClustersQueryVariables) { },
+      vars(_: ConsoleListAllClustersQueryVariables) {},
     }
   ),
   listClusters: executor(
@@ -400,7 +402,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListClustersQuery) => data.infra_listClusters,
-      vars(_: ConsoleListClustersQueryVariables) { },
+      vars(_: ConsoleListClustersQueryVariables) {},
     }
   ),
   getCluster: executor(
@@ -506,7 +508,21 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetClusterQuery) => data.infra_getCluster,
-      vars(_: ConsoleGetClusterQueryVariables) { },
+      vars(_: ConsoleGetClusterQueryVariables) {},
+    }
+  ),
+  getClusterStatus: executor(
+    gql`
+      query Infra_getBYOKCluster($name: String!) {
+        infra_getBYOKCluster(name: $name) {
+          lastOnlineAt
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleGetClusterStatusQuery) =>
+        data.infra_getBYOKCluster,
+      vars(_: ConsoleGetClusterStatusQueryVariables) {},
     }
   ),
   listClusterStatus: executor(
@@ -530,7 +546,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListClusterStatusQuery) =>
         data.infra_listBYOKClusters,
-      vars(_: ConsoleListClusterStatusQueryVariables) { },
+      vars(_: ConsoleListClusterStatusQueryVariables) {},
     }
   ),
   getKubeConfig: executor(
@@ -546,7 +562,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetKubeConfigQuery) => data.infra_getCluster,
-      vars(_: ConsoleGetClusterQueryVariables) { },
+      vars(_: ConsoleGetClusterQueryVariables) {},
     }
   ),
   updateCluster: executor(
@@ -560,7 +576,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateClusterMutation) =>
         data.infra_updateCluster,
-      vars(_: ConsoleUpdateClusterMutationVariables) { },
+      vars(_: ConsoleUpdateClusterMutationVariables) {},
     }
   ),
 });
