@@ -13,14 +13,21 @@ import {
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import { Copy, GearSix, Pause, Play, Trash } from '~/console/components/icons';
+import {
+  Copy,
+  EnvIconComponent,
+  EnvTemplateIconComponent,
+  GearSix,
+  Pause,
+  Play,
+  Trash,
+} from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
 import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import TemplateAvatar from '~/console/components/template-avatar';
 import { findClusterStatus } from '~/console/hooks/use-cluster-status';
 import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
@@ -256,13 +263,50 @@ const ListView = ({ items, onAction }: IResource) => {
                     subtitle={id}
                     avatar={
                       i.clusterName === '' ? (
-                        // <TemplateAvatar />
-                        <TemplateAvatar name="{ }" color="white" />
+                        <ConsoleAvatar
+                          name={id}
+                          color="none"
+                          isAvatar
+                          icon={<EnvTemplateIconComponent size={20} />}
+                          className="border border-dashed !bg-surface-basic-subdued "
+                        />
                       ) : (
-                        <ConsoleAvatar name={id} />
+                        <ConsoleAvatar
+                          name={id}
+                          color="white"
+                          isAvatar
+                          icon={<EnvIconComponent size={20} />}
+                        />
                       )
                     }
                   />
+                  // <div className="flex flex-row gap-md">
+                  //   <ListTitleV2
+                  //     title={name}
+                  //     subtitle={id}
+                  //     avatar={
+                  //       i.clusterName === '' ? (
+                  //         <ConsoleAvatar
+                  //           name={id}
+                  //           color="none"
+                  //           isAvatar
+                  //           icon={<EnvTemplateIconComponent size={20} />}
+                  //           className="border border-dashed !bg-surface-basic-subdued "
+                  //         />
+                  //       ) : (
+                  //         <ConsoleAvatar
+                  //           name={id}
+                  //           color="white"
+                  //           isAvatar
+                  //           icon={<EnvIconComponent size={20} />}
+                  //         />
+                  //       )
+                  //     }
+                  //   />
+                  //   {i.clusterName === '' && (
+                  //     <Chip item={{ name: 'template' }} label="Template" />
+                  //   )}
+                  // </div>
                 ),
               },
               cluster: {

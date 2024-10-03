@@ -15,7 +15,7 @@ export const findClusterStatus = (item?: {
   const timeDifference =
     (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
 
-  return timeDifference <= 2;
+  return timeDifference <= 1;
 };
 
 const useClusterStatus = () => {

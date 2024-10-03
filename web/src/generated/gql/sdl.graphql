@@ -3993,6 +3993,7 @@ input SearchBuilds {
 }
 
 input SearchCluster {
+  allClusters: MatchFilterIn
   cloudProviderName: MatchFilterIn
   isReady: MatchFilterIn
   region: MatchFilterIn

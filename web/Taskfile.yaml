@@ -11,6 +11,7 @@ tasks:
         BASE_URL=dev.kloudlite.io
         COOKIE_DOMAIN=".dev.kloudlite.io"
         GATEWAY_URL="http://gateway-api.kloudlite.svc.cluster.local:3000"
+        export COOKIE_DOMAIN=".dev.kloudlite.io"
         case {{.app}} in
           "auth")
             PORT=4000

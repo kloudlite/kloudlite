@@ -327,6 +327,7 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase =
   | 'Pending';
 
 export type SearchCluster = {
+  allClusters?: InputMaybe<MatchFilterIn>;
   cloudProviderName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
   region?: InputMaybe<MatchFilterIn>;
@@ -2126,6 +2127,7 @@ export type ConsoleGetClusterQuery = {
 };
 
 export type ConsoleListClusterStatusQueryVariables = Exact<{
+  search?: InputMaybe<SearchCluster>;
   pagination?: InputMaybe<CursorPaginationIn>;
 }>;
 

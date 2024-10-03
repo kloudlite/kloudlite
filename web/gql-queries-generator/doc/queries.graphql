@@ -395,8 +395,8 @@ query consoleGetCluster($name: String!) {
   }
 }
 
-query consoleListClusterStatus($pagination: CursorPaginationIn) {
-  infra_listBYOKClusters(pagination: $pagination) {
+query consoleListClusterStatus($search: SearchCluster, $pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(search: $search, pagination: $pagination) {
     edges {
       node {
         lastOnlineAt

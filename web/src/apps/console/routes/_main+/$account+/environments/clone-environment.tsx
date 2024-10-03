@@ -1,5 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
 import { useCallback, useEffect, useState } from 'react';
+import Radio from '~/components/atoms/radio';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
@@ -21,23 +22,6 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 
 type IDialog = IDialogBase<ExtractNodeType<IEnvironments>>;
-
-// const ClusterSelectItem = ({
-//   label,
-//   value,
-// }: {
-//   label: string;
-//   value: string;
-// }) => {
-//   return (
-//     <div>
-//       <div className="flex flex-col">
-//         <div>{label}</div>
-//         <div className="bodySm text-text-soft">{value}</div>
-//       </div>
-//     </div>
-//   );
-// };
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
@@ -84,6 +68,7 @@ const Root = (props: IDialog) => {
     initialValues: {
       name: '',
       displayName: '',
+      radioType: 'compute',
       environmentRoutingMode: false,
       isNameError: false,
       clusterName: '',
@@ -102,7 +87,8 @@ const Root = (props: IDialog) => {
               ? 'public'
               : 'private',
             destinationEnvName: val.name,
-            clusterName: val.clusterName,
+            clusterName:
+              val.radioType === 'template' ? '' : val.clusterName || '',
             sourceEnvName: parseName(props.data),
           });
           if (e) {
@@ -151,25 +137,31 @@ const Root = (props: IDialog) => {
             nameErrorLabel="isNameError"
           />
 
-          <Select
-            label="Select Cluster"
-            size="lg"
-            value={values.clusterName}
-            placeholder="Select a Cluster"
-            options={async () => clusterList}
-            // options={async () => [
-            //   ...((clusterList &&
-            //     clusterList.filter((d) => {
-            //       return d.ready;
-            //     })) ||
-            //     []),
-            // ]}
-            onChange={({ value }) => {
-              handleChange('clusterName')(dummyEvent(value));
+          <Radio.Root
+            direction="horizontal"
+            value={values.radioType}
+            onChange={(value) => {
+              handleChange('radioType')(dummyEvent(value));
             }}
-            error={!!errors.clusterName}
-            message={errors.clusterName}
-          />
+          >
+            <Radio.Item value="compute">Environment</Radio.Item>
+            <Radio.Item value="template">Environment Template</Radio.Item>
+          </Radio.Root>
+
+          {values.radioType === 'compute' && (
+            <Select
+              label="Select Cluster"
+              size="lg"
+              value={values.clusterName}
+              placeholder="Select a Cluster"
+              options={async () => clusterList}
+              onChange={({ value }) => {
+                handleChange('clusterName')(dummyEvent(value));
+              }}
+              error={!!errors.clusterName}
+              message={errors.clusterName}
+            />
+          )}
 
           {/* <Checkbox */}
           {/*   label="Public" */}

@@ -511,8 +511,11 @@ export const clusterQueries = (executor: IExecutor) => ({
   ),
   listClusterStatus: executor(
     gql`
-      query listCluster($pagination: CursorPaginationIn) {
-        infra_listBYOKClusters(pagination: $pagination) {
+      query Infra_listBYOKClusters(
+        $search: SearchCluster
+        $pagination: CursorPaginationIn
+      ) {
+        infra_listBYOKClusters(search: $search, pagination: $pagination) {
           edges {
             node {
               lastOnlineAt
