@@ -1452,6 +1452,7 @@ type SearchCluster struct {
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	Region            *repos.MatchFilter `json:"region,omitempty"`
 	Text              *repos.MatchFilter `json:"text,omitempty"`
+	AllClusters       *repos.MatchFilter `json:"allClusters,omitempty"`
 }
 
 type SearchDomainEntry struct {

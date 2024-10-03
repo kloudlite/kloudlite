@@ -24,6 +24,7 @@ input SearchCluster {
     isReady: MatchFilterIn
     region: MatchFilterIn
     text: MatchFilterIn
+    allClusters: MatchFilterIn
 }
 
 input SearchGlobalVPNs {

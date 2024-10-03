@@ -7967,6 +7967,7 @@ input SearchCluster {
     isReady: MatchFilterIn
     region: MatchFilterIn
     text: MatchFilterIn
+    allClusters: MatchFilterIn
 }
 
 input SearchGlobalVPNs {
@@ -58897,7 +58898,7 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"cloudProviderName", "isReady", "region", "text"}
+	fieldsInOrder := [...]string{"cloudProviderName", "isReady", "region", "text", "allClusters"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -58932,6 +58933,13 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 				return it, err
 			}
 			it.Text = data
+		case "allClusters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allClusters"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllClusters = data
 		}
 	}
 
