@@ -1,0 +1,87 @@
+name: build-images
+
+on:
+  workflow_dispatch:
+
+  push:
+    tags:
+      - "v*"
+
+    paths:
+      - cmd/**
+      - infrastructure-templates/**
+      - terraform/**
+      - ".github/workflows/*"
+      - ".github/actions/**"
+      - Dockerfile
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-images:
+    strategy:
+      fail-fast: true
+      matrix:
+        name:
+          - iac-job
+          - aws-spot-node-terminator
+          - gcp-spot-node-terminator
+
+    runs-on: ubuntu-latest
+    name: build container images 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: setup nix (with cachix)
+        uses: kloudlite/actions/setup-nix-cachix@v1
+        with:
+          flake_lock: ${{ inputs.working_directory }}/flake.lock
+          nix_develop_arguments: ${{ inputs.working_directory }}#default
+
+          cachix_cache_name: ${{ secrets.CACHIX_CACHE_NAME }}
+          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: setup docker
+        uses: kloudlite/actions/setup-docker@v1
+        with:
+          docker_registry: "ghcr.io"
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: generate image tag
+        uses: kloudlite/actions/generate-image-tag@v1
+
+      - name: builds iac job image
+        if: ${{ matrix.name == 'iac-job' }}
+        working-directory: "./"
+        shell: bash
+        run: |
+          task local:build:iac-job Image="ghcr.io/${{ github.repository }}/iac-job:${IMAGE_TAG}"
+
+      - name: builds gcp-spot-node-terminator
+        if: ${{ matrix.name == 'gcp-spot-node-terminator' }}
+        working-directory: ./cmd/gcp-spot-node-terminator
+        shell: bash
+        run: |
+          task container:build-and-push image="ghcr.io/${{github.repository}}/cmd/gcp-spot-node-terminator:$IMAGE_TAG" push=true dockerArgs=""
+
+      - name: builds aws spot node terminator
+        if: ${{ matrix.name == 'aws-spot-node-terminator'}}
+        working-directory: ./cmd/aws-spot-node-terminator
+        shell: bash
+        run: |
+          task container:build-and-push image="ghcr.io/${{ github.repository }}/cmd/aws-spot-node-terminator:$IMAGE_TAG" push=true dockerArgs=""
+
+      # - uses: ./.github/actions/build-container-images
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     cachix_cache_name: ${{ secrets.CACHIX_CACHE_NAME }}
+      #     cachix_auth_token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      #     working_directory: "."
+      #
+      #     builds_iac_job: ${{ matrix.name == 'iac-job' }}
+      #     builds_aws_spot_node_terminator: ${{ matrix.name == 'aws-spot-node-terminator' }}
+      #     builds_gcp_spot_node_terminator: ${{ matrix.name == 'gcp-spot-node-terminator' }}
