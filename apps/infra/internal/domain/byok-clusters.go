@@ -91,7 +91,12 @@ func (d *domain) CreateBYOKCluster(ctx InfraContext, cluster entities.BYOKCluste
 
 	cluster.MessageQueueTopicName = common.SendToAgentSubjectPrefix(ctx.AccountName, cluster.Name)
 
-	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, cluster.GlobalVPN, nil)
+	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, ensureGlobalVPNConnectionArgs{
+		ClusterName:   cluster.Name,
+		GlobalVPNName: cluster.GlobalVPN,
+		DispatchAddr:  nil,
+		Visibility:    cluster.Visibility,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
