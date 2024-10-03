@@ -1,0 +1,85 @@
+name: 'IAC container images'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  cachix_cache_name:
+    description: "cachix cache name"
+    default: ""
+
+  cachix_auth_token:
+    description: "cachix auth token"
+
+  working_directory:
+    description: 'working directory'
+    default: "."
+
+  # builds
+  builds_iac_job:
+    description: "builds IAC job"
+    default: false
+
+  builds_aws_spot_node_terminator:
+    description: "builds AWS Spot Node terminator"
+    default: false
+
+  builds_gcp_spot_node_terminator:
+    description: "builds GCP Spot Node terminator"
+    default: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: setup ENV variables
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |+
+        dir=${{ inputs.working_directory }}
+        if [ "$(basename $dir)" != "." ]; then
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}/$(basename $dir)" | tee -a $GITHUB_ENV | tee -a $GITHUB_OUTPUT
+        else
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}" | tee -a $GITHUB_ENV | tee -a $GITHUB_OUTPUT
+        fi
+
+    - name: setup nix (with cachix)
+      uses: kloudlite/actions/setup-nix-cachix@v1
+      with:
+        flake_lock: ${{ inputs.working_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.working_directory }}#default"
+
+        cachix_cache_name: ${{ inputs.cachix_cache_name }}
+        cachix_auth_token: ${{ inputs.cachix_auth_token }}
+
+    - name: setup docker
+      uses: kloudlite/actions/setup-docker@v1
+      with:
+        docker_registry: "ghcr.io"
+        docker_username: ${{ github.actor }}
+        docker_password: ${{ inputs.github_token }}
+
+    - name: generate image tag
+      uses: kloudlite/actions/generate-image-tag@v1
+
+    - name: builds iac job image
+      if: ${{ inputs.builds_iac_job == 'true' }}
+      working-directory: ${{ inputs.working_directory }}
+      shell: bash
+      run: |
+        task local:build:iac-job Image="${IMAGE_REPOSITORY_PREFIX}/iac-job:$IMAGE_TAG"
+        # task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/websocket-server:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: builds aws-spot-node-terminator
+    #   if: ${{ inputs.builds_aws_spot_node_terminator == 'true' }}
+    #   working-directory: ${{ inputs.working_directory }}/cmd/aws-spot-node-terminator
+    #   shell: bash
+    #   run: |
+    #     task local:build:iac-job Image="${IMAGE_REPOSITORY_PREFIX}/iac-job:$IMAGE_TAG"
+
+    - name: builds gcp-spot-node-terminator
+      if: ${{ inputs.builds_gcp_spot_node_terminator == 'true' }}
+      working-directory: ${{ inputs.working_directory }}/cmd/gcp-spot-node-terminator
+      shell: bash
+      run: |
+        task container:build-and-push image="${IMAGE_REPOSITORY_PREFIX}/iac-job:$IMAGE_TAG" push=true dockerArgs=""
