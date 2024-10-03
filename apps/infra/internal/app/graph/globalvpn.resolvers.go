@@ -6,8 +6,9 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -65,5 +66,7 @@ func (r *Resolver) GlobalVPN() generated.GlobalVPNResolver { return &globalVPNRe
 // GlobalVPNIn returns generated.GlobalVPNInResolver implementation.
 func (r *Resolver) GlobalVPNIn() generated.GlobalVPNInResolver { return &globalVPNInResolver{r} }
 
-type globalVPNResolver struct{ *Resolver }
-type globalVPNInResolver struct{ *Resolver }
+type (
+	globalVPNResolver   struct{ *Resolver }
+	globalVPNInResolver struct{ *Resolver }
+)
