@@ -393,14 +393,27 @@ func (d *domain) deleteGlobalVPNConnection(ctx InfraContext, clusterName string,
 }
 
 func (d *domain) EnsureGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string, dispatchAddr *entities.DispatchAddr) (*entities.GlobalVPNConnection, error) {
-	return d.ensureGlobalVPNConnection(ctx, clusterName, groupName, dispatchAddr)
+	// return d.ensureGlobalVPNConnection(ctx, clusterName, groupName, dispatchAddr)
+	return d.ensureGlobalVPNConnection(ctx, ensureGlobalVPNConnectionArgs{
+		ClusterName:   clusterName,
+		GlobalVPNName: groupName,
+		DispatchAddr:  dispatchAddr,
+		Visibility:    entities.ClusterVisbility{},
+	})
 }
 
-func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string, dispatchAddr *entities.DispatchAddr) (*entities.GlobalVPNConnection, error) {
+type ensureGlobalVPNConnectionArgs struct {
+	ClusterName   string
+	GlobalVPNName string
+	DispatchAddr  *entities.DispatchAddr
+	Visibility    entities.ClusterVisbility
+}
+
+func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, args ensureGlobalVPNConnectionArgs) (*entities.GlobalVPNConnection, error) {
 	gvpnConn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
-		fields.ClusterName:  clusterName,
-		fields.MetadataName: groupName,
+		fields.ClusterName:  args.ClusterName,
+		fields.MetadataName: args.GlobalVPNName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -414,19 +427,19 @@ func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string,
 	}
 
 	gvpnGateway := networkingv1.Gateway{ObjectMeta: metav1.ObjectMeta{
-		Name: groupName,
-		// Name: fmt.Sprintf("%s-%s", ctx.AccountName, groupName),
+		Name: args.GlobalVPNName,
 		// Name: fmt.Sprintf("%s-%s", ctx.AccountName, groupName),
 	}}
 	gvpnGateway.EnsureGVK()
 
 	return d.createGlobalVPNConnection(ctx, entities.GlobalVPNConnection{
 		Gateway:          gvpnGateway,
-		GlobalVPNName:    groupName,
-		ResourceMetadata: common.ResourceMetadata{DisplayName: groupName, CreatedBy: common.CreatedOrUpdatedByKloudlite, LastUpdatedBy: common.CreatedOrUpdatedByKloudlite},
+		GlobalVPNName:    args.GlobalVPNName,
+		ResourceMetadata: common.ResourceMetadata{DisplayName: args.GlobalVPNName, CreatedBy: common.CreatedOrUpdatedByKloudlite, LastUpdatedBy: common.CreatedOrUpdatedByKloudlite},
 		AccountName:      ctx.AccountName,
-		ClusterName:      clusterName,
-		DispatchAddr:     dispatchAddr,
+		ClusterName:      args.ClusterName,
+		DispatchAddr:     args.DispatchAddr,
+		Visibility:       args.Visibility,
 		ParsedWgParams:   nil,
 	})
 }
