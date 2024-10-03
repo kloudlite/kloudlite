@@ -2126,6 +2126,14 @@ export type ConsoleGetClusterQuery = {
   };
 };
 
+export type ConsoleGetClusterStatusQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetClusterStatusQuery = {
+  infra_getBYOKCluster?: { lastOnlineAt?: any };
+};
+
 export type ConsoleListClusterStatusQueryVariables = Exact<{
   search?: InputMaybe<SearchCluster>;
   pagination?: InputMaybe<CursorPaginationIn>;

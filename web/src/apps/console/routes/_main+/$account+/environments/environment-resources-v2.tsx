@@ -15,6 +15,8 @@ import {
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import {
+  CircleFill,
+  CircleNotch,
   Copy,
   EnvIconComponent,
   EnvTemplateIconComponent,
@@ -29,8 +31,7 @@ import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import { findClusterStatus } from '~/console/hooks/use-cluster-status';
-import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
+import { findClusterStatusv3 } from '~/console/hooks/use-cluster-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
@@ -43,6 +44,7 @@ import {
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { useClusterStatusV3 } from '~/console/hooks/use-cluster-status-v3';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -202,18 +204,18 @@ const GridView = ({ items = [], onAction }: IResource) => {
 
 const ListView = ({ items, onAction }: IResource) => {
   const { account } = useParams();
-  const { clusters } = useClusterStatusV2();
+  // const { clusters } = useClusterStatusV2();
+  const { clusters: clusterStatus } = useClusterStatusV3({
+    clusterNames: items.map((i) => i.clusterName),
+  });
 
-  // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
-  //   Record<string, boolean>
-  // >({});
-  // useEffect(() => {
-  //   const states: Record<string, boolean> = {};
-  //   Object.entries(clusters).forEach(([key, value]) => {
-  //     states[key] = findClusterStatus(value);
-  //   });
-  //   setClusterOnlineStatus(states);
-  // }, [clusters]);
+  // useDebounce(
+  //   () => {
+  //     console.log('nayak', clusterStatus);
+  //   },
+  //   100,
+  //   [clusterStatus]
+  // );
 
   return (
     <ListV2.Root
@@ -253,7 +255,10 @@ const ListView = ({ items, onAction }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          const isClusterOnline = findClusterStatus(clusters[i.clusterName]);
+          // const isClusterOnline = findClusterStatus(clusters[i.clusterName]);
+          const isClusterOnlinev3 = findClusterStatusv3(
+            clusterStatus[i.clusterName]
+          );
 
           return {
             columns: {
@@ -314,12 +319,25 @@ const ListView = ({ items, onAction }: IResource) => {
                     return <Badge type="neutral">Archived</Badge>;
                   }
 
-                  if (!isClusterOnline) {
-                    return <Badge type="warning">Cluster Offline</Badge>;
-                  }
-
                   if (i.spec?.suspend) {
                     return <Badge type="neutral">Suspended</Badge>;
+                  }
+
+                  if (clusterStatus[i.clusterName] === undefined) {
+                    return (
+                      <div className="cursor-pointer w-fit">
+                        <span className="animate-spin relative flex items-center justify-center text-text-warning">
+                          <CircleNotch size={12} />
+                          <span className="absolute">
+                            <CircleFill size={8} />
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (!isClusterOnlinev3) {
+                    return <Badge type="warning">Cluster Offline</Badge>;
                   }
 
                   return <SyncStatusV2 item={i} />;
@@ -338,7 +356,7 @@ const ListView = ({ items, onAction }: IResource) => {
                   <ExtraButton
                     item={i}
                     onAction={onAction}
-                    isClusterOnline={isClusterOnline}
+                    isClusterOnline={isClusterOnlinev3}
                   />
                 ),
               },
@@ -380,9 +398,10 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
         throw errors[0];
       }
       toast.success(
-        `${suspend
-          ? 'Environment suspended successfully'
-          : 'Environment resumed successfully'
+        `${
+          suspend
+            ? 'Environment suspended successfully'
+            : 'Environment resumed successfully'
         }`
       );
       reloadPage();

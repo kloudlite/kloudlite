@@ -21,7 +21,7 @@ type IClusterMap = { [key: string]: ExtractNodeType<IClustersStatus> };
 const ClusterStatusContext = createContext<{
   clusters: IClusterMap;
   setClusters: Dispatch<SetStateAction<IClusterMap>>;
-}>({ clusters: {}, setClusters: () => { } });
+}>({ clusters: {}, setClusters: () => {} });
 
 const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
   const [clusters, setClusters] = useState<IClusterMap>({});
