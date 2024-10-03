@@ -908,10 +908,10 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 	f := repos.Filter{
 		fields.AccountName:       ctx.AccountName,
 		fields.MetadataNamespace: accNs,
-		"$or": []map[string]any{
-			{fc.ClusterOwnedBy: ctx.UserId},
-			{fc.ClusterOwnedBy: nil},
-		},
+		// "$or": []map[string]any{
+		// 	{fc.ClusterOwnedBy: ctx.UserId},
+		// 	{fc.ClusterOwnedBy: nil},
+		// },
 	}
 
 	pr, err := d.clusterRepo.FindPaginated(ctx, d.clusterRepo.MergeMatchFilters(f, mf), pagination)
