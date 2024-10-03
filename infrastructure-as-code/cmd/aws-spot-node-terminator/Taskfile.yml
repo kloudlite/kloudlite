@@ -2,17 +2,16 @@ version: 3
 
 tasks:
   container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: 'var Image must have a value'
+    requires:
+      vars:
+        - image
     vars:
-      Push: true
-      DockerArgs: ""
+      push: '{{ .push | default "true" }}'
     cmds:
-      - docker build -t {{.Image}} . {{.DockerArgs}}
+      - docker build -t {{.image}} . {{.dockerArgs}}
       - |+
-        if [ "{{.Push}}" == "true" ]; then
-          docker push {{.Image}}
+        if [ "{{.push}}" == "true" ]; then
+          docker push {{.image}}
         fi
 
   local-build:
