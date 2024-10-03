@@ -77,7 +77,7 @@ RUN cat > /etc/motd <<'EOF'
 Welcome to KloudLite's Development Environment
 EOF
 
-COPY .bashrc .profile .zshrc aliasrc /tmp/
+COPY .bashrc .profile .zshrc .check-online aliasrc /tmp/
 
 RUN chsh -s /bin/zsh kl
 

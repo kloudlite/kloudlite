@@ -1,5 +1,3 @@
-#!/bin/zsh
-
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
@@ -39,22 +37,44 @@ if [[ -f $ZSH_HIGHLIGHT_PATH ]]; then
   source $ZSH_HIGHLIGHT_PATH
 fi
 
+function update_rprompt {
+ [ -f /tmp/kl/online.status ] || return
+ online_status=$(tail -n 1 /tmp/kl/online.status)
+ if [ "$online_status" = "online" ]; then
+  #RPROMPT="%F{green}online"
+  RPROMPT=""
+ else
+  RPROMPT="%F{red}%Boffline%b"
+ fi
+ zle && zle reset-prompt
+}
+
+autoload -U add-zsh-hook
+add-zsh-hook precmd update_rprompt
+
+TRAPALRM() {
+    update_rprompt
+}
+
 precmd() {
+ update_rprompt
   if [ -z "$KL_HASH_FILE" ]; then
     return
   fi
-
-	chash=$(cat $KL_HASH_FILE | jq '.hash' -r)
-	ohash=$(cat /tmp/hash)
-	if [ "$chash" != "$ohash" ]; then
-		dirtyPrefix="(needs-restart)"
-		cprefix="$(echo $PURE_PROMPT_SYMBOL | awk '{print $1}')"
-		if [ "$cprefix" != "$dirtyPrefix" ]; then
-			PURE_PROMPT_SYMBOL="$dirtyPrefix $PURE_PROMPT_SYMBOL"
-		fi
-	else
-		PURE_PROMPT_SYMBOL=${PURE_PROMPT_SYMBOL#"$dirtyPrefix "}
-	fi
+ chash=$(cat $KL_HASH_FILE | jq '.hash' -r)
+ ohash=$(cat /tmp/hash)
+ if [ "$chash" != "$ohash" ]; then
+  dirtyPrefix="(needs-restart)"
+  cprefix="$(echo $PURE_PROMPT_SYMBOL | awk '{print $1}')"
+  if [ "$cprefix" != "$dirtyPrefix" ]; then
+   PURE_PROMPT_SYMBOL="$dirtyPrefix $PURE_PROMPT_SYMBOL"
+  fi
+ else
+  PURE_PROMPT_SYMBOL=${PURE_PROMPT_SYMBOL#"$dirtyPrefix "}
+ fi
 }
+
+TMOUT=1
+
 # go to workspace
 cd /workspace
