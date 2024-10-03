@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -382,6 +383,16 @@ func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.Sea
 		if search.Text != nil {
 			filter[fields.MetadataName] = *search.Text
 		}
+
+		if search.AllClusters == nil {
+			filter[fc.ClusterOwnedBy] = repos.MatchFilter{
+				MatchType: repos.MatchTypeArray,
+				Array: []any{
+					ictx.UserId,
+					nil,
+				},
+			}
+		}
 	}
 
 	pClusters, err := r.Domain.ListClusters(ictx, filter, *pagination)
@@ -418,6 +429,16 @@ func (r *queryResolver) InfraListBYOKClusters(ctx context.Context, search *model
 	if search != nil {
 		if search.Text != nil {
 			filter[fields.MetadataName] = *search.Text
+		}
+	}
+
+	if search == nil || search.AllClusters == nil {
+		filter[fc.ClusterOwnedBy] = repos.MatchFilter{
+			MatchType: repos.MatchTypeArray,
+			Array: []any{
+				ictx.UserId,
+				nil,
+			},
 		}
 	}
 
