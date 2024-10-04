@@ -19,7 +19,18 @@ metadata:
   name: kl-gateway
 EOF
 
+
 kubectl apply -f /tmp/namespace.yml
+
+
+cat > /tmp/kl-ns.yml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite
+EOF
+
+kubectl apply -f /tmp/kl-ns.yml
 
 cat > /tmp/secrets.yml <<EOF
 apiVersion: v1
@@ -69,7 +80,6 @@ EOF
 kubectl apply -f /tmp/service.yml
 
 kubectl apply -f {{.InstallCommand.CRDsURL}} --server-side
-kubectl create ns kloudlite
 
 cat > /tmp/helm-chart.yml <<EOF
 apiVersion: helm.cattle.io/v1
@@ -104,14 +114,16 @@ EOF
 
 kubectl apply -f /tmp/helm-chart.yml
 
-checksum=$(kubectl get secret/include-wg-interfaces -n kl-gateway -o jsonpath='{.data.wg-extra\.conf}' | base64 -d |md5sum)
-cat > /tmp/patch.yml <<EOF
-spec:
-  template:
-    metadata:
-      annotations:
-        kloudlite.io/checksum.include-wg-interfaces: "$checksum"
-EOF
-kubectl patch deployment deploy/default -n kl-gateway --patch-file /tmp/patch.yml
+{{/*checksum=$(kubectl get secret/include-wg-interfaces -n kl-gateway -o jsonpath='{.data.wg-extra\.conf}' | base64 -d |md5sum)*/}}
+{{/*cat > /tmp/patch.yml <<EOF*/}}
+{{/*spec:*/}}
+{{/*  template:*/}}
+{{/*    metadata:*/}}
+{{/*      annotations:*/}}
+{{/*        kloudlite.io/checksum.include-wg-interfaces: "$checksum"*/}}
+{{/*EOF*/}}
+{{/*kubectl patch deploy/default -n kl-gateway --patch-file /tmp/patch.yml*/}}
+
+kubectl proxy --address 0.0.0.0 --port 8080 --accept-hosts '.*' &
 
 {{- end }}

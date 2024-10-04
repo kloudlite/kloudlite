@@ -16,7 +16,7 @@ const (
 	SocatImage                  = "ghcr.io/kloudlite/hub/socat:latest"
 	KLDNS                       = "100.64.0.1"
 	InterceptWorkspaceServiceIp = "172.18.0.3"
-	HostIp                      = "172.18.0.2"
+	K3sServerIp                 = "172.18.0.2"
 )
 
 func GetWireguardImageName() string {

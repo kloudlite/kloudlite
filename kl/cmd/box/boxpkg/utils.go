@@ -277,7 +277,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 		ExposedPorts: nat.PortSet{nat.Port(fmt.Sprintf("%d/tcp", sshPort)): {}},
 	}, &container.HostConfig{
 		ExtraHosts: []string{
-			fmt.Sprintf("k3s-cluster.local:%s", constants.HostIp),
+			fmt.Sprintf("k3s-cluster.local:%s", constants.K3sServerIp),
 		},
 		Privileged:  true,
 		NetworkMode: "kloudlite",
@@ -836,7 +836,7 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 					if len(l) > 8 {
 						l = l[8:]
 					}
-					fn.Log(l)
+					fn.Log(text.Blue("[box]"), l)
 				}
 			}
 		}()

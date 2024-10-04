@@ -1,6 +1,7 @@
 package k3s
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	_ "embed"
@@ -18,9 +19,7 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
-	"io"
 	"os"
-	"strings"
 	"text/template"
 )
 
@@ -32,6 +31,7 @@ const (
 var startupScript string
 
 func (c *client) CreateClustersAccounts(accountName string) error {
+	defer spinner.Client.UpdateMessage("setting up cluster")()
 	if err := c.EnsureImage(constants.GetK3SImageName()); err != nil {
 		return fn.NewE(err)
 	}
@@ -98,7 +98,6 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 	}
 
 	createdConatiner := container.CreateResponse{}
-
 	if flags.IsDev() {
 		createdConatiner, err = c.c.ContainerCreate(context.Background(), &container.Config{
 			Labels: map[string]string{
@@ -141,7 +140,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				"kloudlite": {
 					IPAMConfig: &network.EndpointIPAMConfig{
-						IPv4Address: constants.HostIp,
+						IPv4Address: constants.K3sServerIp,
 					},
 				},
 			},
@@ -186,7 +185,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				"kloudlite": {
 					IPAMConfig: &network.EndpointIPAMConfig{
-						IPv4Address: constants.HostIp,
+						IPv4Address: constants.K3sServerIp,
 					},
 				},
 			},
@@ -205,28 +204,16 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 	if err != nil {
 		return fn.NewE(err, "failed to generate connection script")
 	}
-	execConfig := container.ExecOptions{
-		Cmd: []string{"sh", "-c", script},
-	}
 
-	resp, err := c.c.ContainerExecCreate(context.Background(), createdConatiner.ID, execConfig)
-	if err != nil {
-		return fn.NewE(err, "failed to create exec")
-	}
-
-	err = c.c.ContainerExecStart(context.Background(), resp.ID, container.ExecStartOptions{})
-	if err != nil {
-		return fn.NewE(err, "failed to start exec")
-	}
-
-	if err := c.EnsureK3sServerIsReady(); err != nil {
-		return fn.NewE(err, "failed to ensure k3s server is ready")
+	if err = c.runScriptInContainer(script); err != nil {
+		return fn.NewE(err, "failed to run script")
 	}
 
 	return nil
 }
 
 func generateConnectionScript(clusterConfig *fileclient.AccountClusterConfig) (string, error) {
+	defer spinner.Client.UpdateMessage("generating connection script")()
 	t := template.New("connectionScript")
 
 	p, err := t.Parse(startupScript)
@@ -258,7 +245,7 @@ func (c *client) EnsureK3sServerIsReady() error {
 	    echo "100.64.0.1 is reachable!"
 	    break
 	  else
-	    echo "Cannot reach 100.64.0.1, retrying in 0.5 seconds..."
+	    echo "waiting for cluster to be ready..."
 	    sleep 0.5
 	  fi
 	done
@@ -275,6 +262,7 @@ chmod +x /tmp/ping.sh
 }
 
 func (c *client) imageExists(imageName string) (bool, error) {
+	defer spinner.Client.UpdateMessage(fmt.Sprintf("checking image %s", imageName))()
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("reference", imageName)
 	images, err := c.c.ImageList(context.Background(), image.ListOptions{
@@ -419,10 +407,14 @@ kubectl delete pod/$(kubectl get pods -n kl-gateway | tail -n +2 | awk '{print $
 	if err := c.runScriptInContainer(script); err != nil {
 		return err
 	}
-	return c.EnsureK3sServerIsReady()
+
+	return nil
 }
 
 func (c *client) runScriptInContainer(script string) error {
+	defer spinner.Client.UpdateMessage("setting up cluster, this may take a while")()
+
+	f := spinner.Client.UpdateMessage("ensuring k3s server is ready")
 	existingContainers, err := c.c.ContainerList(context.Background(), container.ListOptions{
 		All: true,
 		Filters: filters.NewArgs(
@@ -430,6 +422,9 @@ func (c *client) runScriptInContainer(script string) error {
 			filters.Arg("label", fmt.Sprintf("%s=%s", "kl-k3s", "true")),
 		),
 	})
+
+	f()
+
 	if err != nil {
 		return fn.Errorf("failed to list containers: %w", err)
 	}
@@ -438,31 +433,70 @@ func (c *client) runScriptInContainer(script string) error {
 		return fn.Errorf("no k3s container found")
 	}
 
+	f = spinner.Client.UpdateMessage("setting up cluster resources, please wait")
 	execID, err := c.c.ContainerExecCreate(context.Background(), existingContainers[0].ID, container.ExecOptions{
 		Cmd:          []string{"/bin/sh", "-c", script},
 		AttachStdout: true,
 		AttachStderr: true,
 	})
+
 	if err != nil {
-		return fn.Errorf("failed to create exec instance for container: %w", err)
+		return fn.NewE(err, "failed to create exec instance for container")
 	}
 
 	resp, err := c.c.ContainerExecAttach(context.Background(), execID.ID, container.ExecStartOptions{
 		Detach: false,
 	})
+	f()
+
 	if err != nil {
-		return fn.Errorf("failed to attach to exec instance: %w", err)
+
+		res, err2 := c.c.ContainerLogs(context.Background(), existingContainers[0].ID, container.LogsOptions{
+			ShowStdout: true,
+			ShowStderr: true,
+			Follow:     false,
+		})
+
+		if err2 != nil {
+			return fn.NewE(err2, "failed to attach to exec instance 1")
+		}
+
+		defer res.Close()
+
+		scanner := bufio.NewScanner(res)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if len(line) > 8 {
+				line = line[8:]
+			}
+			fn.Log(text.Yellow("[stderr]"), line)
+		}
+
+		return fn.NewE(err, "failed to attach to exec instance 2")
 	}
 	defer resp.Close()
 
-	output := new(strings.Builder)
-	if _, err := io.Copy(output, resp.Reader); err != nil {
-		return fn.Errorf("failed to read exec output: %w", err)
+	if flags.IsVerbose {
+
+		scanner := bufio.NewScanner(resp.Reader)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if len(line) > 8 {
+				line = line[8:]
+			}
+			fn.Log(text.Blue("[stdout]"), line)
+		}
+
+	} else {
+		//output := new(strings.Builder)
+		//if _, err := io.Copy(output, resp.Reader); err != nil {
+		//	return fn.Errorf("failed to read exec output: %w", err)
+		//}
 	}
 
 	execInspect, err := c.c.ContainerExecInspect(context.Background(), execID.ID)
 	if err != nil {
-		return fn.Errorf("failed to inspect exec instance: %w", err)
+		return fn.NewE(err, "failed to inspect exec")
 	}
 
 	if execInspect.ExitCode != 0 {
