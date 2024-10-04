@@ -168,6 +168,10 @@ func (c *client) restartContainer(path string) error {
 		return fn.NewE(err, "failed to list containers")
 	}
 
+	if err := os.RemoveAll("/tmp/kl"); err != nil {
+		return fn.NewE(err)
+	}
+
 	timeOut := 0
 	if err := c.cli.ContainerRestart(context.Background(), existingContainers[0].ID, container.StopOptions{
 		Signal:  "SIGKILL",

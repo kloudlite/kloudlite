@@ -18,7 +18,7 @@ RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VER
 
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 
-RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git bzip2 wireguard-tools
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git bzip2 wireguard-tools iputils-ping
 
 RUN mkdir /var/run/sshd
 

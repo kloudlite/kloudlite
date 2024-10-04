@@ -413,12 +413,8 @@ kubectl apply -f /tmp/service-device-router.yml
 
 func (c *client) RestartWgProxyContainer() error {
 	defer spinner.Client.UpdateMessage("restarting kloudlite-gateway")()
-	//	script := `
-	//	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick down wg0
-	//	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick up wg0
-	//`
 	script := `
-kubectl delete pod -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}')
+kubectl delete pod/$(kubectl get pods -n kl-gateway | tail -n +2 | awk '{print $1}') -n kl-gateway --grace-period 1
 `
 	if err := c.runScriptInContainer(script); err != nil {
 		return err
