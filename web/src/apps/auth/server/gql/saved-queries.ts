@@ -3,6 +3,8 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 import { IGQLServerProps } from '~/root/lib/types/common';
 import {
   AuthAddOauthCredientialsMutation,
+  AuthCheckOauthEnabledQuery,
+  AuthCheckOauthEnabledQueryVariables,
   AuthLoginMutation,
   AuthLoginMutationVariables,
   AuthLoginPageInitUrlsQuery,
@@ -13,20 +15,18 @@ import {
   AuthOauthLoginMutationVariables,
   AuthRequestResetPasswordMutation,
   AuthRequestResetPasswordMutationVariables,
+  AuthResendVerificationEmailMutation,
+  AuthResendVerificationEmailMutationVariables,
   AuthResetPasswordMutation,
   AuthResetPasswordMutationVariables,
+  AuthSetRemoteAuthHeaderMutation,
+  AuthSetRemoteAuthHeaderMutationVariables,
   AuthSignUpWithEmailMutation,
   AuthSignUpWithEmailMutationVariables,
   AuthVerifyEmailMutation,
   AuthVerifyEmailMutationVariables,
   AuthWhoAmIQuery,
   AuthWhoAmIQueryVariables,
-  AuthCheckOauthEnabledQuery,
-  AuthCheckOauthEnabledQueryVariables,
-  AuthSetRemoteAuthHeaderMutation,
-  AuthSetRemoteAuthHeaderMutationVariables,
-  AuthResendVerificationEmailMutation,
-  AuthResendVerificationEmailMutationVariables,
 } from '~/root/src/generated/gql/server';
 import { cliQueries } from './cli-queries';
 
@@ -48,7 +48,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
         transformer(data: AuthSetRemoteAuthHeaderMutation) {
           return data.auth_setRemoteAuthHeader;
         },
-        vars(_: AuthSetRemoteAuthHeaderMutationVariables) {},
+        vars(_: AuthSetRemoteAuthHeaderMutationVariables) { },
       }
     ),
 
@@ -65,7 +65,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
         transformer(data: AuthCheckOauthEnabledQuery) {
           return data.auth_listOAuthProviders;
         },
-        vars(_: AuthCheckOauthEnabledQueryVariables) {},
+        vars(_: AuthCheckOauthEnabledQueryVariables) { },
       }
     ),
     addOauthCredientials: executor(
@@ -78,20 +78,23 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
         transformer(data: AuthAddOauthCredientialsMutation) {
           return data.oAuth_addLogin;
         },
-        vars(_: AuthOauthLoginMutationVariables) {},
+        vars(_: AuthOauthLoginMutationVariables) { },
       }
     ),
 
     requestResetPassword: executor(
       gql`
-        mutation Auth_requestResetPassword($email: String!) {
-          auth_requestResetPassword(email: $email)
+        mutation Auth_requestResetPassword(
+          $email: String!
+          $captchaToken: String!
+        ) {
+          auth_requestResetPassword(email: $email, captchaToken: $captchaToken)
         }
       `,
       {
         transformer: (data: AuthRequestResetPasswordMutation) =>
           data.auth_requestResetPassword,
-        vars(_: AuthRequestResetPasswordMutationVariables) {},
+        vars(_: AuthRequestResetPasswordMutationVariables) { },
       }
     ),
 
@@ -107,7 +110,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       {
         transformer: (data: AuthResetPasswordMutation) =>
           data.auth_resetPassword,
-        vars(_: AuthResetPasswordMutationVariables) {},
+        vars(_: AuthResetPasswordMutationVariables) { },
       }
     ),
 
@@ -122,7 +125,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       {
         transformer: (data: AuthOauthLoginMutation) => data.oAuth_login,
 
-        vars(_: AuthOauthLoginMutationVariables) {},
+        vars(_: AuthOauthLoginMutationVariables) { },
       }
     ),
 
@@ -136,7 +139,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       `,
       {
         transformer: (data: AuthVerifyEmailMutation) => data.auth_verifyEmail,
-        vars(_: AuthVerifyEmailMutationVariables) {},
+        vars(_: AuthVerifyEmailMutationVariables) { },
       }
     ),
 
@@ -149,7 +152,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       {
         transformer: (data: AuthResendVerificationEmailMutation) =>
           data.auth_resendVerificationEmail,
-        vars(_: AuthResendVerificationEmailMutationVariables) {},
+        vars(_: AuthResendVerificationEmailMutationVariables) { },
       }
     ),
 
@@ -163,7 +166,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       `,
       {
         transformer: (data: AuthLoginPageInitUrlsQuery) => data,
-        vars(_: AuthLoginPageInitUrlsQueryVariables) {},
+        vars(_: AuthLoginPageInitUrlsQueryVariables) { },
       }
     ),
 
@@ -177,7 +180,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       `,
       {
         transformer: (data: AuthLoginMutation) => data.auth_login,
-        vars(_: AuthLoginMutationVariables) {},
+        vars(_: AuthLoginMutationVariables) { },
       }
     ),
 
@@ -189,7 +192,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       `,
       {
         transformer: (data: AuthLogoutMutation) => data.auth_logout,
-        vars(_: AuthLogoutMutationVariables) {},
+        vars(_: AuthLogoutMutationVariables) { },
       }
     ),
 
@@ -197,17 +200,23 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       gql`
         mutation Auth_signup(
           $name: String!
-          $password: String!
           $email: String!
+          $password: String!
+          $captchaToken: String!
         ) {
-          auth_signup(name: $name, password: $password, email: $email) {
+          auth_signup(
+            name: $name
+            email: $email
+            password: $password
+            captchaToken: $captchaToken
+          ) {
             id
           }
         }
       `,
       {
         transformer: (data: AuthSignUpWithEmailMutation) => data.auth_signup,
-        vars(_: AuthSignUpWithEmailMutationVariables) {},
+        vars(_: AuthSignUpWithEmailMutationVariables) { },
       }
     ),
 
@@ -225,7 +234,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       `,
       {
         transformer: (data: AuthWhoAmIQuery) => data.auth_me,
-        vars(_: AuthWhoAmIQueryVariables) {},
+        vars(_: AuthWhoAmIQueryVariables) { },
       }
     ),
   };

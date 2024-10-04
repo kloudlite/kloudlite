@@ -1,11 +1,11 @@
 import { redirect } from 'react-router-dom';
 import { IExtRemixCtx, MapType } from '../types/common';
 
-const withContext = (
+const withContext = <T = any>(
   ctx: IExtRemixCtx,
-  props: MapType<any>,
+  props: T,
   headers: MapType = {}
-) => {
+): T => {
   let _props = props;
 
   if (ctx.authProps) {
@@ -23,7 +23,7 @@ const withContext = (
       'set-cookie': [...(ctx.request.cookies || [])].join('; '),
       ...headers,
     },
-  });
+  }) as T;
 };
 
 export const redirectWithContext = (

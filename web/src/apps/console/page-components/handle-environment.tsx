@@ -1,7 +1,10 @@
+/* eslint-disable no-nested-ternary */
 import { useCallback, useEffect, useState } from 'react';
+import Radio from '~/components/atoms/radio';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
+import { cn } from '~/components/utils';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -14,18 +17,28 @@ import { IEnvironment } from '../server/gql/queries/environment-queries';
 import { parseName, parseNodes } from '../server/r-utils/common';
 import { DIALOG_TYPE } from '../utils/commons';
 
-const ClusterSelectItem = ({
+export const ClusterSelectItem = ({
   label,
   value,
+  disabled,
 }: {
   label: string;
   value: string;
+  disabled?: boolean;
 }) => {
   return (
-    <div>
+    <div className={cn({ 'cursor-default': !!disabled })}>
       <div className="flex flex-col">
-        <div>{label}</div>
-        <div className="bodySm text-text-soft">{value}</div>
+        <div className={disabled ? 'text-text-disabled' : 'text-text-default'}>
+          {label}
+        </div>
+        <div
+          className={cn('bodySm text-text-default', {
+            'text-text-disabled': !!disabled,
+          })}
+        >
+          {value}
+        </div>
       </div>
     </div>
   );
@@ -53,8 +66,13 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
         label: c.displayName,
         value: parseName(c),
         ready: findClusterStatus(c),
+        disabled: !findClusterStatus(c),
         render: () => (
-          <ClusterSelectItem label={c.displayName} value={parseName(c)} />
+          <ClusterSelectItem
+            label={c.displayName}
+            value={parseName(c)}
+            disabled={!findClusterStatus(c)}
+          />
         ),
       }));
       setClusterList(data);
@@ -71,7 +89,7 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
     Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
-      clusterName: Yup.string().required(),
+      // clusterName: Yup.string().required(),
     })
   );
 
@@ -88,6 +106,7 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
       name: '',
       displayName: '',
       clusterName: '',
+      radioType: 'compute',
       environmentRoutingMode: false,
       isNameError: false,
     },
@@ -101,7 +120,8 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
               metadata: {
                 name: val.name,
               },
-              clusterName: val.clusterName || '',
+              clusterName:
+                val.radioType === 'template' ? '' : val.clusterName || '',
               displayName: val.displayName,
               spec: {
                 routing: {
@@ -159,7 +179,9 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
     >
       <Popup.Header>
         {show?.type === DIALOG_TYPE.ADD
-          ? `Create new environment`
+          ? values.radioType === 'compute'
+            ? `Create new environment`
+            : `Create new template`
           : `Edit environment`}
       </Popup.Header>
       <Popup.Form
@@ -184,24 +206,31 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
               isUpdate={show?.type !== DIALOG_TYPE.ADD}
             />
 
-            <Select
-              label="Select Cluster"
-              size="lg"
-              value={values.clusterName}
-              placeholder="Select a Cluster"
-              options={async () => [
-                ...((clusterList &&
-                  clusterList.filter((d) => {
-                    return d.ready;
-                  })) ||
-                  []),
-              ]}
-              onChange={({ value }) => {
-                handleChange('clusterName')(dummyEvent(value));
+            <Radio.Root
+              direction="horizontal"
+              value={values.radioType}
+              onChange={(value) => {
+                handleChange('radioType')(dummyEvent(value));
               }}
-              error={!!errors.clusterName}
-              message={errors.clusterName}
-            />
+            >
+              <Radio.Item value="compute">Environment</Radio.Item>
+              <Radio.Item value="template">Environment Template</Radio.Item>
+            </Radio.Root>
+
+            {values.radioType === 'compute' && (
+              <Select
+                label="Select Compute"
+                size="lg"
+                value={values.clusterName}
+                placeholder="Select a Compute"
+                options={async () => clusterList}
+                onChange={({ value }) => {
+                  handleChange('clusterName')(dummyEvent(value));
+                }}
+                error={!!errors.clusterName}
+                message={errors.clusterName}
+              />
+            )}
 
             {/* <Checkbox */}
             {/*   label="Public" */}

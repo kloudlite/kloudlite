@@ -1,23 +1,23 @@
 import { useNavigate } from '@remix-run/react';
+import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
-import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
-import useForm from '~/root/lib/client/hooks/use-form';
-import { UserMe } from '~/root/lib/server/gql/saved-queries';
-import Yup from '~/root/lib/server/helpers/yup';
-import { handleError } from '~/root/lib/utils/common';
-import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
-import { NameIdView } from '~/iotconsole/components/name-id-view';
-import MultiStepProgressWrapper from '~/iotconsole/components/multi-step-progress-wrapper';
+import FillerCreateTeam from '~/iotconsole/assets/filler-create-team';
+import { BottomNavigation } from '~/iotconsole/components/commons';
+import { SignOut } from '~/iotconsole/components/icons';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/iotconsole/components/multi-step-progress';
-import { BottomNavigation } from '~/iotconsole/components/commons';
-import FillerCreateTeam from '~/iotconsole/assets/filler-create-team';
-import { SignOut } from '~/iotconsole/components/icons';
-import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import MultiStepProgressWrapper from '~/iotconsole/components/multi-step-progress-wrapper';
+import { NameIdView } from '~/iotconsole/components/name-id-view';
+import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
-import { Button } from '~/components/atoms/button';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import useForm from '~/root/lib/client/hooks/use-form';
+import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
+import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 
 const NewAccount = () => {
   const api = useIotConsoleApi();

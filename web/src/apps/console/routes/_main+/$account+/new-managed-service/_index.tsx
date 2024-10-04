@@ -22,6 +22,7 @@ import MultiStepProgress, {
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import { NameIdView } from '~/console/components/name-id-view';
 import { findClusterStatus } from '~/console/hooks/use-cluster-status';
+import { ClusterSelectItem } from '~/console/page-components/handle-environment';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   IMSvTemplate,
@@ -302,13 +303,14 @@ const FieldView = ({
         size="lg"
         value={values.clusterName}
         placeholder="Select a Cluster"
-        options={async () => [
-          ...((clusters &&
-            clusters.filter((c) => {
-              return c.ready;
-            })) ||
-            []),
-        ]}
+        options={async () => clusters}
+        // options={async () => [
+        //   ...((clusters &&
+        //     clusters.filter((c) => {
+        //       return c.ready;
+        //     })) ||
+        //     []),
+        // ]}
         onChange={({ value }) => {
           handleChange('clusterName')(dummyEvent(value));
           handleChange('nodepoolName')(dummyEvent(''));
@@ -502,22 +504,22 @@ const ReviewView = ({
   );
 };
 
-const ClusterSelectItem = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => {
-  return (
-    <div>
-      <div className="flex flex-col">
-        <div>{label}</div>
-        <div className="bodySm text-text-soft">{value}</div>
-      </div>
-    </div>
-  );
-};
+// const ClusterSelectItem = ({
+//   label,
+//   value,
+// }: {
+//   label: string;
+//   value: string;
+// }) => {
+//   return (
+//     <div>
+//       <div className="flex flex-col">
+//         <div>{label}</div>
+//         <div className="bodySm text-text-soft">{value}</div>
+//       </div>
+//     </div>
+//   );
+// };
 
 const ManagedServiceLayout = () => {
   // const { msvtemplates, cluster, account } =
@@ -548,8 +550,13 @@ const ManagedServiceLayout = () => {
         label: c.displayName,
         value: parseName(c),
         ready: findClusterStatus(c),
+        disabled: !findClusterStatus(c),
         render: () => (
-          <ClusterSelectItem label={c.displayName} value={parseName(c)} />
+          <ClusterSelectItem
+            label={c.displayName}
+            value={parseName(c)}
+            disabled={!findClusterStatus(c)}
+          />
         ),
       }));
       setClusterList(data);

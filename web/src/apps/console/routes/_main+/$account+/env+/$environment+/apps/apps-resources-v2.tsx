@@ -25,6 +25,7 @@ import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
+import { findClusterStatus } from '~/console/hooks/use-cluster-status';
 import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IApps } from '~/console/server/gql/queries/app-queries';
@@ -304,7 +305,9 @@ const ListView = ({ items = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          const isClusterOnline = findClusterStatus(
+            clusters[environment.clusterName]
+          );
 
           const { name, id, updateInfo } = parseItem(i);
           return {
@@ -332,9 +335,13 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     return null;
                   }
 
-                  // if (!isClusterOnline) {
-                  //   return <Badge type="warning">Cluster Offline</Badge>;
-                  // }
+                  if (environment.clusterName === '') {
+                    return <ListItemV2 className="px-4xl" data="-" />;
+                  }
+
+                  if (!isClusterOnline) {
+                    return <Badge type="warning">Cluster Offline</Badge>;
+                  }
 
                   return <SyncStatusV2 item={i} />;
                 },

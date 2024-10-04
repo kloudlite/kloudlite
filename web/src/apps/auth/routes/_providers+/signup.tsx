@@ -1,4 +1,3 @@
-import { Button } from '~/components/atoms/button.jsx';
 import {
   Envelope,
   GithubLogoFill,
@@ -6,23 +5,24 @@ import {
   GoogleLogo,
 } from '@jengaicons/react';
 import {
-  useSearchParams,
   Link,
   useNavigate,
   useOutletContext,
+  useSearchParams,
 } from '@remix-run/react';
-import { TextInput, PasswordInput } from '~/components/atoms/input.jsx';
+import { RECAPTCHA_SITE_KEY, mainUrl } from '~/auth/consts';
+import { Button } from '~/components/atoms/button.jsx';
+import { PasswordInput, TextInput } from '~/components/atoms/input.jsx';
+import { ArrowLeft, ArrowRight } from '~/components/icons';
+import { toast } from '~/components/molecule/toast';
+import { cn } from '~/components/utils';
+import grecaptcha from '~/root/lib/client/helpers/g-recaptcha';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { toast } from '~/components/molecule/toast';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { ArrowLeft, ArrowRight } from '~/components/icons';
-import { cn } from '~/components/utils';
-import { RECAPTCHA_SITE_KEY, mainUrl } from '~/auth/consts';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
-import grecaptcha from '~/root/lib/client/helpers/g-recaptcha';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -55,7 +55,7 @@ const SignUpWithEmail = () => {
           email: v.email,
           name: v.name,
           password: v.password,
-          token,
+          captchaToken: token,
         });
         if (_errors) {
           throw _errors[0];

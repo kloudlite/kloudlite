@@ -9,8 +9,9 @@ tasks:
     cmds:
       - |
         BASE_URL=dev.kloudlite.io
-        COOKIE_DOMAIN=".kloudlite.io"
+        COOKIE_DOMAIN=".dev.kloudlite.io"
         GATEWAY_URL="http://gateway-api.kloudlite.svc.cluster.local:3000"
+        export COOKIE_DOMAIN=".dev.kloudlite.io"
         case {{.app}} in
           "auth")
             PORT=4000
@@ -217,5 +218,16 @@ tasks:
     vars:
       Image: ghcr.io/kloudlite/web/events:{{.tag}}
     cmds:
-      # - docker buildx build -t {{.Image}} --platform linux/amd64 -f Dockerfile.webinar --push .
       - docker buildx build . -t {{.Image}} --platform linux/amd64 -f Dockerfile.webinar --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true
+
+  container-push-dashboard:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    silent: true
+    vars:
+      IMAGE: ghcr.io/kloudlite/web/{{.app}}:{{.tag}}
+    cmds:
+      - docker buildx build --build-arg APP={{.app}} . -t {{.IMAGE}} --platform linux/amd64 --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true

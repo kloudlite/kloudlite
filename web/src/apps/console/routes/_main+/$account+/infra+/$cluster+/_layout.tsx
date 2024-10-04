@@ -6,9 +6,9 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import withContext from '~/root/lib/app-setup/with-contxt';
-import { IExtRemixCtx } from '~/root/lib/types/common';
 import { BrandLogo } from '~/components/branding/brand-logo';
+import Breadcrum from '~/console/components/breadcrum';
+import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import {
   ChevronRight,
   Cpu,
@@ -17,20 +17,20 @@ import {
   GearSix,
   HouseLine,
 } from '~/console/components/icons';
+import LogoWrapper from '~/console/components/logo-wrapper';
 import {
   ICluster,
   IClusters,
 } from '~/console/server/gql/queries/cluster-queries';
-import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
-import Breadcrum from '~/console/components/breadcrum';
-import LogoWrapper from '~/console/components/logo-wrapper';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { BreadcrumSlash } from '~/console/utils/commons';
+import withContext from '~/root/lib/app-setup/with-contxt';
+import { IExtRemixCtx } from '~/root/lib/types/common';
 import { IAccountContext } from '../../_layout';
 
 export interface IClusterContext extends IAccountContext {
@@ -58,7 +58,7 @@ export const loader = async (ctx: IExtRemixCtx) => {
 
 const Cluster = () => {
   const rootContext = useOutletContext<IAccountContext>();
-  const { cluster } = useLoaderData<typeof loader>();
+  const { cluster } = useLoaderData();
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
 

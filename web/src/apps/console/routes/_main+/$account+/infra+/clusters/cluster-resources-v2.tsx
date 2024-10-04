@@ -218,7 +218,7 @@ const GetByokClusterMessage = ({
     (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
 
   switch (true) {
-    case timeDifference <= 2:
+    case timeDifference <= 1:
       return (
         <div className="flex flex-row gap-sm bodyMd-medium text-text-strong pulsable">
           <span>Attached Compute</span>
@@ -242,7 +242,7 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
     (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
 
   switch (true) {
-    case timeDifference <= 2:
+    case timeDifference <= 1:
       return (
         <TooltipV2
           className="!w-fit !max-w-[500px]"
@@ -259,7 +259,7 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           </div>
         </TooltipV2>
       );
-    case timeDifference > 2:
+    case timeDifference > 1:
       return (
         <TooltipV2
           className="!w-fit !max-w-[500px]"
@@ -278,20 +278,9 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
       );
     default:
       return (
-        <TooltipV2
-          className="!w-fit !max-w-[500px]"
-          place="top"
-          offset={tooltipOffset}
-          content={
-            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
-              {lastOnlineAt}
-            </div>
-          }
-        >
-          <div>
-            <Badge type="warning">Offline</Badge>
-          </div>
-        </TooltipV2>
+        <div>
+          <Badge type="warning">Offline</Badge>
+        </div>
       );
   }
 };

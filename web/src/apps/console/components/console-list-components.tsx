@@ -157,7 +157,7 @@ const ListItemV2 = ({
               <div
                 className={cn(
                   'flex-1 bodyMd-medium text-text-strong pulsable',
-                  titleClass,
+                  titleClass
                 )}
               >
                 <Truncate length={truncateLength}>{data}</Truncate>
@@ -177,7 +177,7 @@ const ListItemV2 = ({
               <div
                 className={cn(
                   'flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal',
-                  titleClass,
+                  titleClass
                 )}
               >
                 {data.length >= truncateLength ? (
@@ -341,12 +341,8 @@ const listClass = {
   item: 'w-[146px]',
 };
 export {
-  ListBody,
-  ListItem,
-  ListTitle,
-  ListTitleV2,
-  ListItemV2,
-  ListSecondary,
-  listFlex,
-  listClass,
+  ListBody, listClass, listFlex, ListItem, ListItemV2,
+  ListSecondary, ListTitle,
+  ListTitleV2
 };
+

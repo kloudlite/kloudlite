@@ -1,6 +1,6 @@
-import { Check } from '~/console/components/icons';
 import React, { Children, ReactElement, ReactNode, useState } from 'react';
 import { cn } from '~/components/utils';
+import { Check } from '~/console/components/icons';
 
 interface IUseMultiStepProgress {
   defaultStep: number;
@@ -50,6 +50,7 @@ type IProgressTrackerItem = {
   noJump?: (step: number) => boolean;
   editable?: boolean;
   step: number;
+  hasPages?: boolean;
 };
 
 function ProgressTrackerItem(
@@ -65,7 +66,18 @@ function ProgressTrackerItem(
     noJump,
     editable,
     step,
+    hasPages,
   } = props;
+
+  if (!hasPages) {
+    return (
+      <div>
+        <span className="headingMd text-text-default"> {label}</span>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -143,6 +155,7 @@ interface IMultiStepProgress {
   jumpStep: (step: number) => void;
   noJump?: (step: number) => boolean;
   editable?: boolean;
+  hasPages?: boolean;
 }
 const Root = ({
   children,
@@ -150,6 +163,7 @@ const Root = ({
   jumpStep,
   noJump,
   editable = true,
+  hasPages = true,
 }: IMultiStepProgress) => {
   let child = children;
   // @ts-ignore
@@ -171,6 +185,7 @@ const Root = ({
             noJump={noJump || (() => !(index + 1 < currentStep))}
             editable={editable}
             completed={currentStep > ch.props.step}
+            hasPages={hasPages}
             onClick={() => {
               if (noJump ? !noJump?.(ch.props.step) : index + 1 < currentStep) {
                 jumpStep(index + 1);

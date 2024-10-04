@@ -13,8 +13,8 @@ import {
 import { useSocketWatch } from '~/root/lib/client/helpers/socket/useWatch';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useConsoleApi } from '../server/gql/api-provider';
-import { ExtractNodeType, parseNodes } from '../server/r-utils/common';
 import { IClustersStatus } from '../server/gql/queries/cluster-queries';
+import { ExtractNodeType, parseNodes } from '../server/r-utils/common';
 
 type IClusterMap = { [key: string]: ExtractNodeType<IClustersStatus> };
 
@@ -39,6 +39,12 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await api.listClusterStatus({
         pagination: {
           first: 500,
+        },
+        search: {
+          allClusters: {
+            exact: true,
+            matchType: 'exact',
+          },
         },
       });
       const parsed = parseNodes(data).reduce((acc, c) => {
@@ -77,7 +83,7 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
       listCluster();
     },
     3000,
-    [update],
+    [update]
   );
 
   useSocketWatch(() => {
@@ -88,7 +94,7 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
     <ClusterStatusContext.Provider
       value={useMemo(
         () => ({ clusters, setClusters }),
-        [clusters, setClusters],
+        [clusters, setClusters]
       )}
     >
       {children}
