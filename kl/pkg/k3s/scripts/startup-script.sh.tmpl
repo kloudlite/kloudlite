@@ -12,6 +12,15 @@ while true; do
   break
 done
 
+cat > /tmp/namespace.yml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kl-gateway
+EOF
+
+kubectl apply -f /tmp/namespace.yml
+
 cat > /tmp/secrets.yml <<EOF
 apiVersion: v1
 kind: Secret
