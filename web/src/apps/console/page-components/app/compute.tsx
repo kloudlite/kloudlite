@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Slider from '~/components/atoms/slider';
@@ -257,7 +256,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
         )}
 
         <div className="flex flex-col gap-3xl pt-3xl">
-          <Button
+          {/* <Button
             size="sm"
             content={
               <span className="truncate text-left">Advanced options</span>
@@ -267,7 +266,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             onClick={() => {
               setAdvancedOptions(!advancedOptions);
             }}
-          />
+          /> */}
 
           {/* {advancedOptions && (
             <Select

@@ -1,17 +1,17 @@
-import { Trash } from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
+import { Trash } from '~/console/components/icons';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import {
   ListBody,
   ListItem,
@@ -23,10 +23,10 @@ import {
 import DeleteDialog from '../components/delete-dialog';
 import Grid from '../components/grid';
 import ListGridView from '../components/list-grid-view';
+import ListV2 from '../components/listV2';
 import ResourceExtraAction from '../components/resource-extra-action';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { ISecrets } from '../server/gql/queries/secret-queries';
-import ListV2 from '../components/listV2';
 
 const RESOURCE_NAME = 'secret';
 type BaseType = ExtractNodeType<ISecrets>;
@@ -233,7 +233,7 @@ const SecretResourcesV2 = ({
   linkComponent = null,
 }: Omit<IResource, 'onDelete'>) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
 
   const api = useConsoleApi();
@@ -245,9 +245,9 @@ const SecretResourcesV2 = ({
   useWatchReload(
     items.map((i) => {
       return `account:${account}.environment:${environment}.secret:${parseName(
-        i,
+        i
       )}`;
-    }),
+    })
   );
 
   const props: IResource = {

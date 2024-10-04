@@ -1,3 +1,4 @@
+import { useOutletContext, useParams } from '@remix-run/react';
 import {
   createContext,
   useCallback,
@@ -7,12 +8,10 @@ import {
   useState,
 } from 'react';
 import { ChildrenProps } from '~/components/types';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useSocketWatch } from '~/root/lib/client/helpers/socket/useWatch';
-import { useOutletContext, useParams } from '@remix-run/react';
-import { useConsoleApi } from '../server/gql/api-provider';
-import { parseName, parseNodes } from '../server/r-utils/common';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IAccountContext } from '../routes/_main+/$account+/_layout';
+import { useConsoleApi } from '../server/gql/api-provider';
 
 const ctx = createContext<{
   // clusters: {
@@ -43,7 +42,6 @@ const ClusterStatusProvider = ({
   }>({});
 
   const addToWatchList = (clusterNames: string[]) => {
-    console.log('nayak', clusterNames);
     setWatchList((s) => {
       const resp = clusterNames.reduce((acc, curr) => {
         if (!curr) {
@@ -69,7 +67,7 @@ const ClusterStatusProvider = ({
 
     (async () => {
       try {
-        const { data: clusters } = await api.listClusterStatus({
+        const { data: clustersStatus } = await api.listClusterStatus({
           pagination: {
             first: 100,
           },
@@ -85,17 +83,10 @@ const ClusterStatusProvider = ({
           },
         });
 
-        const parsedNodes = parseNodes(clusters);
-
-        const lastOnlineAt = parsedNodes.reduce((acc, curr) => {
-          acc[parseName(curr)] = curr.lastOnlineAt;
-          return acc;
-        }, {} as { [key: string]: string });
-
         setClustersMap((s) => {
           return {
             ...s,
-            ...lastOnlineAt,
+            ...clustersStatus,
           };
         });
       } catch (e) {
@@ -172,7 +163,7 @@ export const useClusterStatusV3 = ({
   clusterNames?: string[];
 }) => {
   const { clustersMap } = useOutletContext<IAccountContext>();
-  const { addToWatchList, removeFromWatchList } = useContext(ctx);
+  const { addToWatchList, removeFromWatchList: _ } = useContext(ctx);
   useDebounce(
     () => {
       if (!clusterName && !clusterNames) {
@@ -186,11 +177,11 @@ export const useClusterStatusV3 = ({
       }
 
       return () => {
-        if (clusterName) {
-          removeFromWatchList([clusterName]);
-        } else if (clusterNames) {
-          removeFromWatchList(clusterNames);
-        }
+        // if (clusterName) {
+        //   removeFromWatchList([clusterName]);
+        // } else if (clusterNames) {
+        //   removeFromWatchList(clusterNames);
+        // }
       };
     },
     100,

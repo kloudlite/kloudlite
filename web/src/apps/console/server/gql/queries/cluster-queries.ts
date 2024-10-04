@@ -11,6 +11,7 @@ import {
   ConsoleGetClusterQuery,
   ConsoleGetClusterQueryVariables,
   ConsoleGetClusterStatusQuery,
+  ConsoleGetClusterStatusQueryVariables,
   ConsoleGetKubeConfigQuery,
   ConsoleListAllClustersQuery,
   ConsoleListAllClustersQueryVariables,
@@ -22,8 +23,8 @@ import {
   ConsoleListDnsHostsQueryVariables,
   ConsoleUpdateClusterMutation,
   ConsoleUpdateClusterMutationVariables,
-  ConsoleGetClusterStatusQueryVariables,
 } from '~/root/src/generated/gql/server';
+import { parseName, parseNodes } from '../../r-utils/common';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
 export type IClusters = NN<ConsoleListClustersQuery['infra_listClusters']>;
@@ -544,8 +545,12 @@ export const clusterQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleListClusterStatusQuery) =>
-        data.infra_listBYOKClusters,
+      transformer: (data: ConsoleListClusterStatusQuery) => {
+        return parseNodes(data.infra_listBYOKClusters).reduce((acc, curr) => {
+          acc[parseName(curr)] = curr.lastOnlineAt;
+          return acc;
+        }, {} as { [key: string]: string });
+      },
       vars(_: ConsoleListClusterStatusQueryVariables) {},
     }
   ),

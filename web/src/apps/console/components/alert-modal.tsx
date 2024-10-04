@@ -13,6 +13,7 @@ export interface IAlertModal {
   title: ReactNode;
   okText?: string;
   okDisabled?: boolean;
+  showOkButton?: boolean;
   cancelText?: string;
   variant?: ButtonVariants;
   footer?: boolean;
@@ -28,6 +29,7 @@ const AlertModal = ({
   title,
   okDisabled = false,
   okText = 'Delete',
+  showOkButton = true,
   cancelText = 'Cancel',
   variant = 'critical',
 }: IAlertModal) => {
@@ -55,14 +57,16 @@ const AlertModal = ({
         {footer && (
           <AlertDialog.Footer>
             <AlertDialog.Button variant="basic" content={cancelText} closable />
-            <AlertDialog.Button
-              type="submit"
-              disabled={okDisabled}
-              variant={variant}
-              content={okText}
-              closable={false}
-              loading={isLoading}
-            />
+            {showOkButton && (
+              <AlertDialog.Button
+                type="submit"
+                disabled={okDisabled}
+                variant={variant}
+                content={okText}
+                closable={false}
+                loading={isLoading}
+              />
+            )}
           </AlertDialog.Footer>
         )}
       </form>

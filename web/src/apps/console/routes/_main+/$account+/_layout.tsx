@@ -25,12 +25,13 @@ import {
   IAccount,
   IAccounts,
 } from '~/console/server/gql/queries/account-queries';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 
 import { Button } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 import MenuSelect, { SelectItem } from '~/console/components/menu-select';
+import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v3';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -46,7 +47,6 @@ import withContext from '~/root/lib/app-setup/with-contxt';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { handleError } from '~/root/lib/utils/common';
-import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v3';
 import { IConsoleRootContext } from '../_layout/_layout';
 
 export const loader = async (ctx: IExtRemixCtx) => {
@@ -87,17 +87,12 @@ export const loader = async (ctx: IExtRemixCtx) => {
       throw clusterError[0];
     }
 
-    const cMaps = parseNodes(clusterList).reduce((acc, c) => {
-      acc[parseName(c)] = c.lastOnlineAt;
-      return acc;
-    }, {} as { [key: string]: string });
-
     acccountData = data;
 
     return withContext(ctx, {
       msvtemplates: msvTemplates,
       account: data,
-      clustersMap: cMaps,
+      clustersMap: clusterList,
     });
   } catch (err) {
     handleError(err);
