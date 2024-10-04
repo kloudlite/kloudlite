@@ -18,5 +18,5 @@ while true; do
  else
   echo "offline" >> /tmp/kl/online.status
  fi
- sleep 1
+ sleep 2
 done
