@@ -221,12 +221,15 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResul
 		case rApi.ErroredState:
 			if obj.Spec.RetryOnFailure {
 				if obj.Status.LastReconcileTime != nil {
-					if time.Since(obj.Status.LastReconcileTime.Time) > obj.Spec.RetryOnFailureDelay.Duration {
-						r.logger.Infof("re-creatingjob for lifecycle %s/%s, as it failed and is past the retry delay", obj.Namespace, obj.Name)
-						if err := r.Delete(ctx, &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}); err != nil {
-							if !apiErrors.IsNotFound(err) {
-								return check.Failed(err)
-							}
+					r.logger.Infof("time since last reconcilation: %s", time.Since(obj.Status.LastReconcileTime.Time).String())
+					if time.Since(obj.Status.LastReconcileTime.Time) < obj.Spec.RetryOnFailureDelay.Duration {
+						return check.Completed().RequeueAfter(obj.Spec.RetryOnFailureDelay.Duration)
+					}
+
+					r.logger.Infof("re-creatingjob for lifecycle %s/%s, as it failed and is past the retry delay", obj.Namespace, obj.Name)
+					if err := r.Delete(ctx, &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}); err != nil {
+						if !apiErrors.IsNotFound(err) {
+							return check.Failed(err)
 						}
 					}
 				}

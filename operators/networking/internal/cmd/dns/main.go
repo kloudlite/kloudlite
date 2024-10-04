@@ -4,20 +4,26 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/kloudlite/operator/common"
 	"github.com/kloudlite/operator/operators/networking/internal/cmd/dns/types"
+	"github.com/kloudlite/operator/pkg/logging"
 	"github.com/miekg/dns"
 )
 
 type ResolverCtx struct {
 	context.Context
-	logger *log.Logger
+	*slog.Logger
 }
 
 var (
@@ -33,7 +39,7 @@ const (
 func exchangeWithDNS(ctx ResolverCtx, m *dns.Msg, nameserver string) []dns.RR {
 	m, err := dns.ExchangeContext(ctx, m, nameserver)
 	if err != nil {
-		log.Error("while exchanging dns message", "err", err, "nameserver", nameserver)
+		ctx.Error("while exchanging dns message", "err", err, "nameserver", nameserver)
 		return nil
 	}
 	if m == nil {
@@ -61,10 +67,10 @@ func (h *dnsHandler) resolver(ctx ResolverCtx, domain string, qtype uint16) []dn
 		}
 
 		for _, k := range gatewayMap.Keys() {
-			ctx.logger.Debug("checking for question", "domain", domain, "dns-suffix", k, "local-gateway-dns", h.localGatewayDNS)
+			ctx.Debug("checking for question", "domain", domain, "dns-suffix", k, "local-gateway-dns", h.localGatewayDNS)
 
 			if len(result) > 0 {
-				ctx.logger.Debug("found result", "result", result)
+				ctx.Debug("found result", "result", result)
 				break
 			}
 
@@ -108,17 +114,18 @@ func (h *dnsHandler) resolver(ctx ResolverCtx, domain string, qtype uint16) []dn
 type dnsHandler struct {
 	AnswerClusterLocalIPs bool
 	localGatewayDNS       string
+	logger                *slog.Logger
 }
 
 func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
-	logger := log.With("qname", r.Question[0].Name, "qtype", r.Question[0].Qtype)
+	logger := h.logger.With("qname", r.Question[0].Name, "qtype", r.Question[0].Qtype)
 	logger.Debug("incoming dns request")
 	msg := new(dns.Msg)
 	msg.SetReply(r)
 	msg.Authoritative = true
 
 	for _, question := range r.Question {
-		answers := h.resolver(ResolverCtx{Context: context.TODO(), logger: logger}, question.Name, question.Qtype)
+		answers := h.resolver(ResolverCtx{Context: context.TODO(), Logger: h.logger}, question.Name, question.Qtype)
 		msg.Answer = append(msg.Answer, answers...)
 	}
 
@@ -126,15 +133,15 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	logger.Debug("outgoing dns request", "answers", msg.Answer)
 }
 
-func httpServer(addr string) {
+func httpServer(ctx Context, addr string) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	log.Info("starting http server", "addr", addr)
+	ctx.Info("starting http server", "addr", addr)
 	r.Put("/gateway/{dns_suffix}/{gateway_addr}", func(w http.ResponseWriter, r *http.Request) {
 		dnsSuffix, gatewayAddr := chi.URLParam(r, "dns_suffix"), chi.URLParam(r, "gateway_addr")
 		gatewayMap.Set(dnsSuffix, gatewayAddr)
-		log.Info("registered gateway", "dns-suffix", dnsSuffix, "gateway-addr", gatewayAddr)
+		ctx.Info("registered gateway", "dns-suffix", dnsSuffix, "gateway-addr", gatewayAddr)
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -146,14 +153,26 @@ func httpServer(addr string) {
 			return
 		}
 		serviceMap.Set(svcDNS+".", []dns.RR{rr})
-		log.Info("registered service", "svc-dns", svcDNS, "svc-binding-ip", svcBindingIP)
+		ctx.Info("registered service", "svc-dns", svcDNS, "svc-binding-ip", svcBindingIP)
 		w.WriteHeader(http.StatusOK)
 	})
 
-	log.Fatal(http.ListenAndServe(addr, r))
+	server := http.Server{Addr: addr, Handler: r}
+	go func() {
+		<-ctx.Done()
+		ctx.Warn("closing http server", "addr", addr)
+		server.Shutdown(context.TODO())
+	}()
+	server.ListenAndServe()
+	ctx.Info("http server closed", "addr", addr)
 }
 
-func dnsServer(addr string, handler *dnsHandler) {
+type Context struct {
+	context.Context
+	*slog.Logger
+}
+
+func dnsServer(ctx Context, addr string, handler *dnsHandler) {
 	server := &dns.Server{
 		Addr:      addr,
 		Net:       "udp",
@@ -162,14 +181,25 @@ func dnsServer(addr string, handler *dnsHandler) {
 		ReusePort: true,
 	}
 
-	log.Info("starting dns server", "addr", addr)
-	err := server.ListenAndServe()
-	if err != nil {
-		log.Fatal("failed to start server", "err", err)
+	go func() {
+		<-ctx.Done()
+		ctx.Warn("closing dns server", "addr", addr)
+		server.Shutdown()
+	}()
+
+	ctx.Info("starting dns server", "addr", addr)
+	if err := server.ListenAndServe(); err != nil {
+		ctx.Error("failed to start DNS server, got", "err", err)
+		os.Exit(1)
 	}
+
+	ctx.Info("dns server closed", "addr", addr)
 }
 
 func main() {
+	start := time.Now()
+	common.PrintBuildInfo()
+
 	var (
 		isDebug         bool
 		wgDNSAddr       string
@@ -200,10 +230,10 @@ func main() {
 	flag.StringVar(&serviceHosts, "service-hosts", "", "--service-hosts service_host=ip[,service_host2=ip2,service_host3=ip3...]")
 	flag.Parse()
 
-	if isDebug {
-		log.SetLevel(log.DebugLevel)
-		log.Info("logging at DEBUG level")
-	}
+	logger := logging.NewSlogLogger(logging.SlogOptions{
+		ShowCaller:    true,
+		ShowDebugLogs: isDebug,
+	})
 
 	for _, dnsServer := range strings.Split(dnsServers, ",") {
 		s := strings.SplitN(dnsServer, "=", 2)
@@ -212,14 +242,15 @@ func main() {
 		}
 
 		gatewayMap.Set(s[0], s[1])
-		log.Info("registered gateway", "dns-suffix", s[0], "gateway-addr", s[1])
+		logger.Info("registered gateway", "dns-suffix", s[0], "gateway-addr", s[1])
 	}
 
 	if accountName != "" {
 		accountDNSName := "account.kloudlite.local"
 		accountRecord, err := dns.NewRR(fmt.Sprintf("%s. 5 IN TXT %s", accountDNSName, accountName))
 		if err != nil {
-			panic(err)
+			logger.Error("failed to parse DNS Resource Record, got", "err", err)
+			os.Exit(1)
 		}
 		serviceMap.Set(accountDNSName+".", []dns.RR{accountRecord})
 	}
@@ -232,11 +263,15 @@ func main() {
 
 		rr, err := dns.NewRR(fmt.Sprintf("%s. 5 IN A %s", s[0], s[1]))
 		if err != nil {
-			panic(err)
+			logger.Error("failed to parse DNS Resource Record, got", "err", err)
+			os.Exit(1)
 		}
 		serviceMap.Set(s[0]+".", []dns.RR{rr})
-		log.Info("registered service", "host", s[0], "ip", s[1])
+		logger.Info("registered service", "host", s[0], "ip", s[1])
 	}
+
+	ctx, cf := signal.NotifyContext(context.TODO(), syscall.SIGTERM, syscall.SIGINT)
+	defer cf()
 
 	var wg sync.WaitGroup
 
@@ -244,23 +279,26 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			dnsServer(localDNSAddr, &dnsHandler{AnswerClusterLocalIPs: true, localGatewayDNS: localGatewayDNS})
+			dnsServer(Context{Context: ctx, Logger: logger}, localDNSAddr, &dnsHandler{AnswerClusterLocalIPs: true, localGatewayDNS: localGatewayDNS})
 		}()
 	}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		dnsServer(wgDNSAddr, &dnsHandler{localGatewayDNS: localGatewayDNS})
+		dnsServer(Context{Context: ctx, Logger: logger}, wgDNSAddr, &dnsHandler{localGatewayDNS: localGatewayDNS})
 	}()
 
 	if enableHTTP {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			httpServer(httpAddr)
+			httpServer(Context{Context: ctx, Logger: logger}, httpAddr)
 		}()
 	}
 
+	common.PrintReadyBanner2(time.Since(start))
 	wg.Wait()
+	logger.Warn("exiting ...")
+	os.Exit(0)
 }
