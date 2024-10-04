@@ -14,8 +14,6 @@ import {
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import {
-  CircleFill,
-  CircleNotch,
   Copy,
   EnvIconComponent,
   EnvTemplateIconComponent,
@@ -203,18 +201,9 @@ const GridView = ({ items = [], onAction }: IResource) => {
 
 const ListView = ({ items, onAction }: IResource) => {
   const { account } = useParams();
-  // const { clusters } = useClusterStatusV2();
-  const { clusters: clusterStatus } = useClusterStatusV3({
+  const { clustersMap: clusterStatus } = useClusterStatusV3({
     clusterNames: items.map((i) => i.clusterName),
   });
-
-  // useDebounce(
-  //   () => {
-  //     console.log('nayak', clusterStatus);
-  //   },
-  //   100,
-  //   [clusterStatus]
-  // );
 
   return (
     <ListV2.Root
@@ -254,7 +243,6 @@ const ListView = ({ items, onAction }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          // const isClusterOnline = findClusterStatus(clusters[i.clusterName]);
           const isClusterOnlinev3 = findClusterStatusv3(
             clusterStatus[i.clusterName]
           );
@@ -285,33 +273,6 @@ const ListView = ({ items, onAction }: IResource) => {
                       )
                     }
                   />
-                  // <div className="flex flex-row gap-md">
-                  //   <ListTitleV2
-                  //     title={name}
-                  //     subtitle={id}
-                  //     avatar={
-                  //       i.clusterName === '' ? (
-                  //         <ConsoleAvatar
-                  //           name={id}
-                  //           color="none"
-                  //           isAvatar
-                  //           icon={<EnvTemplateIconComponent size={20} />}
-                  //           className="border border-dashed !bg-surface-basic-subdued "
-                  //         />
-                  //       ) : (
-                  //         <ConsoleAvatar
-                  //           name={id}
-                  //           color="white"
-                  //           isAvatar
-                  //           icon={<EnvIconComponent size={20} />}
-                  //         />
-                  //       )
-                  //     }
-                  //   />
-                  //   {i.clusterName === '' && (
-                  //     <Chip item={{ name: 'template' }} label="Template" />
-                  //   )}
-                  // </div>
                 ),
               },
               cluster: {
@@ -327,8 +288,6 @@ const ListView = ({ items, onAction }: IResource) => {
               status: {
                 render: () => {
                   if (i.clusterName === '') {
-                    // return <Badge type="success">TEMPLATE</Badge>;
-                    // return <Note className="items-center" size={16} />;
                     return <ListItemV2 className="px-4xl" data="-" />;
                   }
 
@@ -341,16 +300,7 @@ const ListView = ({ items, onAction }: IResource) => {
                   }
 
                   if (clusterStatus[i.clusterName] === undefined) {
-                    return (
-                      <div className="cursor-pointer w-fit">
-                        <span className="animate-spin relative flex items-center justify-center text-text-warning">
-                          <CircleNotch size={12} />
-                          <span className="absolute">
-                            <CircleFill size={8} />
-                          </span>
-                        </span>
-                      </div>
-                    );
+                    return <ListItemV2 className="px-4xl" data="-" />;
                   }
 
                   if (!isClusterOnlinev3) {
