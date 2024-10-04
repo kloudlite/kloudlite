@@ -1,7 +1,15 @@
+type IRenderOption = {
+  sitekey: string;
+  size?: string;
+  badge?: string;
+  theme?: any;
+};
 declare global {
   interface Window {
     grecaptcha: {
       enterprise: {
+        reset: () => void;
+        render: (container: string, option?: IRenderOption) => void;
         ready: (callback: () => Promise<void>) => void;
         execute: (
           sitekey: string,
@@ -27,6 +35,19 @@ export const onReady = (callback: () => Promise<void>) => {
   ready(callback);
 };
 
+export const render = (container: string, option: IRenderOption) => {
+  if (
+    !window.grecaptcha ||
+    !window.grecaptcha.enterprise ||
+    !window.grecaptcha.enterprise.render
+  ) {
+    console.warn('window.grecaptcha.enterprise.render is not defined.');
+    return;
+  }
+  const render = window.grecaptcha.enterprise.render;
+  render(container, option);
+};
+
 export const execute = async (
   sitekey: string,
   action: {
@@ -45,9 +66,24 @@ export const execute = async (
   return exec(sitekey, action);
 };
 
+export const reset = async () => {
+  if (
+    !window.grecaptcha ||
+    !window.grecaptcha.enterprise ||
+    !window.grecaptcha.enterprise.reset
+  ) {
+    console.warn('window.grecaptcha.enterprises.reset is not defined.');
+    return;
+  }
+  const r = window.grecaptcha.enterprise.reset;
+  return r();
+};
+
 const grecaptcha = {
   onReady,
+  render,
   execute,
+  reset,
 };
 
 export default grecaptcha;
