@@ -39,11 +39,11 @@ const Images = () => {
     <>
       <LoadingComp
         data={promise}
-      // skeletonData={{
-      //   imagesData: fake.ConsoleListRegistryImagesQuery.core_listRegistryImages
-      //     as any,
+        // skeletonData={{
+        //   imagesData: fake.ConsoleListRegistryImagesQuery.core_listRegistryImages
+        //     as any,
 
-      // }}
+        // }}
       >
         {({ imagesData }) => {
           const images = parseNodes(imagesData);
@@ -55,7 +55,7 @@ const Images = () => {
                 action: images.length > 0 && (
                   <Button
                     variant="outline"
-                    size='md'
+                    size="md"
                     content="Add your images"
                     prefix={<Info />}
                     onClick={() => {

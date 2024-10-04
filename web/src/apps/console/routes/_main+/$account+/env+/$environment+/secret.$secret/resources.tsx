@@ -1,22 +1,21 @@
-import { Eye, PencilLine, SmileySad, Trash } from '~/console/components/icons';
 import { useEffect, useState } from 'react';
 import { cn } from '~/components/utils';
 import AlertModal, { IAlertModal } from '~/console/components/alert-modal';
+import {
+  ListTitleV2,
+  listClass,
+} from '~/console/components/console-list-components';
+import { Eye, PencilLine, SmileySad, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
 import NoResultsFound from '~/console/components/no-results-found';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
 import {
   ICSBase,
   ICSValueExtended,
   IModifiedItem,
   IShowDialog,
 } from '~/console/components/types.d';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
-import {
-  ListTitle,
-  ListTitleV2,
-  listClass,
-} from '~/console/components/console-list-components';
-import ListV2 from '~/console/components/listV2';
 import Handle from './handle';
 
 // const RESOURCE_NAME = 'secret';
@@ -331,7 +330,9 @@ const SecretItemResources = ({
             message: showSecret.data?.value.newvalue
               ? showSecret.data?.value.newvalue
               : showSecret.data?.value.value,
-            footer: false,
+            footer: true,
+            cancelText: 'Close',
+            showOkButton: false,
             data: showSecret.data,
           });
         }}

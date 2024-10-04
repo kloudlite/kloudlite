@@ -49,8 +49,8 @@ import { handleError } from '~/root/lib/utils/common';
 // import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import TooltipV2 from '~/components/atoms/tooltipV2';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
-import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import { useClusterStatusV3 } from '~/console/hooks/use-cluster-status-v3';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -192,7 +192,7 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
             }}
             size="sm"
             variant="outline"
-          // prefix={<ArrowClockwise size={16} />}
+            // prefix={<ArrowClockwise size={16} />}
           />
         </div>
       )}
@@ -405,7 +405,9 @@ const GridView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
 };
 const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
   const { account } = useParams();
-  const { clusters } = useClusterStatusV2();
+  const { clustersMap: clustersStatus } = useClusterStatusV3({
+    clusterNames: items.map((i) => parseName(i)),
+  });
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -444,7 +446,7 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const { name, id, updateInfo, provider } = parseItem(i);
+          const { name, id, updateInfo } = parseItem(i);
 
           // const isLatest = dayjs(i.updateTime).isAfter(
           //   dayjs().subtract(3, 'hour')
@@ -473,7 +475,7 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                   return (
                     <GetByokClusterMessage
                       // lastOnlineAt={i.lastOnlineAt}
-                      lastOnlineAt={clusters[id]?.lastOnlineAt}
+                      lastOnlineAt={clustersStatus[id]}
                       item={i}
                     />
                   );
@@ -481,7 +483,7 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
               },
               status: {
                 render: () => (
-                  <GetSyncStatus lastOnlineAt={clusters[id]?.lastOnlineAt} />
+                  <GetSyncStatus lastOnlineAt={clustersStatus[id]} />
                 ),
               },
               updated: {

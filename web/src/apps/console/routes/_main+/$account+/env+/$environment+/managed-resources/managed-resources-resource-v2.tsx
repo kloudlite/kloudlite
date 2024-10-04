@@ -16,8 +16,8 @@ import { LockSimple, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
 import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { findClusterStatus } from '~/console/hooks/use-cluster-status';
-import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
+import { findClusterStatusv3 } from '~/console/hooks/use-cluster-status';
+import { useClusterStatusV3 } from '~/console/hooks/use-cluster-status-v3';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
@@ -134,7 +134,9 @@ const GridView = ({ items = [], onAction, templates }: IResource) => {
 
 const ListView = ({ items = [], onAction, templates }: IResource) => {
   const { environment } = useOutletContext<IEnvironmentContext>();
-  const { clusters } = useClusterStatusV2();
+  const { clustersMap: clustersStatus } = useClusterStatusV3({
+    clusterName: environment.clusterName,
+  });
 
   // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
   //   Record<string, boolean>
@@ -195,8 +197,8 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
         rows: items.map((i) => {
           const { name, id, logo, updateInfo } = parseItem(i, templates);
           // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
-          const isClusterOnline = findClusterStatus(
-            clusters[environment.clusterName]
+          const isClusterOnline = findClusterStatusv3(
+            clustersStatus[environment.clusterName]
           );
 
           return {
@@ -232,7 +234,10 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               status: {
                 render: () => {
-                  if (environment.clusterName === '') {
+                  if (
+                    environment.clusterName === '' ||
+                    clustersStatus[environment.clusterName] === undefined
+                  ) {
                     return <ListItemV2 className="px-4xl" data="-" />;
                   }
 

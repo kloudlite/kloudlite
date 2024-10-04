@@ -261,17 +261,18 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   }, [readOnlyApp]);
 
   useEffect(() => {
-    if (
-      values.imagePullPolicy !==
-      readOnlyApp.spec.containers[activeContIndex].imagePullPolicy
-    ) {
-      setContainer((s) => {
-        return {
-          ...s,
-          imagePullPolicy: values.imagePullPolicy,
-        };
-      });
-    }
+    console.log('values', values.imagePullPolicy);
+    // if (
+    //   values.imagePullPolicy !==
+    //   readOnlyApp.spec.containers[activeContIndex].imagePullPolicy
+    // ) {
+    setContainer((s) => {
+      return {
+        ...s,
+        imagePullPolicy: values.imagePullPolicy,
+      };
+    });
+    // }
   }, [values.imagePullPolicy]);
 
   return (

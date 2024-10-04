@@ -4,23 +4,23 @@ import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn, generateKey } from '~/components/utils';
+import FillerTeam from '~/console/assets/filler-team';
+import ConsoleAvatar from '~/console/components/console-avatar';
+import DynamicPagination from '~/console/components/dynamic-pagination';
+import { ArrowRight, Users } from '~/console/components/icons';
+import List from '~/console/components/list';
+import SplitWrapper from '~/console/components/split-wrapper';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IInvites } from '~/console/server/gql/queries/access-queries';
+import { IAccounts } from '~/console/server/gql/queries/account-queries';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { parseName } from '~/console/server/r-utils/common';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useExtLoaderData } from '~/root/lib/client/hooks/use-custom-loader-data';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { IAccounts } from '~/console/server/gql/queries/account-queries';
-import { IInvites } from '~/console/server/gql/queries/access-queries';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import DynamicPagination from '~/console/components/dynamic-pagination';
-import List from '~/console/components/list';
-import { parseName } from '~/console/server/r-utils/common';
-import ConsoleAvatar from '~/console/components/console-avatar';
-import { ArrowRight, Users } from '~/console/components/icons';
-import SplitWrapper from '~/console/components/split-wrapper';
-import FillerTeam from '~/console/assets/filler-team';
-import { useExtLoaderData } from '~/root/lib/client/hooks/use-custom-loader-data';
 
 export const loader = async (ctx: IRemixCtx) => {
   let accounts;
@@ -180,10 +180,10 @@ const Accounts = () => {
         <div className="flex flex-col gap-xl">
           <div className="heading3xl text-text-default">
             Welcome {(user?.name || '').split(' ')[0] || ''}! <br />
-            Select your account.
+            Select your team.
           </div>
           <div className="bodyLg text-text-default">
-            Select an account to proceed to console screens.
+            Select your team to proceed to console screens.
           </div>
         </div>
         <div className="flex flex-col gap-3xl">

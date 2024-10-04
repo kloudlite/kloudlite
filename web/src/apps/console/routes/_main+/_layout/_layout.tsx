@@ -28,7 +28,6 @@ import {
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { ViewModeProvider } from '~/console/components/view-mode';
-import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
 import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
@@ -495,21 +494,19 @@ const Console = () => {
           </div>
         }
       />
-      <ClusterStatusProvider>
-        <ViewModeProvider>
-          <SubNavDataProvider>
-            <UnsavedChangesProvider>
-              <Container className="pb-5xl">
-                <Outlet
-                  context={{
-                    ...loaderData,
-                  }}
-                />
-              </Container>
-            </UnsavedChangesProvider>
-          </SubNavDataProvider>
-        </ViewModeProvider>
-      </ClusterStatusProvider>
+      <ViewModeProvider>
+        <SubNavDataProvider>
+          <UnsavedChangesProvider>
+            <Container className="pb-5xl">
+              <Outlet
+                context={{
+                  ...loaderData,
+                }}
+              />
+            </Container>
+          </UnsavedChangesProvider>
+        </SubNavDataProvider>
+      </ViewModeProvider>
     </div>
   );
 };
