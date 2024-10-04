@@ -248,7 +248,7 @@ func generateConnectionScript(clusterConfig *fileclient.AccountClusterConfig) (s
 }
 
 func (c *client) EnsureK3sServerIsReady() error {
-	defer spinner.Client.UpdateMessage("ensuring k3s server is ready")()
+	defer spinner.Client.UpdateMessage("attaching your device to the account")()
 
 	pingScript := `
 	cat > /tmp/ping.sh <<EOF
@@ -413,11 +413,17 @@ kubectl apply -f /tmp/service-device-router.yml
 
 func (c *client) RestartWgProxyContainer() error {
 	defer spinner.Client.UpdateMessage("restarting kloudlite-gateway")()
+	//	script := `
+	//	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick down wg0
+	//	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick up wg0
+	//`
 	script := `
-	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick down wg0
-	kubectl exec -c ip-manager -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}') -- wg-quick up wg0
+kubectl delete pod -n kl-gateway $(kubectl get pods -n kl-gateway | grep -i default- | awk '{print $1}')
 `
-	return c.runScriptInContainer(script)
+	if err := c.runScriptInContainer(script); err != nil {
+		return err
+	}
+	return c.EnsureK3sServerIsReady()
 }
 
 func (c *client) runScriptInContainer(script string) error {

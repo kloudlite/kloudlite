@@ -30,7 +30,7 @@ const (
 	KLHostIp      = "198.18.0.2"
 	KLWorkspaceIp = "198.18.0.3"
 	KLWGAllowedIp = "100.64.0.0/10"
-	HostIp        = "172.18.0.2"
+	LocalHostIP   = "127.0.0.1"
 )
 
 type Keys struct {
@@ -267,7 +267,7 @@ PublicKey = %s
 AllowedIPs = %s/32, %s
 PersistentKeepalive = 25
 Endpoint = %s:33820
-`, config.Host.PrivateKey, KLHostIp, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp, HostIp)
+`, config.Host.PrivateKey, KLHostIp, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp, LocalHostIP)
 	return wgConfig, nil
 }
 
