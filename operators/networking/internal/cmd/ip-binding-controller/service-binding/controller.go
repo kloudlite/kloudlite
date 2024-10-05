@@ -39,7 +39,8 @@ type Reconciler struct {
 }
 
 const (
-	svcNetworkingProxyTo = "kloudlite.io/networking.proxy.to"
+	svcNetworkingProxyTo       = "kloudlite.io/networking.proxy.to"
+	serviceBindingIPAnnotation = "kloudlite.io/servicebinding.ip"
 )
 
 func (r *Reconciler) GetName() string {
@@ -326,6 +327,13 @@ func (r *Reconciler) reconcileService(ctx context.Context, request ctrl.Request)
 	}()
 
 	sb := &sblist.Items[0]
+
+	if v, ok := svc.GetAnnotations()[serviceBindingIPAnnotation]; !ok || v != sb.Spec.GlobalIP {
+		fn.MapSet(&svc.Labels, serviceBindingIPAnnotation, sb.Spec.GlobalIP)
+		if err := r.Update(ctx, svc); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sb, func() error {
 		if sb.Generation == 0 {
