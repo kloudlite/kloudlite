@@ -97,6 +97,11 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		return fn.NewE(err)
 	}
 
+	configFolder, err := fileclient.GetConfigFolder()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	createdConatiner := container.CreateResponse{}
 	if flags.IsDev() {
 		createdConatiner, err = c.c.ContainerCreate(context.Background(), &container.Config{
@@ -123,6 +128,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			},
 			Binds: []string{
 				fmt.Sprintf("kl-k3s-%s-cache:/var/lib/rancher/k3s", clusterConfig.ClusterName),
+				fmt.Sprintf("%s:/.cache/kl", configFolder),
 			},
 			PortBindings: map[nat.Port][]nat.PortBinding{
 				"6443/tcp": {
@@ -173,6 +179,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			},
 			Binds: []string{
 				fmt.Sprintf("kl-k3s-%s-cache:/var/lib/rancher/k3s", clusterConfig.ClusterName),
+				fmt.Sprintf("%s:/.cache/kl", configFolder),
 			},
 			PortBindings: map[nat.Port][]nat.PortBinding{
 				"33820/udp": {
@@ -341,18 +348,18 @@ func (c *client) StartAppInterceptService(ports []apiclient.AppPort) error {
 	if err := c.EnsureKloudliteNetwork(); err != nil {
 		return fn.NewE(err)
 	}
-
-	if len(ports) == 0 {
-		script := `
-kubectl get svc/device-router -n kl-gateway
-exit_code=$?
-
-if [ $exit_code -eq 0 ]; then
-  kubectl delete svc device-router -n kl-gateway
-fi
-`
-		return c.runScriptInContainer(script)
-	}
+	//
+	//	if len(ports) == 0 {
+	//		script := `
+	//kubectl get svc/device-router -n kl-gateway
+	//exit_code=$?
+	//
+	//if [ $exit_code -eq 0 ]; then
+	//  kubectl delete svc device-router -n kl-gateway
+	//fi
+	//`
+	//		return c.runScriptInContainer(script)
+	//	}
 
 	tmpl := `
 cat > /tmp/service-device-router.yml <<EOF
@@ -369,11 +376,9 @@ spec:
     - protocol: UDP
       name: udp-{{.AppPort}}
       port: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
-      targetPort: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
     - protocol: TCP
       name: tcp-{{.AppPort}}
       port: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
-      targetPort: {{if eq .DevicePort 0}}{{.AppPort}}{{else}}{{.DevicePort}}{{end}}
   {{end}}
 EOF
 
@@ -430,7 +435,7 @@ func (c *client) runScriptInContainer(script string) error {
 	}
 
 	if len(existingContainers) == 0 {
-		return fn.Errorf("no k3s container found")
+		return fn.Errorf("no k3s container running locally")
 	}
 
 	f = spinner.Client.UpdateMessage("setting up cluster resources, please wait")

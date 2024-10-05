@@ -1,27 +1,28 @@
 package status
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-ping/ping"
 	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/domain/envclient"
+	"time"
+
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 const (
-	StatusFailed = "failed to get status"
+	K3sServerNotReady = "k3s server is not ready, please wait"
 )
 
 var Cmd = &cobra.Command{
 	Use:   "status",
 	Short: "get status of your current context (user, account, environment, vpn status)",
 	Run: func(cmd *cobra.Command, _ []string) {
-
 		apic, err := apiclient.New()
 		if err != nil {
 			fn.PrintError(err)
@@ -61,67 +62,67 @@ var Cmd = &cobra.Command{
 
 		err = getK3sStatus()
 		if err != nil {
+			fn.Log("Compute attached: ", text.Yellow("not ready"))
+			fn.Log("Gateway attached: ", text.Yellow("not ready"))
 			return
 		}
-
 	},
 }
 
 func getK3sStatus() error {
-	deployments := []struct {
-		name      string
-		namespace string
-	}{
-		{"default", "kl-gateway"},
-		{"kl-agent", "kloudlite"},
-		{"kl-agent-operator", "kloudlite"},
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
 	}
 
-	for _, d := range deployments {
-		isReady, err := checkDeploymentStatus(d.name, d.namespace)
+	k3sTracker, err := fc.GetK3sTracker()
+	if err != nil {
+		return err
+	}
+
+	lastCheckedAt, err := time.Parse(time.RFC3339, k3sTracker.LastCheckedAt)
+	if err != nil {
+		return err
+	}
+
+	if time.Since(lastCheckedAt) > 3*time.Second {
+		return fn.Error(K3sServerNotReady)
+	}
+
+	if k3sTracker.Compute {
+		fn.Log("Compute attached: ", text.Green("ready"))
+	} else {
+		fn.Log("Compute attached: ", text.Yellow("not ready"))
+	}
+
+	if k3sTracker.Gateway {
+		fn.Log("Gateway attached: ", text.Green("ready"))
+	} else {
+		fn.Log("Gateway attached: ", text.Yellow("not ready"))
+	}
+
+	if !k3sTracker.Gateway {
+		fn.Log("Workspace status:", text.Yellow("offline"))
+		return nil
+	}
+
+	if envclient.InsideBox() {
+		pinger, err := ping.NewPinger(constants.KLDNS)
 		if err != nil {
 			return err
 		}
-		status := text.Green("ready")
-		if !isReady {
-			status = text.Yellow("not ready")
+		pinger.Count = 1
+		pinger.Timeout = 2 * time.Second
+		if err := pinger.Run(); err != nil {
+			fn.Log("Workspace status:", text.Yellow("offline"))
+			return nil
 		}
-		fn.Log(fmt.Sprintf("%s: %s", d.name, status))
+		stats := pinger.Statistics()
+		if stats.PacketsRecv == 0 {
+			fn.Log("Workspace status:", text.Yellow("offline"))
+			return nil
+		}
+		fn.Log("Workspace status:", text.Green("online"))
 	}
-
 	return nil
-}
-
-func checkDeploymentStatus(name, namespace string) (bool, error) {
-	url := fmt.Sprintf("http://%s:8080/apis/apps/v1/namespaces/%s/deployments/%s", constants.K3sServerIp, namespace, name)
-	resp, err := http.Get(url)
-	if err != nil {
-		return false, fn.NewE(err, StatusFailed)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return false, fn.NewE(fmt.Errorf("unexpected status code: %d", resp.StatusCode), StatusFailed)
-	}
-
-	var data struct {
-		Status struct {
-			Conditions []struct {
-				Type   string `json:"type"`
-				Status string `json:"status"`
-			} `json:"conditions"`
-		} `json:"status"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return false, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	for _, c := range data.Status.Conditions {
-		if c.Type == "Available" && c.Status == "True" {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }

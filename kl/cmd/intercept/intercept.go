@@ -3,6 +3,10 @@ package intercept
 import (
 	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -11,9 +15,6 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
-	"os"
-	"strconv"
-	"strings"
 )
 
 var Cmd = &cobra.Command{
@@ -130,10 +131,8 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 }
 
 func init() {
-
 	fileclient.OnlyInsideBox(Cmd)
 
 	fileclient.OnlyInsideBox(stopCmd)
 	Cmd.AddCommand(stopCmd)
-
 }

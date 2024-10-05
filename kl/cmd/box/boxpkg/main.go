@@ -5,10 +5,10 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/pkg/k3s"
-
 	"io"
 	"os"
+
+	"github.com/kloudlite/kl/pkg/k3s"
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
@@ -59,7 +59,6 @@ func (c *client) Context() context.Context {
 
 func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
-
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

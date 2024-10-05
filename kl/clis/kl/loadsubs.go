@@ -54,6 +54,5 @@ func init() {
 	rootCmd.AddCommand(status.Cmd)
 	rootCmd.AddCommand(packages.Cmd)
 
-	fileclient.OnlyInsideBox(connect.Command)
 	rootCmd.AddCommand(connect.Command)
 }

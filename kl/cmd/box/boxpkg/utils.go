@@ -652,7 +652,7 @@ func (c *client) ConnectClusterToAccount(cConfig *fileclient.AccountClusterConfi
 		return fn.Error("k3s container should exist")
 	}
 	if len(existingContainer) == 0 {
-		return fn.Error("no k3s container found")
+		return fn.Error("no k3s container running locally")
 	}
 	script, err := GenerateConnectionScript(cConfig)
 	if err != nil {

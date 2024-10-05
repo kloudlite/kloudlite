@@ -1,0 +1,27 @@
+tasks:
+  build:
+    env:
+      CGO_ENABLED:
+        default:
+          value: "0"
+    cmd:
+      - go build -v -o /tmp/k3s-tracker .
+
+  dev:
+    env:
+      KUBERNETES_HOST:
+        default:
+          value: localhost:8080
+    cmd:
+      - run: build
+      - /tmp/k3s-tracker --output /tmp/status.json
+
+
+  container:build:
+    cmd:
+      - docker build -t ghcr.io/kloudlite/kl/k3s-tracker:latest .
+      - docker push ghcr.io/kloudlite/kl/k3s-tracker:latest
+
+  container:run:
+    cmd:
+      - docker run -p 8080:8080 k3s-tracker

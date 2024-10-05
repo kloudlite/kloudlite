@@ -1,6 +1,8 @@
 package fileclient
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	uuid "github.com/nu7hatch/gouuid"
@@ -25,6 +27,7 @@ const (
 	DeviceFileName                   string = "kl-device.yaml"
 	WGConfigFileName                 string = "kl-wg.yaml"
 	WorkspaceWireguardConfigFileName string = "kl-workspace-wg.conf"
+	K3sTrackerFileName                      = "k3s-status.json"
 
 	KLWGProxyIp   = "198.18.0.1"
 	KLHostIp      = "198.18.0.2"
@@ -80,6 +83,13 @@ type ExtraData struct {
 	SelectedAccount string          `json:"selectedAccount"`
 	DnsHostSuffix   string          `json:"dnsHostSuffix"`
 	SelectedEnvs    map[string]*Env `json:"selectedEnvs"`
+}
+
+type k3sTracker struct {
+	Compute        bool   `json:"compute"`
+	Gateway        bool   `json:"gateway"`
+	DeviceRouterIP string `json:"deviceRouterIP"`
+	LastCheckedAt  string `json:"lastCheckedAt"`
 }
 
 func GetUserHomeDir() (string, error) {
@@ -347,6 +357,21 @@ func (fc *fclient) GetWGConfig() (*WGConfig, error) {
 	}
 
 	return &wgConfig, nil
+}
+
+func (fc *fclient) GetK3sTracker() (*k3sTracker, error) {
+	file, err := ReadFile(K3sTrackerFileName)
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+
+	tracker := k3sTracker{}
+
+	if err = json.Unmarshal(bytes.Trim(file, "\x00"), &tracker); err != nil {
+		return nil, fn.NewE(err)
+	}
+
+	return &tracker, nil
 }
 
 func GetCookieString(options ...fn.Option) (string, error) {

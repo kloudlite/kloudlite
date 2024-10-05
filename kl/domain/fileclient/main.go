@@ -12,6 +12,7 @@ type FileClient interface {
 	SetWGConfig(config string) error
 	CurrentAccountName() (string, error)
 	Logout() error
+	GetK3sTracker() (*k3sTracker, error)
 	GetVpnAccountConfig(account string) (*AccountVpnConfig, error)
 	SetVpnAccountConfig(account string, config *AccountVpnConfig) error
 	GetClusterConfig(account string) (*AccountClusterConfig, error)
