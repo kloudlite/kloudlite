@@ -167,12 +167,12 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 
 	k3sTracker, err := apic.fc.GetK3sTracker()
 	if err != nil {
-		return err
+		return fn.Error("k3s server is not ready, please wait")
 	}
 
 	lastCheckedAt, err := time.Parse(time.RFC3339, k3sTracker.LastCheckedAt)
 	if err != nil {
-		return err
+		return fn.Error("k3s server is not ready, please wait")
 	}
 
 	if time.Since(lastCheckedAt) > 3*time.Second {
@@ -182,7 +182,7 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 	respData, err := klFetch(query, map[string]any{
 		"appName":      app.Metadata.Name,
 		"envName":      envName,
-		"ipAddr":       k3sTracker.DeviceRouterIP,
+		"ipAddr":       k3sTracker.DeviceRouter.IP,
 		"clusterName":  fmt.Sprintf("%s-%s", user.Name, hostName),
 		"intercept":    status,
 		"portMappings": ports,
@@ -200,7 +200,7 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 
 func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 	defer spinner.Client.UpdateMessage("Cleaning up intercepts...")()
-	devName := fn.GetOption(options, "deviceName")
+	// devName := fn.GetOption(options, "deviceName")
 	accountName := fn.GetOption(options, "accountName")
 	currentEnv, err := apic.EnsureEnv()
 	if err != nil {
@@ -226,20 +226,25 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 		options = append(options, fn.MakeOption("accountName", accountName))
 	}
 
-	if devName == "" {
-		avc, err := fc.GetVpnAccountConfig(accountName)
-		if err != nil && os.IsNotExist(err) {
-			return nil
-		} else if err != nil {
-			return functions.NewE(err)
-		}
-
-		if avc.DeviceName == "" {
-			return fn.Errorf("device name is required")
-		}
-
-		devName = avc.DeviceName
+	config, err := apic.fc.GetClusterConfig(accountName)
+	if err != nil {
+		return functions.NewE(err)
 	}
+
+	//if devName == "" {
+	//	avc, err := fc.GetVpnAccountConfig(accountName)
+	//	if err != nil && os.IsNotExist(err) {
+	//		return nil
+	//	} else if err != nil {
+	//		return functions.NewE(err)
+	//	}
+	//
+	//	if avc.DeviceName == "" {
+	//		return fn.Errorf("device name is required")
+	//	}
+	//
+	//	devName = avc.DeviceName
+	//}
 
 	cookie, err := getCookie([]fn.Option{
 		fn.MakeOption("accountName", accountName),
@@ -250,8 +255,9 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 	query := "cli_removeDeviceIntercepts"
 
 	respData, err := klFetch(query, map[string]any{
-		"envName":    currentEnv.Name,
-		"deviceName": devName,
+		"envName": currentEnv.Name,
+		//"deviceName": devName,
+		"deviceName": config.ClusterName,
 	}, &cookie)
 	if err != nil {
 		return functions.NewE(err)

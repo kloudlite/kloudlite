@@ -116,10 +116,17 @@ kubectl apply -f /tmp/helm-chart.yml
 
 cat > /tmp/service-device-router.yml <<EOF
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: kl-local
+  labels:
+    kloudlite.io/gateway.enabled: "true"
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: kl-device-router
-  namespace: kl-gateway
+  namespace: kl-local
   annotations:
     kloudlite.io/networking.proxy.to: "172.18.0.3"
 spec:

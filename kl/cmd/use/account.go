@@ -3,8 +3,8 @@ package use
 import (
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/k3s"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/k3s"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/spf13/cobra"
 )

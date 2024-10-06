@@ -5,10 +5,9 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/k3s"
 	"io"
 	"os"
-
-	"github.com/kloudlite/kl/pkg/k3s"
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"

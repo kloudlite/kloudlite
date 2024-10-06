@@ -5,8 +5,8 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
+	"github.com/kloudlite/kl/k3s"
 	"github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/k3s"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )

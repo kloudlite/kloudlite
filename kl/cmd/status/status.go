@@ -3,8 +3,7 @@ package status
 import (
 	"errors"
 	"fmt"
-	"github.com/go-ping/ping"
-	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/cmd/connect"
 	"github.com/kloudlite/kl/domain/envclient"
 	"time"
 
@@ -62,8 +61,8 @@ var Cmd = &cobra.Command{
 
 		err = getK3sStatus()
 		if err != nil {
-			fn.Log("Compute attached: ", text.Yellow("not ready"))
-			fn.Log("Gateway attached: ", text.Yellow("not ready"))
+			fn.Log("Local Cluster: ", text.Yellow("getting ready"))
+			fn.Log("Edge Gateway Connection: ", text.Yellow("getting ready"))
 			return
 		}
 	},
@@ -90,39 +89,27 @@ func getK3sStatus() error {
 	}
 
 	if k3sTracker.Compute {
-		fn.Log("Compute attached: ", text.Green("ready"))
+		fn.Log("Local Cluster: ", text.Green("ready"))
 	} else {
-		fn.Log("Compute attached: ", text.Yellow("not ready"))
+		fn.Log("Local Cluster: ", text.Yellow("getting ready"))
 	}
 
 	if k3sTracker.Gateway {
-		fn.Log("Gateway attached: ", text.Green("ready"))
+		fn.Log("Edge Gateway Connection: ", text.Green("ready"))
 	} else {
-		fn.Log("Gateway attached: ", text.Yellow("not ready"))
-	}
-
-	if !k3sTracker.Gateway {
-		fn.Log("Workspace status:", text.Yellow("offline"))
-		return nil
+		fn.Log("Edge Gateway Connection: ", text.Yellow("getting ready"))
 	}
 
 	if envclient.InsideBox() {
-		pinger, err := ping.NewPinger(constants.KLDNS)
-		if err != nil {
-			return err
-		}
-		pinger.Count = 1
-		pinger.Timeout = 2 * time.Second
-		if err := pinger.Run(); err != nil {
-			fn.Log("Workspace status:", text.Yellow("offline"))
+		if !k3sTracker.Gateway {
+			fn.Log("Workspace Connection:", text.Yellow("offline"))
 			return nil
 		}
-		stats := pinger.Statistics()
-		if stats.PacketsRecv == 0 {
-			fn.Log("Workspace status:", text.Yellow("offline"))
+		if connect.ChekcWireguardConnection() {
+			fn.Log("Workspace Connection:", text.Green("online"))
 			return nil
 		}
-		fn.Log("Workspace status:", text.Green("online"))
+		fn.Log("Workspace Connection:", text.Yellow("offline"))
 	}
 	return nil
 }

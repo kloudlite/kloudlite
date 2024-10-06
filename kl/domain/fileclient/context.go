@@ -85,11 +85,25 @@ type ExtraData struct {
 	SelectedEnvs    map[string]*Env `json:"selectedEnvs"`
 }
 
+type Port struct {
+	Name       string `json:"name"`
+	Port       int    `json:"port"`
+	Protocol   string `json:"protocol"`
+	TargetPort int    `json:"targetPort"`
+}
+
 type k3sTracker struct {
-	Compute        bool   `json:"compute"`
-	Gateway        bool   `json:"gateway"`
-	DeviceRouterIP string `json:"deviceRouterIP"`
-	LastCheckedAt  string `json:"lastCheckedAt"`
+	Compute      bool `json:"compute"`
+	Gateway      bool `json:"gateway"`
+	DeviceRouter struct {
+		IP      string `json:"ip"`
+		Service struct {
+			Spec struct {
+				Ports []Port `json:"ports"`
+			} `json:"spec"`
+		} `json:"service"`
+	} `json:"deviceRouter"`
+	LastCheckedAt string `json:"lastCheckedAt"`
 }
 
 func GetUserHomeDir() (string, error) {

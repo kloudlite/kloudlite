@@ -2,8 +2,8 @@ package k3s
 
 import (
 	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/k3s"
 	"github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/k3s"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )
