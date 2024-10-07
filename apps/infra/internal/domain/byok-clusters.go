@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/helm"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 )
@@ -182,7 +184,7 @@ func (d *domain) GetBYOKCluster(ctx InfraContext, name string) (*entities.BYOKCl
 		return nil, errors.NewE(err)
 	}
 
-	c, err := d.findBYOKCluster(ctx, name)
+	c, err := d.findBYOKCluster(ctx, ctx.AccountName, name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -196,7 +198,7 @@ type BYOKSetupInstruction struct {
 }
 
 func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string, onlyHelmValues bool) ([]BYOKSetupInstruction, error) {
-	cluster, err := d.findBYOKCluster(ctx, name)
+	cluster, err := d.findBYOKCluster(ctx, ctx.AccountName, name)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +243,7 @@ func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	cluster, err := d.findBYOKCluster(ctx, name)
+	cluster, err := d.findBYOKCluster(ctx, ctx.AccountName, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -269,8 +271,54 @@ func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
 	return nil
 }
 
-func (d *domain) findBYOKCluster(ctx InfraContext, clusterName string) (*entities.BYOKCluster, error) {
-	cluster, err := d.byokClusterRepo.FindOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName))
+func (d *domain) RenderHelmKloudliteAgent(ctx context.Context, accountName string, clusterName string, clusterToken string) ([]byte, error) {
+	cluster, err := d.byokClusterRepo.FindOne(ctx, entities.UniqueBYOKClusterFilter(accountName, clusterName))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if cluster == nil {
+		return nil, ErrClusterNotFound
+	}
+
+	if clusterToken != cluster.ClusterToken {
+		return nil, fmt.Errorf("UnAuthorized")
+	}
+
+	values, err := json.Marshal(map[string]any{
+		"accountName":           accountName,
+		"clusterName":           clusterName,
+		"clusterToken":          cluster.ClusterToken,
+		"messageOfficeGRPCAddr": d.env.MessageOfficeExternalGrpcAddr,
+		"kloudliteDNSSuffix":    fmt.Sprintf("%s.%s", accountName, d.env.KloudliteDNSSuffix),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := d.helmClient.TemplateChart(ctx, &helm.ChartSpec{
+		ReleaseName: "kloudlite-agent",
+		Namespace:   "kloudlite",
+		ChartName:   "kloudlite/kloudlite-agent",
+		Version:     d.env.KloudliteRelease,
+		ValuesYaml:  string(values),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	namespace := `
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite
+`
+
+	return []byte(fmt.Sprintf("%s\n---\n%s", namespace, b)), nil
+}
+
+func (d *domain) findBYOKCluster(ctx context.Context, accountName, clusterName string) (*entities.BYOKCluster, error) {
+	cluster, err := d.byokClusterRepo.FindOne(ctx, entities.UniqueBYOKClusterFilter(accountName, clusterName))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -282,7 +330,7 @@ func (d *domain) findBYOKCluster(ctx InfraContext, clusterName string) (*entitie
 }
 
 func (d *domain) UpsertBYOKClusterKubeconfig(ctx InfraContext, clusterName string, kubeconfig []byte) error {
-	byokCluster, err := d.findBYOKCluster(ctx, clusterName)
+	byokCluster, err := d.findBYOKCluster(ctx, ctx.AccountName, clusterName)
 	if err != nil {
 		return err
 	}
@@ -300,7 +348,7 @@ func (d *domain) UpsertBYOKClusterKubeconfig(ctx InfraContext, clusterName strin
 }
 
 func (d *domain) isBYOKCluster(ctx InfraContext, name string) bool {
-	cluster, err := d.findBYOKCluster(ctx, name)
+	cluster, err := d.findBYOKCluster(ctx, ctx.AccountName, name)
 	if err != nil {
 		return false
 	}

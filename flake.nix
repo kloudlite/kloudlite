@@ -1,7 +1,7 @@
 {
   description = "kloudlite api dev environment";
 
-  inputs = { nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable"; }; 
+  inputs = { nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable"; };
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -36,7 +36,7 @@
             ]))
 
             # programming tools
-            go_1_21
+            go_1_23
             operator-sdk
             mongosh
             natscli
@@ -52,7 +52,6 @@
             protoc-gen-go-grpc
 
             # build tools
-            podman
             upx
 
             rover

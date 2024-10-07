@@ -22,6 +22,7 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 
 	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/helm"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/operator/pkg/constants"
 	"go.uber.org/fx"
@@ -67,6 +68,8 @@ type domain struct {
 
 	msvcTemplates    []*entities.MsvcTemplate
 	msvcTemplatesMap map[string]map[string]*entities.MsvcTemplateEntry
+
+	helmClient helm.Client
 }
 
 func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, dispatchAddr *entities.DispatchAddr, obj client.Object, recordVersion int) error {
@@ -202,6 +205,8 @@ var Module = fx.Module("domain",
 			moSvc ports.MessageOfficeService,
 			logger *slog.Logger,
 			resourceEventPublisher ResourceEventPublisher,
+
+			helmClient helm.Client,
 		) (Domain, error) {
 			open, err := os.Open(env.MsvcTemplateFilePath)
 			if err != nil {
@@ -265,6 +270,8 @@ var Module = fx.Module("domain",
 				volumeAttachmentRepo: volumeAttachmentRepo,
 				pvRepo:               pvRepo,
 				namespaceRepo:        namespaceRepo,
+
+				helmClient: helmClient,
 			}, nil
 		}),
 )
