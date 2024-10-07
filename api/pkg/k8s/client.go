@@ -230,9 +230,6 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 	c, err := client.New(cfg, client.Options{
 		Scheme: scheme,
 		Mapper: nil,
-		WarningHandler: client.WarningHandlerOptions{
-			SuppressWarnings: true,
-		},
 	})
 	if err != nil {
 		return nil, errors.NewE(err)

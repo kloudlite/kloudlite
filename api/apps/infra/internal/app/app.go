@@ -229,4 +229,26 @@ var Module = fx.Module(
 			)
 		},
 	),
+
+	fx.Invoke(
+		func(server httpServer.Server, d domain.Domain, env *env.Env) {
+			server.Raw().Get("/render/helm/kloudlite-agent/:accountName/:clusterName", func(c *fiber.Ctx) error {
+				s := c.GetReqHeaders()["Authorization"]
+				if len(s) != 1 {
+					return fiber.ErrForbidden
+				}
+
+				b, err := d.RenderHelmKloudliteAgent(c.Context(), c.Params("accountName"), c.Params("clusterName"), s[0])
+				if err != nil {
+					if err.Error() == "UnAuthorized" {
+						return fiber.ErrUnauthorized
+					}
+					return err
+				}
+
+				_, err = c.Write(b)
+				return err
+			})
+		},
+	),
 )

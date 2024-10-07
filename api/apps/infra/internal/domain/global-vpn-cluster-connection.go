@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"math"
@@ -9,6 +10,7 @@ import (
 
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/iputils"
+	"github.com/kloudlite/api/pkg/wgutils"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
@@ -17,8 +19,10 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	common_types "github.com/kloudlite/operator/apis/common-types"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -172,13 +176,6 @@ func (d *domain) reconGlobalVPNConnections(ctx InfraContext, vpnName string) err
 				fc.GlobalVPNConnectionSpecPeers: peers,
 			},
 		}))
-		// unp, err := d.gvpnConnRepo.Patch(ctx, repos.Filter{
-		// 	fields.AccountName:  ctx.AccountName,
-		// 	fields.ClusterName:  xcc.ClusterName,
-		// 	fields.MetadataName: xcc.Name,
-		// },
-		// 	common.PatchForUpdate(ctx, xcc, common.PatchOpts{XPatch: map[string]any{fc.GlobalVPNConnectionSpecPeers: peers}}),
-		// )
 		if err != nil {
 			return errors.NewE(err)
 		}
@@ -189,6 +186,25 @@ func (d *domain) reconGlobalVPNConnections(ctx InfraContext, vpnName string) err
 	}
 
 	return nil
+}
+
+func (d *domain) renderGlobalVPNGatewayConnection(ctx context.Context, accountName, clusterName string) ([]byte, error) {
+	// cluster, err := d.findBYOKCluster(ctx, accountName, clusterName)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// gvConn, err := d.findGlobalVPNConnection(ctx, accountName, clusterName, cluster.GlobalVPN)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//
+	// b, err := templates.Read(templates.ClusterGatewayDeploymentTemplate)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	return nil, nil
 }
 
 func (d *domain) claimNextClusterCIDR(ctx InfraContext, clusterName string, gvpnName string) (string, error) {
@@ -325,13 +341,27 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 		IPAddr: gvpnDevice.IPAddr,
 	}
 
-	gvpnConn.Gateway.Spec = networkingv1.GatewaySpec{
-		GlobalIP:    gvpnDevice.IPAddr,
-		ClusterCIDR: clusterCIDR,
-		SvcCIDR:     svcCIDR,
-		DNSSuffix:   fmt.Sprintf("svc.%s.local", gvpnConn.ClusterName),
-		Peers:       nil,
+	privateKey, publicKey, err := wgutils.GenerateKeyPair()
+	if err != nil {
+		return nil, err
 	}
+
+	gvpnConn.Gateway.Spec = networkingv1.GatewaySpec{
+		GlobalIP:        gvpnDevice.IPAddr,
+		TargetNamespace: "kl-gateway",
+		ClusterCIDR:     clusterCIDR,
+		SvcCIDR:         svcCIDR,
+		DNSSuffix:       fmt.Sprintf("svc.%s.local", gvpnConn.ClusterName),
+		// FIXME: dispatch secret from api to cluster
+		WireguardKeysRef: common_types.LocalObjectReference{
+			Name: fmt.Sprintf("%s-wg", gvpn.Name),
+		},
+	}
+	gvpnConn.ParsedWgParams = &networkingv1.WireguardKeys{
+		PrivateKey: privateKey,
+		PublicKey:  publicKey,
+	}
+
 	gvpnConn.Gateway.EnsureGVK()
 
 	gv, err := d.gvpnConnRepo.Create(ctx, &gvpnConn)
@@ -339,15 +369,36 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 		return nil, err
 	}
 
-	if err := d.applyGlobalVPNConnection(ctx, gv); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, gvpnConn.DispatchAddr, &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      gvpnConn.Spec.WireguardKeysRef.Name,
+			Namespace: gvpnConn.Spec.TargetNamespace,
+		},
+		Data: map[string][]byte{
+			"public_key":  []byte(publicKey),
+			"private_key": []byte(privateKey),
+		},
+	}, gvpn.RecordVersion); err != nil {
 		return nil, err
 	}
+
+	if err := d.reconGlobalVPNConnections(ctx, gvpn.Name); err != nil {
+		return nil, err
+	}
+
+	// if err := d.applyGlobalVPNConnection(ctx, gv); err != nil {
+	// 	return nil, err
+	// }
 
 	return gv, nil
 }
 
 func (d *domain) deleteGlobalVPNConnection(ctx InfraContext, clusterName string, gvpnName string) error {
-	gv, err := d.findGlobalVPNConnection(ctx, clusterName, gvpnName)
+	gv, err := d.findGlobalVPNConnection(ctx, ctx.AccountName, clusterName, gvpnName)
 	if err != nil {
 		if !errors.OfType[errors.ErrNotFound](err) {
 			return errors.NewE(err)
@@ -448,9 +499,9 @@ func (d *domain) applyGlobalVPNConnection(ctx InfraContext, gvpn *entities.Globa
 	return d.resDispatcher.ApplyToTargetCluster(ctx, gvpn.DispatchAddr, &gvpn.Gateway, gvpn.RecordVersion)
 }
 
-func (d *domain) findGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string) (*entities.GlobalVPNConnection, error) {
+func (d *domain) findGlobalVPNConnection(ctx context.Context, accountName string, clusterName string, groupName string) (*entities.GlobalVPNConnection, error) {
 	cc, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:  ctx.AccountName,
+		fields.AccountName:  accountName,
 		fields.ClusterName:  clusterName,
 		fields.MetadataName: groupName,
 	})
