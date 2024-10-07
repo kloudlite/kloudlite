@@ -1,29 +1,30 @@
-import { Buildings, CopySimple } from '~/console/components/icons';
 import { useNavigate, useOutletContext } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
+import { Buildings, CopySimple } from '~/console/components/icons';
+import { parseName } from '~/console/server/r-utils/common';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import useForm from '~/root/lib/client/hooks/use-form';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { parseName } from '~/console/server/r-utils/common';
 
-import SecondarySubHeader from '~/console/components/secondary-sub-header';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import {
   Box,
   DeleteContainer,
 } from '~/console/components/common-console-components';
-import { IAccount } from '~/console/server/gql/queries/account-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
+import SecondarySubHeader from '~/console/components/secondary-sub-header';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IAccount } from '~/console/server/gql/queries/account-queries';
+import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { IAccountContext } from '../_layout';
+import { ISettingsContext } from './_layout';
 // import SubNavAction from '../components/sub-nav-action';
 // import { useConsoleApi } from '../server/gql/api-provider';
 // import { IAccount } from '../server/gql/queries/access-queries';
@@ -59,6 +60,7 @@ export const updateAccount = async ({
 
 const SettingGeneral = () => {
   const { account } = useOutletContext<IAccountContext>();
+  const { teamMembers, currentUser } = useOutletContext<ISettingsContext>();
   const [deleteAccount, setDeleteAccount] = useState(false);
 
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
@@ -71,6 +73,12 @@ const SettingGeneral = () => {
       toast.success('Text copied to clipboard.');
     },
   });
+
+  const isOwner = useMemo(() => {
+    if (!teamMembers || !currentUser) return false;
+    const owner = teamMembers.find((member) => member.role === 'account_owner');
+    return owner?.user?.email === currentUser?.email;
+  }, [teamMembers, currentUser]);
 
   const { values, handleChange, submit, isLoading, resetValues } = useForm({
     initialValues: {
@@ -127,7 +135,7 @@ const SettingGeneral = () => {
         <Box title="Profile">
           <div className="flex flex-row items-center gap-3xl">
             <Avatar size="lg" color="one" image={<Buildings />} />{' '}
-            <Button content="Upload photo" variant="basic" />
+            {/* <Button content="Upload photo" variant="basic" /> */}
           </div>
           <div className="flex flex-row gap-3xl">
             <div className="flex-1">
@@ -135,6 +143,7 @@ const SettingGeneral = () => {
                 label="Account name"
                 value={values.displayName}
                 onChange={handleChange('displayName')}
+                disabled={!isOwner}
               />
             </div>
             <div className="flex-1">
@@ -213,20 +222,40 @@ const SettingGeneral = () => {
         </Box>
 
         <DeleteContainer
-          title="Delete Account"
+          title="Disable Account"
           action={async () => {
             setDeleteAccount(true);
           }}
+          content="Disable"
+          disabled={!isOwner}
         >
-          Permanently remove your Account and all of its contents from the
-          Kloudlite platform. This action is not reversible — please continue
-          with caution.
+          For permanent delete or reverse your account and all of its contents
+          from the Kloudlite platform, please contact us at support@kloudlite.io
         </DeleteContainer>
         <DeleteDialog
           resourceName={parseName(account)}
           resourceType="account"
           show={deleteAccount}
           setShow={setDeleteAccount}
+          customMessages={{
+            action: 'Disable',
+            warning: (
+              <span>
+                Are you sure you want to disable &ldquo;{parseName(account)}
+                &rdquo;?
+              </span>
+            ),
+            prompt: (
+              <>
+                <div className="bodyMd inline">Enter the account name</div>
+                <div className="bodyMd-semibold inline">
+                  {' '}
+                  {parseName(account)}{' '}
+                </div>
+                <div className="bodyMd inline">to continue:</div>
+              </>
+            ),
+          }}
           onSubmit={async () => {
             try {
               const { errors } = await api.deleteAccount({
@@ -237,7 +266,7 @@ const SettingGeneral = () => {
                 throw errors[0];
               }
               reload();
-              toast.success(`Account deleted successfully`);
+              toast.success(`Account disabled successfully`);
               setDeleteAccount(false);
               navigate(`/`);
             } catch (err) {
