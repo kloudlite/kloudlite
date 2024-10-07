@@ -680,15 +680,6 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		"app": resourceName,
 	}
 
-	service := &corev1.Service{}
-	ctx2, cf := func() (context.Context, context.CancelFunc) {
-		if d.env.IsDev {
-			return context.WithCancel(ctx)
-		}
-		return context.WithTimeout(context.TODO(), 45*time.Second) // 45 seconds, as it might take a while for a cloud provider to allocate IP
-	}()
-	defer cf()
-
 	wgEndpoint := d.env.KloudliteGlobalVPNDeviceHost
 
 	wgSvcName := fmt.Sprintf("%s-wg", resourceName)
@@ -702,6 +693,18 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 	if err != nil {
 		return errors.NewE(err)
 	}
+
+	service := &corev1.Service{}
+	ctx2, cf := func() (context.Context, context.CancelFunc) {
+		if d.env.IsDev {
+			return context.WithCancel(ctx)
+		}
+
+		// FIXME: it might take a while for a cloud provider to allocate IP, but
+		// till then your HTTP requests might time out
+		return context.WithTimeout(context.TODO(), 5*time.Second)
+	}()
+	defer cf()
 
 	for {
 		if ctx2.Err() != nil {
@@ -883,7 +886,7 @@ func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string)
 	}
 
 	if cluster.GlobalVPN != nil {
-		gvpn, err := d.findGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN)
+		gvpn, err := d.findGlobalVPNConnection(ctx, cluster.AccountName, cluster.Name, *cluster.GlobalVPN)
 		if err != nil {
 			return errors.NewE(err)
 		}
@@ -930,7 +933,7 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 	c, err := d.findCluster(ctx, name)
 	if err != nil {
 		if errors.Is(err, ErrClusterNotFound) {
-			byokCluster, err := d.findBYOKCluster(ctx, name)
+			byokCluster, err := d.findBYOKCluster(ctx, ctx.AccountName, name)
 			if err != nil {
 				return nil, err
 			}
@@ -1073,7 +1076,7 @@ func (d *domain) OnClusterDeleteMessage(ctx InfraContext, cluster entities.Clust
 			return errors.NewE(err)
 		}
 
-		gv, err := d.findGlobalVPNConnection(ctx, xcluster.Name, *xcluster.GlobalVPN)
+		gv, err := d.findGlobalVPNConnection(ctx, xcluster.AccountName, xcluster.Name, *xcluster.GlobalVPN)
 		if err != nil {
 			return errors.NewE(err)
 		}
