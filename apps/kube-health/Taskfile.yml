@@ -1,0 +1,35 @@
+version: 3
+
+vars:
+  app: kube-svc-health
+  binary: "./bin/{{.app}}"
+
+tasks:
+  run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go run ./main.go
+
+  build:
+    env:
+      output: "{{.binary}}-{{.GOARCH}}"
+      GOARCH: "{{.GOARCH}}"
+      CGO_ENABLED: 0
+    cmds:
+      - go build -o $output ./main.go
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} -t {{.image}} . --push
