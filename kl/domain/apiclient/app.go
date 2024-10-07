@@ -40,8 +40,8 @@ type AppPort struct {
 	DevicePort int `json:"devicePort,omitempty"`
 }
 
-func (apic *apiClient) ListApps(accountName string, envName string) ([]App, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+func (apic *apiClient) ListApps(teamName string, envName string) ([]App, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -108,29 +108,29 @@ func (apic *apiClient) ListApps(accountName string, envName string) ([]App, erro
 // }
 
 func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envName string, options ...fn.Option) error {
-	accountName := fn.GetOption(options, "accountName")
+	teamName := fn.GetOption(options, "teamName")
 
 	fc, err := fileclient.New()
 	if err != nil {
 		return functions.NewE(err)
 	}
 
-	if accountName == "" {
+	if teamName == "" {
 		kt, err := fc.GetKlFile("")
 		if err != nil {
 			return functions.NewE(err)
 		}
 
-		if kt.AccountName == "" {
-			return fn.Errorf("account name is required")
+		if kt.TeamName == "" {
+			return fn.Errorf("team name is required")
 		}
 
-		accountName = kt.AccountName
-		options = append(options, fn.MakeOption("accountName", accountName))
+		teamName = kt.TeamName
+		options = append(options, fn.MakeOption("teamName", teamName))
 	}
 
 	cookie, err := getCookie([]fn.Option{
-		fn.MakeOption("accountName", accountName),
+		fn.MakeOption("teamName", teamName),
 	}...)
 	if err != nil {
 		return functions.NewE(err)
@@ -201,7 +201,7 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 	defer spinner.Client.UpdateMessage("Cleaning up intercepts...")()
 	// devName := fn.GetOption(options, "deviceName")
-	accountName := fn.GetOption(options, "accountName")
+	teamName := fn.GetOption(options, "teamName")
 	currentEnv, err := apic.EnsureEnv()
 	if err != nil {
 		return functions.NewE(err)
@@ -212,27 +212,27 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 		return functions.NewE(err)
 	}
 
-	if accountName == "" {
+	if teamName == "" {
 		kt, err := fc.GetKlFile("")
 		if err != nil {
 			return functions.NewE(err)
 		}
 
-		if kt.AccountName == "" {
-			return fn.Errorf("account name is required")
+		if kt.TeamName == "" {
+			return fn.Errorf("team name is required")
 		}
 
-		accountName = kt.AccountName
-		options = append(options, fn.MakeOption("accountName", accountName))
+		teamName = kt.TeamName
+		options = append(options, fn.MakeOption("teamName", teamName))
 	}
 
-	config, err := apic.fc.GetClusterConfig(accountName)
+	config, err := apic.fc.GetClusterConfig(teamName)
 	if err != nil {
 		return functions.NewE(err)
 	}
 
 	//if devName == "" {
-	//	avc, err := fc.GetVpnAccountConfig(accountName)
+	//	avc, err := fc.GetVpnTeamConfig(teamName)
 	//	if err != nil && os.IsNotExist(err) {
 	//		return nil
 	//	} else if err != nil {
@@ -247,7 +247,7 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 	//}
 
 	cookie, err := getCookie([]fn.Option{
-		fn.MakeOption("accountName", accountName),
+		fn.MakeOption("teamName", teamName),
 	}...)
 	if err != nil {
 		return functions.NewE(err)

@@ -1,6 +1,6 @@
 ## kli use
 
-select cluster and account to current context
+select cluster and team to current context
 
 
 
@@ -14,7 +14,7 @@ select cluster and account to current context
 ### SEE ALSO
 
 * [kli](kli.md)  - 
-* [kli use account](kli_use_account.md)  - Switch account
+* [kli use team](kli_use_team.md)  - Switch team
 * [kli use cluster](kli_use_cluster.md)  - Switch cluster
 * [kli use help](kli_use_help.md)  - Help about any command
 

@@ -6,7 +6,6 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/k3s"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -94,7 +93,7 @@ func envClone(cmd *cobra.Command, args []string) error {
 }
 
 func cloneEnv(apic apiclient.ApiClient, fc fileclient.FileClient, newEnvName string, clusterName string) (*apiclient.Env, error) {
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -104,7 +103,7 @@ func cloneEnv(apic apiclient.ApiClient, fc fileclient.FileClient, newEnvName str
 		return nil, fn.NewE(err)
 	}
 
-	env, err := apic.CloneEnv(currentAccount, oldEnv.Name, newEnvName, clusterName)
+	env, err := apic.CloneEnv(currentTeam, oldEnv.Name, newEnvName, clusterName)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -114,13 +113,13 @@ func cloneEnv(apic apiclient.ApiClient, fc fileclient.FileClient, newEnvName str
 		return nil, fn.NewE(err)
 	}
 
-	k3sClient, err := k3s.NewClient()
-	if err != nil {
-		return nil, fn.NewE(err)
-	}
-	if err = k3sClient.RemoveAllIntercepts(); err != nil {
-		return nil, fn.NewE(err)
-	}
+	//k3sClient, err := k3s.NewClient()
+	//if err != nil {
+	//	return nil, fn.NewE(err)
+	//}
+	//if err = k3sClient.RemoveAllIntercepts(); err != nil {
+	//	return nil, fn.NewE(err)
+	//}
 
 	persistSelectedEnv := func(e fileclient.Env) error {
 		err := fc.SelectEnv(e)
@@ -145,12 +144,12 @@ func cloneEnv(apic apiclient.ApiClient, fc fileclient.FileClient, newEnvName str
 }
 
 func selectCluster(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.BYOKCluster, error) {
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
-	clusters, err := apic.ListBYOKClusters(currentAccount)
+	clusters, err := apic.ListBYOKClusters(currentTeam)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -172,10 +171,10 @@ func selectCluster(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclie
 }
 
 func checkEnvNameAvailability(apic apiclient.ApiClient, fc fileclient.FileClient, envName string) (bool, error) {
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return false, fn.NewE(err)
 	}
 
-	return apic.CheckEnvName(currentAccount, envName)
+	return apic.CheckEnvName(currentTeam, envName)
 }

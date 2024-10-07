@@ -33,7 +33,7 @@ const (
 //go:embed scripts/startup-script.sh.tmpl
 var startupScript string
 
-func (c *client) CreateClustersAccounts(accountName string) error {
+func (c *client) CreateClustersTeams(teamName string) error {
 	defer spinner.Client.UpdateMessage("setting up cluster")()
 	if err := c.EnsureImage(constants.GetK3SImageName()); err != nil {
 		return fn.NewE(err)
@@ -50,8 +50,8 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 	stopAll := false
 	if (existingContainers != nil) && (len(existingContainers) > 0) {
 		for _, ec := range existingContainers {
-			if ec.Labels["kl-account"] != accountName && ec.Labels["kl-k3s"] == "true" {
-				fn.Log(text.Yellow(fmt.Sprintf("[#] another cluster is running for another account. do you want to stop it and start cluster for account %s? [Y/n] ", accountName)))
+			if ec.Labels["kl-team"] != teamName && ec.Labels["kl-k3s"] == "true" {
+				fn.Log(text.Yellow(fmt.Sprintf("[#] another cluster is running for another team. do you want to stop it and start cluster for team %s? [Y/n] ", teamName)))
 				if !fn.Confirm("Y", "Y") {
 					return nil
 				}
@@ -95,7 +95,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 		return fn.NewE(err)
 	}
 
-	clusterConfig, err := c.apic.GetClusterConfig(accountName)
+	clusterConfig, err := c.apic.GetClusterConfig(teamName)
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -111,7 +111,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			Labels: map[string]string{
 				CONT_MARK_KEY: "true",
 				"kl-k3s":      "true",
-				"kl-account":  accountName,
+				"kl-team":     teamName,
 			},
 			Image: constants.GetK3SImageName(),
 			Cmd: []string{
@@ -162,7 +162,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 			Labels: map[string]string{
 				CONT_MARK_KEY: "true",
 				"kl-k3s":      "true",
-				"kl-account":  accountName,
+				"kl-team":     teamName,
 			},
 			Image: constants.GetK3SImageName(),
 			Cmd: []string{
@@ -220,7 +220,7 @@ func (c *client) CreateClustersAccounts(accountName string) error {
 	return nil
 }
 
-func generateConnectionScript(clusterConfig *fileclient.AccountClusterConfig) (string, error) {
+func generateConnectionScript(clusterConfig *fileclient.TeamClusterConfig) (string, error) {
 	defer spinner.Client.UpdateMessage("generating connection script")()
 	t := template.New("connectionScript")
 
@@ -243,7 +243,7 @@ func generateConnectionScript(clusterConfig *fileclient.AccountClusterConfig) (s
 }
 
 func (c *client) EnsureK3sServerIsReady() error {
-	defer spinner.Client.UpdateMessage("attaching your device to the account")()
+	defer spinner.Client.UpdateMessage("attaching your device to the team")()
 
 	pingScript := `
 	cat > /tmp/ping.sh <<EOF
@@ -409,43 +409,6 @@ func (c *client) StartAppInterceptService(ports []apiclient.AppPort, toStart boo
 			})
 		}
 	}
-
-	//slog.Info("ports", "new", newPorts, "old", k3sTracker.DeviceRouter.Service.Spec.Ports)
-
-	// if toStart {
-	// 	for _, p := range ports {
-	// 		isFound := false
-	// 		for _, sp := range servicePorts {
-	// 			if p.DevicePort == sp.Port {
-	// 				isFound = true
-	// 				break
-	// 			}
-	// 		}
-	//
-	// 		if !isFound {
-	// 			servicePorts = append(servicePorts, fileclient.Port{
-	// 				Name:       fmt.Sprintf("udp-%d", p.AppPort),
-	// 				Port:       p.DevicePort,
-	// 				Protocol:   "UDP",
-	// 				TargetPort: p.DevicePort,
-	// 			})
-	// 			servicePorts = append(servicePorts, fileclient.Port{
-	// 				Name:       fmt.Sprintf("tcp-%d", p.AppPort),
-	// 				Port:       p.DevicePort,
-	// 				Protocol:   "TCP",
-	// 				TargetPort: p.DevicePort,
-	// 			})
-	// 		}
-	// 	}
-	// } else {
-	// 	for _, p := range ports {
-	// 		for _, sp := range servicePorts {
-	// 			if p.DevicePort == sp.Port {
-	// 				servicePorts = append(servicePorts[:len(servicePorts)-1], servicePorts[len(servicePorts)-1:]...)
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	if newPorts == nil || len(newPorts) == 0 {
 		newPorts = append(newPorts, fileclient.Port{

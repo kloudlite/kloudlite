@@ -62,7 +62,7 @@ func (fc *fclient) Logout() error {
 				continue
 			}
 
-			var data AccountVpnConfig
+			var data TeamVpnConfig
 			err = json.Unmarshal(content, &data)
 			if err != nil {
 				fn.PrintError(err)

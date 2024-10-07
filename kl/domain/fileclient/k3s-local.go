@@ -8,7 +8,7 @@ import (
 	"path"
 )
 
-type AccountClusterConfig struct {
+type TeamClusterConfig struct {
 	ClusterToken   string `json:"clusterToken"`
 	ClusterName    string `json:"cluster"`
 	InstallCommand InstallCommand
@@ -18,7 +18,7 @@ type AccountClusterConfig struct {
 }
 
 type InstallHelmValues struct {
-	AccountName           string `json:"accountName"`
+	TeamName              string `json:"accountName"`
 	ClusterName           string `json:"clusterName"`
 	ClusterToken          string `json:"clusterToken"`
 	KloudliteDNSSuffix    string `json:"kloudliteDNSSuffix"`
@@ -32,18 +32,18 @@ type InstallCommand struct {
 	HelmValues   InstallHelmValues
 }
 
-func (a *AccountClusterConfig) Marshal() ([]byte, error) {
+func (a *TeamClusterConfig) Marshal() ([]byte, error) {
 	return json.Marshal(a)
 }
 
-func (a *AccountClusterConfig) Unmarshal(b []byte) error {
+func (a *TeamClusterConfig) Unmarshal(b []byte) error {
 	return json.Unmarshal(b, a)
 }
 
-func (c *fclient) GetClusterConfig(account string) (*AccountClusterConfig, error) {
+func (c *fclient) GetClusterConfig(team string) (*TeamClusterConfig, error) {
 
-	if account == "" {
-		return nil, fn.Error("account is required")
+	if team == "" {
+		return nil, fn.Error("team is required")
 	}
 
 	cfgFolder := c.configPath
@@ -52,12 +52,12 @@ func (c *fclient) GetClusterConfig(account string) (*AccountClusterConfig, error
 		return nil, fn.NewE(err)
 	}
 
-	cfgPath := path.Join(cfgFolder, "k3s-local", fmt.Sprintf("%s.json", account))
+	cfgPath := path.Join(cfgFolder, "k3s-local", fmt.Sprintf("%s.json", team))
 	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
 		return nil, err
 	}
 
-	var accClusterConfig AccountClusterConfig
+	var accClusterConfig TeamClusterConfig
 	b, err := os.ReadFile(cfgPath)
 	if err != nil {
 		return nil, fn.NewE(err, "failed to read k3s-local config")
@@ -75,9 +75,9 @@ func (c *fclient) GetClusterConfig(account string) (*AccountClusterConfig, error
 	return &accClusterConfig, nil
 }
 
-func (c *fclient) SetClusterConfig(account string, accClusterConfig *AccountClusterConfig) error {
-	if account == "" {
-		return fn.Error("account is required")
+func (c *fclient) SetClusterConfig(team string, accClusterConfig *TeamClusterConfig) error {
+	if team == "" {
+		return fn.Error("team is required")
 	}
 
 	cfgFolder := c.configPath
@@ -86,7 +86,7 @@ func (c *fclient) SetClusterConfig(account string, accClusterConfig *AccountClus
 		return fn.NewE(err)
 	}
 
-	cfgPath := path.Join(cfgFolder, "k3s-local", fmt.Sprintf("%s.json", account))
+	cfgPath := path.Join(cfgFolder, "k3s-local", fmt.Sprintf("%s.json", team))
 
 	marshal, err := accClusterConfig.Marshal()
 	if err != nil {

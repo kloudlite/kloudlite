@@ -6,15 +6,15 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "list",
-	Short: "List [accounts | envs | configs | secrets | apps]",
+	Short: "List [teams | envs | configs | secrets | apps]",
 	Long: `Use this command to list resources like,
-  account, environments, configs, secrets and apps`,
+  team, environments, configs, secrets and apps`,
 }
 
 var InfraCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List [accounts | cluster]",
-	Long:  `Use this command to list resources like, accounts & clusters`,
+	Short: "List [teams | cluster]",
+	Long:  `Use this command to list resources like, teams & clusters`,
 }
 
 func init() {

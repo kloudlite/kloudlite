@@ -18,7 +18,7 @@ type KLFileType struct {
 	Mounts  Mounts  `json:"mounts" yaml:"mounts"`
 
 	// InitScripts []string `json:"initScripts" yaml:"initScripts"`
-	AccountName string `json:"accountName" yaml:"accountName"`
+	TeamName string `json:"teamName" yaml:"teamName"`
 }
 
 const (

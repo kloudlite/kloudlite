@@ -58,7 +58,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -67,7 +67,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	secrets, err := apic.ListSecrets(currentAccount, currentEnv.Name)
+	secrets, err := apic.ListSecrets(currentTeam, currentEnv.Name)
 	if err != nil {
 		return functions.NewE(err)
 	}

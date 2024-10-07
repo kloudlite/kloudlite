@@ -263,11 +263,11 @@ func generatePersistedEnv(apic apiclient.ApiClient, fc fileclient.FileClient, kf
 		return nil, fn.NewE(err)
 	}
 	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, ">")
-	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.%s", e.Name, kf.AccountName, extraData.DnsHostSuffix)
+	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.%s", e.Name, kf.TeamName, extraData.DnsHostSuffix)
 	//ev["KL_DEV"] = "false"
 	//if flags.IsDev() {
 	//	ev["KL_DEV"] = "true"
-	//	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.AccountName)
+	//	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.TeamName)
 	//}
 
 	klConfhash, err := GenerateKLConfigHash(kf)

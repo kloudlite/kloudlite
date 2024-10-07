@@ -38,7 +38,7 @@ var configCmd = &cobra.Command{
 		}
 
 		if configName == "" {
-			currentAccount, err := fc.CurrentAccountName()
+			currentTeam, err := fc.CurrentTeamName()
 			if err != nil {
 				fn.PrintError(err)
 				return
@@ -48,7 +48,7 @@ var configCmd = &cobra.Command{
 				fn.PrintError(err)
 				return
 			}
-			configs, err := apic.ListConfigs(currentAccount, currentEnv.Name)
+			configs, err := apic.ListConfigs(currentTeam, currentEnv.Name)
 			if err != nil {
 				fn.PrintError(err)
 				return
@@ -67,7 +67,7 @@ var configCmd = &cobra.Command{
 			configName = selectedConfig.Metadata.Name
 		}
 
-		currentAccountName, err := fc.CurrentAccountName()
+		currentTeamName, err := fc.CurrentTeamName()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -78,7 +78,7 @@ var configCmd = &cobra.Command{
 			return
 		}
 
-		config, err := apic.GetConfig(currentAccountName, currentEnvName.Name, configName)
+		config, err := apic.GetConfig(currentTeamName, currentEnvName.Name, configName)
 		if err != nil {
 			fn.PrintError(err)
 			return

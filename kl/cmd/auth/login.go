@@ -78,7 +78,7 @@ var loginCmd = &cobra.Command{
 			return
 		}
 
-		if err = use.UseAccount(); err != nil {
+		if err = use.UseTeam(); err != nil {
 			fn.PrintError(err)
 			return
 		}

@@ -4,13 +4,13 @@ import (
 	"github.com/kloudlite/kl/pkg/functions"
 )
 
-type Account struct {
+type Team struct {
 	Metadata    Metadata `json:"metadata"`
 	DisplayName string   `json:"displayName"`
 	Status      Status   `json:"status"`
 }
 
-func (apic *apiClient) ListAccounts() ([]Account, error) {
+func (apic *apiClient) ListTeams() ([]Team, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, functions.NewE(err)
@@ -21,7 +21,7 @@ func (apic *apiClient) ListAccounts() ([]Account, error) {
 		return nil, functions.NewE(err)
 	}
 
-	type AccList []Account
+	type AccList []Team
 	if fromResp, err := GetFromResp[AccList](respData); err != nil {
 		return nil, functions.NewE(err)
 	} else {
@@ -29,42 +29,42 @@ func (apic *apiClient) ListAccounts() ([]Account, error) {
 	}
 }
 
-// func SelectAccount(accountName string) (*Account, error) {
+// func SelectTeam(teamName string) (*Team, error) {
 
-// 	accounts, err := ListAccounts()
+// 	teams, err := ListTeams()
 // 	if err != nil {
 // 		return nil, functions.NewE(err)
 // 	}
 
-// 	if accountName != "" {
-// 		for _, a := range accounts {
-// 			if a.Metadata.Name == accountName {
+// 	if teamName != "" {
+// 		for _, a := range teams {
+// 			if a.Metadata.Name == teamName {
 // 				return &a, nil
 // 			}
 // 		}
-// 		return nil, functions.Error("you don't have access to this account")
+// 		return nil, functions.Error("you don't have access to this team")
 // 	}
 
-// 	account, err := fzf.FindOne(
-// 		accounts,
-// 		func(account Account) string {
-// 			return account.DisplayName
+// 	team, err := fzf.FindOne(
+// 		teams,
+// 		func(team Team) string {
+// 			return team.DisplayName
 // 		},
-// 		fzf.WithPrompt("Select Account > "),
+// 		fzf.WithPrompt("Select Team > "),
 // 	)
 
 // 	if err != nil {
 // 		return nil, functions.NewE(err)
 // 	}
 
-// 	return account, nil
+// 	return team, nil
 // }
 
-// func EnsureAccount(options ...fn.Option) (string, error) {
-// 	accountName := fn.GetOption(options, "accountName")
+// func EnsureTeam(options ...fn.Option) (string, error) {
+// 	teamName := fn.GetOption(options, "teamName")
 
-// 	if accountName != "" {
-// 		return accountName, nil
+// 	if teamName != "" {
+// 		return teamName, nil
 // 	}
 
 // 	fc, err := fileclient.New()
@@ -72,9 +72,9 @@ func (apic *apiClient) ListAccounts() ([]Account, error) {
 // 		return "", functions.NewE(err)
 // 	}
 
-// 	s, _ := fc.CurrentAccountName()
+// 	s, _ := fc.CurrentTeamName()
 // 	if s == "" {
-// 		a, err := SelectAccount("")
+// 		a, err := SelectTeam("")
 // 		if err != nil {
 // 			return "", functions.NewE(err)
 // 		}

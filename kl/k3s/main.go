@@ -7,7 +7,7 @@ import (
 )
 
 type K3sClient interface {
-	CreateClustersAccounts(name string) error
+	CreateClustersTeams(name string) error
 	EnsureKloudliteNetwork() error
 	StartAppInterceptService(ports []apiclient.AppPort, toStart bool) error
 	EnsureImage(i string) error

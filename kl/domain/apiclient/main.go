@@ -16,16 +16,16 @@ type User struct {
 var authSecret string
 
 func getCookie(options ...functions.Option) (string, error) {
-	accName := functions.GetOption(options, "accountName")
+	accName := functions.GetOption(options, "teamName")
 	if accName == "" {
 		fc, err := fileclient.New()
 		if err != nil {
 			return "", functions.NewE(err)
 		}
 
-		accName, err = fc.CurrentAccountName()
+		accName, err = fc.CurrentTeamName()
 		if err == nil {
-			options = append(options, functions.MakeOption("accountName", accName))
+			options = append(options, functions.MakeOption("teamName", accName))
 		}
 	}
 

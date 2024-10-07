@@ -31,7 +31,7 @@ var secretsCmd = &cobra.Command{
 			return
 		}
 
-		currentAccount, err := fc.CurrentAccountName()
+		currentTeam, err := fc.CurrentTeamName()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -42,7 +42,7 @@ var secretsCmd = &cobra.Command{
 			return
 		}
 
-		sec, err := apic.ListSecrets(currentAccount, currentEnv.Name)
+		sec, err := apic.ListSecrets(currentTeam, currentEnv.Name)
 		if err != nil {
 			fn.PrintError(err)
 			return

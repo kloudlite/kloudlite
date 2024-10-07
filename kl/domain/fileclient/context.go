@@ -58,7 +58,7 @@ type Session struct {
 }
 
 type MainContext struct {
-	AccountName string `json:"accountName"`
+	TeamName string `json:"teamName"`
 }
 
 type DeviceContext struct {
@@ -68,7 +68,7 @@ type DeviceContext struct {
 
 type InfraContext struct {
 	Name        string `json:"name"`
-	AccountName string `json:"accountName"`
+	TeamName    string `json:"teamName"`
 	ClusterName string `json:"ClusterName"`
 	DeviceName  string `json:"deviceName"`
 }
@@ -79,10 +79,10 @@ type InfraContexts struct {
 }
 
 type ExtraData struct {
-	BaseUrl         string          `json:"baseUrl"`
-	SelectedAccount string          `json:"selectedAccount"`
-	DnsHostSuffix   string          `json:"dnsHostSuffix"`
-	SelectedEnvs    map[string]*Env `json:"selectedEnvs"`
+	BaseUrl       string          `json:"baseUrl"`
+	SelectedTeam  string          `json:"selectedTeam"`
+	DnsHostSuffix string          `json:"dnsHostSuffix"`
+	SelectedEnvs  map[string]*Env `json:"selectedEnvs"`
 }
 
 type Port struct {
@@ -390,7 +390,7 @@ func (fc *fclient) GetK3sTracker() (*k3sTracker, error) {
 
 func GetCookieString(options ...fn.Option) (string, error) {
 
-	accName := fn.GetOption(options, "accountName")
+	accName := fn.GetOption(options, "teamName")
 
 	session, err := GetAuthSession()
 	if err != nil {

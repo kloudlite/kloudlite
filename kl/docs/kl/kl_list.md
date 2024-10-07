@@ -1,12 +1,12 @@
 ## kl list
 
-List [accounts | envs | configs | secrets | apps]
+List [teams | envs | configs | secrets | apps]
 
 ### Synopsis
 
 ```
 Use this command to list resources like,
-  account, environments, configs, secrets and apps
+  team, environments, configs, secrets and apps
 ```
 
 ### Options
@@ -22,7 +22,7 @@ Use this command to list resources like,
 ### SEE ALSO
 
 * [kl](kl.md)  - 
-* [list accounts](list_accounts.md)  - Get list of accounts accessible to you
+* [list teams](list_teams.md)  - Get list of teams accessible to you
 * [kl list apps](kl_list_apps.md)  - Get list of apps in selected environment
 * [kl list configs](kl_list_configs.md)  - Get list of configs in selected environment
 * [kl list envs](kl_list_envs.md)  - Get list of environments

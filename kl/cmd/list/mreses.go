@@ -34,13 +34,13 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		currentAccount, err := fc.CurrentAccountName()
+		currentTeam, err := fc.CurrentTeamName()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		mres, err := apic.ListMreses(currentAccount, currentEnv.Name)
+		mres, err := apic.ListMreses(currentTeam, currentEnv.Name)
 		if err != nil {
 			fn.PrintError(err)
 			return

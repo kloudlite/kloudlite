@@ -60,7 +60,7 @@ func (c *client) Start() error {
 		}
 	}
 
-	if err = c.k3s.CreateClustersAccounts(c.klfile.AccountName); err != nil {
+	if err = c.k3s.CreateClustersTeams(c.klfile.TeamName); err != nil {
 		return fn.NewE(err)
 	}
 
@@ -112,24 +112,24 @@ func (c *client) Start() error {
 
 func (c *client) StartClusterContainer() error {
 	defer spinner.Client.UpdateMessage("starting k3s cluster")()
-	_, err := c.apic.GetClusterConfig(c.klfile.AccountName)
+	_, err := c.apic.GetClusterConfig(c.klfile.TeamName)
 	if err != nil {
 		return fn.NewE(err)
 	}
-	err = c.EnsureK3SCluster(c.klfile.AccountName)
+	err = c.EnsureK3SCluster(c.klfile.TeamName)
 	if err != nil {
 		return fn.NewE(err)
 	}
-	config, err := c.fc.GetClusterConfig(c.klfile.AccountName)
+	config, err := c.fc.GetClusterConfig(c.klfile.TeamName)
 	if config.Installed {
 		return nil
 	}
-	err = c.ConnectClusterToAccount(config)
+	err = c.ConnectClusterToTeam(config)
 	if err != nil {
 		return fn.NewE(err)
 	}
 	config.Installed = true
-	err = c.fc.SetClusterConfig(c.klfile.AccountName, config)
+	err = c.fc.SetClusterConfig(c.klfile.TeamName, config)
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -138,7 +138,7 @@ func (c *client) StartClusterContainer() error {
 
 func (c *client) StartWgContainer() error {
 	defer spinner.Client.UpdateMessage("starting wireguard")()
-	vpnCfg, err := c.apic.GetAccVPNConfig(c.klfile.AccountName)
+	vpnCfg, err := c.apic.GetAccVPNConfig(c.klfile.TeamName)
 	if err != nil {
 		return fn.NewE(err)
 	}

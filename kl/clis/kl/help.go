@@ -12,10 +12,10 @@ func GetRootHelp(cmd *cobra.Command) string {
 These are common kl commands used in various situatiions:
 
 Manage Context:
-      status                      - get status of your current context (user, account, environment, vpn status)
+      status                      - get status of your current context (user, team, environment, vpn status)
 
-      list account                - list all accounts
-      switch account              - switch between kloudlite accounts
+      list team                - list all teams
+      switch team              - switch between kloudlite teams
 
 Setup a kloudlite environment:
       init                        - initilize kloudlite configuration file in current working directory

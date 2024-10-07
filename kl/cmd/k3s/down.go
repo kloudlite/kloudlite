@@ -40,17 +40,11 @@ func stopK3sServer(cmd *cobra.Command) error {
 		return err
 	}
 
-	timeOut := 0
 	for _, c := range crlist {
-		if err := cli.ContainerStop(cmd.Context(), c.ID, container.StopOptions{
-			Signal:  "SIGKILL",
-			Timeout: &timeOut,
-		}); err != nil {
+		if err := cli.ContainerStop(cmd.Context(), c.ID, container.StopOptions{}); err != nil {
 			return err
 		}
-		if err := cli.ContainerRemove(cmd.Context(), c.ID, container.RemoveOptions{
-			Force: true,
-		}); err != nil {
+		if err := cli.ContainerRemove(cmd.Context(), c.ID, container.RemoveOptions{}); err != nil {
 			return err
 		}
 	}

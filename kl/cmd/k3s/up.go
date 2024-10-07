@@ -26,14 +26,14 @@ func startK3sServer() error {
 	if err != nil {
 		return functions.NewE(err)
 	}
-	if data.SelectedAccount == "" {
-		return functions.Error("No account selected")
+	if data.SelectedTeam == "" {
+		return functions.Error("No team selected")
 	}
 	k, err := k3s.NewClient()
 	if err != nil {
 		return err
 	}
-	if err = k.CreateClustersAccounts(data.SelectedAccount); err != nil {
+	if err = k.CreateClustersTeams(data.SelectedTeam); err != nil {
 		return functions.NewE(err)
 	}
 	functions.Log("k3s server started")

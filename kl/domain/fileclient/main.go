@@ -10,13 +10,13 @@ type FileClient interface {
 	GetHostWgConfig() (string, error)
 	GetWGConfig() (*WGConfig, error)
 	SetWGConfig(config string) error
-	CurrentAccountName() (string, error)
+	CurrentTeamName() (string, error)
 	Logout() error
 	GetK3sTracker() (*k3sTracker, error)
-	GetVpnAccountConfig(account string) (*AccountVpnConfig, error)
-	SetVpnAccountConfig(account string, config *AccountVpnConfig) error
-	GetClusterConfig(account string) (*AccountClusterConfig, error)
-	SetClusterConfig(account string, accClusterConfig *AccountClusterConfig) error
+	GetVpnTeamConfig(team string) (*TeamVpnConfig, error)
+	SetVpnTeamConfig(team string, config *TeamVpnConfig) error
+	GetClusterConfig(team string) (*TeamClusterConfig, error)
+	SetClusterConfig(team string, accClusterConfig *TeamClusterConfig) error
 	GetDevice() (*DeviceContext, error)
 	SetDevice(device *DeviceContext) error
 

@@ -38,7 +38,7 @@ var secretCmd = &cobra.Command{
 		}
 
 		if secName == "" {
-			currentAccount, err := fc.CurrentAccountName()
+			currentTeam, err := fc.CurrentTeamName()
 			if err != nil {
 				fn.PrintError(err)
 				return
@@ -48,7 +48,7 @@ var secretCmd = &cobra.Command{
 				fn.PrintError(err)
 				return
 			}
-			secrets, err := apic.ListSecrets(currentAccount, currentEnv.Name)
+			secrets, err := apic.ListSecrets(currentTeam, currentEnv.Name)
 			if err != nil {
 				fn.PrintError(err)
 				return
@@ -67,13 +67,13 @@ var secretCmd = &cobra.Command{
 			secName = selectedSecret.Metadata.Name
 		}
 
-		currentAccount, err := fc.CurrentAccountName()
+		currentTeam, err := fc.CurrentTeamName()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		sec, err := apic.GetSecret(currentAccount, secName)
+		sec, err := apic.GetSecret(currentTeam, secName)
 		if err != nil {
 			fn.PrintError(err)
 			return

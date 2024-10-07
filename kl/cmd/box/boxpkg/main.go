@@ -91,7 +91,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 
 	env, err := fc.EnvOfPath(cwd)
 	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
-		environment, err := apic.GetEnvironment(klFile.AccountName, klFile.DefaultEnv)
+		environment, err := apic.GetEnvironment(klFile.TeamName, klFile.DefaultEnv)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}

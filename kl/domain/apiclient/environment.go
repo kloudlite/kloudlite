@@ -57,9 +57,9 @@ const (
 // 	}
 // }
 
-func (apic *apiClient) ListEnvs(accountName string) ([]Env, error) {
+func (apic *apiClient) ListEnvs(teamName string) ([]Env, error) {
 
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -83,8 +83,8 @@ func (apic *apiClient) ListEnvs(accountName string) ([]Env, error) {
 	}
 }
 
-func (apic *apiClient) GetEnvironment(accountName, envName string) (*Env, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+func (apic *apiClient) GetEnvironment(teamName, envName string) (*Env, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (apic *apiClient) EnsureEnv() (*fileclient.Env, error) {
 	if kt.DefaultEnv == "" {
 		return nil, functions.Error("please initialize kl.yml by running `kl init` in current workspace")
 	}
-	e, err := apic.GetEnvironment(kt.AccountName, kt.DefaultEnv)
+	e, err := apic.GetEnvironment(kt.TeamName, kt.DefaultEnv)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -133,9 +133,9 @@ func (apic *apiClient) EnsureEnv() (*fileclient.Env, error) {
 // 		return nil, functions.NewE(err)
 // 	}
 
-// 	accountName := fn.GetOption(options, "accountName")
-// 	if _, err := EnsureAccount(
-// 		fn.MakeOption("accountName", accountName),
+// 	teamName := fn.GetOption(options, "teamName")
+// 	if _, err := EnsureTeam(
+// 		fn.MakeOption("teamName", teamName),
 // 	); err != nil {
 // 		return nil, functions.NewE(err)
 // 	}
@@ -168,8 +168,8 @@ func (apic *apiClient) EnsureEnv() (*fileclient.Env, error) {
 // 	}, nil
 // }
 
-func (apic *apiClient) CloneEnv(accountName, envName, newEnvName, clusterName string) (*Env, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+func (apic *apiClient) CloneEnv(teamName, envName, newEnvName, clusterName string) (*Env, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -192,8 +192,8 @@ func (apic *apiClient) CloneEnv(accountName, envName, newEnvName, clusterName st
 	}
 }
 
-func (apic *apiClient) CheckEnvName(accountName, envName string) (bool, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+func (apic *apiClient) CheckEnvName(teamName, envName string) (bool, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return false, functions.NewE(err)
 	}

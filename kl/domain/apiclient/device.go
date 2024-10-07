@@ -15,7 +15,7 @@ import (
 )
 
 type Device struct {
-	AccountName       string `json:"accountName"`
+	TeamName          string `json:"accountName"`
 	CreationTime      string `json:"creationTime"`
 	CreatedBy         User   `json:"createdBy"`
 	DisplayName       string `json:"displayName"`
@@ -49,8 +49,8 @@ type DeviceList struct {
 	Edges Edges[Env] `json:"edges"`
 }
 
-func (apic *apiClient) GetVPNDevice(accountName string, devName string) (*Device, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+func (apic *apiClient) GetVPNDevice(teamName string, devName string) (*Device, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -66,13 +66,13 @@ func (apic *apiClient) GetVPNDevice(accountName string, devName string) (*Device
 	return GetFromResp[Device](respData)
 }
 
-func (apic *apiClient) CreateDevice(devName, displayName, account string) (*Device, error) {
+func (apic *apiClient) CreateDevice(devName, displayName, team string) (*Device, error) {
 	//cn, err := getDeviceName(devName)
 	//if err != nil {
 	//	return nil, fn.NewE(err)
 	//}
 
-	cookie, err := getCookie(fn.MakeOption("accountName", account))
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -136,7 +136,7 @@ func (apic *apiClient) CheckDeviceStatus() bool {
 	client.Timeout = 2 * time.Second
 
 	message := new(dns.Msg)
-	message.SetQuestion(dns.Fqdn("account.kloudlite.local"), dns.TypeA)
+	message.SetQuestion(dns.Fqdn("team.kloudlite.local"), dns.TypeA)
 	message.RecursionDesired = true
 
 	// Send the DNS query
@@ -179,7 +179,7 @@ func getDeviceName(devName string) (*CheckName, error) {
 	}
 }
 
-func (apic *apiClient) CreateVpnForAccount(account string) (*Device, error) {
+func (apic *apiClient) CreateVpnForTeam(team string) (*Device, error) {
 	devName, err := os.Hostname()
 	if err != nil {
 		return nil, fn.NewE(err)
@@ -194,48 +194,48 @@ func (apic *apiClient) CreateVpnForAccount(account string) (*Device, error) {
 		}
 		devName = checkNames.SuggestedNames[0]
 	}
-	device, err := apic.CreateDevice(devName, devName, account)
+	device, err := apic.CreateDevice(devName, devName, team)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 	return device, nil
 }
 
-func (apic *apiClient) GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error) {
+func (apic *apiClient) GetAccVPNConfig(team string) (*fileclient.TeamVpnConfig, error) {
 
-	avc, err := apic.fc.GetVpnAccountConfig(account)
+	avc, err := apic.fc.GetVpnTeamConfig(team)
 
 	if err != nil && os.IsNotExist(err) {
-		dev, err := apic.CreateVpnForAccount(account)
+		dev, err := apic.CreateVpnForTeam(team)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
-		accountVpnConfig := fileclient.AccountVpnConfig{
+		teamVpnConfig := fileclient.TeamVpnConfig{
 			WGconf:     dev.WireguardConfig.Value,
 			DeviceName: dev.Metadata.Name,
 		}
 
-		if err := apic.fc.SetVpnAccountConfig(account, &accountVpnConfig); err != nil {
+		if err := apic.fc.SetVpnTeamConfig(team, &teamVpnConfig); err != nil {
 			return nil, fn.NewE(err)
 		}
 	} else if err != nil {
 		return nil, fn.NewE(err)
 	}
 	if avc == nil {
-		avc, err = apic.fc.GetVpnAccountConfig(account)
+		avc, err = apic.fc.GetVpnTeamConfig(team)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
 	}
 	if avc.WGconf == "" {
-		d, err := apic.GetVPNDevice(account, avc.DeviceName)
+		d, err := apic.GetVPNDevice(team, avc.DeviceName)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
 
 		avc.WGconf = d.WireguardConfig.Value
 
-		if err := apic.fc.SetVpnAccountConfig(account, avc); err != nil {
+		if err := apic.fc.SetVpnTeamConfig(team, avc); err != nil {
 			return nil, fn.NewE(err)
 		}
 	}

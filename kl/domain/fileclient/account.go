@@ -5,15 +5,15 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-func (f *fclient) CurrentAccountName() (string, error) {
+func (f *fclient) CurrentTeamName() (string, error) {
 	kt, err := f.getKlFile("")
 	if err != nil {
 		return "", functions.NewE(err)
 	}
 
-	if kt.AccountName == "" {
-		return "", fn.Error("no account selected")
+	if kt.TeamName == "" {
+		return "", fn.Error("no team selected")
 	}
 
-	return kt.AccountName, nil
+	return kt.TeamName, nil
 }

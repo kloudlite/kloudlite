@@ -29,7 +29,7 @@ var configsCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		currentAccount, err := fc.CurrentAccountName()
+		currentTeam, err := fc.CurrentTeamName()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -39,7 +39,7 @@ var configsCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		config, err := apic.ListConfigs(currentAccount, currentEnv.Name)
+		config, err := apic.ListConfigs(currentTeam, currentEnv.Name)
 
 		if err != nil {
 			fn.PrintError(err)

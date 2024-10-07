@@ -92,7 +92,7 @@ func (apic *apiClient) GetLoadMaps() (map[string]string, MountMap, error) {
 	}
 
 	cookie, err := getCookie([]functions.Option{
-		functions.MakeOption("accountName", kt.AccountName),
+		functions.MakeOption("teamName", kt.TeamName),
 	}...)
 
 	if err != nil {

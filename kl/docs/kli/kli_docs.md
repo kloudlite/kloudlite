@@ -12,7 +12,7 @@ Example:
   kl docs
 
   when you execute the above command a link will be opened on your browser. 
-  visit your browser and approve there to access your account using this cli.
+  visit your browser and approve there to access your team using this cli.
 	
 ```
 

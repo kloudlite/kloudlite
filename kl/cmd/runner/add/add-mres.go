@@ -143,11 +143,11 @@ func selectMres(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	m, err := apic.ListMreses(currentAccount, currentEnv.Name)
+	m, err := apic.ListMreses(currentTeam, currentEnv.Name)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -168,11 +168,11 @@ func init() {
 }
 
 func selectMresKey(apic apiclient.ApiClient, fc fileclient.FileClient, secretName string) (*string, error) {
-	selectedAccount, err := fc.CurrentAccountName()
+	selectedTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	secret, err := apic.GetSecret(selectedAccount, secretName)
+	secret, err := apic.GetSecret(selectedTeam, secretName)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

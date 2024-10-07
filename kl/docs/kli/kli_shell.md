@@ -14,7 +14,7 @@ Example:
 ### Options
 
 ```
-  -a, --account string   account name
+  -a, --team string   team name
   -c, --cluster string   cluster name
   -h, --help             help for shell
   -h, --help   help for shell

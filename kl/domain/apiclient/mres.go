@@ -10,9 +10,9 @@ type Mres struct {
 	SecretRefName Metadata `json:"secretRef"`
 }
 
-func (apic *apiClient) ListMreses(accountName string, envName string) ([]Mres, error) {
+func (apic *apiClient) ListMreses(teamName string, envName string) ([]Mres, error) {
 
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -33,8 +33,8 @@ func (apic *apiClient) ListMreses(accountName string, envName string) ([]Mres, e
 	return fromResp, nil
 }
 
-func (apic *apiClient) ListMresKeys(accountName, envName, importedManagedResource string) ([]string, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+func (apic *apiClient) ListMresKeys(teamName, envName, importedManagedResource string) ([]string, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -60,7 +60,7 @@ type MresResp struct {
 	MresName string `json:"mresName"`
 }
 
-func (apic *apiClient) GetMresConfigValues(accountName string) (map[string]string, error) {
+func (apic *apiClient) GetMresConfigValues(teamName string) (map[string]string, error) {
 	fc := apic.fc
 
 	currentEnv, err := apic.EnsureEnv()
@@ -77,7 +77,7 @@ func (apic *apiClient) GetMresConfigValues(accountName string) (map[string]strin
 		return nil, fn.Errorf("no managed resource selected")
 	}
 
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

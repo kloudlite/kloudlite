@@ -9,8 +9,8 @@ type BYOKCluster struct {
 	Metadata    Metadata `json:"metadata"`
 }
 
-func (apic *apiClient) ListBYOKClusters(accountName string) ([]BYOKCluster, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+func (apic *apiClient) ListBYOKClusters(teamName string) ([]BYOKCluster, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

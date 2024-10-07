@@ -11,7 +11,7 @@ use this command to initialize a kl-config file
 ### Options
 
 ```
-  -a, --account string   account name
+  -a, --team string   team name
   -f, --file string      file name
   -h, --help             help for init
   -q, --quiet            quiet output

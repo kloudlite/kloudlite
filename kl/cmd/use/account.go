@@ -9,38 +9,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var accountCmd = &cobra.Command{
-	Use:   "account",
-	Short: "use account",
+var teamCmd = &cobra.Command{
+	Use:   "team",
+	Short: "use team",
 	Run: func(_ *cobra.Command, _ []string) {
-		if err := UseAccount(); err != nil {
+		if err := UseTeam(); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func UseAccount() error {
+func UseTeam() error {
 	apic, err := apiclient.New()
 
 	if err != nil {
 		return fn.NewE(err)
 	}
-	accounts, err := apic.ListAccounts()
+	teams, err := apic.ListTeams()
 	if err != nil {
 		return fn.NewE(err)
 	}
 
-	var selectedAccount *apiclient.Account
+	var selectedTeam *apiclient.Team
 
-	if len(accounts) == 0 {
-		return fn.Error("no accounts found")
-	} else if len(accounts) == 1 {
-		selectedAccount = &accounts[0]
+	if len(teams) == 0 {
+		return fn.Error("no teams found")
+	} else if len(teams) == 1 {
+		selectedTeam = &teams[0]
 	} else {
-		selectedAccount, err = fzf.FindOne(accounts, func(item apiclient.Account) string {
+		selectedTeam, err = fzf.FindOne(teams, func(item apiclient.Team) string {
 			return item.Metadata.Name
-		}, fzf.WithPrompt("Select account to use >"))
+		}, fzf.WithPrompt("Select team to use >"))
 		if err != nil {
 			return err
 		}
@@ -51,7 +51,7 @@ func UseAccount() error {
 		return fn.NewE(err)
 	}
 
-	data.SelectedAccount = selectedAccount.Metadata.Name
+	data.SelectedTeam = selectedTeam.Metadata.Name
 
 	err = fileclient.SaveExtraData(data)
 	if err != nil {
@@ -62,9 +62,9 @@ func UseAccount() error {
 	if err != nil {
 		return err
 	}
-	if err = k.CreateClustersAccounts(selectedAccount.Metadata.Name); err != nil {
+	if err = k.CreateClustersTeams(selectedTeam.Metadata.Name); err != nil {
 		return fn.NewE(err)
 	}
-	fn.Log("Selected account is ", selectedAccount.Metadata.Name)
+	fn.Log("Selected team is ", selectedTeam.Metadata.Name)
 	return nil
 }

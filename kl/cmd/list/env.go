@@ -36,17 +36,17 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		return functions.NewE(err)
 	}
 
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return functions.NewE(err)
 	}
-	envs, err := apic.ListEnvs(currentAccount)
+	envs, err := apic.ListEnvs(currentTeam)
 	if err != nil {
 		return functions.NewE(err)
 	}
 
 	if len(envs) == 0 {
-		return fn.Errorf("[#] no environments found in account: %s", text.Blue(currentAccount))
+		return fn.Errorf("[#] no environments found in team: %s", text.Blue(currentTeam))
 	}
 
 	env, _ := apic.EnsureEnv()

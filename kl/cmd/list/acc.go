@@ -14,15 +14,15 @@ import (
 )
 
 var accCmd = &cobra.Command{
-	Use:   "accounts",
-	Short: "Get list of accounts accessible to you",
+	Use:   "teams",
+	Short: "Get list of teams accessible to you",
 	Run: func(cmd *cobra.Command, _ []string) {
 		apic, err := apiclient.New()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-		err = listAccounts(apic, cmd)
+		err = listTeams(apic, cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -30,15 +30,15 @@ var accCmd = &cobra.Command{
 	},
 }
 
-func listAccounts(apic apiclient.ApiClient, cmd *cobra.Command) error {
-	accounts, err := apic.ListAccounts()
+func listTeams(apic apiclient.ApiClient, cmd *cobra.Command) error {
+	teams, err := apic.ListTeams()
 
 	if err != nil {
 		return functions.NewE(err)
 	}
 
-	if len(accounts) == 0 {
-		return fn.Errorf("[#] no accounts found")
+	if len(teams) == 0 {
+		return fn.Errorf("[#] no teams found")
 	}
 
 	fc, err := fileclient.New()
@@ -47,22 +47,22 @@ func listAccounts(apic apiclient.ApiClient, cmd *cobra.Command) error {
 	}
 
 	// this erro ignore is intentional
-	accountName, _ := fc.CurrentAccountName()
+	teamName, _ := fc.CurrentTeamName()
 
 	header := table.Row{table.HeaderText("name"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)
 
-	for _, a := range accounts {
+	for _, a := range teams {
 		rows = append(rows, table.Row{
 			func() string {
-				if a.Metadata.Name == accountName {
+				if a.Metadata.Name == teamName {
 					return text.Colored(fmt.Sprint("*", a.DisplayName), 2)
 				}
 				return a.DisplayName
 			}(),
 
 			func() string {
-				if a.Metadata.Name == accountName {
+				if a.Metadata.Name == teamName {
 					return text.Colored(a.Metadata.Name, 2)
 				}
 				return a.Metadata.Name
@@ -77,5 +77,5 @@ func listAccounts(apic apiclient.ApiClient, cmd *cobra.Command) error {
 }
 
 func init() {
-	accCmd.Aliases = append(accCmd.Aliases, "acc", "account")
+	accCmd.Aliases = append(accCmd.Aliases, "team")
 }

@@ -22,7 +22,7 @@ type InstallCommand struct {
 	ChartVersion string `json:"chart-version"`
 	CRDsURL      string `json:"crds-url"`
 	HelmValues   struct {
-		AccountName           string `json:"accountName"`
+		TeamName              string `json:"accountName"`
 		ClusterName           string `json:"clusterName"`
 		ClusterToken          string `json:"clusterToken"`
 		KloudliteDNSSuffix    string `json:"kloudliteDNSSuffix"`
@@ -30,8 +30,8 @@ type InstallCommand struct {
 	} `json:"helm-values"`
 }
 
-func (apic *apiClient) getClustersOfAccount(account string) ([]Cluster, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", account))
+func (apic *apiClient) getClustersOfTeam(team string) ([]Cluster, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -47,9 +47,9 @@ func (apic *apiClient) getClustersOfAccount(account string) ([]Cluster, error) {
 	return clusters, nil
 }
 
-func (apic *apiClient) GetClusterConfig(account string) (*fileclient.AccountClusterConfig, error) {
+func (apic *apiClient) GetClusterConfig(team string) (*fileclient.TeamClusterConfig, error) {
 
-	existingClusters, err := apic.getClustersOfAccount(account)
+	existingClusters, err := apic.getClustersOfTeam(team)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (apic *apiClient) GetClusterConfig(account string) (*fileclient.AccountClus
 	for _, c := range existingClusters {
 		if c.Metadata.Labels["kloudlite.io/local-uuid"] == wgconfig.UUID {
 			selectedCluster = &c
-			err := apic.enrichClusterWithInstructions(account, selectedCluster)
+			err := apic.enrichClusterWithInstructions(team, selectedCluster)
 			if err != nil {
 				return nil, err
 			}
@@ -69,13 +69,13 @@ func (apic *apiClient) GetClusterConfig(account string) (*fileclient.AccountClus
 		}
 	}
 	if selectedCluster == nil {
-		selectedCluster, err = apic.createClusterForAccount(account)
+		selectedCluster, err = apic.createClusterForTeam(team)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
 	}
 
-	config := fileclient.AccountClusterConfig{
+	config := fileclient.TeamClusterConfig{
 		ClusterToken: selectedCluster.ClusterToken,
 		ClusterName:  selectedCluster.Metadata.Name,
 		InstallCommand: fileclient.InstallCommand{
@@ -83,7 +83,7 @@ func (apic *apiClient) GetClusterConfig(account string) (*fileclient.AccountClus
 			ChartVersion: selectedCluster.InstallCommand.ChartVersion,
 			CRDsURL:      selectedCluster.InstallCommand.CRDsURL,
 			HelmValues: fileclient.InstallHelmValues{
-				AccountName:           selectedCluster.InstallCommand.HelmValues.AccountName,
+				TeamName:              selectedCluster.InstallCommand.HelmValues.TeamName,
 				ClusterName:           selectedCluster.InstallCommand.HelmValues.ClusterName,
 				ClusterToken:          selectedCluster.InstallCommand.HelmValues.ClusterToken,
 				KloudliteDNSSuffix:    selectedCluster.InstallCommand.HelmValues.KloudliteDNSSuffix,
@@ -92,15 +92,15 @@ func (apic *apiClient) GetClusterConfig(account string) (*fileclient.AccountClus
 		},
 	}
 	config.WGConfig = *wgconfig
-	err = apic.fc.SetClusterConfig(account, &config)
+	err = apic.fc.SetClusterConfig(team, &config)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 	return &config, nil
 }
 
-func getClusterName(clusterName, account string) (*CheckName, error) {
-	cookie, err := getCookie(fn.MakeOption("accountName", account))
+func getClusterName(clusterName, team string) (*CheckName, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -120,8 +120,8 @@ func getClusterName(clusterName, account string) (*CheckName, error) {
 	}
 }
 
-func (apic *apiClient) enrichClusterWithInstructions(account string, d *Cluster) error {
-	cookie, err := getCookie(fn.MakeOption("accountName", account))
+func (apic *apiClient) enrichClusterWithInstructions(team string, d *Cluster) error {
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -143,18 +143,18 @@ func (apic *apiClient) enrichClusterWithInstructions(account string, d *Cluster)
 	return nil
 }
 
-func (apic *apiClient) createCluster(hostName, account string) (*Cluster, error) {
+func (apic *apiClient) createCluster(hostName, team string) (*Cluster, error) {
 	user, err := apic.GetCurrentUser()
 	if err != nil {
 		return nil, err
 	}
 	userName := user.Name + "-" + hostName
-	cn, err := getClusterName(userName, account)
+	cn, err := getClusterName(userName, team)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
-	cookie, err := getCookie(fn.MakeOption("accountName", account))
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -195,7 +195,7 @@ func (apic *apiClient) createCluster(hostName, account string) (*Cluster, error)
 		return nil, fn.NewE(err)
 	}
 
-	err = apic.enrichClusterWithInstructions(account, d)
+	err = apic.enrichClusterWithInstructions(team, d)
 	if err != nil {
 		return nil, err
 	}
@@ -203,12 +203,12 @@ func (apic *apiClient) createCluster(hostName, account string) (*Cluster, error)
 	return d, nil
 }
 
-func (apic *apiClient) createClusterForAccount(account string) (*Cluster, error) {
+func (apic *apiClient) createClusterForTeam(team string) (*Cluster, error) {
 	hostName, err := os.Hostname()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	cluster, err := apic.createCluster(hostName, account)
+	cluster, err := apic.createCluster(hostName, team)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

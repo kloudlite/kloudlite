@@ -20,7 +20,7 @@ const (
 
 var Cmd = &cobra.Command{
 	Use:   "status",
-	Short: "get status of your current context (user, account, environment, vpn status)",
+	Short: "get status of your current context (user, team, environment, vpn status)",
 	Run: func(cmd *cobra.Command, _ []string) {
 		apic, err := apiclient.New()
 		if err != nil {
@@ -41,9 +41,9 @@ var Cmd = &cobra.Command{
 			return
 		}
 
-		acc, err := fc.CurrentAccountName()
+		acc, err := fc.CurrentTeamName()
 		if err == nil {
-			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), acc))
+			fn.Log(fmt.Sprint(text.Bold(text.Blue("Team: ")), acc))
 		}
 
 		e, err := apic.EnsureEnv()

@@ -1,6 +1,6 @@
 ## kli status
 
-get status of your current context (user, account, environment, vpn status)
+get status of your current context (user, team, environment, vpn status)
 
 
 

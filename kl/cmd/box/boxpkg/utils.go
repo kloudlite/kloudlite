@@ -357,14 +357,14 @@ func (c *client) stopOtherContainers() error {
 	return nil
 }
 
-func (c *client) stopContainer(_ string) error {
+func (c *client) stopContainer(path string) error {
 	defer spinner.Client.UpdateMessage("stopping container")()
 
 	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
 		Filters: filters.NewArgs(
 			dockerLabelFilter(CONT_MARK_KEY, "true"),
-			// dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, "true"),
-			// dockerLabelFilter(CONT_PATH_KEY, path),
+			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_PATH_KEY, path),
 		),
 		All: true,
 	})
@@ -373,6 +373,9 @@ func (c *client) stopContainer(_ string) error {
 	}
 
 	for _, c2 := range existingContainers {
+		if c2.Labels["kl-team"] == c.klfile.TeamName {
+			continue
+		}
 		timeOut := 0
 		if err := c.cli.ContainerStop(context.Background(), c2.ID, container.StopOptions{
 			Timeout: &timeOut,
@@ -594,7 +597,7 @@ func (c *client) SyncVpn(wg string) error {
 	return nil
 }
 
-func GenerateConnectionScript(clusterConfig *fileclient.AccountClusterConfig) (string, error) {
+func GenerateConnectionScript(clusterConfig *fileclient.TeamClusterConfig) (string, error) {
 	t := template.New("connectionScript")
 	p, err := t.Parse(`
 echo "checking whether k3s server is accepting connections"
@@ -622,7 +625,7 @@ spec:
   version: {{.InstallCommand.ChartVersion}}
   targetNamespace: kloudlite
   valuesContent: |-
-    accountName: {{.InstallCommand.HelmValues.AccountName}}
+    accountName: {{.InstallCommand.HelmValues.TeamName}}
     clusterName: {{.InstallCommand.HelmValues.ClusterName}}
     clusterToken: {{.InstallCommand.HelmValues.ClusterToken}}
     kloudliteDNSSuffix: {{.InstallCommand.HelmValues.KloudliteDNSSuffix}}
@@ -640,12 +643,12 @@ EOF
 	return b.String(), nil
 }
 
-func (c *client) ConnectClusterToAccount(cConfig *fileclient.AccountClusterConfig) error {
+func (c *client) ConnectClusterToTeam(cConfig *fileclient.TeamClusterConfig) error {
 	existingContainer, err := c.cli.ContainerList(context.Background(), container.ListOptions{
 		Filters: filters.NewArgs(
 			dockerLabelFilter(CONT_MARK_KEY, "true"),
 			dockerLabelFilter("kl-k3s", "true"),
-			dockerLabelFilter("kl-account", c.klfile.AccountName),
+			dockerLabelFilter("kl-team", c.klfile.TeamName),
 		),
 	})
 	if err != nil {
@@ -687,7 +690,7 @@ func (c *client) ConnectClusterToAccount(cConfig *fileclient.AccountClusterConfi
 	}
 }
 
-func (c *client) EnsureK3SCluster(account string) error {
+func (c *client) EnsureK3SCluster(team string) error {
 	err := c.ensureImage(constants.GetK3SImageName())
 	if err != nil {
 		return err
@@ -703,7 +706,7 @@ func (c *client) EnsureK3SCluster(account string) error {
 	}
 
 	if existingContainers != nil && (len(existingContainers) > 0) {
-		if existingContainers[0].Labels["kl-account"] != account {
+		if existingContainers[0].Labels["kl-team"] != team {
 			err := c.cli.ContainerStop(context.Background(), existingContainers[0].ID, container.StopOptions{})
 			if err != nil {
 				return fn.Error("failed to stop container")
@@ -729,7 +732,7 @@ func (c *client) EnsureK3SCluster(account string) error {
 		Labels: map[string]string{
 			CONT_MARK_KEY: "true",
 			"kl-k3s":      "true",
-			"kl-account":  c.klfile.AccountName,
+			"kl-team":     c.klfile.TeamName,
 		},
 		Image: constants.GetK3SImageName(),
 		Cmd: []string{
@@ -737,7 +740,7 @@ func (c *client) EnsureK3SCluster(account string) error {
 			"--tls-san",
 			"0.0.0.0",
 			"--tls-san",
-			fmt.Sprintf("%s.kcluster.local.khost.dev", c.klfile.AccountName),
+			fmt.Sprintf("%s.kcluster.local.khost.dev", c.klfile.TeamName),
 		},
 	}, &container.HostConfig{
 		Privileged:  true,
@@ -747,7 +750,7 @@ func (c *client) EnsureK3SCluster(account string) error {
 		},
 		Binds: []string{
 			//"/Users/karthik/Downloads/k9s/k9s:/bin/k9s",
-			fmt.Sprintf("kl-k3s-%s-cache:/var/lib/rancher/k3s", c.klfile.AccountName),
+			fmt.Sprintf("kl-k3s-%s-cache:/var/lib/rancher/k3s", c.klfile.TeamName),
 		},
 	}, &network.NetworkingConfig{}, nil, "")
 	if err != nil {

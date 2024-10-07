@@ -2,7 +2,6 @@ package use
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/k3s"
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
@@ -87,7 +86,7 @@ func init() {
 	switchCmd.Aliases = append(switchCmd.Aliases, "switch")
 
 	switchCmd.Flags().StringP("envname", "e", "", "environment name")
-	switchCmd.Flags().StringP("account", "a", "", "account name")
+	switchCmd.Flags().StringP("team", "a", "", "team name")
 }
 
 func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.Env, error) {
@@ -97,13 +96,13 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.E
 		return nil, functions.NewE(err)
 	}
 
-	k3sClient, err := k3s.NewClient()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-	if err = k3sClient.RemoveAllIntercepts(); err != nil {
-		return nil, functions.NewE(err)
-	}
+	//k3sClient, err := k3s.NewClient()
+	//if err != nil {
+	//	return nil, functions.NewE(err)
+	//}
+	//if err = k3sClient.RemoveAllIntercepts(); err != nil {
+	//	return nil, functions.NewE(err)
+	//}
 
 	persistSelectedEnv := func(env fileclient.Env) error {
 		err := fc.SelectEnv(env)
@@ -113,12 +112,12 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.E
 		return nil
 	}
 
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
 
-	envs, err := apic.ListEnvs(currentAccount)
+	envs, err := apic.ListEnvs(currentTeam)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

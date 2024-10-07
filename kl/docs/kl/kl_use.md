@@ -1,6 +1,6 @@
 ## kl use
 
-select environment and account to current context
+select environment and team to current context
 
 
 

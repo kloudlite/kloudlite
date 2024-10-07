@@ -18,14 +18,14 @@ type Config struct {
 	Data        map[string]string `yaml:"data"`
 }
 
-func (apic *apiClient) ListConfigs(accountName string, envName string) ([]Config, error) {
+func (apic *apiClient) ListConfigs(teamName string, envName string) ([]Config, error) {
 
 	// env, err := EnsureEnv(nil, options...)
 	// if err != nil {
 	// 	return nil, fn.NewE(err)
 	// }
 
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -105,9 +105,9 @@ func (apic *apiClient) ListConfigs(accountName string, envName string) ([]Config
 // 	return config, nil
 // }
 
-func (apic *apiClient) GetConfig(accountName string, envName string, configName string) (*Config, error) {
+func (apic *apiClient) GetConfig(teamName string, envName string, configName string) (*Config, error) {
 
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

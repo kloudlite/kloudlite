@@ -14,14 +14,14 @@ type Secret struct {
 	IsReadyOnly bool              `yaml:"isReadyOnly" json:"isReadyOnly"`
 }
 
-func (apic *apiClient) ListSecrets(accountName string, envName string) ([]Secret, error) {
+func (apic *apiClient) ListSecrets(teamName string, envName string) ([]Secret, error) {
 
 	// env, err := EnsureEnv(nil, options...)
 	// if err != nil {
 	// 	return nil, functions.NewE(err)
 	// }
 
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -101,9 +101,9 @@ func (apic *apiClient) ListSecrets(accountName string, envName string) ([]Secret
 // 	return secret, nil
 // }
 
-func (apic *apiClient) GetSecret(accountName string, secretName string) (*Secret, error) {
+func (apic *apiClient) GetSecret(teamName string, secretName string) (*Secret, error) {
 
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	cookie, err := getCookie(fn.MakeOption("teamName", teamName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

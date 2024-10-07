@@ -59,7 +59,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	currentAccount, err := fc.CurrentAccountName()
+	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -69,7 +69,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	configs, err := apic.ListConfigs(currentAccount, currentEnv.Name)
+	configs, err := apic.ListConfigs(currentTeam, currentEnv.Name)
 	if err != nil {
 		return fn.NewE(err)
 	}

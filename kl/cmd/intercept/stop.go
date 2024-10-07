@@ -32,7 +32,7 @@ Examples:
 			return
 		}
 
-		currentAcc, err := fc.CurrentAccountName()
+		currentAcc, err := fc.CurrentTeamName()
 		if err != nil {
 			fn.PrintError(err)
 			return

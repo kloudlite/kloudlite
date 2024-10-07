@@ -51,19 +51,19 @@ var InitCommand = &cobra.Command{
 			return
 		}
 
-		selectedAccount, err := selectAccount(apic)
+		selectedTeam, err := selectTeam(apic)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		} else {
-			if selectedEnv, err := selectEnv(apic, fc, *selectedAccount); err != nil {
+			if selectedEnv, err := selectEnv(apic, fc, *selectedTeam); err != nil {
 				fn.PrintError(err)
 			} else {
 				newKlFile := fileclient.KLFileType{
-					AccountName: *selectedAccount,
-					DefaultEnv:  *selectedEnv,
-					Version:     "v1",
-					Packages:    []string{"neovim", "git"},
+					TeamName:   *selectedTeam,
+					DefaultEnv: *selectedEnv,
+					Version:    "v1",
+					Packages:   []string{"neovim", "git"},
 				}
 				if err := fc.WriteKLFile(newKlFile); err != nil {
 					fn.PrintError(err)
@@ -98,26 +98,26 @@ var InitCommand = &cobra.Command{
 	},
 }
 
-func selectAccount(apic apiclient.ApiClient) (*string, error) {
-	if accounts, err := apic.ListAccounts(); err == nil {
-		if selectedAccount, err := fzf.FindOne(
-			accounts,
-			func(account apiclient.Account) string {
-				return account.Metadata.Name + " #" + account.Metadata.Name
+func selectTeam(apic apiclient.ApiClient) (*string, error) {
+	if teams, err := apic.ListTeams(); err == nil {
+		if selectedTeam, err := fzf.FindOne(
+			teams,
+			func(team apiclient.Team) string {
+				return team.Metadata.Name + " #" + team.Metadata.Name
 			},
 			fzf.WithPrompt("select kloudlite team > "),
 		); err != nil {
 			return nil, fn.NewE(err)
 		} else {
-			return &selectedAccount.Metadata.Name, nil
+			return &selectedTeam.Metadata.Name, nil
 		}
 	} else {
 		return nil, fn.NewE(err)
 	}
 }
 
-func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, accountName string) (*string, error) {
-	if envs, err := apic.ListEnvs(accountName); err == nil {
+func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, teamName string) (*string, error) {
+	if envs, err := apic.ListEnvs(teamName); err == nil {
 		if selectedEnv, err := fzf.FindOne(
 			envs,
 			func(env apiclient.Env) string {
@@ -149,6 +149,6 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, accountName s
 }
 
 func init() {
-	InitCommand.Flags().StringP("account", "a", "", "account name")
+	InitCommand.Flags().StringP("team", "a", "", "team name")
 	InitCommand.Flags().StringP("file", "f", "", "file name")
 }

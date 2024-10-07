@@ -94,7 +94,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, klFil
 
 	items := make([]apiclient.ConfigORSecret, 0)
 	if cOrs == fileclient.ConfigType {
-		currentAccount, err := fc.CurrentAccountName()
+		currentTeam, err := fc.CurrentTeamName()
 		if err != nil {
 			return err
 		}
@@ -103,7 +103,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, klFil
 			fn.PrintError(err)
 			return err
 		}
-		configs, e := apic.ListConfigs(currentAccount, currentEnv.Name)
+		configs, e := apic.ListConfigs(currentTeam, currentEnv.Name)
 
 		if e != nil {
 			return e
@@ -117,7 +117,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, klFil
 		}
 
 	} else {
-		currentAccount, err := fc.CurrentAccountName()
+		currentTeam, err := fc.CurrentTeamName()
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, klFil
 			fn.PrintError(err)
 			return err
 		}
-		secrets, e := apic.ListSecrets(currentAccount, currentEnv.Name)
+		secrets, e := apic.ListSecrets(currentTeam, currentEnv.Name)
 
 		if e != nil {
 			return e

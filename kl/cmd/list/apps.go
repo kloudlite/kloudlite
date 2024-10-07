@@ -44,7 +44,7 @@ func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Com
 
 	envName := fn.ParseStringFlag(cmd, "env")
 
-	currentAccountName, err := fc.CurrentAccountName()
+	currentTeamName, err := fc.CurrentTeamName()
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -53,7 +53,7 @@ func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Com
 		return functions.NewE(err)
 	}
 
-	apps, err := apic.ListApps(currentAccountName, currentEnvName.Name)
+	apps, err := apic.ListApps(currentTeamName, currentEnvName.Name)
 	if err != nil {
 		return functions.NewE(err)
 	}
