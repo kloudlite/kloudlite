@@ -1947,6 +1947,7 @@ query consoleListMembershipsForAccount($accountName: String!) {
       name
       joined
       email
+      id
     }
     role
   }

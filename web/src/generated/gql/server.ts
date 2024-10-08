@@ -3592,7 +3592,13 @@ export type ConsoleListMembershipsForAccountQueryVariables = Exact<{
 export type ConsoleListMembershipsForAccountQuery = {
   accounts_listMembershipsForAccount?: Array<{
     role: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
-    user: { verified: boolean; name: string; joined: any; email: string };
+    user: {
+      verified: boolean;
+      name: string;
+      joined: any;
+      email: string;
+      id: string;
+    };
   }>;
 };
 

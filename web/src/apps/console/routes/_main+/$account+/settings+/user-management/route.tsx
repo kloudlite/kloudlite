@@ -127,7 +127,7 @@ const Teams = ({ setShowUserInvite, searchText, sortTeamMembers }: ITeams) => {
                 isLoading && searchResp.length === 0
                   ? placeHolderUsers
                   : sorted.map((i) => ({
-                      id: i.user.email,
+                      id: i.user.id,
                       name: i.user.name,
                       role: i.role,
                       email: i.user.email,

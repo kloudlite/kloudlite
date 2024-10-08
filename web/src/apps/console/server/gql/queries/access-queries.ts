@@ -63,6 +63,7 @@ export const accessQueries = (executor: IExecutor) => ({
             name
             joined
             email
+            id
           }
           role
         }
