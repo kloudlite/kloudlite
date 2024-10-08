@@ -1,6 +1,7 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
 import SidebarLayout from '~/iotconsole/components/sidebar-layout';
 import {
+  DISCARD_ACTIONS,
   UnsavedChangesProvider,
   useUnsavedChanges,
 } from '~/lib/client/hooks/use-unsaved-changes';
@@ -52,8 +53,8 @@ const Layout = () => {
     setIgnorePaths(
       navItems.map(
         (ni) =>
-          `/${account}/deviceblueprint/${deviceBlueprintName}/app/${appName}/settings/${ni.value}`
-      )
+          `/${account}/deviceblueprint/${deviceBlueprintName}/app/${appName}/settings/${ni.value}`,
+      ),
     );
   }, []);
 
@@ -110,7 +111,7 @@ const Layout = () => {
   }, [rootContext.app]);
 
   useEffect(() => {
-    if (performAction === 'discard-changes') {
+    if (performAction === DISCARD_ACTIONS.DISCARD_CHANGES) {
       setApp(rootContext.app);
       setPerformAction('');
     }
@@ -120,7 +121,7 @@ const Layout = () => {
     <SidebarLayout navItems={navItems} parentPath="/settings">
       <Popup.Root
         className="w-[90vw] max-w-[1440px] min-w-[1000px]"
-        show={performAction === 'view-changes'}
+        show={performAction === DISCARD_ACTIONS.VIEW_CHANGES}
         onOpenChange={(v) => setPerformAction(v)}
       >
         <Popup.Header>Review Changes</Popup.Header>
