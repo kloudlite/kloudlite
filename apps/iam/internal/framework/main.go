@@ -33,8 +33,8 @@ var Module fx.Option = fx.Module(
 	}),
 	repos.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(logger *slog.Logger) (app.IAMGrpcServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger})
+	fx.Provide(func(logger *slog.Logger, ev *env.Env) (app.IAMGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger, ShowLogs: ev.ShowGRPCLogs})
 	}),
 
 	app.Module,

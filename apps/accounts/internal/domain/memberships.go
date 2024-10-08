@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	"strings"
+
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -69,7 +70,6 @@ func (d *domain) UpdateAccountMembership(ctx UserContext, accountName string, me
 		ResourceRef:  iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
 		Role:         string(role),
 	})
-
 	if err != nil {
 		return false, errors.NewE(err)
 	}
