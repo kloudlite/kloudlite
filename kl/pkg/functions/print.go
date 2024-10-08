@@ -81,6 +81,12 @@ func Printf(format string, str ...interface{}) {
 }
 
 func Println(str ...interface{}) {
-	str = append(str, "\n")
-	stdout(fmt.Sprint(str...))
+	r := strings.Join(func() []string {
+		resp := make([]string, 0, len(str))
+		for _, s := range str {
+			resp = append(resp, fmt.Sprint(s))
+		}
+		return resp
+	}(), " ")
+	stdout(fmt.Sprintf("%s\n", r))
 }

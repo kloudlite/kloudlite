@@ -2,7 +2,9 @@ package sshclient
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"regexp"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -18,6 +20,20 @@ type SSHConfig struct {
 	SSHPort int
 }
 
+func HostKeyCallback(hostname string, remote net.Addr, key ssh.PublicKey) error {
+	// *.local.khost.dev:21708
+	// regex match
+
+	re := regexp.MustCompile(`(.*)\.local\.khost\.dev:(\d+)`)
+	matches := re.FindStringSubmatch(hostname)
+
+	if len(matches) != 3 {
+		return fn.Errorf("hostname not allowed: %s", hostname)
+	}
+
+	return nil
+}
+
 func DoSSH(sc SSHConfig) error {
 	pkFile, err := publicKeyFile(sc.KeyPath)
 
@@ -26,7 +42,7 @@ func DoSSH(sc SSHConfig) error {
 		Auth: []ssh.AuthMethod{
 			pkFile,
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: HostKeyCallback,
 	}
 
 	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", sc.Host, sc.SSHPort), config)
