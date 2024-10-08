@@ -38,8 +38,8 @@ type ApiClient interface {
 	CheckEnvName(teamName, envName string) (bool, error)
 	GetLoadMaps() (map[string]string, MountMap, error)
 
-	ListBYOKClusters(teamName string) ([]BYOKCluster, error)
-
+	//ListBYOKClusters(teamName string) ([]BYOKCluster, error)
+	GetClustersOfTeam(team string) ([]Cluster, error)
 	ListMreses(teamName string, envName string) ([]Mres, error)
 	ListMresKeys(teamName, envName, importedManagedResource string) ([]string, error)
 	GetMresConfigValues(teamName string) (map[string]string, error)

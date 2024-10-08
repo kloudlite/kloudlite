@@ -58,21 +58,25 @@ var Cmd = &cobra.Command{
 			}
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), klFile.DefaultEnv))
 		}
+		fn.Log()
+		fn.Log(text.Bold("Cluster Status"))
 
-		err = getK3sStatus()
+		config, err := fc.GetClusterConfig(acc)
 		if err != nil {
-			fn.Log("Local Cluster: ", text.Yellow("getting ready"))
-			fn.Log("Edge Gateway Connection: ", text.Yellow("getting ready"))
+			fn.PrintError(err)
+			return
+		}
+		fn.Log("Cluster Name: ", text.Blue(config.ClusterName))
+
+		err = getK3sStatus(fc)
+		if err != nil {
+			fn.Log("Running: ", text.Yellow("false"))
 			return
 		}
 	},
 }
 
-func getK3sStatus() error {
-	fc, err := fileclient.New()
-	if err != nil {
-		return fn.NewE(err)
-	}
+func getK3sStatus(fc fileclient.FileClient) error {
 
 	k3sTracker, err := fc.GetK3sTracker()
 	if err != nil {
@@ -88,6 +92,12 @@ func getK3sStatus() error {
 		return fn.Error(K3sServerNotReady)
 	}
 
+	if k3sTracker.Compute && k3sTracker.Gateway {
+		fn.Log("Running: ", text.Green("true"))
+	} else {
+		fn.Log("Running: ", text.Yellow("false"))
+	}
+
 	if k3sTracker.Compute {
 		fn.Log("Local Cluster: ", text.Green("ready"))
 	} else {
@@ -95,21 +105,22 @@ func getK3sStatus() error {
 	}
 
 	if k3sTracker.Gateway {
-		fn.Log("Edge Gateway Connection: ", text.Green("ready"))
+		fn.Log("Edge Gateway Connection: ", text.Green("online"))
 	} else {
-		fn.Log("Edge Gateway Connection: ", text.Yellow("getting ready"))
+		fn.Log("Edge Gateway Connection: ", text.Yellow("offline"))
 	}
 
 	if envclient.InsideBox() {
+		fn.Log("\nWorkspace Status")
 		if !k3sTracker.Gateway {
-			fn.Log("Workspace Connection:", text.Yellow("offline"))
+			fn.Log("Edge Connection:", text.Yellow("offline"))
 			return nil
 		}
 		if connect.ChekcWireguardConnection() {
-			fn.Log("Workspace Connection:", text.Green("online"))
+			fn.Log("Edge Connection:", text.Green("online"))
 			return nil
 		}
-		fn.Log("Workspace Connection:", text.Yellow("offline"))
+		fn.Log("Edge Connection:", text.Yellow("offline"))
 	}
 	return nil
 }

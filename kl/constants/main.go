@@ -25,7 +25,7 @@ func GetWireguardImageName() string {
 
 func GetK3SImageName() string {
 	//return "rancher/k3s:v1.27.5-k3s1"
-	return "ghcr.io/kloudlite/kl/k3s:latest"
+	return fmt.Sprintf("ghcr.io/kloudlite/kl/k3s:%s", flags.Version)
 }
 
 var (

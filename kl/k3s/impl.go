@@ -615,3 +615,23 @@ func (c *client) runScriptInContainer(script string) error {
 
 	return nil
 }
+
+func (c *client) CheckK3sRunningLocally() (bool, error) {
+	defer spinner.Client.UpdateMessage("checking k3s server")()
+	existingContainers, err := c.c.ContainerList(context.Background(), container.ListOptions{
+		All: true,
+		Filters: filters.NewArgs(
+			filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
+			filters.Arg("label", fmt.Sprintf("%s=%s", "kl-k3s", "true")),
+		),
+	})
+	
+	if err != nil {
+		return false, fn.Errorf("failed to list containers: %w", err)
+	}
+
+	if len(existingContainers) == 0 {
+		return false, fn.Errorf("no k3s container running locally")
+	}
+	return true, nil
+}

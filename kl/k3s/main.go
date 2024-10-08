@@ -14,6 +14,7 @@ type K3sClient interface {
 	RestartWgProxyContainer() error
 	RemoveAllIntercepts() error
 	DeletePods() error
+	CheckK3sRunningLocally() (bool, error)
 }
 
 type client struct {

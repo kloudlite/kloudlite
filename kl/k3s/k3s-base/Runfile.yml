@@ -44,5 +44,11 @@ tasks:
 
   container:build:
     cmd:
-#      - run download:images
-      - docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/kloudlite/kl/k3s:latest . --push
+      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=v1.0.0-nightly -t ghcr.io/kloudlite/kl/k3s:v1.0.0-nightly . --push
+
+  container:push:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
+    cmd:
+      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=${tag} -t ghcr.io/kloudlite/kl/k3s:${tag} . --push
