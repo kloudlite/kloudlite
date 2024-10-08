@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/helm"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 
 	"github.com/kloudlite/api/apps/infra/internal/env"
@@ -76,6 +77,24 @@ func main() {
 			utilruntime.Must(clustersv1.AddToScheme(scheme))
 
 			return k8s.NewClient(restCfg, scheme)
+		}),
+
+		fx.Provide(func(restCfg *rest.Config) (helm.Client, error) {
+			client, err := helm.NewHelmClient(restCfg, helm.ClientOptions{
+				RepositoryCacheDir: "/tmp",
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if err := client.AddOrUpdateChartRepo(context.TODO(), helm.RepoEntry{
+				Name: "kloudlite",
+				URL:  "https://kloudlite.github.io/helm-charts",
+			}); err != nil {
+				return nil, err
+			}
+
+			return client, nil
 		}),
 
 		framework.Module,
