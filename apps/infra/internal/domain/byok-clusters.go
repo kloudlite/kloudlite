@@ -203,6 +203,11 @@ func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string, 
 		return nil, err
 	}
 
+	gvpnConn, err := d.findGlobalVPNConnection(ctx, ctx.AccountName, cluster.Name, cluster.GlobalVPN)
+	if err != nil {
+		return nil, err
+	}
+
 	if onlyHelmValues {
 		b, err := json.Marshal(map[string]any{
 			"crds-url": fmt.Sprintf("https://github.com/kloudlite/helm-charts/releases/download/%s/crds-all.yml", d.env.KloudliteRelease),
@@ -216,6 +221,11 @@ func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string, 
 				"clusterToken":          cluster.ClusterToken,
 				"messageOfficeGRPCAddr": d.env.MessageOfficeExternalGrpcAddr,
 				"kloudliteDNSSuffix":    fmt.Sprintf("%s.%s", ctx.AccountName, d.env.KloudliteDNSSuffix),
+			},
+
+			"gateway": map[string]any{
+				"IP":          gvpnConn.Spec.GlobalIP,
+				"clusterCIDR": gvpnConn.Spec.ClusterCIDR,
 			},
 		})
 		if err != nil {
