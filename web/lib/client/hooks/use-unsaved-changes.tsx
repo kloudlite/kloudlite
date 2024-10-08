@@ -13,8 +13,8 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { ChildrenProps } from '~/components/types';
 import Popup from '~/components/molecule/popup';
+import { ChildrenProps } from '~/components/types';
 import { useReload } from '../helpers/reloader';
 
 const UnsavedChanges = createContext<{
@@ -28,6 +28,7 @@ const UnsavedChanges = createContext<{
   performAction: string;
   setPerformAction: (action: string) => void;
   loading: boolean;
+  onProceed?: () => void;
 }>({
   hasChanges: false,
   setHasChanges() {},
@@ -39,6 +40,7 @@ const UnsavedChanges = createContext<{
   performAction: '',
   setPerformAction() {},
   loading: false,
+  onProceed() {},
 });
 
 export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
@@ -49,6 +51,7 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
   const location = useLocation();
   const { state, proceed, reset } = unstable_useBlocker(({ nextLocation }) => {
     if (hasChanges && !ignorePaths.includes(nextLocation.pathname)) {
+      console.log('hasChanges', hasChanges);
       return true;
     }
     return false;
@@ -146,6 +149,8 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
     </UnsavedChanges.Provider>
   );
 };
+
 export const useUnsavedChanges = () => {
+  // const
   return useContext(UnsavedChanges);
 };
