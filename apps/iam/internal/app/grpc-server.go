@@ -52,6 +52,8 @@ func (s *GrpcService) UpdateMembership(ctx context.Context, in *iam.UpdateMember
 	}, nil
 }
 
+var ErrRoleBindingNotFound error = fmt.Errorf("role binding not found")
+
 func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, resourceRef string) (*entities.RoleBinding, error) {
 	rb, err := s.rbRepo.FindOne(
 		ctx, repos.Filter{
@@ -63,7 +65,7 @@ func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, reso
 		return nil, errors.NewE(err)
 	}
 	if rb == nil {
-		return nil, errors.Newf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
+		return nil, ErrRoleBindingNotFound
 	}
 	return rb, nil
 }
@@ -236,6 +238,10 @@ func (s *GrpcService) RemoveMembership(ctx context.Context, in *iam.RemoveMember
 
 	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
 	if err != nil {
+		if errors.Is(err, ErrRoleBindingNotFound) {
+			s.logger.WithKV("userID", in.UserId, "resourceRef", in.ResourceRef).Infof("role binding might already have been deleted")
+			return &iam.RemoveMembershipOut{Result: true}, nil
+		}
 		return nil, errors.NewE(err)
 	}
 
