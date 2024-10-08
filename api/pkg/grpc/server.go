@@ -18,7 +18,8 @@ type Server interface {
 }
 
 type ServerOpts struct {
-	Logger *slog.Logger
+	ShowLogs bool
+	Logger   *slog.Logger
 }
 
 type grpcServer struct {
@@ -52,10 +53,16 @@ func NewGrpcServer(opts ServerOpts) (Server, error) {
 		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
 	}
 
-	server := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(grpcLogger, grpcLoggingOpts...)),
-		grpc.ChainStreamInterceptor(logging.StreamServerInterceptor(grpcLogger, grpcLoggingOpts...)),
+	interceptors := []grpc.ServerOption{}
 
+	if opts.ShowLogs {
+		interceptors = append(interceptors,
+			grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(grpcLogger, grpcLoggingOpts...)),
+			grpc.ChainStreamInterceptor(logging.StreamServerInterceptor(grpcLogger, grpcLoggingOpts...)),
+		)
+	}
+
+	interceptors = append(interceptors,
 		grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 			p, ok := peer.FromContext(stream.Context())
 			if ok {
@@ -69,6 +76,8 @@ func NewGrpcServer(opts ServerOpts) (Server, error) {
 			return handler(srv, stream)
 		}),
 	)
+
+	server := grpc.NewServer(interceptors...)
 
 	return &grpcServer{Server: server, logger: opts.Logger}, nil
 }
