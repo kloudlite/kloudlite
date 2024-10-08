@@ -12,6 +12,11 @@ while true; do
   break
 done
 
+{{/*kubectl delete pods -n kloudlite --all --force --grace-period=0*/}}
+{{/*kubectl delete pods -n kl-gateway --all --force --grace-period=0*/}}
+
+kubectl taint nodes --all shutdown=true:NoExecute-
+
 cat > /tmp/namespace.yml <<EOF
 apiVersion: v1
 kind: Namespace
@@ -51,11 +56,14 @@ stringData:
     [Peer]
     # HOST
     PublicKey = {{.WGConfig.Host.PublicKey}}
+    PersistentKeepalive = 25
     AllowedIPs = 198.18.0.2/32
 
     [Peer]
     # WORKSPACE
     PublicKey = {{.WGConfig.Workspace.PublicKey}}
+    Endpoint = 172.18.0.3:31820
+    PersistentKeepalive = 25
     AllowedIPs = 198.18.0.3/32
 EOF
 
@@ -81,38 +89,41 @@ kubectl apply -f /tmp/service.yml
 
 kubectl apply -f {{.InstallCommand.CRDsURL}} --server-side
 
-cat > /tmp/helm-chart.yml <<EOF
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: kloudlite
-  namespace: kube-system
-spec:
-  repo: {{.InstallCommand.ChartRepo}}
-  chart: kloudlite-agent
-  version: {{.InstallCommand.ChartVersion}}
-  targetNamespace: kloudlite
-  valuesContent: |-
-    accountName: {{.InstallCommand.HelmValues.TeamName}}
-    clusterName: {{.InstallCommand.HelmValues.ClusterName}}
-    clusterToken: {{.InstallCommand.HelmValues.ClusterToken}}
-    kloudliteDNSSuffix: {{.InstallCommand.HelmValues.KloudliteDNSSuffix}}
-    messageOfficeGRPCAddr: {{.InstallCommand.HelmValues.MessageOfficeGRPCAddr}}
-    agentOperator:
-      image:
-        repository: ghcr.io/kloudlite/operator/agent
-        tag: {{.Version}}
-      configuration:
-        gateway:
-          imageIPBindingController:
-            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller
-            tag: {{.Version}}
-          imageIPManager:
-            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-manager
-            tag: {{.Version}}
-EOF
+{{/*cat > /tmp/helm-chart.yml <<EOF*/}}
+{{/*apiVersion: helm.cattle.io/v1*/}}
+{{/*kind: HelmChart*/}}
+{{/*metadata:*/}}
+{{/*  name: kloudlite*/}}
+{{/*  namespace: kube-system*/}}
+{{/*spec:*/}}
+{{/*  repo: {{.InstallCommand.ChartRepo}}*/}}
+{{/*  chart: kloudlite-agent*/}}
+{{/*  version: {{.InstallCommand.ChartVersion}}*/}}
+{{/*  targetNamespace: kloudlite*/}}
+{{/*  valuesContent: |-*/}}
+{{/*    accountName: {{.InstallCommand.HelmValues.TeamName}}*/}}
+{{/*    clusterName: {{.InstallCommand.HelmValues.ClusterName}}*/}}
+{{/*    clusterToken: {{.InstallCommand.HelmValues.ClusterToken}}*/}}
+{{/*    kloudliteDNSSuffix: {{.InstallCommand.HelmValues.KloudliteDNSSuffix}}*/}}
+{{/*    messageOfficeGRPCAddr: {{.InstallCommand.HelmValues.MessageOfficeGRPCAddr}}*/}}
+{{/*    agentOperator:*/}}
+{{/*      image:*/}}
+{{/*        repository: ghcr.io/kloudlite/operator/agent*/}}
+{{/*        tag: {{.Version}}*/}}
+{{/*      configuration:*/}}
+{{/*        gateway:*/}}
+{{/*          imageIPBindingController:*/}}
+{{/*            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller*/}}
+{{/*            tag: {{.Version}}*/}}
+{{/*          imageIPManager:*/}}
+{{/*            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-manager*/}}
+{{/*            tag: {{.Version}}*/}}
+{{/*EOF*/}}
 
-kubectl apply -f /tmp/helm-chart.yml
+{{/*kubectl apply -f /tmp/helm-chart.yml*/}}
+
+curl -L0 -H 'Authorization: {{.InstallCommand.HelmValues.ClusterToken}}' https://console.dev.kloudlite.io/render/helm/kloudlite-agent/{{.InstallCommand.HelmValues.TeamName}}/{{.InstallCommand.HelmValues.ClusterName}} |  kubectl apply -f -
+
 
 cat > /tmp/service-device-router.yml <<EOF
 apiVersion: v1

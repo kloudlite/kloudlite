@@ -217,7 +217,14 @@ func (c *client) CreateClustersTeams(teamName string) error {
 		return fn.NewE(err, "failed to run script")
 	}
 
-	return nil
+	start := time.Now()
+	defer func() {
+		if flags.IsVerbose {
+			fn.Log(text.Yellow(fmt.Sprintf("Time taken to create cluster: %.2fs", time.Since(start).Seconds())))
+		}
+	}()
+	return c.EnsureK3sServerIsReady()
+
 }
 
 func generateConnectionScript(clusterConfig *fileclient.TeamClusterConfig) (string, error) {
@@ -240,6 +247,16 @@ func generateConnectionScript(clusterConfig *fileclient.TeamClusterConfig) (stri
 		return "", fn.NewE(err)
 	}
 	return b.String(), nil
+}
+
+func (c *client) DeletePods() error {
+	defer spinner.Client.UpdateMessage("deleting pods")()
+	script := `
+kubectl taint nodes --all shutdown=true:NoExecute	
+kubectl delete pods -n kloudlite --all --force --grace-period=0
+kubectl delete pods -n kl-gateway --all --force --grace-period=0
+`
+	return c.runScriptInContainer(script)
 }
 
 func (c *client) EnsureK3sServerIsReady() error {
@@ -444,23 +461,17 @@ kubectl patch svc/kl-device-router -n kl-local --type=json --patch-file /tmp/ser
 func (c *client) RemoveAllIntercepts() error {
 	defer spinner.Client.UpdateMessage("Cleaning up intercepts...")()
 	script := `
-cat > /tmp/service-device-router.yml <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: kl-device-router
-  namespace: kl-local
-  annotations:
-    kloudlite.io/networking.proxy.to: "172.18.0.3"
-spec:
-  ports:
-  - protocol: TCP
-    name: not-in-use
-    port: 59595
-    targetPort: 59595
+cat > /tmp/service-device-router.patch.json <<EOF
+[
+	{
+		"op": "replace",
+		"path": "/spec/ports",
+		"value": {"name": "not-in-use","port": 59595,"protocol": "TCP","targetPort": 59595}
+	}
+]
 EOF
 
-kubectl apply -f /tmp/service-device-router.yml
+kubectl patch svc/kl-device-router -n kl-local --type=json --patch-file /tmp/service-device-router.patch.json
 `
 	return c.runScriptInContainer(script)
 }

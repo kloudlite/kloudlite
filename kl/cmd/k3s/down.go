@@ -9,6 +9,7 @@ import (
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 var DownCmd = &cobra.Command{
@@ -40,6 +41,16 @@ func stopK3sServer(cmd *cobra.Command) error {
 		return err
 	}
 
+	k3sclient, err := k3s.NewClient()
+	if err != nil {
+		return err
+	}
+
+	if err := k3sclient.DeletePods(); err != nil {
+		return err
+	}
+
+	<-time.After(2 * time.Second)
 	for _, c := range crlist {
 		if err := cli.ContainerStop(cmd.Context(), c.ID, container.StopOptions{}); err != nil {
 			return err

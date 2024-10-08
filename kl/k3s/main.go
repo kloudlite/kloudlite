@@ -13,6 +13,7 @@ type K3sClient interface {
 	EnsureImage(i string) error
 	RestartWgProxyContainer() error
 	RemoveAllIntercepts() error
+	DeletePods() error
 }
 
 type client struct {
