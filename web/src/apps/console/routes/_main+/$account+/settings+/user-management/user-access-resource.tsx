@@ -21,7 +21,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '../../_layout';
 
-const RESOURCE_NAME = 'user';
+const RESOURCE_NAME = 'Team member';
 
 type BaseType = {
   id: string;
@@ -228,7 +228,7 @@ const UserAccessResources = ({
               }
             }
             reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            toast.success(`${titleCase(RESOURCE_NAME)} removed successfully`);
             setShowDeleteDialog(null);
           } catch (err) {
             handleError(err);
