@@ -1,22 +1,23 @@
-import { Plus, SmileySad } from '~/console/components/icons';
 import { useOutletContext } from '@remix-run/react';
-import { useCallback, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import { dayjs } from '~/components/molecule/dayjs';
 import Profile from '~/components/molecule/profile';
+import { useSort } from '~/components/utils';
+import { EmptyState } from '~/console/components/empty-state';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { Plus, SmileySad } from '~/console/components/icons';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import Wrapper from '~/console/components/wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useSearch } from '~/root/lib/client/helpers/search-filter';
-import { ExtractArrayType, NonNullableString } from '~/root/lib/types/common';
-import { EmptyState } from '~/console/components/empty-state';
-import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { motion } from 'framer-motion';
 import { parseName } from '~/console/server/r-utils/common';
-import { useSort } from '~/components/utils';
-import { dayjs } from '~/components/molecule/dayjs';
 import Pulsable from '~/root/lib/client/components/pulsable';
+import { useSearch } from '~/root/lib/client/helpers/search-filter';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { ExtractArrayType, NonNullableString } from '~/root/lib/types/common';
 import { IAccountContext } from '../../_layout';
+import { ISettingsContext } from '../_layout';
 import HandleUser from './handle-user';
 import Tools from './tools';
 import UserAccessResources from './user-access-resource';
@@ -28,6 +29,7 @@ interface ITeams {
     sortByProperty: string;
     sortByTime: string;
   };
+  isOwner?: boolean;
 }
 
 const placeHolderUsers = Array(3)
@@ -39,7 +41,12 @@ const placeHolderUsers = Array(3)
     email: 'sampleuser@gmail.com',
   }));
 
-const Teams = ({ setShowUserInvite, searchText, sortTeamMembers }: ITeams) => {
+const Teams = ({
+  setShowUserInvite,
+  searchText,
+  sortTeamMembers,
+  isOwner,
+}: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
   const { data: teamMembers, isLoading } = useCustomSwr(
@@ -134,6 +141,7 @@ const Teams = ({ setShowUserInvite, searchText, sortTeamMembers }: ITeams) => {
                     }))
               }
               isPendingInvitation={false}
+              isOwner={isOwner || false}
             />
           )}
         </Pulsable>
@@ -146,6 +154,7 @@ const Invitations = ({
   setShowUserInvite,
   searchText,
   sortTeamMembers,
+  isOwner,
 }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
@@ -241,6 +250,7 @@ const Invitations = ({
                     }))
             }
             isPendingInvitation
+            isOwner={isOwner || false}
           />
         </Pulsable>
       </Wrapper>
@@ -253,7 +263,8 @@ const SettingUserManagement = () => {
     'team' | 'invitations' | NonNullableString
   >('team');
   const [visible, setVisible] = useState(false);
-  const { account } = useOutletContext<IAccountContext>();
+  // const { account } = useOutletContext<IAccountContext>();
+  const { teamMembers, currentUser } = useOutletContext<ISettingsContext>();
 
   const [searchText, setSearchText] = useState('');
 
@@ -262,21 +273,29 @@ const SettingUserManagement = () => {
     sortByTime: 'des',
   });
 
-  const api = useConsoleApi();
+  // const api = useConsoleApi();
 
-  const { data: teamMembers, isLoading } = useCustomSwr(
-    `${parseName(account)}-owners`,
-    async () => {
-      return api.listMembershipsForAccount({
-        accountName: parseName(account),
-      });
-    }
-  );
+  const isOwner = useMemo(() => {
+    if (!teamMembers || !currentUser) return false;
+    const owner = teamMembers.find((member) => member.role === 'account_owner');
+    return owner?.user?.email === currentUser?.email;
+  }, [teamMembers, currentUser]);
 
-  const owners = useCallback(
-    () => teamMembers?.filter((i) => i.role === 'account_owner') || [],
-    [teamMembers]
-  )();
+  // const { data: teamMembers, isLoading } = useCustomSwr(
+  //   `${parseName(account)}-owners`,
+  //   async () => {
+  //     return api.listMembershipsForAccount({
+  //       accountName: parseName(account),
+  //     });
+  //   }
+  // );
+
+  // const owners = useCallback(
+  //   () => teamMembers?.filter((i) => i.role === 'account_owner') || [],
+  //   [teamMembers]
+  // )();
+
+  const accountOwner = teamMembers?.find((i) => i.role === 'account_owner');
 
   return (
     <div className="flex flex-col gap-8xl">
@@ -284,18 +303,30 @@ const SettingUserManagement = () => {
         <SecondarySubHeader
           title="User management"
           action={
-            <Button
-              content="Invite user"
-              variant="primary"
-              onClick={() => setVisible(true)}
-            />
+            isOwner && (
+              <Button
+                content="Invite user"
+                variant="primary"
+                onClick={() => setVisible(true)}
+              />
+            )
           }
         />
 
         <div className="flex flex-col p-3xl gap-3xl shadow-button border border-border-default rounded bg-surface-basic-default">
           <div className="headingLg text-text-strong">Account owners</div>
 
-          <Pulsable isLoading={isLoading}>
+          <Pulsable isLoading={false}>
+            <div className="flex flex-col gap-3xl">
+              <Profile
+                key={accountOwner?.user?.email}
+                name={accountOwner?.user?.name}
+                subtitle={accountOwner?.user?.email}
+              />
+            </div>
+          </Pulsable>
+
+          {/* <Pulsable isLoading={isLoading}>
             <div className="flex flex-col gap-3xl">
               {[
                 ...(isLoading
@@ -318,7 +349,7 @@ const SettingUserManagement = () => {
                 );
               })}
             </div>
-          </Pulsable>
+          </Pulsable> */}
         </div>
       </div>
       <div className="flex flex-col">
@@ -328,9 +359,9 @@ const SettingUserManagement = () => {
               value={active}
               onChange={setActive}
               items={[
-                { label: 'Team member', to: 'team-member', value: 'team' },
+                { label: 'Team members', to: 'team-member', value: 'team' },
                 {
-                  label: 'Pending invitation',
+                  label: 'Pending invitations',
                   to: 'pending-invitation',
                   value: 'invitations',
                 },
@@ -348,12 +379,14 @@ const SettingUserManagement = () => {
             setShowUserInvite={setVisible}
             searchText={searchText}
             sortTeamMembers={sortByProperty}
+            isOwner={isOwner}
           />
         ) : (
           <Invitations
             setShowUserInvite={setVisible}
             searchText={searchText}
             sortTeamMembers={sortByProperty}
+            isOwner={isOwner}
           />
         )}
       </div>

@@ -1,20 +1,18 @@
 import { useOutletContext } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
-import SelectPrimitive from '~/components/atoms/select-primitive';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
+import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IDialogBase } from '~/console/components/types.d';
+import {
+  IMemberType
+} from '~/console/routes/_main+/$account+/settings+/user-management/user-access-resource';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { parseName } from '~/console/server/r-utils/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { Github__Com___Kloudlite___Api___Apps___Iam___Types__Role as Role } from '~/root/src/generated/gql/server';
-import { parseName } from '~/console/server/r-utils/common';
-import CommonPopupHandle from '~/console/components/common-popup-handle';
-import {
-  IMemberType,
-  mapRoleToDisplayName,
-} from '~/console/routes/_main+/$account+/settings+/user-management/user-access-resource';
 import { IAccountContext } from '../../_layout';
 
 type IDialog = IDialogBase<IMemberType>;
@@ -40,7 +38,8 @@ const Root = (props: IDialog) => {
     initialValues: isUpdate
       ? {
           email: props?.data.email || '',
-          role: props?.data.role || 'account_member',
+          // role: props?.data.role || 'account_member',
+          role: 'account_member',
         }
       : {
           email: '',
@@ -98,7 +97,7 @@ const Root = (props: IDialog) => {
             )}
           </div>
 
-          <SelectPrimitive.Root
+          {/* <SelectPrimitive.Root
             label="Role"
             value={values.role}
             onChange={handleChange('role')}
@@ -113,7 +112,7 @@ const Root = (props: IDialog) => {
                 </SelectPrimitive.Option>
               );
             })}
-          </SelectPrimitive.Root>
+          </SelectPrimitive.Root> */}
         </div>
       </Popup.Content>
       <Popup.Footer>

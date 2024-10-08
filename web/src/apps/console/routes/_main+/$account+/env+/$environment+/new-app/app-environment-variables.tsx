@@ -21,6 +21,10 @@ import NoResultsFound from '~/console/components/no-results-found';
 import { IShowDialog } from '~/console/components/types.d';
 import { useAppState } from '~/console/page-components/app-states';
 import useForm from '~/root/lib/client/hooks/use-form';
+import {
+  DISCARD_ACTIONS,
+  useUnsavedChanges,
+} from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
 import AppDialog from './app-dialogs';
@@ -205,9 +209,11 @@ const EnvironmentVariablesList = ({
 };
 
 export const EnvironmentVariables = () => {
-  const { setContainer, getContainer } = useAppState();
+  const { setContainer, getContainer, getReadOnlyContainer, readOnlyApp } =
+    useAppState();
 
   const [showCSDialog, setShowCSDialog] = useState<IShowDialog>(null);
+  const { performAction } = useUnsavedChanges();
 
   const entry = Yup.object({
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
@@ -231,10 +237,16 @@ export const EnvironmentVariables = () => {
       .notRequired(),
   });
 
-  const { values, setValues, submit } = useForm({
-    initialValues: getContainer().env,
+  const {
+    values,
+    setValues,
+    submit,
+    resetValues: reset,
+  } = useForm({
+    initialValues: getReadOnlyContainer().env || null,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
+      // @ts-ignore
       setContainer((c) => ({
         ...c,
         env: val,
@@ -261,6 +273,7 @@ export const EnvironmentVariables = () => {
   };
 
   const removeEntry = (val: IEnvVariable) => {
+    // @ts-ignore
     setValues((v) => {
       const nv = v?.filter((v) => v.key !== val.key);
       return nv;
@@ -333,6 +346,25 @@ export const EnvironmentVariables = () => {
       resetValues();
     },
   });
+
+  useEffect(() => {
+    if (performAction === DISCARD_ACTIONS.DISCARD_CHANGES) {
+      // if (app.ciBuildId) {
+      //   setIsEdited(false);
+      // }
+      reset();
+      // @ts-ignore
+      // setBuildData(readOnlyApp?.build);
+    }
+
+    // else if (performAction === 'init') {
+    //   setIsEdited(false);
+    // }
+  }, [performAction]);
+
+  useEffect(() => {
+    reset();
+  }, [readOnlyApp]);
 
   return (
     <>

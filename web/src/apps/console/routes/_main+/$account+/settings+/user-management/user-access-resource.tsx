@@ -1,29 +1,27 @@
-import { PencilSimple, Trash } from '~/console/components/icons';
 import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';
 import { toast } from '~/components/molecule/toast';
 import { titleCase } from '~/components/utils';
 import {
-  ListBody,
   ListItemV2,
-  ListTitle,
   ListTitleV2,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
+import { Trash } from '~/console/components/icons';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
+import HandleUser from '~/console/routes/_main+/$account+/settings+/user-management/handle-user';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { parseName } from '~/console/server/r-utils/common';
-import HandleUser from '~/console/routes/_main+/$account+/settings+/user-management/handle-user';
 import { IAccountContext } from '../../_layout';
 
-const RESOURCE_NAME = 'user';
+const RESOURCE_NAME = 'Team member';
 
 type BaseType = {
   id: string;
@@ -59,7 +57,7 @@ export const mapRoleToDisplayName = (role: string): string => {
 };
 
 const ExtraButton = ({ onAction, item, isInvite }: IExtraButton) => {
-  let items: IResourceExtraItem[] = [
+  const items: IResourceExtraItem[] = [
     {
       label: 'Remove',
       icon: <Trash size={16} />,
@@ -69,18 +67,18 @@ const ExtraButton = ({ onAction, item, isInvite }: IExtraButton) => {
       className: '!text-text-critical',
     },
   ];
-  if (!isInvite) {
-    items = [
-      {
-        label: 'Edit',
-        icon: <PencilSimple size={16} />,
-        type: 'item',
-        onClick: () => onAction({ action: 'edit', item }),
-        key: 'edit',
-      },
-      ...items,
-    ];
-  }
+  // if (!isInvite) {
+  //   items = [
+  //     {
+  //       label: 'Edit',
+  //       icon: <PencilSimple size={16} />,
+  //       type: 'item',
+  //       onClick: () => onAction({ action: 'edit', item }),
+  //       key: 'edit',
+  //     },
+  //     ...items,
+  //   ];
+  // }
   return <ResourceExtraAction options={items} />;
 };
 
@@ -88,9 +86,10 @@ interface IResource {
   items: BaseType[];
   onAction: OnAction;
   isInvite: boolean;
+  isOwner: boolean;
 }
 
-const ListView = ({ items = [], onAction, isInvite }: IResource) => {
+const ListView = ({ items = [], onAction, isInvite, isOwner }: IResource) => {
   return (
     <List.Root>
       {items.map((item) => (
@@ -118,13 +117,19 @@ const ListView = ({ items = [], onAction, isInvite }: IResource) => {
             },
             {
               key: 3,
-              render: () => (
-                <ExtraButton
-                  isInvite={isInvite}
-                  onAction={onAction}
-                  item={item}
-                />
-              ),
+              render: () => {
+                if (item.role === 'account_owner') return null;
+                if (isOwner) {
+                  return (
+                    <ExtraButton
+                      isInvite={isInvite}
+                      onAction={onAction}
+                      item={item}
+                    />
+                  );
+                }
+                return null;
+              },
             },
           ]}
         />
@@ -136,9 +141,11 @@ const ListView = ({ items = [], onAction, isInvite }: IResource) => {
 const UserAccessResources = ({
   items = [],
   isPendingInvitation = false,
+  isOwner,
 }: {
   items: BaseType[];
   isPendingInvitation: boolean;
+  isOwner: boolean;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
@@ -153,6 +160,7 @@ const UserAccessResources = ({
   const props: IResource = {
     items,
     isInvite: isPendingInvitation,
+    isOwner,
     onAction: ({ action, item }) => {
       switch (action) {
         case 'edit':

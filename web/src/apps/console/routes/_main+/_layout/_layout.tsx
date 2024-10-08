@@ -65,7 +65,7 @@ export type IConsoleRootContext = {
 
 export const meta = (c: IRemixCtx) => {
   return [
-    { title: `Account ${constants.metadot} ${c.params?.account || ''}` },
+    { title: `Team ${constants.metadot} ${c.params?.account || ''}` },
     { name: 'theme-color', content: LightTitlebarColor },
   ];
 };
@@ -143,9 +143,9 @@ const AccountTabs = () => {
 };
 
 const Logo = () => {
-  const { account } = useParams();
+  // const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/environments`}>
+    <LogoWrapper to="/teams">
       <BrandLogo />
     </LogoWrapper>
   );
@@ -171,11 +171,10 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            {!hideProfileName ? (
-              <Profile name={titleCase(user.name)} size="xs" />
-            ) : (
-              <Profile size="xs" />
-            )}
+            <Profile
+              {...(hideProfileName ? {} : { name: titleCase(user.name) })}
+              size="xs"
+            />
           </div>
           <div className="flex md:hidden">
             <Profile size="xs" />
