@@ -273,6 +273,7 @@ export const EnvironmentVariables = () => {
   };
 
   const removeEntry = (val: IEnvVariable) => {
+    // @ts-ignore
     setValues((v) => {
       const nv = v?.filter((v) => v.key !== val.key);
       return nv;
