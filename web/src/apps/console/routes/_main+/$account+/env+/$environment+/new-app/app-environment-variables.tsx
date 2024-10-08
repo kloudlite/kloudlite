@@ -21,7 +21,10 @@ import NoResultsFound from '~/console/components/no-results-found';
 import { IShowDialog } from '~/console/components/types.d';
 import { useAppState } from '~/console/page-components/app-states';
 import useForm from '~/root/lib/client/hooks/use-form';
-import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
+import {
+  DISCARD_ACTIONS,
+  useUnsavedChanges,
+} from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
 import AppDialog from './app-dialogs';
@@ -343,8 +346,7 @@ export const EnvironmentVariables = () => {
   });
 
   useEffect(() => {
-    if (performAction === 'discard-changes') {
-      console.log('discard-changes');
+    if (performAction === DISCARD_ACTIONS.DISCARD_CHANGES) {
       // if (app.ciBuildId) {
       //   setIsEdited(false);
       // }

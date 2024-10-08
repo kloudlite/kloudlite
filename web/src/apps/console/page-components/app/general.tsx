@@ -16,7 +16,10 @@ import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
+import {
+  DISCARD_ACTIONS,
+  useUnsavedChanges,
+} from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 
@@ -119,7 +122,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
         setImageLoaded(false);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -133,7 +136,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       }
     },
     300,
-    [imageSearchText]
+    [imageSearchText],
   );
 
   const {
@@ -176,7 +179,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       displayName: Yup.string().required(),
       imageUrl: Yup.string().matches(
         constants.dockerImageFormatRegex,
-        'Invalid image format'
+        'Invalid image format',
       ),
       manualRepo: Yup.string().when(
         ['imageUrl', 'imageMode'],
@@ -189,7 +192,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             return schema.required().matches(regex, 'Invalid image format');
           }
           return schema;
-        }
+        },
       ),
       imageMode: Yup.string().required(),
       source: Yup.object()
@@ -242,7 +245,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   }, [values, mode]);
 
   useEffect(() => {
-    if (performAction === 'discard-changes') {
+    if (performAction === DISCARD_ACTIONS.DISCARD_CHANGES) {
       // if (app.ciBuildId) {
       //   setIsEdited(false);
       // }

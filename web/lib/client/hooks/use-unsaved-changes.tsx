@@ -6,6 +6,7 @@ import {
   useRevalidator,
 } from '@remix-run/react';
 import {
+  ReactNode,
   createContext,
   useCallback,
   useContext,
@@ -14,7 +15,6 @@ import {
   useState,
 } from 'react';
 import Popup from '~/components/molecule/popup';
-import { ChildrenProps } from '~/components/types';
 import { useReload } from '../helpers/reloader';
 
 const UnsavedChanges = createContext<{
@@ -28,7 +28,6 @@ const UnsavedChanges = createContext<{
   performAction: string;
   setPerformAction: (action: string) => void;
   loading: boolean;
-  onProceed?: () => void;
 }>({
   hasChanges: false,
   setHasChanges() {},
@@ -40,10 +39,15 @@ const UnsavedChanges = createContext<{
   performAction: '',
   setPerformAction() {},
   loading: false,
-  onProceed() {},
 });
 
-export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
+export const UnsavedChangesProvider = ({
+  children,
+  onProceed,
+}: {
+  children?: ReactNode;
+  onProceed?: (props: { setPerformAction?: (action: string) => void }) => void;
+}) => {
   const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [reload, setReload] = useState(false);
   const [ignorePaths, setIgnorePaths] = useState<string[]>([]);
@@ -51,7 +55,6 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
   const location = useLocation();
   const { state, proceed, reset } = unstable_useBlocker(({ nextLocation }) => {
     if (hasChanges && !ignorePaths.includes(nextLocation.pathname)) {
-      console.log('hasChanges', hasChanges);
       return true;
     }
     return false;
@@ -65,8 +68,8 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
         }
         return hasChanges;
       },
-      [hasChanges]
-    )
+      [hasChanges],
+    ),
   );
 
   useEffect(() => {
@@ -119,7 +122,7 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
           performAction,
           setPerformAction,
           s,
-        ]
+        ],
       )}
     >
       {children}
@@ -142,12 +145,21 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
           <Popup.Button
             content="Discard"
             variant="warning"
-            onClick={() => proceed?.()}
+            onClick={() => {
+              proceed?.();
+              onProceed?.({ setPerformAction });
+            }}
           />
         </Popup.Footer>
       </Popup.Root>
     </UnsavedChanges.Provider>
   );
+};
+
+export const DISCARD_ACTIONS = {
+  DISCARD_CHANGES: 'discard-changes',
+  VIEW_CHANGES: 'view-changes',
+  INIT: 'init',
 };
 
 export const useUnsavedChanges = () => {

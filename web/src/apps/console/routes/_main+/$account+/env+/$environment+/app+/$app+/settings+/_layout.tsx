@@ -18,6 +18,7 @@ import { constants } from '~/console/server/utils/constants';
 import { useReload } from '~/lib/client/helpers/reloader';
 import useForm from '~/lib/client/hooks/use-form';
 import {
+  DISCARD_ACTIONS,
   UnsavedChangesProvider,
   useUnsavedChanges,
 } from '~/lib/client/hooks/use-unsaved-changes';
@@ -69,8 +70,8 @@ const Layout = () => {
     setIgnorePaths(
       navItems.map(
         (ni) =>
-          `/${account}/env/${environment}/app/${appName}/settings/${ni.value}`
-      )
+          `/${account}/env/${environment}/app/${appName}/settings/${ni.value}`,
+      ),
     );
   }, []);
 
@@ -143,11 +144,11 @@ const Layout = () => {
                                 if (app.ciBuildId) {
                                   if (
                                     readOnlyApp.spec.containers?.[0].image.includes(
-                                      constants.defaultAppRepoNameOnly
+                                      constants.defaultAppRepoNameOnly,
                                     )
                                   ) {
                                     return `${constants.defaultAppRepoName(
-                                      accountName
+                                      accountName,
                                     )}:${tagName}`;
                                   }
                                   return `${registryHost}/${accountName}/${
@@ -158,7 +159,7 @@ const Layout = () => {
                                   }`;
                                 }
                                 return `${constants.defaultAppRepoName(
-                                  accountName
+                                  accountName,
                                 )}:${tagName}`;
                               })(),
                               name: 'container-0',
@@ -177,7 +178,7 @@ const Layout = () => {
         }
         toast.success('App updated successfully');
         // @ts-ignore
-        setPerformAction('init');
+        setPerformAction(DISCARD_ACTIONS.INIT);
         if (!gitMode) {
           // @ts-ignore
           setBuildData(null);
@@ -221,7 +222,7 @@ const Layout = () => {
   }, [rootContext.app]);
 
   useEffect(() => {
-    if (performAction === 'discard-changes') {
+    if (performAction === DISCARD_ACTIONS.DISCARD_CHANGES) {
       setApp(rootContext.app);
       setReadOnlyApp(rootContext.app);
       // @ts-ignore
@@ -237,7 +238,7 @@ const Layout = () => {
           'min-w-[1000px]': showDiff,
           'min-w-[500px]': !showDiff,
         })}
-        show={performAction === 'view-changes'}
+        show={performAction === DISCARD_ACTIONS.VIEW_CHANGES}
         onOpenChange={(v) => setPerformAction(v)}
       >
         <Popup.Header>Commit Changes</Popup.Header>
@@ -302,7 +303,11 @@ const Settings = () => {
   const rootContext = useOutletContext<IAppContext>();
   return (
     <AppContextProvider initialAppState={rootContext.app}>
-      <UnsavedChangesProvider>
+      <UnsavedChangesProvider
+        onProceed={({ setPerformAction }) => {
+          setPerformAction?.(DISCARD_ACTIONS.DISCARD_CHANGES);
+        }}
+      >
         <Layout />
       </UnsavedChangesProvider>
     </AppContextProvider>
