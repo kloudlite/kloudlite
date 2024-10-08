@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 	"os"
+	"time"
 )
 
 var cloneCmd = &cobra.Command{
@@ -143,20 +144,28 @@ func cloneEnv(apic apiclient.ApiClient, fc fileclient.FileClient, newEnvName str
 	return env, nil
 }
 
-func selectCluster(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.BYOKCluster, error) {
+func selectCluster(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.Cluster, error) {
 	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
-	clusters, err := apic.ListBYOKClusters(currentTeam)
+	c, err := apic.GetClustersOfTeam(currentTeam)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
+	clusters := make([]apiclient.Cluster, 0)
+	for _, cluster := range c {
+		if time.Since(cluster.LastOnlineAt) > time.Minute*1 {
+			continue
+		}
+		clusters = append(clusters, cluster)
+	}
+
 	cluster, err := fzf.FindOne(
 		clusters,
-		func(clus apiclient.BYOKCluster) string {
+		func(clus apiclient.Cluster) string {
 			return fmt.Sprintf("%s (%s)", clus.DisplayName, clus.Metadata.Name)
 		},
 		fzf.WithPrompt("Select Cluster > "),

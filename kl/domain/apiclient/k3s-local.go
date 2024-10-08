@@ -2,14 +2,17 @@ package apiclient
 
 import (
 	"os"
+	"time"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 type Cluster struct {
+	DisplayName    string          `json:"displayName"`
 	ClusterToken   string          `json:"clusterToken"`
 	Name           string          `json:"name"`
+	LastOnlineAt   time.Time       `json:"lastOnlineAt"`
 	InstallCommand *InstallCommand `json:"installCommand"`
 	Metadata       struct {
 		Name   string            `json:"name"`
@@ -34,7 +37,7 @@ type InstallCommand struct {
 	}
 }
 
-func (apic *apiClient) getClustersOfTeam(team string) ([]Cluster, error) {
+func (apic *apiClient) GetClustersOfTeam(team string) ([]Cluster, error) {
 	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
 		return nil, fn.NewE(err)
@@ -53,7 +56,7 @@ func (apic *apiClient) getClustersOfTeam(team string) ([]Cluster, error) {
 
 func (apic *apiClient) GetClusterConfig(team string) (*fileclient.TeamClusterConfig, error) {
 
-	existingClusters, err := apic.getClustersOfTeam(team)
+	existingClusters, err := apic.GetClustersOfTeam(team)
 	if err != nil {
 		return nil, err
 	}

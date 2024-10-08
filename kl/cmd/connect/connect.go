@@ -20,19 +20,24 @@ var Command = &cobra.Command{
 	Use:   "connect",
 	Short: "start the wireguard connection",
 	Long:  "This command will start the wireguard connection",
-	Run: func(_ *cobra.Command, _ []string) {
-		if err := startWg(); err != nil {
+	Run: func(cmd *cobra.Command, _ []string) {
+		if err := startWg(cmd); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func startWg() error {
+func startWg(cmd *cobra.Command) error {
 	defer spinner.Client.UpdateMessage("connecting your device")()
 	k3sClient, err := k3s.NewClient()
 	if err != nil {
 		return fn.NewE(err)
+	}
+
+	r, _ := k3sClient.CheckK3sRunningLocally()
+	if !r {
+		return nil
 	}
 
 	if !envclient.InsideBox() {
@@ -50,7 +55,19 @@ func startWg() error {
 		return fn.NewE(err)
 	}
 
+	if err = fn.ExecNoOutput("wg-quick down kl-vpn"); err != nil {
+		return fn.NewE(err)
+	}
+
+	if err := k3sClient.RestartWgProxyContainer(); err != nil {
+		return fn.NewE(err)
+	}
+
 	if err = fn.ExecNoOutput("wg-quick up kl-workspace-wg"); err != nil {
+		return fn.NewE(err)
+	}
+
+	if err = fn.ExecNoOutput("wg-quick up kl-vpn"); err != nil {
 		return fn.NewE(err)
 	}
 
