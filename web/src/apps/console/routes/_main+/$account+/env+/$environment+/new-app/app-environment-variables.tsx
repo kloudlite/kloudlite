@@ -243,9 +243,10 @@ export const EnvironmentVariables = () => {
     submit,
     resetValues: reset,
   } = useForm({
-    initialValues: getReadOnlyContainer().env || [],
+    initialValues: getReadOnlyContainer().env || null,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
+      //@ts-ignore
       setContainer((c) => ({
         ...c,
         env: val,
