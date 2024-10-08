@@ -136,13 +136,13 @@ type ComplexityRoot struct {
 	}
 
 	CloudProviderSecret struct {
+		AWS               func(childComplexity int) int
 		AccountName       func(childComplexity int) int
-		Aws               func(childComplexity int) int
 		CloudProviderName func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
-		Gcp               func(childComplexity int) int
+		GCP               func(childComplexity int) int
 		ID                func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
@@ -236,7 +236,7 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams struct {
-		AwsAccountID      func(childComplexity int) int
+		AWSAccountID      func(childComplexity int) int
 		CfParamTrustedArn func(childComplexity int) int
 		ExternalID        func(childComplexity int) int
 		RoleArn           func(childComplexity int) int
@@ -408,17 +408,17 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec struct {
+		AWS                    func(childComplexity int) int
 		AccountID              func(childComplexity int) int
 		AccountName            func(childComplexity int) int
 		AvailabilityMode       func(childComplexity int) int
-		Aws                    func(childComplexity int) int
 		BackupToS3Enabled      func(childComplexity int) int
 		CloudProvider          func(childComplexity int) int
 		CloudflareEnabled      func(childComplexity int) int
 		ClusterInternalDNSHost func(childComplexity int) int
 		ClusterServiceCidr     func(childComplexity int) int
 		ClusterTokenRef        func(childComplexity int) int
-		Gcp                    func(childComplexity int) int
+		GCP                    func(childComplexity int) int
 		KloudliteRelease       func(childComplexity int) int
 		MessageQueueTopicName  func(childComplexity int) int
 		Output                 func(childComplexity int) int
@@ -428,7 +428,7 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig struct {
 		CredentialsRef func(childComplexity int) int
-		GcpProjectID   func(childComplexity int) int
+		GCPProjectID   func(childComplexity int) int
 		MasterNodes    func(childComplexity int) int
 		Region         func(childComplexity int) int
 		ServiceAccount func(childComplexity int) int
@@ -446,7 +446,7 @@ type ComplexityRoot struct {
 		BootVolumeSize   func(childComplexity int) int
 		BootVolumeType   func(childComplexity int) int
 		Credentials      func(childComplexity int) int
-		GcpProjectID     func(childComplexity int) int
+		GCPProjectID     func(childComplexity int) int
 		MachineType      func(childComplexity int) int
 		Nodes            func(childComplexity int) int
 		PoolType         func(childComplexity int) int
@@ -473,9 +473,9 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec struct {
-		Aws           func(childComplexity int) int
+		AWS           func(childComplexity int) int
 		CloudProvider func(childComplexity int) int
-		Gcp           func(childComplexity int) int
+		GCP           func(childComplexity int) int
 		MaxCount      func(childComplexity int) int
 		MinCount      func(childComplexity int) int
 		NodeLabels    func(childComplexity int) int
@@ -891,8 +891,8 @@ type ComplexityRoot struct {
 	}
 
 	K8s__io___api___core___v1__PersistentVolumeSpec struct {
+		AWSElasticBlockStore          func(childComplexity int) int
 		AccessModes                   func(childComplexity int) int
-		AwsElasticBlockStore          func(childComplexity int) int
 		AzureDisk                     func(childComplexity int) int
 		AzureFile                     func(childComplexity int) int
 		Capacity                      func(childComplexity int) int
@@ -1308,7 +1308,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		InfraCheckAwsAccess                   func(childComplexity int, cloudproviderName string) int
+		InfraCheckAWSAccess                   func(childComplexity int, cloudproviderName string) int
 		InfraCheckNameAvailability            func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
 		InfraGetBYOKCluster                   func(childComplexity int, name string) int
 		InfraGetCluster                       func(childComplexity int, name string) int
@@ -1386,12 +1386,12 @@ type BYOKClusterResolver interface {
 	ClusterDNSSuffix(ctx context.Context, obj *entities.BYOKCluster) (string, error)
 }
 type CloudProviderSecretResolver interface {
-	Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials, error)
+	AWS(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials, error)
 	CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret) (model.GithubComKloudliteOperatorApisCommonTypesCloudProvider, error)
 
 	CreationTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 
-	Gcp(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials, error)
+	GCP(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials, error)
 	ID(ctx context.Context, obj *entities.CloudProviderSecret) (repos.ID, error)
 
 	UpdateTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
@@ -1569,7 +1569,7 @@ type QueryResolver interface {
 	InfraGetProviderSecret(ctx context.Context, name string) (*entities.CloudProviderSecret, error)
 	InfraListDomainEntries(ctx context.Context, search *model.SearchDomainEntry, pagination *repos.CursorPagination) (*model.DomainEntryPaginatedRecords, error)
 	InfraGetDomainEntry(ctx context.Context, domainName string) (*entities.DomainEntry, error)
-	InfraCheckAwsAccess(ctx context.Context, cloudproviderName string) (*model.CheckAwsAccessOutput, error)
+	InfraCheckAWSAccess(ctx context.Context, cloudproviderName string) (*model.CheckAWSAccessOutput, error)
 	InfraListHelmReleases(ctx context.Context, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) (*model.HelmReleasePaginatedRecords, error)
 	InfraGetHelmRelease(ctx context.Context, clusterName string, name string) (*entities.HelmRelease, error)
 	InfraListManagedServiceTemplates(ctx context.Context) ([]*entities.MsvcTemplate, error)
@@ -1600,10 +1600,10 @@ type BYOKClusterInResolver interface {
 	Visibility(ctx context.Context, obj *entities.BYOKCluster, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn) error
 }
 type CloudProviderSecretInResolver interface {
-	Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn) error
+	AWS(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn) error
 	CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret, data model.GithubComKloudliteOperatorApisCommonTypesCloudProvider) error
 
-	Gcp(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn) error
+	GCP(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn) error
 	Metadata(ctx context.Context, obj *entities.CloudProviderSecret, data *v1.ObjectMeta) error
 }
 type ClusterInResolver interface {
@@ -1874,19 +1874,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CheckNameAvailabilityOutput.SuggestedNames(childComplexity), true
 
+	case "CloudProviderSecret.aws":
+		if e.complexity.CloudProviderSecret.AWS == nil {
+			break
+		}
+
+		return e.complexity.CloudProviderSecret.AWS(childComplexity), true
+
 	case "CloudProviderSecret.accountName":
 		if e.complexity.CloudProviderSecret.AccountName == nil {
 			break
 		}
 
 		return e.complexity.CloudProviderSecret.AccountName(childComplexity), true
-
-	case "CloudProviderSecret.aws":
-		if e.complexity.CloudProviderSecret.Aws == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.Aws(childComplexity), true
 
 	case "CloudProviderSecret.cloudProviderName":
 		if e.complexity.CloudProviderSecret.CloudProviderName == nil {
@@ -1917,11 +1917,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.CloudProviderSecret.DisplayName(childComplexity), true
 
 	case "CloudProviderSecret.gcp":
-		if e.complexity.CloudProviderSecret.Gcp == nil {
+		if e.complexity.CloudProviderSecret.GCP == nil {
 			break
 		}
 
-		return e.complexity.CloudProviderSecret.Gcp(childComplexity), true
+		return e.complexity.CloudProviderSecret.GCP(childComplexity), true
 
 	case "CloudProviderSecret.id":
 		if e.complexity.CloudProviderSecret.ID == nil {
@@ -2344,11 +2344,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.EncodedValue.Value(childComplexity), true
 
 	case "Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams.awsAccountId":
-		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams.AwsAccountID == nil {
+		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams.AWSAccountID == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams.AwsAccountID(childComplexity), true
+		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams.AWSAccountID(childComplexity), true
 
 	case "Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams.cfParamTrustedARN":
 		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams.CfParamTrustedArn == nil {
@@ -3064,6 +3064,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.SecretName(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.aws":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AWS == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AWS(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.accountId":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AccountID == nil {
 			break
@@ -3084,13 +3091,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AvailabilityMode(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.aws":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Aws == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Aws(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.backupToS3Enabled":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.BackupToS3Enabled == nil {
@@ -3135,11 +3135,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterTokenRef(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.gcp":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Gcp == nil {
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.GCP == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Gcp(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.GCP(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.kloudliteRelease":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.KloudliteRelease == nil {
@@ -3184,11 +3184,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.CredentialsRef(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.gcpProjectID":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.GcpProjectID == nil {
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.GCPProjectID == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.GcpProjectID(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.GCPProjectID(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.masterNodes":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.MasterNodes == nil {
@@ -3268,11 +3268,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.Credentials(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.gcpProjectID":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.GcpProjectID == nil {
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.GCPProjectID == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.GcpProjectID(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.GCPProjectID(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.machineType":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.MachineType == nil {
@@ -3373,11 +3373,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.Role(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.aws":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.Aws == nil {
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.AWS == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.Aws(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.AWS(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.cloudProvider":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.CloudProvider == nil {
@@ -3387,11 +3387,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.CloudProvider(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.gcp":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.Gcp == nil {
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.GCP == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.Gcp(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.GCP(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.maxCount":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.MaxCount == nil {
@@ -5185,19 +5185,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.Phase(childComplexity), true
 
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.awsElasticBlockStore":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AWSElasticBlockStore == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AWSElasticBlockStore(childComplexity), true
+
 	case "K8s__io___api___core___v1__PersistentVolumeSpec.accessModes":
 		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AccessModes == nil {
 			break
 		}
 
 		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AccessModes(childComplexity), true
-
-	case "K8s__io___api___core___v1__PersistentVolumeSpec.awsElasticBlockStore":
-		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AwsElasticBlockStore == nil {
-			break
-		}
-
-		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AwsElasticBlockStore(childComplexity), true
 
 	case "K8s__io___api___core___v1__PersistentVolumeSpec.azureDisk":
 		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AzureDisk == nil {
@@ -7227,7 +7227,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.PersistentVolumePaginatedRecords.TotalCount(childComplexity), true
 
 	case "Query.infra_checkAwsAccess":
-		if e.complexity.Query.InfraCheckAwsAccess == nil {
+		if e.complexity.Query.InfraCheckAWSAccess == nil {
 			break
 		}
 
@@ -7236,7 +7236,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraCheckAwsAccess(childComplexity, args["cloudproviderName"].(string)), true
+		return e.complexity.Query.InfraCheckAWSAccess(childComplexity, args["cloudproviderName"].(string)), true
 
 	case "Query.infra_checkNameAvailability":
 		if e.complexity.Query.InfraCheckNameAvailability == nil {
@@ -10210,7 +10210,7 @@ input VolumeAttachmentIn {
 	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
 	directive @override(from: String!, label: String) on FIELD_DEFINITION
-	directive @policy(policies: [[federation__Policy!]!]!) on 
+	directive @policy(policies: [[federation__Policy!]!]!) on
 	  | FIELD_DEFINITION
 	  | OBJECT
 	  | INTERFACE
@@ -10218,7 +10218,7 @@ input VolumeAttachmentIn {
 	  | ENUM
 	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
-	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
+	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on
 	  | FIELD_DEFINITION
 	  | OBJECT
 	  | INTERFACE
@@ -10260,1207 +10260,2878 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_infra_createBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.BYOKCluster
-	if tmp, ok := rawArgs["cluster"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
-		arg0, err = ec.unmarshalNBYOKClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐBYOKCluster(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createBYOKCluster_argsCluster(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["cluster"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createBYOKCluster_argsCluster(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.BYOKCluster, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["cluster"]
+	if !ok {
+		var zeroVal entities.BYOKCluster
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+	if tmp, ok := rawArgs["cluster"]; ok {
+		return ec.unmarshalNBYOKClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐBYOKCluster(ctx, tmp)
+	}
+
+	var zeroVal entities.BYOKCluster
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.Cluster
-	if tmp, ok := rawArgs["cluster"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
-		arg0, err = ec.unmarshalNClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCluster(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createCluster_argsCluster(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["cluster"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createCluster_argsCluster(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Cluster, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["cluster"]
+	if !ok {
+		var zeroVal entities.Cluster
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+	if tmp, ok := rawArgs["cluster"]; ok {
+		return ec.unmarshalNClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCluster(ctx, tmp)
+	}
+
+	var zeroVal entities.Cluster
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createDomainEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.DomainEntry
-	if tmp, ok := rawArgs["domainEntry"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domainEntry"))
-		arg0, err = ec.unmarshalNDomainEntryIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐDomainEntry(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createDomainEntry_argsDomainEntry(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["domainEntry"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createDomainEntry_argsDomainEntry(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.DomainEntry, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["domainEntry"]
+	if !ok {
+		var zeroVal entities.DomainEntry
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domainEntry"))
+	if tmp, ok := rawArgs["domainEntry"]; ok {
+		return ec.unmarshalNDomainEntryIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐDomainEntry(ctx, tmp)
+	}
+
+	var zeroVal entities.DomainEntry
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.GlobalVPNDevice
-	if tmp, ok := rawArgs["gvpnDevice"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpnDevice"))
-		arg0, err = ec.unmarshalNGlobalVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createGlobalVPNDevice_argsGvpnDevice(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["gvpnDevice"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createGlobalVPNDevice_argsGvpnDevice(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.GlobalVPNDevice, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["gvpnDevice"]
+	if !ok {
+		var zeroVal entities.GlobalVPNDevice
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpnDevice"))
+	if tmp, ok := rawArgs["gvpnDevice"]; ok {
+		return ec.unmarshalNGlobalVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, tmp)
+	}
+
+	var zeroVal entities.GlobalVPNDevice
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.GlobalVPN
-	if tmp, ok := rawArgs["gvpn"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
-		arg0, err = ec.unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createGlobalVPN_argsGvpn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["gvpn"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createGlobalVPN_argsGvpn(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.GlobalVPN, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["gvpn"]
+	if !ok {
+		var zeroVal entities.GlobalVPN
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		return ec.unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, tmp)
+	}
+
+	var zeroVal entities.GlobalVPN
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createHelmRelease_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createHelmRelease_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 entities.HelmRelease
-	if tmp, ok := rawArgs["release"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("release"))
-		arg1, err = ec.unmarshalNHelmReleaseIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_createHelmRelease_argsRelease(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["release"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createHelmRelease_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_createHelmRelease_argsRelease(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.HelmRelease, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["release"]
+	if !ok {
+		var zeroVal entities.HelmRelease
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("release"))
+	if tmp, ok := rawArgs["release"]; ok {
+		return ec.unmarshalNHelmReleaseIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx, tmp)
+	}
+
+	var zeroVal entities.HelmRelease
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createNodePool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createNodePool_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 entities.NodePool
-	if tmp, ok := rawArgs["pool"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pool"))
-		arg1, err = ec.unmarshalNNodePoolIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNodePool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_createNodePool_argsPool(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pool"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createNodePool_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_createNodePool_argsPool(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.NodePool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pool"]
+	if !ok {
+		var zeroVal entities.NodePool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pool"))
+	if tmp, ok := rawArgs["pool"]; ok {
+		return ec.unmarshalNNodePoolIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNodePool(ctx, tmp)
+	}
+
+	var zeroVal entities.NodePool
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createProviderSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.CloudProviderSecret
-	if tmp, ok := rawArgs["secret"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
-		arg0, err = ec.unmarshalNCloudProviderSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderSecret(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createProviderSecret_argsSecret(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["secret"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createProviderSecret_argsSecret(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.CloudProviderSecret, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["secret"]
+	if !ok {
+		var zeroVal entities.CloudProviderSecret
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+	if tmp, ok := rawArgs["secret"]; ok {
+		return ec.unmarshalNCloudProviderSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderSecret(ctx, tmp)
+	}
+
+	var zeroVal entities.CloudProviderSecret
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteBYOKCluster_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteBYOKCluster_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteCluster_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteCluster_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteDomainEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["domainName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domainName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteDomainEntry_argsDomainName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["domainName"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteDomainEntry_argsDomainName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["domainName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domainName"))
+	if tmp, ok := rawArgs["domainName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["gvpn"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteGlobalVPNDevice_argsGvpn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["gvpn"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_deleteGlobalVPNDevice_argsDeviceName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["deviceName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteGlobalVPNDevice_argsGvpn(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["gvpn"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteGlobalVPNDevice_argsDeviceName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["deviceName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteGlobalVPN_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteGlobalVPN_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteHelmRelease_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteHelmRelease_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["releaseName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("releaseName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_deleteHelmRelease_argsReleaseName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["releaseName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteHelmRelease_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteHelmRelease_argsReleaseName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["releaseName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("releaseName"))
+	if tmp, ok := rawArgs["releaseName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteNodePool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteNodePool_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["poolName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_deleteNodePool_argsPoolName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["poolName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteNodePool_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteNodePool_argsPoolName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolName"))
+	if tmp, ok := rawArgs["poolName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deletePV_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deletePV_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["pvName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pvName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_deletePV_argsPvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pvName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deletePV_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deletePV_argsPvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pvName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pvName"))
+	if tmp, ok := rawArgs["pvName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteProviderSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["secretName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteProviderSecret_argsSecretName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["secretName"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteProviderSecret_argsSecretName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["secretName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
+	if tmp, ok := rawArgs["secretName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateBYOKCluster_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["displayName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_updateBYOKCluster_argsDisplayName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["displayName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateBYOKCluster_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateBYOKCluster_argsDisplayName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["displayName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+	if tmp, ok := rawArgs["displayName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.Cluster
-	if tmp, ok := rawArgs["cluster"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
-		arg0, err = ec.unmarshalNClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCluster(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateCluster_argsCluster(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["cluster"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateCluster_argsCluster(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Cluster, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["cluster"]
+	if !ok {
+		var zeroVal entities.Cluster
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
+	if tmp, ok := rawArgs["cluster"]; ok {
+		return ec.unmarshalNClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCluster(ctx, tmp)
+	}
+
+	var zeroVal entities.Cluster
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateDomainEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.DomainEntry
-	if tmp, ok := rawArgs["domainEntry"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domainEntry"))
-		arg0, err = ec.unmarshalNDomainEntryIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐDomainEntry(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateDomainEntry_argsDomainEntry(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["domainEntry"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateDomainEntry_argsDomainEntry(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.DomainEntry, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["domainEntry"]
+	if !ok {
+		var zeroVal entities.DomainEntry
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domainEntry"))
+	if tmp, ok := rawArgs["domainEntry"]; ok {
+		return ec.unmarshalNDomainEntryIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐDomainEntry(ctx, tmp)
+	}
+
+	var zeroVal entities.DomainEntry
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.GlobalVPNDevice
-	if tmp, ok := rawArgs["gvpnDevice"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpnDevice"))
-		arg0, err = ec.unmarshalNGlobalVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateGlobalVPNDevice_argsGvpnDevice(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["gvpnDevice"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateGlobalVPNDevice_argsGvpnDevice(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.GlobalVPNDevice, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["gvpnDevice"]
+	if !ok {
+		var zeroVal entities.GlobalVPNDevice
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpnDevice"))
+	if tmp, ok := rawArgs["gvpnDevice"]; ok {
+		return ec.unmarshalNGlobalVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, tmp)
+	}
+
+	var zeroVal entities.GlobalVPNDevice
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.GlobalVPN
-	if tmp, ok := rawArgs["gvpn"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
-		arg0, err = ec.unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateGlobalVPN_argsGvpn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["gvpn"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateGlobalVPN_argsGvpn(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.GlobalVPN, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["gvpn"]
+	if !ok {
+		var zeroVal entities.GlobalVPN
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		return ec.unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, tmp)
+	}
+
+	var zeroVal entities.GlobalVPN
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateHelmRelease_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateHelmRelease_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 entities.HelmRelease
-	if tmp, ok := rawArgs["release"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("release"))
-		arg1, err = ec.unmarshalNHelmReleaseIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_updateHelmRelease_argsRelease(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["release"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateHelmRelease_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateHelmRelease_argsRelease(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.HelmRelease, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["release"]
+	if !ok {
+		var zeroVal entities.HelmRelease
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("release"))
+	if tmp, ok := rawArgs["release"]; ok {
+		return ec.unmarshalNHelmReleaseIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx, tmp)
+	}
+
+	var zeroVal entities.HelmRelease
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateNodePool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateNodePool_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 entities.NodePool
-	if tmp, ok := rawArgs["pool"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pool"))
-		arg1, err = ec.unmarshalNNodePoolIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNodePool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_updateNodePool_argsPool(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pool"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateNodePool_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateNodePool_argsPool(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.NodePool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pool"]
+	if !ok {
+		var zeroVal entities.NodePool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pool"))
+	if tmp, ok := rawArgs["pool"]; ok {
+		return ec.unmarshalNNodePoolIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNodePool(ctx, tmp)
+	}
+
+	var zeroVal entities.NodePool
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateProviderSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.CloudProviderSecret
-	if tmp, ok := rawArgs["secret"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
-		arg0, err = ec.unmarshalNCloudProviderSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderSecret(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateProviderSecret_argsSecret(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["secret"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateProviderSecret_argsSecret(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.CloudProviderSecret, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["secret"]
+	if !ok {
+		var zeroVal entities.CloudProviderSecret
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+	if tmp, ok := rawArgs["secret"]; ok {
+		return ec.unmarshalNCloudProviderSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderSecret(ctx, tmp)
+	}
+
+	var zeroVal entities.CloudProviderSecret
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_upgradeHelmKloudliteAgent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_upgradeHelmKloudliteAgent_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_upgradeHelmKloudliteAgent_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query___type_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query___type_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_checkAwsAccess_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["cloudproviderName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudproviderName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_checkAwsAccess_argsCloudproviderName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["cloudproviderName"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_checkAwsAccess_argsCloudproviderName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["cloudproviderName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudproviderName"))
+	if tmp, ok := rawArgs["cloudproviderName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_checkNameAvailability_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 domain.ResType
-	if tmp, ok := rawArgs["resType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resType"))
-		arg0, err = ec.unmarshalNResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋdomainᚐResType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_checkNameAvailability_argsResType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["resType"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_checkNameAvailability_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_checkNameAvailability_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_checkNameAvailability_argsResType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (domain.ResType, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["resType"]
+	if !ok {
+		var zeroVal domain.ResType
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("resType"))
+	if tmp, ok := rawArgs["resType"]; ok {
+		return ec.unmarshalNResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋdomainᚐResType(ctx, tmp)
+	}
+
+	var zeroVal domain.ResType
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_checkNameAvailability_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_checkNameAvailability_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getBYOKCluster_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getBYOKCluster_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getCluster_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getCluster_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getDomainEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["domainName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domainName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getDomainEntry_argsDomainName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["domainName"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getDomainEntry_argsDomainName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["domainName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domainName"))
+	if tmp, ok := rawArgs["domainName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["gvpn"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getGlobalVPNDevice_argsGvpn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["gvpn"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getGlobalVPNDevice_argsDeviceName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["deviceName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getGlobalVPNDevice_argsGvpn(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["gvpn"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getGlobalVPNDevice_argsDeviceName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["deviceName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getGlobalVPN_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getGlobalVPN_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getHelmRelease_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getHelmRelease_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getHelmRelease_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getHelmRelease_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getHelmRelease_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getManagedServiceTemplate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["category"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getManagedServiceTemplate_argsCategory(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["category"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getManagedServiceTemplate_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getManagedServiceTemplate_argsCategory(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["category"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+	if tmp, ok := rawArgs["category"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getManagedServiceTemplate_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getNamespace_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getNamespace_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getNamespace_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getNamespace_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getNamespace_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getNodePool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getNodePool_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["poolName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getNodePool_argsPoolName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["poolName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getNodePool_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getNodePool_argsPoolName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolName"))
+	if tmp, ok := rawArgs["poolName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getPVC_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getPVC_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getPVC_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getPVC_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getPVC_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getPV_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getPV_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getPV_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getPV_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getPV_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getProviderSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getProviderSecret_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getProviderSecret_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getVolumeAttachment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getVolumeAttachment_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_getVolumeAttachment_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getVolumeAttachment_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_getVolumeAttachment_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listBYOKClusters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchCluster
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchCluster(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listBYOKClusters_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listBYOKClusters_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listBYOKClusters_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchCluster, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchCluster
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchCluster(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchCluster
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listBYOKClusters_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listClusters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchCluster
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchCluster(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listClusters_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listClusters_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listClusters_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchCluster, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchCluster
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchCluster(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchCluster
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listClusters_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listDomainEntries_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchDomainEntry
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchDomainEntry2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchDomainEntry(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listDomainEntries_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listDomainEntries_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listDomainEntries_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchDomainEntry, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchDomainEntry
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchDomainEntry2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchDomainEntry(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchDomainEntry
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listDomainEntries_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listGlobalVPNDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["gvpn"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listGlobalVPNDevices_argsGvpn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["gvpn"] = arg0
-	var arg1 *model.SearchGlobalVPNDevices
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchGlobalVPNDevices2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNDevices(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listGlobalVPNDevices_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_listGlobalVPNDevices_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listGlobalVPNDevices_argsGvpn(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["gvpn"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listGlobalVPNDevices_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchGlobalVPNDevices, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchGlobalVPNDevices
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchGlobalVPNDevices2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNDevices(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchGlobalVPNDevices
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listGlobalVPNDevices_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listGlobalVPNs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchGlobalVPNs
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchGlobalVPNs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNs(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listGlobalVPNs_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listGlobalVPNs_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listGlobalVPNs_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchGlobalVPNs, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchGlobalVPNs
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchGlobalVPNs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNs(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchGlobalVPNs
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listGlobalVPNs_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listHelmReleases_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listHelmReleases_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 *model.SearchHelmRelease
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchHelmRelease2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchHelmRelease(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listHelmReleases_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_listHelmReleases_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listHelmReleases_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listHelmReleases_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchHelmRelease, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchHelmRelease
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchHelmRelease2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchHelmRelease(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchHelmRelease
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listHelmReleases_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listNamespaces_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listNamespaces_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 *model.SearchNamespaces
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchNamespaces2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchNamespaces(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listNamespaces_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_listNamespaces_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listNamespaces_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listNamespaces_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchNamespaces, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchNamespaces
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchNamespaces2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchNamespaces(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchNamespaces
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listNamespaces_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listNodePools_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listNodePools_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 *model.SearchNodepool
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchNodepool2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchNodepool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listNodePools_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_listNodePools_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listNodePools_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listNodePools_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchNodepool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchNodepool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchNodepool2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchNodepool(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchNodepool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listNodePools_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listPVCs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listPVCs_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 *model.SearchPersistentVolumeClaims
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchPersistentVolumeClaims2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchPersistentVolumeClaims(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listPVCs_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_listPVCs_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listPVCs_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listPVCs_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchPersistentVolumeClaims, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchPersistentVolumeClaims
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchPersistentVolumeClaims2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchPersistentVolumeClaims(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchPersistentVolumeClaims
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listPVCs_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listPVs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listPVs_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 *model.SearchPersistentVolumes
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchPersistentVolumes2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchPersistentVolumes(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listPVs_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_listPVs_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listPVs_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listPVs_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchPersistentVolumes, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchPersistentVolumes
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchPersistentVolumes2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchPersistentVolumes(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchPersistentVolumes
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listPVs_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listProviderSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchProviderSecret
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchProviderSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchProviderSecret(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listProviderSecrets_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listProviderSecrets_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listProviderSecrets_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchProviderSecret, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchProviderSecret
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchProviderSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchProviderSecret(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchProviderSecret
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listProviderSecrets_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listVolumeAttachments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listVolumeAttachments_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 *model.SearchVolumeAttachments
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchVolumeAttachments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchVolumeAttachments(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listVolumeAttachments_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_infra_listVolumeAttachments_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listVolumeAttachments_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listVolumeAttachments_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchVolumeAttachments, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchVolumeAttachments
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchVolumeAttachments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchVolumeAttachments(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchVolumeAttachments
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listVolumeAttachments_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infrat_getBYOKClusterSetupInstructions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infrat_getBYOKClusterSetupInstructions_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
-	var arg1 *bool
-	if tmp, ok := rawArgs["onlyHelmValues"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyHelmValues"))
-		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infrat_getBYOKClusterSetupInstructions_argsOnlyHelmValues(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["onlyHelmValues"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infrat_getBYOKClusterSetupInstructions_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infrat_getBYOKClusterSetupInstructions_argsOnlyHelmValues(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["onlyHelmValues"]
+	if !ok {
+		var zeroVal *bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyHelmValues"))
+	if tmp, ok := rawArgs["onlyHelmValues"]; ok {
+		return ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	}
+
+	var zeroVal *bool
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 bool
-	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field___Type_enumValues_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field___Type_enumValues_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["includeDeprecated"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 bool
-	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field___Type_fields_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["includeDeprecated"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
 }
 
 // endregion ***************************** args.gotpl *****************************
@@ -12714,7 +14385,7 @@ func (ec *executionContext) fieldContext_BYOKSetupInstruction_title(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CheckAwsAccessOutput_result(ctx context.Context, field graphql.CollectedField, obj *model.CheckAwsAccessOutput) (ret graphql.Marshaler) {
+func (ec *executionContext) _CheckAwsAccessOutput_result(ctx context.Context, field graphql.CollectedField, obj *model.CheckAWSAccessOutput) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CheckAwsAccessOutput_result(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -12758,7 +14429,7 @@ func (ec *executionContext) fieldContext_CheckAwsAccessOutput_result(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _CheckAwsAccessOutput_installationUrl(ctx context.Context, field graphql.CollectedField, obj *model.CheckAwsAccessOutput) (ret graphql.Marshaler) {
+func (ec *executionContext) _CheckAwsAccessOutput_installationUrl(ctx context.Context, field graphql.CollectedField, obj *model.CheckAWSAccessOutput) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CheckAwsAccessOutput_installationUrl(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -12945,7 +14616,7 @@ func (ec *executionContext) _CloudProviderSecret_aws(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProviderSecret().Aws(rctx, obj)
+		return ec.resolvers.CloudProviderSecret().AWS(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13184,7 +14855,7 @@ func (ec *executionContext) _CloudProviderSecret_gcp(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProviderSecret().Gcp(rctx, obj)
+		return ec.resolvers.CloudProviderSecret().GCP(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16105,7 +17776,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AwsAccountID, nil
+		return obj.AWSAccountID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16476,9 +18147,9 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism)
+	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSAuthMechanism(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_authMechanism(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18659,9 +20330,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsCredentials)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSCredentials)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentials2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsCredentials(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentials2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSCredentials(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_credentials(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18887,9 +20558,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsVPCParams)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSVPCParams)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsVPCParams(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSVPCParams(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_vpc(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19236,9 +20907,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_ec2Pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19544,9 +21215,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_spotPool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19660,7 +21331,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_authMechanism(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsCredentials) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_authMechanism(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSCredentials) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_authMechanism(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -19686,9 +21357,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism)
+	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSAuthMechanism(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_authMechanism(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19704,7 +21375,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsCredentials) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSCredentials) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_secretRef(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -19754,7 +21425,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_instanceType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_instanceType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_instanceType(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -19798,7 +21469,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_nodes(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -19839,7 +21510,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -19886,7 +21557,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -19936,7 +21607,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -19980,7 +21651,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_cpuNode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_cpuNode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_cpuNode(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20003,9 +21674,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_cpuNode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20027,7 +21698,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_gpuNode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_gpuNode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_gpuNode(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20050,9 +21721,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_gpuNode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20072,7 +21743,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_nodes(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20113,7 +21784,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_spotFleetTaggingRoleName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_spotFleetTaggingRoleName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_spotFleetTaggingRoleName(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20157,7 +21828,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_availabilityZone(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_availabilityZone(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_availabilityZone(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20201,7 +21872,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_id(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_id(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20245,7 +21916,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_id(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsVPCParams) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_id(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSVPCParams) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20289,7 +21960,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_publicSubnets(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsVPCParams) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_publicSubnets(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSVPCParams) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_publicSubnets(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20315,9 +21986,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID)
+	res := resTmp.([]*model.GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSubnetWithIDᚄ(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSubnetWithIDᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_publicSubnets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20831,7 +22502,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Aws, nil
+		return obj.AWS, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21146,7 +22817,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gcp, nil
+		return obj.GCP, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21486,7 +23157,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.GcpProjectID, nil
+		return obj.GCPProjectID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21684,9 +23355,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1GcpVPCParams)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1GCPVPCParams)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GcpVPCParams(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPVPCParams(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_vpc(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22031,7 +23702,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.GcpProjectID, nil
+		return obj.GCPProjectID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22309,9 +23980,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1GcpVPCParams)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1GCPVPCParams)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GcpVPCParams(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPVPCParams(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_vpc(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22457,7 +24128,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GcpVPCParams) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GCPVPCParams) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -22688,7 +24359,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Aws, nil
+		return obj.AWS, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22797,7 +24468,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gcp, nil
+		return obj.GCP, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -34326,7 +35997,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_aws
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AwsElasticBlockStore, nil
+		return obj.AWSElasticBlockStore, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -40630,15 +42301,18 @@ func (ec *executionContext) _Mutation_infra_createCluster(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateCluster(rctx, fc.Args["cluster"].(entities.Cluster))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Cluster
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Cluster
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -40750,15 +42424,18 @@ func (ec *executionContext) _Mutation_infra_updateCluster(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateCluster(rctx, fc.Args["cluster"].(entities.Cluster))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Cluster
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Cluster
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -40870,15 +42547,18 @@ func (ec *executionContext) _Mutation_infra_deleteCluster(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteCluster(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -40951,15 +42631,18 @@ func (ec *executionContext) _Mutation_infra_createGlobalVPN(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateGlobalVpn(rctx, fc.Args["gvpn"].(entities.GlobalVPN))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.GlobalVPN
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.GlobalVPN
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41069,15 +42752,18 @@ func (ec *executionContext) _Mutation_infra_updateGlobalVPN(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateGlobalVpn(rctx, fc.Args["gvpn"].(entities.GlobalVPN))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.GlobalVPN
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.GlobalVPN
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41187,15 +42873,18 @@ func (ec *executionContext) _Mutation_infra_deleteGlobalVPN(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteGlobalVpn(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41268,15 +42957,18 @@ func (ec *executionContext) _Mutation_infra_createGlobalVPNDevice(ctx context.Co
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateGlobalVPNDevice(rctx, fc.Args["gvpnDevice"].(entities.GlobalVPNDevice))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.GlobalVPNDevice
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.GlobalVPNDevice
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41382,15 +43074,18 @@ func (ec *executionContext) _Mutation_infra_updateGlobalVPNDevice(ctx context.Co
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateGlobalVPNDevice(rctx, fc.Args["gvpnDevice"].(entities.GlobalVPNDevice))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.GlobalVPNDevice
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.GlobalVPNDevice
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41496,15 +43191,18 @@ func (ec *executionContext) _Mutation_infra_deleteGlobalVPNDevice(ctx context.Co
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteGlobalVPNDevice(rctx, fc.Args["gvpn"].(string), fc.Args["deviceName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41577,15 +43275,18 @@ func (ec *executionContext) _Mutation_infra_createBYOKCluster(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateBYOKCluster(rctx, fc.Args["cluster"].(entities.BYOKCluster))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.BYOKCluster
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.BYOKCluster
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41695,15 +43396,18 @@ func (ec *executionContext) _Mutation_infra_updateBYOKCluster(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateBYOKCluster(rctx, fc.Args["clusterName"].(string), fc.Args["displayName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.BYOKCluster
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.BYOKCluster
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41813,15 +43517,18 @@ func (ec *executionContext) _Mutation_infra_deleteBYOKCluster(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteBYOKCluster(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41894,15 +43601,18 @@ func (ec *executionContext) _Mutation_infra_upgradeHelmKloudliteAgent(ctx contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpgradeHelmKloudliteAgent(rctx, fc.Args["clusterName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -41975,15 +43685,18 @@ func (ec *executionContext) _Mutation_infra_createProviderSecret(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateProviderSecret(rctx, fc.Args["secret"].(entities.CloudProviderSecret))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.CloudProviderSecret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.CloudProviderSecret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42081,15 +43794,18 @@ func (ec *executionContext) _Mutation_infra_updateProviderSecret(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateProviderSecret(rctx, fc.Args["secret"].(entities.CloudProviderSecret))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.CloudProviderSecret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.CloudProviderSecret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42187,15 +43903,18 @@ func (ec *executionContext) _Mutation_infra_deleteProviderSecret(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteProviderSecret(rctx, fc.Args["secretName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42268,15 +43987,18 @@ func (ec *executionContext) _Mutation_infra_createDomainEntry(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateDomainEntry(rctx, fc.Args["domainEntry"].(entities.DomainEntry))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.DomainEntry
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.DomainEntry
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42370,15 +44092,18 @@ func (ec *executionContext) _Mutation_infra_updateDomainEntry(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateDomainEntry(rctx, fc.Args["domainEntry"].(entities.DomainEntry))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.DomainEntry
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.DomainEntry
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42472,15 +44197,18 @@ func (ec *executionContext) _Mutation_infra_deleteDomainEntry(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteDomainEntry(rctx, fc.Args["domainName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42553,15 +44281,18 @@ func (ec *executionContext) _Mutation_infra_createNodePool(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateNodePool(rctx, fc.Args["clusterName"].(string), fc.Args["pool"].(entities.NodePool))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.NodePool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.NodePool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42667,15 +44398,18 @@ func (ec *executionContext) _Mutation_infra_updateNodePool(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateNodePool(rctx, fc.Args["clusterName"].(string), fc.Args["pool"].(entities.NodePool))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.NodePool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.NodePool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42781,15 +44515,18 @@ func (ec *executionContext) _Mutation_infra_deleteNodePool(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteNodePool(rctx, fc.Args["clusterName"].(string), fc.Args["poolName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42862,15 +44599,18 @@ func (ec *executionContext) _Mutation_infra_createHelmRelease(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateHelmRelease(rctx, fc.Args["clusterName"].(string), fc.Args["release"].(entities.HelmRelease))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.HelmRelease
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.HelmRelease
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -42976,15 +44716,18 @@ func (ec *executionContext) _Mutation_infra_updateHelmRelease(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateHelmRelease(rctx, fc.Args["clusterName"].(string), fc.Args["release"].(entities.HelmRelease))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.HelmRelease
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.HelmRelease
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -43090,15 +44833,18 @@ func (ec *executionContext) _Mutation_infra_deleteHelmRelease(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteHelmRelease(rctx, fc.Args["clusterName"].(string), fc.Args["releaseName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -43171,15 +44917,18 @@ func (ec *executionContext) _Mutation_infra_deletePV(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeletePv(rctx, fc.Args["clusterName"].(string), fc.Args["pvName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -48501,15 +50250,18 @@ func (ec *executionContext) _Query_infra_checkNameAvailability(ctx context.Conte
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraCheckNameAvailability(rctx, fc.Args["resType"].(domain.ResType), fc.Args["clusterName"].(*string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedIn == nil {
-				return nil, errors.New("directive isLoggedIn is not implemented")
+				var zeroVal *domain.CheckNameAvailabilityOutput
+				return zeroVal, errors.New("directive isLoggedIn is not implemented")
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *domain.CheckNameAvailabilityOutput
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -48588,15 +50340,18 @@ func (ec *executionContext) _Query_infra_listClusters(ctx context.Context, field
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListClusters(rctx, fc.Args["search"].(*model.SearchCluster), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.ClusterPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.ClusterPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -48674,15 +50429,18 @@ func (ec *executionContext) _Query_infra_getCluster(ctx context.Context, field g
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetCluster(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Cluster
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Cluster
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -48794,15 +50552,18 @@ func (ec *executionContext) _Query_infra_listBYOKClusters(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListBYOKClusters(rctx, fc.Args["search"].(*model.SearchCluster), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.BYOKClusterPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.BYOKClusterPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -48880,15 +50641,18 @@ func (ec *executionContext) _Query_infra_getBYOKCluster(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetBYOKCluster(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.BYOKCluster
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.BYOKCluster
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -48998,15 +50762,18 @@ func (ec *executionContext) _Query_infrat_getBYOKClusterSetupInstructions(ctx co
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfratGetBYOKClusterSetupInstructions(rctx, fc.Args["name"].(string), fc.Args["onlyHelmValues"].(*bool))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal []*model.BYOKSetupInstruction
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal []*model.BYOKSetupInstruction
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49082,15 +50849,18 @@ func (ec *executionContext) _Query_infra_listGlobalVPNs(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListGlobalVPNs(rctx, fc.Args["search"].(*model.SearchGlobalVPNs), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.GlobalVPNPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.GlobalVPNPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49168,15 +50938,18 @@ func (ec *executionContext) _Query_infra_getGlobalVPN(ctx context.Context, field
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetGlobalVpn(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.GlobalVPN
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.GlobalVPN
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49286,15 +51059,18 @@ func (ec *executionContext) _Query_infra_listGlobalVPNDevices(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListGlobalVPNDevices(rctx, fc.Args["gvpn"].(string), fc.Args["search"].(*model.SearchGlobalVPNDevices), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.GlobalVPNDevicePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.GlobalVPNDevicePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49372,15 +51148,18 @@ func (ec *executionContext) _Query_infra_getGlobalVPNDevice(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetGlobalVPNDevice(rctx, fc.Args["gvpn"].(string), fc.Args["deviceName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.GlobalVPNDevice
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.GlobalVPNDevice
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49486,15 +51265,18 @@ func (ec *executionContext) _Query_infra_listNodePools(ctx context.Context, fiel
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListNodePools(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchNodepool), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.NodePoolPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.NodePoolPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49572,15 +51354,18 @@ func (ec *executionContext) _Query_infra_getNodePool(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetNodePool(rctx, fc.Args["clusterName"].(string), fc.Args["poolName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.NodePool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.NodePool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49686,15 +51471,18 @@ func (ec *executionContext) _Query_infra_listProviderSecrets(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListProviderSecrets(rctx, fc.Args["search"].(*model.SearchProviderSecret), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.CloudProviderSecretPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.CloudProviderSecretPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49772,15 +51560,18 @@ func (ec *executionContext) _Query_infra_getProviderSecret(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetProviderSecret(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.CloudProviderSecret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.CloudProviderSecret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49878,15 +51669,18 @@ func (ec *executionContext) _Query_infra_listDomainEntries(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListDomainEntries(rctx, fc.Args["search"].(*model.SearchDomainEntry), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.DomainEntryPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.DomainEntryPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -49964,15 +51758,18 @@ func (ec *executionContext) _Query_infra_getDomainEntry(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetDomainEntry(rctx, fc.Args["domainName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.DomainEntry
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.DomainEntry
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50064,17 +51861,20 @@ func (ec *executionContext) _Query_infra_checkAwsAccess(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraCheckAwsAccess(rctx, fc.Args["cloudproviderName"].(string))
+			return ec.resolvers.Query().InfraCheckAWSAccess(rctx, fc.Args["cloudproviderName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.CheckAWSAccessOutput
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.CheckAWSAccessOutput
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50086,10 +51886,10 @@ func (ec *executionContext) _Query_infra_checkAwsAccess(ctx context.Context, fie
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*model.CheckAwsAccessOutput); ok {
+		if data, ok := tmp.(*model.CheckAWSAccessOutput); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.CheckAwsAccessOutput`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.CheckAWSAccessOutput`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -50101,9 +51901,9 @@ func (ec *executionContext) _Query_infra_checkAwsAccess(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.CheckAwsAccessOutput)
+	res := resTmp.(*model.CheckAWSAccessOutput)
 	fc.Result = res
-	return ec.marshalNCheckAwsAccessOutput2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAwsAccessOutput(ctx, field.Selections, res)
+	return ec.marshalNCheckAwsAccessOutput2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAWSAccessOutput(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_infra_checkAwsAccess(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -50153,15 +51953,18 @@ func (ec *executionContext) _Query_infra_listHelmReleases(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListHelmReleases(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchHelmRelease), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.HelmReleasePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.HelmReleasePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50239,15 +52042,18 @@ func (ec *executionContext) _Query_infra_getHelmRelease(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetHelmRelease(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.HelmRelease
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.HelmRelease
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50476,15 +52282,18 @@ func (ec *executionContext) _Query_infra_listPVCs(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListPVCs(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchPersistentVolumeClaims), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.PersistentVolumeClaimPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.PersistentVolumeClaimPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50562,15 +52371,18 @@ func (ec *executionContext) _Query_infra_getPVC(ctx context.Context, field graph
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetPvc(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.PersistentVolumeClaim
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.PersistentVolumeClaim
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50674,15 +52486,18 @@ func (ec *executionContext) _Query_infra_listNamespaces(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListNamespaces(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchNamespaces), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.NamespacePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.NamespacePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50760,15 +52575,18 @@ func (ec *executionContext) _Query_infra_getNamespace(ctx context.Context, field
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetNamespace(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Namespace
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Namespace
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50872,15 +52690,18 @@ func (ec *executionContext) _Query_infra_listPVs(ctx context.Context, field grap
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListPVs(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchPersistentVolumes), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.PersistentVolumePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.PersistentVolumePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -50958,15 +52779,18 @@ func (ec *executionContext) _Query_infra_getPV(ctx context.Context, field graphq
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetPv(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.PersistentVolume
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.PersistentVolume
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -51070,15 +52894,18 @@ func (ec *executionContext) _Query_infra_listVolumeAttachments(ctx context.Conte
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListVolumeAttachments(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchVolumeAttachments), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.VolumeAttachmentPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.VolumeAttachmentPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -51156,15 +52983,18 @@ func (ec *executionContext) _Query_infra_getVolumeAttachment(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetVolumeAttachment(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.VolumeAttachment
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.VolumeAttachment
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -54371,7 +56201,7 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.CloudProviderSecretIn().Aws(ctx, &it, data); err != nil {
+			if err = ec.resolvers.CloudProviderSecretIn().AWS(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "cloudProviderName":
@@ -54396,7 +56226,7 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.CloudProviderSecretIn().Gcp(ctx, &it, data); err != nil {
+			if err = ec.resolvers.CloudProviderSecretIn().GCP(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "metadata":
@@ -54617,7 +56447,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			if err != nil {
 				return it, err
 			}
-			it.AwsAccountID = data
+			it.AWSAccountID = data
 		}
 	}
 
@@ -54681,7 +56511,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			it.AssumeRoleParams = data
 		case "authMechanism":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSAuthMechanism(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -54769,7 +56599,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		switch k {
 		case "credentials":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentials"))
-			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsCredentialsIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSCredentialsIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -54851,7 +56681,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			it.AvailabilityZone = data
 		case "ec2Pool":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ec2Pool"))
-			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -54872,7 +56702,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			it.PoolType = data
 		case "spotPool":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spotPool"))
-			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -54883,8 +56713,8 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsCredentialsIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1AwsCredentialsIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSCredentialsIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSCredentialsIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -54899,7 +56729,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		switch k {
 		case "authMechanism":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSAuthMechanism(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -54917,8 +56747,8 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfigIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfigIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -54951,8 +56781,8 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNodeIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNodeIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -54985,8 +56815,8 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNodeIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNodeIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -55012,8 +56842,8 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfigIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfigIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -55028,14 +56858,14 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		switch k {
 		case "cpuNode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuNode"))
-			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotCPUNodeIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.CPUNode = data
 		case "gpuNode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gpuNode"))
-			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotGpuNodeIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -55080,7 +56910,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-			it.Aws = data
+			it.AWS = data
 		case "cloudflareEnabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudflareEnabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -55101,7 +56931,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-			it.Gcp = data
+			it.GCP = data
 		}
 	}
 
@@ -55203,7 +57033,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-			it.Aws = data
+			it.AWS = data
 		case "cloudProvider":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
@@ -55217,7 +57047,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-			it.Gcp = data
+			it.GCP = data
 		case "maxCount":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxCount"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
@@ -57147,7 +58977,7 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			if err != nil {
 				return it, err
 			}
-			it.AwsElasticBlockStore = data
+			it.AWSElasticBlockStore = data
 		case "azureDisk":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azureDisk"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__AzureDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSourceIn(ctx, v)
@@ -59758,7 +61588,7 @@ func (ec *executionContext) _BYOKSetupInstruction(ctx context.Context, sel ast.S
 
 var checkAwsAccessOutputImplementors = []string{"CheckAwsAccessOutput"}
 
-func (ec *executionContext) _CheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, obj *model.CheckAwsAccessOutput) graphql.Marshaler {
+func (ec *executionContext) _CheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, obj *model.CheckAWSAccessOutput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, checkAwsAccessOutputImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62003,7 +63833,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsCredentials) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSCredentials) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62047,7 +63877,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62088,7 +63918,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62129,7 +63959,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62168,7 +63998,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62213,7 +64043,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithIDImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithIDImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62257,7 +64087,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParamsImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsVPCParams) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSVPCParams) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParamsImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -62692,7 +64522,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 
 var github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParamsImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams"}
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1GcpVPCParams) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1GCPVPCParams) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParamsImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -71000,11 +72830,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCheckAwsAccessOutput2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, v model.CheckAwsAccessOutput) graphql.Marshaler {
+func (ec *executionContext) marshalNCheckAwsAccessOutput2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAWSAccessOutput(ctx context.Context, sel ast.SelectionSet, v model.CheckAWSAccessOutput) graphql.Marshaler {
 	return ec._CheckAwsAccessOutput(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCheckAwsAccessOutput2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, v *model.CheckAwsAccessOutput) graphql.Marshaler {
+func (ec *executionContext) marshalNCheckAwsAccessOutput2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAWSAccessOutput(ctx context.Context, sel ast.SelectionSet, v *model.CheckAWSAccessOutput) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -71575,17 +73405,17 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 	return v
 }
 
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism, error) {
-	var res model.GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSAuthMechanism(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism, error) {
+	var res model.GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSAuthMechanism(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentials2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsCredentials(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsCredentials) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentials2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSCredentials(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSCredentials) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -71595,12 +73425,12 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsCredentialsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsCredentialsIn, error) {
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSCredentialsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSCredentialsIn, error) {
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSubnetWithIDᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSubnetWithIDᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -71624,7 +73454,7 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSubnetWithID(ctx, sel, v[i])
+			ret[i] = ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSubnetWithID(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -71644,7 +73474,7 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 	return ret
 }
 
-func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSubnetWithID(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSubnetWithID(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -73708,14 +75538,14 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfigIn, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -73723,14 +75553,14 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotCPUNodeIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNodeIn, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -73738,14 +75568,14 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotGpuNodeIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNodeIn, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -73753,14 +75583,14 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfigIn, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -73768,7 +75598,7 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsVPCParams(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsVPCParams) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSVPCParams(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSVPCParams) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -73819,7 +75649,7 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GcpVPCParams(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1GcpVPCParams) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPVPCParams(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1GCPVPCParams) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
