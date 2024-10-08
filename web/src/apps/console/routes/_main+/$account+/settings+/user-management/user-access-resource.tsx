@@ -141,7 +141,7 @@ const UserAccessResources = ({
   isPendingInvitation: boolean;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
   const [showUserInvite, setShowUserInvite] = useState<BaseType | null>(null);
 
@@ -220,7 +220,7 @@ const UserAccessResources = ({
               }
             }
             reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            toast.success(`${titleCase(RESOURCE_NAME)} removed successfully`);
             setShowDeleteDialog(null);
           } catch (err) {
             handleError(err);
