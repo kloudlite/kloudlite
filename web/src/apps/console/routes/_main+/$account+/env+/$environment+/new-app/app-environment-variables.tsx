@@ -246,7 +246,7 @@ export const EnvironmentVariables = () => {
     initialValues: getReadOnlyContainer().env || null,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
-      //@ts-ignore
+      // @ts-ignore
       setContainer((c) => ({
         ...c,
         env: val,

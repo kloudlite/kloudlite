@@ -70,8 +70,8 @@ const Layout = () => {
     setIgnorePaths(
       navItems.map(
         (ni) =>
-          `/${account}/env/${environment}/app/${appName}/settings/${ni.value}`,
-      ),
+          `/${account}/env/${environment}/app/${appName}/settings/${ni.value}`
+      )
     );
   }, []);
 
@@ -144,11 +144,11 @@ const Layout = () => {
                                 if (app.ciBuildId) {
                                   if (
                                     readOnlyApp.spec.containers?.[0].image.includes(
-                                      constants.defaultAppRepoNameOnly,
+                                      constants.defaultAppRepoNameOnly
                                     )
                                   ) {
                                     return `${constants.defaultAppRepoName(
-                                      accountName,
+                                      accountName
                                     )}:${tagName}`;
                                   }
                                   return `${registryHost}/${accountName}/${
@@ -159,7 +159,7 @@ const Layout = () => {
                                   }`;
                                 }
                                 return `${constants.defaultAppRepoName(
-                                  accountName,
+                                  accountName
                                 )}:${tagName}`;
                               })(),
                               name: 'container-0',

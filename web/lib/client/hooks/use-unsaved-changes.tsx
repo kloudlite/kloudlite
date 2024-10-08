@@ -68,8 +68,8 @@ export const UnsavedChangesProvider = ({
         }
         return hasChanges;
       },
-      [hasChanges],
-    ),
+      [hasChanges]
+    )
   );
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export const UnsavedChangesProvider = ({
           performAction,
           setPerformAction,
           s,
-        ],
+        ]
       )}
     >
       {children}
@@ -163,6 +163,5 @@ export const DISCARD_ACTIONS = {
 };
 
 export const useUnsavedChanges = () => {
-  // const
   return useContext(UnsavedChanges);
 };
