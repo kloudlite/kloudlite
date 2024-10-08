@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	uuid "github.com/nu7hatch/gouuid"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"os"
 	"path"
 	"runtime"
 	"strings"
+
+	uuid "github.com/nu7hatch/gouuid"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/domain/envclient"
@@ -151,7 +152,7 @@ func GetConfigFolder() (configFolder string, err error) {
 		return "", functions.NewE(err)
 	}
 
-	configPath := path.Join(homePath, ".cache", ".kl")
+	configPath := path.Join(homePath, ".kl")
 
 	// ensuring the dir is present
 	if err := os.MkdirAll(configPath, os.ModePerm); err != nil {
@@ -312,10 +313,10 @@ PrivateKey = %s
 
 [Peer]
 PublicKey = %s
-AllowedIPs = %s/32, %s
+AllowedIPs = #CLUSTER_GATEWAY_IP/32, #CLUSTER_IP_RANGE
 Endpoint = k3s-cluster.local:33820
 PersistentKeepalive = 25
-`, KLWorkspaceIp, config.Workspace.PrivateKey, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp)
+`, KLWorkspaceIp, config.Workspace.PrivateKey, config.Proxy.PublicKey)
 }
 
 func (fc *fclient) GetWGConfig() (*WGConfig, error) {

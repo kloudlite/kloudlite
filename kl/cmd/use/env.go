@@ -2,7 +2,6 @@ package use
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/k3s"
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
@@ -97,13 +96,13 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.E
 		return nil, functions.NewE(err)
 	}
 
-	k3sClient, err := k3s.NewClient()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-	if err = k3sClient.RemoveAllIntercepts(); err != nil {
-		return nil, functions.NewE(err)
-	}
+	//k3sClient, err := k3s.NewClient()
+	//if err != nil {
+	//	return nil, functions.NewE(err)
+	//}
+	//if err = k3sClient.RemoveAllIntercepts(); err != nil {
+	//	return nil, functions.NewE(err)
+	//}
 
 	persistSelectedEnv := func(env fileclient.Env) error {
 		err := fc.SelectEnv(env)

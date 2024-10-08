@@ -1,14 +1,22 @@
 package fileclient
 
 import (
-	"github.com/kloudlite/kl/pkg/functions"
+	"errors"
+	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 func (f *fclient) CurrentTeamName() (string, error) {
 	kt, err := f.getKlFile("")
 	if err != nil {
-		return "", functions.NewE(err)
+		if errors.Is(err, confighandler.ErrKlFileNotExists) {
+			extraData, err := GetExtraData()
+			if err != nil {
+				return "", fn.NewE(err)
+			}
+			return extraData.SelectedTeam, nil
+		}
+		return "", fn.NewE(err)
 	}
 
 	if kt.TeamName == "" {

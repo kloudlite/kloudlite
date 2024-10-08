@@ -64,7 +64,7 @@ stringData:
     PublicKey = {{.WGConfig.Workspace.PublicKey}}
     Endpoint = 172.18.0.3:31820
     PersistentKeepalive = 25
-    AllowedIPs = 198.18.0.3/32
+    AllowedIPs = 198.18.0.3/32, {{.IpAddress}}/32
 EOF
 
 kubectl apply -f /tmp/secrets.yml
@@ -194,7 +194,7 @@ spec:
     spec:
       containers:
         - name: kl-tracker
-          image: ghcr.io/kloudlite/kl/k3s-tracker:latest
+          image: ghcr.io/kloudlite/kl/k3s-tracker:{{.ImageTag}}
           args:
             - --output
             - /.cache/kl/k3s-status.json

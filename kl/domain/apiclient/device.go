@@ -67,10 +67,10 @@ func (apic *apiClient) GetVPNDevice(teamName string, devName string) (*Device, e
 }
 
 func (apic *apiClient) CreateDevice(devName, displayName, team string) (*Device, error) {
-	//cn, err := getDeviceName(devName)
-	//if err != nil {
-	//	return nil, fn.NewE(err)
-	//}
+	cn, err := getDeviceName(devName, team)
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
 
 	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
@@ -78,13 +78,13 @@ func (apic *apiClient) CreateDevice(devName, displayName, team string) (*Device,
 	}
 
 	dn := devName
-	//if !cn.Result {
-	//	if len(cn.SuggestedNames) == 0 {
-	//		return nil, fn.Errorf("no suggested names for device %s", devName)
-	//	}
-	//
-	//	dn = cn.SuggestedNames[0]
-	//}
+	if !cn.Result {
+		if len(cn.SuggestedNames) == 0 {
+			return nil, fn.Errorf("no suggested names for device %s", devName)
+		}
+
+		dn = cn.SuggestedNames[0]
+	}
 	fn.Logf("creating new device %s\n", dn)
 	respData, err := klFetch("cli_createGlobalVPNDevice", map[string]any{
 		"gvpnDevice": map[string]any{
@@ -158,8 +158,8 @@ func (apic *apiClient) CheckDeviceStatus() bool {
 	return true
 }
 
-func getDeviceName(devName string) (*CheckName, error) {
-	cookie, err := getCookie()
+func getDeviceName(devName, team string) (*CheckName, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -184,7 +184,8 @@ func (apic *apiClient) CreateVpnForTeam(team string) (*Device, error) {
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	checkNames, err := getDeviceName(devName)
+
+	checkNames, err := getDeviceName(devName, team)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -213,6 +214,7 @@ func (apic *apiClient) GetAccVPNConfig(team string) (*fileclient.TeamVpnConfig, 
 		teamVpnConfig := fileclient.TeamVpnConfig{
 			WGconf:     dev.WireguardConfig.Value,
 			DeviceName: dev.Metadata.Name,
+			IpAddress:  dev.IPAddress,
 		}
 
 		if err := apic.fc.SetVpnTeamConfig(team, &teamVpnConfig); err != nil {

@@ -28,6 +28,10 @@ type InstallCommand struct {
 		KloudliteDNSSuffix    string `json:"kloudliteDNSSuffix"`
 		MessageOfficeGRPCAddr string `json:"messageOfficeGRPCAddr"`
 	} `json:"helm-values"`
+	Gateway struct {
+		IP          string `json:"IP"`
+		ClusterCIDR string `json:"clusterCIDR"`
+	}
 }
 
 func (apic *apiClient) getClustersOfTeam(team string) ([]Cluster, error) {
@@ -90,6 +94,8 @@ func (apic *apiClient) GetClusterConfig(team string) (*fileclient.TeamClusterCon
 				MessageOfficeGRPCAddr: selectedCluster.InstallCommand.HelmValues.MessageOfficeGRPCAddr,
 			},
 		},
+		GatewayIP:   selectedCluster.InstallCommand.Gateway.IP,
+		ClusterCIDR: selectedCluster.InstallCommand.Gateway.ClusterCIDR,
 	}
 	config.WGConfig = *wgconfig
 	err = apic.fc.SetClusterConfig(team, &config)

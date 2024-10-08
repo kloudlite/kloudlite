@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"github.com/kloudlite/kl/cmd/use"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
@@ -14,7 +15,7 @@ import (
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "login to kloudlite",
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		apic, err := apiclient.New()
 		if err != nil {
 			fn.PrintError(err)
@@ -78,7 +79,7 @@ var loginCmd = &cobra.Command{
 			return
 		}
 
-		if err = use.UseTeam(); err != nil {
+		if err = use.UseTeam(cmd); err != nil {
 			fn.PrintError(err)
 			return
 		}

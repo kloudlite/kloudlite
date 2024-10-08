@@ -2,9 +2,6 @@ package apiclient
 
 import (
 	"fmt"
-	"os"
-	"time"
-
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -109,6 +106,7 @@ func (apic *apiClient) ListApps(teamName string, envName string) ([]App, error) 
 
 func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envName string, options ...fn.Option) error {
 	teamName := fn.GetOption(options, "teamName")
+	devName := fn.GetOption(options, "deviceName")
 
 	fc, err := fileclient.New()
 	if err != nil {
@@ -127,6 +125,19 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 
 		teamName = kt.TeamName
 		options = append(options, fn.MakeOption("teamName", teamName))
+	}
+
+	if devName == "" {
+		avc, err := fc.GetVpnTeamConfig(teamName)
+		if err != nil {
+			return functions.NewE(err)
+		}
+
+		if avc.DeviceName == "" {
+			return fmt.Errorf("device name is required")
+		}
+
+		devName = avc.DeviceName
 	}
 
 	cookie, err := getCookie([]fn.Option{
@@ -153,37 +164,38 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 		return fn.Errorf("no ports provided to intercept")
 	}
 
-	user, err := apic.GetCurrentUser()
-	if err != nil {
-		return err
-	}
-
-	hostName := os.Getenv("KL_HOST_USER")
+	//user, err := apic.GetCurrentUser()
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//hostName := os.Getenv("KL_HOST_USER")
 
 	query := "cli_interceptApp"
 	if !app.IsMainApp {
 		query = "cli_interceptExternalApp"
 	}
 
-	k3sTracker, err := apic.fc.GetK3sTracker()
-	if err != nil {
-		return fn.Error("k3s server is not ready, please wait")
-	}
+	//k3sTracker, err := apic.fc.GetK3sTracker()
+	//if err != nil {
+	//	return fn.Error("k3s server is not ready, please wait")
+	//}
 
-	lastCheckedAt, err := time.Parse(time.RFC3339, k3sTracker.LastCheckedAt)
-	if err != nil {
-		return fn.Error("k3s server is not ready, please wait")
-	}
-
-	if time.Since(lastCheckedAt) > 3*time.Second {
-		return fn.Error("k3s server is not ready, please wait")
-	}
+	//lastCheckedAt, err := time.Parse(time.RFC3339, k3sTracker.LastCheckedAt)
+	//if err != nil {
+	//	return fn.Error("k3s server is not ready, please wait")
+	//}
+	//
+	//if time.Since(lastCheckedAt) > 3*time.Second {
+	//	return fn.Error("k3s server is not ready, please wait")
+	//}
 
 	respData, err := klFetch(query, map[string]any{
-		"appName":      app.Metadata.Name,
-		"envName":      envName,
-		"ipAddr":       k3sTracker.DeviceRouter.IP,
-		"clusterName":  fmt.Sprintf("%s-%s", user.Name, hostName),
+		"appName":    app.Metadata.Name,
+		"envName":    envName,
+		"deviceName": devName,
+		//"ipAddr":       k3sTracker.DeviceRouter.IP,
+		//"clusterName":  fmt.Sprintf("%s-%s", user.Name, hostName),
 		"intercept":    status,
 		"portMappings": ports,
 	}, &cookie)

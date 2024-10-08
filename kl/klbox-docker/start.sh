@@ -24,7 +24,18 @@ export KL_HOST_USER="$KL_HOST_USER"
 EOL
 
 sudo mkdir -p /etc/wireguard
-sudo cp /.cache/kl/kl-workspace-wg.conf /etc/wireguard/kl-workspace-wg.conf
+echo $KL_TEAM_NAME
+set -x
+CLUSTER_IP_RANGE=$(echo $CLUSTER_IP_RANGE | sed 's/\//###/g')
+cat /.cache/kl/kl-workspace-wg.conf | sed "s/#CLUSTER_GATEWAY_IP/${CLUSTER_GATEWAY_IP:-null}/" | sed "s/#CLUSTER_IP_RANGE/${CLUSTER_IP_RANGE:-null}/" > /tmp/wg-cong
+sed -i "s/###/\//" /tmp/wg-cong
+set +x
+sudo cp /tmp/wg-cong /etc/wireguard/kl-workspace-wg.conf
+rm /tmp/wg-cong
+cat /.cache/kl/vpn/${KL_TEAM_NAME}.json | jq -r .wg | base64 -d > /tmp/kl-vpn.conf
+sudo cp /tmp/kl-vpn.conf /etc/wireguard/kl-vpn.conf
+rm /tmp/kl-vpn.conf
+sudo wg-quick up kl-vpn
 sudo wg-quick up kl-workspace-wg
 
 # sudo dnsmasq --server=/.local/$KL_DNS --server=1.1.1.1

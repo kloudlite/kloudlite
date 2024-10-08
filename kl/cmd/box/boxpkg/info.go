@@ -3,13 +3,12 @@ package boxpkg
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"strings"
 )
 
 func (c *client) Info() error {
@@ -44,5 +43,6 @@ func (c *client) Info() error {
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(sshPort), "-oStrictHostKeyChecking=no"}, " ")))
 
+	fn.Logf("%s %s\n", text.Bold("vscode:"), text.Blue(fmt.Sprintf("vscode://vscode-remote/ssh-remote+kl@%s:%s/workspace", getDomainFromPath(c.cwd), sshPort)))
 	return nil
 }

@@ -16,11 +16,18 @@ tasks:
       - run: build
       - /tmp/k3s-tracker --output /tmp/status.json
 
-
   container:build:
     cmd:
-      - docker build -t ghcr.io/kloudlite/kl/k3s-tracker:latest .
-      - docker push ghcr.io/kloudlite/kl/k3s-tracker:latest
+      - docker build --build-arg VERSION=v1.0.0-nightly -t ghcr.io/kloudlite/kl/k3s-tracker:v1.0.0-nightly .
+
+
+  container:push:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
+    cmd:
+      - docker build --build-arg VERSION=${tag} -t ghcr.io/kloudlite/kl/k3s-tracker:${tag} .
+      - docker push ghcr.io/kloudlite/kl/k3s-tracker:${tag}
 
   container:run:
     cmd:

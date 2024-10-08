@@ -208,7 +208,7 @@ func (c *client) CreateClustersTeams(teamName string) error {
 		return fn.NewE(err, "failed to start container")
 	}
 
-	script, err := generateConnectionScript(clusterConfig)
+	script, err := c.generateConnectionScript(clusterConfig)
 	if err != nil {
 		return fn.NewE(err, "failed to generate connection script")
 	}
@@ -227,7 +227,7 @@ func (c *client) CreateClustersTeams(teamName string) error {
 
 }
 
-func generateConnectionScript(clusterConfig *fileclient.TeamClusterConfig) (string, error) {
+func (c *client) generateConnectionScript(clusterConfig *fileclient.TeamClusterConfig) (string, error) {
 	defer spinner.Client.UpdateMessage("generating connection script")()
 	t := template.New("connectionScript")
 
@@ -241,8 +241,42 @@ func generateConnectionScript(clusterConfig *fileclient.TeamClusterConfig) (stri
 		clusterConfig.Version = "v1.0.8-nightly"
 	}
 
+	teamName, err := c.fc.CurrentTeamName()
+	if err != nil {
+		return "", err
+	}
+
+	vpnTeamConfig, err := c.fc.GetVpnTeamConfig(teamName)
+	if err != nil {
+		return "", err
+	}
+
+	cc := struct {
+		ClusterToken   string `json:"clusterToken"`
+		ClusterName    string `json:"cluster"`
+		InstallCommand fileclient.InstallCommand
+		Installed      bool
+		WGConfig       fileclient.WGConfig
+		Version        string
+		GatewayIP      string
+		ClusterCIDR    string
+		IpAddress      string
+		ImageTag       string
+	}{
+		ClusterToken:   clusterConfig.ClusterToken,
+		ClusterName:    clusterConfig.ClusterName,
+		InstallCommand: clusterConfig.InstallCommand,
+		Installed:      clusterConfig.Installed,
+		WGConfig:       clusterConfig.WGConfig,
+		Version:        clusterConfig.Version,
+		GatewayIP:      clusterConfig.GatewayIP,
+		ClusterCIDR:    clusterConfig.ClusterCIDR,
+		IpAddress:      vpnTeamConfig.IpAddress,
+		ImageTag:       flags.Version,
+	}
+
 	b := new(bytes.Buffer)
-	err = p.Execute(b, clusterConfig)
+	err = p.Execute(b, cc)
 	if err != nil {
 		return "", fn.NewE(err)
 	}

@@ -11,9 +11,9 @@ RUN go mod download
 
 COPY main.go main.go
 
-RUN go build -o main .
+ARG VERSION
 
-
+RUN go build -ldflags "-X main.version=$VERSION" -o main .
 
 FROM gcr.io/distroless/static-debian12
 

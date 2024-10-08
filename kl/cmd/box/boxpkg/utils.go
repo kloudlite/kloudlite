@@ -68,6 +68,7 @@ func (c *client) ensurePublicKey() error {
 
 	return nil
 }
+
 func (c *client) ensureCacheExist() error {
 
 	caches := []string{"kl-nix-store", "kl-home-cache", "kl-k3s-cache"}
@@ -97,19 +98,6 @@ func (c *client) ensureCacheExist() error {
 	}
 
 	return nil
-}
-
-func GetDockerHostIp() (string, error) {
-
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		return "", fn.NewE(err)
-	}
-	defer conn.Close()
-
-	localAddress := conn.LocalAddr().(*net.UDPAddr)
-
-	return localAddress.IP.To4().String(), nil
 }
 
 func (c *client) imageExists(imageName string) (bool, error) {
@@ -255,6 +243,12 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 		return "", fn.NewE(err)
 	}
 
+	currentSystemConfig, err := fileclient.GetExtraData()
+	if err != nil {
+		return "", fn.NewE(err)
+	}
+	clusterConfig, err := c.fc.GetClusterConfig(currentSystemConfig.SelectedTeam)
+
 	resp, err := c.cli.ContainerCreate(context.Background(), &container.Config{
 		Image: GetImageName(),
 		Labels: map[string]string{
@@ -272,6 +266,9 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 			fmt.Sprintf("KL_DNS=%s", constants.KLDNS),
 			fmt.Sprintf("KL_BASE_URL=%s", constants.BaseURL),
 			fmt.Sprintf("KL_HOST_USER=%s", hostName),
+			fmt.Sprintf("CLUSTER_GATEWAY_IP=%s", clusterConfig.GatewayIP),
+			fmt.Sprintf("CLUSTER_IP_RANGE=%s", clusterConfig.ClusterCIDR),
+			fmt.Sprintf("KL_TEAM_NAME=%s", currentSystemConfig.SelectedTeam),
 		},
 		Hostname:     "box",
 		ExposedPorts: nat.PortSet{nat.Port(fmt.Sprintf("%d/tcp", sshPort)): {}},
@@ -529,6 +526,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 	return volumes, nil
 }
 
+// SyncVpn Deprecate later
 func (c *client) SyncVpn(wg string) error {
 	defer spinner.Client.UpdateMessage("validating vpn configuration")()
 

@@ -6,7 +6,6 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/k3s"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -114,13 +113,13 @@ func cloneEnv(apic apiclient.ApiClient, fc fileclient.FileClient, newEnvName str
 		return nil, fn.NewE(err)
 	}
 
-	k3sClient, err := k3s.NewClient()
-	if err != nil {
-		return nil, fn.NewE(err)
-	}
-	if err = k3sClient.RemoveAllIntercepts(); err != nil {
-		return nil, fn.NewE(err)
-	}
+	//k3sClient, err := k3s.NewClient()
+	//if err != nil {
+	//	return nil, fn.NewE(err)
+	//}
+	//if err = k3sClient.RemoveAllIntercepts(); err != nil {
+	//	return nil, fn.NewE(err)
+	//}
 
 	persistSelectedEnv := func(e fileclient.Env) error {
 		err := fc.SelectEnv(e)

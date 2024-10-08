@@ -3,7 +3,6 @@ package intercept
 import (
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/k3s"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/spf13/cobra"
@@ -76,14 +75,14 @@ Examples:
 			return
 		}
 
-		k3sClient, err := k3s.NewClient()
-		if err != nil {
-			return
-		}
+		//k3sClient, err := k3s.NewClient()
+		//if err != nil {
+		//	return
+		//}
 
-		if err = k3sClient.StartAppInterceptService(appToStop.Spec.Intercept.PortMappings, false); err != nil {
-			return
-		}
+		//if err = k3sClient.StartAppInterceptService(appToStop.Spec.Intercept.PortMappings, false); err != nil {
+		//	return
+		//}
 
 		fn.Log("intercepted app stopped successfully")
 	},

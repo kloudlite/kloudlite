@@ -1,4 +1,4 @@
-package k3s
+package cluster
 
 import (
 	"fmt"
@@ -17,14 +17,14 @@ var DownCmd = &cobra.Command{
 	Short: "Stops the k3s server",
 	Long:  `Stops the k3s server`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		if err := stopK3sServer(cmd); err != nil {
+		if err := StopK3sServer(cmd); err != nil {
 			functions.PrintError(err)
 			return
 		}
 	},
 }
 
-func stopK3sServer(cmd *cobra.Command) error {
+func StopK3sServer(cmd *cobra.Command) error {
 	defer spinner.Client.UpdateMessage("stopping k3s server")()
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
 	if err != nil {

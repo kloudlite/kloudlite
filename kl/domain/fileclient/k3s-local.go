@@ -15,6 +15,8 @@ type TeamClusterConfig struct {
 	Installed      bool
 	WGConfig       WGConfig
 	Version        string
+	GatewayIP      string
+	ClusterCIDR    string
 }
 
 type InstallHelmValues struct {

@@ -11,6 +11,7 @@ import (
 
 type TeamVpnConfig struct {
 	WGconf     string `json:"wg"`
+	IpAddress  string `json:"ip"`
 	DeviceName string `json:"device"`
 }
 

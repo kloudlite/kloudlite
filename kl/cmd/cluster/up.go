@@ -1,4 +1,4 @@
-package k3s
+package cluster
 
 import (
 	"github.com/kloudlite/kl/domain/fileclient"
@@ -22,18 +22,19 @@ var UpCmd = &cobra.Command{
 
 func startK3sServer() error {
 	defer spinner.Client.UpdateMessage("starting k3s server")()
-	data, err := fileclient.GetExtraData()
+	fc, err := fileclient.New()
 	if err != nil {
-		return functions.NewE(err)
+		return err
 	}
-	if data.SelectedTeam == "" {
-		return functions.Error("No team selected")
+	currentTeam, err := fc.CurrentTeamName()
+	if err != nil {
+		return err
 	}
 	k, err := k3s.NewClient()
 	if err != nil {
 		return err
 	}
-	if err = k.CreateClustersTeams(data.SelectedTeam); err != nil {
+	if err = k.CreateClustersTeams(currentTeam); err != nil {
 		return functions.NewE(err)
 	}
 	functions.Log("k3s server started")

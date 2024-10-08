@@ -3,7 +3,6 @@ package intercept
 import (
 	"bufio"
 	"fmt"
-	"github.com/kloudlite/kl/k3s"
 	"os"
 	"strconv"
 	"strings"
@@ -108,13 +107,13 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 		DevicePort: devicePort,
 	})
 
-	k3sClient, err := k3s.NewClient()
-	if err != nil {
-		return err
-	}
-	if err = k3sClient.StartAppInterceptService(ports, true); err != nil {
-		return err
-	}
+	//k3sClient, err := k3s.NewClient()
+	//if err != nil {
+	//	return err
+	//}
+	//if err = k3sClient.StartAppInterceptService(ports, true); err != nil {
+	//	return err
+	//}
 
 	if err = apic.InterceptApp(selectedApp.App, true, ports, currentEnv.Name, []fn.Option{
 		fn.MakeOption("appName", selectedApp.Name),
