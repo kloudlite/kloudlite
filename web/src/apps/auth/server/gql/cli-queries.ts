@@ -305,28 +305,51 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  // cli_interceptApp: executor(
+  //   gql`
+  //     mutation Core_interceptAppOnLocalCluster(
+  //       $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
+  //       $intercept: Boolean!
+  //       $clusterName: String!
+  //       $ipAddr: String!
+  //       $appName: String!
+  //       $envName: String!
+  //     ) {
+  //       core_interceptAppOnLocalCluster(
+  //         portMappings: $portMappings
+  //         intercept: $intercept
+  //         clusterName: $clusterName
+  //         ipAddr: $ipAddr
+  //         appname: $appName
+  //         envName: $envName
+  //       )
+  //     }
+  //   `,
+  //   {
+  //     transformer: (data: any) => data.core_interceptAppOnLocalCluster,
+  //     vars: (_: any) => {},
+  //   }
+  // ),
   cli_interceptApp: executor(
     gql`
-      mutation Core_interceptAppOnLocalCluster(
+      mutation Core_interceptApp(
         $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
-        $clusterName: String!
-        $ipAddr: String!
+        $deviceName: String!
         $appName: String!
         $envName: String!
       ) {
-        core_interceptAppOnLocalCluster(
+        core_interceptApp(
           portMappings: $portMappings
           intercept: $intercept
-          clusterName: $clusterName
-          ipAddr: $ipAddr
+          deviceName: $deviceName
           appname: $appName
           envName: $envName
         )
       }
     `,
     {
-      transformer: (data: any) => data.core_interceptAppOnLocalCluster,
+      transformer: (data: any) => data.core_interceptApp,
       vars: (_: any) => {},
     }
   ),
@@ -741,6 +764,7 @@ export const cliQueries = (executor: IExecutor) => ({
             node {
               clusterToken
               displayName
+              lastOnlineAt
               id
               metadata {
                 name

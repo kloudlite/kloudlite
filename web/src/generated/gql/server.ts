@@ -6307,15 +6307,12 @@ export type AuthCli_InterceptAppMutationVariables = Exact<{
     | Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn
   >;
   intercept: Scalars['Boolean']['input'];
-  clusterName: Scalars['String']['input'];
-  ipAddr: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
   appName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
 }>;
 
-export type AuthCli_InterceptAppMutation = {
-  core_interceptAppOnLocalCluster: boolean;
-};
+export type AuthCli_InterceptAppMutation = { core_interceptApp: boolean };
 
 export type AuthCli_RemoveDeviceInterceptsMutationVariables = Exact<{
   envName: Scalars['String']['input'];
@@ -6577,6 +6574,7 @@ export type AuthCli_ListAccountClustersQuery = {
       node: {
         clusterToken: string;
         displayName: string;
+        lastOnlineAt?: any;
         id: string;
         metadata: { name: string; labels?: any };
       };

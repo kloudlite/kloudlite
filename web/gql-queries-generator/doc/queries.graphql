@@ -4699,12 +4699,11 @@ mutation authCli_intercepExternalApp($envName: String!, $appName: String!, $devi
   )
 }
 
-mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $clusterName: String!, $ipAddr: String!, $appName: String!, $envName: String!) {
-  core_interceptAppOnLocalCluster(
+mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appName: String!, $envName: String!) {
+  core_interceptApp(
     portMappings: $portMappings
     intercept: $intercept
-    clusterName: $clusterName
-    ipAddr: $ipAddr
+    deviceName: $deviceName
     appname: $appName
     envName: $envName
   )
@@ -4980,6 +4979,7 @@ query authCli_listAccountClusters($pagination: CursorPaginationIn) {
       node {
         clusterToken
         displayName
+        lastOnlineAt
         id
         metadata {
           name
