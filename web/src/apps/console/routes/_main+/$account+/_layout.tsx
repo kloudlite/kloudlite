@@ -25,19 +25,14 @@ import {
   IAccount,
   IAccounts,
 } from '~/console/server/gql/queries/account-queries';
-import {
-  ExtractNodeType,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 
 import { Button } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 import MenuSelect, { SelectItem } from '~/console/components/menu-select';
-import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
+import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v3';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
@@ -76,9 +71,15 @@ export const loader = async (ctx: IExtRemixCtx) => {
 
     const { data: clusterList, errors: clusterError } = await GQLServerHandler(
       ctx.request
-    ).listByokClusters({
+    ).listClusterStatus({
       pagination: {
         first: 100,
+      },
+      search: {
+        allClusters: {
+          exact: true,
+          matchType: 'exact',
+        },
       },
     });
 
@@ -86,17 +87,12 @@ export const loader = async (ctx: IExtRemixCtx) => {
       throw clusterError[0];
     }
 
-    const cMaps = parseNodes(clusterList).reduce((acc, c) => {
-      acc[c.metadata.name] = c;
-      return acc;
-    }, {} as { [key: string]: ExtractNodeType<IByocClusters> });
-
     acccountData = data;
 
     return withContext(ctx, {
       msvtemplates: msvTemplates,
       account: data,
-      clustersMap: cMaps,
+      clustersMap: clusterList,
     });
   } catch (err) {
     handleError(err);
@@ -104,7 +100,7 @@ export const loader = async (ctx: IExtRemixCtx) => {
     return k as {
       account: typeof acccountData;
       msvtemplates: IMSvTemplates;
-      clustersMap: { [key: string]: ExtractNodeType<IByocClusters> };
+      clustersMap: { [key: string]: string };
     };
   }
 };
@@ -191,17 +187,22 @@ const Account = () => {
     ensureAccountClientSide(params);
   }, []);
 
-  const { setClusters } = useClusterStatusV2();
+  const [cm, setCm] = useState(clustersMap);
 
   useEffect(() => {
-    // @ts-ignore
-    setClusters(clustersMap);
+    setCm(clustersMap);
   }, [clustersMap]);
 
   return (
-    <>
+    <ClusterStatusProvider clustersMap={cm} setClustersMap={setCm}>
       <Outlet
-        context={{ ...rootContext, account, msvtemplates, clustersMap }}
+        context={{
+          ...rootContext,
+          account,
+          msvtemplates,
+          clustersMap: cm,
+          setclustersMap: setCm,
+        }}
       />
       <Popup.Root
         show={unloadState === 'blocked'}
@@ -224,7 +225,7 @@ const Account = () => {
           />
         </Popup.Footer>
       </Popup.Root>
-    </>
+    </ClusterStatusProvider>
   );
 };
 
@@ -518,7 +519,10 @@ export const handle = ({ account }: any) => {
 export interface IAccountContext extends IConsoleRootContext {
   account: LoaderResult<typeof loader>['account'];
   msvtemplates: IMSvTemplates;
-  clustersMap: { [key: string]: ExtractNodeType<IByocClusters> };
+  clustersMap: { [key: string]: string };
+  setClustersMap: React.Dispatch<
+    React.SetStateAction<{ [key: string]: string }>
+  >;
 }
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({

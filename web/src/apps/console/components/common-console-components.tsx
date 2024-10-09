@@ -1,27 +1,36 @@
 import { ReactNode, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
-import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { toast } from '~/components/molecule/toast';
-import { Copy, Check } from '~/console/components/icons';
-import { Truncate } from '~/root/lib/utils/common';
 import TooltipV2 from '~/components/atoms/tooltipV2';
+import { toast } from '~/components/molecule/toast';
+import { cn } from '~/components/utils';
+import { Check, Copy } from '~/console/components/icons';
+import useClipboard from '~/root/lib/client/hooks/use-clipboard';
+import { Truncate } from '~/root/lib/utils/common';
 
 interface IDeleteContainer {
   title: ReactNode;
   children: ReactNode;
   action: () => void;
+  content?: string;
+  disabled?: boolean;
 }
 export const DeleteContainer = ({
   title,
   children,
   action,
+  content,
+  disabled = false,
 }: IDeleteContainer) => {
   return (
     <div className="flex flex-col gap-3xl p-3xl rounded border border-border-critical bg-surface-basic-default shadow-button">
       <div className="text-text-strong headingLg">{title}</div>
       <div className="bodyMd text-text-default">{children}</div>
-      <Button onClick={action} content="Delete" variant="critical" />
+      <Button
+        onClick={action}
+        content={content || 'Delete'}
+        variant="critical"
+        disabled={disabled}
+      />
     </div>
   );
 };
@@ -48,7 +57,7 @@ export const Box = ({ children, title, className }: IBox) => {
     <div
       className={cn(
         'rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ',
-        className,
+        className
       )}
     >
       <div className="text-text-strong headingLg">{title}</div>

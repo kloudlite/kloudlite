@@ -28,7 +28,6 @@ import {
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { ViewModeProvider } from '~/console/components/view-mode';
-import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
 import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
@@ -66,7 +65,7 @@ export type IConsoleRootContext = {
 
 export const meta = (c: IRemixCtx) => {
   return [
-    { title: `Account ${constants.metadot} ${c.params?.account || ''}` },
+    { title: `Team ${constants.metadot} ${c.params?.account || ''}` },
     { name: 'theme-color', content: LightTitlebarColor },
   ];
 };
@@ -144,9 +143,9 @@ const AccountTabs = () => {
 };
 
 const Logo = () => {
-  const { account } = useParams();
+  // const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/environments`}>
+    <LogoWrapper to="/teams">
       <BrandLogo />
     </LogoWrapper>
   );
@@ -172,11 +171,10 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            {!hideProfileName ? (
-              <Profile name={titleCase(user.name)} size="xs" />
-            ) : (
-              <Profile size="xs" />
-            )}
+            <Profile
+              {...(hideProfileName ? {} : { name: titleCase(user.name) })}
+              size="xs"
+            />
           </div>
           <div className="flex md:hidden">
             <Profile size="xs" />
@@ -495,21 +493,19 @@ const Console = () => {
           </div>
         }
       />
-      <ClusterStatusProvider>
-        <ViewModeProvider>
-          <SubNavDataProvider>
-            <UnsavedChangesProvider>
-              <Container className="pb-5xl">
-                <Outlet
-                  context={{
-                    ...loaderData,
-                  }}
-                />
-              </Container>
-            </UnsavedChangesProvider>
-          </SubNavDataProvider>
-        </ViewModeProvider>
-      </ClusterStatusProvider>
+      <ViewModeProvider>
+        <SubNavDataProvider>
+          <UnsavedChangesProvider>
+            <Container className="pb-5xl">
+              <Outlet
+                context={{
+                  ...loaderData,
+                }}
+              />
+            </Container>
+          </UnsavedChangesProvider>
+        </SubNavDataProvider>
+      </ViewModeProvider>
     </div>
   );
 };
