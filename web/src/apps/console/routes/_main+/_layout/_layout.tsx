@@ -309,7 +309,7 @@ const NotificationMenu = () => {
             first: 100,
           },
         }),
-      true,
+      true
     );
 
   const notifications = parseNodes(notificationsData);
@@ -482,7 +482,7 @@ const Console = () => {
               {breadcrum.map((bc: any, index) =>
                 cloneElement(bc.handle.breadcrum(bc), {
                   key: generateKey(index),
-                }),
+                })
               )}
             </Breadcrum.Root>
           )
