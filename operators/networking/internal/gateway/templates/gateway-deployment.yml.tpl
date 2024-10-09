@@ -226,8 +226,7 @@ spec:
         args:
           - --health-probe-bind-address=$(POD_IP):8081
           - --metrics-bind-address=$(POD_IP):9090
-          - --leader-elect
-          - "false"
+          {{- /* - --leader-elect */}}
         resources:
           requests:
             cpu: 100m

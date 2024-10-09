@@ -94,18 +94,14 @@ func New(name string) Operator {
 
 	mgrConfig, mgrOptions := func() (*rest.Config, ctrl.Options) {
 		cOpts := ctrl.Options{
-			Scheme: scheme,
-			// Port:                       9443,
-			LeaderElection:   enableLeaderElection,
-			LeaderElectionID: fmt.Sprintf("operator-%s.kloudlite.io", name),
-			// LeaderElectionResourceLock: "configmapsleases",
-			LeaderElectionResourceLock: "leases",
+			Scheme:                        scheme,
+			LeaderElection:                enableLeaderElection,
+			LeaderElectionReleaseOnCancel: true,
+			LeaderElectionID:              fmt.Sprintf("operator-%s.kloudlite.io", name),
+			LeaderElectionResourceLock:    "leases",
 		}
 		if isDev {
-			// cOpts.MetricsBindAddress = "0"
-			// cOpts.MetricsBindAddress = "0"
 			cOpts.Metrics.BindAddress = "0"
-			// cOpts.LeaderElectionID = "nxtcoder17.dev.kloudlite.io"
 			logger.Warnf("dev mode enabled, using dev server host: %s", devServerHost)
 			return &rest.Config{Host: devServerHost}, cOpts
 		}
