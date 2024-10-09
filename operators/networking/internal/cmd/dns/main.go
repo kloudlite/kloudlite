@@ -279,14 +279,14 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			dnsServer(Context{Context: ctx, Logger: logger}, localDNSAddr, &dnsHandler{AnswerClusterLocalIPs: true, localGatewayDNS: localGatewayDNS})
+			dnsServer(Context{Context: ctx, Logger: logger}, localDNSAddr, &dnsHandler{AnswerClusterLocalIPs: true, localGatewayDNS: localGatewayDNS, logger: logger})
 		}()
 	}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		dnsServer(Context{Context: ctx, Logger: logger}, wgDNSAddr, &dnsHandler{localGatewayDNS: localGatewayDNS})
+		dnsServer(Context{Context: ctx, Logger: logger}, wgDNSAddr, &dnsHandler{localGatewayDNS: localGatewayDNS, logger: logger})
 	}()
 
 	if enableHTTP {

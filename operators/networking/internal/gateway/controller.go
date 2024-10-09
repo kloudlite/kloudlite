@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"reflect"
 	"strings"
 
@@ -515,23 +514,6 @@ func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gatew
 	req.AddToOwnedResources(rr...)
 
 	return check.Completed()
-}
-
-func syncDNS(ctx context.Context, registrationAddr string, dnsSuffix string, dnsAddr string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, fmt.Sprintf("%s/gateway/%s/%s", registrationAddr, dnsSuffix, dnsAddr), nil)
-	if err != nil {
-		return errors.NewEf(err, "creating http request")
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return errors.NewEf(err, "executing http request")
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.Newf("http request failed with status: %d, url: %s", resp.StatusCode, req.URL.String())
-	}
-
-	return nil
 }
 
 func (r *Reconciler) trackLoadBalancer(req *rApi.Request[*networkingv1.Gateway]) stepResult.Result {
