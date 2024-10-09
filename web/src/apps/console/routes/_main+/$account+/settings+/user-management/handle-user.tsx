@@ -4,11 +4,10 @@ import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IDialogBase } from '~/console/components/types.d';
-import {
-  IMemberType
-} from '~/console/routes/_main+/$account+/settings+/user-management/user-access-resource';
+import { IMemberType } from '~/console/routes/_main+/$account+/settings+/user-management/user-access-resource';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName } from '~/console/server/r-utils/common';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -31,6 +30,7 @@ const validRoles = (role: string): Role => {
 const Root = (props: IDialog) => {
   const { setVisible, isUpdate } = props;
   const api = useConsoleApi();
+  const reloadPage = useReload();
 
   const { account } = useOutletContext<IAccountContext>();
 
@@ -71,6 +71,7 @@ const Root = (props: IDialog) => {
             throw e[0];
           }
         }
+        reloadPage();
         toast.success(`user ${isUpdate ? 'role updated' : 'invited'}`);
         setVisible(false);
       } catch (err) {

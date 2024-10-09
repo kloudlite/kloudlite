@@ -1,4 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from '~/components/atoms/button';
 import { Checkbox } from '~/components/atoms/checkbox';
@@ -13,6 +14,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { LocalDeviceClusterInstructions } from '../clusters/handle-cluster-resource';
 
 type IDialog = IDialogBase<ExtractNodeType<IByocClusters>>;
 
@@ -21,22 +23,23 @@ const Root = (props: IDialog) => {
 
   const api = useConsoleApi();
   const reloadPage = useReload();
+  const [show, setShow] = useState(false);
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: isUpdate
         ? {
-          displayName: props.data.displayName,
-          name: parseName(props.data),
-          visibilityMode: false,
-          isNameError: false,
-        }
+            displayName: props.data.displayName,
+            name: parseName(props.data),
+            visibilityMode: false,
+            isNameError: false,
+          }
         : {
-          name: '',
-          displayName: '',
-          visibilityMode: false,
-          isNameError: false,
-        },
+            name: '',
+            displayName: '',
+            visibilityMode: false,
+            isNameError: false,
+          },
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
         displayName: Yup.string().required('name is required'),
@@ -70,7 +73,7 @@ const Root = (props: IDialog) => {
           reloadPage();
           resetValues();
           toast.success(
-            `compute ${isUpdate ? 'updated' : 'created'} successfully`
+            `cluster ${isUpdate ? 'updated' : 'created'} successfully`
           );
           setVisible(false);
         } catch (err) {
@@ -80,78 +83,89 @@ const Root = (props: IDialog) => {
     });
 
   return (
-    <Popup.Form
-      onSubmit={(e) => {
-        if (!values.isNameError) {
-          handleSubmit(e);
-        } else {
-          e.preventDefault();
-        }
-      }}
-    >
-      <Popup.Content>
-        <div className="flex flex-col gap-2xl">
-          <NameIdView
-            resType="cluster"
-            displayName={values.displayName}
-            name={values.name}
-            label="Cluster name"
-            placeholder="Enter cluster name"
-            errors={errors.name}
-            handleChange={handleChange}
-            nameErrorLabel="isNameError"
-            isUpdate={isUpdate}
+    <>
+      <Popup.Form
+        onSubmit={(e) => {
+          if (!values.isNameError) {
+            handleSubmit(e);
+          } else {
+            e.preventDefault();
+          }
+        }}
+      >
+        <Popup.Content>
+          <div className="flex flex-col gap-2xl">
+            <NameIdView
+              resType="cluster"
+              displayName={values.displayName}
+              name={values.name}
+              label="Cluster name"
+              placeholder="Enter cluster name"
+              errors={errors.name}
+              handleChange={handleChange}
+              nameErrorLabel="isNameError"
+              isUpdate={isUpdate}
+            />
+            {!isUpdate && (
+              <>
+                <Checkbox
+                  label="Private Cluster"
+                  checked={values.visibilityMode}
+                  onChange={(val) => {
+                    handleChange('visibilityMode')(dummyEvent(val));
+                  }}
+                />
+                <Banner
+                  type="info"
+                  body={
+                    <div className="flex flex-col">
+                      <span className="bodyMd-medium">
+                        Private clusters are those who are hosted behind a NAT.
+                      </span>
+                      <span className="bodyMd">
+                        Ex: Cluster running on your local machine
+                      </span>
+                    </div>
+                  }
+                />
+                <Button
+                  target="_blank"
+                  size="sm"
+                  content={
+                    <span className="truncate text-left">
+                      Attach your local cluster
+                    </span>
+                  }
+                  variant="primary-plain"
+                  className="truncate justify-center"
+                  onClick={() => {
+                    setShow(true);
+                  }}
+                />
+              </>
+            )}
+          </div>
+        </Popup.Content>
+        <Popup.Footer>
+          <Popup.Button closable content="Cancel" variant="basic" />
+          <Popup.Button
+            loading={isLoading}
+            type="submit"
+            content={isUpdate ? 'Update' : 'Create'}
+            variant="primary"
           />
-          {!isUpdate && (
-            <>
-              <Checkbox
-                label="Private Cluster"
-                checked={values.visibilityMode}
-                onChange={(val) => {
-                  handleChange('visibilityMode')(dummyEvent(val));
-                }}
-              />
-              <Banner
-                type="info"
-                body={
-                  <div className="flex flex-col">
-                    <span className="bodyMd-medium">
-                      Private clusters are those who are hosted behind a NAT.
-                    </span>
-                    <span className="bodyMd">
-                      Ex: Cluster running on your local machine
-                    </span>
-                  </div>
-                }
-              />
-              <Button
-                target="_blank"
-                size="sm"
-                content={
-                  <span className="truncate text-left">
-                    Attach your local device
-                  </span>
-                }
-                variant="primary-plain"
-                className="truncate justify-center"
-                onClick={() => {
-                  window.location.href = 'https://github.com/kloudlite/kl';
-                }}
-              />
-            </>
-          )}
-        </div>
-      </Popup.Content>
-      <Popup.Footer>
-        <Popup.Button closable content="Cancel" variant="basic" />
-        <Popup.Button
-          loading={isLoading}
-          type="submit"
-          content={isUpdate ? 'Update' : 'Create'}
-          variant="primary"
-        />
-      </Popup.Footer>
-    </Popup.Form>
+        </Popup.Footer>
+      </Popup.Form>
+      <LocalDeviceClusterInstructions
+        {...{
+          show,
+          onClose: () => {
+            setShow(false);
+            setVisible(false);
+          },
+        }}
+      />
+    </>
   );
 };
 

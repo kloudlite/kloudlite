@@ -1,21 +1,32 @@
 import { useOutletContext } from '@remix-run/react';
+import { ApexOptions } from 'apexcharts';
 import axios from 'axios';
-import Chart from '~/console/components/charts/charts-client';
-import useDebounce from '~/lib/client/hooks/use-debounce';
 import { useState } from 'react';
 import { dayjs } from '~/components/molecule/dayjs';
-import { parseValue } from '~/console/page-components/util';
-import { ApexOptions } from 'apexcharts';
-import { parseName } from '~/console/server/r-utils/common';
+import Chart from '~/console/components/charts/charts-client';
+import { findClusterStatusv3 } from '~/console/hooks/use-cluster-status';
+import { useClusterStatusV3 } from '~/console/hooks/use-cluster-status-v3';
 import { useDataState } from '~/console/page-components/common-state';
-import { observeUrl } from '~/lib/configs/base-url.cjs';
-import LogComp from '~/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';
+import { NoLogsAndMetricsBanner } from '~/console/page-components/no-logs-banner';
+import { parseValue } from '~/console/page-components/util';
+import { parseName } from '~/console/server/r-utils/common';
+import LogComp from '~/lib/client/components/logger';
+import useDebounce from '~/lib/client/hooks/use-debounce';
+import { observeUrl } from '~/lib/configs/base-url.cjs';
 import { generatePlainColor } from '~/root/lib/utils/color-generator';
 import { IAppContext } from '../_layout';
 
 const LogsAndMetrics = () => {
   const { app, environment, account } = useOutletContext<IAppContext>();
+
+  const { clustersMap: clusterStatus } = useClusterStatusV3({
+    clusterName: environment.clusterName,
+  });
+
+  const isClusterOnline = findClusterStatusv3(
+    clusterStatus[environment.clusterName]
+  );
 
   type tData = {
     metric: {
@@ -157,6 +168,24 @@ const LogsAndMetrics = () => {
     linesVisible: boolean;
     timestampVisible: boolean;
   }>('logs');
+
+  if (environment.clusterName === '') {
+    return (
+      <NoLogsAndMetricsBanner
+        title="Logs and Metrics Unavailable for Template Applications"
+        description="Logs and metrics will become available once your app is associated with a cluster."
+      />
+    );
+  }
+
+  if (isClusterOnline === false) {
+    return (
+      <NoLogsAndMetricsBanner
+        title="Logs and Metrics Unavailable for Offline Cluster-Based Applications"
+        description="Logs and metrics will be accessible once the cluster is back online."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6xl pt-6xl">
