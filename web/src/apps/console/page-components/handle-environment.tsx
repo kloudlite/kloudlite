@@ -66,12 +66,12 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
         label: c.displayName,
         value: parseName(c),
         ready: findClusterStatus(c),
-        disabled: !findClusterStatus(c),
-        render: () => (
+        disabled: () => !findClusterStatus(c),
+        render: ({ disabled }: { disabled: boolean }) => (
           <ClusterSelectItem
             label={c.displayName}
             value={parseName(c)}
-            disabled={!findClusterStatus(c)}
+            disabled={disabled}
           />
         ),
       }));
@@ -90,7 +90,7 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
       displayName: Yup.string().required(),
       name: Yup.string().required(),
       // clusterName: Yup.string().required(),
-    })
+    }),
   );
 
   const {
