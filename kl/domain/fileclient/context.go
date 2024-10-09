@@ -289,7 +289,7 @@ Address = %s/32
 
 [Peer]
 PublicKey = %s
-AllowedIPs = %s/32, %s
+AllowedIPs = 198.18.0.0/16, %s/32, %s
 PersistentKeepalive = 25
 Endpoint = %s:33820
 `, config.Host.PrivateKey, KLHostIp, config.Proxy.PublicKey, KLWGProxyIp, KLWGAllowedIp, LocalHostIP)
@@ -313,7 +313,7 @@ PrivateKey = %s
 
 [Peer]
 PublicKey = %s
-AllowedIPs = #CLUSTER_GATEWAY_IP/32, #CLUSTER_IP_RANGE
+AllowedIPs = 198.18.0.0/16, #CLUSTER_GATEWAY_IP/32, #CLUSTER_IP_RANGE
 Endpoint = k3s-cluster.local:33820
 PersistentKeepalive = 25
 `, KLWorkspaceIp, config.Workspace.PrivateKey, config.Proxy.PublicKey)
