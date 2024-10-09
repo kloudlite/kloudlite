@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/cmd/connect"
 	"github.com/kloudlite/kl/domain/envclient"
+	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/k3s"
 	"os"
 	"time"
@@ -90,11 +91,17 @@ var Cmd = &cobra.Command{
 
 		k3sTracker, err := fc.GetK3sTracker()
 		if err != nil {
+			if flags.IsVerbose {
+				fn.PrintError(err)
+			}
 			fn.Log("Local Cluster: ", text.Yellow("not ready"))
 			fn.Log("Edge Connection:", text.Yellow("offline"))
 		} else {
 			err = getClusterK3sStatus(k3sTracker)
 			if err != nil {
+				if flags.IsVerbose {
+					fn.PrintError(err)
+				}
 				fn.Log("Local Cluster: ", text.Yellow("not ready"))
 				fn.Log("Edge Connection:", text.Yellow("offline"))
 			}
@@ -121,7 +128,7 @@ func getClusterK3sStatus(k3sTracker *fileclient.K3sTracker) error {
 		return err
 	}
 
-	if time.Since(lastCheckedAt) > 3*time.Second {
+	if time.Since(lastCheckedAt) > 4*time.Second {
 		return fn.Error(K3sServerNotReady)
 	}
 
