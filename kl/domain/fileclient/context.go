@@ -93,9 +93,10 @@ type Port struct {
 	TargetPort int    `json:"targetPort"`
 }
 
-type k3sTracker struct {
+type K3sTracker struct {
 	Compute      bool `json:"compute"`
 	Gateway      bool `json:"gateway"`
+	WgConnection bool `json:"wgConnection"`
 	DeviceRouter struct {
 		IP      string `json:"ip"`
 		Service struct {
@@ -376,13 +377,13 @@ func (fc *fclient) GetWGConfig() (*WGConfig, error) {
 	return &wgConfig, nil
 }
 
-func (fc *fclient) GetK3sTracker() (*k3sTracker, error) {
+func (fc *fclient) GetK3sTracker() (*K3sTracker, error) {
 	file, err := ReadFile(K3sTrackerFileName)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
-	tracker := k3sTracker{}
+	tracker := K3sTracker{}
 
 	if err = json.Unmarshal(bytes.Trim(file, "\x00"), &tracker); err != nil {
 		return nil, fn.NewE(err)

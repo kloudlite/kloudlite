@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"github.com/go-ping/ping"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -15,6 +16,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
+
+const KLDNS string = "100.64.0.1"
 
 func connectConfig() (*rest.Config, error) {
 	host, ok := os.LookupEnv("KUBERNETES_HOST")
@@ -109,10 +112,13 @@ func main() {
 			slog.Error("failed to check deployment status", slog.Group("deployment", "namespace", GatewayNamespace, "name", GatewayDeployment), "err", err)
 		}
 
+		wgConnection := ChekcWireguardConnection()
+
 		b, err := json.Marshal(map[string]any{
 			"lastCheckedAt": start.Format(time.RFC3339),
 			"compute":       agent && agentOp,
 			"gateway":       gateway,
+			"wgConnection":  wgConnection,
 			"deviceRouter": map[string]any{
 				"ip":      deviceRouterIP,
 				"service": svc,
@@ -133,4 +139,21 @@ func main() {
 		slog.Info("written status", "file", f.Name())
 		<-time.After(1 * time.Second)
 	}
+}
+
+func ChekcWireguardConnection() bool {
+	pinger, err := ping.NewPinger(KLDNS)
+	if err != nil {
+		return false
+	}
+	pinger.Count = 1
+	pinger.Timeout = 2 * time.Second
+	if err := pinger.Run(); err != nil {
+		return false
+	}
+	stats := pinger.Statistics()
+	if stats.PacketsRecv == 0 {
+		return false
+	}
+	return true
 }

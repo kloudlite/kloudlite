@@ -625,7 +625,7 @@ func (c *client) CheckK3sRunningLocally() (bool, error) {
 			filters.Arg("label", fmt.Sprintf("%s=%s", "kl-k3s", "true")),
 		),
 	})
-	
+
 	if err != nil {
 		return false, fn.Errorf("failed to list containers: %w", err)
 	}

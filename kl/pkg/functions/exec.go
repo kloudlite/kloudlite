@@ -64,19 +64,12 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 }
 
 func ExecNoOutput(cmdString string) error {
-	r := csv.NewReader(strings.NewReader(cmdString))
-	r.Comma = ' '
-	cmdArr, err := r.Read()
+	cmd := exec.Command("sh", "-c", cmdString)
+	_, err := cmd.Output()
 	if err != nil {
 		return NewE(err)
 	}
-	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
-
-	cmd.Stderr = os.Stderr
-
-	cmd.Stderr = os.Stderr
-
-	return err
+	return nil
 }
 
 // isAdmin checks if the current user has administrative privileges.

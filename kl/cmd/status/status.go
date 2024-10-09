@@ -68,20 +68,32 @@ var Cmd = &cobra.Command{
 		}
 		fn.Log("Cluster Name: ", text.Blue(config.ClusterName))
 
-		err = getK3sStatus(fc)
+		k3sTracker, err := fc.GetK3sTracker()
 		if err != nil {
 			fn.Log("Running: ", text.Yellow("false"))
 			return
 		}
+
+		err = getClusterK3sStatus(k3sTracker)
+		if err != nil {
+			fn.Log("Running: ", text.Yellow("false"))
+		}
+
+		if envclient.InsideBox() {
+			fn.Log(text.Bold("\nWorkspace Status"))
+			env, _ := fc.CurrentEnv()
+			fn.Log("Current Environment: ", text.Blue(env.Name))
+
+			if connect.ChekcWireguardConnection() {
+				fn.Log("Edge Connection:", text.Green("online"))
+			} else {
+				fn.Log("Edge Connection:", text.Yellow("offline"))
+			}
+		}
 	},
 }
 
-func getK3sStatus(fc fileclient.FileClient) error {
-
-	k3sTracker, err := fc.GetK3sTracker()
-	if err != nil {
-		return err
-	}
+func getClusterK3sStatus(k3sTracker *fileclient.K3sTracker) error {
 
 	lastCheckedAt, err := time.Parse(time.RFC3339, k3sTracker.LastCheckedAt)
 	if err != nil {
@@ -91,36 +103,20 @@ func getK3sStatus(fc fileclient.FileClient) error {
 	if time.Since(lastCheckedAt) > 3*time.Second {
 		return fn.Error(K3sServerNotReady)
 	}
+	fn.Log("Running: ", text.Green("true"))
 
 	if k3sTracker.Compute && k3sTracker.Gateway {
-		fn.Log("Running: ", text.Green("true"))
-	} else {
-		fn.Log("Running: ", text.Yellow("false"))
-	}
-
-	if k3sTracker.Compute {
 		fn.Log("Local Cluster: ", text.Green("ready"))
 	} else {
-		fn.Log("Local Cluster: ", text.Yellow("getting ready"))
-	}
-
-	if k3sTracker.Gateway {
-		fn.Log("Edge Gateway Connection: ", text.Green("online"))
-	} else {
-		fn.Log("Edge Gateway Connection: ", text.Yellow("offline"))
+		fn.Log("Local Cluster: ", text.Yellow("Not ready"))
 	}
 
 	if envclient.InsideBox() {
-		fn.Log("\nWorkspace Status")
-		if !k3sTracker.Gateway {
-			fn.Log("Edge Connection:", text.Yellow("offline"))
-			return nil
-		}
-		if connect.ChekcWireguardConnection() {
+		if k3sTracker.WgConnection {
 			fn.Log("Edge Connection:", text.Green("online"))
-			return nil
+		} else {
+			fn.Log("Edge Connection:", text.Yellow("offline"))
 		}
-		fn.Log("Edge Connection:", text.Yellow("offline"))
 	}
 	return nil
 }

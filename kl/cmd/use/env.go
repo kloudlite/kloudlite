@@ -124,13 +124,28 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.E
 
 	oldEnv, _ := apic.EnsureEnv()
 
+	//env, err := fzf.FindOne(
+	//	envs,
+	//	func(env apiclient.Env) string {
+	//		if env.ClusterName == "" {
+	//			return fmt.Sprintf("%s -> %s (template)", env.DisplayName, env.Metadata.Name)
+	//		}
+	//		return fmt.Sprintf("%s -> %s ", env.DisplayName, env.Metadata.Name)
+	//	},
+	//	fzf.WithPrompt("Select Environment > "),
+	//)
+
 	env, err := fzf.FindOne(
 		envs,
 		func(env apiclient.Env) string {
+			displayName := fmt.Sprintf("%-40s", env.DisplayName)
+			name := fmt.Sprintf("%-30s", env.Metadata.Name)
+
 			if env.ClusterName == "" {
-				return fmt.Sprintf("%s (%s) template-env", env.DisplayName, env.Metadata.Name)
+				name := fmt.Sprintf("%-30s", fmt.Sprintf("%s (template)", env.Metadata.Name))
+				return fmt.Sprintf("%s %s", name, displayName)
 			}
-			return fmt.Sprintf("%s (%s) compute-env", env.DisplayName, env.Metadata.Name)
+			return fmt.Sprintf("%s %s", name, displayName)
 		},
 		fzf.WithPrompt("Select Environment > "),
 	)
