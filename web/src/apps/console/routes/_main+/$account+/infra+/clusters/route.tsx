@@ -45,7 +45,7 @@ const CreateClusterButton = () => {
   return (
     <>
       <Button
-        content="Attach compute"
+        content="Attach cluster"
         variant="primary"
         prefix={<Plus />}
         onClick={() => {
@@ -90,7 +90,7 @@ const ClusterComponent = ({
       return {
         image: <EmptyClusterImage />,
         is: true,
-        title: 'This is where you’ll manage your compute.',
+        title: 'This is where you’ll manage your cluster.',
         content: (
           <div className=" flex flex-col items-center gap-lg">
             You can attach any kubernetes cluster.
@@ -110,7 +110,7 @@ const ClusterComponent = ({
               >
                 Instructions{' '}
               </span>
-              to attach your local device.
+              to attach your local cluster.
             </div>
             <LocalDeviceClusterInstructions
               {...{ show: visible, onClose: () => setVisible(false) }}
@@ -124,7 +124,7 @@ const ClusterComponent = ({
       is: false,
       title: 'This is where you’ll manage your cluster.',
       content: (
-        <p>You can create a new compute and manage the listed compute.</p>
+        <p>You can create a new cluster and manage the listed cluster.</p>
       ),
       action: <CreateClusterButton />,
     };
@@ -136,7 +136,7 @@ const ClusterComponent = ({
   return (
     <Wrapper
       secondaryHeader={{
-        title: 'Attached Computes',
+        title: 'Attached clusters',
         action: byokClusters.length > 0 && <CreateClusterButton />,
       }}
       empty={getEmptyState({

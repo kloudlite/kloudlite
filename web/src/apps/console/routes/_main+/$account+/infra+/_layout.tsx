@@ -13,7 +13,7 @@ const Infra = () => {
   return (
     <SidebarLayout
       navItems={[
-        { label: 'Attached Computes', value: 'clusters' },
+        { label: 'Attached Clusters', value: 'clusters' },
         // { label: 'Helm Repos', value: 'helm-repos' },
         // { label: 'Bring your own Kubernetes', value: 'byok-cluster' },
         { label: 'Wireguard Devices', value: 'vpn-devices' },
