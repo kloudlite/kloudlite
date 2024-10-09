@@ -3,6 +3,7 @@ package packagectrl
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
 	"net/http"
 	"os"
@@ -25,6 +26,7 @@ func (p *Packages) Unmarshal(b []byte) error {
 }
 
 func SyncLockfileWithNewConfig(config fileclient.KLFileType) (map[string]string, error) {
+	defer spinner.Client.UpdateMessage("installing nix packages")()
 	_, err := os.Stat("kl.lock")
 	packages := Packages{}
 	if err == nil {

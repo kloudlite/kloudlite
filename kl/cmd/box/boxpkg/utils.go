@@ -172,7 +172,7 @@ func (c *client) restartContainer(path string) error {
 }
 
 func (c *client) startContainer(klconfHash string) (string, error) {
-
+	defer spinner.Client.UpdateMessage("starting container please wait")()
 	err := c.stopOtherContainers()
 	if err != nil {
 		return "", fn.NewE(err)
@@ -215,7 +215,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 				return "", fn.NewE(err)
 			}
 
-			if err := c.waithForSshReady(sshPort, existingContainers[0].ID); err != nil {
+			if err := c.waitForSshReady(sshPort, existingContainers[0].ID); err != nil {
 				return "", fn.NewE(err)
 			}
 		}
@@ -310,7 +310,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 		return "", fn.NewE(err, "failed to start container")
 	}
 
-	if err := c.waithForSshReady(sshPort, resp.ID); err != nil {
+	if err := c.waitForSshReady(sshPort, resp.ID); err != nil {
 		return "", fn.NewE(err)
 	}
 
@@ -816,7 +816,7 @@ func (c *client) containerAtPath(path string) (*types.Container, error) {
 	return &existingContainers[0], nil
 }
 
-func (c *client) waithForSshReady(port int, containerId string) error {
+func (c *client) waitForSshReady(port int, containerId string) error {
 	defer spinner.Client.UpdateMessage("waiting for ssh to be ready")()
 
 	ctx, cf := context.WithTimeout(context.Background(), 1*time.Minute)
@@ -838,6 +838,31 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 						l = l[8:]
 					}
 					fn.Log(text.Blue("[box]"), l)
+				}
+			}
+		}()
+	} else {
+		go func() {
+			cf := func() {}
+			rc, err := c.cli.ContainerLogs(ctx, containerId, container.LogsOptions{
+				ShowStdout: true,
+				ShowStderr: true,
+				Since:      time.Now().Format(time.RFC3339),
+				Follow:     true,
+			})
+
+			if r := bufio.NewScanner(rc); err == nil {
+				for r.Scan() {
+					l := r.Text()
+					if len(l) > 8 {
+						l = l[8:]
+					}
+
+					if l == "kloudlite-entrypoint:INSTALLING_PACKAGES" {
+						cf = spinner.Client.UpdateMessage("installing nix packages")
+					} else if l == "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE" {
+						cf()
+					}
 				}
 			}
 		}()
@@ -867,7 +892,7 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 						l = l[8:]
 					}
 
-					logs += l + "\n"
+					logs += fmt.Sprintf("%s %s\n", text.Yellow("[stderr]"), l)
 				}
 
 				return fn.NewE(fn.Errorf("failed to start container"), logs)

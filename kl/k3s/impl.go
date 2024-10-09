@@ -594,7 +594,7 @@ func (c *client) runScriptInContainer(script string) error {
 			if len(line) > 8 {
 				line = line[8:]
 			}
-			fn.Log(text.Blue("[stdout]"), line)
+			fn.Log(text.Blue("[kube]"), line)
 		}
 
 	} else {

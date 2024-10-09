@@ -33,4 +33,7 @@ func init() {
 	fileclient.OnlyOutsideBox(infoCmd)
 	BoxCmd.AddCommand(infoCmd)
 
+	fileclient.OnlyOutsideBox(stopAllCmd)
+	BoxCmd.AddCommand(stopAllCmd)
+
 }

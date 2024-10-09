@@ -42,6 +42,10 @@ func StopK3sServer(cmd *cobra.Command) error {
 		return err
 	}
 
+	if len(crlist) == 0 {
+		return nil
+	}
+
 	k3sclient, err := k3s.NewClient()
 	if err != nil {
 		return err
