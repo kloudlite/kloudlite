@@ -6,11 +6,15 @@ inputs:
     description: 'GitHub Token'
     required: true
 
-  cachix_auth_token:
-    description: "cachix auth token"
+  cachix_cache_name:
+    description: "cachix.org cache name"
     required: true
 
-  git_directory:
+  cachix_auth_token:
+    description: "cachix.org auth token"
+    required: true
+
+  working_directory:
     description: 'base directory'
     default: "."
 
@@ -18,32 +22,31 @@ runs:
   using: 'composite'
   steps:
     - name: setup-docker
-      uses: nxtcoder17/actions/.github/actions/setup-docker@main
+      uses: kloudlite/actions/setup-docker@v1
       with:
         docker_username: ${{ github.actor }}
         docker_password: ${{ inputs.github_token }}
 
     - name: go cache
-      uses: nxtcoder17/actions/.github/actions/setup-cache-go@gh-actions/tricks
+      uses: kloudlite/setup-cache-go@v1
       with:
         cache_key: "kubelet-metrics-reexporter"
 
     - name: use nix flakes
-      uses: nxtcoder17/actions/.github/actions/setup-nix-cachix@main
+      uses: kloudlite/setup-nix-cachix@v1
       with:
-        flake_lock: ${{ inputs.git_directory }}/flake.lock
-        nix_develop_arguments: "${{ inputs.git_directory }}#default"
+        flake_lock: ${{ inputs.working_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.working_directory }}#default"
 
         cachix_cache_name: "kloudlite"
         cachix_auth_token: ${{ inputs.cachix_auth_token }}
 
     - name: generate image tag
-      uses: nxtcoder17/actions/.github/actions/generate-image-tag@gh-actions/tricks
+      uses: kloudlite/actions/generate-image-tag@v1
 
     - name: Build And Push Image
-      working-directory: ${{ inputs.git_directory }}
+      working-directory: ${{ inputs.working_directory }}
       if: ${{ env.IMAGE_TAG != '' }}
-      # if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
       shell: bash
       run: |+
         set +e

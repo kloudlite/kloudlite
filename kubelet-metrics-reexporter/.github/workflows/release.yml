@@ -1,4 +1,4 @@
-name: Release with nix
+name: Release
 
 on:
   workflow_dispatch:
@@ -28,9 +28,44 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: build-and-push
-        uses: ./.github/actions/build-with-nix
+      - name: setup-docker
+        uses: kloudlite/actions/setup-docker@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          git_directory: "."
+          docker_registry: "ghcr.io"
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: setup-go-cache
+        uses: kloudlite/actions/setup-cache-go@v1
+        with:
+          cache_key: "kubelet-metrics-reexporter"
+
+      - name: use nix flakes
+        uses: kloudlite/actions/setup-nix-cachix@v1
+        with:
+          flake_lock: ./flake.lock
+          nix_develop_arguments: "./#default"
+
+          cachix_cache_name: ${{ secrets.CACHIX_CACHE_NAME }}
+          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN}}
+
+      - name: generate image tag
+        uses: kloudlite/actions/generate-image-tag@v1
+
+      - name: Build And Push Image
+        working-directory: "./"
+        if: ${{ env.IMAGE_TAG != '' }}
+        shell: bash
+        run: |+
+          set +e
+          image_name="ghcr.io/${{ github.repository }}"
+
+          docker manifest inspect $image_name:$IMAGE_TAG
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+          set -e
+
+          task container:build-and-push image="$image_name:$IMAGE_TAG"
