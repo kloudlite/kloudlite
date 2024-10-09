@@ -1,88 +1,302 @@
-name: build-kl-binary
+name: kl workflows
 on:
   workflow_call:
 
 jobs:
-  docker-build:
-    runs-on: ubuntu-latest
+  # docker-build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: '3.x'
+  #
+  #     - name: Create and Set Image Tag
+  #       id: tag_name
+  #       run: |
+  #         import re
+  #         import os
+  #
+  #         ref = os.getenv('GITHUB_REF')
+  #         if ref.startswith('refs/heads/release-'):
+  #             tag = ref.replace('refs/heads/release-', '')
+  #             if not re.search('-nightly$', tag):
+  #                 tag += "-nightly"
+  #         elif ref.startswith('refs/tags/'):
+  #             tag = ref.replace('refs/tags/', '')
+  #         else:
+  #             tag = 'default-tag'  # Adjust this fallback tag as necessary
+  #
+  #         with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+  #             env_file.write(f"TAG={tag}\n")
+  #
+  #         with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+  #             env_out.write(f"TAG_NAME={tag}\n")
+  #       shell: python
+  #
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
+  #
+  #     - name: Setup Build Environment
+  #       id: setup
+  #       uses: ./.github/actions/setup/
+  #       with:
+  #         github_token: "${{ secrets.GITHUB_TOKEN }}"
+  #         enable_go: false
+  #         enable_task: false
+  #         enable_upx: false
+  #         enable_docker: true
+  #
+  #     - name: Build & Push Image
+  #       if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
+  #       env:
+  #         IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+  #         OVERRIDE_PUSHED_IMAGE: "false"
+  #       run: |
+  #         set +e
+  #         image_name="ghcr.io/kloudlite/kl/box"
+  #
+  #         docker manifest inspect $image_name:$IMAGE_TAG
+  #         exit_status=$?
+  #         if [ $exit_status -eq 0 ]; then
+  #           [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+  #           echo "image exists, but override pushed image is set to true. proceeding with building image"
+  #         fi
+  #
+  #         set -e
+  #
+  #         docker buildx build --platform linux/amd64,linux/arm64 -t "$image_name:$IMAGE_TAG" --build-arg VERSION=$IMAGE_TAG --build-context project=kl kl/klbox-docker --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max" --push
+
+  klbox-docker-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runs-on: warp-ubuntu-2404-x64-8x-spot
+
+          - arch: arm64
+            runs-on: blacksmith-4vcpu-ubuntu-2204-arm
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ${{ matrix.runs-on }}
+
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v2
+      - uses: kloudlite/actions/generate-image-tag@v1
+      - uses: kloudlite/actions/setup-docker@v1
         with:
-          python-version: '3.x'
-
-      - name: Create and Set Image Tag
-        id: tag_name
-        run: |
-          import re
-          import os
-
-          ref = os.getenv('GITHUB_REF')
-          if ref.startswith('refs/heads/release-'):
-              tag = ref.replace('refs/heads/release-', '')
-              if not re.search('-nightly$', tag):
-                  tag += "-nightly"
-          elif ref.startswith('refs/tags/'):
-              tag = ref.replace('refs/tags/', '')
-          else:
-              tag = 'default-tag'  # Adjust this fallback tag as necessary
-
-          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-              env_file.write(f"TAG={tag}\n")
-
-          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
-              env_out.write(f"TAG_NAME={tag}\n")
-        shell: python
+          docker_registry: ghcr.io
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Setup Build Environment
-        id: setup
-        uses: ./.github/actions/setup/
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
-          enable_go: false
-          enable_task: false
-          enable_upx: false
-          enable_docker: true
+          fetch-depth: 0
 
       - name: Build & Push Image
-        if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
+        # if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
+        working-directory: ./kl
         env:
-          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          # IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          KL_VERSION_TAG: ${{ env.IMAGE_TAG }}
           OVERRIDE_PUSHED_IMAGE: "false"
         run: |
           set +e
           image_name="ghcr.io/kloudlite/kl/box"
 
-          docker manifest inspect $image_name:$IMAGE_TAG
-          exit_status=$?
-          if [ $exit_status -eq 0 ]; then
-            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-            echo "image exists, but override pushed image is set to true. proceeding with building image"
-          fi
+          # docker manifest inspect $image_name:$IMAGE_TAG
+          # exit_status=$?
+          # if [ $exit_status -eq 0 ]; then
+          #   [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+          #   echo "image exists, but override pushed image is set to true. proceeding with building image"
+          # fi
 
           set -e
 
-          docker buildx build --platform linux/amd64,linux/arm64 -t "$image_name:$IMAGE_TAG" --build-arg VERSION=$IMAGE_TAG --build-context project=kl kl/klbox-docker --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max" --push
+          docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/box:$IMAGE_TAG-${{ matrix.arch }} --build-context project=. --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true ./klbox-docker 
+
+  klbox-docker-multiarch-manifest:
+    needs: klbox-docker-build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: kloudlite/actions/generate-image-tag@v1
+
+      - uses: kloudlite/actions/setup-docker@v1
+        with:
+          docker_registry: ghcr.io
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: multiarch manifest build
+        env:
+          # IMAGE_TAG: ${{ env.II}}
+          KL_VERSION_TAG: ${{ env.IMAGE_TAG }}
+          # OVERRIDE_PUSHED_IMAGE: "false"
+        shell: bash
+        run: |
+          image_name="ghcr.io/kloudlite/kl/box"
+          docker manifest create ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 ${image_name}:${IMAGE_TAG}-arm64
+
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 --os linux --arch amd64
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-arm64 --os linux --arch arm64
+
+          docker manifest push ${image_name}:${IMAGE_TAG}
+
+  kl-k3s-tracker-docker-build:
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: kloudlite/actions/generate-image-tag@v1
+
+      - uses: kloudlite/actions/setup-docker@v1
+        with:
+          docker_registry: ghcr.io
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Build & Push Image
+        working-directory: ./kl/k3s/k3s-tracker
+        env:
+          KL_VERSION_TAG: ${{ env.IMAGE_TAG }}
+          OVERRIDE_PUSHED_IMAGE: "false"
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/k3s-tracker:$IMAGE_TAG . --push
+
+  kl-k3s-base-docker-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ amd64, arm64 ]
+        include:
+          - arch: amd64
+            runs-on: warp-ubuntu-2404-x64-8x-spot
+
+          - arch: arm64
+            runs-on: blacksmith-4vcpu-ubuntu-2204-arm
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - uses: kloudlite/actions/generate-image-tag@v1
+
+      - uses: kloudlite/actions/setup-docker@v1
+        with:
+          docker_registry: ghcr.io
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Build & Push Image
+        working-directory: ./kl/k3s/k3s-base
+        env:
+          KL_VERSION_TAG: ${{ env.IMAGE_TAG }}
+          K3S_VERSION: "v1.31.1+k3s1"
+          OVERRIDE_PUSHED_IMAGE: "false"
+        run: |
+          set +e
+          image_name="ghcr.io/kloudlite/kl/k3s-tacker"
+          set -e
+          mkdir -p ./images
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG -o ./images/dns.tar.gz
+
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG -o ./images/ip-manager.tar.gz
+
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG -o ./images/logs-proxy.tar.gz
+
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG -o ./images/webhook.tar.gz
+
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG -o ./images/ip-binding-controller.tar.gz
+
+          docker pull ghcr.io/kloudlite/kloudlite/api/tenant-agent:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/api/tenant-agent:$IMAGE_TAG -o ./images/kl-agent.tar.gz
+
+          docker pull ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG -o ./images/kl-agent-operator.tar.gz
+
+          curl -L "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s-airgap-images-${{ matrix.arch }}.tar" -o ./images/k3s-airgap-images-${{ matrix.arch }}.tar
+          docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/k3s:$IMAGE_TAG-${{ matrix.arch }} . --push
+
+  kl-k3s-docker-multiarch-manifest:
+    needs: kl-k3s-base-docker-build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: kloudlite/actions/setup-docker@v1
+        with:
+          docker_registry: ghcr.io
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: kloudlite/actions/generate-image-tag@v1
+
+      - name: multiarch manifest build
+        env:
+          KL_VERSION_TAG: ${{ env.IMAGE_TAG }}
+          OVERRIDE_PUSHED_IMAGE: "false"
+        shell: bash
+        run: |
+          image_name="ghcr.io/kloudlite/kl/k3s"
+          docker manifest create ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 ${image_name}:${IMAGE_TAG}-arm64
+
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 --os linux --arch amd64
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-arm64 --os linux --arch arm64
+
+          docker manifest push ${image_name}:${IMAGE_TAG}
 
   build:
     name: Build ${{ matrix.app }}-${{ matrix.platform }}-${{ matrix.arch }}
     strategy:
       fail-fast: false
       matrix:
-        app: [kl,kli]
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        # app: [kl,kli]
+        app: [kl]
+        # os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, macos-13, macos-14]
         arch: [amd64, arm64]
         include:
           - os: ubuntu-latest
             goos: linux
             platform: linux
-          - os: windows-latest
-            goos: windows
-            platform: windows
+          # - os: windows-latest
+          #   goos: windows
+          #   platform: windows
           - os: macos-13
             goos: darwin
             platform: darwin
