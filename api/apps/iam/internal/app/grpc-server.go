@@ -11,7 +11,6 @@ import (
 	t "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -52,6 +51,8 @@ func (s *GrpcService) UpdateMembership(ctx context.Context, in *iam.UpdateMember
 	}, nil
 }
 
+var ErrRoleBindingNotFound error = fmt.Errorf("role binding not found")
+
 func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, resourceRef string) (*entities.RoleBinding, error) {
 	rb, err := s.rbRepo.FindOne(
 		ctx, repos.Filter{
@@ -63,7 +64,7 @@ func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, reso
 		return nil, errors.NewE(err)
 	}
 	if rb == nil {
-		return nil, errors.Newf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
+		return nil, ErrRoleBindingNotFound
 	}
 	return rb, nil
 }
@@ -121,45 +122,99 @@ func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, erro
 		return &iam.CanOut{Status: false}, nil
 	}
 
-	var hasAccountMemberRole bool
-
-	canFilter := repos.Filter{
-		"resource_ref": map[string]any{"$in": in.ResourceRefs},
-		"user_id":      in.UserId,
-	}
-
+	arb := make([]any, len(rb))
 	for i := range rb {
-		if rb[i] == t.RoleAccountMember {
-			hasAccountMemberRole = true
-
-			rr := make([]map[string]any, 0, len(in.ResourceRefs))
-
-			for i := range in.ResourceRefs {
-				accountName, _, _, err := t.ParseResourceRef(in.ResourceRefs[i])
-				if err != nil {
-					return nil, err
-				}
-
-				if strings.TrimSpace(accountName) == "" {
-					return nil, fmt.Errorf("accountName must be provided")
-				}
-
-				nf := s.rbRepo.MergeMatchFilters(repos.Filter{}, map[string]repos.MatchFilter{
-					"resource_ref": {
-						MatchType: repos.MatchTypeRegex,
-						Regex:     fn.New(t.NewResourceRef(accountName, "*", "*")),
-					},
-				})
-				rr = append(rr, map[string]any{"resource_ref": nf["resource_ref"]})
-			}
-
-			delete(canFilter, "resource_ref")
-			canFilter["$or"] = rr
-		}
+		arb = append(arb, rb[i])
 	}
 
-	rbs, err := s.rbRepo.Find(
-		ctx, repos.Query{Filter: canFilter},
+	accountName := ""
+	for i := range in.ResourceRefs {
+		acc, _, _, err := t.ParseResourceRef(in.ResourceRefs[i])
+		if err != nil {
+			return nil, err
+		}
+		accountName = acc
+	}
+
+	// var hasAccountMemberRole bool
+
+	// resourceFilter := repos.Filter{
+	// 	"resource_ref": map[string]any{"$in": in.ResourceRefs},
+	// 	"user_id":      in.UserId,
+	// }
+
+	// resourceFilter = s.rbRepo.MergeMatchFilters(resourceFilter, map[string]repos.MatchFilter{
+	// 	"role": {
+	// 		MatchType: repos.MatchTypeArray,
+	// 		Array:     arb,
+	// 	},
+	// })
+
+	accountLevelFilter := s.rbRepo.MergeMatchFilters(repos.Filter{}, map[string]repos.MatchFilter{
+		"user_id": {
+			MatchType: repos.MatchTypeExact,
+			Exact:     in.UserId,
+		},
+		"resource_ref": {
+			MatchType: repos.MatchTypeExact,
+			Exact:     fmt.Sprintf("%s/account/%s", accountName, accountName),
+		},
+		"role": {
+			MatchType: repos.MatchTypeArray,
+			Array:     []any{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+		},
+	})
+
+	// for i := range rb {
+	// 	if rb[i] == t.RoleAccountMember {
+	// 		hasAccountMemberRole = true
+	//
+	// 		rr := make([]map[string]any, 0, len(in.ResourceRefs))
+	//
+	// 		for i := range in.ResourceRefs {
+	// 			accountName, _, _, err := t.ParseResourceRef(in.ResourceRefs[i])
+	// 			if err != nil {
+	// 				return nil, err
+	// 			}
+	//
+	// 			if strings.TrimSpace(accountName) == "" {
+	// 				return nil, fmt.Errorf("accountName must be provided")
+	// 			}
+	//
+	// 			nf := s.rbRepo.MergeMatchFilters(repos.Filter{}, map[string]repos.MatchFilter{
+	// 				"resource_ref": {
+	// 					MatchType: repos.MatchTypeRegex,
+	// 					// FIXME: HERE
+	// 					Regex: fn.New(t.NewResourceRef(accountName, "*", "*")),
+	// 				},
+	// 			})
+	// 			rr = append(rr, map[string]any{
+	// 				"resource_ref": nf["resource_ref"],
+	// 			})
+	// 		}
+	//
+	// 		// FIXME: error HERE
+	// 		delete(canFilter, "resource_ref")
+	// 		canFilter["$or"] = rr
+	// 	}
+	// }
+
+	// accountMemberFilter := repos.Filter{
+	//   "resource_ref":
+	// }
+	//
+	// resourceFilter = s.rbRepo.MergeMatchFilters(resourceFilter, map[string]repos.MatchFilter{
+	// 	"role": {
+	// 		MatchType: repos.MatchTypeArray,
+	// 		Array:     []any{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	// 	},
+	// })
+
+	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"$and": []map[string]any{
+			accountLevelFilter,
+		},
+	}},
 	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find rolebindings for (resourceRefs=%s)", strings.Join(in.ResourceRefs, ","))
@@ -169,18 +224,22 @@ func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, erro
 		return nil, errors.Newf("no rolebinding found for (userId=%s, resourceRefs=%s)", in.UserId, strings.Join(in.ResourceRefs, ","))
 	}
 
-	if hasAccountMemberRole && len(rbs) > 0 {
+	if len(rbs) > 0 {
 		return &iam.CanOut{Status: true}, nil
 	}
 
-	for i := range rbs {
-		// 2nd loop, but very small length (always < #roles), so it's not exactly O(n^2), much like XO(n)
-		for _, role := range s.roleBindingMap[t.Action(in.Action)] {
-			if role == rbs[i].Role {
-				return &iam.CanOut{Status: true}, nil
-			}
-		}
-	}
+	// if hasAccountMemberRole && len(rbs) > 0 {
+	// 	return &iam.CanOut{Status: true}, nil
+	// }
+	//
+	// for i := range rbs {
+	// 	// 2nd loop, but very small length (always < #roles), so it's not exactly O(n^2), much like XO(n)
+	// 	for _, role := range s.roleBindingMap[t.Action(in.Action)] {
+	// 		if role == rbs[i].Role {
+	// 			return &iam.CanOut{Status: true}, nil
+	// 		}
+	// 	}
+	// }
 
 	return &iam.CanOut{Status: false}, nil
 }
@@ -236,6 +295,10 @@ func (s *GrpcService) RemoveMembership(ctx context.Context, in *iam.RemoveMember
 
 	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
 	if err != nil {
+		if errors.Is(err, ErrRoleBindingNotFound) {
+			s.logger.WithKV("userID", in.UserId, "resourceRef", in.ResourceRef).Infof("role binding might already have been deleted")
+			return &iam.RemoveMembershipOut{Result: true}, nil
+		}
 		return nil, errors.NewE(err)
 	}
 
