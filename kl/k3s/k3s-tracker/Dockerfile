@@ -3,6 +3,8 @@ FROM golang:1.22 as builder
 WORKDIR /app
 
 ENV CGO_ENABLED=0
+ARG TARGETARCH
+ENV GOARCH=$TARGETARCH
 
 COPY go.mod go.mod
 COPY go.sum go.sum

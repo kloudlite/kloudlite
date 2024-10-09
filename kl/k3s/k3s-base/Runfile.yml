@@ -2,53 +2,79 @@ tasks:
   build:
 
   pull:dns:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - docker pull ghcr.io/kloudlite/operator/networking/cmd/dns:v1.0.8-nightly
-      - docker image save ghcr.io/kloudlite/operator/networking/cmd/dns:v1.0.8-nightly -o ./images/dns.tar.gz
+      - docker pull ghcr.io/kloudlite/operator/networking/cmd/dns:${tag}
+      - docker image save ghcr.io/kloudlite/operator/networking/cmd/dns:${tag} -o ./images/dns.tar.gz
 
   pull:ip-manager:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - docker pull ghcr.io/kloudlite/operator/networking/cmd/ip-manager:v1.0.8-nightly
-      - docker image save ghcr.io/kloudlite/operator/networking/cmd/ip-manager:v1.0.8-nightly -o ./images/ip-manager.tar.gz
+      - docker pull ghcr.io/kloudlite/operator/networking/cmd/ip-manager:${tag}
+      - docker image save ghcr.io/kloudlite/operator/networking/cmd/ip-manager:${tag} -o ./images/ip-manager.tar.gz
 
   pull:logs-proxy:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - docker pull ghcr.io/kloudlite/operator/networking/cmd/logs-proxy:v1.0.8-nightly
-      - docker image save ghcr.io/kloudlite/operator/networking/cmd/logs-proxy:v1.0.8-nightly -o ./images/logs-proxy.tar.gz
+      - docker pull ghcr.io/kloudlite/operator/networking/cmd/logs-proxy:${tag}
+      - docker image save ghcr.io/kloudlite/operator/networking/cmd/logs-proxy:${tag} -o ./images/logs-proxy.tar.gz
 
   pull:webhook:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - docker pull ghcr.io/kloudlite/operator/networking/cmd/webhook:v1.0.8-nightly
-      - docker image save ghcr.io/kloudlite/operator/networking/cmd/webhook:v1.0.8-nightly -o ./images/webhook.tar.gz
+      - docker pull ghcr.io/kloudlite/operator/networking/cmd/webhook:${tag}
+      - docker image save ghcr.io/kloudlite/operator/networking/cmd/webhook:${tag} -o ./images/webhook.tar.gz
 
   pull:ip-binding-controller:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - docker pull ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller:v1.0.8-nightly
-      - docker image save ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller:v1.0.8-nightly -o ./images/ip-binding-controller.tar.gz
+      - docker pull ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller:${tag}
+      - docker image save ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller:${tag} -o ./images/ip-binding-controller.tar.gz
 
   pull:agent:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - docker pull ghcr.io/kloudlite/api/tenant-agent:v1.0.8-nightly
-      - docker image save ghcr.io/kloudlite/api/tenant-agent:v1.0.8-nightly -o ./images/kl-agent.tar.gz
+      - docker pull ghcr.io/kloudlite/api/tenant-agent:${tag}
+      - docker image save ghcr.io/kloudlite/api/tenant-agent:${tag} -o ./images/kl-agent.tar.gz
 
   pull:agent-operator:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - docker pull ghcr.io/kloudlite/operator/agent:v1.0.8-nightly
-      - docker image save ghcr.io/kloudlite/operator/agent:v1.0.8-nightly -o ./images/kl-agent-operator.tar.gz
+      - docker pull ghcr.io/kloudlite/operator/agent:${tag}
+      - docker image save ghcr.io/kloudlite/operator/agent:${tag} -o ./images/kl-agent-operator.tar.gz
 
   download:images:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
       - |+
         wget "https://github.com/k3s-io/k3s/releases/download/v1.31.1%2Bk3s1/k3s-airgap-images-amd64.tar" -O ./images/k3s-airgap-images-amd64.tars
-        run pull:dns pull:ip-manager pull:logs-proxy pull:webhook pull:ip-binding-controller pull:agent -p
+        run pull:dns pull:ip-manager pull:logs-proxy pull:webhook pull:ip-binding-controller pull:agent -p tag=${tag}
 
   container:build:
     cmd:
-      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=v1.0.0-nightly -t ghcr.io/kloudlite/kl/k3s:v1.0.0-nightly . --push
+      - run download:images tag=v1.0.8-nightly
+      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=v1.0.0-nightly -t ghcr.io/kloudlite/kl/k3s:v1.0.0-nightly .
 
   container:push:
     preconditions:
       - sh: '[[ -n "{{.tag}}" ]]'
         msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
+      - run download:images tag=${tag}
       - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=${tag} -t ghcr.io/kloudlite/kl/k3s:${tag} . --push

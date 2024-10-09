@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/cmd/connect"
 	"github.com/kloudlite/kl/domain/envclient"
+	"github.com/kloudlite/kl/k3s"
 	"time"
 
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -41,6 +42,12 @@ var Cmd = &cobra.Command{
 			return
 		}
 
+		k3sClient, err := k3s.NewClient()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		acc, err := fc.CurrentTeamName()
 		if err == nil {
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Team: ")), acc))
@@ -66,17 +73,24 @@ var Cmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		fn.Log("Cluster Name: ", text.Blue(config.ClusterName))
+		fn.Log("Name: ", text.Blue(config.ClusterName))
+
+		k3sStatus, _ := k3sClient.CheckK3sRunningLocally()
+		if k3sStatus {
+			fn.Log("Running: ", text.Green("true"))
+		} else {
+			fn.Log("Running ", text.Yellow("false"))
+		}
 
 		k3sTracker, err := fc.GetK3sTracker()
 		if err != nil {
-			fn.Log("Running: ", text.Yellow("false"))
+			fn.Log("Local Cluster: ", text.Yellow("not ready"))
 			return
 		}
 
 		err = getClusterK3sStatus(k3sTracker)
 		if err != nil {
-			fn.Log("Running: ", text.Yellow("false"))
+			fn.Log("Local Cluster: ", text.Yellow("not ready"))
 		}
 
 		if envclient.InsideBox() {
@@ -103,7 +117,6 @@ func getClusterK3sStatus(k3sTracker *fileclient.K3sTracker) error {
 	if time.Since(lastCheckedAt) > 3*time.Second {
 		return fn.Error(K3sServerNotReady)
 	}
-	fn.Log("Running: ", text.Green("true"))
 
 	if k3sTracker.Compute && k3sTracker.Gateway {
 		fn.Log("Local Cluster: ", text.Green("ready"))
@@ -111,12 +124,11 @@ func getClusterK3sStatus(k3sTracker *fileclient.K3sTracker) error {
 		fn.Log("Local Cluster: ", text.Yellow("Not ready"))
 	}
 
-	if envclient.InsideBox() {
-		if k3sTracker.WgConnection {
-			fn.Log("Edge Connection:", text.Green("online"))
-		} else {
-			fn.Log("Edge Connection:", text.Yellow("offline"))
-		}
+	if k3sTracker.WgConnection {
+		fn.Log("Edge Connection:", text.Green("online"))
+	} else {
+		fn.Log("Edge Connection:", text.Yellow("offline"))
 	}
+
 	return nil
 }

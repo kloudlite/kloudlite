@@ -37,6 +37,6 @@ func startK3sServer() error {
 	if err = k.CreateClustersTeams(currentTeam); err != nil {
 		return functions.NewE(err)
 	}
-	functions.Log("k3s server started")
+	functions.Log("k3s server started. It will usually take a minute to come online")
 	return nil
 }

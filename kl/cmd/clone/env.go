@@ -163,6 +163,10 @@ func selectCluster(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclie
 		clusters = append(clusters, cluster)
 	}
 
+	if len(clusters) == 0 {
+		return nil, fn.Error("there are no available cluster to use. You can attach your local k3s cluster using \"kl cluster up\"")
+	}
+
 	cluster, err := fzf.FindOne(
 		clusters,
 		func(clus apiclient.Cluster) string {
