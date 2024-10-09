@@ -594,8 +594,18 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 	}
 
 	d.logger.Info("applying yaml", "yaml", string(deploymentBytes))
-	if _, err := yc.ApplyYAML(ctx, deploymentBytes); err != nil {
-		return errors.NewE(err)
+	for i := 0; i < 5; i++ {
+		if _, err = yc.ApplyYAML(ctx, deploymentBytes); err != nil {
+			d.logger.Warn("syncing to kloudlite gateway device, failing with", "err", err, "retry.count", i, "retry.remaining", 5-i)
+			continue
+			// return errors.NewE(err)
+		}
+		err = nil
+		break
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -773,8 +783,18 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		return err
 	}
 
-	if err := d.k8sClient.ApplyYAML(ctx, deploymentBytes); err != nil {
-		return errors.NewE(err)
+	for i := 0; i < 5; i++ {
+		if err := d.k8sClient.ApplyYAML(ctx, deploymentBytes); err != nil {
+			d.logger.Warn("syncing to kloudlite platform device, failing with", "err", err, "retry.count", i, "retry.remaining", 5-i)
+			continue
+			// return errors.NewE(err)
+		}
+		err = nil
+		break
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil
