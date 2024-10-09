@@ -34,6 +34,7 @@ func StopK3sServer(cmd *cobra.Command) error {
 	crlist, err := cli.ContainerList(cmd.Context(), container.ListOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s=%s", k3s.CONT_MARK_KEY, "true")),
+			filters.Arg("label", fmt.Sprintf("%s=%s", "kl-k3s", "true")),
 		),
 		All: true,
 	})

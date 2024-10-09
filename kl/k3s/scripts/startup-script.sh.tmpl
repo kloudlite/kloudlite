@@ -37,6 +37,17 @@ EOF
 
 kubectl apply -f /tmp/kl-ns.yml
 
+cat > /tmp/kl-tracker-ns.yml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kl-tracker
+  labels:
+    kloudlite.io/gateway.enabled: "true"
+EOF
+
+kubectl apply -f /tmp/kl-tracker-ns.yml
+
 cat > /tmp/secrets.yml <<EOF
 apiVersion: v1
 kind: Secret
@@ -158,7 +169,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kl-tracker
-  namespace: kloudlite
+  namespace: kl-tracker
 
 ---
 
@@ -166,6 +177,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: kl-tracker-rb
+  namespace: kl-tracker
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: "ClusterRole"
@@ -173,7 +185,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kl-tracker
-    namespace: kloudlite
+    namespace: kl-tracker
 
 ---
 
@@ -181,7 +193,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kl-tracker
-  namespace: kloudlite
+  namespace: kl-tracker
 spec:
   replicas: 1
   selector:

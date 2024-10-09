@@ -14,9 +14,9 @@ while true; do
  echo "$(date +%T): exit code" >> /tmp/kl/ping.exit_code
  if [ $exit_code -eq 0 ]; then
   #echo "$(date +%T): online" > /tmp/kl/online.status
-  echo "online" >> /tmp/kl/online.status
+  echo "online" > /tmp/kl/online.status
  else
-  echo "offline" >> /tmp/kl/online.status
+  echo "offline" > /tmp/kl/online.status
  fi
  sleep 2
 done

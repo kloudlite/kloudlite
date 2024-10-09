@@ -12,7 +12,7 @@ type FileClient interface {
 	SetWGConfig(config string) error
 	CurrentTeamName() (string, error)
 	Logout() error
-	GetK3sTracker() (*k3sTracker, error)
+	GetK3sTracker() (*K3sTracker, error)
 	GetVpnTeamConfig(team string) (*TeamVpnConfig, error)
 	SetVpnTeamConfig(team string, config *TeamVpnConfig) error
 	GetClusterConfig(team string) (*TeamClusterConfig, error)
