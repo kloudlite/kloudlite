@@ -112,7 +112,7 @@ func main() {
 			slog.Error("failed to check deployment status", slog.Group("deployment", "namespace", GatewayNamespace, "name", GatewayDeployment), "err", err)
 		}
 
-		wgConnection := ChekcWireguardConnection()
+		wgConnection := CheckWireguardConnection()
 
 		b, err := json.Marshal(map[string]any{
 			"lastCheckedAt": start.Format(time.RFC3339),
@@ -141,7 +141,7 @@ func main() {
 	}
 }
 
-func ChekcWireguardConnection() bool {
+func CheckWireguardConnection() bool {
 	pinger, err := ping.NewPinger(KLDNS)
 	if err != nil {
 		return false
