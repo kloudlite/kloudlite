@@ -37,7 +37,12 @@ func main() {
 		}),
 
 		fx.Provide(func() (*env.Env, error) {
-			return env.LoadEnv()
+			e, err := env.LoadEnv()
+			if err != nil {
+				return nil, err
+			}
+			e.ShowGRPCLogs = debug
+			return e, nil
 		}),
 
 		framework.Module,

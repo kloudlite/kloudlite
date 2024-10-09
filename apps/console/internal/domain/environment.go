@@ -666,13 +666,17 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		return errors.NewE(err)
 	}
 
-	if err := d.environmentRepo.DeleteOne(
-		ctx,
-		repos.Filter{
-			fields.AccountName:  ctx.AccountName,
-			fields.MetadataName: env.Name,
-		},
-	); err != nil {
+	if err := d.environmentRepo.DeleteOne(ctx, repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: env.Name,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.resourceMappingRepo.DeleteMany(ctx, repos.Filter{
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
+		fc.EnvironmentName:                  env.Name,
+	}); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -701,16 +705,9 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		return d.resyncK8sResource(ctx, xenv.Name, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
-	uenv, err := d.environmentRepo.PatchById(
-		ctx,
-		xenv.Id,
-		common.PatchForSyncFromAgent(
-			&env,
-			recordVersion,
-			status,
-			common.PatchOpts{
-				MessageTimestamp: opts.MessageTimestamp,
-			}))
+	uenv, err := d.environmentRepo.PatchById(ctx, xenv.Id, common.PatchForSyncFromAgent(
+		&env, recordVersion, status, common.PatchOpts{MessageTimestamp: opts.MessageTimestamp}),
+	)
 	if err != nil {
 		return err
 	}
