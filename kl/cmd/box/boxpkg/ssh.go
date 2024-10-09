@@ -60,7 +60,7 @@ func (c *client) Ssh() error {
 		return fn.NewE(err)
 	}
 
-	if err := c.waithForSshReady(port, cont.ID); err != nil {
+	if err := c.waitForSshReady(port, cont.ID); err != nil {
 		return fn.NewE(err)
 	}
 

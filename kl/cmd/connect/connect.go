@@ -53,6 +53,7 @@ func startWg(cmd *cobra.Command) error {
 		if err := k3sClient.RestartWgProxyContainer(); err != nil {
 			return fn.NewE(err)
 		}
+		return nil
 	}
 
 	if err = fn.ExecNoOutput("wg-quick down kl-vpn 2> /dev/null | echo already down "); err != nil {

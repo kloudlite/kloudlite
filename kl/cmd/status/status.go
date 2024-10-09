@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/kl/cmd/connect"
 	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/k3s"
+	"os"
 	"time"
 
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -70,8 +71,13 @@ var Cmd = &cobra.Command{
 
 		config, err := fc.GetClusterConfig(acc)
 		if err != nil {
-			fn.PrintError(err)
-			return
+			if os.IsNotExist(err) {
+				fn.PrintError(fn.Error("kl file is not synced properly. please run \"kl init\" to re-initialized kl file"))
+				return
+			} else {
+				fn.PrintError(err)
+				return
+			}
 		}
 		fn.Log("Name: ", text.Blue(config.ClusterName))
 
@@ -85,12 +91,13 @@ var Cmd = &cobra.Command{
 		k3sTracker, err := fc.GetK3sTracker()
 		if err != nil {
 			fn.Log("Local Cluster: ", text.Yellow("not ready"))
-			return
-		}
-
-		err = getClusterK3sStatus(k3sTracker)
-		if err != nil {
-			fn.Log("Local Cluster: ", text.Yellow("not ready"))
+			fn.Log("Edge Connection:", text.Yellow("offline"))
+		} else {
+			err = getClusterK3sStatus(k3sTracker)
+			if err != nil {
+				fn.Log("Local Cluster: ", text.Yellow("not ready"))
+				fn.Log("Edge Connection:", text.Yellow("offline"))
+			}
 		}
 
 		if envclient.InsideBox() {
@@ -126,9 +133,9 @@ func getClusterK3sStatus(k3sTracker *fileclient.K3sTracker) error {
 
 	if k3sTracker.WgConnection {
 		fn.Log("Edge Connection:", text.Green("online"))
-	} else {
-		fn.Log("Edge Connection:", text.Yellow("offline"))
+		return nil
 	}
+	fn.Log("Edge Connection:", text.Yellow("offline"))
 
 	return nil
 }
