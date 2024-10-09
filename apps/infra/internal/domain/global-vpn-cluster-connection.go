@@ -369,6 +369,18 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 		return nil, err
 	}
 
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, gvpnConn.DispatchAddr, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: gvpnConn.Spec.TargetNamespace,
+		},
+	}, gvpn.RecordVersion); err != nil {
+		return nil, err
+	}
+
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, gvpnConn.DispatchAddr, &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
