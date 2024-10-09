@@ -32,55 +32,52 @@ permissions:
   packages: write
 
 jobs:
-  # setup:
-  #   - uses: dorny/paths-filter@v3
-  #     id: changes
-  #     with:
-  #       filters: |
-  #         api:
-  #           - 'api/**'
-  #         operator:
-  #           - 'operator/**'
-  #         infrastructure-as-code:
-  #           - 'infrastructure-as-code/**'
-
-
   web:
     uses: ./.github/workflows/web.yml
+    secrets: inherit
 
   kl:
     uses: ./.github/workflows/kl.yml
+    secrets: inherit
 
   api:
     uses: ./.github/workflows/api.yml
+    secrets: inherit
 
   operator:
     uses: ./.github/workflows/operator.yml
+    secrets: inherit
 
   infrastructure-as-code:
-    uses: ./.github/workflows/iac.yml
+    uses: ./.github/workflows/infrastructure-as-code.yml
+    secrets: inherit
+    with:
+      working_directory: ./infrastructure-as-code
+      image_name_prefix: ghcr.io/${{ github.repository }}/infrastructure-as-code
 
   autoscaler:
     uses: ./.github/workflows/autoscaler.yml
+    secrets: inherit
 
   kubelet-metrics-reexporter:
     uses: ./.github/workflows/kubelet-metrics-reexporter.yml
+    secrets: inherit
 
-  k3s:
-    runs-on: ubuntu-latest
-    name: supported k3s binary
-    env:
-      K3S_VERSION: "v1.28.6+k3s2"
-    steps:
-      - name: k3s binary download
-        run: |+
-          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s" > ./k3s
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: k3s
-          path: ./k3s
+  # k3s:
+  #   runs-on: ubuntu-latest
+  #   name: supported k3s binary
+  #   env:
+  #     K3S_VERSION: "v1.28.6+k3s2"
+  #   steps:
+  #     - name: k3s binary download
+  #       run: |+
+  #         curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s" > ./k3s
+  #
+  #     - name: Upload Build Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: k3s
+  #         path: ./k3s
 
   github_release:
     needs:

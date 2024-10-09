@@ -1,0 +1,140 @@
+name: infrastructure-as-code
+
+on:
+  workflow_call:
+    inputs:
+      working_directory: 
+        description: "cd into this directory"
+        required: true
+        type: string
+
+      image_name_prefix:
+        description: "image name prefix to use for container images"
+        required: true
+        type: string
+
+    secrets:
+      # GITHUB_TOKEN:
+      #   required: true
+      CACHIX_AUTH_TOKEN:
+        required: true
+      CACHIX_CACHE_NAME:
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-images:
+    strategy:
+      fail-fast: true
+      matrix:
+        name:
+          - iac-job
+          - aws-spot-node-terminator
+          - gcp-spot-node-terminator
+
+    runs-on: ubuntu-latest
+    name: build container images 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: setup env (on workflow_call)
+        shell: bash
+        run: |+
+          echo "WORKING_DIR=${{ inputs.working_directory }}" | tee -a $GITHUB_ENV | tee -a $GITHUB_OUTPUT
+          echo "IMAGE_NAME_PREFIX=${{ inputs.image_name_prefix }}" | tee -a $GITHUB_ENV | tee -a $GITHUB_OUTPUT
+
+      - name: setup nix (with cachix)
+        uses: kloudlite/actions/setup-nix-cachix@v1
+        with:
+          flake_lock: ${{ env.WORKING_DIR }}/flake.lock
+          nix_develop_arguments: ${{ env.WORKING_DIR }}/#default
+
+          cachix_cache_name: ${{ secrets.CACHIX_CACHE_NAME }}
+          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: setup docker
+        uses: kloudlite/actions/setup-docker@v1
+        with:
+          docker_registry: "ghcr.io"
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: generate image tag
+        uses: kloudlite/actions/generate-image-tag@v1
+
+      - name: builds iac job image
+        if: ${{ matrix.name == 'iac-job' }}
+        working-directory: ${{ env.WORKING_DIR }}
+        shell: bash
+        run: |
+          task local:build:iac-job Image="$IMAGE_NAME_PREFIX/iac-job:${IMAGE_TAG}"
+
+      - name: builds gcp-spot-node-terminator
+        if: ${{ matrix.name == 'gcp-spot-node-terminator' }}
+        working-directory: ${{ env.WORKING_DIR }}/cmd/gcp-spot-node-terminator
+        shell: bash
+        run: |
+          task container:build-and-push image="$IMAGE_NAME_PREFIX/cmd/gcp-spot-node-terminator:$IMAGE_TAG" push=true dockerArgs=""
+
+      - name: builds aws spot node terminator
+        if: ${{ matrix.name == 'aws-spot-node-terminator'}}
+        working-directory: ${{env.WORKING_DIR}}/cmd/aws-spot-node-terminator
+        shell: bash
+        run: |
+          task container:build-and-push image="$IMAGE_NAME_PREFIX/cmd/aws-spot-node-terminator:$IMAGE_TAG" push=true dockerArgs=""
+
+  build-k3s-runner-and-binary:
+    runs-on: ubuntu-latest
+    env:
+      k3s_version: "v1.30.5+k3s1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: setup env (on workflow_call)
+        shell: bash
+        run: |+
+          echo "WORKING_DIR=${{ inputs.working_directory }}" | tee -a $GITHUB_ENV | tee -a $GITHUB_OUTPUT
+          echo "IMAGE_NAME_PREFIX=${{ inputs.image_name_prefix }}" | tee -a $GITHUB_ENV | tee -a $GITHUB_OUTPUT
+
+      - name: setup nix (with cachix)
+        uses: kloudlite/actions/setup-nix-cachix@v1
+        with:
+          flake_lock: ${{ env.WORKING_DIR }}/flake.lock
+          nix_develop_arguments: ${{ env.WORKING_DIR }}/#default
+
+          cachix_cache_name: ${{ secrets.CACHIX_CACHE_NAME }}
+          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: build k3s runner
+        shell: bash
+        working-directory: ${{env.WORKING_DIR}}/cmd/k3s-runner
+        run: |+
+          GOARCH=amd64 task build
+          GOARCH=arm64 task build
+
+      - name: download supported k3s binary
+        shell: bash
+        working-directory: ${{ env.WORKING_DIR }}/cmd/k3s-runner
+        run: |+
+          echo "$PWD"
+          mkdir -p ./bin
+          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$k3s_version/k3s" > ./bin/k3s-amd64
+          cp ./bin/k3s-amd64 ./bin/k3s
+          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$k3s_version/k3s-arm64" > ./bin/k3s-arm64
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k3s
+          path: ${{ env.WORKING_DIR }}/cmd/k3s-runner/bin/*
