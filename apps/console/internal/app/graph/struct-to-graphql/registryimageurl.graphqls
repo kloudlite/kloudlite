@@ -1,10 +1,16 @@
 type RegistryImageURL @shareable {
-  scriptUrl: String!
-  url: String!
+  klWebhookAuthToken: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: [String!]!
+  url: [String!]!
+  urlExample: [String!]!
 }
 
 input RegistryImageURLIn {
-  scriptUrl: String!
-  url: String!
+  klWebhookAuthToken: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: [String!]!
+  url: [String!]!
+  urlExample: [String!]!
 }
 

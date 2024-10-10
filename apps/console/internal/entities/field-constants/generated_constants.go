@@ -220,8 +220,11 @@ const (
 
 // constant vars generated for struct RegistryImageURL
 const (
-	RegistryImageURLScriptUrl = "scriptUrl"
-	RegistryImageURLUrl       = "url"
+	RegistryImageURLKlWebhookAuthToken = "klWebhookAuthToken"
+	RegistryImageURLScriptUrl          = "scriptUrl"
+	RegistryImageURLScriptUrlExample   = "scriptUrlExample"
+	RegistryImageURLUrl                = "url"
+	RegistryImageURLUrlExample         = "urlExample"
 )
 
 // constant vars generated for struct ResourceMapping
