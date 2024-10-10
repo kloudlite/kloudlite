@@ -887,8 +887,11 @@ type ComplexityRoot struct {
 	}
 
 	RegistryImageURL struct {
-		ScriptURL func(childComplexity int) int
-		URL       func(childComplexity int) int
+		KlWebhookAuthToken func(childComplexity int) int
+		ScriptURL          func(childComplexity int) int
+		ScriptURLExample   func(childComplexity int) int
+		URL                func(childComplexity int) int
+		URLExample         func(childComplexity int) int
 	}
 
 	Router struct {
@@ -5289,6 +5292,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RegistryImagePaginatedRecords.TotalCount(childComplexity), true
 
+	case "RegistryImageURL.klWebhookAuthToken":
+		if e.complexity.RegistryImageURL.KlWebhookAuthToken == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageURL.KlWebhookAuthToken(childComplexity), true
+
 	case "RegistryImageURL.scriptUrl":
 		if e.complexity.RegistryImageURL.ScriptURL == nil {
 			break
@@ -5296,12 +5306,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RegistryImageURL.ScriptURL(childComplexity), true
 
+	case "RegistryImageURL.scriptUrlExample":
+		if e.complexity.RegistryImageURL.ScriptURLExample == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageURL.ScriptURLExample(childComplexity), true
+
 	case "RegistryImageURL.url":
 		if e.complexity.RegistryImageURL.URL == nil {
 			break
 		}
 
 		return e.complexity.RegistryImageURL.URL(childComplexity), true
+
+	case "RegistryImageURL.urlExample":
+		if e.complexity.RegistryImageURL.URLExample == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageURL.URLExample(childComplexity), true
 
 	case "Router.apiVersion":
 		if e.complexity.Router.APIVersion == nil {
@@ -6020,7 +6044,7 @@ type Query {
 }
 
 type Mutation {
-  core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
+  	core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -6359,9 +6383,9 @@ type Github__com___kloudlite___operator___apis___crds___v1__Https @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable {
-  enabled: Boolean!
+  enabled: Boolean
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
-  toDevice: String!
+  toDevice: String
   toIPAddr: String
 }
 
@@ -6694,9 +6718,9 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
-  enabled: Boolean!
+  enabled: Boolean
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
-  toDevice: String!
+  toDevice: String
   toIPAddr: String
 }
 
@@ -7361,13 +7385,19 @@ input RegistryImageCredentialsIn {
 
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/registryimageurl.graphqls", Input: `type RegistryImageURL @shareable {
-  scriptUrl: String!
-  url: String!
+  klWebhookAuthToken: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: [String!]!
+  url: [String!]!
+  urlExample: [String!]!
 }
 
 input RegistryImageURLIn {
-  scriptUrl: String!
-  url: String!
+  klWebhookAuthToken: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: [String!]!
+  url: [String!]!
+  urlExample: [String!]!
 }
 
 `, BuiltIn: false},
@@ -7507,7 +7537,7 @@ input SecretKeyValueRefIn {
 	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
 	directive @override(from: String!, label: String) on FIELD_DEFINITION
-	directive @policy(policies: [[federation__Policy!]!]!) on 
+	directive @policy(policies: [[federation__Policy!]!]!) on
 	  | FIELD_DEFINITION
 	  | OBJECT
 	  | INTERFACE
@@ -7515,7 +7545,7 @@ input SecretKeyValueRefIn {
 	  | ENUM
 	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
-	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
+	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on
 	  | FIELD_DEFINITION
 	  | OBJECT
 	  | INTERFACE
@@ -7544,8 +7574,7 @@ union _Entity = Build
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
-		findBuildByID(id: ID!,): Build!
-
+	findBuildByID(id: ID!,): Build!
 }
 
 type _Service {
@@ -7567,1894 +7596,4679 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Entity_findBuildByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 repos.ID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Entity_findBuildByID_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["id"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Entity_findBuildByID_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (repos.ID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal repos.ID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, tmp)
+	}
+
+	var zeroVal repos.ID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_cloneEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_cloneEnvironment_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["sourceEnvName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceEnvName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_cloneEnvironment_argsSourceEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["sourceEnvName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["destinationEnvName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationEnvName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Mutation_core_cloneEnvironment_argsDestinationEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["destinationEnvName"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["displayName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Mutation_core_cloneEnvironment_argsDisplayName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["displayName"] = arg3
-	var arg4 v1.EnvironmentRoutingMode
-	if tmp, ok := rawArgs["environmentRoutingMode"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environmentRoutingMode"))
-		arg4, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg4, err := ec.field_Mutation_core_cloneEnvironment_argsEnvironmentRoutingMode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["environmentRoutingMode"] = arg4
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_cloneEnvironment_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_cloneEnvironment_argsSourceEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["sourceEnvName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceEnvName"))
+	if tmp, ok := rawArgs["sourceEnvName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_cloneEnvironment_argsDestinationEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["destinationEnvName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationEnvName"))
+	if tmp, ok := rawArgs["destinationEnvName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_cloneEnvironment_argsDisplayName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["displayName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+	if tmp, ok := rawArgs["displayName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_cloneEnvironment_argsEnvironmentRoutingMode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (v1.EnvironmentRoutingMode, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["environmentRoutingMode"]
+	if !ok {
+		var zeroVal v1.EnvironmentRoutingMode
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("environmentRoutingMode"))
+	if tmp, ok := rawArgs["environmentRoutingMode"]; ok {
+		return ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, tmp)
+	}
+
+	var zeroVal v1.EnvironmentRoutingMode
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.App
-	if tmp, ok := rawArgs["app"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg1, err = ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_createApp_argsApp(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["app"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createApp_argsApp(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.App, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["app"]
+	if !ok {
+		var zeroVal entities.App
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
+	if tmp, ok := rawArgs["app"]; ok {
+		return ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
+	}
+
+	var zeroVal entities.App
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createConfig_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.Config
-	if tmp, ok := rawArgs["config"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-		arg1, err = ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_createConfig_argsConfig(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["config"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createConfig_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createConfig_argsConfig(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Config, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["config"]
+	if !ok {
+		var zeroVal entities.Config
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+	if tmp, ok := rawArgs["config"]; ok {
+		return ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
+	}
+
+	var zeroVal entities.Config
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.Environment
-	if tmp, ok := rawArgs["env"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
-		arg0, err = ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createEnvironment_argsEnv(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["env"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createEnvironment_argsEnv(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Environment, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["env"]
+	if !ok {
+		var zeroVal entities.Environment
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
+	if tmp, ok := rawArgs["env"]; ok {
+		return ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
+	}
+
+	var zeroVal entities.Environment
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createExternalApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createExternalApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.ExternalApp
-	if tmp, ok := rawArgs["externalApp"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalApp"))
-		arg1, err = ec.unmarshalNExternalAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐExternalApp(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_createExternalApp_argsExternalApp(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["externalApp"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createExternalApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createExternalApp_argsExternalApp(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ExternalApp, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["externalApp"]
+	if !ok {
+		var zeroVal entities.ExternalApp
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("externalApp"))
+	if tmp, ok := rawArgs["externalApp"]; ok {
+		return ec.unmarshalNExternalAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐExternalApp(ctx, tmp)
+	}
+
+	var zeroVal entities.ExternalApp
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.ImagePullSecret
-	if tmp, ok := rawArgs["pullSecret"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
-		arg0, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createImagePullSecret_argsPullSecret(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pullSecret"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createImagePullSecret_argsPullSecret(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ImagePullSecret, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pullSecret"]
+	if !ok {
+		var zeroVal entities.ImagePullSecret
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
+	if tmp, ok := rawArgs["pullSecret"]; ok {
+		return ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
+	}
+
+	var zeroVal entities.ImagePullSecret
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createManagedResource_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg0
-	var arg1 entities.ManagedResource
-	if tmp, ok := rawArgs["mres"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
-		arg1, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_createManagedResource_argsMres(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["mres"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createManagedResource_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createManagedResource_argsMres(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ManagedResource, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["mres"]
+	if !ok {
+		var zeroVal entities.ManagedResource
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
+	if tmp, ok := rawArgs["mres"]; ok {
+		return ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
+	}
+
+	var zeroVal entities.ManagedResource
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createRouter_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createRouter_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.Router
-	if tmp, ok := rawArgs["router"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
-		arg1, err = ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_createRouter_argsRouter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["router"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createRouter_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createRouter_argsRouter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Router, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["router"]
+	if !ok {
+		var zeroVal entities.Router
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
+	if tmp, ok := rawArgs["router"]; ok {
+		return ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
+	}
+
+	var zeroVal entities.Router
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_createSecret_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.Secret
-	if tmp, ok := rawArgs["secret"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
-		arg1, err = ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_createSecret_argsSecret(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["secret"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createSecret_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createSecret_argsSecret(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Secret, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["secret"]
+	if !ok {
+		var zeroVal entities.Secret
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+	if tmp, ok := rawArgs["secret"]; ok {
+		return ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
+	}
+
+	var zeroVal entities.Secret
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["appName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_deleteApp_argsAppName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["appName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteApp_argsAppName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["appName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
+	if tmp, ok := rawArgs["appName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteConfig_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["configName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_deleteConfig_argsConfigName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["configName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteConfig_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteConfig_argsConfigName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["configName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("configName"))
+	if tmp, ok := rawArgs["configName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteEnvironment_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteEnvironment_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteExternalApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteExternalApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["externalAppName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalAppName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_deleteExternalApp_argsExternalAppName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["externalAppName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteExternalApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteExternalApp_argsExternalAppName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["externalAppName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("externalAppName"))
+	if tmp, ok := rawArgs["externalAppName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteImagePullSecret_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteImagePullSecret_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteImportedManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteImportedManagedResource_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["importName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("importName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_deleteImportedManagedResource_argsImportName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["importName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteImportedManagedResource_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteImportedManagedResource_argsImportName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["importName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("importName"))
+	if tmp, ok := rawArgs["importName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteManagedResource_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["mresName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_deleteManagedResource_argsMresName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["mresName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteManagedResource_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteManagedResource_argsMresName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["mresName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
+	if tmp, ok := rawArgs["mresName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteRegistryImage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["image"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteRegistryImage_argsImage(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["image"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteRegistryImage_argsImage(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["image"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+	if tmp, ok := rawArgs["image"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteRouter_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteRouter_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["routerName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routerName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_deleteRouter_argsRouterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["routerName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteRouter_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteRouter_argsRouterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["routerName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("routerName"))
+	if tmp, ok := rawArgs["routerName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_deleteSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_deleteSecret_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["secretName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_deleteSecret_argsSecretName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["secretName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteSecret_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteSecret_argsSecretName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["secretName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
+	if tmp, ok := rawArgs["secretName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_importManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_importManagedResource_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_importManagedResource_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["mresName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Mutation_core_importManagedResource_argsMresName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["mresName"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["importName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("importName"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Mutation_core_importManagedResource_argsImportName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["importName"] = arg3
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_importManagedResource_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_importManagedResource_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_importManagedResource_argsMresName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["mresName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
+	if tmp, ok := rawArgs["mresName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_importManagedResource_argsImportName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["importName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("importName"))
+	if tmp, ok := rawArgs["importName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_interceptAppOnLocalCluster_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["appname"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appname"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_interceptAppOnLocalCluster_argsAppname(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["appname"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Mutation_core_interceptAppOnLocalCluster_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["ipAddr"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ipAddr"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Mutation_core_interceptAppOnLocalCluster_argsIPAddr(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["ipAddr"] = arg3
-	var arg4 bool
-	if tmp, ok := rawArgs["intercept"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
-		arg4, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg4, err := ec.field_Mutation_core_interceptAppOnLocalCluster_argsIntercept(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["intercept"] = arg4
-	var arg5 []*v1.AppInterceptPortMappings
-	if tmp, ok := rawArgs["portMappings"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
-		arg5, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg5, err := ec.field_Mutation_core_interceptAppOnLocalCluster_argsPortMappings(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["portMappings"] = arg5
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_argsAppname(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["appname"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("appname"))
+	if tmp, ok := rawArgs["appname"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_argsIPAddr(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["ipAddr"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("ipAddr"))
+	if tmp, ok := rawArgs["ipAddr"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_argsIntercept(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["intercept"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
+	if tmp, ok := rawArgs["intercept"]; ok {
+		return ec.unmarshalNBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptAppOnLocalCluster_argsPortMappings(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*v1.AppInterceptPortMappings, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["portMappings"]
+	if !ok {
+		var zeroVal []*v1.AppInterceptPortMappings
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
+	if tmp, ok := rawArgs["portMappings"]; ok {
+		return ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*v1.AppInterceptPortMappings
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_interceptApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_interceptApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["appname"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appname"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_interceptApp_argsAppname(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["appname"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Mutation_core_interceptApp_argsDeviceName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["deviceName"] = arg2
-	var arg3 bool
-	if tmp, ok := rawArgs["intercept"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
-		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Mutation_core_interceptApp_argsIntercept(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["intercept"] = arg3
-	var arg4 []*v1.AppInterceptPortMappings
-	if tmp, ok := rawArgs["portMappings"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
-		arg4, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg4, err := ec.field_Mutation_core_interceptApp_argsPortMappings(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["portMappings"] = arg4
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_interceptApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptApp_argsAppname(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["appname"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("appname"))
+	if tmp, ok := rawArgs["appname"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptApp_argsDeviceName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["deviceName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptApp_argsIntercept(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["intercept"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
+	if tmp, ok := rawArgs["intercept"]; ok {
+		return ec.unmarshalNBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptApp_argsPortMappings(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*v1.AppInterceptPortMappings, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["portMappings"]
+	if !ok {
+		var zeroVal []*v1.AppInterceptPortMappings
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
+	if tmp, ok := rawArgs["portMappings"]; ok {
+		return ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*v1.AppInterceptPortMappings
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_interceptExternalApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_interceptExternalApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["externalAppName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalAppName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_interceptExternalApp_argsExternalAppName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["externalAppName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Mutation_core_interceptExternalApp_argsDeviceName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["deviceName"] = arg2
-	var arg3 bool
-	if tmp, ok := rawArgs["intercept"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
-		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Mutation_core_interceptExternalApp_argsIntercept(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["intercept"] = arg3
-	var arg4 []*v1.AppInterceptPortMappings
-	if tmp, ok := rawArgs["portMappings"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
-		arg4, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg4, err := ec.field_Mutation_core_interceptExternalApp_argsPortMappings(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["portMappings"] = arg4
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_interceptExternalApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptExternalApp_argsExternalAppName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["externalAppName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("externalAppName"))
+	if tmp, ok := rawArgs["externalAppName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptExternalApp_argsDeviceName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["deviceName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptExternalApp_argsIntercept(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["intercept"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
+	if tmp, ok := rawArgs["intercept"]; ok {
+		return ec.unmarshalNBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_interceptExternalApp_argsPortMappings(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*v1.AppInterceptPortMappings, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["portMappings"]
+	if !ok {
+		var zeroVal []*v1.AppInterceptPortMappings
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
+	if tmp, ok := rawArgs["portMappings"]; ok {
+		return ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*v1.AppInterceptPortMappings
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_removeDeviceIntercepts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_removeDeviceIntercepts_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_removeDeviceIntercepts_argsDeviceName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["deviceName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_removeDeviceIntercepts_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_removeDeviceIntercepts_argsDeviceName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["deviceName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.App
-	if tmp, ok := rawArgs["app"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg1, err = ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_updateApp_argsApp(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["app"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateApp_argsApp(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.App, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["app"]
+	if !ok {
+		var zeroVal entities.App
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
+	if tmp, ok := rawArgs["app"]; ok {
+		return ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
+	}
+
+	var zeroVal entities.App
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateConfig_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.Config
-	if tmp, ok := rawArgs["config"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-		arg1, err = ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_updateConfig_argsConfig(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["config"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateConfig_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateConfig_argsConfig(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Config, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["config"]
+	if !ok {
+		var zeroVal entities.Config
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+	if tmp, ok := rawArgs["config"]; ok {
+		return ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
+	}
+
+	var zeroVal entities.Config
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.Environment
-	if tmp, ok := rawArgs["env"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
-		arg0, err = ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateEnvironment_argsEnv(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["env"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateEnvironment_argsEnv(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Environment, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["env"]
+	if !ok {
+		var zeroVal entities.Environment
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
+	if tmp, ok := rawArgs["env"]; ok {
+		return ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
+	}
+
+	var zeroVal entities.Environment
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateExternalApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateExternalApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.ExternalApp
-	if tmp, ok := rawArgs["externalApp"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalApp"))
-		arg1, err = ec.unmarshalNExternalAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐExternalApp(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_updateExternalApp_argsExternalApp(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["externalApp"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateExternalApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateExternalApp_argsExternalApp(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ExternalApp, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["externalApp"]
+	if !ok {
+		var zeroVal entities.ExternalApp
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("externalApp"))
+	if tmp, ok := rawArgs["externalApp"]; ok {
+		return ec.unmarshalNExternalAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐExternalApp(ctx, tmp)
+	}
+
+	var zeroVal entities.ExternalApp
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.ImagePullSecret
-	if tmp, ok := rawArgs["pullSecret"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
-		arg0, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateImagePullSecret_argsPullSecret(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pullSecret"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateImagePullSecret_argsPullSecret(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ImagePullSecret, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pullSecret"]
+	if !ok {
+		var zeroVal entities.ImagePullSecret
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
+	if tmp, ok := rawArgs["pullSecret"]; ok {
+		return ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
+	}
+
+	var zeroVal entities.ImagePullSecret
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateManagedResource_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg0
-	var arg1 entities.ManagedResource
-	if tmp, ok := rawArgs["mres"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
-		arg1, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_updateManagedResource_argsMres(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["mres"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateManagedResource_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateManagedResource_argsMres(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ManagedResource, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["mres"]
+	if !ok {
+		var zeroVal entities.ManagedResource
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
+	if tmp, ok := rawArgs["mres"]; ok {
+		return ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
+	}
+
+	var zeroVal entities.ManagedResource
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateRouter_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateRouter_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.Router
-	if tmp, ok := rawArgs["router"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
-		arg1, err = ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_updateRouter_argsRouter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["router"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateRouter_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateRouter_argsRouter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Router, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["router"]
+	if !ok {
+		var zeroVal entities.Router
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
+	if tmp, ok := rawArgs["router"]; ok {
+		return ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
+	}
+
+	var zeroVal entities.Router
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_core_updateSecret_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 entities.Secret
-	if tmp, ok := rawArgs["secret"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
-		arg1, err = ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_core_updateSecret_argsSecret(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["secret"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateSecret_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateSecret_argsSecret(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.Secret, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["secret"]
+	if !ok {
+		var zeroVal entities.Secret
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+	if tmp, ok := rawArgs["secret"]; ok {
+		return ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
+	}
+
+	var zeroVal entities.Secret
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_cloneClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_cloneClusterManagedService_argsClusterName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["sourceMsvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceMsvcName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_infra_cloneClusterManagedService_argsSourceMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["sourceMsvcName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["destinationMsvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationMsvcName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Mutation_infra_cloneClusterManagedService_argsDestinationMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["destinationMsvcName"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["displayName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Mutation_infra_cloneClusterManagedService_argsDisplayName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["displayName"] = arg3
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_cloneClusterManagedService_argsClusterName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["clusterName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_cloneClusterManagedService_argsSourceMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["sourceMsvcName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceMsvcName"))
+	if tmp, ok := rawArgs["sourceMsvcName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_cloneClusterManagedService_argsDestinationMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["destinationMsvcName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationMsvcName"))
+	if tmp, ok := rawArgs["destinationMsvcName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_cloneClusterManagedService_argsDisplayName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["displayName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+	if tmp, ok := rawArgs["displayName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_createClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.ClusterManagedService
-	if tmp, ok := rawArgs["service"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service"))
-		arg0, err = ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_createClusterManagedService_argsService(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["service"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_createClusterManagedService_argsService(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ClusterManagedService, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["service"]
+	if !ok {
+		var zeroVal entities.ClusterManagedService
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("service"))
+	if tmp, ok := rawArgs["service"]; ok {
+		return ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
+	}
+
+	var zeroVal entities.ClusterManagedService
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_deleteClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_deleteClusterManagedService_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_deleteClusterManagedService_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_infra_updateClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.ClusterManagedService
-	if tmp, ok := rawArgs["service"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service"))
-		arg0, err = ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_infra_updateClusterManagedService_argsService(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["service"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_infra_updateClusterManagedService_argsService(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ClusterManagedService, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["service"]
+	if !ok {
+		var zeroVal entities.ClusterManagedService
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("service"))
+	if tmp, ok := rawArgs["service"]; ok {
+		return ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
+	}
+
+	var zeroVal entities.ClusterManagedService
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query___type_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query___type_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []map[string]interface{}
-	if tmp, ok := rawArgs["representations"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("representations"))
-		arg0, err = ec.unmarshalN_Any2ᚕmapᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query__entities_argsRepresentations(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["representations"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query__entities_argsRepresentations(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]map[string]interface{}, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["representations"]
+	if !ok {
+		var zeroVal []map[string]interface{}
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("representations"))
+	if tmp, ok := rawArgs["representations"]; ok {
+		return ec.unmarshalN_Any2ᚕmapᚄ(ctx, tmp)
+	}
+
+	var zeroVal []map[string]interface{}
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_checkNameAvailability_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_checkNameAvailability_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_checkNameAvailability_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg1
-	var arg2 entities.ResourceType
-	if tmp, ok := rawArgs["resType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resType"))
-		arg2, err = ec.unmarshalNConsoleResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐResourceType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_checkNameAvailability_argsResType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["resType"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Query_core_checkNameAvailability_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg3
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_checkNameAvailability_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_checkNameAvailability_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_checkNameAvailability_argsResType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.ResourceType, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["resType"]
+	if !ok {
+		var zeroVal entities.ResourceType
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("resType"))
+	if tmp, ok := rawArgs["resType"]; ok {
+		return ec.unmarshalNConsoleResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐResourceType(ctx, tmp)
+	}
+
+	var zeroVal entities.ResourceType
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_checkNameAvailability_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getApp_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getApp_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getConfigValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getConfigValues_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 []*domain.ConfigKeyRef
-	if tmp, ok := rawArgs["queries"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("queries"))
-		arg1, err = ec.unmarshalOConfigKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐConfigKeyRef(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getConfigValues_argsQueries(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["queries"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getConfigValues_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getConfigValues_argsQueries(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*domain.ConfigKeyRef, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["queries"]
+	if !ok {
+		var zeroVal []*domain.ConfigKeyRef
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("queries"))
+	if tmp, ok := rawArgs["queries"]; ok {
+		return ec.unmarshalOConfigKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐConfigKeyRef(ctx, tmp)
+	}
+
+	var zeroVal []*domain.ConfigKeyRef
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getConfig_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getConfig_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getConfig_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getConfig_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getEnvironment_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getEnvironment_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getExternalApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getExternalApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getExternalApp_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getExternalApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getExternalApp_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getImagePullSecret_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getImagePullSecret_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getManagedResouceOutputKeyValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getManagedResouceOutputKeyValues_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getManagedResouceOutputKeyValues_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg1
-	var arg2 []*domain.ManagedResourceKeyRef
-	if tmp, ok := rawArgs["keyrefs"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyrefs"))
-		arg2, err = ec.unmarshalOManagedResourceKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐManagedResourceKeyRef(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_getManagedResouceOutputKeyValues_argsKeyrefs(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["keyrefs"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getManagedResouceOutputKeyValues_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getManagedResouceOutputKeyValues_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getManagedResouceOutputKeyValues_argsKeyrefs(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*domain.ManagedResourceKeyRef, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["keyrefs"]
+	if !ok {
+		var zeroVal []*domain.ManagedResourceKeyRef
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("keyrefs"))
+	if tmp, ok := rawArgs["keyrefs"]; ok {
+		return ec.unmarshalOManagedResourceKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐManagedResourceKeyRef(ctx, tmp)
+	}
+
+	var zeroVal []*domain.ManagedResourceKeyRef
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getManagedResouceOutputKeys_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getManagedResouceOutputKeys_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getManagedResouceOutputKeys_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_getManagedResouceOutputKeys_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getManagedResouceOutputKeys_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getManagedResouceOutputKeys_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getManagedResouceOutputKeys_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getManagedResource_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getManagedResource_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_getManagedResource_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getManagedResource_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getManagedResource_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getManagedResource_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getRegistryImage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["image"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getRegistryImage_argsImage(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["image"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getRegistryImage_argsImage(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["image"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+	if tmp, ok := rawArgs["image"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getRouter_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getRouter_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getRouter_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getRouter_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getRouter_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getSecretValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getSecretValues_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 []*domain.SecretKeyRef
-	if tmp, ok := rawArgs["queries"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("queries"))
-		arg1, err = ec.unmarshalOSecretKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐSecretKeyRefᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getSecretValues_argsQueries(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["queries"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getSecretValues_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getSecretValues_argsQueries(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*domain.SecretKeyRef, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["queries"]
+	if !ok {
+		var zeroVal []*domain.SecretKeyRef
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("queries"))
+	if tmp, ok := rawArgs["queries"]; ok {
+		return ec.unmarshalOSecretKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐSecretKeyRefᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*domain.SecretKeyRef
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_getSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_getSecret_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_getSecret_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_getSecret_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getSecret_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listApps_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listApps_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 *model.SearchApps
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchApps2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchApps(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listApps_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_listApps_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listApps_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listApps_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchApps, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchApps
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchApps2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchApps(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchApps
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listApps_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listConfigs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listConfigs_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 *model.SearchConfigs
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchConfigs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchConfigs(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listConfigs_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_listConfigs_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listConfigs_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listConfigs_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchConfigs, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchConfigs
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchConfigs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchConfigs(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchConfigs
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listConfigs_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listEnvironments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchEnvironments
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchEnvironments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchEnvironments(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listEnvironments_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listEnvironments_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listEnvironments_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchEnvironments, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchEnvironments
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchEnvironments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchEnvironments(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchEnvironments
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listEnvironments_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listExternalApps_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listExternalApps_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 *model.SearchExternalApps
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchExternalApps2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchExternalApps(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listExternalApps_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_listExternalApps_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listExternalApps_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listExternalApps_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchExternalApps, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchExternalApps
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchExternalApps2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchExternalApps(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchExternalApps
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listExternalApps_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listImagePullSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchImagePullSecrets
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchImagePullSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImagePullSecrets(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listImagePullSecrets_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listImagePullSecrets_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listImagePullSecrets_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchImagePullSecrets, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchImagePullSecrets
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchImagePullSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImagePullSecrets(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchImagePullSecrets
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listImagePullSecrets_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listImportedManagedResources_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listImportedManagedResources_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 *model.SearchImportedManagedResources
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchImportedManagedResources2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImportedManagedResources(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listImportedManagedResources_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_listImportedManagedResources_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listImportedManagedResources_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listImportedManagedResources_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchImportedManagedResources, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchImportedManagedResources
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchImportedManagedResources2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImportedManagedResources(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchImportedManagedResources
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listImportedManagedResources_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listManagedResources_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchManagedResources
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchManagedResources2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchManagedResources(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listManagedResources_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listManagedResources_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listManagedResources_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchManagedResources, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchManagedResources
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchManagedResources2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchManagedResources(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchManagedResources
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listManagedResources_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listRegistryImages_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg0, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listRegistryImages_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listRegistryImages_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listRouters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listRouters_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 *model.SearchRouters
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchRouters2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchRouters(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listRouters_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_listRouters_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listRouters_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listRouters_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchRouters, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchRouters
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchRouters2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchRouters(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchRouters
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listRouters_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_listSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_listSecrets_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 *model.SearchSecrets
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchSecrets(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_listSecrets_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_core_listSecrets_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pq"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_listSecrets_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listSecrets_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchSecrets, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchSecrets
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchSecrets(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchSecrets
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listSecrets_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_restartApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_restartApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["appName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_restartApp_argsAppName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["appName"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_restartApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_restartApp_argsAppName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["appName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
+	if tmp, ok := rawArgs["appName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_resyncApp_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncApp_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncConfig_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_resyncConfig_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncConfig_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncConfig_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncEnvironment_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncEnvironment_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncExternalApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncExternalApp_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_resyncExternalApp_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncExternalApp_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncExternalApp_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncImagePullSecret_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncImagePullSecret_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["msvcName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncManagedResource_argsMsvcName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["msvcName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_resyncManagedResource_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncManagedResource_argsMsvcName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["msvcName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncManagedResource_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncRouter_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncRouter_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_resyncRouter_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncRouter_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncRouter_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_resyncSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_resyncSecret_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_core_resyncSecret_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_resyncSecret_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncSecret_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_core_searchRegistryImages_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["query"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_core_searchRegistryImages_argsQuery(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["query"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_core_searchRegistryImages_argsQuery(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["query"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+	if tmp, ok := rawArgs["query"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_getClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_getClusterManagedService_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_getClusterManagedService_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_infra_listClusterManagedServices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SearchClusterManagedService
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterManagedService(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_infra_listClusterManagedServices_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_infra_listClusterManagedServices_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pagination"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listClusterManagedServices_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchClusterManagedService, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchClusterManagedService
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterManagedService(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchClusterManagedService
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listClusterManagedServices_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 bool
-	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field___Type_enumValues_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field___Type_enumValues_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["includeDeprecated"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 bool
-	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field___Type_fields_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["includeDeprecated"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
 }
 
 // endregion ***************************** args.gotpl *****************************
@@ -10756,15 +13570,18 @@ func (ec *executionContext) _Build_id(ctx context.Context, field graphql.Collect
 			ctx = rctx // use context from middleware stack in children
 			return obj.ID, nil
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal repos.ID
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, obj, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal repos.ID
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, obj, directive1)
 		}
@@ -20331,14 +23148,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20422,14 +23236,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28491,15 +31302,18 @@ func (ec *executionContext) _Mutation_core_setupDefaultEnvironment(ctx context.C
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreSetupDefaultEnvironment(rctx)
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -28561,15 +31375,18 @@ func (ec *executionContext) _Mutation_core_createEnvironment(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateEnvironment(rctx, fc.Args["env"].(entities.Environment))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -28677,15 +31494,18 @@ func (ec *executionContext) _Mutation_core_updateEnvironment(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateEnvironment(rctx, fc.Args["env"].(entities.Environment))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -28793,15 +31613,18 @@ func (ec *executionContext) _Mutation_core_deleteEnvironment(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteEnvironment(rctx, fc.Args["envName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -28874,15 +31697,18 @@ func (ec *executionContext) _Mutation_core_cloneEnvironment(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["clusterName"].(string), fc.Args["sourceEnvName"].(string), fc.Args["destinationEnvName"].(string), fc.Args["displayName"].(string), fc.Args["environmentRoutingMode"].(v1.EnvironmentRoutingMode))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -28990,15 +31816,18 @@ func (ec *executionContext) _Mutation_core_createImagePullSecret(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateImagePullSecret(rctx, fc.Args["pullSecret"].(entities.ImagePullSecret))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ImagePullSecret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ImagePullSecret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29104,15 +31933,18 @@ func (ec *executionContext) _Mutation_core_updateImagePullSecret(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateImagePullSecret(rctx, fc.Args["pullSecret"].(entities.ImagePullSecret))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ImagePullSecret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ImagePullSecret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29218,15 +32050,18 @@ func (ec *executionContext) _Mutation_core_deleteImagePullSecret(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteImagePullSecret(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29299,15 +32134,18 @@ func (ec *executionContext) _Mutation_core_deleteRegistryImage(ctx context.Conte
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteRegistryImage(rctx, fc.Args["image"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29380,15 +32218,18 @@ func (ec *executionContext) _Mutation_core_createApp(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateApp(rctx, fc.Args["envName"].(string), fc.Args["app"].(entities.App))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.App
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.App
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29502,15 +32343,18 @@ func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateApp(rctx, fc.Args["envName"].(string), fc.Args["app"].(entities.App))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.App
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.App
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29624,15 +32468,18 @@ func (ec *executionContext) _Mutation_core_deleteApp(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteApp(rctx, fc.Args["envName"].(string), fc.Args["appName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29705,15 +32552,18 @@ func (ec *executionContext) _Mutation_core_interceptApp(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreInterceptApp(rctx, fc.Args["envName"].(string), fc.Args["appname"].(string), fc.Args["deviceName"].(string), fc.Args["intercept"].(bool), fc.Args["portMappings"].([]*v1.AppInterceptPortMappings))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29786,15 +32636,18 @@ func (ec *executionContext) _Mutation_core_interceptAppOnLocalCluster(ctx contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreInterceptAppOnLocalCluster(rctx, fc.Args["envName"].(string), fc.Args["appname"].(string), fc.Args["clusterName"].(string), fc.Args["ipAddr"].(string), fc.Args["intercept"].(bool), fc.Args["portMappings"].([]*v1.AppInterceptPortMappings))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29867,15 +32720,18 @@ func (ec *executionContext) _Mutation_core_removeDeviceIntercepts(ctx context.Co
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreRemoveDeviceIntercepts(rctx, fc.Args["envName"].(string), fc.Args["deviceName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -29948,15 +32804,18 @@ func (ec *executionContext) _Mutation_core_createExternalApp(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateExternalApp(rctx, fc.Args["envName"].(string), fc.Args["externalApp"].(entities.ExternalApp))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ExternalApp
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ExternalApp
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30060,15 +32919,18 @@ func (ec *executionContext) _Mutation_core_updateExternalApp(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateExternalApp(rctx, fc.Args["envName"].(string), fc.Args["externalApp"].(entities.ExternalApp))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ExternalApp
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ExternalApp
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30172,15 +33034,18 @@ func (ec *executionContext) _Mutation_core_deleteExternalApp(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteExternalApp(rctx, fc.Args["envName"].(string), fc.Args["externalAppName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30253,15 +33118,18 @@ func (ec *executionContext) _Mutation_core_interceptExternalApp(ctx context.Cont
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreInterceptExternalApp(rctx, fc.Args["envName"].(string), fc.Args["externalAppName"].(string), fc.Args["deviceName"].(string), fc.Args["intercept"].(bool), fc.Args["portMappings"].([]*v1.AppInterceptPortMappings))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30334,15 +33202,18 @@ func (ec *executionContext) _Mutation_core_createConfig(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateConfig(rctx, fc.Args["envName"].(string), fc.Args["config"].(entities.Config))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Config
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Config
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30448,15 +33319,18 @@ func (ec *executionContext) _Mutation_core_updateConfig(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateConfig(rctx, fc.Args["envName"].(string), fc.Args["config"].(entities.Config))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Config
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Config
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30562,15 +33436,18 @@ func (ec *executionContext) _Mutation_core_deleteConfig(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteConfig(rctx, fc.Args["envName"].(string), fc.Args["configName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30643,15 +33520,18 @@ func (ec *executionContext) _Mutation_core_createSecret(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateSecret(rctx, fc.Args["envName"].(string), fc.Args["secret"].(entities.Secret))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Secret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Secret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30763,15 +33643,18 @@ func (ec *executionContext) _Mutation_core_updateSecret(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateSecret(rctx, fc.Args["envName"].(string), fc.Args["secret"].(entities.Secret))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Secret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Secret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30883,15 +33766,18 @@ func (ec *executionContext) _Mutation_core_deleteSecret(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteSecret(rctx, fc.Args["envName"].(string), fc.Args["secretName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -30964,15 +33850,18 @@ func (ec *executionContext) _Mutation_core_createRouter(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateRouter(rctx, fc.Args["envName"].(string), fc.Args["router"].(entities.Router))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Router
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Router
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31078,15 +33967,18 @@ func (ec *executionContext) _Mutation_core_updateRouter(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateRouter(rctx, fc.Args["envName"].(string), fc.Args["router"].(entities.Router))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Router
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Router
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31192,15 +34084,18 @@ func (ec *executionContext) _Mutation_core_deleteRouter(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteRouter(rctx, fc.Args["envName"].(string), fc.Args["routerName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31273,15 +34168,18 @@ func (ec *executionContext) _Mutation_infra_createClusterManagedService(ctx cont
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCreateClusterManagedService(rctx, fc.Args["service"].(entities.ClusterManagedService))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31387,15 +34285,18 @@ func (ec *executionContext) _Mutation_infra_updateClusterManagedService(ctx cont
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraUpdateClusterManagedService(rctx, fc.Args["service"].(entities.ClusterManagedService))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31501,15 +34402,18 @@ func (ec *executionContext) _Mutation_infra_deleteClusterManagedService(ctx cont
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraDeleteClusterManagedService(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31582,15 +34486,18 @@ func (ec *executionContext) _Mutation_infra_cloneClusterManagedService(ctx conte
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().InfraCloneClusterManagedService(rctx, fc.Args["clusterName"].(string), fc.Args["sourceMsvcName"].(string), fc.Args["destinationMsvcName"].(string), fc.Args["displayName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31696,15 +34603,18 @@ func (ec *executionContext) _Mutation_core_createManagedResource(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreCreateManagedResource(rctx, fc.Args["msvcName"].(string), fc.Args["mres"].(entities.ManagedResource))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ManagedResource
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ManagedResource
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31820,15 +34730,18 @@ func (ec *executionContext) _Mutation_core_updateManagedResource(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreUpdateManagedResource(rctx, fc.Args["msvcName"].(string), fc.Args["mres"].(entities.ManagedResource))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ManagedResource
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ManagedResource
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -31944,15 +34857,18 @@ func (ec *executionContext) _Mutation_core_deleteManagedResource(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteManagedResource(rctx, fc.Args["msvcName"].(string), fc.Args["mresName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -32025,15 +34941,18 @@ func (ec *executionContext) _Mutation_core_importManagedResource(ctx context.Con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreImportManagedResource(rctx, fc.Args["envName"].(string), fc.Args["msvcName"].(string), fc.Args["mresName"].(string), fc.Args["importName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ImportedManagedResource
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ImportedManagedResource
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -32137,15 +35056,18 @@ func (ec *executionContext) _Mutation_core_deleteImportedManagedResource(ctx con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CoreDeleteImportedManagedResource(rctx, fc.Args["envName"].(string), fc.Args["importName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -32552,15 +35474,18 @@ func (ec *executionContext) _Query_core_checkNameAvailability(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreCheckNameAvailability(rctx, fc.Args["envName"].(*string), fc.Args["msvcName"].(*string), fc.Args["resType"].(entities.ResourceType), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedIn == nil {
-				return nil, errors.New("directive isLoggedIn is not implemented")
+				var zeroVal *domain.CheckNameAvailabilityOutput
+				return zeroVal, errors.New("directive isLoggedIn is not implemented")
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *domain.CheckNameAvailabilityOutput
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -32683,15 +35608,18 @@ func (ec *executionContext) _Query_core_listEnvironments(ctx context.Context, fi
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListEnvironments(rctx, fc.Args["search"].(*model.SearchEnvironments), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.EnvironmentPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.EnvironmentPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -32769,15 +35697,18 @@ func (ec *executionContext) _Query_core_getEnvironment(ctx context.Context, fiel
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetEnvironment(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Environment
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -32885,15 +35816,18 @@ func (ec *executionContext) _Query_core_resyncEnvironment(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncEnvironment(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -32966,15 +35900,18 @@ func (ec *executionContext) _Query_core_listImagePullSecrets(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListImagePullSecrets(rctx, fc.Args["search"].(*model.SearchImagePullSecrets), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.ImagePullSecretPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.ImagePullSecretPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33052,15 +35989,18 @@ func (ec *executionContext) _Query_core_getImagePullSecret(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetImagePullSecret(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ImagePullSecret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ImagePullSecret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33166,15 +36106,18 @@ func (ec *executionContext) _Query_core_resyncImagePullSecret(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncImagePullSecret(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33247,15 +36190,18 @@ func (ec *executionContext) _Query_core_getRegistryImageURL(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetRegistryImageURL(rctx)
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.RegistryImageURL
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.RegistryImageURL
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33295,10 +36241,16 @@ func (ec *executionContext) fieldContext_Query_core_getRegistryImageURL(_ contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "klWebhookAuthToken":
+				return ec.fieldContext_RegistryImageURL_klWebhookAuthToken(ctx, field)
 			case "scriptUrl":
 				return ec.fieldContext_RegistryImageURL_scriptUrl(ctx, field)
+			case "scriptUrlExample":
+				return ec.fieldContext_RegistryImageURL_scriptUrlExample(ctx, field)
 			case "url":
 				return ec.fieldContext_RegistryImageURL_url(ctx, field)
+			case "urlExample":
+				return ec.fieldContext_RegistryImageURL_urlExample(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RegistryImageURL", field.Name)
 		},
@@ -33323,15 +36275,18 @@ func (ec *executionContext) _Query_core_getRegistryImage(ctx context.Context, fi
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetRegistryImage(rctx, fc.Args["image"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.RegistryImage
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.RegistryImage
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33421,15 +36376,18 @@ func (ec *executionContext) _Query_core_listRegistryImages(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListRegistryImages(rctx, fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.RegistryImagePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.RegistryImagePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33507,15 +36465,18 @@ func (ec *executionContext) _Query_core_searchRegistryImages(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreSearchRegistryImages(rctx, fc.Args["query"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal []*entities.RegistryImage
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal []*entities.RegistryImage
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33608,15 +36569,18 @@ func (ec *executionContext) _Query_core_listApps(ctx context.Context, field grap
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListApps(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchApps), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.AppPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.AppPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33694,15 +36658,18 @@ func (ec *executionContext) _Query_core_getApp(ctx context.Context, field graphq
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetApp(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.App
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.App
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33816,15 +36783,18 @@ func (ec *executionContext) _Query_core_resyncApp(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncApp(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33897,15 +36867,18 @@ func (ec *executionContext) _Query_core_restartApp(ctx context.Context, field gr
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreRestartApp(rctx, fc.Args["envName"].(string), fc.Args["appName"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -33978,15 +36951,18 @@ func (ec *executionContext) _Query_core_listExternalApps(ctx context.Context, fi
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListExternalApps(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchExternalApps), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.ExternalAppPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.ExternalAppPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34064,15 +37040,18 @@ func (ec *executionContext) _Query_core_getExternalApp(ctx context.Context, fiel
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetExternalApp(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ExternalApp
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ExternalApp
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34176,15 +37155,18 @@ func (ec *executionContext) _Query_core_resyncExternalApp(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncExternalApp(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34257,15 +37239,18 @@ func (ec *executionContext) _Query_core_getConfigValues(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetConfigValues(rctx, fc.Args["envName"].(string), fc.Args["queries"].([]*domain.ConfigKeyRef))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal []*domain.ConfigKeyValueRef
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal []*domain.ConfigKeyValueRef
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34343,15 +37328,18 @@ func (ec *executionContext) _Query_core_listConfigs(ctx context.Context, field g
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListConfigs(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchConfigs), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.ConfigPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.ConfigPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34429,15 +37417,18 @@ func (ec *executionContext) _Query_core_getConfig(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetConfig(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Config
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Config
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34543,15 +37534,18 @@ func (ec *executionContext) _Query_core_resyncConfig(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncConfig(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34624,15 +37618,18 @@ func (ec *executionContext) _Query_core_getSecretValues(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetSecretValues(rctx, fc.Args["envName"].(string), fc.Args["queries"].([]*domain.SecretKeyRef))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal []*domain.SecretKeyValueRef
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal []*domain.SecretKeyValueRef
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34710,15 +37707,18 @@ func (ec *executionContext) _Query_core_listSecrets(ctx context.Context, field g
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListSecrets(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchSecrets), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.SecretPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.SecretPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34796,15 +37796,18 @@ func (ec *executionContext) _Query_core_getSecret(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Secret
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Secret
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34916,15 +37919,18 @@ func (ec *executionContext) _Query_core_resyncSecret(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -34997,15 +38003,18 @@ func (ec *executionContext) _Query_core_listRouters(ctx context.Context, field g
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListRouters(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchRouters), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.RouterPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.RouterPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35083,15 +38092,18 @@ func (ec *executionContext) _Query_core_getRouter(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetRouter(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.Router
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.Router
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35197,15 +38209,18 @@ func (ec *executionContext) _Query_core_resyncRouter(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncRouter(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35278,15 +38293,18 @@ func (ec *executionContext) _Query_core_getManagedResouceOutputKeys(ctx context.
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetManagedResouceOutputKeys(rctx, fc.Args["msvcName"].(*string), fc.Args["envName"].(*string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal []string
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal []string
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35359,15 +38377,18 @@ func (ec *executionContext) _Query_core_getManagedResouceOutputKeyValues(ctx con
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetManagedResouceOutputKeyValues(rctx, fc.Args["msvcName"].(*string), fc.Args["envName"].(*string), fc.Args["keyrefs"].([]*domain.ManagedResourceKeyRef))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal []*domain.ManagedResourceKeyValueRef
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal []*domain.ManagedResourceKeyValueRef
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35448,15 +38469,18 @@ func (ec *executionContext) _Query_infra_listClusterManagedServices(ctx context.
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraListClusterManagedServices(rctx, fc.Args["search"].(*model.SearchClusterManagedService), fc.Args["pagination"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.ClusterManagedServicePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.ClusterManagedServicePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35534,15 +38558,18 @@ func (ec *executionContext) _Query_infra_getClusterManagedService(ctx context.Co
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().InfraGetClusterManagedService(rctx, fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ClusterManagedService
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35648,15 +38675,18 @@ func (ec *executionContext) _Query_core_listManagedResources(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListManagedResources(rctx, fc.Args["search"].(*model.SearchManagedResources), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.ManagedResourcePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.ManagedResourcePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35734,15 +38764,18 @@ func (ec *executionContext) _Query_core_getManagedResource(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreGetManagedResource(rctx, fc.Args["msvcName"].(*string), fc.Args["envName"].(*string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *entities.ManagedResource
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *entities.ManagedResource
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35858,15 +38891,18 @@ func (ec *executionContext) _Query_core_resyncManagedResource(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreResyncManagedResource(rctx, fc.Args["msvcName"].(string), fc.Args["name"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -35939,15 +38975,18 @@ func (ec *executionContext) _Query_core_listImportedManagedResources(ctx context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().CoreListImportedManagedResources(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchImportedManagedResources), fc.Args["pq"].(*repos.CursorPagination))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+				var zeroVal *model.ImportedManagedResourcePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
 			}
 			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
 		}
 		directive2 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
+				var zeroVal *model.ImportedManagedResourcePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
 			}
 			return ec.directives.HasAccount(ctx, nil, directive1)
 		}
@@ -37500,6 +40539,50 @@ func (ec *executionContext) fieldContext_RegistryImagePaginatedRecords_totalCoun
 	return fc, nil
 }
 
+func (ec *executionContext) _RegistryImageURL_klWebhookAuthToken(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageURL_klWebhookAuthToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KlWebhookAuthToken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageURL_klWebhookAuthToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RegistryImageURL_scriptUrl(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_RegistryImageURL_scriptUrl(ctx, field)
 	if err != nil {
@@ -37526,12 +40609,56 @@ func (ec *executionContext) _RegistryImageURL_scriptUrl(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RegistryImageURL_scriptUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageURL_scriptUrlExample(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageURL_scriptUrlExample(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScriptURLExample, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageURL_scriptUrlExample(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RegistryImageURL",
 		Field:      field,
@@ -37570,12 +40697,56 @@ func (ec *executionContext) _RegistryImageURL_url(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RegistryImageURL_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageURL_urlExample(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageURL_urlExample(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URLExample, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageURL_urlExample(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RegistryImageURL",
 		Field:      field,
@@ -43568,7 +46739,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		switch k {
 		case "enabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -43582,7 +46753,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			it.PortMappings = data
 		case "toDevice":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toDevice"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -45060,27 +48231,48 @@ func (ec *executionContext) unmarshalInputRegistryImageURLIn(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"scriptUrl", "url"}
+	fieldsInOrder := [...]string{"klWebhookAuthToken", "scriptUrl", "scriptUrlExample", "url", "urlExample"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "klWebhookAuthToken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("klWebhookAuthToken"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.KlWebhookAuthToken = data
 		case "scriptUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scriptUrl"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ScriptURL = data
+		case "scriptUrlExample":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scriptUrlExample"))
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScriptURLExample = data
 		case "url":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.URL = data
+		case "urlExample":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("urlExample"))
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.URLExample = data
 		}
 	}
 
@@ -49019,16 +52211,10 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__Intercept")
 		case "enabled":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_enabled(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "portMappings":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_portMappings(ctx, field, obj)
 		case "toDevice":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "toIPAddr":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx, field, obj)
 		default:
@@ -53197,13 +56383,28 @@ func (ec *executionContext) _RegistryImageURL(ctx context.Context, sel ast.Selec
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RegistryImageURL")
+		case "klWebhookAuthToken":
+			out.Values[i] = ec._RegistryImageURL_klWebhookAuthToken(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "scriptUrl":
 			out.Values[i] = ec._RegistryImageURL_scriptUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "scriptUrlExample":
+			out.Values[i] = ec._RegistryImageURL_scriptUrlExample(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "url":
 			out.Values[i] = ec._RegistryImageURL_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "urlExample":
+			out.Values[i] = ec._RegistryImageURL_urlExample(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

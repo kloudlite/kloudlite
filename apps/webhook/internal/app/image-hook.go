@@ -5,11 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strings"
 	"time"
+
+	_ "embed"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/apps/webhook/internal/domain"
@@ -22,6 +22,9 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/fx"
 )
+
+//go:embed scripts/kl-image-hook.sh
+var imageHookScript string
 
 func validateAndDecodeAccessToken(accessToken string, tokenSecret string) (accountName string, err error) {
 	b, err := base64.StdEncoding.DecodeString(accessToken)
@@ -69,7 +72,7 @@ func LoadImageHook() fx.Option {
 		func(server httpServer.Server, envVars *env.Env, producer messaging.Producer, logr logging.Logger, d domain.Domain) error {
 			app := server.Raw()
 
-			app.Post("/image-meta-push", func(ctx *fiber.Ctx) error {
+			app.Post("/image/push", func(ctx *fiber.Ctx) error {
 				logger := logr.WithName("image-hook")
 
 				headers := ctx.GetReqHeaders()
@@ -132,18 +135,18 @@ func LoadImageHook() fx.Option {
 				return ctx.Status(http.StatusAccepted).JSON(map[string]string{"status": "ok"})
 			})
 
-			app.Get("/image-meta-push", func(c *fiber.Ctx) error {
-				f, err := os.Open("kl-image-script.sh")
-				if err != nil {
-					return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error opening script: %s", err.Error()))
-				}
-				defer f.Close()
-				all, err := io.ReadAll(f)
-				if err != nil {
-					return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error reading script: %s", err.Error()))
-				}
-				script := string(all)
-				script = strings.ReplaceAll(script, "$WEBHOOK_URL", fmt.Sprintf("%s/image-meta-push", envVars.WebhookURL))
+			app.Get("/image-hook.sh", func(c *fiber.Ctx) error {
+				// f, err := os.Open("kl-image-script.sh")
+				// if err != nil {
+				// 	return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error opening script: %s", err.Error()))
+				// }
+				// defer f.Close()
+				// all, err := io.ReadAll(f)
+				// if err != nil {
+				// 	return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error reading script: %s", err.Error()))
+				// }
+				// script := string(imageHookScript)
+				script := strings.ReplaceAll(imageHookScript, "$WEBHOOK_URL", fmt.Sprintf("%s/image/push", envVars.WebhookURL))
 				return c.SendString(script)
 			})
 

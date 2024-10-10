@@ -74,8 +74,36 @@ func (d *domain) GetRegistryImageURL(ctx ConsoleContext) (*entities.RegistryImag
 	encodedToken := encodeAccessToken(ctx.AccountName, d.envVars.WebhookTokenHashingSecret)
 
 	return &entities.RegistryImageURL{
-		URL:       fmt.Sprintf(`curl -X POST "%s/image-meta-push" -H "Authorization: %s" -H "Content-Type: application/json" -d '{"image": "imageName:imageTag", "meta": {"repository": "github", "registry": "docker", "author":"kloudlite"}}'`, d.envVars.WebhookURL, encodedToken),
-		ScriptURL: fmt.Sprintf(`curl "%s/image-meta-push" | authorization=%s image=imageName:imageTag meta="repository=github,registry=docker,author=kloudlite" sh`, d.envVars.WebhookURL, encodedToken),
+		URL: []string{
+			`export KL_WEBHOOK_TOKEN="paste your token"`,
+			strings.TrimSpace(fmt.Sprintf(`
+curl -X POST "%s/image/push" \
+	-H "Authorization: $KL_WEBHOOK_TOKEN" \
+	-H "Content-Type: application/json" \
+	-d '{ "image": "<image-name>:<image-tag>", "meta": { "<key>": "<value>" }}'`, d.envVars.WebhookURL)),
+		},
+
+		URLExample: []string{
+			`export KL_WEBHOOK_TOKEN="super-secret-token"`,
+			fmt.Sprintf(`
+curl -X POST "%s/image/push" \
+	-H "Authorization: $KL_WEBHOOK_TOKEN" \
+	-H "Content-Type: application/json" \
+	-d '{ "image": "ghcr.io/kloudlite/api/sample:v1.2.3", "meta": { "repo": "kloudlite/sample", "branch": "testing-ci" }}'
+`, d.envVars.WebhookURL),
+		},
+
+		ScriptURL: []string{
+			`export KL_WEBHOOK_TOKEN="paste your token"`,
+			fmt.Sprintf(`curl "%s/image-hook.sh" | image=<image-name>:<image-tag> meta="<key-1>=<value-1>,<key-2>=<value-2>" sh`, d.envVars.ImageHookScriptHostedURL),
+		},
+		ScriptURLExample: []string{
+			`export KL_WEBHOOK_TOKEN="super-secret-token"`,
+			fmt.Sprintf(`
+curl "%s/image-hook.sh" | image=ghcr.io/kloudlite/api/sample:v1.2.3 meta="repo=kloudlite/sample,branch=testing-ci" sh
+		`, d.envVars.ImageHookScriptHostedURL),
+		},
+		KlWebhookAuthToken: encodedToken,
 	}, nil
 }
 
