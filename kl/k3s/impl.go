@@ -272,7 +272,7 @@ func (c *client) generateConnectionScript(clusterConfig *fileclient.TeamClusterC
 		GatewayIP:      clusterConfig.GatewayIP,
 		ClusterCIDR:    clusterConfig.ClusterCIDR,
 		IpAddress:      vpnTeamConfig.IpAddress,
-		ImageTag:       flags.Version,
+		ImageTag:       clusterConfig.Version,
 	}
 
 	b := new(bytes.Buffer)
