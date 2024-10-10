@@ -281,20 +281,6 @@ const SettingUserManagement = () => {
     return owner?.user?.email === currentUser?.email;
   }, [teamMembers, currentUser]);
 
-  // const { data: teamMembers, isLoading } = useCustomSwr(
-  //   `${parseName(account)}-owners`,
-  //   async () => {
-  //     return api.listMembershipsForAccount({
-  //       accountName: parseName(account),
-  //     });
-  //   }
-  // );
-
-  // const owners = useCallback(
-  //   () => teamMembers?.filter((i) => i.role === 'account_owner') || [],
-  //   [teamMembers]
-  // )();
-
   const accountOwner = teamMembers?.find((i) => i.role === 'account_owner');
 
   return (
@@ -325,31 +311,6 @@ const SettingUserManagement = () => {
               />
             </div>
           </Pulsable>
-
-          {/* <Pulsable isLoading={isLoading}>
-            <div className="flex flex-col gap-3xl">
-              {[
-                ...(isLoading
-                  ? [
-                      {
-                        user: {
-                          email: 'sampleuser@gmail.com',
-                          name: 'sample user',
-                        },
-                      },
-                    ]
-                  : owners),
-              ].map((t) => {
-                return (
-                  <Profile
-                    key={t.user.email}
-                    name={t.user.name}
-                    subtitle={t.user.email}
-                  />
-                );
-              })}
-            </div>
-          </Pulsable> */}
         </div>
       </div>
       <div className="flex flex-col">
