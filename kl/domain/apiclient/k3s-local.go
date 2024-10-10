@@ -42,7 +42,9 @@ func (apic *apiClient) GetClustersOfTeam(team string) ([]Cluster, error) {
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	fetch, err := klFetch("cli_listAccountClusters", map[string]any{}, &cookie)
+	fetch, err := klFetch("cli_listAccountClusters", map[string]any{
+		"pagination": PaginationDefault,
+	}, &cookie)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

@@ -85,10 +85,28 @@ func (apic *apiClient) CreateDevice(devName, displayName, team string) (*Device,
 
 		dn = cn.SuggestedNames[0]
 	}
+
+	wgconfig, err := apic.fc.GetWGConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := apic.GetCurrentUser()
+	if err != nil {
+		return nil, err
+	}
+
 	fn.Logf("creating new device %s\n", dn)
 	respData, err := klFetch("cli_createGlobalVPNDevice", map[string]any{
 		"gvpnDevice": map[string]any{
-			"metadata":       map[string]string{"name": dn},
+			"metadata": map[string]any{
+				"name": dn,
+				"labels": map[string]string{
+					"kloudlite.io/k3scluster": "true",
+					"kloudlite.io/local-uuid": wgconfig.UUID,
+					"kloudlite.io/owned-by":   user.UserId,
+				},
+			},
 			"globalVPNName":  Default_GVPN,
 			"displayName":    displayName,
 			"creationMethod": "kl",
@@ -185,6 +203,27 @@ func (apic *apiClient) CreateVpnForTeam(team string) (*Device, error) {
 		return nil, fn.NewE(err)
 	}
 
+	wgconfig, err := apic.fc.GetWGConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := apic.GetCurrentUser()
+	if err != nil {
+		return nil, err
+	}
+
+	devices, err := apic.ListVpnDevices(team)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, d := range devices {
+		if d.Metadata.Labels["kloudlite.io/local-uuid"] == wgconfig.UUID && d.Metadata.Labels["kloudlite.io/owned-by"] == user.UserId {
+			return &d, nil
+		}
+	}
+
 	checkNames, err := getDeviceName(devName, team)
 	if err != nil {
 		return nil, fn.NewE(err)
@@ -243,4 +282,24 @@ func (apic *apiClient) GetAccVPNConfig(team string) (*fileclient.TeamVpnConfig, 
 	}
 
 	return avc, nil
+}
+
+func (apic *apiClient) ListVpnDevices(team string) ([]Device, error) {
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+
+	respData, err := klFetch("cli_listVPNDevices", map[string]any{
+		"gvpn":       Default_GVPN,
+		"pagination": PaginationDefault,
+	}, &cookie)
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	devices, err := GetFromRespForEdge[Device](respData)
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	return devices, nil
 }
