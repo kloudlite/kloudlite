@@ -518,6 +518,7 @@ kubectl delete pod/$(kubectl get pods -n kl-gateway | tail -n +2 | awk '{print $
 	if err := c.runScriptInContainer(script); err != nil {
 		return err
 	}
+	fn.Log(text.Yellow("It will usually take a minute for the cluster to come online"))
 
 	return nil
 }
