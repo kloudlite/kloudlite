@@ -30,10 +30,13 @@ curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0!?select=kl' | bash
 curl 'https://kl.kloudlite.io/kloudlite/kl?select=kl' | bash
 ```
 
-###### install in windows
-```sh
-iwr 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | iex
-```
+[//]: # (###### install in windows)
+
+[//]: # (```sh)
+
+[//]: # (iwr 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | iex)
+
+[//]: # (```)
 
 ### Authentication
 
@@ -78,7 +81,7 @@ You can search and add packages form [NixHub](https://www.nixhub.io/)
 ### Switch between Environments
 You can switch between remote environments using the following command.
 ```sh
-kl env use
+kl use env
 ```
 This command will prompt to select environment from the list of available environments.
 
@@ -92,16 +95,10 @@ kl box ssh
 ```
 This command will start the container if it is not running and ssh into the container.
 
-### Expose Ports
-You can expose ports from the container to your local machine using the following command.
-```sh
-kl box expose -p <container-port>
-```
-
 ### Intercept applications
 You can intercept applications running in remote environments to your local machine using the following commands.
 ```sh
-kl intercept start -p <remote-port>:<local-port>
+kl intercept
 ```
 This command will prompt to choose the application from the list of available applications in the environment.
 
@@ -117,11 +114,6 @@ packages:
 # list of nix packages
 - neovim@0.5.1
 # ...
-ports:
-# list of exposed ports
-- 8080
-# ...
-envVars:
 # list of environment variables
 envVars:
 - key: ENV_VAR_NAME
