@@ -2,7 +2,6 @@ package connect
 
 import (
 	"bufio"
-	"errors"
 	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/k3s"
@@ -13,7 +12,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 )
 
 var Command = &cobra.Command{
@@ -87,37 +85,37 @@ func startWg(cmd *cobra.Command) error {
 		return fn.NewE(err)
 	}
 
-	time.Sleep(time.Second * 1)
-
-	open, err := os.Open("/tmp/kl/online.status")
-	if err != nil {
-		return err
-	}
-
-	if _, err := open.Seek(0, io.SeekEnd); err != nil {
-		return err
-	}
-
-	defer open.Close()
-	reader := bufio.NewReader(open)
-
-	startTime := time.Now()
-	for {
-		<-time.After(time.Second * 1)
-		msg, err := reader.ReadString('\n')
-		if err != nil {
-			if time.Since(startTime) > time.Second*30 {
-				return nil
-			}
-			if errors.Is(err, io.EOF) {
-				continue
-			}
-			return err
-		}
-		if msg == "online\n" {
-			break
-		}
-	}
+	//time.Sleep(time.Second * 1)
+	//
+	//open, err := os.Open("/tmp/kl/online.status")
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if _, err := open.Seek(0, io.SeekEnd); err != nil {
+	//	return err
+	//}
+	//
+	//defer open.Close()
+	//reader := bufio.NewReader(open)
+	//
+	//startTime := time.Now()
+	//for {
+	//	<-time.After(time.Second * 1)
+	//	msg, err := reader.ReadString('\n')
+	//	if err != nil {
+	//		if time.Since(startTime) > time.Second*30 {
+	//			return nil
+	//		}
+	//		if errors.Is(err, io.EOF) {
+	//			continue
+	//		}
+	//		return err
+	//	}
+	//	if msg == "online\n" {
+	//		break
+	//	}
+	//}
 	fn.Log(text.Green("device connected"))
 
 	return nil
