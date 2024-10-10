@@ -16,8 +16,13 @@ type RegistryImage struct {
 }
 
 type RegistryImageURL struct {
-	URL       string `json:"url"`
-	ScriptURL string `json:"scriptUrl"`
+	URL        []string `json:"url"`
+	URLExample []string `json:"urlExample"`
+
+	KlWebhookAuthToken string `json:"klWebhookAuthToken"`
+
+	ScriptURL        []string `json:"scriptUrl"`
+	ScriptURLExample []string `json:"scriptUrlExample"`
 }
 
 var RegistryImageIndexes = []repos.IndexField{

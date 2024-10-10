@@ -178,9 +178,9 @@ type Github__com___kloudlite___operator___apis___crds___v1__Https @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable {
-  enabled: Boolean!
+  enabled: Boolean
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
-  toDevice: String!
+  toDevice: String
   toIPAddr: String
 }
 
@@ -513,9 +513,9 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
-  enabled: Boolean!
+  enabled: Boolean
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
-  toDevice: String!
+  toDevice: String
   toIPAddr: String
 }
 
