@@ -11,23 +11,29 @@ To install the latest version in Linux or Mac you can run the following command 
 
 ###### Install latest with curl
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
+curl 'https://kl.kloudlite.io/kloudlite/kloudlite!?select=kl' | bash
 ```
 
 ###### Install latest with wget
 
 ```sh
-wget -qO- 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
+wget -qO- 'https://kl.kloudlite.io/kloudlite/kloudlite!?select=kl' | bash
 ```
 
 ###### Install specific version
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0!?select=kl' | bash
+curl 'https://kl.kloudlite.io/kloudlite/kloudlite@v1.0.0!?select=kl' | bash
 ```
 
-###### download but don't install
+###### Download but don't install
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite/kl?select=kl' | bash
+curl 'https://kl.kloudlite.io/kloudlite/kloudlite?select=kl' | bash
+```
+
+
+###### For nightly releases
+```sh
+curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0-nightly!?select=kl' | bash
 ```
 
 [//]: # (###### install in windows)
