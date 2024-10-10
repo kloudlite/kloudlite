@@ -228,6 +228,6 @@ tasks:
         msg: "var tag must have a value"
     silent: true
     vars:
-      IMAGE: ghcr.io/kloudlite/web/{{.app}}:{{.tag}}
+      IMAGE: ghcr.io/kloudlite/kloudlite/web/{{.app}}:{{.tag}}
     cmds:
       - docker buildx build --build-arg APP={{.app}} . -t {{.IMAGE}} --platform linux/amd64 --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true

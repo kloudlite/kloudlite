@@ -1,9 +1,9 @@
-import { CopySimple } from '~/console/components/icons';
 import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
 import { toast } from '~/components/molecule/toast';
-import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { cn } from '~/components/utils';
+import { CopySimple } from '~/console/components/icons';
+import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 
 interface ICodeView {
   data: string;
@@ -83,9 +83,11 @@ const CodeView = ({
             <pre className={cn('flex-1 overflow-auto', preClassName)}>
               <code ref={ref}>{data}</code>
             </pre>
-            <span className="invisible group-hover/sha:visible">
-              <CopySimple size={14} />
-            </span>
+            {copy && (
+              <span className="invisible group-hover/sha:visible">
+                <CopySimple size={14} />
+              </span>
+            )}
           </div>
         )}
       </div>

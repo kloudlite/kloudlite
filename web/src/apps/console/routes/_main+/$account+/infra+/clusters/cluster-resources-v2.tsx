@@ -293,7 +293,7 @@ const ExtraButton = ({
   onShowLogs: () => void;
   item: CombinedBaseType;
 }) => {
-  let options: IResourceExtraItem[] = [
+  const options: IResourceExtraItem[] = [
     {
       key: '1',
       label: 'Edit',
@@ -301,21 +301,29 @@ const ExtraButton = ({
       type: 'item',
       onClick: onEdit,
     },
+    {
+      label: 'Delete',
+      icon: <Trash size={16} />,
+      type: 'item',
+      onClick: onDelete,
+      key: 'delete',
+      className: '!text-text-critical',
+    },
   ];
 
-  if (item.type === 'byok' && item.ownedBy === null) {
-    options = [
-      ...options,
-      {
-        label: 'Delete',
-        icon: <Trash size={16} />,
-        type: 'item',
-        onClick: onDelete,
-        key: 'delete',
-        className: '!text-text-critical',
-      },
-    ];
-  }
+  // if (item.type === 'byok' && item.ownedBy === null) {
+  //   options = [
+  //     ...options,
+  //     {
+  //       label: 'Delete',
+  //       icon: <Trash size={16} />,
+  //       type: 'item',
+  //       onClick: onDelete,
+  //       key: 'delete',
+  //       className: '!text-text-critical',
+  //     },
+  //   ];
+  // }
 
   return <ResourceExtraAction options={options} />;
 };

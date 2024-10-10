@@ -4945,6 +4945,59 @@ query authCli_listClusters($pagination: CursorPaginationIn) {
   }
 }
 
+query authCli_listVPNDevices($gvpn: String!, $pagination: CursorPaginationIn) {
+  infra_listGlobalVPNDevices(gvpn: $gvpn, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationMethod
+        creationTime
+        displayName
+        globalVPNName
+        id
+        ipAddr
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        privateKey
+        publicEndpoint
+        publicKey
+        recordVersion
+        updateTime
+        wireguardConfig {
+          value
+          encoding
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query authCli_listAccounts {
   accounts_listAccounts {
     metadata {

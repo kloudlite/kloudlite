@@ -1647,16 +1647,16 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Intercept {
-  enabled: Boolean!
+  enabled: Boolean
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
-  toDevice: String!
+  toDevice: String
   toIPAddr: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
-  enabled: Boolean!
+  enabled: Boolean
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
-  toDevice: String!
+  toDevice: String
   toIPAddr: String
 }
 
@@ -3886,13 +3886,17 @@ type RegistryImagePaginatedRecords {
 }
 
 type RegistryImageURL {
-  scriptUrl: String!
-  url: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: String!
+  url: [String!]!
+  urlExample: String!
 }
 
 input RegistryImageURLIn {
-  scriptUrl: String!
-  url: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: String!
+  url: [String!]!
+  urlExample: String!
 }
 
 type RemoteLogin {
