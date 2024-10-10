@@ -30,14 +30,7 @@ export const RegistryImageInstruction = ({
 
   const [active, setActive] = useState<
     'url' | 'script-url' | NonNullableString
-  >('url');
-
-  // const formatUrl = (url: string) => {
-  //   return url
-  //     .replace(/ -H /g, ' \\\n-H ')
-  //     .replace(/ -d /g, ' \\\n-d ')
-  //     .replace(/ curl /, 'curl \\');
-  // };
+  >('script-url');
 
   return (
     <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
