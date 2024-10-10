@@ -12,7 +12,13 @@ spec:
     enabled: true
     forceRedirect: true
   routes:
+    - app: infra-api
+      path: /render/helm
+      port: {{  include "apps.infraApi.httpPort" . }}
+      rewrite: false
+
     - app: auth-web
       path: /
       port: {{ include "apps.authWeb.httpPort" . }}
+
 ---
