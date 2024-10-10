@@ -569,7 +569,7 @@ func (c *client) runScriptInContainer(script string) error {
 		})
 
 		if err2 != nil {
-			return fn.NewE(err2, "failed to attach to exec instance 1")
+			return fn.NewE(err2, "failed to attach to exec instance")
 		}
 
 		defer res.Close()
@@ -583,27 +583,27 @@ func (c *client) runScriptInContainer(script string) error {
 			fn.Log(text.Yellow("[stderr]"), line)
 		}
 
-		return fn.NewE(err, "failed to attach to exec instance 2")
+		return fn.NewE(err, "failed to attach to exec instance")
 	}
 	defer resp.Close()
 
-	if flags.IsVerbose {
-
-		scanner := bufio.NewScanner(resp.Reader)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if len(line) > 8 {
-				line = line[8:]
-			}
+	scanner := bufio.NewScanner(resp.Reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 8 {
+			line = line[8:]
+		}
+		if flags.IsVerbose {
 			fn.Log(text.Blue("[kube]"), line)
 		}
-
-	} else {
-		//output := new(strings.Builder)
-		//if _, err := io.Copy(output, resp.Reader); err != nil {
-		//	return fn.Errorf("failed to read exec output: %w", err)
-		//}
 	}
+
+	//else {
+	//output := new(strings.Builder)
+	//if _, err := io.Copy(output, resp.Reader); err != nil {
+	//	return fn.Errorf("failed to read exec output: %w", err)
+	//}
+	//}
 
 	execInspect, err := c.c.ContainerExecInspect(context.Background(), execID.ID)
 	if err != nil {
