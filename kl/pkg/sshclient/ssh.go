@@ -2,7 +2,6 @@ package sshclient
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"net"
 	"os"
 	"regexp"
@@ -103,7 +102,7 @@ func DoSSH(sc SSHConfig) error {
 var ErrSSHNotReady = fn.Error("ssh is not ready")
 
 func CheckSSHConnection(sc SSHConfig) error {
-	defer spinner.Client.UpdateMessage("checking ssh connection")()
+	//defer spinner.Client.UpdateMessage("checking ssh connection")()
 	pkFile, err := publicKeyFile(sc.KeyPath)
 	if err != nil {
 		return fn.Errorf("failed to parse private key: %s, please ensure you have the correct key", err)
