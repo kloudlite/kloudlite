@@ -206,7 +206,7 @@ spec:
     spec:
       containers:
         - name: kl-tracker
-          image: ghcr.io/kloudlite/kl/k3s-tracker:{{.ImageTag}}
+          image: {{.ImageBase}}/k3s-tracker:{{.ImageTag}}
           args:
             - --output
             - /.cache/kl/k3s-status.json

@@ -1,10 +1,15 @@
+version: 3
+
+env:
+  ImageBase: ghcr.io/kloudlite/kl
+
 tasks:
   build:
     env:
       CGO_ENABLED:
         default:
           value: "0"
-    cmd:
+    cmds:
       - go build -v -o /tmp/k3s-tracker .
 
   dev:
@@ -12,23 +17,23 @@ tasks:
       KUBERNETES_HOST:
         default:
           value: localhost:8080
-    cmd:
-      - run: build
+    cmds:
+      - task: build
       - /tmp/k3s-tracker --output /tmp/status.json
 
   container:build:
-    cmd:
-      - docker build --build-arg VERSION=v1.0.0-nightly -t ghcr.io/kloudlite/kl/k3s-tracker:v1.0.0-nightly .
+    cmds:
+      - docker build --build-arg VERSION=v1.0.0-nightly -t {{.ImageBase}}/k3s-tracker:v1.0.0-nightly .
 
 
   container:push:
     preconditions:
       - sh: '[[ -n "{{.tag}}" ]]'
         msg: "var tag must have a value, of format 'v1.0.0-nightly'"
-    cmd:
-      - docker build --build-arg VERSION=${tag} -t ghcr.io/kloudlite/kl/k3s-tracker:${tag} .
-      - docker push ghcr.io/kloudlite/kl/k3s-tracker:${tag}
+    cmds:
+      - docker build --build-arg VERSION={{.tag}} -t {{.ImageBase}}/k3s-tracker:{{.tag}} .
+      - docker push {{.ImageBase}}/k3s-tracker:{{.tag}}
 
   container:run:
-    cmd:
+    cmds:
       - docker run -p 8080:8080 k3s-tracker

@@ -37,7 +37,7 @@ type client struct {
 }
 
 type BoxClient interface {
-	SyncProxy(config ProxyConfig) error
+	//SyncProxy(config ProxyConfig) error
 	Stop() error
 	Restart() error
 	Start() error

@@ -33,7 +33,7 @@ curl 'https://kl.kloudlite.io/kloudlite/kloudlite?select=kl' | bash
 
 ###### For nightly releases
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0-nightly!?select=kl' | bash
+curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.8-nightly!?select=kl' | bash
 ```
 
 [//]: # (###### install in windows)

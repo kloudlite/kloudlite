@@ -9,23 +9,23 @@ import (
 )
 
 const (
-	DefaultBaseURL              = "https://auth.kloudlite.io"
 	RuntimeLinux                = "linux"
 	RuntimeDarwin               = "darwin"
 	RuntimeWindows              = "windows"
-	SocatImage                  = "ghcr.io/kloudlite/hub/socat:latest"
 	KLDNS                       = "100.64.0.1"
 	InterceptWorkspaceServiceIp = "172.18.0.3"
 	K3sServerIp                 = "172.18.0.2"
+	//SocatImage                  = "ghcr.io/kloudlite/hub/socat:latest"
 )
 
+var DefaultBaseURL = flags.DefaultBaseURL
+
 func GetWireguardImageName() string {
-	return fmt.Sprintf("ghcr.io/kloudlite/kl/box/wireguard:%s", flags.Version)
+	return fmt.Sprintf("%s/box/wireguard:%s", flags.ImageBase, flags.Version)
 }
 
 func GetK3SImageName() string {
-	//return "rancher/k3s:v1.27.5-k3s1"
-	return fmt.Sprintf("ghcr.io/kloudlite/kl/k3s:%s", flags.Version)
+	return fmt.Sprintf("%s/k3s:%s", flags.ImageBase, flags.Version)
 }
 
 var (

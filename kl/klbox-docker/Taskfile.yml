@@ -2,7 +2,7 @@ version: 3
 
 
 vars:
-  ImageRegistry: "ghcr.io/kloudlite/kl/box"
+  ImageBase: "ghcr.io/kloudlite/kl"
 
 tasks:
   clean:
@@ -35,7 +35,7 @@ tasks:
 
   container:build:
     cmds:
-      - eval docker buildx build "{{.buildx_args}}" --build-context project=.. --load -t {{.ImageRegistry}}:v1.0.0-nightly --build-arg VERSION=v1.0.0-nightly .
+      - eval docker buildx build "{{.buildx_args}}" --build-context project=.. --load -t {{.ImageBase}}/box:v1.0.0-nightly --build-arg VERSION=v1.0.0-nightly .
 
   container:push:
     preconditions:
@@ -44,7 +44,7 @@ tasks:
     cmds:
 #      - docker buildx create --name klbuilder --use
 #      - docker buildx inspect klbuilder --bootstrap
-      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION={{.tag}} -t ghcr.io/kloudlite/kl/box:{{.tag}} . --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true --build-context project=..
+      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION={{.tag}} -t {{.ImageBase}}/box:{{.tag}} . --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true --build-context project=..
 #      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.ImageRegistry}}:{{.tag}} --build-arg VERSION={{.tag}} --build-context project=.. . --push
 #      - docker buildx rm klbuilder
 
