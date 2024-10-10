@@ -406,16 +406,16 @@ type GithubComKloudliteOperatorApisCrdsV1HTTPSIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Intercept struct {
-	Enabled      bool                                                            `json:"enabled"`
+	Enabled      *bool                                                           `json:"enabled,omitempty"`
 	PortMappings []*GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings `json:"portMappings,omitempty"`
-	ToDevice     string                                                          `json:"toDevice"`
+	ToDevice     *string                                                         `json:"toDevice,omitempty"`
 	ToIPAddr     *string                                                         `json:"toIPAddr,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
-	Enabled      bool                           `json:"enabled"`
+	Enabled      *bool                          `json:"enabled,omitempty"`
 	PortMappings []*v1.AppInterceptPortMappings `json:"portMappings,omitempty"`
-	ToDevice     string                         `json:"toDevice"`
+	ToDevice     *string                        `json:"toDevice,omitempty"`
 	ToIPAddr     *string                        `json:"toIPAddr,omitempty"`
 }
 
@@ -800,13 +800,19 @@ type RegistryImagePaginatedRecords struct {
 }
 
 type RegistryImageURL struct {
-	ScriptURL string `json:"scriptUrl"`
-	URL       string `json:"url"`
+	KlWebhookAuthToken string   `json:"klWebhookAuthToken"`
+	ScriptURL          []string `json:"scriptUrl"`
+	ScriptURLExample   []string `json:"scriptUrlExample"`
+	URL                []string `json:"url"`
+	URLExample         []string `json:"urlExample"`
 }
 
 type RegistryImageURLIn struct {
-	ScriptURL string `json:"scriptUrl"`
-	URL       string `json:"url"`
+	KlWebhookAuthToken string   `json:"klWebhookAuthToken"`
+	ScriptURL          []string `json:"scriptUrl"`
+	ScriptURLExample   []string `json:"scriptUrlExample"`
+	URL                []string `json:"url"`
+	URLExample         []string `json:"urlExample"`
 }
 
 type RouterEdge struct {
