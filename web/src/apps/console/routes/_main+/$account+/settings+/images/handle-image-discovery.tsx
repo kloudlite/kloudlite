@@ -1,6 +1,7 @@
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import Banner from '~/components/molecule/banner';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
@@ -71,6 +72,17 @@ export const RegistryImageInstruction = ({
                           language="sh"
                         />
                       ))}
+                    <Banner
+                      type="info"
+                      body={
+                        <div className="flex flex-col gap-md">
+                          <span className="bodyMd-medium">
+                            Webhook Image Metadata Push Example:
+                          </span>
+                          <span className="bodyMd">{data.urlExample}</span>
+                        </div>
+                      }
+                    />
                   </div>
                 )}
                 {active === 'script-url' && (
@@ -85,6 +97,20 @@ export const RegistryImageInstruction = ({
                           language="sh"
                         />
                       ))}
+                    <Banner
+                      type="info"
+                      body={
+                        <div className="flex flex-col gap-md">
+                          <span className="bodyMd-medium">
+                            Shell Script Example with Image and Meta
+                            Information:
+                          </span>
+                          <span className="bodyMd">
+                            {data.scriptUrlExample}
+                          </span>
+                        </div>
+                      }
+                    />
                   </div>
                 )}
               </div>

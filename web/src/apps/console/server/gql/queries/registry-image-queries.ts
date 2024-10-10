@@ -62,6 +62,8 @@ export const registryImagesQueries = (executor: IExecutor) => ({
         core_getRegistryImageURL {
           scriptUrl
           url
+          urlExample
+          scriptUrlExample
         }
       }
     `,

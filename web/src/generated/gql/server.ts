@@ -6071,7 +6071,12 @@ export type ConsoleGetRegistryImageUrlQueryVariables = Exact<{
 }>;
 
 export type ConsoleGetRegistryImageUrlQuery = {
-  core_getRegistryImageURL: { scriptUrl: Array<string>; url: Array<string> };
+  core_getRegistryImageURL: {
+    scriptUrl: Array<string>;
+    url: Array<string>;
+    urlExample: string;
+    scriptUrlExample: string;
+  };
 };
 
 export type ConsoleSearchRegistryImagesQueryVariables = Exact<{

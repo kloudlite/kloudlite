@@ -4494,6 +4494,8 @@ query consoleGetRegistryImageUrl {
   core_getRegistryImageURL {
     scriptUrl
     url
+    urlExample
+    scriptUrlExample
   }
 }
 
