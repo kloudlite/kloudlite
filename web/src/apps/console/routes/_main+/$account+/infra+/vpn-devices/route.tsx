@@ -108,7 +108,7 @@ const Devices = () => {
                     onClick={() => {
                       setVisible(true);
                     }}
-                  // LinkComponent={Link}
+                    // LinkComponent={Link}
                   />
                 ),
               }}

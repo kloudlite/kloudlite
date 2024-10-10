@@ -64,6 +64,7 @@ export const registryImagesQueries = (executor: IExecutor) => ({
           url
           urlExample
           scriptUrlExample
+          klWebhookAuthToken
         }
       }
     `,

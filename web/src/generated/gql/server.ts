@@ -1701,10 +1701,11 @@ export type RegistryImageIn = {
 };
 
 export type RegistryImageUrlIn = {
+  klWebhookAuthToken: Scalars['String']['input'];
   scriptUrl: Array<Scalars['String']['input']>;
-  scriptUrlExample: Scalars['String']['input'];
+  scriptUrlExample: Array<Scalars['String']['input']>;
   url: Array<Scalars['String']['input']>;
-  urlExample: Scalars['String']['input'];
+  urlExample: Array<Scalars['String']['input']>;
 };
 
 export type SearchProjectManagedService = {
@@ -6074,8 +6075,9 @@ export type ConsoleGetRegistryImageUrlQuery = {
   core_getRegistryImageURL: {
     scriptUrl: Array<string>;
     url: Array<string>;
-    urlExample: string;
-    scriptUrlExample: string;
+    urlExample: Array<string>;
+    scriptUrlExample: Array<string>;
+    klWebhookAuthToken: string;
   };
 };
 

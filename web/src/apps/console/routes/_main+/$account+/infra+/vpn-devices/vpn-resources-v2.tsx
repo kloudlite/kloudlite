@@ -1,6 +1,9 @@
-import { Eye, Trash } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { CopyButton, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -10,28 +13,25 @@ import {
   ListTitleV2,
   listClass,
 } from '~/console/components/console-list-components';
+import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
+import { Eye, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { ShowWireguardConfig } from '~/console/page-components/handle-console-devices';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IGlobalVpnDevices } from '~/console/server/gql/queries/global-vpn-queries';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import ListV2 from '~/console/components/listV2';
-import { IGlobalVpnDevices } from '~/console/server/gql/queries/global-vpn-queries';
-import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import DeleteDialog from '~/console/components/delete-dialog';
-import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
-import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import { ShowWireguardConfig } from '~/console/page-components/handle-console-devices';
 
 type BaseType = ExtractNodeType<IGlobalVpnDevices>;
 const RESOURCE_NAME = 'global-vpn';
@@ -223,21 +223,6 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
                     <DeviceHostView hostName={`${parseName(i)}.device.local`} />
                   </div>
                 ),
-                // render: () => (
-                //   <ListItem
-                //     noTooltip
-                //     data={
-                //       <CopyButton
-                //         title={
-                //           <span className="text-sm">
-                //             {parseName(i)}.device.local
-                //           </span>
-                //         }
-                //         value={`${parseName(i)}.device.local`}
-                //       />
-                //     }
-                //   />
-                // ),
               },
               ip: {
                 render: () => (

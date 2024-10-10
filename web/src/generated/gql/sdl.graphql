@@ -3886,17 +3886,19 @@ type RegistryImagePaginatedRecords {
 }
 
 type RegistryImageURL {
+  klWebhookAuthToken: String!
   scriptUrl: [String!]!
-  scriptUrlExample: String!
+  scriptUrlExample: [String!]!
   url: [String!]!
-  urlExample: String!
+  urlExample: [String!]!
 }
 
 input RegistryImageURLIn {
+  klWebhookAuthToken: String!
   scriptUrl: [String!]!
-  scriptUrlExample: String!
+  scriptUrlExample: [String!]!
   url: [String!]!
-  urlExample: String!
+  urlExample: [String!]!
 }
 
 type RemoteLogin {

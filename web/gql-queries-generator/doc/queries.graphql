@@ -4496,6 +4496,7 @@ query consoleGetRegistryImageUrl {
     url
     urlExample
     scriptUrlExample
+    klWebhookAuthToken
   }
 }
 
