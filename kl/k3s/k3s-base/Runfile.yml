@@ -76,5 +76,5 @@ tasks:
       - sh: '[[ -n "{{.tag}}" ]]'
         msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmd:
-      - run download:images tag=${tag}
+      - run download:images tag=v1.0.8-nightly
       - docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=${tag} -t ghcr.io/kloudlite/kl/k3s:${tag} . --push
