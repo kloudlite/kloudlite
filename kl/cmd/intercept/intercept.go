@@ -61,12 +61,13 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 
 	var apps []app
 
-	for _, a := range appsList {
-		for _, p := range a.Spec.Services {
+	for i, _ := range appsList {
+		a := appsList[i]
+		for j, _ := range a.Spec.Services {
 			apps = append(apps, app{
 				Name:        a.Metadata.Name,
 				DisplayName: a.DisplayName,
-				Port:        p.Port,
+				Port:        a.Spec.Services[j].Port,
 				App:         &a,
 			})
 		}
