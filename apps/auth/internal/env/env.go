@@ -40,7 +40,7 @@ type githubOAuthEnv struct {
 	GithubAppId        string `env:"GITHUB_APP_ID" required:"true"`
 	GithubAppPKFile    string `env:"GITHUB_APP_PK_FILE" required:"true"`
 	GithubScopes       string `env:"GITHUB_SCOPES" required:"true"`
-	GithubWebhookUrl   string `env:"GITHUB_WEBHOOK_URL" required:"true"`
+	GithubWebhookUrl   string `env:"GITHUB_WEBHOOK_URL" required:"false"`
 }
 
 type gitlabOAuthEnv struct {
@@ -48,7 +48,6 @@ type gitlabOAuthEnv struct {
 	GitlabClientSecret string `env:"GITLAB_CLIENT_SECRET" required:"true"`
 	GitlabCallbackUrl  string `env:"GITLAB_CALLBACK_URL" required:"true"`
 	GitlabScopes       string `env:"GITLAB_SCOPES" required:"true"`
-	GitlabWebhookUrl   string `env:"GITLAB_WEBHOOK_URL" required:"true"`
 }
 
 type googleOAuthEnv struct {
