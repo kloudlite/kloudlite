@@ -109,6 +109,9 @@ spec:
         - key: WEBHOOK_URL
           value: "https://webhooks.{{.Values.baseDomain}}"
 
+        - key: IMAGE_HOOK_SCRIPT_HOSTED_URL
+          value: "https://scripts.{{.Values.baseDomain}}"
+
       volumes:
         - mountPath: /console.d/templates
           type: config
