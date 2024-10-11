@@ -1,13 +1,14 @@
 version: v1
-defaultEnv: master
+defaultEnv: base-template
 packages:
 - neovim
 - git
-- pnpm
-- nodejs
-- gnumake
-- nodePackages.node-gyp
+- nodejs@22.8.0
+- pnpm@9.12.0
+- python@3.13.0rc3
+- gcc@14.2.0
 envVars: []
-mounts: []
-ports: []
-accountName: demoaccount
+mounts:
+- path: /workspace/src/apps/devdoc/.firebaseConfig
+  configRef: env-conf/firebase
+teamName: demo-account

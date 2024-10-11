@@ -1,8 +1,8 @@
 {
-  "git@2.45.2": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#git",
-  "gnumake@4.4.1": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#gnumake",
-  "neovim@0.10.1": "nixpkgs/60dfaff009e440faefbaeb20d8dda3239ba4a439#neovim",
-  "nodePackages.node-gyp@10.2.0": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#nodePackages.node-gyp",
-  "nodejs@22.4.1": "nixpkgs/c3392ad349a5227f4a3464dce87bcc5046692fce#nodejs",
-  "pnpm@9.7.0": "nixpkgs/8987be1fef03440514ebf3b0b60e0c44fc13eb6c#pnpm"
+  "gcc@14.2.0": "nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#gcc14",
+  "git@2.46.0": "nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#git",
+  "neovim@0.10.2": "nixpkgs/8bca501bf31b54ae2022fe5065ab475d75f7560e#neovim",
+  "nodejs@22.8.0": "nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#nodejs_22",
+  "pnpm@9.12.0": "nixpkgs/e2f08f4d8b3ecb5cf5c9fd9cb2d53bb3c71807da#pnpm",
+  "python@3.13.0rc3": "nixpkgs/73bed75dbd3de6d4fca3f81ce25a0cc7766afff6#python313"
 }
