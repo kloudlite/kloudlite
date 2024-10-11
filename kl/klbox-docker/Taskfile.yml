@@ -34,8 +34,10 @@ tasks:
   #     - go run ./main.go exec
 
   container:build:
+    vars:
+      tag: '{{ .tag | default "v1.0.0-nightly" }}'
     cmds:
-      - eval docker buildx build "{{.buildx_args}}" --build-context project=.. --load -t {{.ImageBase}}/box:v1.0.0-nightly --build-arg VERSION=v1.0.0-nightly .
+      - eval docker buildx build "{{.buildx_args}}" --build-context project=.. --load -t {{.ImageBase}}/box:{{.tag}} --build-arg VERSION={{.tag}} .
 
   container:push:
     preconditions:

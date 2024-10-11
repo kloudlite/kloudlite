@@ -3,6 +3,8 @@
 set -o errexit
 set -o pipefail
 
+sudo /docker-socket.sh &
+
 /start.sh
 
 export SSH_PORT=$SSH_PORT
