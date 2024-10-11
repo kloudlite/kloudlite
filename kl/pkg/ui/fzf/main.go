@@ -25,7 +25,7 @@ func FindOne[T any](items []T, itemFunc func(item T) string, options ...Option) 
 	}()...)
 
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, functions.NewE(err, "failed to create fzf")
 	}
 
 	idxs, err := f.Find(items, func(i int) string {

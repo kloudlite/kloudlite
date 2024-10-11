@@ -13,7 +13,7 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
-		return NewE(err)
+		return NewE(err, "failed to parse command")
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
@@ -34,7 +34,7 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	// s.Start()
 	err = cmd.Run()
 	// s.Stop()
-	return NewE(err)
+	return NewE(err, "failed to execute command")
 }
 
 func Exec(cmdString string, env map[string]string) ([]byte, error) {
@@ -42,7 +42,7 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
-		return nil, NewE(err)
+		return nil, NewE(err, "failed to parse command")
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
@@ -67,7 +67,7 @@ func ExecNoOutput(cmdString string) error {
 	cmd := exec.Command("sh", "-c", cmdString)
 	_, err := cmd.Output()
 	if err != nil {
-		return NewE(err)
+		return NewE(err, "failed to execute command")
 	}
 	return nil
 }
@@ -76,7 +76,7 @@ func ExecNoOutput(cmdString string) error {
 func isAdmin() bool {
 	cmd := exec.Command("net", "session")
 	err := cmd.Run()
-	return NewE(err) == nil
+	return err == nil
 }
 
 func WinSudoExec(cmdString string, env map[string]string) ([]byte, error) {

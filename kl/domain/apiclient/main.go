@@ -2,6 +2,7 @@ package apiclient
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -41,7 +42,7 @@ func GetFromResp[T any](respData []byte) (*T, error) {
 	var resp Response[T]
 	err := json.Unmarshal(respData, &resp)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, functions.NewE(err, fmt.Sprintf("failed to unmarshal api response %q", string(respData)))
 	}
 	if len(resp.Errors) > 0 {
 		return nil, resp.Errors[0]

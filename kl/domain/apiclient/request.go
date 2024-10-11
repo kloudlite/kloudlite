@@ -3,6 +3,7 @@ package apiclient
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
 	"net"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -25,7 +25,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 		"args":   []any{variables},
 	})
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err, fmt.Sprintf("failed to marshal apiclient request to server with request %#v on method %s", variables, method))
 	}
 
 	payload := strings.NewReader(string(marshal))
@@ -52,7 +52,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 				host, port := addrArray[0], addrArray[1]
 				ips, err := customResolver.LookupIPAddr(ctx, host)
 				if err != nil || len(ips) == 0 {
-					return nil, functions.NewE(err) // or: return nil, functions.Error("couldn't resolve the host")
+					return nil, fn.NewE(err) // or: return nil, fn.Error("couldn't resolve the host")
 				}
 				// Use the first IP address returned by the custom DNS resolver
 				return net.Dial(network, net.JoinHostPort(ips[0].String(), port))
@@ -62,7 +62,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	req, err := http.NewRequest(http.MethodPost, url, payload)
 
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err, fmt.Sprintf("failed to create request while making apiclient request on method %s", method))
 	}
 
 	req.Header.Add("authority", "klcli.kloudlite.io")
@@ -78,14 +78,14 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	//f()
 	if err != nil || res.StatusCode != 200 {
 		if err != nil {
-			return nil, functions.NewE(err)
+			return nil, fn.NewE(err, fmt.Sprintf("failed while making apiclient request to server with method %s", method))
 		}
 
 		body, e := io.ReadAll(res.Body)
 		if e != nil {
 			return nil, e
 		}
-		return nil, functions.Error(string(body))
+		return nil, fn.NewE(err, fmt.Sprintf("failed to make apiclient request to server with method %s, status code %d, body %s", method, res.StatusCode, string(body)))
 	}
 	defer func() {
 		_ = res.Body.Close()
@@ -93,7 +93,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err, fmt.Sprintf("failed to read response body of apiclient request to server with method %s", method))
 	}
 
 	type RespData struct {
@@ -109,8 +109,8 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		fn.PrintError(fn.Errorf("some issue with apiclient:\n%s", string(body)))
-		return nil, functions.NewE(err)
+		//fn.PrintError(fn.Errorf("some issue with apiclient:\n%s", string(body)))
+		return nil, fn.NewE(err, fmt.Sprintf("failed to unmarshal apiclient response to server with method %s and response %q", method, string(body)))
 	}
 
 	if len(respData.Errors) > 0 {
@@ -119,7 +119,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 			errorMessages = append(errorMessages, e.Message)
 		}
 
-		return nil, fn.Errorf(strings.Join(errorMessages, "\n"))
+		return nil, fn.NewE(fn.Errorf(strings.Join(errorMessages, "\n")), "failed to unmarshal apiclient response to server with method %s and response %q", method, string(body))
 	}
 
 	return body, nil
