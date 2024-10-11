@@ -16,7 +16,7 @@ var Cmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if b := functions.ParseBoolFlag(cmd, "reset"); b {
-			if err := fileclient.SaveBaseURL(constants.DefaultBaseURL); err != nil {
+			if err := fileclient.SaveBaseURL(constants.GetDefaultBaseURL()); err != nil {
 				fn.PrintError(err)
 			} else {
 				fn.Log("Base url reset successfully")
