@@ -275,7 +275,7 @@ func (c *client) generateConnectionScript(clusterConfig *fileclient.TeamClusterC
 		ClusterCIDR:         clusterConfig.ClusterCIDR,
 		IpAddress:           vpnTeamConfig.IpAddress,
 		K3sTrackerImageName: constants.GetK3sTrackerImageName(),
-		BaseURL:             constants.GetDefaultBaseURL(),
+		BaseURL:             constants.BaseURL,
 	}
 
 	b := new(bytes.Buffer)
