@@ -56,7 +56,7 @@ echo "experimental-features = nix-command flakes" >~/.config/nix/nix.conf
 
 # shift
 
-export PATH=$PATH:$HOME/.local/state/nix/profiles/bin
+export PATH=$PATH:$HOME/.local/state/nix/profiles/profile/bin
 
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
 cat $KL_HASH_FILE | jq '.hash' -r >/tmp/hash
