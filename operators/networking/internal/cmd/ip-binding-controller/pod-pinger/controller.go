@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	probing "github.com/prometheus-community/pro-bing"
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,8 +34,6 @@ type Reconciler struct {
 	Name       string
 	yamlClient kubectl.YAMLClient
 }
-
-const KloudlitePodActiveLabel = "kloudlite.io/pod.active"
 
 const KloudlitePodReconcileAfter = "kloudlite.io/pod.reconcile.after"
 
@@ -158,48 +156,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return requeue(fmt.Errorf("multiple pod bindings with same reservation found, exiting"))
 	}
 
-	// if out, err := exec.CommandContext(ctx, "timeout", "1", "ping", "-c", "1", pblist.Items[0].Spec.GlobalIP).CombinedOutput(); err != nil {
-	// 	logger.Error("failed to ping", "global-ip", pblist.Items[0].Spec.GlobalIP, "output", out)
-	// 	if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
-	// 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
-	// 	}
-	// 	if err := r.Delete(ctx, pod); err != nil {
-	// 		return ctrl.Result{}, err
-	// 	}
-	// 	return ctrl.Result{}, err
-	// }
-
-	pinger, err := probing.NewPinger(pblist.Items[0].Spec.GlobalIP)
-	if err != nil {
-		r.logger.Error("failed to create pinger, got", "err", err, "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
-		return requeue(err)
-	}
-
-	pinger.Count = 1
-	pinger.Size = 24 // probing requires min 24 bytes
-	pinger.ResolveTimeout = 5 * time.Second
-
-	pctx, cf := context.WithTimeout(ctx, 5*time.Second)
-	defer cf()
-
-	if err = pinger.RunWithContext(pctx); err != nil {
-		logger.Error("failed to ping, got", "err", err)
-
-		// if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
-		// 	return requeue(nil, 1*time.Second)
-		// }
-
+	if out, err := exec.CommandContext(ctx, "timeout", "5", "ping", "-c", "1", pblist.Items[0].Spec.GlobalIP).CombinedOutput(); err != nil {
+		logger.Error("failed to ping", "global-ip", pblist.Items[0].Spec.GlobalIP, "output", string(out))
 		return deletePod(fmt.Sprintf("ping failed, got err: %s", err.Error()))
 	}
-	logger.Debug("ping success, requeing after 5s", "ping.packets-received", pinger.Statistics().PacketsRecv)
 
-	// if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
-	// 	fn.MapSet(&pod.Labels, KloudlitePodActiveLabel, "true")
-	// 	if err := r.Update(ctx, pod); err != nil {
-	// 		r.logger.Error("failed to update pod, got", "err", err, "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
-	// 		return requeue(err)
-	// 	}
-	// }
+	logger.Debug("ping success, requeing after 5s")
 
 	return requeue(nil)
 }
