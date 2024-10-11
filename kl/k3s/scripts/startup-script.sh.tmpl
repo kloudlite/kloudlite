@@ -133,7 +133,7 @@ kubectl apply -f {{.InstallCommand.CRDsURL}} --server-side
 
 {{/*kubectl apply -f /tmp/helm-chart.yml*/}}
 
-curl -L0 -H 'Authorization: {{.InstallCommand.HelmValues.ClusterToken}}' https://console.dev.kloudlite.io/render/helm/kloudlite-agent/{{.InstallCommand.HelmValues.TeamName}}/{{.InstallCommand.HelmValues.ClusterName}} |  kubectl apply -f -
+curl -L0 -H 'Authorization: {{.InstallCommand.HelmValues.ClusterToken}}' {{.BaseURL}}/render/helm/kloudlite-agent/{{.InstallCommand.HelmValues.TeamName}}/{{.InstallCommand.HelmValues.ClusterName}} |  kubectl apply -f -
 
 
 cat > /tmp/service-device-router.yml <<EOF
@@ -206,7 +206,7 @@ spec:
     spec:
       containers:
         - name: kl-tracker
-          image: {{.ImageBase}}/k3s-tracker:{{.ImageTag}}
+          image: {{.K3sTrackerImageName}}
           args:
             - --output
             - /.cache/kl/k3s-status.json

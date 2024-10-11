@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
@@ -28,7 +29,7 @@ func (c *client) Start() error {
 		return fn.NewE(err)
 	}
 
-	if err := c.ensureImage(GetImageName()); err != nil {
+	if err := c.ensureImage(constants.GetBoxImageName()); err != nil {
 		return fn.NewE(err)
 	}
 

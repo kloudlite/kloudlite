@@ -253,29 +253,27 @@ func (c *client) generateConnectionScript(clusterConfig *fileclient.TeamClusterC
 	}
 
 	cc := struct {
-		ClusterToken   string `json:"clusterToken"`
-		ClusterName    string `json:"cluster"`
-		InstallCommand fileclient.InstallCommand
-		Installed      bool
-		WGConfig       fileclient.WGConfig
-		Version        string
-		GatewayIP      string
-		ClusterCIDR    string
-		IpAddress      string
-		ImageTag       string
-		ImageBase      string
+		ClusterToken        string `json:"clusterToken"`
+		ClusterName         string `json:"cluster"`
+		InstallCommand      fileclient.InstallCommand
+		Installed           bool
+		WGConfig            fileclient.WGConfig
+		Version             string
+		GatewayIP           string
+		ClusterCIDR         string
+		IpAddress           string
+		K3sTrackerImageName string
 	}{
-		ClusterToken:   clusterConfig.ClusterToken,
-		ClusterName:    clusterConfig.ClusterName,
-		InstallCommand: clusterConfig.InstallCommand,
-		Installed:      clusterConfig.Installed,
-		WGConfig:       clusterConfig.WGConfig,
-		Version:        clusterConfig.Version,
-		GatewayIP:      clusterConfig.GatewayIP,
-		ClusterCIDR:    clusterConfig.ClusterCIDR,
-		IpAddress:      vpnTeamConfig.IpAddress,
-		ImageTag:       clusterConfig.Version,
-		ImageBase:      flags.ImageBase,
+		ClusterToken:        clusterConfig.ClusterToken,
+		ClusterName:         clusterConfig.ClusterName,
+		InstallCommand:      clusterConfig.InstallCommand,
+		Installed:           clusterConfig.Installed,
+		WGConfig:            clusterConfig.WGConfig,
+		Version:             clusterConfig.Version,
+		GatewayIP:           clusterConfig.GatewayIP,
+		ClusterCIDR:         clusterConfig.ClusterCIDR,
+		IpAddress:           vpnTeamConfig.IpAddress,
+		K3sTrackerImageName: constants.GetK3sTrackerImageName(),
 	}
 
 	b := new(bytes.Buffer)

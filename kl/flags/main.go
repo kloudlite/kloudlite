@@ -1,10 +1,9 @@
 package flags
 
 var (
-	Version    = "development"
-	CliName    = "kl"
-	BasePrefix = ""
-	DevMode    = "false"
+	Version = "development"
+	CliName = "kl"
+	DevMode = "false"
 
 	IsVerbose = false
 	IsQuiet   = false
