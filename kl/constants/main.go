@@ -19,14 +19,6 @@ const (
 	K3sServerIp                 = "172.18.0.2"
 )
 
-var GetDefaultBaseURL = func() string {
-	if s := os.Getenv("KL_BASE_URL"); s != "" {
-		return s
-	}
-
-	return flags.DefaultBaseURL
-}
-
 // depricated
 func GetWireguardImageName() string {
 	return fmt.Sprintf("%s/box/wireguard:%s", flags.ImageBase, flags.Version)
@@ -57,10 +49,14 @@ func GetBoxImageName() string {
 
 var (
 	BaseURL = func() string {
-		baseUrl := GetDefaultBaseURL()
+		baseUrl := flags.DefaultBaseURL
 
 		s, err := fileclient.GetBaseURL()
 		if err == nil && s != "" {
+			baseUrl = s
+		}
+
+		if s := os.Getenv("KL_BASE_URL"); s != "" {
 			baseUrl = s
 		}
 
