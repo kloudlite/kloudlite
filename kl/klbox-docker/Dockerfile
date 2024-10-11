@@ -16,9 +16,9 @@ ENV CGO_ENABLED=0
 RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VERSION} -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
 
 
-FROM --platform=$TARGETPLATFORM ubuntu:latest
+FROM --platform=$TARGETPLATFORM ubuntu:24.04
 
-RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git bzip2 wireguard-tools iputils-ping
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git bzip2 wireguard-tools iputils-ping socat
 
 RUN mkdir /var/run/sshd
 
@@ -83,10 +83,11 @@ RUN chsh -s /bin/zsh kl
 
 COPY ./start.sh /start.sh
 COPY ./entrypoint.sh /entrypoint.sh
+COPY ./docker-socket.sh /docker-socket.sh
 
 RUN mkdir /kl-tmp && chown -R kl:kl /kl-tmp
 
-RUN chmod +x /start.sh /entrypoint.sh
+RUN chmod +x /start.sh /entrypoint.sh /docker-socket.sh
 
 COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
 

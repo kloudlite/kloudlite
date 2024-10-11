@@ -520,7 +520,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 	// }
 
 	volumes = append(volumes,
-		mount.Mount{Type: mount.TypeVolume, Source: dockerSock, Target: "/var/run/docker.sock"},
+		mount.Mount{Type: mount.TypeVolume, Source: dockerSock, Target: "/var/run/host-docker.sock"},
 	)
 
 	return volumes, nil
