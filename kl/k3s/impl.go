@@ -223,7 +223,8 @@ func (c *client) CreateClustersTeams(teamName string) error {
 			fn.Log(text.Yellow(fmt.Sprintf("Time taken to create cluster: %.2fs", time.Since(start).Seconds())))
 		}
 	}()
-	return c.EnsureK3sServerIsReady()
+	// return c.EnsureK3sServerIsReady()
+	return nil
 
 }
 
