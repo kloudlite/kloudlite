@@ -63,7 +63,7 @@ func (c *fclient) getKlFile(filePath string) (*KLFileType, error) {
 
 	klfile, err := confighandler.ReadConfig[KLFileType](filePath)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, functions.NewE(err, "failed to read klfile")
 	}
 
 	return klfile, nil

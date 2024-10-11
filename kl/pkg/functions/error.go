@@ -56,7 +56,7 @@ func PrintError(err error) {
 		return
 	}
 
-	if flags.IsDev() {
+	if flags.IsDev() || flags.IsVerbose {
 		tracerr.Print(err)
 		return
 	}

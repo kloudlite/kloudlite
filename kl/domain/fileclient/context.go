@@ -121,7 +121,7 @@ func GetUserHomeDir() (string, error) {
 
 		oldPwd, err := os.Getwd()
 		if err != nil {
-			return "", functions.NewE(err)
+			return "", functions.NewE(err, "failed to get current working directory")
 		}
 
 		sp := strings.Split(oldPwd, "/")
@@ -157,7 +157,7 @@ func GetConfigFolder() (configFolder string, err error) {
 
 	// ensuring the dir is present
 	if err := os.MkdirAll(configPath, os.ModePerm); err != nil {
-		return "", functions.NewE(err)
+		return "", functions.NewE(err, "failed to create config folder")
 	}
 
 	// ensuring user permission on created dir
@@ -165,7 +165,7 @@ func GetConfigFolder() (configFolder string, err error) {
 		if err = fn.ExecCmd(
 			fmt.Sprintf("chown %s %s", usr, configPath), nil, false,
 		); err != nil {
-			return "", functions.NewE(err)
+			return "", functions.NewE(err, "failed to change user permission on config folder")
 		}
 	}
 
@@ -213,11 +213,11 @@ func GetExtraData() (*ExtraData, error) {
 			b, err := yaml.Marshal(extraData)
 
 			if err != nil {
-				return nil, functions.NewE(err)
+				return nil, functions.NewE(err, "failed to marshal extra data")
 			}
 
 			if err := writeOnUserScope(ExtraDataFileName, b); err != nil {
-				return nil, functions.NewE(err)
+				return nil, functions.NewE(err, "failed to write extra data")
 			}
 		}
 
@@ -225,7 +225,7 @@ func GetExtraData() (*ExtraData, error) {
 	}
 
 	if err = yaml.Unmarshal(file, &extraData); err != nil {
-		return nil, functions.NewE(err)
+		return nil, functions.NewE(err, "failed to unmarshal extra data")
 	}
 
 	return &extraData, nil
@@ -234,7 +234,7 @@ func GetExtraData() (*ExtraData, error) {
 func (fc *fclient) SetDevice(device *DeviceContext) error {
 	file, err := yaml.Marshal(device)
 	if err != nil {
-		return functions.NewE(err)
+		return functions.NewE(err, "failed to marshal device context")
 	}
 
 	return writeOnUserScope(DeviceFileName, file)
@@ -249,11 +249,11 @@ func (fc *fclient) GetDevice() (*DeviceContext, error) {
 			b, err := yaml.Marshal(device)
 
 			if err != nil {
-				return nil, functions.NewE(err)
+				return nil, functions.NewE(err, "failed to marshal device context")
 			}
 
 			if err := writeOnUserScope(DeviceFileName, b); err != nil {
-				return nil, functions.NewE(err)
+				return nil, functions.NewE(err, "failed to write device context")
 			}
 		}
 
@@ -261,7 +261,7 @@ func (fc *fclient) GetDevice() (*DeviceContext, error) {
 	}
 
 	if err = yaml.Unmarshal(file, &device); err != nil {
-		return nil, functions.NewE(err)
+		return nil, functions.NewE(err, "failed to unmarshal device context")
 	}
 
 	return &device, nil
@@ -281,7 +281,7 @@ func (c *fclient) GetHostWgConfig() (string, error) {
 
 	config, err := c.GetWGConfig()
 	if err != nil {
-		return "", fn.NewE(err)
+		return "", fn.NewE(err, "failed to get wg config")
 	}
 
 	wgConfig := fmt.Sprintf(`[Interface]
@@ -300,7 +300,7 @@ Endpoint = %s:33820
 func (fc *fclient) SetWGConfig(config string) error {
 
 	if err := writeOnUserScope("kl-host-wg.conf", []byte(config)); err != nil {
-		return fn.NewE(err)
+		return fn.NewE(err, "failed to write wg config")
 	}
 
 	return nil
@@ -325,19 +325,19 @@ func (fc *fclient) GetWGConfig() (*WGConfig, error) {
 	if err != nil {
 		u, err := uuid.NewV4()
 		if err != nil {
-			return nil, fn.NewE(err)
+			return nil, fn.NewE(err, "failed to generate uuid")
 		}
 		wgProxyPrivateKey, wgProxyPublicKey, err := GenerateWireGuardKeys()
 		if err != nil {
-			return nil, fn.NewE(err)
+			return nil, fn.NewE(err, "failed to generate wg keys")
 		}
 		hostPrivateKey, hostPublicKey, err := GenerateWireGuardKeys()
 		if err != nil {
-			return nil, fn.NewE(err)
+			return nil, fn.NewE(err, "failed to generate wg keys")
 		}
 		workSpacePrivateKey, workSpacePublicKey, err := GenerateWireGuardKeys()
 		if err != nil {
-			return nil, fn.NewE(err)
+			return nil, fn.NewE(err, "failed to generate wg keys")
 		}
 		wgConfig := WGConfig{
 			UUID: u.String(),
@@ -356,14 +356,14 @@ func (fc *fclient) GetWGConfig() (*WGConfig, error) {
 		}
 		file, err := yaml.Marshal(wgConfig)
 		if err != nil {
-			return nil, fn.NewE(err)
+			return nil, fn.NewE(err, "failed to marshal wg config")
 		}
 		if err := writeOnUserScope(WGConfigFileName, file); err != nil {
-			return nil, fn.NewE(err)
+			return nil, fn.NewE(err, "failed to write wg config")
 		}
 		config := fc.generateWGConfig(&wgConfig)
 		if err := writeOnUserScope(WorkspaceWireguardConfigFileName, []byte(config)); err != nil {
-			return nil, fn.NewE(err)
+			return nil, fn.NewE(err, "failed to write wg config")
 		}
 		return &wgConfig, nil
 	}
@@ -371,7 +371,7 @@ func (fc *fclient) GetWGConfig() (*WGConfig, error) {
 	wgConfig := WGConfig{}
 
 	if err = yaml.Unmarshal(file, &wgConfig); err != nil {
-		return nil, fn.NewE(err)
+		return nil, fn.NewE(err, "failed to unmarshal wg config")
 	}
 
 	return &wgConfig, nil
@@ -380,13 +380,13 @@ func (fc *fclient) GetWGConfig() (*WGConfig, error) {
 func (fc *fclient) GetK3sTracker() (*K3sTracker, error) {
 	file, err := ReadFile(K3sTrackerFileName)
 	if err != nil {
-		return nil, fn.NewE(err)
+		return nil, fn.NewE(err, "failed to read k3s tracker")
 	}
 
 	tracker := K3sTracker{}
 
 	if err = json.Unmarshal(bytes.Trim(file, "\x00"), &tracker); err != nil {
-		return nil, fn.NewE(err)
+		return nil, fn.NewE(err, "failed to unmarshal k3s tracker")
 	}
 
 	return &tracker, nil
@@ -398,7 +398,7 @@ func GetCookieString(options ...fn.Option) (string, error) {
 
 	session, err := GetAuthSession()
 	if err != nil {
-		return "", functions.NewE(err)
+		return "", functions.NewE(err, "failed to get auth session")
 	}
 
 	if session == "" {
@@ -421,17 +421,17 @@ func GetAuthSession() (string, error) {
 		if !errors.Is(err, os.ErrNotExist) {
 			b, err := yaml.Marshal(session)
 			if err != nil {
-				return "", functions.NewE(err)
+				return "", functions.NewE(err, "failed to marshal session")
 			}
 
 			if err := writeOnUserScope(SessionFileName, b); err != nil {
-				return "", functions.NewE(err)
+				return "", functions.NewE(err, "failed to save session")
 			}
 		}
 	}
 
 	if err = yaml.Unmarshal(file, &session); err != nil {
-		return "", functions.NewE(err)
+		return "", functions.NewE(err, "failed to unmarshal session")
 	}
 
 	return session.Session, nil
@@ -440,7 +440,7 @@ func GetAuthSession() (string, error) {
 func SaveAuthSession(session string) error {
 	file, err := yaml.Marshal(Session{Session: session})
 	if err != nil {
-		return functions.NewE(err)
+		return functions.NewE(err, "failed to marshal session")
 	}
 
 	return writeOnUserScope(SessionFileName, file)
@@ -449,7 +449,7 @@ func SaveAuthSession(session string) error {
 func writeOnUserScope(name string, data []byte) error {
 	dir, err := GetConfigFolder()
 	if err != nil {
-		return functions.NewE(err)
+		return functions.NewE(err, "failed to get config folder")
 	}
 
 	if _, er := os.Stat(dir); errors.Is(er, os.ErrNotExist) {
@@ -462,14 +462,14 @@ func writeOnUserScope(name string, data []byte) error {
 	filePath := path.Join(dir, name)
 
 	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return functions.NewE(err)
+		return functions.NewE(err, "failed to write file")
 	}
 
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
 		if err := fn.ExecCmd(
 			fmt.Sprintf("chown %s %s", usr, filePath), nil, false,
 		); err != nil {
-			return functions.NewE(err)
+			return functions.NewE(err, "failed to change user permission on file")
 		}
 	}
 
@@ -479,7 +479,7 @@ func writeOnUserScope(name string, data []byte) error {
 func ReadFile(name string) ([]byte, error) {
 	dir, err := GetConfigFolder()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, functions.NewE(err, "failed to get config folder")
 	}
 
 	filePath := path.Join(dir, name)
@@ -491,7 +491,7 @@ func ReadFile(name string) ([]byte, error) {
 	file, err := os.ReadFile(filePath)
 
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, functions.NewE(err, "failed to read file")
 	}
 
 	return file, nil
