@@ -374,15 +374,19 @@ jobs:
       fail-fast: false
       matrix:
         app: [kl]
-        os: [ubuntu-latest, windows-latest, macos-14, macos-13]
+        os:
+          - ubuntu-latest
+          # - windows-latest
+          - macos-14
+          - macos-13
         arch: [amd64, arm64]
         include:
           - os: ubuntu-latest
             goos: linux
             platform: linux
-          - os: windows-latest
-            goos: windows
-            platform: windows
+          # - os: windows-latest
+          #   goos: windows
+          #   platform: windows
           - os: macos-13
             goos: darwin
             platform: darwin
