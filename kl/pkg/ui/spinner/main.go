@@ -57,7 +57,7 @@ func (s *sclient) popMessage() string {
 
 	oresp := s.message[len(s.message)-1]
 	if s.verbose && !s.quiet {
-		logf("%s %s\n", text.Bold(text.Red(fmt.Sprintf("- [%d]", len(s.message)-1))), oresp)
+		logf("%s %s\n", text.Bold(text.Yellow(fmt.Sprintf("- [%d]", len(s.message)-1))), oresp)
 	}
 
 	s.message = s.message[:len(s.message)-1]
