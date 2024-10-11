@@ -37,21 +37,9 @@ RUN echo "GatewayPorts yes" >> /etc/ssh/sshd_config
 
 ENV HOSTNAME box
 RUN mkdir -m 0755 /nix && chown kl /nix
-RUN mkdir -p /kl-nix-profile && chown kl /kl-nix-profile
-
-#RUN <<EOF
-# export VERSION=2.23.0
-# export SYSTEM=x86_64-linux
-# cd /tmp
-# curl -LO https://releases.nixos.org/nix/nix-$VERSION/nix-$VERSION-$SYSTEM.tar.xz
-# tar xf nix-$VERSION-$SYSTEM.tar.xz
-# mv nix-$VERSION-$SYSTEM /nix-installer
-#EOF
-#RUN chown kl /nix-installer
 
 USER kl
-RUN mkdir -p ~/.local/state/nix
-RUN ln -sf /kl-nix-profile ~/.local/state/nix/profiles
+RUN mkdir -p ~/.local/state/nix 
 RUN curl -L https://nixos.org/nix/install | sh -s --
 
 RUN mkdir -p "/home/kl/.config/zsh"
@@ -63,12 +51,6 @@ USER root
 RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  "/usr/share/zsh/plugins/zsh-syntax-highlighting"
 
 USER root
-
-# COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
-
-# RUN mkdir -p /home/kl/.config/nix
-# && echo "experimental-features = nix-command flakes" > /home/kl/.config/nix/nix.conf
-# RUN chown -R kl:kl /home/kl/.config
 
 RUN cp /etc/ssl/certs/ca-certificates.crt /no-cert-file.crt
 

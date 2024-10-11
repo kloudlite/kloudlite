@@ -11,7 +11,7 @@ export IN_DEV_BOX="true"
 export KL_WORKSPACE="$KL_WORKSPACE"
 export KL_TMP_PATH="/kl-tmp"
 
-cat <<EOL > /kl-tmp/global-profile
+cat <<EOL >/kl-tmp/global-profile
 export SSH_PORT=$SSH_PORT
 export IN_DEV_BOX="true"
 export KL_WORKSPACE="$KL_WORKSPACE"
@@ -27,45 +27,41 @@ sudo mkdir -p /etc/wireguard
 echo $KL_TEAM_NAME
 set -x
 CLUSTER_IP_RANGE=$(echo $CLUSTER_IP_RANGE | sed 's/\//###/g')
-cat /.cache/kl/kl-workspace-wg.conf | sed "s/#CLUSTER_GATEWAY_IP/${CLUSTER_GATEWAY_IP:-null}/" | sed "s/#CLUSTER_IP_RANGE/${CLUSTER_IP_RANGE:-null}/" > /tmp/wg-cong
+cat /.cache/kl/kl-workspace-wg.conf | sed "s/#CLUSTER_GATEWAY_IP/${CLUSTER_GATEWAY_IP:-null}/" | sed "s/#CLUSTER_IP_RANGE/${CLUSTER_IP_RANGE:-null}/" >/tmp/wg-cong
 sed -i "s/###/\//" /tmp/wg-cong
 set +x
 sudo cp /tmp/wg-cong /etc/wireguard/kl-workspace-wg.conf
 rm /tmp/wg-cong
-cat /.cache/kl/vpn/${KL_TEAM_NAME}.json | jq -r .wg | base64 -d > /tmp/kl-vpn.conf
+cat /.cache/kl/vpn/${KL_TEAM_NAME}.json | jq -r .wg | base64 -d >/tmp/kl-vpn.conf
 sudo cp /tmp/kl-vpn.conf /etc/wireguard/kl-vpn.conf
 rm /tmp/kl-vpn.conf
 sudo wg-quick up kl-vpn
 sudo wg-quick up kl-workspace-wg
 
-# sudo dnsmasq --server=/.local/$KL_DNS --server=1.1.1.1
-
-# sudo chown kl /var/run/docker.sock
-
 entrypoint_executed="/home/kl/.kloudlite_entrypoint_executed"
 if [ ! -f "$entrypoint_executed" ]; then
-    mkdir -p /home/kl/.config
-    cp /tmp/.zshrc /home/kl/.zshrc
-    cp /tmp/.bashrc /home/kl/.bashrc
-    cp /tmp/.profile /home/kl/.profile
-    cp /tmp/.check-online /home/kl/.check-online
-    ln -sf /home/kl/.profile /home/kl/.zprofile
-    cp /tmp/aliasrc /home/kl/.config/aliasrc
-    echo "successfully initialized .profile and .bashrc" >> $entrypoint_executed
-    # ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" <<<y >/dev/null 2>&1
+  mkdir -p /home/kl/.config
+  cp /tmp/.zshrc /home/kl/.zshrc
+  cp /tmp/.bashrc /home/kl/.bashrc
+  cp /tmp/.profile /home/kl/.profile
+  cp /tmp/.check-online /home/kl/.check-online
+  ln -sf /home/kl/.profile /home/kl/.zprofile
+  cp /tmp/aliasrc /home/kl/.config/aliasrc
+  echo "successfully initialized .profile and .bashrc" >>$entrypoint_executed
+  # ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" <<<y >/dev/null 2>&1
 fi
 
 mkdir -p ~/.config/nix
-echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+echo "experimental-features = nix-command flakes" >~/.config/nix/nix.conf
 
 # shift
 
-export PATH=$PATH:/kl-nix-profile/profile/bin
+export PATH=$PATH:$HOME/.local/state/nix/profiles/bin
 
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
-cat $KL_HASH_FILE | jq '.hash' -r > /tmp/hash
-cat $KL_HASH_FILE | jq '.config.env | to_entries | map_values(. = "export \(.key)=\"\(.value)\"")|.[]' -r >> /tmp/env
-cat > /tmp/mount.sh <<EOF
+cat $KL_HASH_FILE | jq '.hash' -r >/tmp/hash
+cat $KL_HASH_FILE | jq '.config.env | to_entries | map_values(. = "export \(.key)=\"\(.value)\"")|.[]' -r >>/tmp/env
+cat >/tmp/mount.sh <<EOF
 set -o errexit
 set -o pipefail
 vmounts=$(cat $KL_HASH_FILE | jq '.config.mounts | length')
@@ -76,7 +72,7 @@ fi
 EOF
 sudo bash /tmp/mount.sh
 
-cat > /tmp/pkg-install.sh <<EOF
+cat >/tmp/pkg-install.sh <<EOF
 set -o errexit
 set -o pipefail
 npkgs=$(cat $KL_HASH_FILE | jq '.config.packageHashes | length')
@@ -91,16 +87,10 @@ bash /tmp/pkg-install.sh
 
 #nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command echo "successfully installed packages"
 #echo export PATH=$PATH:$(eval nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command printenv PATH) >> /tmp/env
-echo "export KL_HASH_FILE=$KL_HASH_FILE" >> /tmp/env
+echo "export KL_HASH_FILE=$KL_HASH_FILE" >>/tmp/env
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE"
 
 source /tmp/env
-
-# cat > /tmp/resolv.conf <<EOF
-# nameserver 127.0.0.1
-# search $KL_SEARCH_DOMAIN
-# options ndots:0
-# EOF
 
 RESOLV_FILE="/etc/resolv.conf"
 # add search domain to resolv.conf
@@ -110,21 +100,20 @@ sudo sh -c "echo \"search $KL_SEARCH_DOMAIN\" >> $RESOLV_FILE"
 
 # sudo cp /tmp/resolv.conf /etc/resolv.conf
 
-
 if [ -d "/tmp/ssh2" ]; then
-    mkdir -p /home/kl/.ssh
-    cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
-    cp /tmp/ssh2/id_rsa /home/kl/.ssh/id_rsa
-    cp /tmp/ssh2/id_rsa.pub /home/kl/.ssh/id_rsa.pub
-    chmod 600 /home/kl/.ssh/authorized_keys
-    echo "successfully copied ssh credentials"
+  mkdir -p /home/kl/.ssh
+  cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
+  cp /tmp/ssh2/id_rsa /home/kl/.ssh/id_rsa
+  cp /tmp/ssh2/id_rsa.pub /home/kl/.ssh/id_rsa.pub
+  chmod 600 /home/kl/.ssh/authorized_keys
+  echo "successfully copied ssh credentials"
 fi
 
 # if [ -f "/tmp/gitconfig/.gitconfig" ]; then
 #     cp /tmp/gitconfig/.gitconfig /home/kl/.gitconfig
 # fi
 
-bash ~/.check-online > /dev/null 2>&1 &
+bash ~/.check-online >/dev/null 2>&1 &
 
 trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint:SETUP_COMPLETE"
