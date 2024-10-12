@@ -1,6 +1,7 @@
 {
   "gcc@14.2.0": "nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#gcc14",
   "git@2.46.0": "nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#git",
+  "gnumake@4.4.1": "nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#gnumake",
   "neovim@0.10.2": "nixpkgs/8bca501bf31b54ae2022fe5065ab475d75f7560e#neovim",
   "nodejs@22.8.0": "nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#nodejs_22",
   "pnpm@9.12.0": "nixpkgs/e2f08f4d8b3ecb5cf5c9fd9cb2d53bb3c71807da#pnpm",
