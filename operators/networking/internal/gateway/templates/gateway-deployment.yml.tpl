@@ -43,6 +43,10 @@ spec:
         kloudlite.io/gateway-extra-peers-hash: {{.GatewayWgExtraPeersHash}}
     spec:
       serviceAccountName: {{.ServiceAccountName}}
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ping_group_range
+            value: "0 2147483647"
       initContainers:
         - name: wg-hostnames
           image: ghcr.io/kloudlite/hub/wireguard:latest
