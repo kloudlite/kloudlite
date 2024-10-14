@@ -37,12 +37,12 @@ const Root = (props: IDialog) => {
         label: c.displayName,
         value: parseName(c),
         ready: findClusterStatus(c),
-        disabled: !findClusterStatus(c),
-        render: () => (
+        disabled: () => !findClusterStatus(c),
+        render: ({ disabled }: { disabled: boolean }) => (
           <ClusterSelectItem
             label={c.displayName}
             value={parseName(c)}
-            disabled={!findClusterStatus(c)}
+            disabled={disabled}
           />
         ),
       }));

@@ -99,7 +99,7 @@ const NewAccount = () => {
     <form onSubmit={handleSubmit}>
       <MultiStepProgressWrapper
         fillerImage={<FillerCreateTeam />}
-        title="Setup your account!"
+        title="Setup your team!"
         action={
           accountsData?.length === 0 && (
             <Button
@@ -118,11 +118,11 @@ const NewAccount = () => {
         {...(accountsData?.length === 0
           ? {}
           : {
-            backButton: {
-              content: 'Back to teams',
-              to: `/teams`,
-            },
-          })}
+              backButton: {
+                content: 'Back to teams',
+                to: `/teams`,
+              },
+            })}
       >
         <MultiStepProgress.Root
           hasPages={false}

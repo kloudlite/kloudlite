@@ -4,9 +4,10 @@ import {
   ShouldRevalidateFunction,
   useLoaderData,
   useLocation,
+  useNavigate,
   useParams,
 } from '@remix-run/react';
-import { cloneElement, useCallback } from 'react';
+import { cloneElement, useCallback, useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button, IconButton } from '~/components/atoms/button';
 import Container from '~/components/atoms/container';
@@ -28,7 +29,6 @@ import {
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { ViewModeProvider } from '~/console/components/view-mode';
-import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
 import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
@@ -66,7 +66,7 @@ export type IConsoleRootContext = {
 
 export const meta = (c: IRemixCtx) => {
   return [
-    { title: `Account ${constants.metadot} ${c.params?.account || ''}` },
+    { title: `Team ${constants.metadot} ${c.params?.account || ''}` },
     { name: 'theme-color', content: LightTitlebarColor },
   ];
 };
@@ -144,9 +144,9 @@ const AccountTabs = () => {
 };
 
 const Logo = () => {
-  const { account } = useParams();
+  // const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/environments`}>
+    <LogoWrapper to="/teams">
       <BrandLogo />
     </LogoWrapper>
   );
@@ -166,17 +166,18 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
   const { pathname } = useLocation();
   const eNavigate = useExternalRedirect();
   const { account } = useParams();
+  const navigate = useNavigate();
 
+  const [open, setOpen] = useState(false);
   return (
-    <OptionList.Root>
+    <OptionList.Root open={open} onOpenChange={(e) => setOpen(e)}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            {!hideProfileName ? (
-              <Profile name={titleCase(user.name)} size="xs" />
-            ) : (
-              <Profile size="xs" />
-            )}
+            <Profile
+              {...(hideProfileName ? {} : { name: titleCase(user.name) })}
+              size="xs"
+            />
           </div>
           <div className="flex md:hidden">
             <Profile size="xs" />
@@ -192,13 +193,16 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
             <span className="bodySm text-text-soft">{user.email}</span>
           </div>
         </OptionList.Item>
-        <OptionList.Link
-          LinkComponent={Link}
-          to={`/${account}/user-profile/account`}
+        <OptionList.Item
+          onClick={() => {
+            setOpen(false);
+            setTimeout(() => {
+              navigate(`/${account}/user-profile/account`);
+            }, 200);
+          }}
         >
           Profile Settings
-        </OptionList.Link>
-
+        </OptionList.Item>
         {/* <OptionList.Item>Notifications</OptionList.Item> */}
         {/* <OptionList.Item>Support</OptionList.Item> */}
         <OptionList.Link
@@ -305,7 +309,7 @@ const NotificationMenu = () => {
             first: 100,
           },
         }),
-      true
+      true,
     );
 
   const notifications = parseNodes(notificationsData);
@@ -478,7 +482,7 @@ const Console = () => {
               {breadcrum.map((bc: any, index) =>
                 cloneElement(bc.handle.breadcrum(bc), {
                   key: generateKey(index),
-                })
+                }),
               )}
             </Breadcrum.Root>
           )
@@ -495,21 +499,19 @@ const Console = () => {
           </div>
         }
       />
-      <ClusterStatusProvider>
-        <ViewModeProvider>
-          <SubNavDataProvider>
-            <UnsavedChangesProvider>
-              <Container className="pb-5xl">
-                <Outlet
-                  context={{
-                    ...loaderData,
-                  }}
-                />
-              </Container>
-            </UnsavedChangesProvider>
-          </SubNavDataProvider>
-        </ViewModeProvider>
-      </ClusterStatusProvider>
+      <ViewModeProvider>
+        <SubNavDataProvider>
+          <UnsavedChangesProvider>
+            <Container className="pb-5xl">
+              <Outlet
+                context={{
+                  ...loaderData,
+                }}
+              />
+            </Container>
+          </UnsavedChangesProvider>
+        </SubNavDataProvider>
+      </ViewModeProvider>
     </div>
   );
 };

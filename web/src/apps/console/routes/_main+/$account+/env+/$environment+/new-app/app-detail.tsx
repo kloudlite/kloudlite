@@ -292,15 +292,15 @@ const AppDetail = () => {
               ...{
                 ...(val.advanceOptions
                   ? {
-                    buildOptions: {
-                      buildArgs: val.buildArgs,
-                      buildContexts: val.buildContexts,
-                      contextDir: val.contextDir,
-                      dockerfileContent: val.dockerfileContent,
-                      dockerfilePath: val.dockerfilePath,
-                      targetPlatforms: [],
-                    },
-                  }
+                      buildOptions: {
+                        buildArgs: val.buildArgs,
+                        buildContexts: val.buildContexts,
+                        contextDir: val.contextDir,
+                        dockerfileContent: val.dockerfileContent,
+                        dockerfilePath: val.dockerfilePath,
+                        targetPlatforms: [],
+                      },
+                    }
                   : {}),
               },
               registry: {

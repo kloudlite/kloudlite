@@ -1,3 +1,4 @@
+import { useOutletContext, useParams } from '@remix-run/react';
 import {
   createContext,
   useCallback,
@@ -7,29 +8,35 @@ import {
   useState,
 } from 'react';
 import { ChildrenProps } from '~/components/types';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useSocketWatch } from '~/root/lib/client/helpers/socket/useWatch';
-import { useParams } from '@remix-run/react';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
+import { IAccountContext } from '../routes/_main+/$account+/_layout';
 import { useConsoleApi } from '../server/gql/api-provider';
 
 const ctx = createContext<{
-  clusters: {
-    [key: string]: string;
-  };
-  setClusters: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
+  // clusters: {
+  //   [key: string]: string;
+  // };
+  // setClusters: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
   addToWatchList: (clusterNames: string[]) => void;
   removeFromWatchList: (clusterNames: string[]) => void;
 }>({
-  clusters: {},
-  setClusters: () => {},
+  // clusters: {},
+  // setClusters: () => {},
   addToWatchList: () => {},
   removeFromWatchList: () => {},
 });
 
-const ClusterStatusProvider = ({ children }: ChildrenProps) => {
-  const [clusters, setClusters] = useState<{
-    [key: string]: string;
-  }>({});
+const ClusterStatusProvider = ({
+  children,
+  clustersMap,
+  setClustersMap,
+}: ChildrenProps & {
+  clustersMap: { [key: string]: string };
+  setClustersMap: React.Dispatch<
+    React.SetStateAction<{ [key: string]: string }>
+  >;
+}) => {
   const [watchList, setWatchList] = useState<{
     [key: string]: number;
   }>({});
@@ -57,38 +64,43 @@ const ClusterStatusProvider = ({ children }: ChildrenProps) => {
 
   const caller = (wl: { [key: string]: number }) => {
     const keys = Object.keys(wl);
-    // console.log('nayak', wl, keys, Object.entries(wl));
-    for (let i = 0; i < keys.length; i += 1) {
-      (async () => {
-        const w = keys[i];
-        try {
-          const { data: cluster } = await api.getClusterStatus({
-            name: w,
-          });
-          setClusters((s) => {
-            return {
-              ...s,
-              [w]: cluster.lastOnlineAt,
-            };
-          });
-        } catch (e) {
-          console.log('error', e);
-        }
-      })();
-    }
+
+    (async () => {
+      try {
+        const { data: clustersStatus } = await api.listClusterStatus({
+          pagination: {
+            first: 100,
+          },
+          search: {
+            allClusters: {
+              exact: true,
+              matchType: 'exact',
+            },
+            text: {
+              array: keys,
+              matchType: 'array',
+            },
+          },
+        });
+
+        setClustersMap((s) => {
+          return {
+            ...s,
+            ...clustersStatus,
+          };
+        });
+      } catch (e) {
+        console.log('error', e);
+      }
+    })();
   };
 
   useEffect(() => {
-    const t2 = setTimeout(() => {
-      caller(watchList);
-    }, 1000);
-
     const t = setInterval(() => {
       caller(watchList);
     }, 30 * 1000);
 
     return () => {
-      clearTimeout(t2);
       clearInterval(t);
     };
   }, [watchList]);
@@ -96,8 +108,10 @@ const ClusterStatusProvider = ({ children }: ChildrenProps) => {
   const { account } = useParams();
 
   const topic = useCallback(() => {
-    return Object.keys(clusters).map((c) => `account:${account}.cluster:${c}`);
-  }, [clusters])();
+    return Object.keys(clustersMap).map(
+      (c) => `account:${account}.cluster:${c}`
+    );
+  }, [clustersMap])();
 
   useSocketWatch(() => {
     caller(watchList);
@@ -128,12 +142,10 @@ const ClusterStatusProvider = ({ children }: ChildrenProps) => {
     <ctx.Provider
       value={useMemo(
         () => ({
-          clusters,
-          setClusters,
           addToWatchList,
           removeFromWatchList,
         }),
-        [clusters, setClusters]
+        []
       )}
     >
       {children}
@@ -150,7 +162,8 @@ export const useClusterStatusV3 = ({
   clusterName?: string;
   clusterNames?: string[];
 }) => {
-  const { clusters, addToWatchList, removeFromWatchList } = useContext(ctx);
+  const { clustersMap } = useOutletContext<IAccountContext>();
+  const { addToWatchList, removeFromWatchList: _ } = useContext(ctx);
   useDebounce(
     () => {
       if (!clusterName && !clusterNames) {
@@ -164,11 +177,11 @@ export const useClusterStatusV3 = ({
       }
 
       return () => {
-        if (clusterName) {
-          removeFromWatchList([clusterName]);
-        } else if (clusterNames) {
-          removeFromWatchList(clusterNames);
-        }
+        // if (clusterName) {
+        //   removeFromWatchList([clusterName]);
+        // } else if (clusterNames) {
+        //   removeFromWatchList(clusterNames);
+        // }
       };
     },
     100,
@@ -176,6 +189,6 @@ export const useClusterStatusV3 = ({
   );
 
   return {
-    clusters,
+    clustersMap,
   };
 };

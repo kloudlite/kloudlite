@@ -3,22 +3,20 @@ import { IconButton } from '~/components/atoms/button';
 // import { NumberInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
-import List from '~/console/components/list';
-import NoResultsFound from '~/console/components/no-results-found';
-import { useAppState } from '~/console/page-components/app-states';
 import { BottomNavigation } from '~/console/components/commons';
-import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import {
   ChevronLeft,
   ChevronRight,
   SmileySad,
   X,
 } from '~/console/components/icons';
+import List from '~/console/components/list';
+import NoResultsFound from '~/console/components/no-results-found';
+import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from '~/console/page-components/util';
+import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 // import { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Select from '~/components/atoms/select';
-import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { toast } from '~/components/molecule/toast';
 
 interface IExposedPorts {
   port: number;
@@ -254,7 +252,7 @@ export const Network = () => {
   return (
     <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
       <ExposedPorts />
-      <ExposedRoute />
+      {/* <ExposedRoute /> */}
     </div>
   );
 };

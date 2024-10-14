@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Slider from '~/components/atoms/slider';
@@ -8,7 +7,10 @@ import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn, parseValue } from '~/console/page-components/util';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
+import {
+  DISCARD_ACTIONS,
+  useUnsavedChanges,
+} from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
 import { plans } from './datas';
@@ -80,7 +82,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           mapFormValuesToApp({
             appIn: val,
             oldAppIn: s,
-          })
+          }),
         );
       },
     });
@@ -98,7 +100,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   }, [values, mode]);
 
   useEffect(() => {
-    if (performAction === 'discard-changes') {
+    if (performAction === DISCARD_ACTIONS.DISCARD_CHANGES) {
       resetValues();
     }
   }, [performAction]);
@@ -168,7 +170,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
                 handleChange('selectedPlan')(dummyEvent(v.value));
                 handleChange('memPerCpu')(dummyEvent(v.memoryPerCpu));
                 handleChange('cpuMode')(
-                  dummyEvent(v.isShared ? 'shared' : 'dedicated')
+                  dummyEvent(v.isShared ? 'shared' : 'dedicated'),
                 );
               }}
             />
@@ -257,7 +259,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
         )}
 
         <div className="flex flex-col gap-3xl pt-3xl">
-          <Button
+          {/* <Button
             size="sm"
             content={
               <span className="truncate text-left">Advanced options</span>
@@ -267,7 +269,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             onClick={() => {
               setAdvancedOptions(!advancedOptions);
             }}
-          />
+          /> */}
 
           {/* {advancedOptions && (
             <Select

@@ -1,5 +1,5 @@
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { EmptyClusterImage } from '~/console/components/empty-resource-images';
@@ -15,6 +15,7 @@ import fake from '~/root/fake-data-generator/fake';
 import { IRemixCtx } from '~/root/lib/types/common';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 import ClusterResourcesV2 from './cluster-resources-v2';
+import { LocalDeviceClusterInstructions } from './handle-cluster-resource';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -44,7 +45,7 @@ const CreateClusterButton = () => {
   return (
     <>
       <Button
-        content="Attach compute"
+        content="Attach cluster"
         variant="primary"
         prefix={<Plus />}
         onClick={() => {
@@ -69,6 +70,7 @@ const ClusterComponent = ({
 }) => {
   const [clusterType, setClusterType] = useState('All');
   const byokClusters = parseNodes(clustersData);
+  const [visible, setVisible] = useState(false);
 
   const getEmptyState = ({
     byokClustersCount,
@@ -88,23 +90,33 @@ const ClusterComponent = ({
       return {
         image: <EmptyClusterImage />,
         is: true,
-        title: 'This is where you’ll attach your compute or local devices.',
+        title: 'This is where you’ll manage your cluster.',
         content: (
-          <p>
-            You can attach a new compute and manage the listed compute.
-            <br />
-            Follow the instructions to attach your{' '}
-            <Link
-              to="https://github.com/kloudlite/kl"
-              className="text-text-default"
-            >
-              <span className="bodyMd-semibold underline underline-offset-1 text-text-default">
-                local device
+          <div className=" flex flex-col items-center gap-lg">
+            You can attach any kubernetes cluster.
+            <CreateClusterButton />
+            <div className="flex py-lg gap-xl items-center">
+              <span className="flex w-4xl h-md bg-surface-basic-pressed" />
+              <span className="bodySm-semibold">OR</span>
+              <span className="flex w-4xl h-md bg-surface-basic-pressed" />
+            </div>
+            <div className="inline-block">
+              Follow the{' '}
+              <span
+                onClick={() => {
+                  setVisible(true);
+                }}
+                className="bodyMd-semibold underline underline-offset-1 text-text-default cursor-pointer"
+              >
+                Instructions{' '}
               </span>
-            </Link>{' '}
-          </p>
+              to attach your local cluster.
+            </div>
+            <LocalDeviceClusterInstructions
+              {...{ show: visible, onClose: () => setVisible(false) }}
+            />
+          </div>
         ),
-        action: <CreateClusterButton />,
       };
     }
 
@@ -112,7 +124,7 @@ const ClusterComponent = ({
       is: false,
       title: 'This is where you’ll manage your cluster.',
       content: (
-        <p>You can create a new compute and manage the listed compute.</p>
+        <p>You can create a new cluster and manage the listed cluster.</p>
       ),
       action: <CreateClusterButton />,
     };
@@ -124,7 +136,7 @@ const ClusterComponent = ({
   return (
     <Wrapper
       secondaryHeader={{
-        title: 'Attached Computes',
+        title: 'Attached clusters',
         action: byokClusters.length > 0 && <CreateClusterButton />,
       }}
       empty={getEmptyState({
