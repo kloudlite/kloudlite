@@ -402,7 +402,7 @@ func GetCookieString(options ...fn.Option) (string, error) {
 	}
 
 	if session == "" {
-		return "", fn.Errorf("no session found")
+		return "", fn.Errorf("unauthorized")
 	}
 
 	if accName != "" {
