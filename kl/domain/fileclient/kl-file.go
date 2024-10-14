@@ -52,7 +52,17 @@ func (c *fclient) WriteKLFile(fileObj KLFileType) error {
 }
 
 func (c *fclient) GetKlFile(filePath string) (*KLFileType, error) {
-	return c.getKlFile(filePath)
+	klfile, err := c.getKlFile(filePath)
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+	if klfile.TeamName == "" {
+		return nil, functions.Error("kl file is not valid, teamName is not set properly. You can re-initialize kl file by running \"kl init\" command.")
+	}
+	if klfile.DefaultEnv == "" {
+		return nil, functions.Error("kl file is not valid, defaultEnv is not set properly. You can re-intialize kl file by running \"kl init\" command.")
+	}
+	return klfile, nil
 }
 
 func (c *fclient) getKlFile(filePath string) (*KLFileType, error) {

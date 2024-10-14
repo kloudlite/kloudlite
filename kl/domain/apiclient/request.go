@@ -116,6 +116,9 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	if len(respData.Errors) > 0 {
 		var errorMessages []string
 		for _, e := range respData.Errors {
+			if strings.Contains(e.Message, "no rolebinding found") {
+				return nil, fn.NewE(fn.Errorf("unauthorized"), fmt.Sprintf("error response from apiclient with method %s", method))
+			}
 			errorMessages = append(errorMessages, e.Message)
 		}
 
