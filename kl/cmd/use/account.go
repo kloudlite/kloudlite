@@ -22,15 +22,10 @@ var teamCmd = &cobra.Command{
 
 func UseTeam(cmd *cobra.Command) error {
 	apic, err := apiclient.New()
-
-	fc, err := fileclient.New()
 	if err != nil {
 		return fn.NewE(err)
 	}
 
-	if err != nil {
-		return fn.NewE(err)
-	}
 	teams, err := apic.ListTeams()
 	if err != nil {
 		return fn.NewE(err)
@@ -56,12 +51,7 @@ func UseTeam(cmd *cobra.Command) error {
 		return fn.NewE(err)
 	}
 
-	currentTeam, err := fc.CurrentTeamName()
-	if err != nil {
-		return fn.NewE(err)
-	}
-
-	if selectedTeam.Metadata.Name != currentTeam && currentTeam != "" {
+	if selectedTeam.Metadata.Name != data.SelectedTeam && data.SelectedTeam != "" {
 		if err := cluster.StopK3sServer(cmd); err != nil {
 			return fn.NewE(err)
 		}
@@ -91,6 +81,6 @@ func UseTeam(cmd *cobra.Command) error {
 	//if err = k.CreateClustersTeams(selectedTeam.Metadata.Name); err != nil {
 	//	return fn.NewE(err)
 	//}
-	fn.Log("Selected team is ", selectedTeam.Metadata.Name)
+	fn.Log("Selected team is", selectedTeam.Metadata.Name)
 	return nil
 }

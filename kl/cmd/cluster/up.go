@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var UpCmd = &cobra.Command{
@@ -24,17 +25,27 @@ func startK3sServer() error {
 	defer spinner.Client.UpdateMessage("starting k3s server")()
 	fc, err := fileclient.New()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	currentTeam, err := fc.CurrentTeamName()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
+	extraData, err := fileclient.GetExtraData()
+	if (err != nil && os.IsNotExist(err)) || extraData.SelectedTeam == "" {
+		extraData.SelectedTeam = currentTeam
+		if err := fileclient.SaveExtraData(extraData); err != nil {
+			return functions.NewE(err)
+		}
+	} else if err != nil {
+		return functions.NewE(err)
+	}
+
 	k, err := k3s.NewClient()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
-	if err = k.CreateClustersTeams(currentTeam); err != nil {
+	if err = k.CreateClustersTeams(extraData.SelectedTeam); err != nil {
 		return functions.NewE(err)
 	}
 	functions.Log("k3s server started. It will usually take a minute to come online")

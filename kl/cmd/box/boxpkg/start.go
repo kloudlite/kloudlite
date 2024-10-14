@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/cmd/cluster"
 	"os"
 	"strconv"
 	"strings"
@@ -65,6 +66,38 @@ func (c *client) Start() error {
 	// 	return fn.NewE(err)
 	// }
 
+	data, err := fileclient.GetExtraData()
+	if err != nil {
+		return fn.NewE(err)
+	}
+	if data.SelectedTeam != c.klfile.TeamName {
+		functions.Logf(text.Yellow(fmt.Sprintf("[#] this will switch your main team context from %s to %s. do you want to proceed? [Y/n] ", data.SelectedTeam, c.klfile.TeamName)))
+		if !functions.Confirm("y", "y") {
+			return nil
+		}
+
+		data.SelectedTeam = c.klfile.TeamName
+
+		if err := fileclient.SaveExtraData(data); err != nil {
+			return functions.NewE(err)
+		}
+
+		if err = cluster.StopK3sServer(c.cmd); err != nil {
+			return functions.NewE(err)
+		}
+
+		_, err = c.apic.GetClusterConfig(c.klfile.TeamName)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.apic.GetAccVPNConfig(c.klfile.TeamName)
+		if err != nil {
+			return err
+		}
+
+	}
+
 	_, err = c.startContainer(boxHash.KLConfHash)
 	if err != nil {
 		return fn.NewE(err)
@@ -95,10 +128,6 @@ func (c *client) Start() error {
 		}
 	}
 
-	data, err := fileclient.GetExtraData()
-	if err != nil {
-		return fn.NewE(err)
-	}
 	if data.SelectedEnvs[c.cwd].SSHPort == 0 {
 		data.SelectedEnvs[c.cwd].SSHPort = c.env.SSHPort
 		if err := fileclient.SaveExtraData(data); err != nil {
