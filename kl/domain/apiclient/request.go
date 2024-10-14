@@ -119,7 +119,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 			errorMessages = append(errorMessages, e.Message)
 		}
 
-		return nil, fn.NewE(fn.Errorf(strings.Join(errorMessages, "\n")), "failed to unmarshal apiclient response to server with method %s and response %q", method, string(body))
+		return nil, fn.NewE(fn.Errorf(strings.Join(errorMessages, "\n")), fmt.Sprintf("error response from apiclient with method %s", method))
 	}
 
 	return body, nil
