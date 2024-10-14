@@ -8,7 +8,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -88,7 +87,6 @@ func main() {
 	flag.Parse()
 
 	logger := logging.NewSlogLogger(logging.SlogOptions{
-		Writer:        os.Stderr,
 		Prefix:        "[webhook]",
 		ShowCaller:    true,
 		ShowDebugLogs: logLevel == "debug",
