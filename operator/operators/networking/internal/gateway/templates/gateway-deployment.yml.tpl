@@ -14,7 +14,8 @@
 {{- $serviceBindControllerHealtCheckPort := "8081" }}
 {{- $serviceBindControllerMetricsPort := "9090" }}
 
-{{- $gatewayAdminApiAddr := printf "http://%s.%s.svc.cluster.local:%s" .Name .Namespace $gatewayAdminHttpPort }}
+{{- /* should refrain from using it, as it requires coredns to be up and running */}}
+{{- /* {{- $gatewayAdminApiAddr := printf "http://%s.%s.svc.cluster.local:%s" .Name .Namespace $gatewayAdminHttpPort }} */}}
 
 {{- define "pod-ip" -}}
 - name: POD_IP
@@ -102,8 +103,7 @@ spec:
           {{include "pod-ip" . | nindent 10}}
 
           - name: GATEWAY_ADMIN_API_ADDR
-            value: {{$gatewayAdminApiAddr}}
-            {{- /* value: http://$(POD_IP):{{$gatewayAdminHttpPort}} */}}
+            value: http://$(POD_IP):{{$gatewayAdminHttpPort}}
         args:
           - --addr
           - $(POD_IP):{{$webhookServerHttpPort}}
@@ -138,20 +138,22 @@ spec:
             eval wait $pid
         {{- else }}
         image: {{.ImageIPManager}}
-        args: 
-          - --addr
-          - $(POD_IP):{{$gatewayAdminHttpPort}}
-        {{- /* command: */}}
-        {{- /*   - sh */}}
-        {{- /*   - -c */}}
-        {{- /*   - |+ */}}
-        {{- /*     while true; do */}}
-        {{- /*       ip -4 addr | grep -i $(POD_IP) */}}
-        {{- /*       exit_code=$? */}}
-        {{- /*       [ $exit_code -eq 0 ] && break */}}
-        {{- /*       sleep 1 */}}
-        {{- /*     done */}}
-        {{- /*     /ip-manager --addr $(POD_IP):{{$gatewayAdminHttpPort}} */}}
+        {{- /* args:  */}}
+          {{- /* - --addr */}}
+          {{- /* - $(POD_IP):{{$gatewayAdminHttpPort}} */}}
+        command:
+          - sh
+          - -c
+          - |+
+            mkdir -p /etc/wireguard
+            for file in `find /tmp/include-wg-interfaces -type f`; do
+              basepath=`basename $file`
+              cp $file /etc/wireguard/$basepath
+              wg-quick up "${basepath%.*}"
+            done
+
+            /entrypoint.sh --addr $(POD_IP):{{$gatewayAdminHttpPort}}
+
         {{- end }}
         imagePullPolicy: Always
         env:
@@ -170,7 +172,8 @@ spec:
                 key: private_key
 
           - name: GATEWAY_WG_ENDPOINT
-            value: {{.Name}}.{{.Namespace}}.svc.cluster.local:51820
+            {{- /* value: {{.Name}}.{{.Namespace}}.svc.cluster.local:51820 */}}
+            value: $(POD_IP):51820
 
           - name: EXTRA_WIREGUARD_PEERS_PATH
             value: "/tmp/peers.conf"
@@ -201,6 +204,9 @@ spec:
             mountPath: /tmp/peers.conf
             subPath: peers.conf
 
+          - name: include-wg-interfaces
+            mountPath: /tmp/include-wg-interfaces
+
         resources:
           requests:
             cpu: 100m
@@ -220,7 +226,7 @@ spec:
         args:
           - --health-probe-bind-address=$(POD_IP):8081
           - --metrics-bind-address=$(POD_IP):9090
-          - --leader-elect
+          {{- /* - --leader-elect */}}
         resources:
           requests:
             cpu: 100m
@@ -302,7 +308,6 @@ spec:
             value: "5"
 
           - name: GATEWAY_ADMIN_API_ADDR
-            {{- /* value: {{$gatewayAdminApiAddr}} */}}
             value: http://$(POD_IP):{{$gatewayAdminHttpPort}}
 
       - name: logs-proxy
@@ -351,6 +356,11 @@ spec:
             items:
               - key: peers.conf
                 path: peers.conf
+
+        - name: include-wg-interfaces
+          secret:
+            secretName: include-wg-interfaces
+            optional: true
         {{- end }}
 
 ---
