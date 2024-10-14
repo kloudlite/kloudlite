@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	probing "github.com/prometheus-community/pro-bing"
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +35,7 @@ type Reconciler struct {
 	yamlClient kubectl.YAMLClient
 }
 
-const KloudlitePodActiveLabel = "kloudlite.io/pod.active"
+const KloudlitePodReconcileAfter = "kloudlite.io/pod.reconcile.after"
 
 func (r *Reconciler) GetName() string {
 	return r.Name
@@ -51,79 +51,119 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	r.logger.Debug("[start] reconciling", "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
+	logger := r.logger.With("pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
+
+	requeue := func(err error, after ...time.Duration) (ctrl.Result, error) {
+		if err != nil {
+			logger.Debug("[end] reconciling, got", "err", err)
+			return ctrl.Result{}, err
+		}
+
+		duration := 5 * time.Second
+		if len(after) > 0 {
+			duration = after[0]
+		}
+
+		logger.Debug("[end] reconciling, requeing", "after", duration)
+		return ctrl.Result{RequeueAfter: duration}, nil
+	}
+
+	deletePod := func(reason string) (ctrl.Result, error) {
+		logger.Info("deleting pod", "reason", reason)
+		if err := r.Delete(ctx, pod); err != nil {
+			return requeue(err)
+		}
+		return requeue(nil)
+	}
+
+	if pod.GetDeletionTimestamp() != nil {
+		r.logger.Info("pod is deleting, ignoring check")
+		return ctrl.Result{}, nil
+	}
+
+	logger.Debug("[start] reconciling")
 
 	v, ok := pod.GetLabels()[constants.KloudliteGatewayEnabledLabel]
 	if !ok {
-		r.logger.Info("pod not registered with gateway, deleting it", "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
-		if err := r.Delete(ctx, pod); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, nil
+		return deletePod("pod might have missed mutation webhook")
 	}
 	if v != "true" {
+		logger.Debug("[end] pod opted out of being registered with gateway")
+		return requeue(nil)
+	}
+
+	initContainerFound := false
+	initContainerReady := false
+
+	for _, v := range pod.Spec.InitContainers {
+		if v.Name == "kloudlite-wg" {
+			initContainerFound = true
+		}
+	}
+
+	if !initContainerFound {
+		return deletePod("wg init container not found")
+	}
+
+	for _, v := range pod.Status.InitContainerStatuses {
+		if v.Name == "kloudlite-wg" {
+			initContainerReady = v.Ready
+		}
+	}
+
+	if !initContainerReady {
+		logger.Info("init container is not ready, yet")
 		return ctrl.Result{}, nil
 	}
 
-	for i := range pod.Status.Conditions {
-		if pod.Status.Conditions[i].Type == corev1.PodReady && pod.Status.Conditions[i].Status == corev1.ConditionFalse {
+	ra, ok := pod.Annotations[KloudlitePodReconcileAfter]
+	if !ok {
+		ann := pod.GetAnnotations()
+
+		after := 5 * time.Second
+
+		fn.MapSet(&ann, KloudlitePodReconcileAfter, time.Now().Add(after).Format(time.RFC3339))
+		pod.SetAnnotations(ann)
+		if err := r.Update(ctx, pod); err != nil {
 			return ctrl.Result{}, nil
 		}
+		return requeue(nil, after)
+	}
+
+	reconcileAfter, err := time.Parse(time.RFC3339, ra)
+	if err != nil {
+		return requeue(err)
+	}
+
+	if time.Now().Before(reconcileAfter) {
+		diff := time.Until(reconcileAfter)
+		r.logger.Debug("got here early, reconcilation scheduled", "after", int64(diff.Seconds()))
+		return requeue(nil, diff)
 	}
 
 	var pblist networkingv1.PodBindingList
 	if err := r.List(ctx, &pblist, &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"kloudlite.io/podbinding.reservation": fmt.Sprintf("%s.%s", pod.GetNamespace(), pod.GetName())}),
 	}); err != nil {
-		return ctrl.Result{}, err
+		return requeue(err)
+	}
+
+	if len(pblist.Items) == 0 {
+		return deletePod("recreating pod, as there are no podbindings for it")
 	}
 
 	if len(pblist.Items) != 1 {
-		return ctrl.Result{}, nil
+		return requeue(fmt.Errorf("multiple pod bindings with same reservation found, exiting"))
 	}
 
-	// if out, err := exec.CommandContext(ctx, "timeout", "1", "ping", "-c", "1", pblist.Items[0].Spec.GlobalIP).CombinedOutput(); err != nil {
-	// 	r.logger.Errorf(err, "failed to ping %s (%s/%s)", pblist.Items[0].Spec.GlobalIP, pod.GetNamespace(), pod.GetName())
-	// 	r.logger.Infof("output of ping: %s", out)
-	// 	if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
-	// 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
-	// 	}
-	// 	if err := r.Delete(ctx, pod); err != nil {
-	// 		return ctrl.Result{}, err
-	// 	}
-	// 	return ctrl.Result{}, err
-	// }
-
-	pinger, err := probing.NewPinger(pblist.Items[0].Spec.GlobalIP)
-	if err != nil {
-		r.logger.Error("failed to create pinger, got", "err", err, "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
-		return ctrl.Result{}, err
+	if out, err := exec.CommandContext(ctx, "timeout", "5", "ping", "-c", "1", pblist.Items[0].Spec.GlobalIP).CombinedOutput(); err != nil {
+		logger.Error("failed to ping", "global-ip", pblist.Items[0].Spec.GlobalIP, "output", string(out))
+		return deletePod(fmt.Sprintf("ping failed, got err: %s", err.Error()))
 	}
 
-	pinger.Count = 1
-	pinger.Timeout = 500 * time.Millisecond
+	logger.Debug("ping success, requeing after 5s")
 
-	if err = pinger.RunWithContext(ctx); err != nil {
-		r.logger.Error("failed to ping, got", "err", err, "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
-		if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
-			return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
-		}
-		if err := r.Delete(ctx, pod); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, err
-	}
-
-	if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
-		fn.MapSet(&pod.Labels, KloudlitePodActiveLabel, "true")
-		if err := r.Update(ctx, pod); err != nil {
-			r.logger.Error("failed to update pod, got", "err", err, "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
-			return ctrl.Result{}, err
-		}
-	}
-
-	r.logger.Debug("ping success, requeing after 5s", "pod", fmt.Sprintf("%s/%s", pod.GetNamespace(), pod.GetName()))
-	return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	return requeue(nil)
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -132,7 +172,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logging.NewSlogLogger(logging.SlogOptions{
 		Prefix:        r.Name,
 		ShowCaller:    true,
-		ShowDebugLogs: strings.ToLower(os.Getenv("DEBUG_LOG")) == "true",
+		ShowDebugLogs: strings.ToLower(os.Getenv("LOG_DEBUG")) == "true",
 	})
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: logger.WithName(r.Name)})
 

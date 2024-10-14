@@ -295,11 +295,9 @@ spec:
                       type: object
                     type: array
                   toDevice:
-                    minLength: 1
                     type: string
-                required:
-                - enabled
-                - toDevice
+                  toIPAddr:
+                    type: string
                 type: object
               nodeSelector:
                 additionalProperties:

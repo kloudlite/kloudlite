@@ -4,8 +4,6 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: {{.NamePrefix}}-webhook
   namespace: {{.Namespace}}
-  annotations:
-    {{- /* cert-manager.io/inject-ca-from: {{.Namespace}}/{{.NamePrefix}}-webhook-cert */}}
   ownerReferences: {{.OwnerReferences | toYAML |nindent 4 }}
 webhooks:
 - name: {{.NamePrefix}}-pod.{{.Namespace}}.webhook.com
@@ -30,10 +28,6 @@ webhooks:
         operator: In
         values: [{{$value | squote}}]
       {{- end }}
-
-      {{- /* - key: {{.WebhookNamespaceSelectorKey}} */}}
-      {{- /*   operator: In */}}
-      {{- /*   values: ["{{.WebhookNamespaceSelectorValue}}"] */}}
   admissionReviewVersions: ["v1"]
   sideEffects: None
 
@@ -59,8 +53,5 @@ webhooks:
         operator: In
         values: [{{$value | squote}}]
       {{- end }}
-      {{- /* - key: {{.WebhookNamespaceSelectorKey}} */}}
-      {{- /*   operator: In */}}
-      {{- /*   values: ["{{.WebhookNamespaceSelectorValue}}"] */}}
   admissionReviewVersions: ["v1"]
   sideEffects: None
