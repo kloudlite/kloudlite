@@ -9,6 +9,8 @@ type Env struct {
 	Port     uint16 `env:"HTTP_PORT" required:"true"`
 	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
 
+	WithWorker bool `env:"WITH_WORKER" default:"true"`
+
 	DNSAddr            string `env:"DNS_ADDR" required:"true"`
 	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
 	ConsoleDBUri       string `env:"MONGO_URI" required:"true"`
