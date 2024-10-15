@@ -3,7 +3,6 @@ import {expressMiddleware} from '@apollo/server/express4';
 import express from 'express';
 import {ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource} from '@apollo/gateway';
 import fs from 'fs/promises';
-import yaml from 'js-yaml';
 import assert from 'assert';
 
 const useEnv = (key) => {
@@ -26,7 +25,6 @@ class CustomDataSource extends RemoteGraphQLDataSource {
     return request;
   }
 
-  // eslint-disable-next-line class-methods-use-this
   didReceiveResponse({ response, context }) {
     const x = response.http.headers.get('set-cookie');
     if (!x) return response;
@@ -58,10 +56,10 @@ const server = new ApolloServer({
     credentials: true,
   },
   gateway,
-  // plugins: [graphqlExecutionLogger],
-  // context: async ({ req, res }) => {
-  //   return { req, res };
-  // },
+// plugins: [graphqlExecutionLogger],
+// context: async ({ req, res }) => {
+//   return { req, res };
+// },
 });
 
 const app = express()
@@ -105,4 +103,3 @@ console.log(String.raw`
                     ,                       
 
 `)
-

@@ -1,6 +1,7 @@
 ---
 global:
   name: sample-app
+  envName: "test-env5"
 ---
 
 label: List Apps
@@ -31,6 +32,7 @@ query: |+ #graphql
           kind
           displayName
           accountName
+          serviceHost
         }
       }
     }
@@ -72,20 +74,9 @@ label: Create App
 query: |+ #graphql
   mutation Core_createApp($envName: String!, $app: AppIn!) {
     core_createApp(envName: $envName, app: $app) {
+      id
       metadata {
         name
-      }
-      syncStatus {
-        state
-        recordVersion
-        error
-        action
-        lastSyncedAt
-      }
-      createdBy{
-        userId
-        userName
-        userEmail
       }
     }
   }
@@ -94,7 +85,7 @@ variables:
   app:
     displayName: "sample app"
     metadata:
-      name: "{{.name}}"
+      name: "{{.name}}1"
     spec:
       services:
         - port: 80
@@ -127,9 +118,7 @@ variables:
       name: '{{.name}}'
     spec:
       services:
-        - type: tcp
-          port: 80
-          targetPort: 80
+        - port: 80
       containers:
         - name: main
           image: kong/httpbin
@@ -155,4 +144,14 @@ query: |+ #graphql
 variables:
   envName: "{{.envName}}"
   appName: "{{.name}}"
+---
+
+label: Resync App
+query: |+
+  query Query($envName: String!, $name: String!) {
+    core_resyncApp(envName: $envName, name: $name)
+  }
+variables:
+  envName: "{{.envName}}"
+  name: "{{.name}}"
 ---

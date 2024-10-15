@@ -13,9 +13,7 @@ tasks:
     dotenv:
       - .secrets/env
     cmds:
-      - task: build
-      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/webhook -- --dev
-      - ./bin/{{.app}} --dev
+      - go run ./main.go --dev
 
   build:
     cmds:
@@ -23,6 +21,13 @@ tasks:
         vars: 
           out: "{{.binary}}-{{.GOARCH}}"
           GOARCH: "{{.GOARCH}}"
+
+  webhook:run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go build -o bin/webhook .
+      - ./bin/webhook --dev
 
   container:build-and-push:
     requires:

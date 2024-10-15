@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	fc "github.com/kloudlite/api/apps/accounts/internal/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -180,12 +181,12 @@ func (d *domain) AcceptInvitation(ctx UserContext, accountName string, inviteTok
 		return false, errors.Newf("invitation already accepted or rejected, won't process further")
 	}
 
-	inv.Accepted = fn.New(true)
-	if _, err := d.invitationRepo.UpdateById(ctx, inv.Id, inv); err != nil {
+	if err := d.addMembership(ctx, accountName, ctx.UserId, inv.UserRole); err != nil {
 		return false, errors.NewE(err)
 	}
 
-	if err := d.addMembership(ctx, accountName, ctx.UserId, inv.UserRole); err != nil {
+	// INFO: invitation accepted, removing invite
+	if err := d.invitationRepo.DeleteById(ctx, inv.Id); err != nil {
 		return false, errors.NewE(err)
 	}
 

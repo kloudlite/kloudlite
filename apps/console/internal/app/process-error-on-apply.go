@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"sync"
+	"time"
 
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/pkg/errors"
@@ -13,16 +16,14 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 )
 
 type ErrorOnApplyConsumer messaging.Consumer
 
-func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
-	counter := 0
-
+func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger *slog.Logger) {
 	getEnvironmentResourceContext := func(ctx domain.ConsoleContext, resType entities.ResourceType, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
 		mapping, err := d.GetEnvironmentResourceMapping(ctx, resType, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
@@ -34,9 +35,18 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 		return newResourceContext(ctx, mapping.EnvironmentName), nil
 	}
 
+	counter := 0
+	mu := sync.Mutex{}
+
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
+		mu.Lock()
 		counter += 1
-		logger.Debugf("received message [%d]", counter)
+		mu.Unlock()
+
+		start := time.Now()
+
+		logger := logger.With("subject", msg.Subject, "counter", counter)
+		logger.Debug("INCOMING message", "counter", counter)
 
 		em, err := msgOfficeT.UnmarshalErrMessage(msg.Payload)
 		if err != nil {
@@ -49,40 +59,25 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 		}
 
 		obj := unstructured.Unstructured{Object: errObj.Object}
+		gvkStr := obj.GroupVersionKind().String()
 
-		mLogger := logger.WithKV(
-			"gvk", obj.GroupVersionKind(),
-			"nn", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
+		mlogger := logger.With(
+			"GVK", gvkStr,
+			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
 			"accountName", em.AccountName,
 			"clusterName", em.ClusterName,
 		)
 
-		mLogger.Infof("received message")
+		mlogger.Info("validated message")
 		defer func() {
-			mLogger.Infof("processed message")
+			mlogger.Info("PROCESSED message", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
 		}()
 
 		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", em.AccountName)
 
 		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
 
-		gvkStr := obj.GroupVersionKind().String()
-
 		switch gvkStr {
-		case deviceGVK.String():
-			{
-				if errObj.Action == t.ActionApply {
-					return d.OnVPNDeviceApplyError(dctx, errObj.Error, obj.GetName(), opts)
-				}
-
-				p, err := fn.JsonConvert[entities.ConsoleVPNDevice](obj.Object)
-				if err != nil {
-					return err
-				}
-
-				return d.OnVPNDeviceDeleteMessage(dctx, p)
-			}
-
 		case environmentGVK.String():
 			{
 				if errObj.Action == t.ActionApply {
@@ -185,15 +180,27 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case managedResourceGVK.String():
 			{
-				mres, err := fn.JsonConvert[entities.ManagedResource](obj.Object)
+				mres, err := fn.JsonConvert[crdsv1.ManagedResource](obj.Object)
 				if err != nil {
 					return err
 				}
 
 				if errObj.Action == t.ActionApply {
-					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, obj.GetName(), opts)
+					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.Spec.ResourceTemplate.MsvcRef.Name, obj.GetName(), opts)
 				}
-				return d.OnManagedResourceDeleteMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres)
+				return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres)
+			}
+		case clusterMsvcGVK.String():
+			{
+				cmsvc, err := fn.JsonConvert[entities.ClusterManagedService](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnClusterManagedServiceApplyError(dctx, em.ClusterName, obj.GetName(), errObj.Error, opts)
+				}
+				return d.OnClusterManagedServiceDeleteMessage(dctx, em.ClusterName, cmsvc)
 			}
 
 		default:
@@ -205,10 +212,10 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 	if err := consumer.Consume(msgReader, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
-			logger.Errorf(err, "received while reading messages, ignoring it")
+			logger.Error("while reading messages, got", "err", err)
 			return nil
 		},
 	}); err != nil {
-		logger.Errorf(err, "error while consuming messages")
+		logger.Error("while consuming messages, got", "err", err)
 	}
 }

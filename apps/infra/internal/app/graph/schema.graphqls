@@ -24,6 +24,7 @@ input SearchCluster {
     isReady: MatchFilterIn
     region: MatchFilterIn
     text: MatchFilterIn
+    allClusters: MatchFilterIn
 }
 
 input SearchGlobalVPNs {
@@ -33,11 +34,6 @@ input SearchGlobalVPNs {
 input SearchGlobalVPNDevices {
     text: MatchFilterIn
     creationMethod: MatchFilterIn
-}
-
-input SearchClusterManagedService {
-    isReady: MatchFilterIn
-    text: MatchFilterIn
 }
 
 input SearchNodepool {
@@ -115,9 +111,6 @@ type Query {
 
     infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
-    infra_listClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getClusterManagedService(name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
-
     infra_listHelmReleases(clusterName: String!, search: SearchHelmRelease, pagination: CursorPaginationIn): HelmReleasePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease @isLoggedInAndVerified @hasAccount
 
@@ -170,11 +163,6 @@ type Mutation {
     infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
     infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
     infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-    infra_createClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
-    infra_updateClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
-    infra_deleteClusterManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    infra_cloneClusterManagedService(clusterName: String!, sourceMsvcName: String!, destinationMsvcName: String!, displayName: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
 
     infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount

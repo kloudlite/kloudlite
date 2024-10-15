@@ -1,11 +1,13 @@
 package app
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/apps/webhook/internal/domain"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
@@ -102,8 +104,56 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 
 func LoadGitWebhook() fx.Option {
 	return fx.Invoke(
-		func(server httpServer.Server, envVars *env.Env, producer messaging.Producer, logr logging.Logger) error {
+		func(server httpServer.Server, envVars *env.Env, producer messaging.Producer, logr logging.Logger, d domain.Domain) error {
 			app := server.Raw()
+
+			app.Get("/healthy", func(c *fiber.Ctx) error {
+				return c.SendString("OK")
+			})
+
+			app.Post("/contact-us", func(ctx *fiber.Ctx) error {
+				var data *domain.ContactUsData
+
+				if err := ctx.BodyParser(&data); err != nil {
+					return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request payload"})
+				}
+
+				err := d.SendContactUsEmail(ctx.Context(), data)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				discordWebhookURL := envVars.DiscordWebhookUrl
+				if discordWebhookURL != "" {
+					discordMessage := fmt.Sprintf(
+						""+
+							"🚨 **NEW CONTACT US SUBMISSION** 🚨\n**Name:** %s\n**Email:** %s\n**Mobile:** %s\n**Company:** %s\n**Country:** %s\n**Message:** %s\n",
+						data.Name, data.Email, data.MobileNumber, data.CompanyName, data.Country, data.Message,
+					)
+
+					payload := map[string]string{
+						"content": discordMessage,
+					}
+
+					payloadBytes, err := json.Marshal(payload)
+					if err != nil {
+						return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to marshal Discord payload"})
+					}
+
+					resp, err := http.Post(discordWebhookURL, "application/json", bytes.NewBuffer(payloadBytes))
+					if err != nil {
+						return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send message to Discord"})
+					}
+					defer resp.Body.Close()
+
+					if resp.StatusCode != http.StatusNoContent {
+						return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Discord API returned an error"})
+					}
+				}
+
+				return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})
+			})
+
 			app.Post(
 				"/git/:provider", func(ctx *fiber.Ctx) error {
 					logger := logr.WithName("git-webhook")

@@ -4,23 +4,30 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
+	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
-	t "github.com/kloudlite/api/pkg/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type ResourceUpdateConsumer messaging.Consumer
+type (
+	ResourceUpdateConsumer messaging.Consumer
+	WebhookConsumer        messaging.Consumer
+)
 
 func newResourceContext(ctx domain.ConsoleContext, environmentName string) domain.ResourceContext {
 	return domain.ResourceContext{
@@ -30,21 +37,24 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 }
 
 var (
-	appsGVK                  = fn.GVK("crds.kloudlite.io/v1", "App")
-	externalAppsGVK          = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
-	environmentGVK           = fn.GVK("crds.kloudlite.io/v1", "Environment")
-	deviceGVK                = fn.GVK("wireguard.kloudlite.io/v1", "Device")
-	configGVK                = fn.GVK("v1", "ConfigMap")
-	secretGVK                = fn.GVK("v1", "Secret")
-	routerGVK                = fn.GVK("crds.kloudlite.io/v1", "Router")
-	managedResourceGVK       = fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
-	projectManagedServiceGVK = fn.GVK("crds.kloudlite.io/v1", "ProjectManagedService")
+	appsGVK            = fn.GVK("crds.kloudlite.io/v1", "App")
+	externalAppsGVK    = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
+	environmentGVK     = fn.GVK("crds.kloudlite.io/v1", "Environment")
+	deviceGVK          = fn.GVK("wireguard.kloudlite.io/v1", "Device")
+	configGVK          = fn.GVK("v1", "ConfigMap")
+	secretGVK          = fn.GVK("v1", "Secret")
+	routerGVK          = fn.GVK("crds.kloudlite.io/v1", "Router")
+	managedResourceGVK = fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
+	clusterMsvcGVK     = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
+
+	serviceBindingGVK = fn.GVK("networking.kloudlite.io/v1", "ServiceBinding")
 )
 
-func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
-	counter := 0
-
-	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
+func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
+	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj *unstructured.Unstructured) (domain.ResourceContext, error) {
+		if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
+			return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: v}, nil
+		}
 		mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
@@ -56,59 +66,71 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		return newResourceContext(ctx, mapping.EnvironmentName), nil
 	}
 
-	msgReader := func(msg *msgTypes.ConsumeMsg) error {
-		logger := logger.WithKV("subject", msg.Subject)
+	counter := 0
+	mu := sync.Mutex{}
 
+	msgReader := func(msg *msgTypes.ConsumeMsg) error {
+		mu.Lock()
 		counter += 1
-		logger.Debugf("[%d] received message", counter)
+		mu.Unlock()
+
+		start := time.Now()
+
+		logger := logger.With("subject", msg.Subject, "counter", counter)
+
+		logger.Debug("INCOMING message")
 
 		ru, err := msgOfficeT.UnmarshalResourceUpdate(msg.Payload)
 		if err != nil {
-			logger.Errorf(err, "unmarshaling resource update")
+			logger.Error("unmarshaling resource update, got", "err", err)
 			return nil
 		}
 
 		var rwu types.ResourceUpdate
 		if err := json.Unmarshal(ru.WatcherUpdate, &rwu); err != nil {
-			logger.Errorf(err, "unmarshaling into resource watcher update")
+			logger.Error("unmarshaling into resource update, got", "err", err)
 			return nil
 		}
 
 		if rwu.Object == nil {
-			logger.Infof("msg.Object is nil, so could not extract any info from message, ignoring ...")
+			logger.Debug("msg.object is nil, so could not extract any info from message, ignoring ...")
 			return nil
 		}
 
-		obj := unstructured.Unstructured{Object: rwu.Object}
+		obj := rwu.Object
+		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
-		mLogger := logger.WithKV(
-			"gvk", obj.GetObjectKind().GroupVersionKind(),
-			"resource", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
-			"accountName", ru.AccountName,
-			"clusterName", ru.ClusterName,
+		mlogger := logger.With(
+			"GVK", gvkStr,
+			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
+			"account", ru.AccountName,
+			"cluster", ru.ClusterName,
 		)
 
-		mLogger.Infof("received message")
-		defer func() {
-			mLogger.Infof("processed message")
-		}()
-
 		if len(strings.TrimSpace(ru.AccountName)) == 0 {
-			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
+			mlogger.Warn("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
 		if len(strings.TrimSpace(ru.ClusterName)) == 0 {
-			logger.Infof("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
+			mlogger.Warn("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
-		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", ru.AccountName)
+		mlogger.Debug("validated message")
+		defer func() {
+			mlogger.Info("PROCESSED message", "took", fmt.Sprintf("%dms", time.Since(start).Milliseconds()))
+		}()
 
-		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
+		accountName := ru.AccountName
+		if v, ok := rwu.Object.GetLabels()[constants.AccountNameKey]; ok && len(v) > 0 {
+			accountName = v
+		}
+
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", accountName)
 
 		resStatus, err := func() (types.ResourceStatus, error) {
-			v, ok := rwu.Object[types.ResourceStatusKey]
+			v, ok := obj.Object[types.ResourceStatusKey]
 			if !ok {
 				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
 			}
@@ -123,78 +145,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			return err
 		}
 
-		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
+		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp, ClusterName: ru.ClusterName}
 
 		switch gvkStr {
-		case deviceGVK.String():
-			{
-
-				dev, err := fn.JsonConvert[entities.ConsoleVPNDevice](rwu.Object)
-				if err != nil {
-					return errors.NewE(err)
-				}
-
-				if v, ok := rwu.Object[types.KeyVPNDeviceConfig]; ok {
-					b, err := json.Marshal(v)
-					if err != nil {
-						return errors.NewE(err)
-					}
-					var encodedStr t.EncodedString
-					if err := json.Unmarshal(b, &encodedStr); err != nil {
-						return errors.NewE(err)
-					}
-					dev.WireguardConfig = encodedStr
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnVPNDeviceDeleteMessage(dctx, dev)
-				}
-
-				return d.OnVPNDeviceUpdateMessage(dctx, dev, resStatus, opts, ru.ClusterName)
-			}
-		//case projectGVK.String():
-		//	{
-		//		var p entities.Project
-		//		if err := fn.JsonConversion(ru.Object, &p); err != nil {
-		//			return errors.NewE(err)
-		//		}
-		//
-		//		if resStatus == types.ResourceStatusDeleted {
-		//			return d.OnProjectDeleteMessage(dctx, p)
-		//		}
-		//		return d.OnProjectUpdateMessage(dctx, p, resStatus, opts)
-		//	}
-
-		//case projectManagedServiceGVK.String():
-		//	{
-		//		var pmsvc entities.ProjectManagedService
-		//		if err := fn.JsonConversion(ru.Object, &pmsvc); err != nil {
-		//			return errors.NewE(err)
-		//		}
-		//
-		//		mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, ru.ClusterName, obj.GetNamespace(), obj.GetName())
-		//		if err != nil {
-		//			return err
-		//		}
-		//		if mapping == nil {
-		//			return err
-		//		}
-		//
-		//		if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
-		//			s, err := fn.JsonConvertP[corev1.Secret](v)
-		//			s.SetManagedFields(nil)
-		//			if err != nil {
-		//				return err
-		//			}
-		//			pmsvc.SyncedOutputSecretRef = s
-		//		}
-		//
-		//		if resStatus == types.ResourceStatusDeleted {
-		//			return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
-		//		}
-		//		return d.OnProjectManagedServiceUpdateMessage(dctx, mapping.ProjectName, pmsvc, resStatus, opts)
-		//	}
-
 		case environmentGVK.String():
 			{
 				var ws entities.Environment
@@ -304,43 +257,73 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			}
 		case managedResourceGVK.String():
 			{
-				var mres entities.ManagedResource
+				var mres crdsv1.ManagedResource
 				if err := fn.JsonConversion(rwu.Object, &mres); err != nil {
 					return errors.NewE(err)
 				}
 
-				//rctx, err := getResourceContext(dctx, entities.ResourceTypeManagedResource, ru.ClusterName, obj)
-				//if err != nil {
-				//	return errors.NewE(err)
-				//}
-
-				if v, ok := rwu.Object[types.KeyManagedResSecret]; ok {
+				var outputSecret *corev1.Secret
+				if v, ok := obj.Object[types.KeyManagedResSecret]; ok {
 					s, err := fn.JsonConvertP[corev1.Secret](v)
 					if err != nil {
-						mLogger.Infof("managed resource, invalid output secret received")
+						mlogger.Error("managed resource, invalid output secret received, got", "err", err)
 						return errors.NewE(err)
 					}
 					s.SetManagedFields(nil)
-					mLogger.Infof("seting managed resource output secret")
-					mres.SyncedOutputSecretRef = s
+					outputSecret = s
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnManagedResourceDeleteMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres)
+					return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres)
 				}
-				return d.OnManagedResourceUpdateMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres, resStatus, opts)
+				return d.OnManagedResourceUpdateMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres, outputSecret, resStatus, opts)
 			}
 
+		case serviceBindingGVK.String():
+			{
+				var svcb networkingv1.ServiceBinding
+				if err := fn.JsonConversion(rwu.Object, &svcb); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnServiceBindingDeleteMessage(dctx, &svcb)
+				}
+				return d.OnServiceBindingUpdateMessage(dctx, &svcb, resStatus, opts)
+			}
+
+		case clusterMsvcGVK.String():
+			{
+				var cmsvc entities.ClusterManagedService
+				if err := fn.JsonConversion(rwu.Object, &cmsvc); err != nil {
+					return errors.NewE(err)
+				}
+
+				if v, ok := obj.Object[types.KeyClusterManagedSvcSecret]; ok {
+					v2, err := fn.JsonConvertP[corev1.Secret](v)
+					if err != nil {
+						mlogger.Warn("managed resource, invalid output secret received, got", "err", err)
+						return errors.NewE(err)
+					}
+					v2.SetManagedFields(nil)
+					cmsvc.SyncedOutputSecretRef = v2
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnClusterManagedServiceDeleteMessage(dctx, ru.ClusterName, cmsvc)
+				}
+				return d.OnClusterManagedServiceUpdateMessage(dctx, ru.ClusterName, cmsvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
 		}
 		return nil
 	}
 
 	if err := consumer.Consume(msgReader, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
-			logger.Errorf(err, "received while reading messages, ignoring it")
+			logger.Error("while reading messages, got", "err", err)
 			return nil
 		},
 	}); err != nil {
-		logger.Errorf(err, "error while consuming messages")
+		logger.Error("while consuming messages, got", "err", err)
 	}
 }

@@ -57,7 +57,7 @@ func (d *domain) DeletePV(ctx InfraContext, clusterName string, pvName string) e
 	}
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeNodePool, upv.Name, PublishUpdate)
-	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upv.PersistentVolume)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, &entities.DispatchAddr{AccountName: ctx.AccountName, ClusterName: clusterName}, &upv.PersistentVolume)
 }
 
 // OnPVDeleteMessage implements Domain.

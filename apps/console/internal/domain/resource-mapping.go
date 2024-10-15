@@ -31,7 +31,7 @@ func (d *domain) upsertEnvironmentResourceMapping(ctx ResourceContext, res resou
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	if clusterName == nil {
+	if clusterName == nil || *clusterName == "" {
 		// silent exit
 		return nil, nil
 	}

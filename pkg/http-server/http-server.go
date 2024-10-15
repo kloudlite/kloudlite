@@ -3,6 +3,7 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	l "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/skip"
 	"github.com/kloudlite/api/pkg/logging"
 )
 
@@ -31,7 +33,7 @@ type Server interface {
 }
 
 type server struct {
-	Logger logging.Logger
+	logger *slog.Logger
 	*fiber.App
 	isDev bool
 }
@@ -49,6 +51,10 @@ func (s *server) Listen(addr string) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*1)
 	defer cancel()
 
+	s.App.Get("/_healthy", func(c *fiber.Ctx) error {
+		return c.SendStatus(http.StatusOK)
+	})
+
 	go func() {
 		errChannel <- s.App.Listen(addr)
 	}()
@@ -57,34 +63,45 @@ func (s *server) Listen(addr string) error {
 	case status := <-errChannel:
 		return errors.Newf("could not start server because %v", status.Error())
 	case <-ctx.Done():
-		s.Logger.Infof("Http Server started @ (addr: %q)", addr)
+		s.logger.Info("HTTP server listening", "at", addr)
 	}
 	return nil
 }
 
 type ServerArgs struct {
-	IsDev            bool
+	IsDev bool
+	// Logger is deprecated, now use Slogger
 	Logger           logging.Logger
+	Slogger          *slog.Logger
 	CorsAllowOrigins *string
 	IAMGrpcAddr      string `env:"IAM_GRPC_ADDR" required:"true"`
 }
 
 func NewServer(args ServerArgs) Server {
 	app := fiber.New(fiber.Config{
+		// Prefork:               true,
+		DisableStartupMessage: true,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			args.Logger.Errorf(err)
 			return errors.NewE(err)
 		},
 	})
-	app.Use(
-		l.New(
-			l.Config{
-				Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
-				TimeFormat: "02-Jan-2006 15:04:05",
-				TimeZone:   "Asia/Kolkata",
-			},
-		),
+
+	loggerMiddleware := l.New(
+		l.Config{
+			CustomTags:    map[string]l.LogFunc{},
+			Format:        "${time} ${status} - ${method} ${latency} \t ${path} \n",
+			TimeFormat:    "02-Jan-2006 15:04:05",
+			TimeZone:      "Asia/Kolkata",
+			TimeInterval:  0,
+			Output:        nil,
+			DisableColors: false,
+		},
 	)
+
+	app.Use(skip.New(loggerMiddleware, func(c *fiber.Ctx) bool {
+		return c.Path() == "/_healthy"
+	}))
 
 	if args.CorsAllowOrigins != nil {
 		app.Use(
@@ -101,11 +118,11 @@ func NewServer(args ServerArgs) Server {
 		)
 	}
 
-	if args.Logger == nil {
-		args.Logger = logging.EmptyLogger
+	if args.Slogger == nil {
+		args.Slogger = slog.Default()
 	}
 
-	return &server{App: app, Logger: args.Logger, isDev: args.IsDev}
+	return &server{App: app, logger: args.Slogger, isDev: args.IsDev}
 }
 
 func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...fiber.Handler) {
@@ -127,4 +144,8 @@ func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...
 	})
 
 	s.All("/query", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
+
+	s.All("/", func(c *fiber.Ctx) error {
+		return c.SendStatus(http.StatusNotFound)
+	})
 }

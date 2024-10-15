@@ -13,7 +13,7 @@ metadata:
   labels: 
     app: {{.Name}}
 spec:
-  type: NodePort
+  type: {{ .ServiceType }}
   ports:
     - name: wireguard
       protocol: UDP

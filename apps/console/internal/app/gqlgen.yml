@@ -78,7 +78,14 @@ models:
 
   Environment: &environment-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Environment
+    fields:
+      onlineStatus:
+        resolver: true
   EnvironmentIn: *environment-model
+
+  RegistryImage: &registry-image-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.RegistryImage
+  RegistryImageIn: *registry-image-model
 
   Secret: &secret-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Secret
@@ -110,6 +117,10 @@ models:
   App: &app-model
     fields:
       build:
+        resolver: true
+      serviceHost:
+        resolver: true
+      onlineStatus:
         resolver: true
     model: github.com/kloudlite/api/apps/console/internal/entities.App
   AppIn: *app-model
@@ -146,6 +157,12 @@ models:
     fields:
       managedResource:
         resolver: true
+      onlineStatus:
+        resolver: true
+
+  ClusterManagedService: &custer-managed-service-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
+  ClusterManagedServiceIn: *custer-managed-service-model
 
   ManagedResourceKeyRefIn:
     model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
