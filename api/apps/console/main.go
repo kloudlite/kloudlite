@@ -28,6 +28,9 @@ func main() {
 	var debug bool
 	flag.BoolVar(&debug, "debug", false, "--debug")
 
+	var withWorker bool
+	flag.BoolVar(&withWorker, "with-worker", false, "--with-worker")
+
 	flag.Parse()
 
 	if isDev {
