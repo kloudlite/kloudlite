@@ -9,7 +9,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type Env struct {
+type infraEnv struct {
+	IsDev              bool
+	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY" default:"http://localhost:8080"`
+
 	InfraDbUri  string `env:"MONGO_DB_URI" required:"true"`
 	InfraDbName string `env:"MONGO_DB_NAME" required:"true"`
 
@@ -17,8 +20,10 @@ type Env struct {
 	GrpcPort     uint16 `env:"GRPC_PORT" required:"true"`
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
-	NatsURL    string `env:"NATS_URL" required:"true"`
-	NatsStream string `env:"NATS_STREAM" required:"true"`
+	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
+
+	NatsURL                    string `env:"NATS_URL" required:"true"`
+	NatsReceiveFromAgentStream string `env:"NATS_RECEIVE_FROM_AGENT_STREAM" required:"true"`
 
 	AccountCookieName       string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ProviderSecretNamespace string `env:"PROVIDER_SECRET_NAMESPACE" required:"true"`
@@ -30,17 +35,7 @@ type Env struct {
 	MessageOfficeInternalGrpcAddr string `env:"MESSAGE_OFFICE_INTERNAL_GRPC_ADDR" required:"true"`
 	MessageOfficeExternalGrpcAddr string `env:"MESSAGE_OFFICE_EXTERNAL_GRPC_ADDR" required:"true"`
 
-	AWSCfParamTrustedARN           string `env:"AWS_CF_PARAM_TRUSTED_ARN" required:"true"`
-	AWSCfStackNamePrefix           string `env:"AWS_CF_STACK_NAME_PREFIX" required:"true"`
-	AWSCfRoleNamePrefix            string `env:"AWS_CF_ROLE_NAME_PREFIX" required:"true"`
-	AWSCfInstanceProfileNamePrefix string `env:"AWS_CF_INSTANCE_PROFILE_NAME_PREFIX" required:"true"`
-	AWSCfStackS3URL                string `env:"AWS_CF_STACK_S3_URL" required:"true"`
-
-	AWSAccessKey string `env:"AWS_ACCESS_KEY" required:"true"`
-	AWSSecretKey string `env:"AWS_SECRET_KEY" required:"true"`
-
-	PublicDNSHostSuffix string `env:"PUBLIC_DNS_HOST_SUFFIX" required:"true"`
-	SessionKVBucket     string `env:"SESSION_KV_BUCKET" required:"true"`
+	SessionKVBucket string `env:"SESSION_KV_BUCKET" required:"true"`
 
 	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
 
@@ -56,9 +51,6 @@ type Env struct {
 	// ClusterOffset = 5, reserving 5 * 8K IPs for wireguard devices and other devices, that are not Clusters
 	ClustersOffset int `env:"CLUSTERS_OFFSET" default:"5"`
 
-	IsDev              bool
-	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY"`
-
 	GlobalVPNKubeReverseProxyImage      string `env:"GLOBAL_VPN_KUBE_REVERSE_PROXY_IMAGE" required:"true"`
 	GlobalVPNKubeReverseProxyAuthzToken string `env:"GLOBAL_VPN_KUBE_REVERSE_PROXY_AUTHZ_TOKEN" required:"true"`
 
@@ -66,6 +58,28 @@ type Env struct {
 
 	AvailableKloudliteRegionsConfig string `env:"AVAILABLE_KLOUDLITE_REGIONS_CONFIG" required:"false"`
 	AvailableKloudliteRegions       map[string]AvailableKloudliteRegion
+
+	KloudliteEdgeGatewayServiceType string `env:"KLOUDLITE_EDGE_GATEWAY_SERVICE_TYPE" default:"LoadBalancer"`
+
+	EnableClusterCreation bool `env:"ENABLE_CLUSTER_CREATION" default:"false"`
+}
+
+type Env struct {
+	clusterCreationEnv `json:",inline"`
+	infraEnv           `json:",inline"`
+}
+
+type clusterCreationEnv struct {
+	PublicDNSHostSuffix string `env:"PUBLIC_DNS_HOST_SUFFIX" required:"true"`
+
+	AWSCfParamTrustedARN           string `env:"AWS_CF_PARAM_TRUSTED_ARN" required:"true"`
+	AWSCfStackNamePrefix           string `env:"AWS_CF_STACK_NAME_PREFIX" required:"true"`
+	AWSCfRoleNamePrefix            string `env:"AWS_CF_ROLE_NAME_PREFIX" required:"true"`
+	AWSCfInstanceProfileNamePrefix string `env:"AWS_CF_INSTANCE_PROFILE_NAME_PREFIX" required:"true"`
+	AWSCfStackS3URL                string `env:"AWS_CF_STACK_S3_URL" required:"true"`
+
+	AWSAccessKey string `env:"AWS_ACCESS_KEY" required:"true"`
+	AWSSecretKey string `env:"AWS_SECRET_KEY" required:"true"`
 }
 
 type AvailableKloudliteRegion struct {
@@ -79,9 +93,21 @@ type AvailableKloudliteRegion struct {
 
 func LoadEnv() (*Env, error) {
 	var ev Env
-	if err := env.Set(&ev); err != nil {
+
+	var iev infraEnv
+	if err := env.Set(&iev); err != nil {
 		return nil, errors.NewE(err)
 	}
+	ev.infraEnv = iev
+
+	if iev.EnableClusterCreation {
+		var ccev clusterCreationEnv
+		if err := env.Set(&ccev); err != nil {
+			return nil, errors.NewE(err)
+		}
+		ev.clusterCreationEnv = ccev
+	}
+
 	if ev.AvailableKloudliteRegionsConfig != "" {
 		f, err := os.Open(ev.AvailableKloudliteRegionsConfig)
 		if err != nil {

@@ -35,12 +35,23 @@ type ResourceUpdateContext interface {
 	GetUserName() string
 }
 
+type ResourceForSyncFromAgent interface {
+	GetName() string
+	GetNamespace() string
+	GetCreationTimestamp() metav1.Time
+	GetLabels() map[string]string
+	GetAnnotations() map[string]string
+	GetGeneration() int64
+	GetStatus() rApi.Status
+}
+
 func PatchForSyncFromAgent(
-	res ResourceForSync,
+	res ResourceForSyncFromAgent,
 	recordVersion int,
 	status types.ResourceStatus,
 	opts PatchOpts,
 ) repos.Document {
+	res.GetCreationTimestamp()
 	generatedPatch := repos.Document{
 		fields.MetadataCreationTimestamp: res.GetCreationTimestamp(),
 		fields.MetadataLabels:            res.GetLabels(),
@@ -57,11 +68,12 @@ func PatchForSyncFromAgent(
 		fields.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
 		fields.SyncStatusError:         nil,
 	}
-	var patch repos.Document = nil
-	patch = opts.XPatch
-	if patch == nil {
+
+	if opts.XPatch == nil {
 		return generatedPatch
 	}
+
+	patch := opts.XPatch
 	maps.Copy(patch, generatedPatch)
 	return patch
 }

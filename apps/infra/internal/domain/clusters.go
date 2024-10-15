@@ -9,12 +9,13 @@ import (
 	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/apps/infra/internal/domain/ports"
 	"github.com/kloudlite/api/apps/infra/internal/domain/templates"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
-	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -33,6 +34,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 )
 
 const (
@@ -55,7 +57,7 @@ const (
 )
 
 func (d *domain) generateClusterToken(ctx InfraContext, clusterName string) (string, error) {
-	tout, err := d.messageOfficeInternalClient.GenerateClusterToken(ctx, &message_office_internal.GenerateClusterTokenIn{
+	tout, err := d.moSvc.GenerateClusterToken(ctx, &ports.GenerateClusterTokenIn{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
 	})
@@ -163,6 +165,14 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	if existing != nil {
 		return nil, ErrClusterAlreadyExists{ClusterName: cluster.Name, AccountName: ctx.AccountName}
+	}
+
+	if s, ok := cluster.GetLabels()[constants.ClusterLabelOwnedBy]; ok {
+		if s != string(ctx.UserId) {
+			return nil, errors.Newf("provided wrong owner for cluster %q, expected %q", cluster.Name, ctx.UserId)
+		}
+
+		cluster.OwnedBy = &s
 	}
 
 	cluster.AccountName = ctx.AccountName
@@ -325,7 +335,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 				},
 			}
 		}(),
-		MessageQueueTopicName: common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name),
+		MessageQueueTopicName: common.SendToAgentSubjectPrefix(ctx.AccountName, cluster.Name),
 		KloudliteRelease:      d.env.KloudliteRelease,
 		Output:                nil,
 	}
@@ -343,7 +353,12 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
 	// FIXME: removing public DNS host for now
-	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN)
+	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, ensureGlobalVPNConnectionArgs{
+		ClusterName:   cluster.Name,
+		GlobalVPNName: *cluster.GlobalVPN,
+		DispatchAddr:  nil,
+		Visibility:    entities.ClusterVisbility{},
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -376,25 +391,22 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 }
 
 func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) error {
-  t := time.Now()
-  defer func() {
-    d.logger.Infof("syncKloudliteGatewayDevice took %.2fs", time.Since(t).Seconds())
-  }()
-	// 1. parse deployment template
-	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
-	if err != nil {
-		return errors.NewE(err)
-	}
+	t := time.Now()
+	defer func() {
+		d.logger.Info("syncKloudliteGatewayDevice", "took", fmt.Sprintf("%.2fs", time.Since(t).Seconds()))
+	}()
 
 	svcTemplate, err := templates.Read(templates.GatewayServiceTemplate)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx)
-	if err != nil {
-		return errors.NewE(err)
-	}
+	accNs := fmt.Sprintf("kl-%s", ctx.AccountName)
+
+	// accNs, err := d.getAccNamespace(ctx)
+	// if err != nil {
+	// 	return errors.NewE(err)
+	// }
 
 	gv, err := d.findGlobalVPN(ctx, gvpnName)
 	if err != nil {
@@ -427,9 +439,9 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 
 	publicPeers := make([]wgutils.PublicPeer, 0, len(wgParams.PublicPeers))
 	for _, p := range wgParams.PublicPeers {
-	  if p.PublicKey != clDevice.PublicKey {
-	    publicPeers = append(publicPeers, p)
-	  }
+		if p.PublicKey != clDevice.PublicKey {
+			publicPeers = append(publicPeers, p)
+		}
 	}
 
 	deviceSvcHosts := make([]string, 0, len(deviceHosts))
@@ -437,7 +449,7 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		deviceSvcHosts = append(deviceSvcHosts, fmt.Sprintf("%s=%s", k, v))
 	}
 
-  wgParams.PublicPeers = publicPeers
+	wgParams.PublicPeers = publicPeers
 	wgParams.DNS = klDevice.IPAddr
 	wgParams.ListenPort = 31820
 
@@ -448,7 +460,8 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		}
 	}
 
-	resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	// resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	resourceName := fmt.Sprintf("device-%s-egw", gv.Name)
 	resourceNamespace := accNs
 	selector := map[string]string{
 		"app": resourceName,
@@ -466,14 +479,26 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		return errors.Newf("invalid gateway region %q", gao.KloudliteGatewayRegion)
 	}
 
-	wgEndpoint := gwRegion.PublicDNSHost
+	var k8sRestConfig *rest.Config
 
-	c, err := k8s.RestConfigFromKubeConfig([]byte(gwRegion.Kubeconfig))
-	if err != nil {
-		return errors.NewE(err)
+	switch gwRegion.ID {
+	case "self":
+		k8sRestConfig, err = k8s.RestInclusterConfig()
+		if err != nil {
+			return errors.NewE(err)
+		}
+	default:
+		{
+			k8sRestConfig, err = k8s.RestConfigFromKubeConfig([]byte(gwRegion.Kubeconfig))
+			if err != nil {
+				return errors.NewE(err)
+			}
+		}
 	}
 
-	yc, err := kubectl.NewYAMLClient(c, kubectl.YAMLClientOpts{})
+	wgEndpoint := gwRegion.PublicDNSHost
+
+	yc, err := kubectl.NewYAMLClient(k8sRestConfig, kubectl.YAMLClientOpts{})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -487,6 +512,7 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		Namespace:     resourceNamespace,
 		WireguardPort: wgParams.ListenPort,
 		Selector:      selector,
+		ServiceType:   d.env.KloudliteEdgeGatewayServiceType,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -496,7 +522,8 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		if d.env.IsDev {
 			return context.WithCancel(ctx)
 		}
-		return context.WithTimeout(ctx, 5*time.Second)
+		// return context.WithTimeout(ctx, 10*time.Second)
+		return context.WithTimeout(context.TODO(), 45*time.Second)
 	}()
 	defer cf()
 
@@ -515,8 +542,20 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 			continue
 		}
 
-		if service.Spec.Ports[0].NodePort != 0 {
+		switch service.Spec.Type {
+		case "LoadBalancer":
+			if len(service.Status.LoadBalancer.Ingress) == 0 {
+				wgEndpoint = ""
+				break
+			}
+			wgEndpoint = service.Status.LoadBalancer.Ingress[0].IP + ":" + fmt.Sprintf("%d", wgParams.ListenPort)
+		case "NodePort":
 			wgEndpoint = fmt.Sprintf("%s:%d", wgEndpoint, service.Spec.Ports[0].NodePort)
+		default:
+			return errors.Newf("unknown service type %q", service.Spec.Type)
+		}
+
+		if wgEndpoint != "" {
 			break
 		}
 	}
@@ -532,25 +571,41 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		return err
 	}
 
-	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
-		Name:                  resourceName,
-		Namespace:             accNs,
-		WgConfig:              wgConfig,
-		EnableKubeReverseProxy: false,
-		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
-		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
-		GatewayDNSServers:     strings.Join(dnsServerArgs, ","),
-		GatewayServiceHosts:   strings.Join(deviceSvcHosts, ","),
-		WireguardPort:         wgParams.ListenPort,
+	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
+	if err != nil {
+		return errors.NewE(err)
+	}
 
-    KloudliteAccount: gv.AccountName,
+	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
+		Name:                   resourceName,
+		Namespace:              accNs,
+		WgConfig:               wgConfig,
+		EnableKubeReverseProxy: false,
+		KubeReverseProxyImage:  d.env.GlobalVPNKubeReverseProxyImage,
+		AuthzToken:             d.env.GlobalVPNKubeReverseProxyAuthzToken,
+		GatewayDNSServers:      strings.Join(dnsServerArgs, ","),
+		GatewayServiceHosts:    strings.Join(deviceSvcHosts, ","),
+		WireguardPort:          wgParams.ListenPort,
+
+		KloudliteAccount: gv.AccountName,
 	})
 	if err != nil {
 		return err
 	}
 
-	if _, err := yc.ApplyYAML(ctx, deploymentBytes); err != nil {
-		return errors.NewE(err)
+	d.logger.Info("applying yaml", "yaml", string(deploymentBytes))
+	for i := 0; i < 5; i++ {
+		if _, err = yc.ApplyYAML(ctx, deploymentBytes); err != nil {
+			d.logger.Warn("syncing to kloudlite gateway device, failing with", "err", err, "retry.count", i, "retry.remaining", 5-i)
+			continue
+			// return errors.NewE(err)
+		}
+		err = nil
+		break
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -563,21 +618,17 @@ syncKloudliteDeviceOnPlatform:
   - we can read their logs, and everything on demand
 */
 func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string) error {
-	// 1. parse deployment template
-	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
 	svcTemplate, err := templates.Read(templates.GatewayServiceTemplate)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx)
-	if err != nil {
-		return errors.NewE(err)
-	}
+	accNs := fmt.Sprintf("kl-%s", ctx.AccountName)
+
+	// accNs, err := d.getAccNamespace(ctx)
+	// if err != nil {
+	// 	return errors.NewE(err)
+	// }
 
 	gv, err := d.findGlobalVPN(ctx, gvpnName)
 	if err != nil {
@@ -598,7 +649,6 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		return err
 	}
 
-
 	wgParams, deviceHosts, err := d.buildGlobalVPNDeviceWgBaseParams(ctx, gvpnConns, clDevice)
 	if err != nil {
 		return err
@@ -611,9 +661,9 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 
 	publicPeers := make([]wgutils.PublicPeer, 0, len(wgParams.PublicPeers))
 	for _, p := range wgParams.PublicPeers {
-	  if p.PublicKey != klDevice.PublicKey {
-	    publicPeers = append(publicPeers, p)
-	  }
+		if p.PublicKey != klDevice.PublicKey {
+			publicPeers = append(publicPeers, p)
+		}
 	}
 
 	deviceSvcHosts := make([]string, 0, len(deviceHosts))
@@ -621,8 +671,9 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		deviceSvcHosts = append(deviceSvcHosts, fmt.Sprintf("%s=%s", k, v))
 	}
 
-  wgParams.PublicPeers = publicPeers
+	wgParams.PublicPeers = publicPeers
 	wgParams.DNS = clDevice.IPAddr
+	wgParams.WithDNS = true
 	wgParams.ListenPort = 31820
 
 	dnsServerArgs := make([]string, 0, len(gvpnConns))
@@ -632,15 +683,12 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		}
 	}
 
-	resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	// resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	resourceName := fmt.Sprintf("device-%s-pl", gv.Name)
 	resourceNamespace := accNs
 	selector := map[string]string{
 		"app": resourceName,
 	}
-
-	service := &corev1.Service{}
-	ctx2, cf := context.WithTimeout(ctx, 5*time.Second)
-	defer cf()
 
 	wgEndpoint := d.env.KloudliteGlobalVPNDeviceHost
 
@@ -650,10 +698,23 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		Namespace:     resourceNamespace,
 		WireguardPort: wgParams.ListenPort,
 		Selector:      selector,
+		ServiceType:   d.env.KloudliteEdgeGatewayServiceType,
 	})
 	if err != nil {
 		return errors.NewE(err)
 	}
+
+	service := &corev1.Service{}
+	ctx2, cf := func() (context.Context, context.CancelFunc) {
+		if d.env.IsDev {
+			return context.WithCancel(ctx)
+		}
+
+		// FIXME: it might take a while for a cloud provider to allocate IP, but
+		// till then your HTTP requests might time out
+		return context.WithTimeout(context.TODO(), 5*time.Second)
+	}()
+	defer cf()
 
 	for {
 		if ctx2.Err() != nil {
@@ -671,8 +732,20 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 			continue
 		}
 
-		if service.Spec.Ports[0].NodePort != 0 {
+		switch service.Spec.Type {
+		case "LoadBalancer":
+			if len(service.Status.LoadBalancer.Ingress) == 0 {
+				wgEndpoint = ""
+				break
+			}
+			wgEndpoint = service.Status.LoadBalancer.Ingress[0].IP + ":" + fmt.Sprintf("%d", wgParams.ListenPort)
+		case "NodePort":
 			wgEndpoint = fmt.Sprintf("%s:%d", wgEndpoint, service.Spec.Ports[0].NodePort)
+		default:
+			return errors.Newf("unknown service type %q", service.Spec.Type)
+		}
+
+		if wgEndpoint != "" {
 			break
 		}
 	}
@@ -688,25 +761,40 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		return err
 	}
 
-	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
-		Name:                  resourceName,
-		Namespace:             accNs,
-		WgConfig:              wgConfig,
-		EnableKubeReverseProxy: true,
-		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
-		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
-		GatewayDNSServers:     strings.Join(dnsServerArgs, ","),
-		GatewayServiceHosts:   strings.Join(deviceSvcHosts, ","),
-		WireguardPort:         wgParams.ListenPort,
+	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
+	if err != nil {
+		return errors.NewE(err)
+	}
 
-    KloudliteAccount: gv.AccountName,
+	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
+		Name:                   resourceName,
+		Namespace:              accNs,
+		WgConfig:               wgConfig,
+		EnableKubeReverseProxy: true,
+		KubeReverseProxyImage:  d.env.GlobalVPNKubeReverseProxyImage,
+		AuthzToken:             d.env.GlobalVPNKubeReverseProxyAuthzToken,
+		GatewayDNSServers:      strings.Join(dnsServerArgs, ","),
+		GatewayServiceHosts:    strings.Join(deviceSvcHosts, ","),
+		WireguardPort:          wgParams.ListenPort,
+
+		KloudliteAccount: gv.AccountName,
 	})
 	if err != nil {
 		return err
 	}
 
-	if err := d.k8sClient.ApplyYAML(ctx, deploymentBytes); err != nil {
-		return errors.NewE(err)
+	for i := 0; i < 5; i++ {
+		if err := d.k8sClient.ApplyYAML(ctx, deploymentBytes); err != nil {
+			d.logger.Warn("syncing to kloudlite platform device, failing with", "err", err, "retry.count", i, "retry.remaining", 5-i)
+			continue
+			// return errors.NewE(err)
+		}
+		err = nil
+		break
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -792,7 +880,7 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, 
 		return errors.NewE(err)
 	}
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, cluster.Name, &uhr.HelmChart, uhr.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, &entities.DispatchAddr{AccountName: ctx.AccountName, ClusterName: cluster.Name}, &uhr.HelmChart, uhr.RecordVersion); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -800,7 +888,7 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, 
 }
 
 func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error {
-	out, err := d.messageOfficeInternalClient.GetClusterToken(ctx, &message_office_internal.GetClusterTokenIn{
+	out, err := d.moSvc.GetClusterToken(ctx, &ports.GetClusterTokenIn{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
 	})
@@ -818,7 +906,7 @@ func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string)
 	}
 
 	if cluster.GlobalVPN != nil {
-		gvpn, err := d.findGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN)
+		gvpn, err := d.findGlobalVPNConnection(ctx, cluster.AccountName, cluster.Name, *cluster.GlobalVPN)
 		if err != nil {
 			return errors.NewE(err)
 		}
@@ -843,6 +931,10 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 	f := repos.Filter{
 		fields.AccountName:       ctx.AccountName,
 		fields.MetadataNamespace: accNs,
+		// "$or": []map[string]any{
+		// 	{fc.ClusterOwnedBy: ctx.UserId},
+		// 	{fc.ClusterOwnedBy: nil},
+		// },
 	}
 
 	pr, err := d.clusterRepo.FindPaginated(ctx, d.clusterRepo.MergeMatchFilters(f, mf), pagination)
@@ -861,7 +953,7 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 	c, err := d.findCluster(ctx, name)
 	if err != nil {
 		if errors.Is(err, ErrClusterNotFound) {
-			byokCluster, err := d.findBYOKCluster(ctx, name)
+			byokCluster, err := d.findBYOKCluster(ctx, ctx.AccountName, name)
 			if err != nil {
 				return nil, err
 			}
@@ -953,17 +1045,13 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	if _, err := d.consoleClient.ArchiveEnvironmentsForCluster(ctx, &console.ArchiveEnvironmentsForClusterIn{
+	if _, err := d.consoleClient.ArchiveResourcesForCluster(ctx, &console.ArchiveResourcesForClusterIn{
 		UserId:      string(ctx.UserId),
 		UserName:    ctx.UserName,
 		UserEmail:   ctx.UserEmail,
 		AccountName: ctx.AccountName,
 		ClusterName: name,
 	}); err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.ArchiveClusterManagedService(ctx, name); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -1008,7 +1096,7 @@ func (d *domain) OnClusterDeleteMessage(ctx InfraContext, cluster entities.Clust
 			return errors.NewE(err)
 		}
 
-		gv, err := d.findGlobalVPNConnection(ctx, xcluster.Name, *xcluster.GlobalVPN)
+		gv, err := d.findGlobalVPNConnection(ctx, xcluster.AccountName, xcluster.Name, *xcluster.GlobalVPN)
 		if err != nil {
 			return errors.NewE(err)
 		}
@@ -1082,6 +1170,9 @@ func (d *domain) MarkClusterOnlineAt(ctx InfraContext, clusterName string, times
 		if _, err := d.byokClusterRepo.Patch(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
 			fc.BYOKClusterLastOnlineAt: timestamp,
 		}); err != nil {
+			if errors.Is(err, repos.ErrNoDocuments) {
+				return nil
+			}
 			return errors.NewEf(err, "failed to patch last online time for byok cluster %q,", clusterName)
 		}
 		return nil
@@ -1093,6 +1184,9 @@ func (d *domain) MarkClusterOnlineAt(ctx InfraContext, clusterName string, times
 	}, repos.Document{
 		fc.ClusterLastOnlineAt: timestamp,
 	}); err != nil {
+		if errors.Is(err, repos.ErrNoDocuments) {
+			return nil
+		}
 		return errors.NewEf(err, "failed to patch last online time for cluster %q", clusterName)
 	}
 

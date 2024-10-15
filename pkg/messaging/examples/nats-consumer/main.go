@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -30,8 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	subjectBase := fmt.Sprintf("resource-sync.*.*.platform.kloudlite-console.resource-update")
-	_ = subjectBase
+	subjectBase := "resource-sync.*.*.platform.kloudlite-console.resource-update"
 
 	consumer, err = msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
 		Stream: natsStream,

@@ -164,9 +164,6 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecretIn entities.Cloud
 		return nil, errors.NewE(err)
 	}
 
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
 	if err := d.applyK8sResource(ctx, secret, nSecret.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}

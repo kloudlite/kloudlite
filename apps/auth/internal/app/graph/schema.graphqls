@@ -30,7 +30,7 @@ type Mutation {
   auth_createRemoteLogin(secret: String):String! # public-access
 
   auth_login(email: String!, password: String!): Session # public-access
-  auth_signup(name: String!, email: String!, password: String!): Session # public-access
+  auth_signup(name: String!, email: String!, password: String!, captchaToken: String!): Session! # public-access
 
   oAuth_login(provider: String!, code: String!, state: String): Session! # public-access
   oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean! # public-access
@@ -42,7 +42,7 @@ type Mutation {
 
   auth_verifyEmail(token: String!): Session!
   auth_resetPassword(token: String!, password: String!): Boolean!
-  auth_requestResetPassword(email: String!): Boolean!
+  auth_requestResetPassword(email: String!, captchaToken: String!): Boolean!
   auth_changeEmail(email: String!): Boolean! @isLoggedInAndVerified
   auth_resendVerificationEmail: Boolean! @isLoggedIn
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! @isLoggedInAndVerified

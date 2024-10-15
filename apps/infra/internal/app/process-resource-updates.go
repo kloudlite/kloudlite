@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -12,9 +14,7 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
@@ -43,44 +43,85 @@ var (
 	pvGVK               = fn.GVK("v1", "PersistentVolume")
 	volumeAttachmentGVK = fn.GVK("storage.k8s.io/v1", "VolumeAttachment")
 	namespaceGVK        = fn.GVK("v1", "Namespace")
-	clusterMsvcGVK      = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	ingressGVK          = fn.GVK("networking.k8s.io/v1", "Ingress")
 	secretGVK           = fn.GVK("v1", "Secret")
 )
 
-func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger *slog.Logger) {
+	counter := 0
+	mu := sync.Mutex{}
+
 	readMsg := func(msg *msgTypes.ConsumeMsg) error {
-		logger.Debugf("processing msg timestamp %s", msg.Timestamp.Format(time.RFC3339))
+		mu.Lock()
+		counter += 1
+		mu.Unlock()
+
+		start := time.Now()
+
+		logger := logger.With("subject", msg.Subject, "counter", counter)
+		logger.Debug("INCOMING message")
 
 		ru, err := msgOfficeT.UnmarshalResourceUpdate(msg.Payload)
 		if err != nil {
-			logger.Errorf(err, "unmarshaling resource update")
+			logger.Error("unmarshaling resource update, got", "err", err)
 			return nil
 		}
 
 		var su types.ResourceUpdate
 		if err := json.Unmarshal(ru.WatcherUpdate, &su); err != nil {
-			logger.Errorf(err, "parsing into status update")
+			logger.Error("unmarshaling into resource update, got", "err", err)
 			return nil
 		}
 
 		if su.Object == nil {
-			logger.Infof("message does not contain 'object', so won't be able to find a resource uniquely, thus ignoring ...")
+			logger.Debug("msg.object is nil, so could not extract any info from message, ignoring ...")
 			return nil
 		}
 
 		if len(strings.TrimSpace(ru.AccountName)) == 0 {
-			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
+			logger.Debug("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
+			return nil
+		}
+
+		if len(strings.TrimSpace(ru.ClusterName)) == 0 {
+			logger.Debug("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
+			return nil
+		}
+
+		obj := su.Object
+		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
+
+		mlogger := logger.With(
+			"GVK", gvkStr,
+			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
+			"account", ru.AccountName,
+			"cluster", ru.ClusterName,
+		)
+
+		if len(strings.TrimSpace(ru.AccountName)) == 0 {
+			mlogger.Warn("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
+			return nil
+		}
+
+		if len(strings.TrimSpace(ru.ClusterName)) == 0 {
+			mlogger.Warn("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
 		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: ru.AccountName}
 
-		obj := unstructured.Unstructured{Object: su.Object}
-		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
+		// if strings.HasPrefix(ru.AccountName, "kl-") {
+		// 	// FIXME: this is a kloudlite account, so we should handle it differently, as it is definitely not a tenant account
+		// 	dctx.AccountName = obj.GetLabels()[constants.AccountNameKey]
+		// }
+
+		mlogger.Debug("validated message")
+		defer func() {
+			mlogger.Info("PROCESSED message", "took", fmt.Sprintf("%dms", time.Since(start).Milliseconds()))
+		}()
 
 		resStatus, err := func() (types.ResourceStatus, error) {
-			v, ok := su.Object[types.ResourceStatusKey]
+			v, ok := su.Object.Object[types.ResourceStatusKey]
 			if !ok {
 				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
 			}
@@ -95,18 +136,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			return err
 		}
 
-		mLogger := logger.WithKV(
-			"gvk", obj.GetObjectKind().GroupVersionKind(),
-			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
-			"resource-status", resStatus,
-			"accountName/clusterName", fmt.Sprintf("%s/%s", ru.AccountName, ru.ClusterName),
-		)
-
-		mLogger.Infof("received message")
-		defer func() {
-			mLogger.Infof("processed message")
-		}()
-
 		switch gvkStr {
 		case clusterGVK.String():
 			{
@@ -120,26 +149,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnClusterUpdateMessage(dctx, clus, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
-		// case globalVpnGVK.String():
-		// 	{
-		// 		var gvpn entities.GlobalVPNConnection
-		// 		if err := fn.JsonConversion(su.Object, &gvpn); err != nil {
-		// 			return errors.NewE(err)
-		// 		}
-		//
-		// 		if v, ok := su.Object[types.KeyGlobalVPNWgParams]; ok {
-		// 			wp, err := fn.JsonConvertP[wgv1.WgParams](v)
-		// 			if err != nil {
-		// 				return errors.NewE(err)
-		// 			}
-		// 			gvpn.ParsedWgParams = wp
-		// 		}
-		//
-		// 		if resStatus == types.ResourceStatusDeleted {
-		// 			return d.OnGlobalVPNConnectionDeleteMessage(dctx, ru.ClusterName, gvpn)
-		// 		}
-		// 		return d.OnGlobalVPNConnectionUpdateMessage(dctx, ru.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
-		// 	}
 		case gatewayGVK.String():
 			{
 				var gvpn entities.GlobalVPNConnection
@@ -147,7 +156,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return errors.NewE(err)
 				}
 
-				if v, ok := su.Object[types.KeyGatewayWgParams]; ok {
+				if v, ok := obj.Object[types.KeyGatewayWgParams]; ok {
 					wp, err := fn.JsonConvertP[networkingv1.WireguardKeys](v)
 					if err != nil {
 						return errors.NewE(err)
@@ -158,7 +167,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if resStatus == types.ResourceStatusDeleted {
 					return d.OnGlobalVPNConnectionDeleteMessage(dctx, ru.ClusterName, gvpn)
 				}
-				return d.OnGlobalVPNConnectionUpdateMessage(dctx, ru.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnGlobalVPNConnectionUpdateMessage(dctx, entities.DispatchAddr{AccountName: ru.AccountName, ClusterName: ru.ClusterName}, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case nodepoolGVK.String():
@@ -239,29 +248,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				return d.OnNamespaceUpdateMessage(dctx, ru.ClusterName, ns, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
-		case clusterMsvcGVK.String():
-			{
-				var cmsvc entities.ClusterManagedService
-				if err := fn.JsonConversion(su.Object, &cmsvc); err != nil {
-					return errors.NewE(err)
-				}
-
-				if v, ok := su.Object[types.KeyClusterManagedSvcSecret]; ok {
-					v2, err := fn.JsonConvertP[corev1.Secret](v)
-					if err != nil {
-						mLogger.Infof("managed resource, invalid output secret received")
-						return errors.NewE(err)
-					}
-					v2.SetManagedFields(nil)
-					cmsvc.SyncedOutputSecretRef = v2
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnClusterManagedServiceDeleteMessage(dctx, ru.ClusterName, cmsvc)
-				}
-				return d.OnClusterManagedServiceUpdateMessage(dctx, ru.ClusterName, cmsvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
-			}
-
 		case ingressGVK.String():
 			{
 				var ingress networkv1.Ingress
@@ -294,7 +280,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			}
 		default:
 			{
-				mLogger.Infof("infra status updates consumer does not acknowledge the gvk %s", gvk(&obj))
+				mlogger.Warn("infra resource updates consumer does not acknowledge resource")
 				return nil
 			}
 		}
@@ -302,10 +288,10 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 	if err := consumer.Consume(readMsg, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
-			logger.Errorf(err, "error while consuming message")
+			logger.Error("while reading messages, got", "err", err)
 			return nil
 		},
 	}); err != nil {
-		logger.Errorf(err, "error while consuming messages")
+		logger.Error("while consuming messages, got", "err", err)
 	}
 }

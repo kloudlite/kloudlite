@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/PaesslerAG/jsonpath"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/fx"
 
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -81,24 +83,24 @@ func bsonToStruct[T any](r *mongo.SingleResult) (T, error) {
 	return result, nil
 }
 
-func cursorToStruct[T any](ctx context.Context, curr *mongo.Cursor) ([]T, error) {
+func cursorToStruct[T any](ctx context.Context, curr *mongo.Cursor) ([]T, []map[string]any, error) {
 	var m []map[string]any
 	var results []T
 
 	if err := curr.All(ctx, &m); err != nil {
-		return results, errors.NewE(err)
+		return results, m, errors.NewE(err)
 	}
 
 	b, err := json.Marshal(m)
 	if err != nil {
-		return results, errors.NewE(err)
+		return results, m, errors.NewE(err)
 	}
 
 	if err := json.Unmarshal(b, &results); err != nil {
-		return results, errors.NewE(err)
+		return results, m, errors.NewE(err)
 	}
 
-	return results, nil
+	return results, m, nil
 }
 
 func (repo *dbRepo[T]) NewId() ID {
@@ -122,8 +124,8 @@ func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 		}
 		return nil, errors.NewE(err)
 	}
-
-	return cursorToStruct[T](ctx, curr)
+	toStruct, _, err := cursorToStruct[T](ctx, curr)
+	return toStruct, err
 }
 
 func (repo *dbRepo[T]) Count(ctx context.Context, filter Filter) (int64, error) {
@@ -135,7 +137,7 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	item, err := bsonToStruct[T](one)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return item, errors.Newf("no document found")
+			return item, ErrNoDocuments
 		}
 		return item, errors.NewE(err)
 	}
@@ -171,6 +173,14 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		return nil, errors.Newf("paramter `before` requires paramter `last` to be specified")
 	}
 
+	var cursorKey string
+
+	if pagination.OrderBy == "" {
+		cursorKey = "_id"
+	} else {
+		cursorKey = pagination.OrderBy
+	}
+
 	queryFilter := Filter{}
 
 	for k, v := range filter {
@@ -182,11 +192,13 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		if err != nil {
 			return nil, errors.NewE(err)
 		}
-		objectID, err := primitive.ObjectIDFromHex(string(aft))
-		if err != nil {
-			return nil, errors.NewE(err)
+
+		if pagination.SortDirection == SortDirectionAsc {
+			queryFilter[cursorKey] = bson.M{"$gte": string(aft)}
+		} else {
+			queryFilter[cursorKey] = bson.M{"$lte": string(aft)}
 		}
-		queryFilter["_id"] = bson.M{"$gt": objectID}
+
 	}
 
 	if pagination.Before != nil {
@@ -194,11 +206,12 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		if err != nil {
 			return nil, errors.NewE(err)
 		}
-		objectID, err := primitive.ObjectIDFromHex(string(bef))
-		if err != nil {
-			return nil, errors.NewE(err)
+
+		if pagination.SortDirection == SortDirectionAsc {
+			queryFilter[cursorKey] = bson.M{"$lte": string(bef)}
+		} else {
+			queryFilter[cursorKey] = bson.M{"$gte": string(bef)}
 		}
-		queryFilter["_id"] = bson.M{"$lt": objectID}
 	}
 
 	var limit int64
@@ -210,7 +223,6 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		limit = *pagination.First + 1
 	}
 
-	// var results []T
 	curr, err := repo.db.Collection(repo.collectionName).Find(
 		ctx, queryFilter, &options.FindOptions{
 			Limit: &limit,
@@ -226,7 +238,7 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		return nil, errors.NewE(err)
 	}
 
-	results, err := cursorToStruct[T](ctx, curr)
+	results, rawResults, err := cursorToStruct[T](ctx, curr)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -238,9 +250,18 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 
 	pageInfo := PageInfo{}
 
+	getCursorOfResult := func(r T, m map[string]any) (string, error) {
+		if cursorKey == "_id" {
+			return CursorToBase64(Cursor(r.GetId())), nil
+		}
+		val, err := jsonpath.Get(fmt.Sprintf("$.%s", cursorKey), m)
+		if err != nil {
+			return "", errors.NewE(err)
+		}
+		return CursorToBase64(Cursor(fmt.Sprintf("%v", val))), nil
+	}
+
 	if len(results) > 0 {
-		pageInfo.StartCursor = CursorToBase64(Cursor(string(results[0].GetPrimitiveID())))
-		pageInfo.EndCursor = CursorToBase64(Cursor(string(results[len(results)-1].GetPrimitiveID())))
 
 		if pagination.First != nil {
 			pageInfo.HasNextPage = fn.New(len(results) > int(*pagination.First))
@@ -253,18 +274,30 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		if pagination.Last != nil {
 			pageInfo.HasNextPage = fn.New(pagination.Before != nil)
 			pageInfo.HasPrevPage = fn.New(len(results) > int(*pagination.Last))
-
 			if pageInfo.HasPrevPage != nil && *pageInfo.HasPrevPage {
 				results = results[:*pagination.Last]
 			}
+		}
+
+		pageInfo.StartCursor, err = getCursorOfResult(results[0], rawResults[0])
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+		pageInfo.EndCursor, err = getCursorOfResult(results[len(results)-1], rawResults[len(results)-1])
+		if err != nil {
+			return nil, errors.NewE(err)
 		}
 	}
 
 	edges := make([]RecordEdge[T], len(results))
 	for i := range results {
+		c, err := getCursorOfResult(results[i], rawResults[i])
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
 		edges[i] = RecordEdge[T]{
 			Node:   results[i],
-			Cursor: CursorToBase64(Cursor(results[i].GetPrimitiveID())),
+			Cursor: c,
 		}
 	}
 
@@ -367,12 +400,14 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	return nil
 }
 
+var ErrNoDocuments error = fmt.Errorf("no documents found")
+
 func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error) {
 	var x T
 
 	res, err := repo.findOne(ctx, filter)
 	if err != nil {
-		return x, errors.NewE(err)
+		return x, err
 	}
 
 	return repo.patchRecordByID(ctx, res.GetId(), patch, res.IsMarkedForDeletion(), opts...)
@@ -590,6 +625,11 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 		// READ MORE @ https://www.mongodb.com/docs/manual/tutorial/manage-indexes/#modify-an-index
 		indexName := ""
 		for _, field := range f.Field {
+			if field.IsText {
+				b = append(b, bson.E{Key: field.Key, Value: "text"})
+				indexName = buildIndexName(indexName, field.Key, 1)
+				continue
+			}
 			switch field.Value {
 			case IndexAsc:
 				b = append(b, bson.E{Key: field.Key, Value: 1})
@@ -600,7 +640,9 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 			}
 		}
 
-		indexModel := mongo.IndexModel{Keys: b, Options: &options.IndexOptions{Unique: &f.Unique, Name: &indexName}}
+		indexModel := mongo.IndexModel{
+			Keys: b, Options: &options.IndexOptions{Unique: &f.Unique, Name: &indexName},
+		}
 
 		_, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, indexModel)
 		if err != nil {
@@ -661,6 +703,54 @@ func (repo *dbRepo[T]) MergeMatchFilters(filter Filter, matchFilters ...map[stri
 	return filter
 }
 
+type GroupByAndCountOptions struct {
+	Limit int64
+	Sort  SortDirection
+}
+
+func (repo *dbRepo[T]) GroupByAndCount(ctx context.Context, filter Filter, groupBy string, opts GroupByAndCountOptions) (map[string]int64, error) {
+	agg := make([]bson.M, 0, 4)
+	if filter != nil {
+		agg = append(agg, bson.M{"$match": filter})
+	}
+
+	agg = append(agg,
+		bson.M{
+			"$group": bson.M{
+				"_id":   "$" + groupBy,
+				"count": bson.M{"$sum": 1},
+			},
+		},
+		bson.M{"$sort": bson.M{"count": opts.Sort.Int()}},
+		bson.M{"$limit": opts.Limit},
+	)
+
+	records, err := repo.db.Collection(repo.collectionName).Aggregate(ctx, agg)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	var data []bson.M
+	if err := records.All(ctx, &data); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	// var data bson.D
+	// if err := records.Decode(&data); err != nil {
+	// 	return nil, errors.NewE(err)
+	// }
+
+	result := make(map[string]int64, len(data))
+	for _, v := range data {
+		// m := v.Value.(map[string]any)
+		// result[m["_id"].(string)] = m["count"].(int64)
+		// v.Value.(map[string]interface{})["_id"] = v.Key
+		result[v["_id"].(string)] = v["count"].(int64)
+	}
+
+	return result, nil
+}
+
 type MongoRepoOptions struct {
 	IndexFields []string
 }
@@ -690,16 +780,17 @@ func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []In
 			},
 		),
 		fx.Invoke(
-			func(lifecycle fx.Lifecycle, repo DbRepo[T], logger logging.Logger) {
+			// func(lifecycle fx.Lifecycle, repo DbRepo[T], logger logging.Logger) {
+			func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
 							go func() {
 								err := repo.IndexFields(ctx, indexFields)
 								if err != nil {
-									logger.Errorf(err, "failed to update indexes on DB for repo %T", repo)
+									slog.Error("failed to update indexes", "collection", collectionName, "err", err)
 								}
-								logger.Infof("indexes updated on DB for repo %T", repo)
+								slog.Info("indexes updated on DB", "collection", collectionName)
 							}()
 							return nil
 						},

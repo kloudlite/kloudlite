@@ -11,7 +11,6 @@ import (
 
 type Config struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-
 	corev1.ConfigMap `json:",inline"`
 
 	AccountName     string `json:"accountName" graphql:"noinput"`

@@ -44,6 +44,8 @@ type BYOKCluster struct {
 	Kubeconfig t.EncodedString `json:"kubeconfig" graphql:"ignore"`
 
 	LastOnlineAt *time.Time `json:"lastOnlineAt,omitempty" graphql:"noinput"`
+
+	OwnedBy *string `json:"ownedBy,omitempty", graphql:"noinput"`
 }
 
 func (c *BYOKCluster) GetDisplayName() string {
@@ -70,6 +72,12 @@ var BYOKClusterIndices = []repos.IndexField{
 			{Key: fc.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: fc.BYOKClusterOwnedBy, Value: repos.IndexAsc},
+		},
+		Unique: false,
 	},
 }
 

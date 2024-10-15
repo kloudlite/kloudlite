@@ -2,6 +2,11 @@ package constants
 
 import "fmt"
 
+const (
+	ClusterLabelOwnedBy      string = "kloudlite.io/owned-by"
+	ClusterLabelLocalUuidKey string = "kloudlite.io/local-uuid"
+)
+
 type ResourceType string
 
 const (

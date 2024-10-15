@@ -5,6 +5,8 @@ import (
 	"embed"
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/kloudlite/api/apps/comms/internal/domain"
@@ -19,22 +21,23 @@ import (
 var EmailTemplatesDir embed.FS
 
 func main() {
+	start := time.Now()
+	common.PrintBuildInfo()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "comms", Dev: isDev})
-	if err != nil {
-		panic(err)
-	}
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: isDev, SetAsDefaultLogger: true})
 
-	webApp := fx.New(
+	app := fx.New(
 		fx.NopLogger,
-		fx.Provide(
-			func() logging.Logger {
-				return logger
-			},
-		),
+		fx.Provide(func() (logging.Logger, error) {
+			return logging.New(&logging.Options{Name: "comms", Dev: isDev})
+		}),
+
+		fx.Supply(logger),
+
 		fx.Provide(func() (*env.Env, error) {
 			return env.LoadEnv()
 		}),
@@ -46,15 +49,22 @@ func main() {
 		framework.Module,
 	)
 
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-ch
+		logger.Info("shutting down...")
+		app.Stop(context.Background())
+	}()
+
 	ctx, cf := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cf()
 
-	if err := webApp.Start(ctx); err != nil {
-		logger.Errorf(err, "comms-api startup errors")
-		logger.Infof("EXITING as errors encountered during startup")
+	if err := app.Start(ctx); err != nil {
+		logger.Error("failed to start comms api, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
-	<-webApp.Done()
+	common.PrintReadyBanner2(time.Since(start))
+	<-app.Done()
 }

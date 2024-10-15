@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -13,14 +14,15 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/k8s"
 
+	"github.com/kloudlite/api/apps/infra/internal/domain/ports"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
 	"github.com/kloudlite/api/apps/infra/internal/env"
 	constant "github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
+
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/helm"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/operator/pkg/constants"
 	"go.uber.org/fx"
@@ -30,15 +32,14 @@ import (
 )
 
 type domain struct {
-	logger logging.Logger
+	logger *slog.Logger
 	env    *env.Env
 
-	clusterRepo               repos.DbRepo[*entities.Cluster]
-	byokClusterRepo           repos.DbRepo[*entities.BYOKCluster]
-	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
-	helmReleaseRepo           repos.DbRepo[*entities.HelmRelease]
-	nodeRepo                  repos.DbRepo[*entities.Node]
-	nodePoolRepo              repos.DbRepo[*entities.NodePool]
+	clusterRepo     repos.DbRepo[*entities.Cluster]
+	byokClusterRepo repos.DbRepo[*entities.BYOKCluster]
+	helmReleaseRepo repos.DbRepo[*entities.HelmRelease]
+	nodeRepo        repos.DbRepo[*entities.Node]
+	nodePoolRepo    repos.DbRepo[*entities.NodePool]
 
 	gvpnConnRepo            repos.DbRepo[*entities.GlobalVPNConnection]
 	freeClusterSvcCIDRRepo  repos.DbRepo[*entities.FreeClusterSvcCIDR]
@@ -57,24 +58,26 @@ type domain struct {
 	pvRepo               repos.DbRepo[*entities.PersistentVolume]
 	volumeAttachmentRepo repos.DbRepo[*entities.VolumeAttachment]
 
-	iamClient                   iam.IAMClient
-	consoleClient               console.ConsoleClient
-	accountsSvc                 AccountsSvc
-	messageOfficeInternalClient message_office_internal.MessageOfficeInternalClient
-	resDispatcher               ResourceDispatcher
-	k8sClient                   k8s.Client
-	resourceEventPublisher      ResourceEventPublisher
+	iamClient              iam.IAMClient
+	consoleClient          console.ConsoleClient
+	accountsSvc            AccountsSvc
+	moSvc                  ports.MessageOfficeService
+	resDispatcher          ResourceDispatcher
+	k8sClient              k8s.Client
+	resourceEventPublisher ResourceEventPublisher
 
 	msvcTemplates    []*entities.MsvcTemplate
 	msvcTemplatesMap map[string]map[string]*entities.MsvcTemplateEntry
+
+	helmClient helm.Client
 }
 
-func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, clusterName string, obj client.Object, recordVersion int) error {
+func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, dispatchAddr *entities.DispatchAddr, obj client.Object, recordVersion int) error {
 	switch action {
 	case types.SyncActionApply:
-		return d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, obj, recordVersion)
+		return d.resDispatcher.ApplyToTargetCluster(ctx, dispatchAddr, obj, recordVersion)
 	case types.SyncActionDelete:
-		return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, obj)
+		return d.resDispatcher.DeleteFromTargetCluster(ctx, dispatchAddr, obj)
 	}
 	return errors.Newf("unknonw action: %q", action)
 }
@@ -88,7 +91,7 @@ func addTrackingId(obj client.Object, id repos.ID) {
 
 	labels := obj.GetLabels()
 	if labels == nil {
-		labels = make(map[string]string, 1)
+		labels = make(map[string]string, 2)
 	}
 	labels[constant.ObservabilityTrackingKey] = string(id)
 	obj.SetLabels(labels)
@@ -172,7 +175,6 @@ var Module = fx.Module("domain",
 			env *env.Env,
 			clusterRepo repos.DbRepo[*entities.Cluster],
 			byokClusterRepo repos.DbRepo[*entities.BYOKCluster],
-			clustermanagedserviceRepo repos.DbRepo[*entities.ClusterManagedService],
 			nodeRepo repos.DbRepo[*entities.Node],
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
@@ -200,10 +202,11 @@ var Module = fx.Module("domain",
 			iamClient iam.IAMClient,
 			consoleClient console.ConsoleClient,
 			accountsSvc AccountsSvc,
-			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
-			logger logging.Logger,
+			moSvc ports.MessageOfficeService,
+			logger *slog.Logger,
 			resourceEventPublisher ResourceEventPublisher,
 
+			helmClient helm.Client,
 		) (Domain, error) {
 			open, err := os.Open(env.MsvcTemplateFilePath)
 			if err != nil {
@@ -249,25 +252,26 @@ var Module = fx.Module("domain",
 				gvpnRepo:        gvpnRepo,
 				gvpnDevicesRepo: gvpnDevicesRepo,
 
-				byokClusterRepo:             byokClusterRepo,
-				clusterManagedServiceRepo:   clustermanagedserviceRepo,
-				nodeRepo:                    nodeRepo,
-				nodePoolRepo:                nodePoolRepo,
-				secretRepo:                  secretRepo,
-				domainEntryRepo:             domainNameRepo,
-				resDispatcher:               resourceDispatcher,
-				k8sClient:                   k8sClient,
-				iamClient:                   iamClient,
-				consoleClient:               consoleClient,
-				accountsSvc:                 accountsSvc,
-				messageOfficeInternalClient: msgOfficeInternalClient,
-				resourceEventPublisher:      resourceEventPublisher,
-				helmReleaseRepo:             helmReleaseRepo,
+				byokClusterRepo:        byokClusterRepo,
+				nodeRepo:               nodeRepo,
+				nodePoolRepo:           nodePoolRepo,
+				secretRepo:             secretRepo,
+				domainEntryRepo:        domainNameRepo,
+				resDispatcher:          resourceDispatcher,
+				k8sClient:              k8sClient,
+				iamClient:              iamClient,
+				consoleClient:          consoleClient,
+				accountsSvc:            accountsSvc,
+				moSvc:                  moSvc,
+				resourceEventPublisher: resourceEventPublisher,
+				helmReleaseRepo:        helmReleaseRepo,
 
 				pvcRepo:              pvcRepo,
 				volumeAttachmentRepo: volumeAttachmentRepo,
 				pvRepo:               pvRepo,
 				namespaceRepo:        namespaceRepo,
+
+				helmClient: helmClient,
 			}, nil
 		}),
 )
