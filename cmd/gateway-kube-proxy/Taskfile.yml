@@ -1,26 +1,29 @@
 version: 3
 
 includes:
-  go: ../../.tools/taskfiles/go-build.yml
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
 
 vars:
   app: gateway-kube-proxy
+  binary: ./bin/{{.app}}
 
 tasks:
   build:
     cmds:
       - task: go:build
         vars:
-          Out: ./bin/{{.app}}-{{.GOARCH}}
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
 
   run:
     cmds:
       - fwatcher --exec 'go run ./main.go  --addr :8090 --proxy-addr 127.0.0.1:8111 --authz sample' --ext .go
 
   container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image is not set"
+    requires:
+      vars:
+        - image
     cmds:
       - task: build
         vars:
@@ -28,4 +31,7 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,force-compression=true,compression-level=14,push=true --build-arg BINARY="./bin/{{.app}}" -t {{.Image}} .
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"

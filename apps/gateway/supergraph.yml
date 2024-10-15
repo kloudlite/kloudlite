@@ -24,7 +24,7 @@ subgraphs:
     routing_url: http://infra-api:3000/query
     schema:
       file: ./schemas/infra-api.schema
-  iot-console-api:
-    routing_url: http://iot-console-api:3000/query
-    schema:
-      file: ./schemas/iot-console-api.schema
+  # iot-console-api:
+  #   routing_url: http://iot-console-api:3000/query
+  #   schema:
+  #     file: ./schemas/iot-console-api.schema

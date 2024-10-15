@@ -19,29 +19,42 @@ import (
 )
 
 func main() {
+	start := time.Now()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "accounts", Dev: isDev})
-	if err != nil {
-		panic(err)
+	if isDev {
+		debug = true
 	}
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{
+		ShowCaller:         true,
+		ShowDebugLogs:      debug,
+		SetAsDefaultLogger: true,
+	})
 
 	app := fx.New(
 		fx.NopLogger,
 
-		fx.Provide(func() logging.Logger {
-			return logger
+		fx.Provide(func() (logging.Logger, error) {
+			return logging.New(&logging.Options{Name: "accounts-api", Dev: isDev, ShowDebugLog: debug})
 		}),
 
+		fx.Supply(logger),
+
 		fx.Provide(func() (*env.Env, error) {
-			if e, err := env.LoadEnv(); err != nil {
+			e, err := env.LoadEnv()
+			if err != nil {
 				return nil, errors.NewE(err)
-			} else {
-				e.IsDev = isDev
-				return e, nil
 			}
+			e.IsDev = isDev
+			return e, nil
 		}),
 
 		fx.Provide(func(e *env.Env) (*rest.Config, error) {
@@ -70,10 +83,10 @@ func main() {
 	defer cancelFunc()
 
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "error starting accounts app")
+		logger.Error("failed to start accounts api, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }

@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -25,20 +26,28 @@ import (
 	proto_rpc "github.com/kloudlite/api/apps/tenant-agent/internal/proto-rpc"
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
-	libGrpc "github.com/kloudlite/operator/pkg/grpc"
+
+	libGrpc "github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/operator/pkg/kubectl"
 
-	"github.com/kloudlite/operator/pkg/logging"
+	"github.com/kloudlite/api/pkg/logging"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type grpcHandler struct {
+	mu             sync.Mutex
 	inMemCounter   int64
 	yamlClient     kubectl.YAMLClient
-	logger         logging.Logger
+	logger         *slog.Logger
 	ev             *env.Env
 	msgDispatchCli messages.MessageDispatchServiceClient
 	isDev          bool
+}
+
+func (g *grpcHandler) incrementCounter() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.inMemCounter++
 }
 
 const (
@@ -46,11 +55,8 @@ const (
 )
 
 func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.AgentMessage) error {
-	g.logger.Debugf("[ERROR]: %s", err.Error())
-
 	b, err := json.Marshal(t.AgentErrMessage{
 		AccountName: msg.AccountName,
-		ClusterName: msg.ClusterName,
 		Error:       err.Error(),
 		Action:      msg.Action,
 		Object:      msg.Object,
@@ -70,25 +76,28 @@ func NewAuthorizedGrpcContext(ctx context.Context, accessToken string) context.C
 	return metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", accessToken))
 }
 
-func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) error {
-	g.inMemCounter++
+func (g *grpcHandler) handleMessage(_ context.Context, msg t.AgentMessage) error {
+	g.incrementCounter()
+	start := time.Now()
+
+	logger := g.logger.With("counter", g.inMemCounter, "account", msg.AccountName, "action", msg.Action)
 	ctx, cf := func() (context.Context, context.CancelFunc) {
 		if g.isDev {
-			return context.WithCancel(gctx)
+			return context.WithCancel(context.TODO())
 		}
-		return context.WithTimeout(gctx, 3*time.Second)
+		return context.WithTimeout(context.TODO(), 2*time.Second)
 	}()
 	defer cf()
 
 	if msg.Object == nil {
-		g.logger.Infof("msg.Object is nil, could not process anything out of this message, ignoring ...")
+		logger.Info("msg.Object is nil, could not process anything out of this message, ignoring ...")
 		return nil
 	}
 
 	obj := unstructured.Unstructured{Object: msg.Object}
-	mLogger := g.logger.WithKV("gvk", obj.GetObjectKind().GroupVersionKind().String()).WithKV("clusterName", msg.ClusterName).WithKV("accountName", msg.AccountName).WithKV("action", msg.Action)
+	mLogger := logger.With("gvk", obj.GetObjectKind().GroupVersionKind().String()).With("NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()))
 
-	mLogger.Infof("[%d] received message", g.inMemCounter)
+	mLogger.Info("received message")
 
 	if len(strings.TrimSpace(msg.AccountName)) == 0 {
 		return g.handleErrorOnApply(ctx, errors.Newf("field 'accountName' must be defined in message"), msg)
@@ -97,12 +106,12 @@ func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) er
 	switch msg.Action {
 	case t.ActionApply:
 		{
-			ann := obj.GetAnnotations()
-			if ann == nil {
-				ann = make(map[string]string, 2)
-			}
-
-			obj.SetAnnotations(ann)
+			// lb := obj.GetLabels()
+			// if lb == nil {
+			// 	lb = make(map[string]string, 1)
+			// }
+			// lb[constants.AccountNameKey] = msg.AccountName
+			// obj.SetLabels(lb)
 
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
@@ -110,53 +119,52 @@ func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) er
 			}
 
 			if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
-				mLogger.Errorf(err, "[%d] [error-on-apply]: yaml: \n%s\n", g.inMemCounter, b)
-				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+				// mLogger.Errorf(err, "[%d] [error-on-apply]: yaml: \n%s\n", g.inMemCounter, b)
+				mLogger.Error("failed to process message, got", "err", err, "error-on-apply:YAML", fmt.Sprintf("\n%s\n", b))
 				return g.handleErrorOnApply(ctx, err, msg)
 			}
-			mLogger.Infof("[%d] processed message", g.inMemCounter)
 		}
 	case t.ActionDelete:
 		{
 			if err := g.yamlClient.DeleteResource(ctx, &obj); err != nil {
-				mLogger.Infof("[%d] [error-on-delete]: %v", g.inMemCounter, err)
+				mLogger.Warn("while deleting resource, got", "err", err)
 				if apiErrors.IsNotFound(err) {
-					mLogger.Infof("[%d] processed message, resource does not exist, might already be deleted", g.inMemCounter)
+					mLogger.Info("processed message, resource does not exist, might already be deleted")
 					return g.handleErrorOnApply(ctx, err, msg)
 				}
-				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+				mLogger.Error("failed to process message, got", "err", err)
+				return g.handleErrorOnApply(ctx, err, msg)
 			}
-			mLogger.Infof("[%d] processed message", g.inMemCounter)
 		}
 	case t.ActionRestart:
 		{
 			if err := g.yamlClient.RolloutRestart(ctx, kubectl.Deployment, obj.GetNamespace(), obj.GetLabels()); err != nil {
 				return err
 			}
-			mLogger.Infof("[%d] rolled out deployments", g.inMemCounter)
+			mLogger.Info("rolled out deployments")
 
 			if err := g.yamlClient.RolloutRestart(ctx, kubectl.StatefulSet, obj.GetNamespace(), obj.GetLabels()); err != nil {
 				return err
 			}
 
-			mLogger.Infof("[%d] rolled out statefulsets", g.inMemCounter)
-			mLogger.Infof("[%d] processed message", g.inMemCounter)
+			mLogger.Info("rolled out statefulsets")
 		}
 	default:
 		{
 			err := errors.Newf("invalid action (%s)", msg.Action)
-			mLogger.Infof("[%d] [error]: %s", err.Error())
-			mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+			mLogger.Info("failed to process message, got", "err", err)
 			return g.handleErrorOnApply(ctx, err, msg)
 		}
 	}
+
+	mLogger.Info("processed message", "took", fmt.Sprintf("%.3fs", time.Since(start).Seconds()))
 
 	return nil
 }
 
 func (g *grpcHandler) ensureAccessToken() error {
 	if g.ev.AccessToken == "" {
-		g.logger.Infof("waiting on clusterToken exchange for accessToken")
+		g.logger.Info("waiting on clusterToken exchange for accessToken")
 	}
 
 	ctx := NewAuthorizedGrpcContext(context.TODO(), g.ev.AccessToken)
@@ -165,16 +173,16 @@ func (g *grpcHandler) ensureAccessToken() error {
 		ProtocolVersion: g.ev.GrpcMessageProtocolVersion,
 	})
 	if err != nil {
-		g.logger.Errorf(err, "validating access token")
+		g.logger.Error("validating access token, got", "err", err)
 		validationOut = nil
 	}
 
 	if validationOut != nil && validationOut.Valid {
-		g.logger.Infof("accessToken is valid, proceeding with it ...")
+		g.logger.Info("accessToken is valid, proceeding with it ...")
 		return nil
 	}
 
-	g.logger.Infof("accessToken is invalid, requesting new accessToken ...")
+	g.logger.Debug("accessToken is invalid, requesting new accessToken ...")
 
 	out, err := g.msgDispatchCli.GetAccessToken(ctx, &messages.GetAccessTokenIn{
 		ProtocolVersion: g.ev.GrpcMessageProtocolVersion,
@@ -184,7 +192,7 @@ func (g *grpcHandler) ensureAccessToken() error {
 		return errors.NewE(err)
 	}
 
-	g.logger.Infof("valid access token has been obtained, persisting it in k8s secret (%s/%s)...", g.ev.AccessTokenSecretNamespace, g.ev.AccessTokenSecretName)
+	g.logger.Info("valid access token has been obtained, persisting it in k8s secret (%s/%s)...", g.ev.AccessTokenSecretNamespace, g.ev.AccessTokenSecretName)
 
 	s, err := g.yamlClient.Client().CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Get(context.TODO(), g.ev.AccessTokenSecretName, metav1.GetOptions{})
 	if err != nil {
@@ -216,19 +224,18 @@ func (g *grpcHandler) ensureAccessToken() error {
 		}
 
 		if err := g.yamlClient.Client().CoreV1().Pods(g.ev.ResourceWatcherNamespace).DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&podLabelSelector)}); err != nil {
-			g.logger.Errorf(err, "failed to delete pods for resource watcher")
+			g.logger.Error("failed to delete pods for resource watcher, got", "err", err)
 		}
-		g.logger.Infof("deleted all pods for resource watcher, they will be recreated")
+		g.logger.Info("deleted all pods for resource watcher, they will be recreated")
 	}
 
 	return nil
 }
 
-func (g *grpcHandler) run(rctx context.Context, cf context.CancelFunc) error {
-	defer cf()
+func (g *grpcHandler) run(rctx context.Context) error {
 	ctx := NewAuthorizedGrpcContext(rctx, g.ev.AccessToken)
 
-	g.logger.Infof("asking message office to start sending actions")
+	g.logger.Info("asking message office to start sending actions")
 	msgActionsCli, err := g.msgDispatchCli.SendActions(ctx, &messages.Empty{})
 	if err != nil {
 		return errors.NewE(err)
@@ -243,23 +250,27 @@ func (g *grpcHandler) run(rctx context.Context, cf context.CancelFunc) error {
 		a, err := msgActionsCli.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unavailable {
-				g.logger.Infof("server unavailable, (may be, Gateway Timed Out 504), reconnecting ...")
+				g.logger.Info("server unavailable, (may be, Gateway Timed Out 504), reconnecting ...")
 				return nil
 			}
 			if status.Code(err) == codes.DeadlineExceeded {
-				g.logger.Infof("Connection Timed Out, reconnecting ...")
+				g.logger.Info("Connection Timed Out, reconnecting ...")
+				return nil
+			}
+			if status.Code(err) == codes.Canceled {
+				g.logger.Info("client is being closed, will reconnect")
 				return nil
 			}
 			return err
 		}
 
 		if err := json.Unmarshal(a.Message, &msg); err != nil {
-			g.logger.Errorf(err, "[ERROR] while json unmarshal")
+			g.logger.Error("while unmarshalling agent message, got", "err", err)
 			return errors.NewE(err)
 		}
 
 		if err := g.handleMessage(ctx, msg); err != nil {
-			g.logger.Errorf(err, "[ERROR] while handling message")
+			g.logger.Error("while handling agent message, got", "err", err)
 			return errors.NewE(err)
 		}
 	}
@@ -268,27 +279,35 @@ func (g *grpcHandler) run(rctx context.Context, cf context.CancelFunc) error {
 func main() {
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
+
+	start := time.Now()
+	common.PrintBuildInfo()
 
 	ev := env.GetEnvOrDie()
 
-	logger := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: isDev})
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug})
 
-	logger.Infof("waiting for GRPC connection to happen")
+	logger.Debug("waiting for GRPC connection to happen")
 
 	yamlClient := func() kubectl.YAMLClient {
 		if isDev {
-			logger.Debugf("connecting to k8s over host addr (%s)", "localhost:8081")
-			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"}, kubectl.YAMLClientOpts{Logger: logger})
+			logger.Debug("connecting to k8s over", "local-addr", "localhost:8081")
+			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"}, kubectl.YAMLClientOpts{})
 		}
 		config, err := rest.InClusterConfig()
 		if err != nil {
 			panic(err)
 		}
-		return kubectl.NewYAMLClientOrDie(config, kubectl.YAMLClientOpts{Logger: logger})
+		return kubectl.NewYAMLClientOrDie(config, kubectl.YAMLClientOpts{})
 	}()
 
 	g := grpcHandler{
+		mu:           sync.Mutex{},
 		inMemCounter: 0,
 		yamlClient:   yamlClient,
 		logger:       logger,
@@ -300,73 +319,55 @@ func main() {
 		realVectorClient: nil,
 		logger:           logger,
 		accessToken:      ev.AccessToken,
-		errCh:            nil,
 	}
 
-	gs := libGrpc.NewGrpcServer(libGrpc.GrpcServerOpts{Logger: logger})
-	proto_rpc.RegisterVectorServer(gs.GrpcServer, vps)
+	gs, err := libGrpc.NewGrpcServer(libGrpc.ServerOpts{Logger: logger.With("component", "vector-grpc-proxy")})
+	if err != nil {
+		logger.Error("failed to create grpc server, got", "err", err)
+	}
+	proto_rpc.RegisterVectorServer(gs, vps)
 
 	go func() {
 		err := gs.Listen(ev.VectorProxyGrpcServerAddr)
 		if err != nil {
-			logger.Error(err)
+			logger.Error("failed to listen on vector grpc server, got", "err", err)
 			os.Exit(1)
 		}
 	}()
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 
 	for {
-		logger.Debugf("trying to connect to message office grpc (%s)", ev.GrpcAddr)
-		cc, err := func() (*grpc.ClientConn, error) {
-			// if isDev {
-			// 	logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
-			// 	return libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
-			// 		SecureConnect: false,
-			// 		Timeout:       20 * time.Second,
-			// 	})
-			// }
-			logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
-			return libGrpc.ConnectSecure(ev.GrpcAddr)
-		}()
+		cc, err := libGrpc.NewGrpcClientV2(ev.GrpcAddr, libGrpc.GrpcConnectOpts{TLSConnect: !isDev, Logger: logger})
 		if err != nil {
-			log.Fatalf("Failed to connect after retries: %v", err)
+			logger.Error("failed to connect to message office, got", "err", err)
+			<-time.After(1 * time.Second)
 		}
-
-		logger.Infof("GRPC connection to message-office (%s) successful", ev.GrpcAddr)
 
 		g.msgDispatchCli = messages.NewMessageDispatchServiceClient(cc)
 
 		if err := g.ensureAccessToken(); err != nil {
-			logger.Errorf(err, "ensuring access token")
+			logger.Error("ensuring access token, got", "err", err)
 		}
 
 		ctx, cf := context.WithTimeout(context.TODO(), MaxConnectionDuration)
 
 		vps.accessToken = g.ev.AccessToken
 		vps.realVectorClient = proto_rpc.NewVectorClient(cc)
-		vps.errCh = make(chan error, 1)
+		vps.connCancelFn = cf
 
 		go func() {
-			if err := g.run(ctx, cf); err != nil {
-				logger.Errorf(err, "running grpc sendActions")
+			defer cf()
+			if err := g.run(ctx); err != nil {
+				logger.Error("running grpc sendActions, got", "err", err)
 			}
 		}()
 
-		select {
-		case err := <-vps.errCh:
-			{
-				logger.Errorf(err, "error from vector grpc proxy server")
-				cf()
-			}
-		case <-ctx.Done():
-			{
-				logger.Debugf("run context done, reconnecting ...")
-			}
-		}
+		<-ctx.Done()
+		logger.Debug("MAX_CONNECTION_DURATION reached, will re-initialize connection")
 
 		if err = cc.Close(); err != nil {
-			logger.Errorf(err, "Failed to close connection")
+			logger.Error("Failed to close connection, got", "err", err)
 		}
 	}
 }

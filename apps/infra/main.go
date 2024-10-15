@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/helm"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 
 	"github.com/kloudlite/api/apps/infra/internal/env"
@@ -24,21 +25,31 @@ import (
 )
 
 func main() {
+	start := time.Now()
+	common.PrintBuildInfo()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "infra", Dev: isDev})
-	if err != nil {
-		panic(err)
+	if isDev {
+		debug = true
 	}
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
 
 	app := fx.New(
 		fx.NopLogger,
 
-		fx.Provide(func() logging.Logger {
-			return logger
+		fx.Provide(func() (logging.Logger, error) {
+			return logging.New(&logging.Options{Name: "infra", Dev: isDev})
 		}),
+
+		fx.Supply(logger),
 
 		fx.Provide(func() (*env.Env, error) {
 			e, err := env.LoadEnv()
@@ -51,7 +62,7 @@ func main() {
 		}),
 
 		fx.Provide(func(e *env.Env) (*rest.Config, error) {
-			if e.KubernetesApiProxy != "" {
+			if isDev && e.KubernetesApiProxy != "" {
 				return &rest.Config{
 					Host: e.KubernetesApiProxy,
 				}, nil
@@ -68,6 +79,24 @@ func main() {
 			return k8s.NewClient(restCfg, scheme)
 		}),
 
+		fx.Provide(func(restCfg *rest.Config) (helm.Client, error) {
+			client, err := helm.NewHelmClient(restCfg, helm.ClientOptions{
+				RepositoryCacheDir: "/tmp",
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if err := client.AddOrUpdateChartRepo(context.TODO(), helm.RepoEntry{
+				Name: "kloudlite",
+				URL:  "https://kloudlite.github.io/helm-charts",
+			}); err != nil {
+				return nil, err
+			}
+
+			return client, nil
+		}),
+
 		framework.Module,
 	)
 
@@ -80,10 +109,10 @@ func main() {
 	defer cancel()
 
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "failed to start app")
+		logger.Error("failed to start infra api, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }

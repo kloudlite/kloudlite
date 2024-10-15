@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"runtime/trace"
+	"os"
+	"os/signal"
+	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
@@ -16,9 +18,21 @@ import (
 )
 
 func main() {
+	start := time.Now()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
+
+	if isDev {
+		debug = true
+	}
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
 
 	app := fx.New(
 		fx.Provide(func() (*env.Env, error) {
@@ -36,15 +50,20 @@ func main() {
 			},
 		),
 
+		fx.Supply(logger),
+
 		fn.FxErrorHandler(),
 		framework.Module,
 	)
 
-	if err := app.Start(context.TODO()); err != nil {
-		trace.Log(context.TODO(), "app.Start", err.Error())
-		panic(err)
+	ctx, cf := signal.NotifyContext(context.TODO(), os.Interrupt)
+	defer cf()
+
+	if err := app.Start(ctx); err != nil {
+		logger.Error("failed to start container registry api, got", "err", err)
+		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }

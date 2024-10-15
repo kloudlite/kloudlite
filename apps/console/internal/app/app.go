@@ -2,7 +2,9 @@ package app
 
 import (
 	"context"
+	"log/slog"
 
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/k8s"
 
@@ -12,14 +14,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 
+	"github.com/kloudlite/api/apps/console/internal/app/adapters"
+	infra_service "github.com/kloudlite/api/apps/console/internal/app/adapters/infra-service"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
+	"github.com/kloudlite/api/apps/infra/protobufs/infra"
+	platform_edge "github.com/kloudlite/api/apps/message-office/protobufs/platform-edge"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
@@ -28,16 +34,24 @@ import (
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
+
+	"github.com/miekg/dns"
 )
 
 type (
-	IAMGrpcClient grpc.Client
-	InfraClient   grpc.Client
+	IAMGrpcClient               grpc.Client
+	InfraClient                 grpc.Client
+	MessageOfficeInternalClient grpc.Client
+	AccountsClient              grpc.Client
 )
 
 type (
 	ConsoleGrpcServer grpc.Server
 )
+
+type DNSServer struct {
+	*dns.Server
+}
 
 func toConsoleContext(requestCtx context.Context, accountCookieName string) (domain.ConsoleContext, error) {
 	sess := httpServer.GetSession[*common.AuthSession](requestCtx)
@@ -64,7 +78,9 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
-	repos.NewFxMongoRepo[*entities.ConsoleVPNDevice]("vpn_devices", "devs", entities.VPNDeviceIndexes),
+	repos.NewFxMongoRepo[*entities.ServiceBinding]("service_bindings", "svcb", entities.ServiceBindingIndexes),
+	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cluster_managed_services", "cmsvc", entities.ClusterManagedServiceIndices),
+	repos.NewFxMongoRepo[*entities.RegistryImage]("registry_images", "reg_img", entities.RegistryImageIndexes),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -72,9 +88,23 @@ var Module = fx.Module("app",
 		},
 	),
 
+	fx.Provide(func(conn MessageOfficeInternalClient) platform_edge.PlatformEdgeClient {
+		return platform_edge.NewPlatformEdgeClient(conn)
+	}),
+
+	fx.Provide(func(conn AccountsClient) accounts.AccountsClient {
+		return accounts.NewAccountsClient(conn)
+	}),
+
+	fx.Provide(adapters.NewAccountsSvc),
+
+	fx.Provide(func(cli infra.InfraClient) ports.InfraService {
+		return infra_service.NewInfraService(cli)
+	}),
+
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
-			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d, EnvVars: ev}}
 
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
@@ -157,10 +187,10 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventErrorOnApply)
 		consumerName := "console:error-on-apply"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsResourceSyncStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -170,7 +200,7 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessErrorOnApply(consumer, d, logger)
@@ -182,12 +212,43 @@ var Module = fx.Module("app",
 		})
 	}),
 
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (WebhookConsumer, error) {
+		topic := string(common.ImageRegistryHookTopicName)
+		consumerName := "console:webhook"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.EventsNatsStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to console registry webhooks",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer WebhookConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go func() {
+					err := processWebhooks(consumer, d, logger)
+					if err != nil {
+						logger.Errorf(err, "could not process webhooks")
+					}
+				}()
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventResourceUpdate)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventResourceUpdate)
 
 		consumerName := "console:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsResourceSyncStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -197,7 +258,7 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessResourceUpdates(consumer, d, logger)
@@ -205,6 +266,38 @@ var Module = fx.Module("app",
 			},
 			OnStop: func(ctx context.Context) error {
 				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(svcBindingRepo repos.DbRepo[*entities.ServiceBinding]) domain.ServiceBindingDomain {
+		return domain.NewSvcBindingDomain(svcBindingRepo)
+	}),
+
+	fx.Provide(func(logger *slog.Logger, sbd domain.ServiceBindingDomain, ev *env.Env) *dnsHandler {
+		return &dnsHandler{
+			logger:               logger,
+			serviceBindingDomain: sbd,
+			kloudliteDNSSuffix:   ev.KloudliteDNSSuffix,
+		}
+	}),
+
+	fx.Invoke(func(server *DNSServer, handler *dnsHandler, lf fx.Lifecycle, logger *slog.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				server.Handler = handler
+				go func() {
+					logger.Info("starting dns server", "at", server.Addr)
+					err := server.ListenAndServe()
+					if err != nil {
+						logger.Error("failed to start dns server, got", "err", err)
+						panic(err)
+					}
+				}()
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return server.ShutdownContext(ctx)
 			},
 		})
 	}),

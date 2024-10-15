@@ -2,10 +2,11 @@ package app
 
 import (
 	"encoding/json"
+	"os"
+
 	"github.com/kloudlite/api/apps/iam/internal/entities"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
-	"os"
 
 	"github.com/kloudlite/api/apps/iam/internal/env"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"

@@ -233,6 +233,32 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 	return true, nil
 }
 
+// InterceptApp implements Domain.
+func (d *domain) InterceptAppOnLocalCluster(ctx ResourceContext, appName string, clusterName string, ipAddr string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	patch := repos.Document{
+		fc.AppSpecInterceptEnabled:  intercept,
+		fc.AppSpecInterceptToDevice: clusterName,
+		fc.AppSpecInterceptToIPAddr: ipAddr,
+	}
+
+	if portMappings != nil {
+		patch[fc.AppSpecInterceptPortMappings] = portMappings
+	}
+
+	uApp, err := d.appRepo.Patch(ctx, ctx.DBFilters().Add(fields.MetadataName, appName), patch)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := d.applyApp(ctx, uApp); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
 func (d *domain) RestartApp(ctx ResourceContext, appName string) error {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
@@ -250,6 +276,37 @@ func (d *domain) RestartApp(ctx ResourceContext, appName string) error {
 	return nil
 }
 
+func (d *domain) RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) error {
+	apps, err := d.appRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			fields.AccountName:          ctx.AccountName,
+			fields.EnvironmentName:      ctx.EnvironmentName,
+			fc.AppSpecInterceptToDevice: deviceName,
+		},
+		Sort: nil,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	for i := range apps {
+		patchForUpdate := repos.Document{
+			fc.AppSpecInterceptEnabled: false,
+		}
+
+		up, err := d.appRepo.PatchById(ctx, apps[i].Id, patchForUpdate)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		if err := d.applyApp(ctx, up); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	return nil
+}
+
 func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xApp, err := d.findApp(ctx, app.Name)
 	if err != nil {
@@ -259,14 +316,13 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 	if xApp == nil {
 		return errors.Newf("no apps found")
 	}
+
 	recordVersion, err := d.MatchRecordVersion(app.Annotations, xApp.RecordVersion)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	uapp, err := d.appRepo.PatchById(
-		ctx,
-		xApp.Id,
+	uapp, err := d.appRepo.PatchById(ctx, xApp.Id,
 		common.PatchForSyncFromAgent(&app, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
@@ -314,4 +370,49 @@ func (d *domain) ResyncApp(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 	return d.resyncK8sResource(ctx, a.EnvironmentName, a.SyncStatus.Action, &a.App, a.RecordVersion)
+}
+
+func (d *domain) listAppsByImage(ctx ConsoleContext, image string) ([]*entities.App, error) {
+	apps, err := d.appRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			fields.AccountName: ctx.AccountName,
+			fmt.Sprintf("%s.image", fc.AppSpecContainers):           image,
+			fmt.Sprintf("%s.imagePullPolicy", fc.AppSpecContainers): "Always",
+		},
+		Sort: nil,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return apps, nil
+}
+
+func (d *domain) RolloutAppsByImage(ctx ConsoleContext, imageName string) error {
+
+	iName, iTag := getImageNameTag(imageName)
+
+	apps, err := d.listAppsByImage(ctx, fmt.Sprintf("%s:%s", iName, iTag))
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	// for the latest
+	apps2, err := d.listAppsByImage(ctx, iName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	for _, app := range apps {
+		if err := d.resyncK8sResource(ctx, app.EnvironmentName, app.SyncStatus.Action, &app.App, app.RecordVersion); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	for _, app := range apps2 {
+		if err := d.resyncK8sResource(ctx, app.EnvironmentName, app.SyncStatus.Action, &app.App, app.RecordVersion); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	return nil
 }

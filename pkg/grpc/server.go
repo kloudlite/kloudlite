@@ -1,10 +1,12 @@
 package grpc
 
 import (
+	"context"
+	"log/slog"
 	"net"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/kloudlite/api/pkg/errors"
-	"github.com/kloudlite/api/pkg/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )
@@ -16,12 +18,13 @@ type Server interface {
 }
 
 type ServerOpts struct {
-	Logger logging.Logger
+	ShowLogs bool
+	Logger   *slog.Logger
 }
 
 type grpcServer struct {
 	*grpc.Server
-	logger logging.Logger
+	logger *slog.Logger
 }
 
 func (g *grpcServer) Listen(addr string) error {
@@ -29,7 +32,7 @@ func (g *grpcServer) Listen(addr string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not listen to net/tcp server")
 	}
-	g.logger.Infof("listening on %s", addr)
+	g.logger.Info("grpc server listening", "at", addr)
 	return g.Serve(listen)
 }
 
@@ -39,22 +42,42 @@ func (g *grpcServer) Stop() {
 
 func NewGrpcServer(opts ServerOpts) (Server, error) {
 	if opts.Logger == nil {
-		lgr, err := logging.New(&logging.Options{Name: "grpc-server", Dev: false})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-		opts.Logger = lgr
+		opts.Logger = slog.Default()
 	}
 
-	server := grpc.NewServer(
+	grpcLogger := logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
+		opts.Logger.Log(ctx, slog.Level(lvl), msg, fields...)
+	})
+
+	grpcLoggingOpts := []logging.Option{
+		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
+	}
+
+	interceptors := []grpc.ServerOption{}
+
+	if opts.ShowLogs {
+		interceptors = append(interceptors,
+			grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(grpcLogger, grpcLoggingOpts...)),
+			grpc.ChainStreamInterceptor(logging.StreamServerInterceptor(grpcLogger, grpcLoggingOpts...)),
+		)
+	}
+
+	interceptors = append(interceptors,
 		grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 			p, ok := peer.FromContext(stream.Context())
 			if ok {
-				opts.Logger.Debugf("[Stream] New connection from %s", p.Addr.String())
+				_ = p.Addr.String()
+				// if opts.Slogger != nil {
+				// 	opts.Slogger.Debug("new grpc connection", "from", p.Addr.String())
+				// } else {
+				// 	opts.Logger.Debugf("[Stream] New connection from %s", p.Addr.String())
+				// }
 			}
 			return handler(srv, stream)
 		}),
 	)
+
+	server := grpc.NewServer(interceptors...)
 
 	return &grpcServer{Server: server, logger: opts.Logger}, nil
 }

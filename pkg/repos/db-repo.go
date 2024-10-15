@@ -114,6 +114,8 @@ type DbRepo[T Entity] interface {
 	// Delete(ctx context.Context, query Query) ([]ID, error)
 	DeleteOne(ctx context.Context, filter Filter) error
 
+	GroupByAndCount(ctx context.Context, filter Filter, groupBy string, opts GroupByAndCountOptions) (map[string]int64, error)
+
 	ErrAlreadyExists(err error) bool
 	MergeMatchFilters(filter Filter, matchFilters ...map[string]MatchFilter) Filter
 }
@@ -126,8 +128,9 @@ const (
 )
 
 type IndexKey struct {
-	Key   string
-	Value indexOrder
+	Key    string
+	Value  indexOrder
+	IsText bool
 }
 
 type IndexField struct {
@@ -171,6 +174,13 @@ const (
 	SortDirectionAsc  SortDirection = "ASC"
 	SortDirectionDesc SortDirection = "DESC"
 )
+
+func (s SortDirection) Int() int64 {
+	if s == SortDirectionAsc {
+		return 1
+	}
+	return -1
+}
 
 var DefaultCursorPagination = CursorPagination{
 	First:         functions.New(int64(10)),

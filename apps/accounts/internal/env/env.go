@@ -19,11 +19,11 @@ type Env struct {
 
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
-	IamGrpcAddr               string `env:"IAM_GRPC_ADDR" required:"true"`
-	CommsGrpcAddr             string `env:"COMMS_GRPC_ADDR" required:"true"`
-	ContainerRegistryGrpcAddr string `env:"CONTAINER_REGISTRY_GRPC_ADDR" required:"true"`
-	ConsoleGrpcAddr           string `env:"CONSOLE_GRPC_ADDR" required:"true"`
-	AuthGrpcAddr              string `env:"AUTH_GRPC_ADDR" required:"true"`
+	IamGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
+	CommsGrpcAddr string `env:"COMMS_GRPC_ADDR" required:"true"`
+	// ContainerRegistryGrpcAddr string `env:"CONTAINER_REGISTRY_GRPC_ADDR" required:"true"`
+	ConsoleGrpcAddr string `env:"CONSOLE_GRPC_ADDR" required:"true"`
+	AuthGrpcAddr    string `env:"AUTH_GRPC_ADDR" required:"true"`
 
 	SessionKVBucket string `env:"SESSION_KV_BUCKET" required:"true"`
 	NatsURL         string `env:"NATS_URL" required:"true"`

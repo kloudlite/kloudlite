@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -18,11 +17,45 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 )
+
+func (d *domain) cleanupEnvironment(ctx ConsoleContext, envName string) error {
+	filter := repos.Filter{
+		fields.AccountName:     ctx.AccountName,
+		fields.EnvironmentName: envName,
+	}
+
+	if err := d.appRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.externalAppRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.secretRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.configRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.routerRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.importedMresRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
 
 func (d *domain) findEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
@@ -49,6 +82,7 @@ func (d *domain) getClusterAttachedToEnvironment(ctx K8sContext, name string) (*
 	if env == nil {
 		return nil, errors.Newf("no cluster attached to this environment")
 	}
+
 	return &env.ClusterName, nil
 }
 
@@ -100,9 +134,55 @@ func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) 
 	return w, nil
 }
 
+func (d *domain) SetupDefaultEnvTemplate(ctx ConsoleContext) error {
+	if d.envVars.DefaultEnvTemplateAccountName == "" && d.envVars.DefaultEnvTemplateName == "" {
+		return nil
+	}
+
+	if _, err := d.CloneEnvTemplate(ctx, CloneEnvironmentTemplateArgs{
+		SourceAccountName:  d.envVars.DefaultEnvTemplateAccountName,
+		SourceEnvName:      d.envVars.DefaultEnvTemplateName,
+		DestinationEnvName: d.envVars.DefaultEnvTemplateName,
+		DisplayName:        "Default Environment",
+		EnvRoutingMode:     crdsv1.EnvironmentRoutingModePublic,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
 func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
-	if strings.TrimSpace(env.ClusterName) == "" {
-		return nil, fmt.Errorf("clustername must be set while creating environments")
+	if err := d.canPerformActionInAccount(ctx, iamT.CreateEnvironment); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	dEnvTempName := d.envVars.DefaultEnvTemplateName
+	if dEnvTempName != "" && dEnvTempName == env.Name {
+		return nil, fmt.Errorf("name already reserved by default environment template")
+	}
+
+	if env.ClusterName != "" {
+		ownedBy, err := d.infraSvc.GetByokClusterOwnedBy(ctx, ports.IsClusterLabelsIn{
+			UserId:      string(ctx.UserId),
+			UserEmail:   ctx.UserEmail,
+			UserName:    ctx.UserName,
+			AccountName: ctx.AccountName,
+			ClusterName: env.ClusterName,
+		})
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+
+		if ownedBy != "" && ownedBy != string(ctx.UserId) {
+			return nil, fmt.Errorf("it's owned cluster, but you are not the owner")
+		}
+
+		if env.Labels == nil {
+			env.Labels = map[string]string{}
+		}
+
+		env.Labels[constants.ClusterLabelOwnedBy] = string(ctx.UserId)
 	}
 
 	env.EnsureGVK()
@@ -127,6 +207,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
+
 	env.LastUpdatedBy = env.CreatedBy
 
 	env.AccountName = ctx.AccountName
@@ -286,8 +367,13 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 	}
 
 	secrets, err := d.secretRepo.Find(ctx, repos.Query{
-		Filter: filters,
-		Sort:   nil,
+		Filter: d.secretRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
+			fc.SecretFor: {
+				MatchType: repos.MatchTypeExact,
+				Exact:     nil,
+			},
+		}),
+		Sort: nil,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -300,7 +386,16 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	routers, err := d.routerRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	mresources, err := d.importedMresRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
@@ -416,6 +511,15 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 		}
 	}
 
+	for i := range mresources {
+		if _, err := d.createAndApplyImportedManagedResource(resCtx, CreateAndApplyImportedManagedResourceArgs{
+			ImportedManagedResourceName: mresources[i].Name,
+			ManagedResourceRefID:        mresources[i].ManagedResourceRef.ID,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := d.syncImagePullSecretsToEnvironment(ctx, args.DestinationEnvName); err != nil {
 		return nil, err
 	}
@@ -478,6 +582,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, env entities.Environment)
 		common.PatchOpts{
 			XPatch: repos.Document{
 				fc.EnvironmentSpecRouting: env.Spec.Routing,
+				fc.EnvironmentSpecSuspend: env.Spec.Suspend,
 			},
 		},
 	)
@@ -515,6 +620,10 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, name string) error {
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 
 	if uenv.IsArchived != nil && *uenv.IsArchived {
+		if err := d.cleanupEnvironment(ctx, name); err != nil {
+			return errors.NewE(err)
+		}
+
 		return d.environmentRepo.DeleteById(ctx, uenv.Id)
 	}
 
@@ -553,18 +662,25 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 }
 
 func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Environment) error {
-	err := d.environmentRepo.DeleteOne(
-		ctx,
-		repos.Filter{
-			fields.AccountName:  ctx.AccountName,
-			fields.MetadataName: env.Name,
-		},
-	)
-	if err != nil {
+	if err := d.cleanupEnvironment(ctx, env.Name); err != nil {
 		return errors.NewE(err)
 	}
 
-	if _, err = d.iamClient.RemoveResource(ctx, &iam.RemoveResourceIn{
+	if err := d.environmentRepo.DeleteOne(ctx, repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: env.Name,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.resourceMappingRepo.DeleteMany(ctx, repos.Filter{
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
+		fc.EnvironmentName:                  env.Name,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
+	if _, err := d.iamClient.RemoveResource(ctx, &iam.RemoveResourceIn{
 		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, env.Name),
 	}); err != nil {
 		return errors.NewE(err)
@@ -589,16 +705,9 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		return d.resyncK8sResource(ctx, xenv.Name, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
-	uenv, err := d.environmentRepo.PatchById(
-		ctx,
-		xenv.Id,
-		common.PatchForSyncFromAgent(
-			&env,
-			recordVersion,
-			status,
-			common.PatchOpts{
-				MessageTimestamp: opts.MessageTimestamp,
-			}))
+	uenv, err := d.environmentRepo.PatchById(ctx, xenv.Id, common.PatchForSyncFromAgent(
+		&env, recordVersion, status, common.PatchOpts{MessageTimestamp: opts.MessageTimestamp}),
+	)
 	if err != nil {
 		return err
 	}
