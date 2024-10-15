@@ -36,16 +36,19 @@ jobs:
     uses: ./.github/workflows/web.yml
     secrets: inherit
 
-  kl:
-    uses: ./.github/workflows/kl.yml
-    secrets: inherit
-
   api:
     uses: ./.github/workflows/api.yml
     secrets: inherit
 
   operator:
     uses: ./.github/workflows/operator.yml
+    secrets: inherit
+
+  kl:
+    needs: 
+      - operator
+      - api
+    uses: ./.github/workflows/kl.yml
     secrets: inherit
 
   infrastructure-as-code:
