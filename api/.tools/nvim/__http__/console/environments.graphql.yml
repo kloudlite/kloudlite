@@ -1,13 +1,11 @@
 ---
-global:
-  envTargetNamespace: "nxtcoder17"
-  envName: "test-env"
+global: {}
 ---
 
 label: List Environments
 query: |+ #graphql
   query Core_listEnvironments {
-    core_listEnvironments() {
+    core_listEnvironments {
       edges {
         cursor
         node {
@@ -41,12 +39,16 @@ query: |+ #graphql
             action
           }
           recordVersion
+          onlineStatus {
+            lastOnlineAt
+            willBeOfflineAt
+          }
         }
       }
       pageInfo {
         endCursor
         hasNextPage
-        hasPreviousPage
+        hasPrevPage
         startCursor
       }
       totalCount
@@ -62,7 +64,7 @@ query: |+ #graphql
       apiVersion
       kind
       spec {
-        targetNamespace
+       targetNamespace
       }
       syncStatus {
         state
@@ -76,11 +78,9 @@ query: |+ #graphql
 variables:
   env:
     displayName: Display Name of a sample environment
-    clusterName: "{{.gcpClusterName}}"
+    clusterName: "__kloudlite_enabled_cluster"
     metadata:
-      name: "{{.envName}}"
-    # spec:
-    # projectName: "{{.projectName}}"
+      name: "{{.envName}}8"
 ---
 
 label: resync environment
@@ -121,12 +121,11 @@ variables:
 
 label: "delete environment"
 query: |+
-  mutation Core_deleteEnvironment($projectName: String!, $envName: String!) {
-    core_deleteEnvironment(projectName: $projectName, envName: $envName)
+  mutation Core_deleteEnvironment($envName: String!) {
+    core_deleteEnvironment(envName: $envName)
   }
 variables:
-  projectName: "{{.projectName}}"
-  envName: "{{.clonedEnvName}}"
+  envName: "{{.envName}}4"
 ---
 
 ---

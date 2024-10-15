@@ -15,6 +15,11 @@ type GlobalVPNConnDeviceRef struct {
 	IPAddr string `json:"ipAddr"`
 }
 
+type DispatchAddr struct {
+	AccountName string `json:"accountName"`
+	ClusterName string `json:"clusterName"`
+}
+
 type WgParams struct {
 	WgPrivateKey string `json:"wg_private_key"`
 	WgPublicKey  string `json:"wg_public_key"`
@@ -48,6 +53,9 @@ type GlobalVPNConnection struct {
 	// ClusterPublicEndpoint string                 `json:"clusterPublicEndpoint" graphql:"noinput"`
 	DeviceRef GlobalVPNConnDeviceRef `json:"deviceRef" graphql:"noinput"`
 
+	// DispatchAddr is useful when globalvpn connection belongs to one account, but is deployed to another account
+	DispatchAddr *DispatchAddr `json:"dispatchAddr" graphql:"noinput"`
+
 	// ParsedWgParams *wgv1.WgParams `json:"parsedWgParams" graphql:"ignore"`
 	ParsedWgParams *networkingv1.WireguardKeys `json:"parsedWgParams" graphql:"ignore"`
 	SyncStatus     t.SyncStatus                `json:"syncStatus" graphql:"noinput"`
@@ -70,9 +78,19 @@ var GlobalVPNConnectionIndices = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "clusterName", Value: repos.IndexAsc},
+			{Key: fc.MetadataName, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
+			{Key: fc.ClusterName, Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+
+	{
+		Field: []repos.IndexKey{
+			{Key: fc.GlobalVPNConnectionDispatchAddrAccountName, Value: repos.IndexAsc},
+			{Key: fc.GlobalVPNConnectionDispatchAddrClusterName, Value: repos.IndexAsc},
+			{Key: fc.MetadataName, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

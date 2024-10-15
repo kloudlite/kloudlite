@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -27,7 +28,7 @@ func NewResourceDispatcher(producer SendTargetClusterMessagesProducer) domain.Re
 	}
 }
 
-func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.InfraContext, clusterName string, obj client.Object, recordVersion int) error {
+func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.InfraContext, dispatchAddr *entities.DispatchAddr, obj client.Object, recordVersion int) error {
 	ann := obj.GetAnnotations()
 	if ann == nil {
 		ann = make(map[string]string, 1)
@@ -40,9 +41,15 @@ func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.InfraContext, c
 		return errors.NewE(err)
 	}
 
+	lb := obj.GetLabels()
+	if lb == nil {
+		lb = make(map[string]string, 1)
+	}
+	lb[constants.AccountNameKey] = ctx.AccountName
+	obj.SetLabels(lb)
+
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -51,22 +58,28 @@ func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.InfraContext, c
 	}
 
 	err = a.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
+		Subject: common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName()),
 		Payload: b,
 	})
 
 	return errors.NewE(err)
 }
 
-func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.InfraContext, clusterName string, obj client.Object) error {
+func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.InfraContext, dispatchAddr *entities.DispatchAddr, obj client.Object) error {
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
+	lb := obj.GetLabels()
+	if lb == nil {
+		lb = make(map[string]string, 1)
+	}
+	lb[constants.AccountNameKey] = ctx.AccountName
+	obj.SetLabels(lb)
+
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
@@ -75,7 +88,7 @@ func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.InfraContext
 	}
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
+		Subject: common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName()),
 		Payload: b,
 	})
 

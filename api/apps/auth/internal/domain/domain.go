@@ -2,8 +2,8 @@ package domain
 
 import (
 	"context"
-	"github.com/kloudlite/api/apps/auth/internal/entities"
 
+	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -14,7 +14,7 @@ type Domain interface {
 	CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error)
 
 	Login(ctx context.Context, email string, password string) (*common.AuthSession, error)
-	SignUp(ctx context.Context, name string, email string, password string) (*common.AuthSession, error)
+	SignUp(ctx context.Context, name string, email string, password string, captchaToken string) (*common.AuthSession, error)
 	EnsureUserByEmail(ctx context.Context, email string) (*entities.User, error)
 	GetUserById(ctx context.Context, id repos.ID) (*entities.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*entities.User, error)
@@ -22,7 +22,7 @@ type Domain interface {
 	ClearUserMetadata(ctx context.Context, id repos.ID) (*entities.User, error)
 	VerifyEmail(ctx context.Context, token string) (*common.AuthSession, error)
 	ResetPassword(ctx context.Context, token string, password string) (bool, error)
-	RequestResetPassword(ctx context.Context, email string) (bool, error)
+	RequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error)
 	ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error)
 	ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error)
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)
@@ -39,7 +39,7 @@ type Domain interface {
 
 	CreateInviteCode(ctx context.Context, name string, inviteCode string) (*entities.InviteCode, error)
 	DeleteInviteCode(ctx context.Context, invCodeId string) error
-	//UpdateInviteCode(ctx context.Context, invCode entities.InviteCode) (*entities.InviteCode, error)
+	// UpdateInviteCode(ctx context.Context, invCode entities.InviteCode) (*entities.InviteCode, error)
 
 	VerifyInviteCode(ctx context.Context, userId repos.ID, invitationCode string) (bool, error)
 }

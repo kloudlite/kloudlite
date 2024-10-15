@@ -1,18 +1,15 @@
 package app
 
 import (
+	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
 	"context"
-	"github.com/kloudlite/api/apps/auth/internal/entities"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
-	"github.com/kloudlite/api/pkg/nats"
-	"go.uber.org/fx"
-	"google.golang.org/grpc"
-
 	"github.com/kloudlite/api/apps/auth/internal/app/graph"
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/apps/auth/internal/env"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
@@ -20,7 +17,10 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
+	"go.uber.org/fx"
+	"google.golang.org/grpc"
 )
 
 type CommsClientConnection *grpc.ClientConn
@@ -47,6 +47,19 @@ var Module = fx.Module(
 	fx.Provide(
 		func(conn CommsClientConnection) comms.CommsClient {
 			return comms.NewCommsClient((*grpc.ClientConn)(conn))
+		},
+	),
+
+	fx.Provide(
+		func(ev *env.Env) (*recaptchaenterprise.Client, error) {
+			if ev.GoogleRecaptchaEnabled {
+				client, err := recaptchaenterprise.NewClient(context.TODO())
+				if err != nil {
+					return nil, err
+				}
+				return client, nil
+			}
+			return nil, nil
 		},
 	),
 

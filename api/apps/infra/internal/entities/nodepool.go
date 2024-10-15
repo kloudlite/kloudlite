@@ -17,6 +17,8 @@ type NodePool struct {
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ClusterName string `json:"clusterName" graphql:"noinput"`
 
+	DispatchAddr *DispatchAddr `json:"dispatchAddr" graphql:"noinput"`
+
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 

@@ -34,7 +34,7 @@ type BYOKSetupInstructionIn struct {
 	Title   string `json:"title"`
 }
 
-type CheckAwsAccessOutput struct {
+type CheckAWSAccessOutput struct {
 	Result          bool    `json:"result"`
 	InstallationURL *string `json:"installationUrl,omitempty"`
 }
@@ -53,17 +53,6 @@ type CloudProviderSecretPaginatedRecords struct {
 type ClusterEdge struct {
 	Cursor string            `json:"cursor"`
 	Node   *entities.Cluster `json:"node"`
-}
-
-type ClusterManagedServiceEdge struct {
-	Cursor string                          `json:"cursor"`
-	Node   *entities.ClusterManagedService `json:"node"`
-}
-
-type ClusterManagedServicePaginatedRecords struct {
-	Edges      []*ClusterManagedServiceEdge `json:"edges"`
-	PageInfo   *PageInfo                    `json:"pageInfo"`
-	TotalCount int                          `json:"totalCount"`
 }
 
 type ClusterPaginatedRecords struct {
@@ -89,14 +78,14 @@ type EncodedValue struct {
 }
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParams struct {
-	AwsAccountID      string `json:"awsAccountId"`
+	AWSAccountID      string `json:"awsAccountId"`
 	CfParamTrustedArn string `json:"cfParamTrustedARN"`
 	ExternalID        string `json:"externalID"`
 	RoleArn           string `json:"roleARN"`
 }
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParamsIn struct {
-	AwsAccountID string `json:"awsAccountId"`
+	AWSAccountID string `json:"awsAccountId"`
 }
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeys struct {
@@ -112,7 +101,7 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeysIn struct {
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials struct {
 	AssumeRoleParams           *GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParams `json:"assumeRoleParams,omitempty"`
-	AuthMechanism              GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism           `json:"authMechanism"`
+	AuthMechanism              GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism           `json:"authMechanism"`
 	AuthSecretKeys             *GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeys   `json:"authSecretKeys,omitempty"`
 	CfParamInstanceProfileName *string                                                            `json:"cfParamInstanceProfileName,omitempty"`
 	CfParamRoleName            *string                                                            `json:"cfParamRoleName,omitempty"`
@@ -121,7 +110,7 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials struct {
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn struct {
 	AssumeRoleParams *GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParamsIn `json:"assumeRoleParams,omitempty"`
-	AuthMechanism    GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism             `json:"authMechanism"`
+	AuthMechanism    GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism             `json:"authMechanism"`
 	AuthSecretKeys   *GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeysIn   `json:"authSecretKeys,omitempty"`
 }
 
@@ -134,6 +123,11 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn struct {
 	Mode GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode `json:"mode"`
 }
 
+type GithubComKloudliteAPIAppsInfraInternalEntitiesDispatchAddr struct {
+	AccountName string `json:"accountName"`
+	ClusterName string `json:"clusterName"`
+}
+
 type GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials struct {
 	ServiceAccountJSON string `json:"serviceAccountJSON"`
 }
@@ -143,16 +137,16 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn struct
 }
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesInputField struct {
-	DefaultValue interface{} `json:"defaultValue,omitempty"`
-	DisplayUnit  *string     `json:"displayUnit,omitempty"`
-	InputType    string      `json:"inputType"`
-	Label        string      `json:"label"`
-	Max          *float64    `json:"max,omitempty"`
-	Min          *float64    `json:"min,omitempty"`
-	Multiplier   *float64    `json:"multiplier,omitempty"`
-	Name         string      `json:"name"`
-	Required     *bool       `json:"required,omitempty"`
-	Unit         *string     `json:"unit,omitempty"`
+	DefaultValue any      `json:"defaultValue,omitempty"`
+	DisplayUnit  *string  `json:"displayUnit,omitempty"`
+	InputType    string   `json:"inputType"`
+	Label        string   `json:"label"`
+	Max          *float64 `json:"max,omitempty"`
+	Min          *float64 `json:"min,omitempty"`
+	Multiplier   *float64 `json:"multiplier,omitempty"`
+	Name         string   `json:"name"`
+	Required     *bool    `json:"required,omitempty"`
+	Unit         *string  `json:"unit,omitempty"`
 }
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesMresTemplate struct {
@@ -172,16 +166,16 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfig struct {
-	Credentials   *GithubComKloudliteOperatorApisClustersV1AwsCredentials      `json:"credentials"`
+	Credentials   *GithubComKloudliteOperatorApisClustersV1AWSCredentials      `json:"credentials"`
 	K3sMasters    *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 	NodePools     map[string]interface{}                                       `json:"nodePools,omitempty"`
 	Region        string                                                       `json:"region"`
 	SpotNodePools map[string]interface{}                                       `json:"spotNodePools,omitempty"`
-	Vpc           *GithubComKloudliteOperatorApisClustersV1AwsVPCParams        `json:"vpc,omitempty"`
+	Vpc           *GithubComKloudliteOperatorApisClustersV1AWSVPCParams        `json:"vpc,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn struct {
-	Credentials *GithubComKloudliteOperatorApisClustersV1AwsCredentialsIn      `json:"credentials"`
+	Credentials *GithubComKloudliteOperatorApisClustersV1AWSCredentialsIn      `json:"credentials"`
 	K3sMasters  *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn `json:"k3sMasters,omitempty"`
 	Region      string                                                         `json:"region"`
 }
@@ -202,84 +196,85 @@ type GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn struct {
 
 type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig struct {
 	AvailabilityZone       string                                                     `json:"availabilityZone"`
-	Ec2Pool                *GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig  `json:"ec2Pool,omitempty"`
+	Ec2Pool                *GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig  `json:"ec2Pool,omitempty"`
 	IamInstanceProfileRole *string                                                    `json:"iamInstanceProfileRole,omitempty"`
 	NvidiaGpuEnabled       bool                                                       `json:"nvidiaGpuEnabled"`
 	PoolType               GithubComKloudliteOperatorApisClustersV1AWSPoolType        `json:"poolType"`
+	Region                 string                                                     `json:"region"`
 	RootVolumeSize         int                                                        `json:"rootVolumeSize"`
 	RootVolumeType         string                                                     `json:"rootVolumeType"`
-	SpotPool               *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig `json:"spotPool,omitempty"`
+	SpotPool               *GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig `json:"spotPool,omitempty"`
 	VpcID                  string                                                     `json:"vpcId"`
 	VpcSubnetID            string                                                     `json:"vpcSubnetId"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn struct {
 	AvailabilityZone string                                                       `json:"availabilityZone"`
-	Ec2Pool          *GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn  `json:"ec2Pool,omitempty"`
+	Ec2Pool          *GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfigIn  `json:"ec2Pool,omitempty"`
 	NvidiaGpuEnabled bool                                                         `json:"nvidiaGpuEnabled"`
 	PoolType         GithubComKloudliteOperatorApisClustersV1AWSPoolType          `json:"poolType"`
-	SpotPool         *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn `json:"spotPool,omitempty"`
+	SpotPool         *GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfigIn `json:"spotPool,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsCredentials struct {
-	AuthMechanism GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism `json:"authMechanism"`
+type GithubComKloudliteOperatorApisClustersV1AWSCredentials struct {
+	AuthMechanism GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism `json:"authMechanism"`
 	SecretRef     *GithubComKloudliteOperatorApisCommonTypesSecretRef      `json:"secretRef"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsCredentialsIn struct {
-	AuthMechanism GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism `json:"authMechanism"`
+type GithubComKloudliteOperatorApisClustersV1AWSCredentialsIn struct {
+	AuthMechanism GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism `json:"authMechanism"`
 	SecretRef     *GithubComKloudliteOperatorApisCommonTypesSecretRefIn    `json:"secretRef"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig struct {
+type GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfig struct {
 	InstanceType string                 `json:"instanceType"`
 	Nodes        map[string]interface{} `json:"nodes,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn struct {
+type GithubComKloudliteOperatorApisClustersV1AWSEC2PoolConfigIn struct {
 	InstanceType string                 `json:"instanceType"`
 	Nodes        map[string]interface{} `json:"nodes,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode struct {
+type GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode struct {
 	MemoryPerVcpu *GithubComKloudliteOperatorApisCommonTypesMinMaxFloat `json:"memoryPerVcpu,omitempty"`
 	Vcpu          *GithubComKloudliteOperatorApisCommonTypesMinMaxFloat `json:"vcpu"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn struct {
+type GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNodeIn struct {
 	MemoryPerVcpu *GithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn `json:"memoryPerVcpu,omitempty"`
 	Vcpu          *GithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn `json:"vcpu"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode struct {
+type GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode struct {
 	InstanceTypes []string `json:"instanceTypes"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn struct {
+type GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNodeIn struct {
 	InstanceTypes []string `json:"instanceTypes"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig struct {
-	CPUNode                  *GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode `json:"cpuNode,omitempty"`
-	GpuNode                  *GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode `json:"gpuNode,omitempty"`
+type GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfig struct {
+	CPUNode                  *GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNode `json:"cpuNode,omitempty"`
+	GpuNode                  *GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNode `json:"gpuNode,omitempty"`
 	Nodes                    map[string]interface{}                                  `json:"nodes,omitempty"`
 	SpotFleetTaggingRoleName string                                                  `json:"spotFleetTaggingRoleName"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn struct {
-	CPUNode *GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn `json:"cpuNode,omitempty"`
-	GpuNode *GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn `json:"gpuNode,omitempty"`
+type GithubComKloudliteOperatorApisClustersV1AWSSpotPoolConfigIn struct {
+	CPUNode *GithubComKloudliteOperatorApisClustersV1AWSSpotCPUNodeIn `json:"cpuNode,omitempty"`
+	GpuNode *GithubComKloudliteOperatorApisClustersV1AWSSpotGpuNodeIn `json:"gpuNode,omitempty"`
 	Nodes   map[string]interface{}                                    `json:"nodes,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID struct {
+type GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID struct {
 	AvailabilityZone string `json:"availabilityZone"`
 	ID               string `json:"id"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsVPCParams struct {
+type GithubComKloudliteOperatorApisClustersV1AWSVPCParams struct {
 	ID            string                                                     `json:"id"`
-	PublicSubnets []*GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID `json:"publicSubnets"`
+	PublicSubnets []*GithubComKloudliteOperatorApisClustersV1AWSSubnetWithID `json:"publicSubnets"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterOutput struct {
@@ -297,14 +292,14 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
 	AccountID              string                                                              `json:"accountId"`
 	AccountName            string                                                              `json:"accountName"`
 	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode `json:"availabilityMode"`
-	Aws                    *GithubComKloudliteOperatorApisClustersV1AWSClusterConfig           `json:"aws,omitempty"`
+	AWS                    *GithubComKloudliteOperatorApisClustersV1AWSClusterConfig           `json:"aws,omitempty"`
 	BackupToS3Enabled      bool                                                                `json:"backupToS3Enabled"`
 	CloudflareEnabled      *bool                                                               `json:"cloudflareEnabled,omitempty"`
 	CloudProvider          GithubComKloudliteOperatorApisCommonTypesCloudProvider              `json:"cloudProvider"`
 	ClusterInternalDNSHost *string                                                             `json:"clusterInternalDnsHost,omitempty"`
 	ClusterServiceCidr     *string                                                             `json:"clusterServiceCIDR,omitempty"`
 	ClusterTokenRef        *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef              `json:"clusterTokenRef,omitempty"`
-	Gcp                    *GithubComKloudliteOperatorApisClustersV1GCPClusterConfig           `json:"gcp,omitempty"`
+	GCP                    *GithubComKloudliteOperatorApisClustersV1GCPClusterConfig           `json:"gcp,omitempty"`
 	KloudliteRelease       string                                                              `json:"kloudliteRelease"`
 	MessageQueueTopicName  string                                                              `json:"messageQueueTopicName"`
 	Output                 *GithubComKloudliteOperatorApisClustersV1ClusterOutput              `json:"output,omitempty"`
@@ -314,19 +309,19 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
 	AvailabilityMode  GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode `json:"availabilityMode"`
-	Aws               *GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn         `json:"aws,omitempty"`
+	AWS               *GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn         `json:"aws,omitempty"`
 	CloudflareEnabled *bool                                                               `json:"cloudflareEnabled,omitempty"`
 	CloudProvider     GithubComKloudliteOperatorApisCommonTypesCloudProvider              `json:"cloudProvider"`
-	Gcp               *GithubComKloudliteOperatorApisClustersV1GCPClusterConfigIn         `json:"gcp,omitempty"`
+	GCP               *GithubComKloudliteOperatorApisClustersV1GCPClusterConfigIn         `json:"gcp,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPClusterConfig struct {
 	CredentialsRef *GithubComKloudliteOperatorApisCommonTypesSecretRef           `json:"credentialsRef"`
-	GcpProjectID   string                                                        `json:"gcpProjectID"`
+	GCPProjectID   string                                                        `json:"gcpProjectID"`
 	MasterNodes    *GithubComKloudliteOperatorApisClustersV1GCPMasterNodesConfig `json:"masterNodes,omitempty"`
 	Region         string                                                        `json:"region"`
 	ServiceAccount *GithubComKloudliteOperatorApisClustersV1GCPServiceAccount    `json:"serviceAccount"`
-	Vpc            *GithubComKloudliteOperatorApisClustersV1GcpVPCParams         `json:"vpc,omitempty"`
+	Vpc            *GithubComKloudliteOperatorApisClustersV1GCPVPCParams         `json:"vpc,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPClusterConfigIn struct {
@@ -345,13 +340,13 @@ type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig struct {
 	BootVolumeSize   int                                                        `json:"bootVolumeSize"`
 	BootVolumeType   string                                                     `json:"bootVolumeType"`
 	Credentials      *GithubComKloudliteOperatorApisCommonTypesSecretRef        `json:"credentials"`
-	GcpProjectID     string                                                     `json:"gcpProjectID"`
+	GCPProjectID     string                                                     `json:"gcpProjectID"`
 	MachineType      string                                                     `json:"machineType"`
 	Nodes            map[string]interface{}                                     `json:"nodes,omitempty"`
 	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType        `json:"poolType"`
 	Region           string                                                     `json:"region"`
 	ServiceAccount   *GithubComKloudliteOperatorApisClustersV1GCPServiceAccount `json:"serviceAccount"`
-	Vpc              *GithubComKloudliteOperatorApisClustersV1GcpVPCParams      `json:"vpc,omitempty"`
+	Vpc              *GithubComKloudliteOperatorApisClustersV1GCPVPCParams      `json:"vpc,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn struct {
@@ -366,7 +361,7 @@ type GithubComKloudliteOperatorApisClustersV1GCPServiceAccount struct {
 	Scopes  []string `json:"scopes,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1GcpVPCParams struct {
+type GithubComKloudliteOperatorApisClustersV1GCPVPCParams struct {
 	Name string `json:"name"`
 }
 
@@ -378,9 +373,9 @@ type GithubComKloudliteOperatorApisClustersV1MasterNodeProps struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {
-	Aws           *GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig `json:"aws,omitempty"`
+	AWS           *GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig `json:"aws,omitempty"`
 	CloudProvider GithubComKloudliteOperatorApisCommonTypesCloudProvider     `json:"cloudProvider"`
-	Gcp           *GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig `json:"gcp,omitempty"`
+	GCP           *GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig `json:"gcp,omitempty"`
 	MaxCount      int                                                        `json:"maxCount"`
 	MinCount      int                                                        `json:"minCount"`
 	NodeLabels    map[string]interface{}                                     `json:"nodeLabels,omitempty"`
@@ -388,9 +383,9 @@ type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn struct {
-	Aws           *GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn `json:"aws,omitempty"`
+	AWS           *GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn `json:"aws,omitempty"`
 	CloudProvider GithubComKloudliteOperatorApisCommonTypesCloudProvider       `json:"cloudProvider"`
-	Gcp           *GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn `json:"gcp,omitempty"`
+	GCP           *GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn `json:"gcp,omitempty"`
 	MaxCount      int                                                          `json:"maxCount"`
 	MinCount      int                                                          `json:"minCount"`
 	NodeLabels    map[string]interface{}                                       `json:"nodeLabels,omitempty"`
@@ -437,15 +432,6 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRef struct {
 type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 	Name      string  `json:"name"`
 	Namespace *string `json:"namespace,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
-	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
-	TargetNamespace string                                                  `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn struct {
-	MsvcSpec *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
@@ -499,30 +485,6 @@ type GithubComKloudliteOperatorApisCrdsV1JobVarsIn struct {
 	Tolerations  []*K8sIoAPICoreV1TolerationIn `json:"tolerations,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
-	NodeSelector    map[string]interface{}                               `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
-	Tolerations     []*K8sIoAPICoreV1Toleration                          `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
-	NodeSelector    map[string]interface{}                                 `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
-	Tolerations     []*K8sIoAPICoreV1TolerationIn                          `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec,omitempty"`
-}
-
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
@@ -532,7 +494,7 @@ type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
-	RawMessage interface{} `json:"RawMessage,omitempty"`
+	RawMessage any `json:"RawMessage,omitempty"`
 }
 
 type GlobalVPNDeviceEdge struct {
@@ -812,6 +774,16 @@ type K8sIoAPICoreV1LocalVolumeSourceIn struct {
 	Path   string  `json:"path"`
 }
 
+type K8sIoAPICoreV1ModifyVolumeStatus struct {
+	Status                          K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus `json:"status"`
+	TargetVolumeAttributesClassName *string                                               `json:"targetVolumeAttributesClassName,omitempty"`
+}
+
+type K8sIoAPICoreV1ModifyVolumeStatusIn struct {
+	Status                          K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus `json:"status"`
+	TargetVolumeAttributesClassName *string                                               `json:"targetVolumeAttributesClassName,omitempty"`
+}
+
 type K8sIoAPICoreV1NFSVolumeSource struct {
 	Path     string `json:"path"`
 	ReadOnly *bool  `json:"readOnly,omitempty"`
@@ -937,48 +909,54 @@ type K8sIoAPICoreV1PersistentVolumeClaimConditionIn struct {
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimSpec struct {
-	AccessModes      []string                                     `json:"accessModes,omitempty"`
-	DataSource       *K8sIoAPICoreV1TypedLocalObjectReference     `json:"dataSource,omitempty"`
-	DataSourceRef    *K8sIoAPICoreV1TypedObjectReference          `json:"dataSourceRef,omitempty"`
-	Resources        *K8sIoAPICoreV1ResourceRequirements          `json:"resources,omitempty"`
-	Selector         *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"selector,omitempty"`
-	StorageClassName *string                                      `json:"storageClassName,omitempty"`
-	VolumeMode       *string                                      `json:"volumeMode,omitempty"`
-	VolumeName       *string                                      `json:"volumeName,omitempty"`
+	AccessModes               []string                                     `json:"accessModes,omitempty"`
+	DataSource                *K8sIoAPICoreV1TypedLocalObjectReference     `json:"dataSource,omitempty"`
+	DataSourceRef             *K8sIoAPICoreV1TypedObjectReference          `json:"dataSourceRef,omitempty"`
+	Resources                 *K8sIoAPICoreV1VolumeResourceRequirements    `json:"resources,omitempty"`
+	Selector                  *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"selector,omitempty"`
+	StorageClassName          *string                                      `json:"storageClassName,omitempty"`
+	VolumeAttributesClassName *string                                      `json:"volumeAttributesClassName,omitempty"`
+	VolumeMode                *string                                      `json:"volumeMode,omitempty"`
+	VolumeName                *string                                      `json:"volumeName,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimSpecIn struct {
-	AccessModes      []string                                       `json:"accessModes,omitempty"`
-	DataSource       *K8sIoAPICoreV1TypedLocalObjectReferenceIn     `json:"dataSource,omitempty"`
-	DataSourceRef    *K8sIoAPICoreV1TypedObjectReferenceIn          `json:"dataSourceRef,omitempty"`
-	Resources        *K8sIoAPICoreV1ResourceRequirementsIn          `json:"resources,omitempty"`
-	Selector         *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"selector,omitempty"`
-	StorageClassName *string                                        `json:"storageClassName,omitempty"`
-	VolumeMode       *string                                        `json:"volumeMode,omitempty"`
-	VolumeName       *string                                        `json:"volumeName,omitempty"`
+	AccessModes               []string                                       `json:"accessModes,omitempty"`
+	DataSource                *K8sIoAPICoreV1TypedLocalObjectReferenceIn     `json:"dataSource,omitempty"`
+	DataSourceRef             *K8sIoAPICoreV1TypedObjectReferenceIn          `json:"dataSourceRef,omitempty"`
+	Resources                 *K8sIoAPICoreV1VolumeResourceRequirementsIn    `json:"resources,omitempty"`
+	Selector                  *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"selector,omitempty"`
+	StorageClassName          *string                                        `json:"storageClassName,omitempty"`
+	VolumeAttributesClassName *string                                        `json:"volumeAttributesClassName,omitempty"`
+	VolumeMode                *string                                        `json:"volumeMode,omitempty"`
+	VolumeName                *string                                        `json:"volumeName,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatus struct {
-	AccessModes               []string                                        `json:"accessModes,omitempty"`
-	AllocatedResources        map[string]interface{}                          `json:"allocatedResources,omitempty"`
-	AllocatedResourceStatuses map[string]interface{}                          `json:"allocatedResourceStatuses,omitempty"`
-	Capacity                  map[string]interface{}                          `json:"capacity,omitempty"`
-	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
-	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
+	AccessModes                      []string                                        `json:"accessModes,omitempty"`
+	AllocatedResources               map[string]interface{}                          `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses        map[string]interface{}                          `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                         map[string]interface{}                          `json:"capacity,omitempty"`
+	Conditions                       []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
+	CurrentVolumeAttributesClassName *string                                         `json:"currentVolumeAttributesClassName,omitempty"`
+	ModifyVolumeStatus               *K8sIoAPICoreV1ModifyVolumeStatus               `json:"modifyVolumeStatus,omitempty"`
+	Phase                            *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatusIn struct {
-	AccessModes               []string                                          `json:"accessModes,omitempty"`
-	AllocatedResources        map[string]interface{}                            `json:"allocatedResources,omitempty"`
-	AllocatedResourceStatuses map[string]interface{}                            `json:"allocatedResourceStatuses,omitempty"`
-	Capacity                  map[string]interface{}                            `json:"capacity,omitempty"`
-	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
-	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
+	AccessModes                      []string                                          `json:"accessModes,omitempty"`
+	AllocatedResources               map[string]interface{}                            `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses        map[string]interface{}                            `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                         map[string]interface{}                            `json:"capacity,omitempty"`
+	Conditions                       []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
+	CurrentVolumeAttributesClassName *string                                           `json:"currentVolumeAttributesClassName,omitempty"`
+	ModifyVolumeStatus               *K8sIoAPICoreV1ModifyVolumeStatusIn               `json:"modifyVolumeStatus,omitempty"`
+	Phase                            *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeSpec struct {
 	AccessModes                   []string                                        `json:"accessModes,omitempty"`
-	AwsElasticBlockStore          *K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource `json:"awsElasticBlockStore,omitempty"`
+	AWSElasticBlockStore          *K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource `json:"awsElasticBlockStore,omitempty"`
 	AzureDisk                     *K8sIoAPICoreV1AzureDiskVolumeSource            `json:"azureDisk,omitempty"`
 	AzureFile                     *K8sIoAPICoreV1AzureFilePersistentVolumeSource  `json:"azureFile,omitempty"`
 	Capacity                      map[string]interface{}                          `json:"capacity,omitempty"`
@@ -1005,13 +983,14 @@ type K8sIoAPICoreV1PersistentVolumeSpec struct {
 	ScaleIo                       *K8sIoAPICoreV1ScaleIOPersistentVolumeSource    `json:"scaleIO,omitempty"`
 	StorageClassName              *string                                         `json:"storageClassName,omitempty"`
 	Storageos                     *K8sIoAPICoreV1StorageOSPersistentVolumeSource  `json:"storageos,omitempty"`
+	VolumeAttributesClassName     *string                                         `json:"volumeAttributesClassName,omitempty"`
 	VolumeMode                    *string                                         `json:"volumeMode,omitempty"`
 	VsphereVolume                 *K8sIoAPICoreV1VsphereVirtualDiskVolumeSource   `json:"vsphereVolume,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeSpecIn struct {
 	AccessModes                   []string                                          `json:"accessModes,omitempty"`
-	AwsElasticBlockStore          *K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn `json:"awsElasticBlockStore,omitempty"`
+	AWSElasticBlockStore          *K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn `json:"awsElasticBlockStore,omitempty"`
 	AzureDisk                     *K8sIoAPICoreV1AzureDiskVolumeSourceIn            `json:"azureDisk,omitempty"`
 	AzureFile                     *K8sIoAPICoreV1AzureFilePersistentVolumeSourceIn  `json:"azureFile,omitempty"`
 	Capacity                      map[string]interface{}                            `json:"capacity,omitempty"`
@@ -1038,6 +1017,7 @@ type K8sIoAPICoreV1PersistentVolumeSpecIn struct {
 	ScaleIo                       *K8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn    `json:"scaleIO,omitempty"`
 	StorageClassName              *string                                           `json:"storageClassName,omitempty"`
 	Storageos                     *K8sIoAPICoreV1StorageOSPersistentVolumeSourceIn  `json:"storageos,omitempty"`
+	VolumeAttributesClassName     *string                                           `json:"volumeAttributesClassName,omitempty"`
 	VolumeMode                    *string                                           `json:"volumeMode,omitempty"`
 	VsphereVolume                 *K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn   `json:"vsphereVolume,omitempty"`
 }
@@ -1078,6 +1058,8 @@ type K8sIoAPICoreV1PodAffinityIn struct {
 
 type K8sIoAPICoreV1PodAffinityTerm struct {
 	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"labelSelector,omitempty"`
+	MatchLabelKeys    []string                                     `json:"matchLabelKeys,omitempty"`
+	MismatchLabelKeys []string                                     `json:"mismatchLabelKeys,omitempty"`
 	Namespaces        []string                                     `json:"namespaces,omitempty"`
 	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"namespaceSelector,omitempty"`
 	TopologyKey       string                                       `json:"topologyKey"`
@@ -1085,6 +1067,8 @@ type K8sIoAPICoreV1PodAffinityTerm struct {
 
 type K8sIoAPICoreV1PodAffinityTermIn struct {
 	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"labelSelector,omitempty"`
+	MatchLabelKeys    []string                                       `json:"matchLabelKeys,omitempty"`
+	MismatchLabelKeys []string                                       `json:"mismatchLabelKeys,omitempty"`
 	Namespaces        []string                                       `json:"namespaces,omitempty"`
 	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"namespaceSelector,omitempty"`
 	TopologyKey       string                                         `json:"topologyKey"`
@@ -1160,26 +1144,6 @@ type K8sIoAPICoreV1RBDPersistentVolumeSourceIn struct {
 	ReadOnly  *bool                            `json:"readOnly,omitempty"`
 	SecretRef *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
 	User      *string                          `json:"user,omitempty"`
-}
-
-type K8sIoAPICoreV1ResourceClaim struct {
-	Name string `json:"name"`
-}
-
-type K8sIoAPICoreV1ResourceClaimIn struct {
-	Name string `json:"name"`
-}
-
-type K8sIoAPICoreV1ResourceRequirements struct {
-	Claims   []*K8sIoAPICoreV1ResourceClaim `json:"claims,omitempty"`
-	Limits   map[string]interface{}         `json:"limits,omitempty"`
-	Requests map[string]interface{}         `json:"requests,omitempty"`
-}
-
-type K8sIoAPICoreV1ResourceRequirementsIn struct {
-	Claims   []*K8sIoAPICoreV1ResourceClaimIn `json:"claims,omitempty"`
-	Limits   map[string]interface{}           `json:"limits,omitempty"`
-	Requests map[string]interface{}           `json:"requests,omitempty"`
 }
 
 type K8sIoAPICoreV1ScaleIOPersistentVolumeSource struct {
@@ -1296,6 +1260,16 @@ type K8sIoAPICoreV1VolumeNodeAffinity struct {
 
 type K8sIoAPICoreV1VolumeNodeAffinityIn struct {
 	Required *K8sIoAPICoreV1NodeSelectorIn `json:"required,omitempty"`
+}
+
+type K8sIoAPICoreV1VolumeResourceRequirements struct {
+	Limits   map[string]interface{} `json:"limits,omitempty"`
+	Requests map[string]interface{} `json:"requests,omitempty"`
+}
+
+type K8sIoAPICoreV1VolumeResourceRequirementsIn struct {
+	Limits   map[string]interface{} `json:"limits,omitempty"`
+	Requests map[string]interface{} `json:"requests,omitempty"`
 }
 
 type K8sIoAPICoreV1VsphereVirtualDiskVolumeSource struct {
@@ -1442,10 +1416,10 @@ type NodePoolPaginatedRecords struct {
 }
 
 type PageInfo struct {
-	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
-	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
-	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor   *string `json:"endCursor,omitempty"`
+	HasNextPage *bool   `json:"hasNextPage,omitempty"`
+	HasPrevPage *bool   `json:"hasPrevPage,omitempty"`
+	StartCursor *string `json:"startCursor,omitempty"`
 }
 
 type PersistentVolumeClaimEdge struct {
@@ -1478,11 +1452,7 @@ type SearchCluster struct {
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	Region            *repos.MatchFilter `json:"region,omitempty"`
 	Text              *repos.MatchFilter `json:"text,omitempty"`
-}
-
-type SearchClusterManagedService struct {
-	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
-	Text    *repos.MatchFilter `json:"text,omitempty"`
+	AllClusters       *repos.MatchFilter `json:"allClusters,omitempty"`
 }
 
 type SearchDomainEntry struct {
@@ -1622,44 +1592,44 @@ func (e GithubComKloudliteOperatorApisClustersV1AWSPoolType) MarshalGQL(w io.Wri
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism string
+type GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism string
 
 const (
-	GithubComKloudliteOperatorApisClustersV1AwsAuthMechanismAssumeRole GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism = "assume_role"
-	GithubComKloudliteOperatorApisClustersV1AwsAuthMechanismSecretKeys GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism = "secret_keys"
+	GithubComKloudliteOperatorApisClustersV1AWSAuthMechanismAssumeRole GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism = "assume_role"
+	GithubComKloudliteOperatorApisClustersV1AWSAuthMechanismSecretKeys GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism = "secret_keys"
 )
 
-var AllGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism = []GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism{
-	GithubComKloudliteOperatorApisClustersV1AwsAuthMechanismAssumeRole,
-	GithubComKloudliteOperatorApisClustersV1AwsAuthMechanismSecretKeys,
+var AllGithubComKloudliteOperatorApisClustersV1AWSAuthMechanism = []GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism{
+	GithubComKloudliteOperatorApisClustersV1AWSAuthMechanismAssumeRole,
+	GithubComKloudliteOperatorApisClustersV1AWSAuthMechanismSecretKeys,
 }
 
-func (e GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism) IsValid() bool {
+func (e GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism) IsValid() bool {
 	switch e {
-	case GithubComKloudliteOperatorApisClustersV1AwsAuthMechanismAssumeRole, GithubComKloudliteOperatorApisClustersV1AwsAuthMechanismSecretKeys:
+	case GithubComKloudliteOperatorApisClustersV1AWSAuthMechanismAssumeRole, GithubComKloudliteOperatorApisClustersV1AWSAuthMechanismSecretKeys:
 		return true
 	}
 	return false
 }
 
-func (e GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism) String() string {
+func (e GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism) String() string {
 	return string(e)
 }
 
-func (e *GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(str)
+	*e = GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism(str)
 	if !e.IsValid() {
 		return fmt.Errorf("%s is not a valid Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism", str)
 	}
 	return nil
 }
 
-func (e GithubComKloudliteOperatorApisClustersV1AwsAuthMechanism) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteOperatorApisClustersV1AWSAuthMechanism) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
@@ -1748,22 +1718,22 @@ func (e GithubComKloudliteOperatorApisClustersV1GCPPoolType) MarshalGQL(w io.Wri
 type GithubComKloudliteOperatorApisCommonTypesCloudProvider string
 
 const (
-	GithubComKloudliteOperatorApisCommonTypesCloudProviderAws          GithubComKloudliteOperatorApisCommonTypesCloudProvider = "aws"
+	GithubComKloudliteOperatorApisCommonTypesCloudProviderAWS          GithubComKloudliteOperatorApisCommonTypesCloudProvider = "aws"
 	GithubComKloudliteOperatorApisCommonTypesCloudProviderAzure        GithubComKloudliteOperatorApisCommonTypesCloudProvider = "azure"
 	GithubComKloudliteOperatorApisCommonTypesCloudProviderDigitalocean GithubComKloudliteOperatorApisCommonTypesCloudProvider = "digitalocean"
-	GithubComKloudliteOperatorApisCommonTypesCloudProviderGcp          GithubComKloudliteOperatorApisCommonTypesCloudProvider = "gcp"
+	GithubComKloudliteOperatorApisCommonTypesCloudProviderGCP          GithubComKloudliteOperatorApisCommonTypesCloudProvider = "gcp"
 )
 
 var AllGithubComKloudliteOperatorApisCommonTypesCloudProvider = []GithubComKloudliteOperatorApisCommonTypesCloudProvider{
-	GithubComKloudliteOperatorApisCommonTypesCloudProviderAws,
+	GithubComKloudliteOperatorApisCommonTypesCloudProviderAWS,
 	GithubComKloudliteOperatorApisCommonTypesCloudProviderAzure,
 	GithubComKloudliteOperatorApisCommonTypesCloudProviderDigitalocean,
-	GithubComKloudliteOperatorApisCommonTypesCloudProviderGcp,
+	GithubComKloudliteOperatorApisCommonTypesCloudProviderGCP,
 }
 
 func (e GithubComKloudliteOperatorApisCommonTypesCloudProvider) IsValid() bool {
 	switch e {
-	case GithubComKloudliteOperatorApisCommonTypesCloudProviderAws, GithubComKloudliteOperatorApisCommonTypesCloudProviderAzure, GithubComKloudliteOperatorApisCommonTypesCloudProviderDigitalocean, GithubComKloudliteOperatorApisCommonTypesCloudProviderGcp:
+	case GithubComKloudliteOperatorApisCommonTypesCloudProviderAWS, GithubComKloudliteOperatorApisCommonTypesCloudProviderAzure, GithubComKloudliteOperatorApisCommonTypesCloudProviderDigitalocean, GithubComKloudliteOperatorApisCommonTypesCloudProviderGCP:
 		return true
 	}
 	return false
@@ -2019,17 +1989,21 @@ type K8sIoAPICoreV1PersistentVolumeClaimConditionType string
 
 const (
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending K8sIoAPICoreV1PersistentVolumeClaimConditionType = "FileSystemResizePending"
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume         K8sIoAPICoreV1PersistentVolumeClaimConditionType = "ModifyingVolume"
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError       K8sIoAPICoreV1PersistentVolumeClaimConditionType = "ModifyVolumeError"
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing                K8sIoAPICoreV1PersistentVolumeClaimConditionType = "Resizing"
 )
 
 var AllK8sIoAPICoreV1PersistentVolumeClaimConditionType = []K8sIoAPICoreV1PersistentVolumeClaimConditionType{
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending,
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume,
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError,
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing,
 }
 
 func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) IsValid() bool {
 	switch e {
-	case K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing:
+	case K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing:
 		return true
 	}
 	return false
@@ -2053,6 +2027,49 @@ func (e *K8sIoAPICoreV1PersistentVolumeClaimConditionType) UnmarshalGQL(v interf
 }
 
 func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus string
+
+const (
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInfeasible K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = "Infeasible"
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInProgress K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = "InProgress"
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusPending    K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = "Pending"
+)
+
+var AllK8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus = []K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus{
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInfeasible,
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInProgress,
+	K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusPending,
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInfeasible, K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusInProgress, K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatusPending:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimModifyVolumeStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

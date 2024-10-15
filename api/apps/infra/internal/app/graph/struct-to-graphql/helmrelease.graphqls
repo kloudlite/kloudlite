@@ -4,6 +4,7 @@ type HelmRelease @shareable {
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  dispatchAddr: Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr
   displayName: String!
   id: ID!
   kind: String

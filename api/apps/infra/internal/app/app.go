@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -9,16 +11,16 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kloudlite/api/apps/infra/internal/app/adapters"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/apps/infra/protobufs/infra"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/k8s"
@@ -33,10 +35,9 @@ import (
 type AuthCacheClient kv.Client
 
 type (
-	IAMGrpcClient                   grpc.Client
-	AccountGrpcClient               grpc.Client
-	MessageOfficeInternalGrpcClient grpc.Client
-	ConsoleGrpcClient               grpc.Client
+	IAMGrpcClient     grpc.Client
+	AccountGrpcClient grpc.Client
+	ConsoleGrpcClient grpc.Client
 )
 
 type (
@@ -57,7 +58,6 @@ var Module = fx.Module(
 
 	// repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_cluster", "byok", entities.BYOKClusterIndices),
-	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvc", entities.ClusterManagedServiceIndices),
 	repos.NewFxMongoRepo[*entities.DomainEntry]("domain_entries", "de", entities.DomainEntryIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
@@ -81,9 +81,7 @@ var Module = fx.Module(
 		return NewAccountsSvc(ac), nil
 	}),
 
-	fx.Provide(func(client MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {
-		return message_office_internal.NewMessageOfficeInternalClient(client)
-	}),
+	adapters.FxNewMessageOfficeService(),
 
 	fx.Provide(
 		func(conn ConsoleGrpcClient) console.ConsoleClient {
@@ -113,8 +111,8 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Provide(func(d domain.Domain, kcli k8s.Client) infra.InfraServer {
-		return newGrpcServer(d, kcli)
+	fx.Provide(func(d domain.Domain, kcli k8s.Client, logger *slog.Logger) infra.InfraServer {
+		return newGrpcServer(d, kcli, logger)
 	}),
 
 	fx.Invoke(func(gserver InfraGrpcServer, srv infra.InfraServer) {
@@ -122,11 +120,11 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveResourceUpdatesConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.InfraReceiver, common.EventResourceUpdate)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.InfraReceiver, common.EventResourceUpdate)
 
 		consumerName := "infra:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -136,7 +134,7 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go processResourceUpdates(consumer, d, logger)
@@ -149,12 +147,12 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.InfraReceiver, common.EventErrorOnApply)
 
 		consumerName := "infra:error-on-apply"
 
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -164,7 +162,7 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessErrorOnApply(consumer, logger, d)
@@ -229,6 +227,28 @@ var Module = fx.Module(
 			server.SetupGraphqlServer(schema,
 				httpServer.NewReadSessionMiddleware(sessionRepo, constants.CookieName, constants.CacheSessionPrefix),
 			)
+		},
+	),
+
+	fx.Invoke(
+		func(server httpServer.Server, d domain.Domain, env *env.Env) {
+			server.Raw().Get("/render/helm/kloudlite-agent/:accountName/:clusterName", func(c *fiber.Ctx) error {
+				s := c.GetReqHeaders()["Authorization"]
+				if len(s) != 1 {
+					return fiber.ErrForbidden
+				}
+
+				b, err := d.RenderHelmKloudliteAgent(c.Context(), c.Params("accountName"), c.Params("clusterName"), s[0])
+				if err != nil {
+					if err.Error() == "UnAuthorized" {
+						return fiber.ErrUnauthorized
+					}
+					return err
+				}
+
+				_, err = c.Write(b)
+				return err
+			})
 		},
 	),
 )

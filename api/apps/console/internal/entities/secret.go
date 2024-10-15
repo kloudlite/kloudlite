@@ -27,10 +27,10 @@ type Secret struct {
 }
 
 type SecretCreatedFor struct {
-	RefId        repos.ID `json:"refId"`
-	ResourceType ResourceType   `json:"resourceType"`
-	Name         string   `json:"name"`
-	Namespace    string   `json:"namespace"`
+	RefId        repos.ID     `json:"refId"`
+	ResourceType ResourceType `json:"resourceType"`
+	Name         string       `json:"name"`
+	Namespace    string       `json:"namespace"`
 }
 
 func (s *Secret) GetDisplayName() string {

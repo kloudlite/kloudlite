@@ -7,9 +7,16 @@ global:
 
 label: List Managed Resources
 query: |+ #graphql
-  query Core_listManagedResources($msvcName: String!) {
-    core_listManagedResources(msvcName: $msvcName) {
+  query Core_listManagedResources($search: SearchManagedResources, $pq: CursorPaginationIn) {
+    core_listManagedResources(search: $search, pq: $pq) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        hasPrevPage
+        # endCursor
+      }
       edges {
+        cursor
         node {
           accountName
           displayName
@@ -20,7 +27,16 @@ query: |+ #graphql
     }
   }
 variables:
-  msvcName: "msvc-one"
+  pq:
+    # first: 5
+    # after: NjY5NTUxMTk3YTU0Njk4MTBkZWNlNDRm
+
+    last: 5
+    before: NjY5NTUxMTk3YTU0Njk4MTBkZWNlNDRm
+  search:
+    managedServiceName: 
+      matchType: exact
+      exact: new-k-db-service
 ---
 
 label: Create Managed Resource

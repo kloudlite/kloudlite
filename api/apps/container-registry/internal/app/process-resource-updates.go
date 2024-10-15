@@ -14,7 +14,6 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	"github.com/kloudlite/api/pkg/messaging"
@@ -57,14 +56,14 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			return nil
 		}
 
-		obj := unstructured.Unstructured{Object: su.Object}
+		obj := su.Object
 		mLogger := logger.WithKV(
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
 			"accountName/clusterName", fmt.Sprintf("%s/%s", ru.AccountName, ru.ClusterName),
 		)
 
 		resStatus, err := func() (types.ResourceStatus, error) {
-			v, ok := su.Object[types.ResourceStatusKey]
+			v, ok := obj.Object[types.ResourceStatusKey]
 			if !ok {
 				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
 			}
@@ -110,7 +109,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 		default:
 			{
-				mLogger.Infof("container registry status updates consumer does not acknowledge the gvk %s", gvk(&obj))
+				mLogger.Infof("container registry status updates consumer does not acknowledge the gvk %s", gvk(obj))
 				return nil
 			}
 		}

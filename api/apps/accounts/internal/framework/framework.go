@@ -3,10 +3,12 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/nats"
-	"time"
 
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/repos"
@@ -33,7 +35,7 @@ var Module = fx.Module("framework",
 		return &fm{env: ev}
 	}),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.JetstreamClient, error) {
 		name := "accounts:jetstream-client"
 		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,
@@ -66,9 +68,9 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(ev.CommsGrpcAddr)
 	}),
 
-	fx.Provide(func(ev *env.Env) (app.ContainerRegistryClient, error) {
-		return grpc.NewGrpcClient(ev.ContainerRegistryGrpcAddr)
-	}),
+	// fx.Provide(func(ev *env.Env) (app.ContainerRegistryClient, error) {
+	// 	return grpc.NewGrpcClient(ev.ContainerRegistryGrpcAddr)
+	// }),
 
 	fx.Provide(func(ev *env.Env) (app.ConsoleClient, error) {
 		return grpc.NewGrpcClient(ev.ConsoleGrpcAddr)
@@ -76,7 +78,8 @@ var Module = fx.Module("framework",
 
 	app.Module,
 
-	fx.Invoke(func(c1 app.AuthClient, c2 app.IAMClient, c3 app.CommsClient, c4 app.ContainerRegistryClient, c5 app.ConsoleClient, lf fx.Lifecycle) {
+	// fx.Invoke(func(c1 app.AuthClient, c2 app.IAMClient, c3 app.CommsClient, c4 app.ContainerRegistryClient, c5 app.ConsoleClient, lf fx.Lifecycle) {
+	fx.Invoke(func(c1 app.AuthClient, c2 app.IAMClient, c3 app.CommsClient, c5 app.ConsoleClient, lf fx.Lifecycle) {
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {
 				if err := c1.Close(); err != nil {
@@ -88,9 +91,9 @@ var Module = fx.Module("framework",
 				if err := c3.Close(); err != nil {
 					return errors.NewE(err)
 				}
-				if err := c4.Close(); err != nil {
-					return errors.NewE(err)
-				}
+				// if err := c4.Close(); err != nil {
+				// 	return errors.NewE(err)
+				// }
 				if err := c5.Close(); err != nil {
 					return errors.NewE(err)
 				}
@@ -99,10 +102,8 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Provide(func(logger logging.Logger) (app.AccountsGrpcServer, error) {
-		return grpc.NewGrpcServer(grpc.ServerOpts{
-			Logger: logger.WithKV("component", "grpc-server"),
-		})
+	fx.Provide(func(logger *slog.Logger) (app.AccountsGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{Logger: logger})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, server app.AccountsGrpcServer, ev *env.Env, logger logging.Logger) {

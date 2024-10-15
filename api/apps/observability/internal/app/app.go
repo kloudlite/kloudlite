@@ -118,7 +118,7 @@ var Module = fx.Module(
 				}
 
 				return k8s.NewClient(&rest.Config{
-					Host: fmt.Sprintf("http://kloudlite-device-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
+					Host: fmt.Sprintf("http://device-%s-pl.kl-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
 					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
 							"X-Kloudlite-Authz": {fmt.Sprintf("Bearer %s", ev.GlobalVPNAuthzSecret)},
@@ -181,7 +181,7 @@ var Module = fx.Module(
 				}
 
 				return k8s.NewClient(&rest.Config{
-					Host: fmt.Sprintf("http://kloudlite-device-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
+					Host: fmt.Sprintf("http://device-%s-pl.kl-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
 					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
 							"X-Kloudlite-Authz": {fmt.Sprintf("Bearer %s", ev.GlobalVPNAuthzSecret)},
@@ -201,7 +201,7 @@ var Module = fx.Module(
 			}
 
 			if len(pods) == 0 {
-				// it sends http.StatusTooEarly, for the client to retry request after some time
+				// INFO: it sends http.StatusTooEarly, for the client to retry request after some time
 				logger.Infof("no pods found")
 				http.Error(w, "no pods found", http.StatusTooEarly)
 				return

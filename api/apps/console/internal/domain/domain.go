@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/api/pkg/kv"
 
 	"github.com/kloudlite/api/pkg/logging"
 
+	mo_errors "github.com/kloudlite/api/apps/message-office/errors"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/common"
@@ -20,14 +22,15 @@ import (
 
 	"github.com/kloudlite/api/constants"
 
+	platform_edge "github.com/kloudlite/api/apps/message-office/protobufs/platform-edge"
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
 	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/k8s"
@@ -43,20 +46,26 @@ type domain struct {
 
 	producer MessageDispatcher
 
-	iamClient   iam.IAMClient
-	infraClient infra.InfraClient
+	iamClient          iam.IAMClient
+	infraSvc           ports.InfraService
+	platformEdgeClient platform_edge.PlatformEdgeClient
+	AccountsSvc
 
 	environmentRepo repos.DbRepo[*entities.Environment]
-	vpnDeviceRepo   repos.DbRepo[*entities.ConsoleVPNDevice]
 
-	appRepo         repos.DbRepo[*entities.App]
-	externalAppRepo repos.DbRepo[*entities.ExternalApp]
-	configRepo      repos.DbRepo[*entities.Config]
-	secretRepo      repos.DbRepo[*entities.Secret]
-	routerRepo      repos.DbRepo[*entities.Router]
-	mresRepo        repos.DbRepo[*entities.ManagedResource]
+	appRepo          repos.DbRepo[*entities.App]
+	externalAppRepo  repos.DbRepo[*entities.ExternalApp]
+	configRepo       repos.DbRepo[*entities.Config]
+	secretRepo       repos.DbRepo[*entities.Secret]
+	routerRepo       repos.DbRepo[*entities.Router]
+	mresRepo         repos.DbRepo[*entities.ManagedResource]
 	importedMresRepo repos.DbRepo[*entities.ImportedManagedResource]
-	pullSecretsRepo repos.DbRepo[*entities.ImagePullSecret]
+	pullSecretsRepo  repos.DbRepo[*entities.ImagePullSecret]
+
+	registryImageRepo repos.DbRepo[*entities.RegistryImage]
+
+	serviceBindingRepo        repos.DbRepo[*entities.ServiceBinding]
+	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
 
 	envVars *env.Env
 
@@ -95,6 +104,9 @@ func addTrackingId(obj client.Object, id repos.ID) {
 
 type K8sContext interface {
 	context.Context
+	GetUserId() repos.ID
+	GetUserEmail() string
+	GetUserName() string
 	GetAccountName() string
 }
 
@@ -121,15 +133,15 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: clusterName,
-		Action:      t.ActionApply,
-		Object:      m,
+		// ClusterName: clusterName,
+		Action: t.ActionApply,
+		Object: m,
 	})
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), clusterName)
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -139,6 +151,11 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 }
 
 func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Object, recordVersion int) error {
+	var dispatchAddr struct {
+		AccountName string
+		ClusterName string
+	}
+
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, envName)
 	if err != nil {
 		return errors.NewE(err)
@@ -149,9 +166,70 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 		return nil
 	}
 
+	switch *clusterName {
+	case "__kloudlite_enabled_cluster":
+		{
+			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
+			if err != nil {
+				gErr := grpc.ParseErr(err)
+				if gErr == nil {
+					return errors.NewEf(err, "failed to get allocated edge cluster")
+				}
+
+				if gErr.GetMessage() != mo_errors.ErrEdgeClusterNotAllocated.Error() {
+					return errors.NewEf(err, "failed to get allocated edge cluster")
+				}
+
+				// INFO: not allocated, allocating a new one
+				accountRegion, err := d.GetAccountRegion(ctx, string(ctx.GetUserId()), ctx.GetAccountName())
+				if err != nil {
+					return errors.NewEf(err, "failed to get account region")
+				}
+
+				allocatedEdge, err = d.platformEdgeClient.AllocatePlatformEdgeCluster(ctx, &platform_edge.AllocatePlatformEdgeClusterIn{
+					Region:      accountRegion,
+					AccountName: ctx.GetAccountName(),
+				})
+				if err != nil {
+					return errors.NewEf(err, "failed to allocate platform edge cluster")
+				}
+
+				if err := d.infraSvc.EnsureGlobalVPNConnection(ctx, ports.EnsureGlobalVPNConnectionIn{
+					UserId:        string(ctx.GetUserId()),
+					UserEmail:     ctx.GetUserEmail(),
+					UserName:      ctx.GetUserName(),
+					AccountName:   ctx.GetAccountName(),
+					ClusterName:   allocatedEdge.ClusterName,
+					GlobalVPNName: "default",
+
+					DispatchAddrAccountName: allocatedEdge.OwnedByAccount,
+					DispatchAddrClusterName: allocatedEdge.ClusterName,
+				}); err != nil {
+					return errors.NewEf(err, "failed to ensure global vpn connection")
+				}
+			}
+
+			dispatchAddr.AccountName = allocatedEdge.OwnedByAccount
+			dispatchAddr.ClusterName = allocatedEdge.ClusterName
+		}
+	default:
+		{
+			dispatchAddr.AccountName = ctx.GetAccountName()
+			dispatchAddr.ClusterName = *clusterName
+		}
+	}
+
 	if obj.GetObjectKind().GroupVersionKind().Empty() {
 		return errors.Newf("object GVK is not set, can not apply")
 	}
+
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string, 2)
+	}
+	labels[constants.AccountNameKey] = ctx.GetAccountName()
+	labels[constants.EnvNameKey] = envName
+	obj.SetLabels(labels)
 
 	ann := obj.GetAnnotations()
 	if ann == nil {
@@ -164,9 +242,9 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: *clusterName,
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -174,7 +252,7 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
+	subject := common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -214,7 +292,6 @@ func applyK8sResource(ctx K8sContext, args ApplyK8sResourceArgs) error {
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: args.ClusterName,
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -222,16 +299,18 @@ func applyK8sResource(ctx K8sContext, args ApplyK8sResourceArgs) error {
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), args.ClusterName)
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), args.ClusterName, args.Object.GetObjectKind().GroupVersionKind().String(), args.Object.GetNamespace(), args.Object.GetName())
 
-	err = args.Dispatcher.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: subject,
-		Payload: b,
-	})
+	err = args.Dispatcher.Produce(ctx, msgTypes.ProduceMsg{Subject: subject, Payload: b})
 	return errors.NewE(err)
 }
 
 func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespace string, labels map[string]string) error {
+	var dispatchAddr struct {
+		AccountName string
+		ClusterName string
+	}
+
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, projectName)
 	if err != nil {
 		return errors.NewE(err)
@@ -239,6 +318,25 @@ func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespac
 
 	if clusterName == nil || *clusterName == "" {
 		return nil
+	}
+
+	switch *clusterName {
+	case "__kloudlite_enabled_cluster":
+		{
+			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
+			if err != nil {
+				return errors.NewEf(err, "failed to get allocated edge cluster")
+			}
+
+			dispatchAddr.AccountName = allocatedEdge.OwnedByAccount
+			dispatchAddr.ClusterName = allocatedEdge.ClusterName
+		}
+	default:
+		{
+
+			dispatchAddr.AccountName = ctx.GetAccountName()
+			dispatchAddr.ClusterName = *clusterName
+		}
 	}
 
 	obj := unstructured.Unstructured{
@@ -252,7 +350,6 @@ func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespac
 
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: *clusterName,
 		Action:      t.ActionRestart,
 		Object:      obj.Object,
 	})
@@ -260,7 +357,7 @@ func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespac
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
+	subject := common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -280,7 +377,6 @@ func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, 
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: clusterName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
@@ -288,8 +384,9 @@ func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, 
 		return errors.NewE(err)
 	}
 
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), clusterName),
+		Subject: subject,
 		Payload: b,
 	})
 
@@ -297,6 +394,11 @@ func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, 
 }
 
 func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj client.Object) error {
+	var dispatchAddr struct {
+		AccountName string
+		ClusterName string
+	}
+
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, environmentName)
 	if err != nil {
 		return ErrNoClusterAttached
@@ -305,6 +407,25 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 	if clusterName == nil || *clusterName == "" {
 		d.logger.Infof("skipping delete of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
 		return ErrNoClusterAttached
+	}
+
+	switch *clusterName {
+	case "__kloudlite_enabled_cluster":
+		{
+			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
+			if err != nil {
+				return errors.NewEf(err, "failed to get allocated edge cluster")
+			}
+
+			dispatchAddr.AccountName = allocatedEdge.OwnedByAccount
+			dispatchAddr.ClusterName = allocatedEdge.ClusterName
+		}
+	default:
+		{
+
+			dispatchAddr.AccountName = ctx.GetAccountName()
+			dispatchAddr.ClusterName = *clusterName
+		}
 	}
 
 	if obj.GetObjectKind().GroupVersionKind().Empty() {
@@ -316,8 +437,7 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 		return errors.NewE(err)
 	}
 	b, err := json.Marshal(t.AgentMessage{
-		AccountName: ctx.GetAccountName(),
-		ClusterName: *clusterName,
+		AccountName: dispatchAddr.AccountName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
@@ -325,8 +445,10 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 		return errors.NewE(err)
 	}
 
+	subject := common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
+
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName),
+		Subject: subject,
 		Payload: b,
 	})
 
@@ -548,9 +670,12 @@ var Module = fx.Module("domain",
 		producer MessageDispatcher,
 
 		iamClient iam.IAMClient,
-		infraClient infra.InfraClient,
+		infraSvc ports.InfraService,
+		platformEdgeClient platform_edge.PlatformEdgeClient,
+		accountsSvc AccountsSvc,
 
 		environmentRepo repos.DbRepo[*entities.Environment],
+		registryImageRepo repos.DbRepo[*entities.RegistryImage],
 
 		appRepo repos.DbRepo[*entities.App],
 		externalAppRepo repos.DbRepo[*entities.ExternalApp],
@@ -561,7 +686,8 @@ var Module = fx.Module("domain",
 		importedMresRepo repos.DbRepo[*entities.ImportedManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
-		vpnDeviceRepo repos.DbRepo[*entities.ConsoleVPNDevice],
+		serviceBindingRepo repos.DbRepo[*entities.ServiceBinding],
+		clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService],
 
 		logger logging.Logger,
 		resourceEventPublisher ResourceEventPublisher,
@@ -575,26 +701,30 @@ var Module = fx.Module("domain",
 
 			producer: producer,
 
-			iamClient:   iamClient,
-			infraClient: infraClient,
-			logger:      logger,
+			iamClient:          iamClient,
+			infraSvc:           infraSvc,
+			platformEdgeClient: platformEdgeClient,
+			AccountsSvc:        accountsSvc,
 
-			environmentRepo:     environmentRepo,
-			appRepo:             appRepo,
-			externalAppRepo:     externalAppRepo,
-			configRepo:          configRepo,
-			routerRepo:          routerRepo,
-			secretRepo:          secretRepo,
-			mresRepo:            mresRepo,
-			importedMresRepo:    importedMresRepo,
-			pullSecretsRepo:     ipsRepo,
-			resourceMappingRepo: resourceMappingRepo,
-			vpnDeviceRepo:       vpnDeviceRepo,
+			logger: logger,
+
+			environmentRepo:           environmentRepo,
+			appRepo:                   appRepo,
+			externalAppRepo:           externalAppRepo,
+			configRepo:                configRepo,
+			routerRepo:                routerRepo,
+			secretRepo:                secretRepo,
+			mresRepo:                  mresRepo,
+			importedMresRepo:          importedMresRepo,
+			pullSecretsRepo:           ipsRepo,
+			resourceMappingRepo:       resourceMappingRepo,
+			serviceBindingRepo:        serviceBindingRepo,
+			clusterManagedServiceRepo: clusterManagedServiceRepo,
+			registryImageRepo:         registryImageRepo,
 
 			envVars: ev,
 
 			resourceEventPublisher: resourceEventPublisher,
 			consoleCacheStore:      consoleCacheStore,
 		}
-	}),
-)
+	}))
