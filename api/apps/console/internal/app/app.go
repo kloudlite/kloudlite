@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/messaging"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -18,6 +19,7 @@ import (
 	infra_service "github.com/kloudlite/api/apps/console/internal/app/adapters/infra-service"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/console/internal/app/resource-updates-receiver"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -47,6 +49,10 @@ type (
 
 type (
 	ConsoleGrpcServer grpc.Server
+)
+
+type (
+	WebhookConsumer messaging.Consumer
 )
 
 type DNSServer struct {
@@ -186,7 +192,7 @@ var Module = fx.Module("app",
 		console.RegisterConsoleServer(gserver, srv)
 	}),
 
-	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (resource_updates_receiver.ErrorOnApplyConsumer, error) {
 		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventErrorOnApply)
 		consumerName := "console:error-on-apply"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
@@ -200,17 +206,22 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger *slog.Logger) {
-		lf.Append(fx.Hook{
-			OnStart: func(context.Context) error {
-				go ProcessErrorOnApply(consumer, d, logger)
-				return nil
-			},
-			OnStop: func(ctx context.Context) error {
-				return consumer.Stop(ctx)
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (resource_updates_receiver.ResourceUpdateConsumer, error) {
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventResourceUpdate)
+
+		consumerName := "console:resource-updates"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.NatsReceiveFromAgentStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to console resource updates from tenant clusters",
+				FilterSubjects: []string{topic},
 			},
 		})
 	}),
+
+	resource_updates_receiver.Module,
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (WebhookConsumer, error) {
 		topic := string(common.ImageRegistryHookTopicName)
@@ -235,33 +246,6 @@ var Module = fx.Module("app",
 						logger.Errorf(err, "could not process webhooks")
 					}
 				}()
-				return nil
-			},
-			OnStop: func(ctx context.Context) error {
-				return consumer.Stop(ctx)
-			},
-		})
-	}),
-
-	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventResourceUpdate)
-
-		consumerName := "console:resource-updates"
-		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsReceiveFromAgentStream,
-			ConsumerConfig: msg_nats.ConsumerConfig{
-				Name:           consumerName,
-				Durable:        consumerName,
-				Description:    "this consumer reads message from a subject dedicated to console resource updates from tenant clusters",
-				FilterSubjects: []string{topic},
-			},
-		})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
-		lf.Append(fx.Hook{
-			OnStart: func(context.Context) error {
-				go ProcessResourceUpdates(consumer, d, logger)
 				return nil
 			},
 			OnStop: func(ctx context.Context) error {
