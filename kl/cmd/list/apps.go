@@ -42,8 +42,6 @@ func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Com
 		return functions.NewE(err)
 	}
 
-	envName := fn.ParseStringFlag(cmd, "env")
-
 	currentTeamName, err := fc.CurrentTeamName()
 	if err != nil {
 		return functions.NewE(err)
@@ -81,12 +79,11 @@ func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Com
 
 	fn.Println(table.Table(&header, rows, cmd))
 
-	table.KVOutput("apps of", envName, true)
+	table.KVOutput("apps of environment: ", currentEnvName.Name, true)
 	table.TotalResults(len(apps), true)
 	return nil
 }
 
 func init() {
 	appsCmd.Aliases = append(appsCmd.Aliases, "app")
-	appsCmd.Flags().StringP("env", "e", "", "environment name")
 }
