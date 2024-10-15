@@ -619,11 +619,14 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, name string) error {
 
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 
-	if uenv.IsArchived != nil && *uenv.IsArchived {
-		if err := d.cleanupEnvironment(ctx, name); err != nil {
-			return errors.NewE(err)
-		}
+	isArchived := uenv.IsArchived != nil && *uenv.IsArchived
+	isTemplateEnv := uenv.Name == d.envVars.DefaultEnvTemplateName
 
+	if err := d.cleanupEnvironment(ctx, name); err != nil {
+		return errors.NewE(err)
+	}
+
+	if isArchived || isTemplateEnv {
 		return d.environmentRepo.DeleteById(ctx, uenv.Id)
 	}
 

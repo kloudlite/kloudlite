@@ -1,4 +1,4 @@
-package app
+package resource_updates_receiver
 
 import (
 	"context"
@@ -26,7 +26,6 @@ import (
 
 type (
 	ResourceUpdateConsumer messaging.Consumer
-	WebhookConsumer        messaging.Consumer
 )
 
 func newResourceContext(ctx domain.ConsoleContext, environmentName string) domain.ResourceContext {
