@@ -50,9 +50,9 @@ var Cmd = &cobra.Command{
 			return
 		}
 
-		acc, err := fc.CurrentTeamName()
+		data, err := fileclient.GetExtraData()
 		if err == nil {
-			fn.Log(fmt.Sprint(text.Bold(text.Blue("Team: ")), acc))
+			fn.Log(fmt.Sprint(text.Bold(text.Blue("Team: ")), data.SelectedTeam))
 		}
 
 		e, err := apic.EnsureEnv()
@@ -70,7 +70,7 @@ var Cmd = &cobra.Command{
 		fn.Log()
 		fn.Log(text.Bold("Cluster Status"))
 
-		config, err := fc.GetClusterConfig(acc)
+		config, err := fc.GetClusterConfig(data.SelectedTeam)
 		if err != nil {
 			if os.IsNotExist(err) {
 				fn.PrintError(fn.Error("kl file is not synced properly. please run \"kl init\" to re-initialized kl file"))
