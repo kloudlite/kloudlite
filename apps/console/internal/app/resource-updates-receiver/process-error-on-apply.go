@@ -1,4 +1,4 @@
-package app
+package resource_updates_receiver
 
 import (
 	"context"

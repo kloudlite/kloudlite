@@ -262,7 +262,13 @@ func (d *domain) DeleteClusterManagedService(ctx ConsoleContext, name string) er
 		return errors.NewE(err)
 	}
 
-	if ucmsvc.IsArchived != nil && *ucmsvc.IsArchived {
+	if err := d.cleanupClusterManagedServiceResources(ctx, ucmsvc); err != nil {
+		return err
+	}
+
+	isArchived := ucmsvc.IsArchived != nil && *ucmsvc.IsArchived
+
+	if isArchived {
 		return d.clusterManagedServiceRepo.DeleteById(ctx, ucmsvc.Id)
 	}
 
@@ -294,6 +300,18 @@ func (d *domain) OnClusterManagedServiceApplyError(ctx ConsoleContext, clusterNa
 	return errors.NewE(err)
 }
 
+func (d *domain) cleanupClusterManagedServiceResources(ctx ConsoleContext, msvc *entities.ClusterManagedService) error {
+	if err := d.deleteAllManagedResources(ctx, msvc.Name); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.deleteImportedManagedResources(ctx, msvc.Spec.TargetNamespace); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
 func (d *domain) OnClusterManagedServiceDeleteMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService) error {
 	xService, err := d.findClusterManagedService(ctx, service.Name)
 	if err != nil {
@@ -308,15 +326,11 @@ func (d *domain) OnClusterManagedServiceDeleteMessage(ctx ConsoleContext, cluste
 		return nil
 	}
 
+	if err := d.cleanupClusterManagedServiceResources(ctx, xService); err != nil {
+		return err
+	}
+
 	if err := d.clusterManagedServiceRepo.DeleteById(ctx, xService.Id); err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.deleteAllManagedResources(ctx, xService.Name); err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.deleteImportedManagedResources(ctx, xService.Spec.TargetNamespace); err != nil {
 		return errors.NewE(err)
 	}
 
