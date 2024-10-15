@@ -48,14 +48,14 @@ var secretsCmd = &cobra.Command{
 			return
 		}
 
-		if err := printSecrets(apic, cmd, sec); err != nil {
+		if err := printSecrets(apic, cmd, sec, currentEnv.Name); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printSecrets(apic apiclient.ApiClient, cmd *cobra.Command, secrets []apiclient.Secret) error {
+func printSecrets(apic apiclient.ApiClient, cmd *cobra.Command, secrets []apiclient.Secret, currentEnv string) error {
 	e, err := apic.EnsureEnv()
 	if err != nil {
 		return fn.NewE(err)
@@ -78,6 +78,7 @@ func printSecrets(apic apiclient.ApiClient, cmd *cobra.Command, secrets []apicli
 	}
 
 	fn.Println(table.Table(&header, rows))
+	table.KVOutput("secrets of environment: ", currentEnv, true)
 	table.TotalResults(len(secrets), true)
 	return nil
 }

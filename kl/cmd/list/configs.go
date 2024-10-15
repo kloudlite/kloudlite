@@ -46,14 +46,14 @@ var configsCmd = &cobra.Command{
 			return
 		}
 
-		if err := printConfigs(apic, cmd, config); err != nil {
+		if err := printConfigs(apic, cmd, config, currentEnv.Name); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printConfigs(apic apiclient.ApiClient, cmd *cobra.Command, configs []apiclient.Config) error {
+func printConfigs(apic apiclient.ApiClient, cmd *cobra.Command, configs []apiclient.Config, currentEnv string) error {
 	e, err := apic.EnsureEnv()
 	if err != nil {
 		return fn.NewE(err)
@@ -76,6 +76,8 @@ func printConfigs(apic apiclient.ApiClient, cmd *cobra.Command, configs []apicli
 	}
 
 	fn.Println(table.Table(&header, rows, cmd))
+
+	table.KVOutput("configs of environment: ", currentEnv, true)
 
 	table.TotalResults(len(configs), true)
 	return nil

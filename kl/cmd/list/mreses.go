@@ -46,14 +46,14 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		if err := printMres(apic, cmd, mres); err != nil {
+		if err := printMres(apic, cmd, mres, currentEnv.Name); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printMres(apic apiclient.ApiClient, cmd *cobra.Command, mres []apiclient.Mres) error {
+func printMres(apic apiclient.ApiClient, cmd *cobra.Command, mres []apiclient.Mres, currentEnv string) error {
 	e, err := apic.EnsureEnv()
 	if err != nil {
 		return fn.NewE(err)
@@ -75,6 +75,7 @@ func printMres(apic apiclient.ApiClient, cmd *cobra.Command, mres []apiclient.Mr
 	}
 
 	fn.Println(table.Table(&header, rows))
+	table.KVOutput("managed resources of environment: ", currentEnv, true)
 	table.TotalResults(len(mres), true)
 	return nil
 }
