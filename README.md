@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/discord/934762910717194260?label=discord" alt="Discord">
   </a>
   <a href="#license">
-    <img src="https://img.shields.io/badge/License-Apache--2.0-blue" alt="License">
+    <img src="https://img.shields.io/github/license/kloudlite/kloudlite" alt="License">
   </a>
   <a href="https://goreportcard.com/report/github.com/kloudlite/api">
     <img src="https://goreportcard.com/badge/github.com/kloudlite/api" alt="Go Report Card">
