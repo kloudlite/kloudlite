@@ -49,12 +49,6 @@
 - [Discord](https://discord.com/invite/m5tYzQfcG8): Click [here](https://discord.com/invite/m5tYzQfcG8) to join. You can ask question to our maintainers and to the rich and active community.
 - [Write to us](https://kloudlite.io/contact-us)
 
-## Contributing
-If you are interested in contributing to Kloudlite, read about our...
-
-- [Contributing Guide](https://kloudlite.io/docs/contributing/code-of-conduct)
-- [Report an issue and propose Pull Requests](https://github.com/kloudlite/issues)
-
 ## Roadmap
 The Kloudlite product roadmap can be found [here](https://github.com/orgs/kloudlite/projects/18).
 
