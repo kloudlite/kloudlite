@@ -42,13 +42,7 @@
 ## Documentation
 - [Official Website](https://kloudlite.io)
 - [Official Documentations](https://kloudlite.io/docs)
-<!-- - [FAQ]() -->
-<!-- - Watch [a video overview]() of Kloudlite -->
-
-
-## Self Hosting
-- [Opensource Helm Charts](https://github.com/kloudlite/helm-charts)
-- [Enterprise Support](https://kloudlite.io/contact-us)
+- [Helm Charts](https://github.com/kloudlite/helm-charts)
 
 ## Contact
 - [Twitter](https://x.com/kloudlite): Follow us on Twitter!
