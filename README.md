@@ -3,10 +3,9 @@
     <img src="https://github.com/kloudlite/kloudlite/assets/1580519/a31a5f78-2bde-45f1-8141-d23ee8231eb1" style="height:38px" />
   </a>
   <h1>
-    Development Environment as a Service
+    Development Environments & Workspaces
   </h1>
-  <div>No more waiting for Build & Deploy. Just code & run!</div>
-  <br />
+  
 
   <a href="https://discord.gg/m5tYzQfcG8">
     <img src="https://img.shields.io/discord/934762910717194260?label=discord" alt="Discord">
@@ -27,6 +26,12 @@
 <br/>
 
 **Kloudlite** is an open-source platform designed to provide seamless and secure development environments for building distributed applications. It connects local workspaces with remote Kubernetes environments via a WireGuard network, allowing developers to access services and resources with production-level parity. With Kloudlite, there’s no need for build or deploy steps during development— With service intercepts, your changes are reflected in real time, enhancing productivity and reducing the development loop.
+
+
+## Architecture
+![Frame 1000001531](https://github.com/user-attachments/assets/4096b11b-0323-4216-b730-bc7bca0e8e92)
+
+
 
 ## Key Features:
 - **Connected VPN Network:** Directly connects your local workspace with the remote environment.
