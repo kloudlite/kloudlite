@@ -29,7 +29,7 @@
 
 
 ## Architecture
-![Frame 1000001531](https://github.com/user-attachments/assets/4096b11b-0323-4216-b730-bc7bca0e8e92)
+![Frame 1000001531](https://github.com/user-attachments/assets/df03c018-786c-4679-aca5-15511b959331)
 
 
 
