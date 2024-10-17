@@ -38,6 +38,7 @@
 - **Integrated Workspaces:** Your local development workspace connects directly with the running environment, automatically syncing configurations and secrets, with access to - all services without additional setups.
 - **Stateless & Lightweight Environments:** Each developer can run their own isolated environment with minimal overhead.
 - **Collaboration:** Multiple developers can work on the same environment simultaneously.
+- **App Intercepts:** Apps running in environments can be intercepted, allowing traffic to be redirected to the developer's workspace.
 
 ## Documentation
 - [Official Website](https://kloudlite.io)
