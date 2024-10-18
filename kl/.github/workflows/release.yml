@@ -148,20 +148,20 @@ jobs:
           image_name="ghcr.io/kloudlite/kl/k3s-tacker"
           set -e
           mkdir -p ./images
-          docker pull ghcr.io/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG
-          docker image save ghcr.io/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG -o ./images/dns.tar.gz
-          docker pull ghcr.io/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG
-          docker image save ghcr.io/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG -o ./images/ip-manager.tar.gz
-          docker pull ghcr.io/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG
-          docker image save ghcr.io/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG -o ./images/logs-proxy.tar.gz
-          docker pull ghcr.io/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG
-          docker image save ghcr.io/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG -o ./images/webhook.tar.gz
-          docker pull ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG
-          docker image save ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG -o ./images/ip-binding-controller.tar.gz
-          docker pull ghcr.io/kloudlite/api/tenant-agent:$IMAGE_TAG
-          docker image save ghcr.io/kloudlite/api/tenant-agent:$IMAGE_TAG -o ./images/kl-agent.tar.gz
-          docker pull ghcr.io/kloudlite/operator/agent:$IMAGE_TAG
-          docker image save ghcr.io/kloudlite/operator/agent:$IMAGE_TAG -o ./images/kl-agent-operator.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG -o ./images/dns.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG -o ./images/ip-manager.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG -o ./images/logs-proxy.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG -o ./images/webhook.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG -o ./images/ip-binding-controller.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/api/tenant-agent:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/api/tenant-agent:$IMAGE_TAG -o ./images/kl-agent.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG -o ./images/kl-agent-operator.tar.gz
           curl -L "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s-airgap-images-${{ matrix.arch }}.tar" -o ./images/k3s-airgap-images-${{ matrix.arch }}.tar
           docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/k3s:$IMAGE_TAG-${{ matrix.arch }} . --push
 
