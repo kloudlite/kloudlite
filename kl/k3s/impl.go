@@ -285,8 +285,7 @@ func (c *client) DeletePods() error {
 	defer spinner.Client.UpdateMessage("deleting pods")()
 	script := `
 kubectl taint nodes --all shutdown=true:NoExecute	
-kubectl delete pods -n kloudlite --all --force --grace-period=0
-kubectl delete pods -n kl-gateway --all --force --grace-period=0
+kubectl delete pods --all -n kl-gateway --force --grace-period=0
 `
 	return c.runScriptInContainer(script)
 }
@@ -511,7 +510,7 @@ kubectl patch svc/kl-device-router -n kl-local --type=json --patch-file /tmp/ser
 func (c *client) RestartWgProxyContainer() error {
 	defer spinner.Client.UpdateMessage("restarting kloudlite-gateway")()
 	script := `
-kubectl delete pod/$(kubectl get pods -n kl-gateway | tail -n +2 | awk '{print $1}') -n kl-gateway --grace-period 0
+kubectl delete pods --all -n kl-gateway --grace-period=0
 `
 	if err := c.runScriptInContainer(script); err != nil {
 		return err
