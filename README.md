@@ -34,9 +34,10 @@
 
 
 ## Key Features:
-- **Connected VPN Network:** Directly connects your local workspace with the remote environment.
-- **Integrated Workspaces:** Your local development workspace connects directly with the running environment, automatically syncing configurations and secrets, with access to - all services without additional setups.
-- **Stateless & Lightweight Environments:** Each developer can run their own isolated environment with minimal overhead.
+- **Wireguard Network:** Local workspace is connected to remote environments and services with wireguard.
+- **Integrated Workspaces:** Configs, Secrets of workspace in sync with connected environment and services.
+- **Nix Packages:** Workspace package management based on nix.
+- **Stateless Environments:** Ephemeral and lightweight environments with no overhead.
 - **Collaboration:** Multiple developers can work on the same environment simultaneously.
 - **App Intercepts:** Apps running in environments can be intercepted, allowing traffic to be redirected to the developer's workspace.
 
