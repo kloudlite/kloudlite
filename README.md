@@ -59,7 +59,7 @@ If you've found a vulnerability or a potential vulnerability in the Kloudlite se
 ## License
 Unless otherwise noted, the Kloudlite source files are distributed under the AGPL Version 3.0 license found in the LICENSE file.
 
-## Shoutout to Our Open-Source Heroes 🚀
+## A Big Thanks to the Open-Source Community 🚀
 
 At **Kloudlite**, the open-source community is the lifeblood of our platform. We want to give a huge thanks to the following projects that form 
 the foundation of Kloudlite:
