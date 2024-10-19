@@ -42,7 +42,7 @@
 
 ## Resources
 - [Website](https://kloudlite.io)
-- [Developer Documentation](https://kloudlite.io/docs)
+- [Documentation](https://kloudlite.io/docs)
 - [Roadmap](https://github.com/orgs/kloudlite/projects/22/views/5)
 - [Helm Charts](https://github.com/kloudlite/helm-charts)
 
