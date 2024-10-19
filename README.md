@@ -32,7 +32,6 @@
 ![Frame 1000001531](https://github.com/user-attachments/assets/df03c018-786c-4679-aca5-15511b959331)
 
 
-
 ## Key Features:
 - **WireGuard Network Integration:** Connects the workspace to environments and services using WireGuard.
 - **Synchronized Workspaces:** Keeps workspace configurations and secrets in sync with connected environments and services.
@@ -41,9 +40,9 @@
 - **Concurrent Development Support:** Enables multiple developers to work on the same environment simultaneously.
 - **Application Intercepts:** Allows developers to intercept applications running in environments, redirecting their network traffic to the workspace
 
-## Documentation
-- [Official Website](https://kloudlite.io)
-- [Official Documentations](https://kloudlite.io/docs)
+## Resources
+- [Website](https://kloudlite.io)
+- [Developer Documentations](https://kloudlite.io/docs)
 - [Helm Charts](https://github.com/kloudlite/helm-charts)
 
 ## Contact
