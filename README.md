@@ -34,12 +34,12 @@
 
 
 ## Key Features:
-- **Wireguard Network:** Local workspace is connected to remote environments and services with wireguard.
-- **Integrated Workspaces:** Configs, Secrets of workspace in sync with connected environment and services.
-- **Nix Packages:** Workspace package management based on nix.
-- **Stateless Environments:** Ephemeral and lightweight environments with no overhead.
-- **Collaboration:** Multiple developers can work on the same environment simultaneously.
-- **App Intercepts:** Apps running in environments can be intercepted, allowing traffic to be redirected to the developer's workspace.
+- **WireGuard Network Integration:** Connects the workspace to environments and services using WireGuard.
+- **Synchronized Workspaces:** Keeps workspace configurations and secrets in sync with connected environments and services.
+- **Nix-based Package Management:** Utilizes Nix for managing workspace packages.
+- **Stateless Environments:** Supports ephemeral environments without overhead.
+- **Concurrent Development Support:** Enables multiple developers to work on the same environment simultaneously.
+- **Application Intercepts:** Allows developers to intercept applications running in environments, redirecting their network traffic to the workspace
 
 ## Documentation
 - [Official Website](https://kloudlite.io)
