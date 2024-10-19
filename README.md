@@ -58,3 +58,25 @@ If you've found a vulnerability or a potential vulnerability in the Kloudlite se
 
 ## License
 Unless otherwise noted, the Kloudlite source files are distributed under the AGPL Version 3.0 license found in the LICENSE file.
+
+## Shoutout to Our Open-Source Heroes 🚀
+
+At **Kloudlite**, the open-source community is the lifeblood of our platform. We want to give a huge thanks to the following projects that form 
+the foundation of Kloudlite:
+
+- **[Kubernetes](https://github.com/kubernetes/kubernetes)**: The backbone of our environment management, enabling us to orchestrate clusters with ease and reliability.
+- **[K3S](https://github.com/k3s-io/k3s)**: Lightweight and fast Kubernetes distribution that powers our local development environments.
+- **[WireGuard](https://github.com/WireGuard)**: Providing secure and seamless VPN connectivity between local workspaces and remote environments.
+- **[Helm](https://github.com/helm/helm)**: Simplifying our deployment process with package management for Kubernetes applications.
+- **[Nix](https://github.com/nix-community)**: Managing dependencies in our development containers, ensuring flexibility and consistency across environments.
+- **[Docker](https://github.com/docker)**: Containerizing our applications to provide consistency and simplicity across setups.
+- **[MongoDB](https://github.com/mongodb/mongo)**: Powering our data storage with its flexible, scalable document-based architecture.
+- **[NATS](https://github.com/nats-io/nats-server)**: Enabling fast and lightweight real-time messaging and communication between services.
+- **[VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics)**: Handling our monitoring and metrics with high performance and scalability.
+- **[Apollo Federation](https://github.com/apollographql/federation)**: Orchestrating our distributed GraphQL architecture for seamless communication across services.
+- **[gqlgen](https://github.com/99designs/gqlgen)**: Powering our Golang-based GraphQL server, ensuring type safety and performance.
+- **[Remix](https://github.com/remix-run)**: Providing a modern and flexible framework for building fast, dynamic, and reliable frontend experiences.
+- **[TailwindCSS](https://github.com/tailwindlabs/tailwindcss)**: Simplifying our frontend design with a utility-first CSS framework for beautiful UIs.
+- **[Operator Framework](https://github.com/operator-framework)**: Helping us build powerful and reliable Kubernetes operators to automate complex tasks.
+
+We are deeply grateful to the maintainers and contributors of all these projects for driving innovation and making open-source accessible. Your work powers the heart of Kloudlite! 👏
