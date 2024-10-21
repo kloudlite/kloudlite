@@ -9,6 +9,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"time"
 
 	uuid "github.com/nu7hatch/gouuid"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -80,10 +81,11 @@ type InfraContexts struct {
 }
 
 type ExtraData struct {
-	BaseUrl       string          `json:"baseUrl"`
-	SelectedTeam  string          `json:"selectedTeam"`
-	DnsHostSuffix string          `json:"dnsHostSuffix"`
-	SelectedEnvs  map[string]*Env `json:"selectedEnvs"`
+	BaseUrl         string          `json:"baseUrl"`
+	SelectedTeam    string          `json:"selectedTeam"`
+	DnsHostSuffix   string          `json:"dnsHostSuffix"`
+	SelectedEnvs    map[string]*Env `json:"selectedEnvs"`
+	LastUpdateCheck time.Time       `json:"lastUpdateCheck"`
 }
 
 type Port struct {
