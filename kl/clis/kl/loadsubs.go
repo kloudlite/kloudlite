@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/kl/cmd/clone"
 	"github.com/kloudlite/kl/cmd/cluster"
 	"github.com/kloudlite/kl/cmd/connect"
+	"github.com/kloudlite/kl/cmd/expose"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/intercept"
 	"github.com/kloudlite/kl/cmd/list"
@@ -44,6 +45,7 @@ func init() {
 	//rootCmd.AddCommand(vpn.Cmd)
 
 	rootCmd.AddCommand(cluster.Cmd)
+	rootCmd.AddCommand(expose.Cmd)
 
 	rootCmd.AddCommand(add.Command)
 	rootCmd.AddCommand(status.Cmd)

@@ -127,8 +127,6 @@ func (u *updater) CheckForUpdates() (bool, error) {
 		return false, fn.Errorf("Failed to fetch release info")
 	}
 
-	fmt.Println(vcode, flags.Version)
-
 	if vcode != flags.Version {
 		return true, nil
 	}

@@ -60,7 +60,6 @@ func ExecUpdateCmd(version string) error {
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	fmt.Println(cmd)
 
 	if err = cmd.Run(); err != nil {
 		return functions.NewE(err)

@@ -135,7 +135,7 @@ func getClusterK3sStatus(k3sTracker *fileclient.K3sTracker) error {
 	if k3sTracker.Compute && k3sTracker.Gateway {
 		fn.Log("Local Cluster: ", text.Green("ready"))
 	} else {
-		fn.Log("Local Cluster: ", text.Yellow("Not ready"))
+		fn.Log("Local Cluster: ", text.Yellow("not ready"))
 	}
 
 	if k3sTracker.WgConnection {

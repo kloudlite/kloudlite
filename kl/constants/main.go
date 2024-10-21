@@ -13,6 +13,7 @@ const (
 	RuntimeLinux   = "linux"
 	RuntimeDarwin  = "darwin"
 	RuntimeWindows = "windows"
+	SocatImage     = "ghcr.io/kloudlite/hub/socat:latest"
 
 	KLDNS                       = "100.64.0.1"
 	InterceptWorkspaceServiceIp = "172.18.0.3"
