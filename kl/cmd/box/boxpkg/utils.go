@@ -250,6 +250,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 	clusterConfig, err := c.fc.GetClusterConfig(currentSystemConfig.SelectedTeam)
 
 	resp, err := c.cli.ContainerCreate(context.Background(), &container.Config{
+		User:  fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		Image: constants.GetBoxImageName(),
 		Labels: map[string]string{
 			CONT_MARK_KEY:           "true",
@@ -262,7 +263,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 			fmt.Sprintf("KL_HASH_FILE=/.cache/kl/box-hash/%s", boxhashFileName),
 			fmt.Sprintf("SSH_PORT=%d", sshPort),
 			fmt.Sprintf("KL_WORKSPACE=%s", c.cwd),
-			"KLCONFIG_PATH=/workspace/kl.yml",
+			"KLCONFIG_PATH=/home/kl/workspace/kl.yml",
 			fmt.Sprintf("KL_DNS=%s", constants.KLDNS),
 			fmt.Sprintf("KL_BASE_URL=%s", constants.BaseURL),
 			fmt.Sprintf("KL_HOST_USER=%s", hostName),
@@ -290,7 +291,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 			for _, m := range vmounts {
 				binds = append(binds, fmt.Sprintf("%s:%s:z", m.Source, m.Target))
 			}
-			binds = append(binds, fmt.Sprintf("%s:/workspace:z", c.cwd))
+			binds = append(binds, fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd))
 			return binds
 		}(),
 	}, &network.NetworkingConfig{
@@ -437,7 +438,8 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 	}
 
 	sshPath := path.Join(userHomeDir, ".ssh", "id_rsa.pub")
-	rsaPath := path.Join(userHomeDir, ".ssh", "id_rsa")
+	//rsaPath := path.Join(userHomeDir, ".ssh", "id_rsa")
+	sshDir := path.Join(userHomeDir, ".ssh")
 
 	akByte, err := os.ReadFile(sshPath)
 	if err != nil {
@@ -448,7 +450,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 
 	akTmpPath := path.Join(td, "authorized_keys")
 
-	//gitConfigPath := path.Join(userHomeDir, ".gitconfig")
+	gitConfigPath := path.Join(userHomeDir, ".gitconfig")
 
 	akByte, err = os.ReadFile(path.Join(userHomeDir, ".ssh", "authorized_keys"))
 	if err == nil {
@@ -501,18 +503,19 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 	}
 
 	volumes := []mount.Mount{
-		{Type: mount.TypeBind, Source: akTmpPath, Target: "/tmp/ssh2/authorized_keys", ReadOnly: true},
-		{Type: mount.TypeBind, Source: sshPath, Target: "/tmp/ssh2/id_rsa.pub", ReadOnly: true},
-		{Type: mount.TypeBind, Source: rsaPath, Target: "/tmp/ssh2/id_rsa", ReadOnly: true},
 		{Type: mount.TypeVolume, Source: "kl-home-cache", Target: "/home"},
+		//{Type: mount.TypeBind, Source: rsaPath, Target: "/tmp/ssh2/id_rsa", ReadOnly: true},
+		//  NOTE: never change the order of ssh mount
+		{Type: mount.TypeBind, Source: sshDir, Target: "/home/kl/.ssh", ReadOnly: true},
+		{Type: mount.TypeBind, Source: akTmpPath, Target: "/home/kl/.ssh/authorized_keys", ReadOnly: true},
 		//{Type: mount.TypeBind, Source: gitConfigPath, Target: "/tmp/gitconfig/.gitconfig", ReadOnly: true},
 		{Type: mount.TypeVolume, Source: "kl-nix-store", Target: "/nix"},
 		{Type: mount.TypeBind, Source: configFolder, Target: "/.cache/kl"},
 	}
-	//_, err = os.Stat(gitConfigPath)
-	//if err == nil {
-	//	volumes = append(volumes, mount.Mount{Type: mount.TypeBind, Source: gitConfigPath, Target: "/tmp/gitconfig/.gitconfig", ReadOnly: true})
-	//}
+	_, err = os.Stat(gitConfigPath)
+	if err == nil {
+		volumes = append(volumes, mount.Mount{Type: mount.TypeBind, Source: gitConfigPath, Target: "/home/kl/.gitconfig", ReadOnly: true})
+	}
 
 	dockerSock := "/var/run/docker.sock"
 	// if runtime.GOOS == constants.RuntimeWindows {

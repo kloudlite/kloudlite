@@ -100,18 +100,14 @@ sudo sh -c "echo \"search $KL_SEARCH_DOMAIN\" >> $RESOLV_FILE"
 
 # sudo cp /tmp/resolv.conf /etc/resolv.conf
 
-if [ -d "/tmp/ssh2" ]; then
-  mkdir -p /home/kl/.ssh
-  cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
-  cp /tmp/ssh2/id_rsa /home/kl/.ssh/id_rsa
-  cp /tmp/ssh2/id_rsa.pub /home/kl/.ssh/id_rsa.pub
-  chmod 600 /home/kl/.ssh/authorized_keys
-  echo "successfully copied ssh credentials"
-fi
-
-# if [ -f "/tmp/gitconfig/.gitconfig" ]; then
-#     cp /tmp/gitconfig/.gitconfig /home/kl/.gitconfig
-# fi
+#if [ -d "/tmp/ssh2" ]; then
+#  mkdir -p /home/kl/.ssh
+#  cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
+#  cp /tmp/ssh2/id_rsa /home/kl/.ssh/id_rsa
+#  cp /tmp/ssh2/id_rsa.pub /home/kl/.ssh/id_rsa.pub
+#  chmod 600 /home/kl/.ssh/authorized_keys
+#  echo "successfully copied ssh credentials"
+#fi
 
 bash ~/.check-online >/dev/null 2>&1 &
 

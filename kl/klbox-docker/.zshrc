@@ -77,4 +77,4 @@ precmd() {
 TMOUT=1
 
 # go to workspace
-cd /workspace
+cd /home/kl/workspace

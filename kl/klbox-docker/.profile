@@ -66,4 +66,4 @@ if [ -f "/kl-tmp/global-profile" ]; then
   source /kl-tmp/global-profile
 fi
 
-cd /workspace || return
+cd /home/kl/workspace || return

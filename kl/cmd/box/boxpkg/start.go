@@ -136,7 +136,7 @@ func (c *client) Start() error {
 	}
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(c.env.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
-	fn.Logf("%s %s\n", text.Bold("vscode:"), text.Blue(fmt.Sprintf("vscode://vscode-remote/ssh-remote+kl@%s:%s/workspace", getDomainFromPath(c.cwd), fmt.Sprint(c.env.SSHPort))))
+	fn.Logf("%s %s\n", text.Bold("vscode:"), text.Blue(fmt.Sprintf("vscode://vscode-remote/ssh-remote+kl@%s:%s/home/kl/workspace", getDomainFromPath(c.cwd), fmt.Sprint(c.env.SSHPort))))
 
 	return nil
 }

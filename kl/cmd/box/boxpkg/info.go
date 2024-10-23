@@ -43,6 +43,6 @@ func (c *client) Info() error {
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(sshPort), "-oStrictHostKeyChecking=no"}, " ")))
 
-	fn.Logf("%s %s\n", text.Bold("vscode:"), text.Blue(fmt.Sprintf("vscode://vscode-remote/ssh-remote+kl@%s:%s/workspace", getDomainFromPath(c.cwd), sshPort)))
+	fn.Logf("%s %s\n", text.Bold("vscode:"), text.Blue(fmt.Sprintf("vscode://vscode-remote/ssh-remote+kl@%s:%s/home/kl/workspace", getDomainFromPath(c.cwd), sshPort)))
 	return nil
 }
