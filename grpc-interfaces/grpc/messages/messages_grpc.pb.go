@@ -22,6 +22,7 @@ const (
 	MessageDispatchService_ValidateAccessToken_FullMethodName             = "/MessageDispatchService/ValidateAccessToken"
 	MessageDispatchService_GetAccessToken_FullMethodName                  = "/MessageDispatchService/GetAccessToken"
 	MessageDispatchService_SendActions_FullMethodName                     = "/MessageDispatchService/SendActions"
+	MessageDispatchService_SendClusterGatewayResource_FullMethodName      = "/MessageDispatchService/SendClusterGatewayResource"
 	MessageDispatchService_ReceiveError_FullMethodName                    = "/MessageDispatchService/ReceiveError"
 	MessageDispatchService_ReceiveConsoleResourceUpdate_FullMethodName    = "/MessageDispatchService/ReceiveConsoleResourceUpdate"
 	MessageDispatchService_ReceiveIotConsoleResourceUpdate_FullMethodName = "/MessageDispatchService/ReceiveIotConsoleResourceUpdate"
@@ -37,6 +38,7 @@ type MessageDispatchServiceClient interface {
 	ValidateAccessToken(ctx context.Context, in *ValidateAccessTokenIn, opts ...grpc.CallOption) (*ValidateAccessTokenOut, error)
 	GetAccessToken(ctx context.Context, in *GetAccessTokenIn, opts ...grpc.CallOption) (*GetAccessTokenOut, error)
 	SendActions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
+	SendClusterGatewayResource(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*GatewayResource, error)
 	ReceiveError(ctx context.Context, in *ErrorData, opts ...grpc.CallOption) (*Empty, error)
 	ReceiveConsoleResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error)
 	ReceiveIotConsoleResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error)
@@ -103,6 +105,15 @@ func (x *messageDispatchServiceSendActionsClient) Recv() (*Action, error) {
 	return m, nil
 }
 
+func (c *messageDispatchServiceClient) SendClusterGatewayResource(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*GatewayResource, error) {
+	out := new(GatewayResource)
+	err := c.cc.Invoke(ctx, MessageDispatchService_SendClusterGatewayResource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *messageDispatchServiceClient) ReceiveError(ctx context.Context, in *ErrorData, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, MessageDispatchService_ReceiveError_FullMethodName, in, out, opts...)
@@ -164,6 +175,7 @@ type MessageDispatchServiceServer interface {
 	ValidateAccessToken(context.Context, *ValidateAccessTokenIn) (*ValidateAccessTokenOut, error)
 	GetAccessToken(context.Context, *GetAccessTokenIn) (*GetAccessTokenOut, error)
 	SendActions(*Empty, MessageDispatchService_SendActionsServer) error
+	SendClusterGatewayResource(context.Context, *Empty) (*GatewayResource, error)
 	ReceiveError(context.Context, *ErrorData) (*Empty, error)
 	ReceiveConsoleResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error)
 	ReceiveIotConsoleResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error)
@@ -185,6 +197,9 @@ func (UnimplementedMessageDispatchServiceServer) GetAccessToken(context.Context,
 }
 func (UnimplementedMessageDispatchServiceServer) SendActions(*Empty, MessageDispatchService_SendActionsServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendActions not implemented")
+}
+func (UnimplementedMessageDispatchServiceServer) SendClusterGatewayResource(context.Context, *Empty) (*GatewayResource, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendClusterGatewayResource not implemented")
 }
 func (UnimplementedMessageDispatchServiceServer) ReceiveError(context.Context, *ErrorData) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReceiveError not implemented")
@@ -273,6 +288,24 @@ type messageDispatchServiceSendActionsServer struct {
 
 func (x *messageDispatchServiceSendActionsServer) Send(m *Action) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func _MessageDispatchService_SendClusterGatewayResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageDispatchServiceServer).SendClusterGatewayResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MessageDispatchService_SendClusterGatewayResource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageDispatchServiceServer).SendClusterGatewayResource(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _MessageDispatchService_ReceiveError_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -397,6 +430,10 @@ var MessageDispatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccessToken",
 			Handler:    _MessageDispatchService_GetAccessToken_Handler,
+		},
+		{
+			MethodName: "SendClusterGatewayResource",
+			Handler:    _MessageDispatchService_SendClusterGatewayResource_Handler,
 		},
 		{
 			MethodName: "ReceiveError",

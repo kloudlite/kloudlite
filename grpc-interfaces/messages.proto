@@ -8,6 +8,8 @@ service MessageDispatchService {
 
   rpc SendActions (Empty) returns (stream Action) {}
 
+  rpc SendClusterGatewayResource(Empty) returns (GatewayResource) {}
+
   rpc ReceiveError(ErrorData) returns (Empty) {}
 
   rpc ReceiveConsoleResourceUpdate (ResourceUpdate) returns (Empty) {}
@@ -75,3 +77,7 @@ message PingOutput {
 }
 
 message Empty {}
+
+message GatewayResource {
+  bytes gateway = 1;
+}
