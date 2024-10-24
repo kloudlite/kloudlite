@@ -40,6 +40,7 @@ type ApiClient interface {
 
 	//ListBYOKClusters(teamName string) ([]BYOKCluster, error)
 	GetClustersOfTeam(team string) ([]Cluster, error)
+	DeleteCluster(team, clusterName string) error
 	ListMreses(teamName string, envName string) ([]Mres, error)
 	ListMresKeys(teamName, envName, importedManagedResource string) ([]string, error)
 	GetMresConfigValues(teamName string) (map[string]string, error)

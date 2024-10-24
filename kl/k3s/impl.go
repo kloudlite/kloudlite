@@ -3,7 +3,6 @@ package k3s
 import (
 	"bufio"
 	"bytes"
-	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -38,7 +37,7 @@ func (c *client) CreateClustersTeams(teamName string) error {
 	if err := c.EnsureImage(constants.GetK3SImageName()); err != nil {
 		return fn.NewE(err)
 	}
-	existingContainers, err := c.c.ContainerList(context.Background(), container.ListOptions{
+	existingContainers, err := c.c.ContainerList(c.cmd.Context(), container.ListOptions{
 		All: true,
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
@@ -61,17 +60,17 @@ func (c *client) CreateClustersTeams(teamName string) error {
 		}
 		if stopAll {
 			for _, ec := range existingContainers {
-				if err := c.c.ContainerStop(context.Background(), ec.ID, container.StopOptions{}); err != nil {
+				if err := c.c.ContainerStop(c.cmd.Context(), ec.ID, container.StopOptions{}); err != nil {
 					return fn.NewE(err, "failed to stop container")
 				}
-				if err := c.c.ContainerRemove(context.Background(), ec.ID, container.RemoveOptions{}); err != nil {
+				if err := c.c.ContainerRemove(c.cmd.Context(), ec.ID, container.RemoveOptions{}); err != nil {
 					return fn.NewE(err, "failed to remove container")
 				}
 			}
 		}
 	}
 
-	existingContainers, err = c.c.ContainerList(context.Background(), container.ListOptions{
+	existingContainers, err = c.c.ContainerList(c.cmd.Context(), container.ListOptions{
 		All: true,
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
@@ -84,7 +83,7 @@ func (c *client) CreateClustersTeams(teamName string) error {
 
 	if existingContainers != nil && len(existingContainers) > 0 {
 		if existingContainers[0].State != "running" {
-			if err := c.c.ContainerStart(context.Background(), existingContainers[0].ID, container.StartOptions{}); err != nil {
+			if err := c.c.ContainerStart(c.cmd.Context(), existingContainers[0].ID, container.StartOptions{}); err != nil {
 				return fn.NewE(err, "failed to start container")
 			}
 		}
@@ -107,7 +106,7 @@ func (c *client) CreateClustersTeams(teamName string) error {
 
 	createdConatiner := container.CreateResponse{}
 	if flags.IsDev() {
-		createdConatiner, err = c.c.ContainerCreate(context.Background(), &container.Config{
+		createdConatiner, err = c.c.ContainerCreate(c.cmd.Context(), &container.Config{
 			Labels: map[string]string{
 				CONT_MARK_KEY: "true",
 				"kl-k3s":      "true",
@@ -158,7 +157,7 @@ func (c *client) CreateClustersTeams(teamName string) error {
 			return fn.NewE(err, "failed to create container")
 		}
 	} else {
-		createdConatiner, err = c.c.ContainerCreate(context.Background(), &container.Config{
+		createdConatiner, err = c.c.ContainerCreate(c.cmd.Context(), &container.Config{
 			Labels: map[string]string{
 				CONT_MARK_KEY: "true",
 				"kl-k3s":      "true",
@@ -204,7 +203,7 @@ func (c *client) CreateClustersTeams(teamName string) error {
 		}
 	}
 
-	if err := c.c.ContainerStart(context.Background(), createdConatiner.ID, container.StartOptions{}); err != nil {
+	if err := c.c.ContainerStart(c.cmd.Context(), createdConatiner.ID, container.StartOptions{}); err != nil {
 		return fn.NewE(err, "failed to start container")
 	}
 
@@ -321,7 +320,7 @@ func (c *client) imageExists(imageName string) (bool, error) {
 	defer spinner.Client.UpdateMessage(fmt.Sprintf("checking image %s", imageName))()
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("reference", imageName)
-	images, err := c.c.ImageList(context.Background(), image.ListOptions{
+	images, err := c.c.ImageList(c.cmd.Context(), image.ListOptions{
 		Filters: filterArgs,
 	})
 	if err != nil {
@@ -346,7 +345,7 @@ func (c *client) EnsureImage(i string) error {
 		return nil
 	}
 
-	out, err := c.c.ImagePull(context.Background(), i, image.PullOptions{})
+	out, err := c.c.ImagePull(c.cmd.Context(), i, image.PullOptions{})
 	if err != nil {
 		return fn.NewE(err, fmt.Sprintf("failed to pull image %s", i))
 	}
@@ -359,7 +358,7 @@ func (c *client) EnsureImage(i string) error {
 func (c *client) EnsureKloudliteNetwork() error {
 	defer spinner.Client.UpdateMessage("ensuring kloudlite network")()
 
-	networks, err := c.c.NetworkList(context.Background(), network.ListOptions{
+	networks, err := c.c.NetworkList(c.cmd.Context(), network.ListOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s=%s", "kloudlite", "true")),
 		),
@@ -369,7 +368,7 @@ func (c *client) EnsureKloudliteNetwork() error {
 	}
 
 	if len(networks) == 0 {
-		_, err := c.c.NetworkCreate(context.Background(), "kloudlite", network.CreateOptions{
+		_, err := c.c.NetworkCreate(c.cmd.Context(), "kloudlite", network.CreateOptions{
 			Driver: "bridge",
 			Labels: map[string]string{
 				"kloudlite": "true",
@@ -524,7 +523,7 @@ func (c *client) runScriptInContainer(script string) error {
 	defer spinner.Client.UpdateMessage("setting up cluster, this may take a while")()
 
 	f := spinner.Client.UpdateMessage("ensuring k3s server is ready")
-	existingContainers, err := c.c.ContainerList(context.Background(), container.ListOptions{
+	existingContainers, err := c.c.ContainerList(c.cmd.Context(), container.ListOptions{
 		All: true,
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
@@ -543,7 +542,7 @@ func (c *client) runScriptInContainer(script string) error {
 	}
 
 	f = spinner.Client.UpdateMessage("setting up cluster resources, please wait")
-	execID, err := c.c.ContainerExecCreate(context.Background(), existingContainers[0].ID, container.ExecOptions{
+	execID, err := c.c.ContainerExecCreate(c.cmd.Context(), existingContainers[0].ID, container.ExecOptions{
 		Cmd:          []string{"/bin/sh", "-c", script},
 		AttachStdout: true,
 		AttachStderr: true,
@@ -552,14 +551,14 @@ func (c *client) runScriptInContainer(script string) error {
 		return fn.NewE(err, "failed to create exec instance for container")
 	}
 
-	resp, err := c.c.ContainerExecAttach(context.Background(), execID.ID, container.ExecStartOptions{
+	resp, err := c.c.ContainerExecAttach(c.cmd.Context(), execID.ID, container.ExecStartOptions{
 		Detach: false,
 	})
 	f()
 
 	if err != nil {
 
-		res, err2 := c.c.ContainerLogs(context.Background(), existingContainers[0].ID, container.LogsOptions{
+		res, err2 := c.c.ContainerLogs(c.cmd.Context(), existingContainers[0].ID, container.LogsOptions{
 			ShowStdout: true,
 			ShowStderr: true,
 			Follow:     false,
@@ -602,7 +601,7 @@ func (c *client) runScriptInContainer(script string) error {
 	//}
 	//}
 
-	execInspect, err := c.c.ContainerExecInspect(context.Background(), execID.ID)
+	execInspect, err := c.c.ContainerExecInspect(c.cmd.Context(), execID.ID)
 	if err != nil {
 		return fn.NewE(err, "failed to inspect exec")
 	}
@@ -616,7 +615,7 @@ func (c *client) runScriptInContainer(script string) error {
 
 func (c *client) CheckK3sRunningLocally() (bool, error) {
 	defer spinner.Client.UpdateMessage("checking k3s server")()
-	existingContainers, err := c.c.ContainerList(context.Background(), container.ListOptions{
+	existingContainers, err := c.c.ContainerList(c.cmd.Context(), container.ListOptions{
 		All: true,
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
@@ -632,4 +631,34 @@ func (c *client) CheckK3sRunningLocally() (bool, error) {
 		return false, fn.Errorf("no k3s container running locally")
 	}
 	return true, nil
+}
+
+func (c *client) RemoveClusterVolume(clusterName string) error {
+	defer spinner.Client.UpdateMessage("removing cluster volume")()
+	_, err := c.CheckK3sRunningLocally()
+	if err != nil && err.Error() != "no k3s container running locally" {
+		return err
+	}
+	if err == nil {
+		existingContainers, err := c.c.ContainerList(c.cmd.Context(), container.ListOptions{
+			All: true,
+			Filters: filters.NewArgs(
+				filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
+				filters.Arg("label", fmt.Sprintf("%s=%s", "kl-k3s", "true")),
+			),
+		})
+		if err != nil {
+			return fn.Errorf("failed to list containers: %w", err)
+		}
+		if err := c.c.ContainerStop(c.cmd.Context(), existingContainers[0].ID, container.StopOptions{}); err != nil {
+			return fn.NewE(err, "failed to stop container")
+		}
+		if err := c.c.ContainerRemove(c.cmd.Context(), existingContainers[0].ID, container.RemoveOptions{}); err != nil {
+			return fn.NewE(err, "failed to remove container")
+		}
+	}
+	if err = c.c.VolumeRemove(c.cmd.Context(), fmt.Sprintf("kl-k3s-%s-cache", clusterName), true); err != nil {
+		return fn.NewE(err)
+	}
+	return nil
 }

@@ -2,8 +2,10 @@ package fileclient
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"os"
 	"path"
 )
@@ -96,6 +98,25 @@ func (c *fclient) SetClusterConfig(team string, accClusterConfig *TeamClusterCon
 	}
 	err = os.WriteFile(cfgPath, marshal, 0644)
 	if err != nil {
+		return fn.NewE(err)
+	}
+
+	return nil
+}
+
+func (c *fclient) DeleteClusterData(team string) error {
+	defer spinner.Client.UpdateMessage("removing cluster data")()
+	cfgFolder := c.configPath
+
+	cfgPath := path.Join(cfgFolder, "k3s-local", fmt.Sprintf("%s.json", team))
+
+	_, err := os.Stat(cfgPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fn.NewE(err)
+	}
+
+	err = os.Remove(cfgPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fn.NewE(err)
 	}
 

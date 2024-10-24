@@ -9,19 +9,19 @@ import (
 	"os"
 )
 
-var UpCmd = &cobra.Command{
+var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Starts the k3s server",
 	Long:  `Starts the k3s server`,
-	Run: func(_ *cobra.Command, _ []string) {
-		if err := startK3sServer(); err != nil {
+	Run: func(cmd *cobra.Command, _ []string) {
+		if err := startK3sServer(cmd); err != nil {
 			functions.PrintError(err)
 			return
 		}
 	},
 }
 
-func startK3sServer() error {
+func startK3sServer(cmd *cobra.Command) error {
 	defer spinner.Client.UpdateMessage("starting k3s server")()
 	fc, err := fileclient.New()
 	if err != nil {
@@ -41,7 +41,7 @@ func startK3sServer() error {
 		return functions.NewE(err)
 	}
 
-	k, err := k3s.NewClient()
+	k, err := k3s.NewClient(cmd)
 	if err != nil {
 		return functions.NewE(err)
 	}

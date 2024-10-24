@@ -84,7 +84,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		return nil, fn.NewE(err)
 	}
 
-	k3sClient, err := k3s.NewClient()
+	k3sClient, err := k3s.NewClient(cmd)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

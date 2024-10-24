@@ -14,11 +14,14 @@ var Cmd = &cobra.Command{
 func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "clus", "clusters")
 
-	UpCmd.Aliases = append(UpCmd.Aliases, "start", "connect", "create")
-	DownCmd.Aliases = append(DownCmd.Aliases, "stop", "disconnect", "destroy")
+	upCmd.Aliases = append(upCmd.Aliases, "start", "connect")
+	downCmd.Aliases = append(downCmd.Aliases, "stop", "disconnect")
+	cleanCmd.Aliases = append(cleanCmd.Aliases, "delete", "clean")
 
-	fileclient.OnlyOutsideBox(UpCmd)
-	fileclient.OnlyOutsideBox(DownCmd)
-	Cmd.AddCommand(DownCmd)
-	Cmd.AddCommand(UpCmd)
+	fileclient.OnlyOutsideBox(upCmd)
+	fileclient.OnlyOutsideBox(downCmd)
+	fileclient.OnlyOutsideBox(cleanCmd)
+	Cmd.AddCommand(downCmd)
+	Cmd.AddCommand(upCmd)
+	Cmd.AddCommand(cleanCmd)
 }

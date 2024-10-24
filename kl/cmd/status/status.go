@@ -44,7 +44,7 @@ var Cmd = &cobra.Command{
 			return
 		}
 
-		k3sClient, err := k3s.NewClient()
+		k3sClient, err := k3s.NewClient(cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -73,7 +73,7 @@ var Cmd = &cobra.Command{
 		config, err := fc.GetClusterConfig(data.SelectedTeam)
 		if err != nil {
 			if os.IsNotExist(err) {
-				fn.PrintError(fn.Error("kl file is not synced properly. please run \"kl init\" to re-initialized kl file"))
+				fn.Log(text.Yellow("cluster not found"))
 				return
 			} else {
 				fn.PrintError(err)

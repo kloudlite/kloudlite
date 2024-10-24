@@ -17,6 +17,7 @@ type FileClient interface {
 	SetVpnTeamConfig(team string, config *TeamVpnConfig) error
 	GetClusterConfig(team string) (*TeamClusterConfig, error)
 	SetClusterConfig(team string, accClusterConfig *TeamClusterConfig) error
+	DeleteClusterData(team string) error
 	GetDevice() (*DeviceContext, error)
 	SetDevice(device *DeviceContext) error
 

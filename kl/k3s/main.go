@@ -4,6 +4,7 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/spf13/cobra"
 )
 
 type K3sClient interface {
@@ -15,15 +16,17 @@ type K3sClient interface {
 	RemoveAllIntercepts() error
 	DeletePods() error
 	CheckK3sRunningLocally() (bool, error)
+	RemoveClusterVolume(clusterName string) error
 }
 
 type client struct {
 	c    *dockerclient.Client
 	apic apiclient.ApiClient
 	fc   fileclient.FileClient
+	cmd  *cobra.Command
 }
 
-func NewClient() (K3sClient, error) {
+func NewClient(cmd *cobra.Command) (K3sClient, error) {
 	apiClient, err := apiclient.New()
 	if err != nil {
 		return nil, err
@@ -41,5 +44,6 @@ func NewClient() (K3sClient, error) {
 		c:    c,
 		apic: apiClient,
 		fc:   fc,
+		cmd:  cmd,
 	}, nil
 }

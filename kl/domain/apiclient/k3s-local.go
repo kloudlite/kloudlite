@@ -225,3 +225,18 @@ func (apic *apiClient) createClusterForTeam(team string) (*Cluster, error) {
 	}
 	return cluster, nil
 }
+
+func (apic *apiClient) DeleteCluster(team, clusterName string) error {
+	cookie, err := getCookie(fn.MakeOption("teamName", team))
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	_, err = klFetch("cli_deleteClusterReference", map[string]any{
+		"name": clusterName,
+	}, &cookie)
+	if err != nil {
+		return fn.NewE(err)
+	}
+	return nil
+}

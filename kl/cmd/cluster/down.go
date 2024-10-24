@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var DownCmd = &cobra.Command{
+var downCmd = &cobra.Command{
 	Use:   "down",
 	Short: "Stops the k3s server",
 	Long:  `Stops the k3s server`,
@@ -46,7 +46,7 @@ func StopK3sServer(cmd *cobra.Command) error {
 		return nil
 	}
 
-	k3sclient, err := k3s.NewClient()
+	k3sclient, err := k3s.NewClient(cmd)
 	if err != nil {
 		return err
 	}

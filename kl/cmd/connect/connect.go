@@ -28,7 +28,7 @@ var Command = &cobra.Command{
 
 func startWg(cmd *cobra.Command) error {
 	defer spinner.Client.UpdateMessage("connecting your device")()
-	k3sClient, err := k3s.NewClient()
+	k3sClient, err := k3s.NewClient(cmd)
 	if err != nil {
 		return fn.NewE(err)
 	}
