@@ -280,6 +280,7 @@ func (g *grpcHandler) askForGatewayResource(rctx context.Context) error {
 
 	if _, err := g.yamlClient.ApplyYAML(ctx, out.Gateway); err != nil {
 		g.logger.Error("failed to process message, got", "err", err, "error-on-apply:YAML", fmt.Sprintf("\n%s\n", out.Gateway))
+		return err
 	}
 
 	return nil
