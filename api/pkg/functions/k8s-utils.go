@@ -2,8 +2,9 @@ package functions
 
 import (
 	"encoding/json"
-	"github.com/kloudlite/api/pkg/errors"
 	"regexp"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/constants"
 	"k8s.io/apimachinery/pkg/runtime/schema"
