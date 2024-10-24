@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloudlite/api/grpc-interfaces/infra"
+	"github.com/kloudlite/api/apps/infra/protobufs/infra"
 	klErrors "github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/grpc"
 
@@ -49,6 +49,29 @@ type (
 		createConsumer func(ctx context.Context, accountName string, clusterName string) (messaging.Consumer, string, error)
 	}
 )
+
+// SendClusterGatewayResource implements messages.MessageDispatchServiceServer.
+func (g *grpcServer) SendClusterGatewayResource(ctx context.Context, _ *messages.Empty) (*messages.GatewayResource, error) {
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := g.infraClient.GetClusterGatewayResource(ctx, &infra.GetClusterGatewayResourceIn{
+		AccountName: accountName,
+		ClusterName: clusterName,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &messages.GatewayResource{Gateway: out.Gateway}, nil
+}
+
+// ReceiveIotConsoleResourceUpdate implements messages.MessageDispatchServiceServer.
+func (g *grpcServer) ReceiveIotConsoleResourceUpdate(context.Context, *messages.ResourceUpdate) (*messages.Empty, error) {
+	panic("unimplemented")
+}
 
 // ReceiveConsoleResourceUpdate implements messages.MessageDispatchServiceServer.
 func (g *grpcServer) ReceiveConsoleResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (_ *messages.Empty, err error) {
@@ -444,7 +467,6 @@ func dispatchResourceUpdate(ctx context.Context, receiver common.MessageReceiver
 
 func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger *slog.Logger, infraCli infra.InfraClient) (messages.MessageDispatchServiceServer, error) {
 	return &grpcServer{
-		UnimplementedMessageDispatchServiceServer: messages.UnimplementedMessageDispatchServiceServer{},
 		infraClient:     infraCli,
 		logger:          logger,
 		updatesProducer: producer,

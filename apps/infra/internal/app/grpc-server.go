@@ -22,6 +22,24 @@ type grpcServer struct {
 	logger *slog.Logger
 }
 
+// GetClusterGatewayResource implements infra.InfraServer.
+func (g *grpcServer) GetClusterGatewayResource(ctx context.Context, in *infra.GetClusterGatewayResourceIn) (*infra.GetClusterGatewayResourceOut, error) {
+	l := grpc.NewRequestLogger(g.logger, "EnsureGlobalVPNConnection")
+	defer l.End()
+
+	gw, err := g.d.GetGatewayResource(ctx, in.AccountName, in.ClusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := fn.K8sObjToYAML(gw)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return &infra.GetClusterGatewayResourceOut{Gateway: b}, nil
+}
+
 // EnsureGlobalVPNConnection implements infra.InfraServer.
 func (g *grpcServer) EnsureGlobalVPNConnection(ctx context.Context, in *infra.EnsureGlobalVPNConnectionIn) (*infra.EnsureGlobalVPNConnectionOut, error) {
 	l := grpc.NewRequestLogger(g.logger, "EnsureGlobalVPNConnection")
