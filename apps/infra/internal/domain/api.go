@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	klNetworkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -60,6 +61,8 @@ type Domain interface {
 
 	ListGlobalVPN(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.GlobalVPN], error)
 	GetGlobalVPN(ctx InfraContext, name string) (*entities.GlobalVPN, error)
+
+	GetGatewayResource(ctx context.Context, accountName string, clusterName string) (*klNetworkingv1.Gateway, error)
 
 	CreateGlobalVPNDevice(ctx InfraContext, device entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error)
 	UpdateGlobalVPNDevice(ctx InfraContext, device entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error)

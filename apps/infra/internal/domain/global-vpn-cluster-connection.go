@@ -89,6 +89,23 @@ func (d *domain) getGlobalVPNConnectionPeers(args getGlobalVPNConnectionPeersArg
 	return peers
 }
 
+// GetGatewayResource implements Domain.
+func (d *domain) GetGatewayResource(ctx context.Context, accountName string, clusterName string) (*networkingv1.Gateway, error) {
+	gw, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
+		fc.AccountName: accountName,
+		fc.ClusterName: clusterName,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if gw == nil {
+		return nil, fmt.Errorf("failed to find gateway resource")
+	}
+
+	return &gw.Gateway, nil
+}
+
 func (d *domain) listGlobalVPNConnections(ctx InfraContext, vpnName string) ([]*entities.GlobalVPNConnection, error) {
 	return d.gvpnConnRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
