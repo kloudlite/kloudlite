@@ -49,7 +49,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v0.0.0-20241009112404-194113cddc17
+	github.com/kloudlite/operator v1.0.1-0.20241024180107-6c3c50b884a6
 	github.com/miekg/dns v1.1.57
 	github.com/mittwald/go-helm-client v0.12.14
 	github.com/nats-io/nats.go v1.31.0
