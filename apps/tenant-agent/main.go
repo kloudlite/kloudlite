@@ -106,20 +106,12 @@ func (g *grpcHandler) handleMessage(_ context.Context, msg t.AgentMessage) error
 	switch msg.Action {
 	case t.ActionApply:
 		{
-			// lb := obj.GetLabels()
-			// if lb == nil {
-			// 	lb = make(map[string]string, 1)
-			// }
-			// lb[constants.AccountNameKey] = msg.AccountName
-			// obj.SetLabels(lb)
-
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
 				return g.handleErrorOnApply(ctx, err, msg)
 			}
 
 			if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
-				// mLogger.Errorf(err, "[%d] [error-on-apply]: yaml: \n%s\n", g.inMemCounter, b)
 				mLogger.Error("failed to process message, got", "err", err, "error-on-apply:YAML", fmt.Sprintf("\n%s\n", b))
 				return g.handleErrorOnApply(ctx, err, msg)
 			}
@@ -132,6 +124,7 @@ func (g *grpcHandler) handleMessage(_ context.Context, msg t.AgentMessage) error
 					mLogger.Info("processed message, resource does not exist, might already be deleted")
 					return g.handleErrorOnApply(ctx, err, msg)
 				}
+
 				mLogger.Error("failed to process message, got", "err", err)
 				return g.handleErrorOnApply(ctx, err, msg)
 			}
@@ -276,12 +269,31 @@ func (g *grpcHandler) run(rctx context.Context) error {
 	}
 }
 
+func (g *grpcHandler) askForGatewayResource(rctx context.Context) error {
+	ctx := NewAuthorizedGrpcContext(rctx, g.ev.AccessToken)
+
+	g.logger.Info("asking message office to send gateway resource for this cluster")
+	out, err := g.msgDispatchCli.SendClusterGatewayResource(ctx, &messages.Empty{})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if _, err := g.yamlClient.ApplyYAML(ctx, out.Gateway); err != nil {
+		g.logger.Error("failed to process message, got", "err", err, "error-on-apply:YAML", fmt.Sprintf("\n%s\n", out.Gateway))
+	}
+
+	return nil
+}
+
 func main() {
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 
 	var debug bool
 	flag.BoolVar(&debug, "debug", false, "--debug")
+
+	var kubeApiAddr string
+	flag.StringVar(&kubeApiAddr, "kube-api-addr", "localhost:8081", "--kube-api-addr [host]:port")
 
 	flag.Parse()
 
@@ -296,14 +308,14 @@ func main() {
 
 	yamlClient := func() kubectl.YAMLClient {
 		if isDev {
-			logger.Debug("connecting to k8s over", "local-addr", "localhost:8081")
-			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"}, kubectl.YAMLClientOpts{})
+			logger.Debug("connecting to k8s over", "local-addr", kubeApiAddr)
+			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: kubeApiAddr}, kubectl.YAMLClientOpts{Slogger: logger})
 		}
 		config, err := rest.InClusterConfig()
 		if err != nil {
 			panic(err)
 		}
-		return kubectl.NewYAMLClientOrDie(config, kubectl.YAMLClientOpts{})
+		return kubectl.NewYAMLClientOrDie(config, kubectl.YAMLClientOpts{Slogger: logger})
 	}()
 
 	g := grpcHandler{
@@ -340,14 +352,18 @@ func main() {
 	for {
 		cc, err := libGrpc.NewGrpcClientV2(ev.GrpcAddr, libGrpc.GrpcConnectOpts{TLSConnect: !isDev, Logger: logger})
 		if err != nil {
-			logger.Error("failed to connect to message office, got", "err", err)
-			<-time.After(1 * time.Second)
+			logger.Error("failed to connect to message office, got", "err", err, "retrying after", "5s")
+			<-time.After(5 * time.Second)
 		}
 
 		g.msgDispatchCli = messages.NewMessageDispatchServiceClient(cc)
 
 		if err := g.ensureAccessToken(); err != nil {
 			logger.Error("ensuring access token, got", "err", err)
+			logger.Info("will retry after 5s")
+			cc.Close()
+			<-time.After(5 * time.Second)
+			continue
 		}
 
 		ctx, cf := context.WithTimeout(context.TODO(), MaxConnectionDuration)
@@ -356,6 +372,14 @@ func main() {
 		vps.realVectorClient = proto_rpc.NewVectorClient(cc)
 		vps.connCancelFn = cf
 
+		if err := g.askForGatewayResource(ctx); err != nil {
+			logger.Error("asking gateway resource, got", "err", err)
+			cf()
+			cleanup(ctx, cc, logger)
+			logger.Info("will retry after 5s")
+			<-time.After(5 * time.Second)
+		}
+
 		go func() {
 			defer cf()
 			if err := g.run(ctx); err != nil {
@@ -363,11 +387,15 @@ func main() {
 			}
 		}()
 
-		<-ctx.Done()
-		logger.Debug("MAX_CONNECTION_DURATION reached, will re-initialize connection")
+		cleanup(ctx, cc, logger)
+	}
+}
 
-		if err = cc.Close(); err != nil {
-			logger.Error("Failed to close connection, got", "err", err)
-		}
+func cleanup(ctx context.Context, cc libGrpc.Client, logger *slog.Logger) {
+	<-ctx.Done()
+	logger.Debug("MAX_CONNECTION_DURATION reached, will re-initialize connection")
+
+	if err := cc.Close(); err != nil {
+		logger.Error("Failed to close connection, got", "err", err)
 	}
 }
