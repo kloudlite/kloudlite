@@ -26,6 +26,7 @@ const (
 	Infra_GetClusterKubeconfig_FullMethodName      = "/Infra/GetClusterKubeconfig"
 	Infra_MarkClusterOnlineAt_FullMethodName       = "/Infra/MarkClusterOnlineAt"
 	Infra_EnsureGlobalVPNConnection_FullMethodName = "/Infra/EnsureGlobalVPNConnection"
+	Infra_GetClusterGatewayResource_FullMethodName = "/Infra/GetClusterGatewayResource"
 )
 
 // InfraClient is the client API for Infra service.
@@ -39,6 +40,7 @@ type InfraClient interface {
 	GetClusterKubeconfig(ctx context.Context, in *GetClusterIn, opts ...grpc.CallOption) (*GetClusterKubeconfigOut, error)
 	MarkClusterOnlineAt(ctx context.Context, in *MarkClusterOnlineAtIn, opts ...grpc.CallOption) (*MarkClusterOnlineAtOut, error)
 	EnsureGlobalVPNConnection(ctx context.Context, in *EnsureGlobalVPNConnectionIn, opts ...grpc.CallOption) (*EnsureGlobalVPNConnectionOut, error)
+	GetClusterGatewayResource(ctx context.Context, in *GetClusterGatewayResourceIn, opts ...grpc.CallOption) (*GetClusterGatewayResourceOut, error)
 }
 
 type infraClient struct {
@@ -112,6 +114,15 @@ func (c *infraClient) EnsureGlobalVPNConnection(ctx context.Context, in *EnsureG
 	return out, nil
 }
 
+func (c *infraClient) GetClusterGatewayResource(ctx context.Context, in *GetClusterGatewayResourceIn, opts ...grpc.CallOption) (*GetClusterGatewayResourceOut, error) {
+	out := new(GetClusterGatewayResourceOut)
+	err := c.cc.Invoke(ctx, Infra_GetClusterGatewayResource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InfraServer is the server API for Infra service.
 // All implementations must embed UnimplementedInfraServer
 // for forward compatibility
@@ -123,6 +134,7 @@ type InfraServer interface {
 	GetClusterKubeconfig(context.Context, *GetClusterIn) (*GetClusterKubeconfigOut, error)
 	MarkClusterOnlineAt(context.Context, *MarkClusterOnlineAtIn) (*MarkClusterOnlineAtOut, error)
 	EnsureGlobalVPNConnection(context.Context, *EnsureGlobalVPNConnectionIn) (*EnsureGlobalVPNConnectionOut, error)
+	GetClusterGatewayResource(context.Context, *GetClusterGatewayResourceIn) (*GetClusterGatewayResourceOut, error)
 	mustEmbedUnimplementedInfraServer()
 }
 
@@ -150,6 +162,9 @@ func (UnimplementedInfraServer) MarkClusterOnlineAt(context.Context, *MarkCluste
 }
 func (UnimplementedInfraServer) EnsureGlobalVPNConnection(context.Context, *EnsureGlobalVPNConnectionIn) (*EnsureGlobalVPNConnectionOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnsureGlobalVPNConnection not implemented")
+}
+func (UnimplementedInfraServer) GetClusterGatewayResource(context.Context, *GetClusterGatewayResourceIn) (*GetClusterGatewayResourceOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClusterGatewayResource not implemented")
 }
 func (UnimplementedInfraServer) mustEmbedUnimplementedInfraServer() {}
 
@@ -290,6 +305,24 @@ func _Infra_EnsureGlobalVPNConnection_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Infra_GetClusterGatewayResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterGatewayResourceIn)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InfraServer).GetClusterGatewayResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Infra_GetClusterGatewayResource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InfraServer).GetClusterGatewayResource(ctx, req.(*GetClusterGatewayResourceIn))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Infra_ServiceDesc is the grpc.ServiceDesc for Infra service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -324,6 +357,10 @@ var Infra_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EnsureGlobalVPNConnection",
 			Handler:    _Infra_EnsureGlobalVPNConnection_Handler,
+		},
+		{
+			MethodName: "GetClusterGatewayResource",
+			Handler:    _Infra_GetClusterGatewayResource_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

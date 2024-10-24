@@ -13,6 +13,8 @@ service Infra {
   rpc MarkClusterOnlineAt(MarkClusterOnlineAtIn) returns (MarkClusterOnlineAtOut);
 
   rpc EnsureGlobalVPNConnection(EnsureGlobalVPNConnectionIn) returns (EnsureGlobalVPNConnectionOut);
+
+  rpc GetClusterGatewayResource(GetClusterGatewayResourceIn) returns (GetClusterGatewayResourceOut);
 }
 
 message GetClusterIn {
@@ -87,3 +89,12 @@ message EnsureGlobalVPNConnectionIn {
 }
 
 message EnsureGlobalVPNConnectionOut {}
+
+message GetClusterGatewayResourceIn {
+  string accountName = 1;
+  string clusterName = 2;
+}
+
+message GetClusterGatewayResourceOut {
+  bytes gateway = 1;
+}
