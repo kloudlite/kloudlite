@@ -71,6 +71,12 @@ spec:
         - key: NATS_URL
           value: {{ include "nats.url" . }}
 
+        - key: NATS_RECEIVE_FROM_AGENT_STREAM
+          value: {{.Values.nats.streams.receiveFromAgent.name}}
+
+        - key: NATS_INFRA_INTERNAL_STREAM
+          value: {{.Values.nats.streams.infraInternalEvents.name | squote}}
+
         - key: ACCOUNT_COOKIE_NAME
           value: {{ include "kloudlite.account-cookie-name" . }}
 
@@ -83,8 +89,6 @@ spec:
         - key: CONSOLE_GRPC_ADDR
           value: '{{ include "apps.consoleApi.name" . }}:{{ include "apps.consoleApi.grpcPort" . }}'
 
-        - key: NATS_RECEIVE_FROM_AGENT_STREAM
-          value: {{.Values.nats.streams.receiveFromAgent.name}}
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.nats.buckets.sessionKVBucket.name}}
