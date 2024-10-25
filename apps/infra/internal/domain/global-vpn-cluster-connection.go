@@ -596,10 +596,6 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, dispatchAd
 	// 	}
 	// }
 
-	if _, err := d.matchRecordVersion(gvpn.Annotations, xconn.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, xconn.SyncStatus.Action, xconn.DispatchAddr, &xconn.Gateway, xconn.RecordVersion)
-	}
-
 	recordVersion, err := d.matchRecordVersion(gvpn.Annotations, xconn.RecordVersion)
 	if err != nil {
 		return errors.NewE(err)
