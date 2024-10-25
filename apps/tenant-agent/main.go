@@ -76,16 +76,16 @@ func NewAuthorizedGrpcContext(ctx context.Context, accessToken string) context.C
 	return metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", accessToken))
 }
 
-func (g *grpcHandler) handleMessage(_ context.Context, msg t.AgentMessage) error {
+func (g *grpcHandler) handleMessage(authorizedCtx context.Context, msg t.AgentMessage) error {
 	g.incrementCounter()
 	start := time.Now()
 
 	logger := g.logger.With("counter", g.inMemCounter, "account", msg.AccountName, "action", msg.Action)
 	ctx, cf := func() (context.Context, context.CancelFunc) {
 		if g.isDev {
-			return context.WithCancel(context.TODO())
+			return context.WithCancel(authorizedCtx)
 		}
-		return context.WithTimeout(context.TODO(), 2*time.Second)
+		return context.WithTimeout(authorizedCtx, 2*time.Second)
 	}()
 	defer cf()
 
