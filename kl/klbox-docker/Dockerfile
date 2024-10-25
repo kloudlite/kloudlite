@@ -73,6 +73,4 @@ RUN chmod +x /start.sh /entrypoint.sh /docker-socket.sh
 
 COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
 
-USER kl
-
 ENTRYPOINT ["/entrypoint.sh"]

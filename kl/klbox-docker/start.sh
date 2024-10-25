@@ -23,7 +23,9 @@ export PLATFORM_ARCH=$(uname -m)
 export KL_HOST_USER="$KL_HOST_USER"
 EOL
 
-sudo mkdir -p /etc/wireguard
+chown -R kl /kl-tmp/global-profile
+
+mkdir -p /etc/wireguard
 echo $KL_TEAM_NAME
 set -x
 CLUSTER_IP_RANGE=$(echo $CLUSTER_IP_RANGE | sed 's/\//###/g')
@@ -51,8 +53,9 @@ if [ ! -f "$entrypoint_executed" ]; then
   # ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" <<<y >/dev/null 2>&1
 fi
 
-mkdir -p ~/.config/nix
-echo "experimental-features = nix-command flakes" >~/.config/nix/nix.conf
+chown -R kl /home/kl/
+sudo -u kl mkdir -p /home/kl/.config/nix
+sudo -u kl echo "experimental-features = nix-command flakes" >/home/kl/.config/nix/nix.conf
 
 # shift
 
@@ -77,20 +80,21 @@ set -o errexit
 set -o pipefail
 npkgs=$(cat $KL_HASH_FILE | jq '.config.packageHashes | length')
 if [ \$npkgs -gt 0 ]; then
+  export PATH=$PATH:/home/kl/.local/state/nix/profiles/profile/bin
   nix shell --log-format bar-with-logs $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command echo "successfully installed packages"
   npath=$(nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command printenv PATH)
-  echo export PATH=$PATH:\$npath >> /tmp/env
+  echo export PATH=$PATH:\$npath >> /kl-tmp/env
 fi
 EOF
 
-bash /tmp/pkg-install.sh
+sudo -u kl bash /tmp/pkg-install.sh
 
 #nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command echo "successfully installed packages"
 #echo export PATH=$PATH:$(eval nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command printenv PATH) >> /tmp/env
-echo "export KL_HASH_FILE=$KL_HASH_FILE" >>/tmp/env
+echo "export KL_HASH_FILE=$KL_HASH_FILE" >>/kl-tmp/env
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE"
 
-source /tmp/env
+source /kl-tmp/env
 
 RESOLV_FILE="/etc/resolv.conf"
 # add search domain to resolv.conf

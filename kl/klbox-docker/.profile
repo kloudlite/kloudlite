@@ -12,7 +12,7 @@
 #umask 022
 
 # source $HOME/.nix-profile/etc/profile.d/nix.sh
-export PATH=$PATH:/kl-nix-profile/profile/bin
+export PATH=$PATH:/home/kl/.local/state/nix/profiles/profile/bin
 
 KL_LOCK_PATH=/home/kl/workspace/kl.lock
 [ -f /tmp/env ] && source /tmp/env

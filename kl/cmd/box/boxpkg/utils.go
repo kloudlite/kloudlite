@@ -250,7 +250,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 	clusterConfig, err := c.fc.GetClusterConfig(currentSystemConfig.SelectedTeam)
 
 	resp, err := c.cli.ContainerCreate(context.Background(), &container.Config{
-		User:  fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+		// User:  fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		Image: constants.GetBoxImageName(),
 		Labels: map[string]string{
 			CONT_MARK_KEY:           "true",
@@ -262,6 +262,8 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 		Env: []string{
 			fmt.Sprintf("KL_HASH_FILE=/.cache/kl/box-hash/%s", boxhashFileName),
 			fmt.Sprintf("SSH_PORT=%d", sshPort),
+			fmt.Sprintf("HOST_USER_UID=%d", os.Getuid()),
+			fmt.Sprintf("HOST_USER_GID=%d", os.Getgid()),
 			fmt.Sprintf("KL_WORKSPACE=%s", c.cwd),
 			"KLCONFIG_PATH=/home/kl/workspace/kl.yml",
 			fmt.Sprintf("KL_DNS=%s", constants.KLDNS),
