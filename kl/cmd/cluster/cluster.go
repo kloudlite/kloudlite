@@ -16,12 +16,12 @@ func init() {
 
 	upCmd.Aliases = append(upCmd.Aliases, "start", "connect")
 	downCmd.Aliases = append(downCmd.Aliases, "stop", "disconnect")
-	cleanCmd.Aliases = append(cleanCmd.Aliases, "delete", "clean")
+	// cleanCmd.Aliases = append(cleanCmd.Aliases, "delete", "clean")
 
 	fileclient.OnlyOutsideBox(upCmd)
 	fileclient.OnlyOutsideBox(downCmd)
-	fileclient.OnlyOutsideBox(cleanCmd)
+	// fileclient.OnlyOutsideBox(cleanCmd)
 	Cmd.AddCommand(downCmd)
 	Cmd.AddCommand(upCmd)
-	Cmd.AddCommand(cleanCmd)
+	// Cmd.AddCommand(cleanCmd)
 }

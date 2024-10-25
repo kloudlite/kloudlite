@@ -2,7 +2,10 @@ name: Release
 
 on:
   workflow_dispatch:
-
+    inputs:
+      k3s_base_deps_version:
+        description: 'k3s base image version'
+        required: false
   release:
     types: [created]
 
@@ -109,6 +112,8 @@ jobs:
               tag = ref.replace('refs/heads/release-', '')
               if not re.search('-nightly$', tag):
                   tag += "-nightly"
+                  with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+                    env_file.write(f"IS_NIGHTLY=YES\n")
           elif ref.startswith('refs/tags/'):
               tag = ref.replace('refs/tags/', '')
           else:
@@ -136,14 +141,37 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Set default values
+        id: defaults
+        run: |
+          I_TAG=${{ steps.tag_name.outputs.TAG_NAME }}
+
+          if [[ "${{ env.IS_NIGHTLY }}" = "YES" ]]; then
+            I_TAG=${{ github.event.inputs.k3s_base_deps_version }}
+            if [[ -z $I_TAG ]]; then
+              I_TAG=${{ secrets.K3S_BASE_DEPS_VERSION }}
+            fi
+          fi
+
+          if [[ -z $I_TAG ]]; then
+            echo "Error: k3s_base_deps_version is required for nightly builds."
+            exit 1
+          fi
+
+          # I_TAG=${{  github.event.inputs.k3s_base_deps_version || steps.tag_name.outputs.TAG_NAME }}
+          echo "image_tag_is:$I_TAG"
+          echo "image_name=$I_TAG" >> $GITHUB_ENV
+
       - name: Build & Push Image
         working-directory: ./k3s/k3s-base
         env:
-          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          PUSH_IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
           KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
           K3S_VERSION: "v1.31.1+k3s1"
           OVERRIDE_PUSHED_IMAGE: "false"
         run: |
+          IMAGE_TAG=${{ env.image_name }}
+
           set +e
           image_name="ghcr.io/kloudlite/kl/k3s-tacker"
           set -e
@@ -163,7 +191,7 @@ jobs:
           docker pull ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG
           docker image save ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG -o ./images/kl-agent-operator.tar.gz
           curl -L "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s-airgap-images-${{ matrix.arch }}.tar" -o ./images/k3s-airgap-images-${{ matrix.arch }}.tar
-          docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/k3s:$IMAGE_TAG-${{ matrix.arch }} . --push
+          docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/k3s:$PUSH_IMAGE_TAG-${{ matrix.arch }} . --push
 
   kl-k3s-docker-multiarch-manifest:
     needs: kl-k3s-base-docker-build
@@ -498,7 +526,7 @@ jobs:
 
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
