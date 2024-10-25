@@ -169,6 +169,13 @@ nats:
       maxMsgsPerSubject: 1  # apiVersion.namespace.name in subject
       workQueue: true
 
+    infraInternalEvents:
+      name: infra-internal-events
+      subjects: "infra-internal-events.>"
+      maxMsgBytes: 500kB
+      maxMsgsPerSubject: 1
+      workQueue: true
+
   buckets:
     sessionKVBucket:
       name: auth-session
