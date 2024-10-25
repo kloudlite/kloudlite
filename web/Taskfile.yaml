@@ -1,5 +1,18 @@
 version: "3"
 tasks:
+  clean:
+    cmds:
+      - rm -rf ./node_modules
+      - rm -rf ./public
+      - rm -rf ./src/design-system/out
+      - rm -rf ./src/design-system/node_modules
+      - rm -rf ./src/design-system/dist
+      - rm -rf ./src/generated/node_modules
+      - rm -rf ./src/generated/plugin/dist
+      - rm -rf ./src/generated/plugin/node_modules
+
+      - rm -rf ./src/apps/devdoc/node_modules
+      - rm -rf ./src/apps/devdoc/.next
   default:
     preconditions:
       - sh: '[[ -n "{{.app}}" ]]'

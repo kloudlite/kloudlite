@@ -1,10 +1,10 @@
-FROM node:20.8.1-alpine AS remix
+FROM node:22.10.0-alpine AS remix
 WORKDIR  /app
 COPY ./package-production.json ./package.json
 RUN npm i --frozen-lockfile
 
-FROM node:20.8.1-alpine AS install
-RUN npm i -g pnpm
+FROM node:22.10.0-alpine AS install
+RUN npm i -g pnpm@9.12.2
 WORKDIR  /app
 COPY ./package.json ./package.json
 COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
@@ -19,8 +19,8 @@ COPY ./src/generated/plugin/package.json  ./src/generated/plugin/pnpm-lock.yaml 
 
 RUN pnpm i -p --frozen-lockfile
 
-FROM node:20.8.1-alpine AS build
-RUN npm i -g pnpm
+FROM node:22.10.0-alpine AS build
+RUN npm i -g pnpm@9.12.2
 WORKDIR  /app
 ARG APP
 ENV APP=${APP}
@@ -65,7 +65,7 @@ COPY ./tsconfig.json ./tsconfig.json
 COPY ./remix.env.d.ts ./remix.env.d.ts
 RUN pnpm build:ts
 
-FROM node:20.8.1-alpine
+FROM node:22.10.0-alpine
 WORKDIR  /app
 ARG APP
 ENV APP=${APP}
@@ -75,4 +75,4 @@ COPY ./static/${APP}/. ./public
 COPY --from=build /app/public ./public
 COPY --from=remix /app/node_modules ./node_modules
 
-ENTRYPOINT npm run serve
+ENTRYPOINT ["npm", "run", "serve"]

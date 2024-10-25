@@ -1,4 +1,4 @@
-FROM node:20.8.1-alpine AS base
+FROM node:22.10.0-alpine AS base
 RUN apk add g++ make py3-pip
 RUN npm i -g pnpm
 WORKDIR /app
@@ -30,7 +30,7 @@ WORKDIR /app/src/apps/webinar
 RUN pnpm i --frozen-lockfile
 RUN pnpm build
 
-FROM node:20.8.1-alpine
+FROM node:22.10.1-alpine
 WORKDIR /app
 COPY --from=base /app/src/apps/webinar/.next ./.next
 COPY --from=base /app/src/apps/webinar/public ./public
