@@ -38,8 +38,8 @@ if [[ -f $ZSH_HIGHLIGHT_PATH ]]; then
 fi
 
 function update_rprompt {
- [ -f /tmp/kl/online.status ] || return
- online_status=$(tail -n 1 /tmp/kl/online.status)
+ [ -f /kl-tmp/online.status ] || return
+ online_status=$(tail -n 1 /kl-tmp/online.status)
  if [ "$online_status" = "online" ]; then
   #RPROMPT="%F{green}online"
   RPROMPT=""

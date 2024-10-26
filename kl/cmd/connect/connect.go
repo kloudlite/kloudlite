@@ -122,7 +122,7 @@ func startWg(cmd *cobra.Command) error {
 }
 
 func ChekcWireguardConnection() bool {
-	file, err := os.Open("/tmp/kl/online.status")
+	file, err := os.Open("/kl-tmp/online.status")
 	if err != nil {
 		return false
 	}

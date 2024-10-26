@@ -236,10 +236,15 @@ func (c *client) generateConnectionScript(clusterConfig *fileclient.TeamClusterC
 		return "", fn.NewE(err)
 	}
 
-	clusterConfig.Version = flags.Version
-	if clusterConfig.Version == "" || clusterConfig.Version == "v1.0.0-nightly" {
-		clusterConfig.Version = "v1.0.8-nightly"
-	}
+	//clusterConfig.Version = flags.Version
+	//if clusterConfig.Version == "" || clusterConfig.Version == "v1.0.0-nightly" {
+	//	u := updater.NewUpdater()
+	//	info, err := u.FetchReleaseInfo()
+	//	if err != nil {
+	//		clusterConfig.Version = "v1.1.0"
+	//	}
+	//	clusterConfig.Version = info["version"]
+	//}
 
 	vpnTeamConfig, err := c.fc.GetVpnTeamConfig(teamName)
 	if err != nil {
@@ -259,12 +264,12 @@ func (c *client) generateConnectionScript(clusterConfig *fileclient.TeamClusterC
 		K3sTrackerImageName string
 		BaseURL             string
 	}{
-		ClusterToken:        clusterConfig.ClusterToken,
-		ClusterName:         clusterConfig.ClusterName,
-		InstallCommand:      clusterConfig.InstallCommand,
-		Installed:           clusterConfig.Installed,
-		WGConfig:            clusterConfig.WGConfig,
-		Version:             clusterConfig.Version,
+		ClusterToken:   clusterConfig.ClusterToken,
+		ClusterName:    clusterConfig.ClusterName,
+		InstallCommand: clusterConfig.InstallCommand,
+		Installed:      clusterConfig.Installed,
+		WGConfig:       clusterConfig.WGConfig,
+		//Version:             clusterConfig.Version,
 		GatewayIP:           clusterConfig.GatewayIP,
 		ClusterCIDR:         clusterConfig.ClusterCIDR,
 		IpAddress:           vpnTeamConfig.IpAddress,

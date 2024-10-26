@@ -12,10 +12,10 @@
 #umask 022
 
 # source $HOME/.nix-profile/etc/profile.d/nix.sh
-export PATH=$PATH:/home/kl/.local/state/nix/profiles/profile/bin
+export PATH=$PATH:/home/kl/.nix-profile/bin
 
 KL_LOCK_PATH=/home/kl/workspace/kl.lock
-[ -f /tmp/env ] && source /tmp/env
+[ -f /kl-tmp/env ] && echo "sourcing /kl-tmp/env" && source /kl-tmp/env
 
 # KL_DEVBOX_PATH=/kl-tmp/devbox
 # KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json

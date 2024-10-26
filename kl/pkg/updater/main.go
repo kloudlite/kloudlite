@@ -21,6 +21,7 @@ type Updater interface {
 	GetUpdateMessage() (*string, error)
 	Update() error
 	GetUpdateUrl() (*string, error)
+	FetchReleaseInfo() (map[string]string, error)
 }
 
 func NewUpdater() Updater {
@@ -28,7 +29,7 @@ func NewUpdater() Updater {
 }
 
 func (u *updater) GetUpdateUrl() (*string, error) {
-	relInfo, err := u.fetchReleaseInfo()
+	relInfo, err := u.FetchReleaseInfo()
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +50,7 @@ func (u *updater) GetUpdateUrl() (*string, error) {
 }
 
 func (u *updater) Update() error {
-	relInfo, err := u.fetchReleaseInfo()
+	relInfo, err := u.FetchReleaseInfo()
 	if err != nil {
 		fn.PrintError(err)
 		return err
@@ -89,7 +90,7 @@ func parseTxtResp(data string) (map[string]string, error) {
 	return res, nil
 }
 
-func (u *updater) fetchReleaseInfo() (map[string]string, error) {
+func (u *updater) FetchReleaseInfo() (map[string]string, error) {
 
 	if u.releaseInfo != nil {
 		return u.releaseInfo, nil
@@ -117,7 +118,7 @@ func (u *updater) fetchReleaseInfo() (map[string]string, error) {
 func (u *updater) CheckForUpdates() (bool, error) {
 	// fetch dns records of txt records of url facebook.com
 
-	relInfo, err := u.fetchReleaseInfo()
+	relInfo, err := u.FetchReleaseInfo()
 	if err != nil {
 		return false, err
 	}
@@ -136,7 +137,7 @@ func (u *updater) CheckForUpdates() (bool, error) {
 
 func (u *updater) GetUpdateMessage() (*string, error) {
 
-	relInfo, err := u.fetchReleaseInfo()
+	relInfo, err := u.FetchReleaseInfo()
 	if err != nil {
 		fn.PrintError(err)
 		return nil, err
