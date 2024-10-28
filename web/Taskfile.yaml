@@ -10,9 +10,6 @@ tasks:
       - rm -rf ./src/generated/node_modules
       - rm -rf ./src/generated/plugin/dist
       - rm -rf ./src/generated/plugin/node_modules
-
-      - rm -rf ./src/apps/devdoc/node_modules
-      - rm -rf ./src/apps/devdoc/.next
   default:
     preconditions:
       - sh: '[[ -n "{{.app}}" ]]'
@@ -36,10 +33,6 @@ tasks:
 
           "website")
               PORT=4005
-              ;;
-
-          "devdoc")
-              PORT=4006
               ;;
 
           "iot-console")
@@ -137,10 +130,6 @@ tasks:
 
           "website")
               PORT=4005
-              ;;
-
-          "devdoc")
-              PORT=4006
               ;;
 
           *)
