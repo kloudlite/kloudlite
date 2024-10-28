@@ -11,15 +11,12 @@ import {
   listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import {
-  GearSix,
-  ListDashes,
-  PencilLine,
-  Trash,
-} from '~/console/components/icons';
+import { PencilLine, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
 import ListV2 from '~/console/components/listV2';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
+import ResourceExtraAction, {
+  IResourceExtraItem,
+} from '~/console/components/resource-extra-action';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
@@ -49,8 +46,8 @@ import { handleError } from '~/root/lib/utils/common';
 // import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import TooltipV2 from '~/components/atoms/tooltipV2';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
-import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { useClusterStatusV3 } from '~/console/hooks/use-cluster-status-v3';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -296,48 +293,39 @@ const ExtraButton = ({
   onShowLogs: () => void;
   item: CombinedBaseType;
 }) => {
-  const { account } = useParams();
-  return item.type === 'byok' ? (
-    <ResourceExtraAction
-      options={[
-        {
-          key: '1',
-          label: 'Edit',
-          icon: <PencilLine size={16} />,
-          type: 'item',
-          onClick: onEdit,
-        },
-        {
-          label: 'Delete',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: onDelete,
-          key: 'delete',
-          className: '!text-text-critical',
-        },
-      ]}
-    />
-  ) : (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Show Logs',
-          icon: <ListDashes size={16} />,
-          type: 'item',
-          onClick: onShowLogs,
-          key: '1',
-          // className: '!text-text-critical',
-        },
-        {
-          label: 'Settings',
-          icon: <GearSix size={16} />,
-          type: 'item',
-          to: `/${account}/infra/${item.metadata.name}/settings`,
-          key: 'settings',
-        },
-      ]}
-    />
-  );
+  const options: IResourceExtraItem[] = [
+    {
+      key: '1',
+      label: 'Edit',
+      icon: <PencilLine size={16} />,
+      type: 'item',
+      onClick: onEdit,
+    },
+    {
+      label: 'Delete',
+      icon: <Trash size={16} />,
+      type: 'item',
+      onClick: onDelete,
+      key: 'delete',
+      className: '!text-text-critical',
+    },
+  ];
+
+  // if (item.type === 'byok' && item.ownedBy === null) {
+  //   options = [
+  //     ...options,
+  //     {
+  //       label: 'Delete',
+  //       icon: <Trash size={16} />,
+  //       type: 'item',
+  //       onClick: onDelete,
+  //       key: 'delete',
+  //       className: '!text-text-critical',
+  //     },
+  //   ];
+  // }
+
+  return <ResourceExtraAction options={options} />;
 };
 
 interface IResource {

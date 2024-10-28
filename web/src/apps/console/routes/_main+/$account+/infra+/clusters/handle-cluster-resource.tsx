@@ -48,7 +48,7 @@ kl auth login
             <CodeView
               preClassName="!overflow-none text-wrap break-words"
               copy
-              data="kl up"
+              data="kl cluster up"
             />
 
             {/* {data.url} */}

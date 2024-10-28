@@ -698,6 +698,69 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  cli_listVPNDevices: executor(
+    gql`
+      query Infra_listGlobalVPNDevices(
+        $gvpn: String!
+        $pagination: CursorPaginationIn
+      ) {
+        infra_listGlobalVPNDevices(gvpn: $gvpn, pagination: $pagination) {
+          edges {
+            cursor
+            node {
+              accountName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationMethod
+              creationTime
+              displayName
+              globalVPNName
+              id
+              ipAddr
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
+              metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
+                name
+                namespace
+              }
+              privateKey
+              publicEndpoint
+              publicKey
+              recordVersion
+              updateTime
+              wireguardConfig {
+                value
+                encoding
+              }
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPrevPage
+            startCursor
+          }
+          totalCount
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_listGlobalVPNDevices,
+      vars: (_: any) => {},
+    }
+  ),
   cli_listAccounts: executor(
     gql`
       query Accounts_listAccounts {

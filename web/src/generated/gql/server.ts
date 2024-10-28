@@ -568,11 +568,11 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HpaIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__InterceptIn =
   {
-    enabled: Scalars['Boolean']['input'];
+    enabled?: InputMaybe<Scalars['Boolean']['input']>;
     portMappings?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
     >;
-    toDevice: Scalars['String']['input'];
+    toDevice?: InputMaybe<Scalars['String']['input']>;
     toIPAddr?: InputMaybe<Scalars['String']['input']>;
   };
 
@@ -1701,8 +1701,11 @@ export type RegistryImageIn = {
 };
 
 export type RegistryImageUrlIn = {
-  scriptUrl: Scalars['String']['input'];
-  url: Scalars['String']['input'];
+  klWebhookAuthToken: Scalars['String']['input'];
+  scriptUrl: Array<Scalars['String']['input']>;
+  scriptUrlExample: Array<Scalars['String']['input']>;
+  url: Array<Scalars['String']['input']>;
+  urlExample: Array<Scalars['String']['input']>;
 };
 
 export type SearchProjectManagedService = {
@@ -2715,8 +2718,8 @@ export type ConsoleGetAppQuery = {
         thresholdMemory?: number;
       };
       intercept?: {
-        enabled: boolean;
-        toDevice: string;
+        enabled?: boolean;
+        toDevice?: string;
         portMappings?: Array<{ devicePort: number; appPort: number }>;
       };
       services?: Array<{ port: number }>;
@@ -2865,8 +2868,8 @@ export type ConsoleListAppsQuery = {
             thresholdMemory?: number;
           };
           intercept?: {
-            enabled: boolean;
-            toDevice: string;
+            enabled?: boolean;
+            toDevice?: string;
             portMappings?: Array<{ appPort: number; devicePort: number }>;
           };
           router?: {
@@ -3086,8 +3089,8 @@ export type ConsoleGetExternalAppQuery = {
       record: string;
       recordType: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ExternalAppRecordType;
       intercept?: {
-        enabled: boolean;
-        toDevice: string;
+        enabled?: boolean;
+        toDevice?: string;
         portMappings?: Array<{ appPort: number; devicePort: number }>;
       };
     };
@@ -3159,8 +3162,8 @@ export type ConsoleListExternalAppsQuery = {
           record: string;
           recordType: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ExternalAppRecordType;
           intercept?: {
-            enabled: boolean;
-            toDevice: string;
+            enabled?: boolean;
+            toDevice?: string;
             portMappings?: Array<{ appPort: number; devicePort: number }>;
           };
         };
@@ -6069,7 +6072,13 @@ export type ConsoleGetRegistryImageUrlQueryVariables = Exact<{
 }>;
 
 export type ConsoleGetRegistryImageUrlQuery = {
-  core_getRegistryImageURL: { scriptUrl: string; url: string };
+  core_getRegistryImageURL: {
+    scriptUrl: Array<string>;
+    url: Array<string>;
+    urlExample: Array<string>;
+    scriptUrlExample: Array<string>;
+    klWebhookAuthToken: string;
+  };
 };
 
 export type ConsoleSearchRegistryImagesQueryVariables = Exact<{
@@ -6396,8 +6405,8 @@ export type AuthCli_ListAppsQuery = {
         markedForDeletion?: boolean;
         spec?: {
           intercept?: {
-            enabled: boolean;
-            toDevice: string;
+            enabled?: boolean;
+            toDevice?: string;
             portMappings?: Array<{ devicePort: number; appPort: number }>;
           };
         };
@@ -6420,8 +6429,8 @@ export type AuthCli_ListAppsQuery = {
         spec: {
           displayName?: string;
           intercept?: {
-            enabled: boolean;
-            toDevice: string;
+            enabled?: boolean;
+            toDevice?: string;
             portMappings?: Array<{ devicePort: number; appPort: number }>;
           };
           services?: Array<{ port: number }>;
@@ -6525,6 +6534,53 @@ export type AuthCli_ListClustersQuery = {
         status?: { isReady: boolean };
       };
     }>;
+  };
+};
+
+export type AuthCli_ListVpnDevicesQueryVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListVpnDevicesQuery = {
+  infra_listGlobalVPNDevices?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationMethod?: string;
+        creationTime: any;
+        displayName: string;
+        globalVPNName: string;
+        id: string;
+        ipAddr: string;
+        markedForDeletion?: boolean;
+        privateKey: string;
+        publicEndpoint?: string;
+        publicKey: string;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        wireguardConfig?: { value: string; encoding: string };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPrevPage?: boolean;
+      startCursor?: string;
+    };
   };
 };
 
