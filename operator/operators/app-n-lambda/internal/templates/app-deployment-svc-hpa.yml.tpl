@@ -8,6 +8,8 @@
 
 {{- /* {{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "cluster.local"}} */}}
 
+{{- $serviceAccountName := get . "service-account-name" | default "" }}
+
 {{- with $obj }}
 
 {{- $isIntercepted := (and .Spec.Intercept .Spec.Intercept.Enabled) }}
@@ -40,7 +42,7 @@ spec:
         {{ $podLabels | toYAML | nindent 8 }}
       annotations: {{$podAnnotations | toYAML | nindent 8 }}
     spec:
-      serviceAccountName: {{.Spec.ServiceAccount}}
+      serviceAccountName: {{$serviceAccountName}}
       nodeSelector: {{if .Spec.NodeSelector}}{{ .Spec.NodeSelector | toYAML | nindent 8 }}{{end}}
         {{- if .Spec.Region}}
         kloudlite.io/region: {{.Spec.Region | squote}}
@@ -59,20 +61,6 @@ spec:
       {{- end }}
 
       dnsPolicy: ClusterFirst
-
-      {{- /* affinity: */ -}}
-      {{- /*   nodeAffinity: */ -}}
-      {{- /*     preferredDuringSchedulingIgnoredDuringExecution: */ -}}
-      {{- /*       {{- $nWeight := 30 -}} */ -}}
-      {{- /*       {{- range $weight := Iterate $nWeight }} */ -}}
-      {{- /*       - weight: {{ sub $nWeight $weight }} */ -}}
-      {{- /*         preference: */ -}}
-      {{- /*           matchExpressions: */ -}}
-      {{- /*             - key: kloudlite.io/node-index */ -}}
-      {{- /*               operator: In */ -}}
-      {{- /*               values: */ -}}
-      {{- /*                 - {{$weight | squote}} */ -}}
-      {{- /*       {{- end }} */ -}}
 
       {{- if .Spec.Containers }}
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}
