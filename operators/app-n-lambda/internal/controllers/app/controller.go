@@ -61,8 +61,7 @@ const (
 
 	AppInterceptCreated string = "app-intercept-created"
 
-	DefaultsPatched string = "defaults-patched"
-	AppRouterReady  string = "app-router-ready"
+	AppRouterReady string = "app-router-ready"
 )
 
 var DeleteChecklist = []rApi.CheckMeta{
@@ -101,7 +100,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 			return "Deployment Created"
 		}(), Hide: req.Object.IsInterceptEnabled()},
 		{Name: DeploymentReady, Title: "Deployment Ready", Hide: req.Object.IsInterceptEnabled()},
-		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled() || req.Object.IsHPAEnabled()},
+		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled() || !req.Object.IsHPAEnabled()},
 		{Name: AppInterceptCreated, Title: "App Intercept Created", Hide: !req.Object.IsInterceptEnabled()},
 		{Name: AppRouterReady, Title: "App Router Ready", Hide: req.Object.Spec.Router == nil},
 	}); !step.ShouldProceed() {
@@ -191,6 +190,16 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 	return check.Completed()
 }
 
+func getServiceAccountName(obj *crdsv1.App) string {
+	if obj.Spec.ServiceAccount != "" {
+		return obj.Spec.ServiceAccount
+	}
+	if _, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
+		return "kloudlite-env-sa"
+	}
+	return ""
+}
+
 func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(DeploymentSvcCreated, req)
@@ -199,14 +208,18 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	b, err := templates.ParseBytes(
 		r.appDeploymentTemplate, map[string]any{
-			"object":        obj,
-			"volumes":       volumes,
-			"volume-mounts": vMounts,
-			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
-			"pod-labels":    fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
+			"object":               obj,
+			"volumes":              volumes,
+			"volume-mounts":        vMounts,
+			"service-account-name": getServiceAccountName(obj),
+			"owner-refs":           []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"account-name":         obj.GetAnnotations()[constants.AccountNameKey],
+			"pod-labels":           fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
 			"pod-annotations": fn.MapFilter(obj.GetAnnotations(),
 				func(k string, _ string) bool {
+					if k == "kloudlite.io/last-applied" {
+						return false
+					}
 					return strings.HasPrefix(k, "kloudlite.io/") && !strings.HasPrefix(k, "kloudlite.io/operator.")
 				},
 			),
@@ -323,10 +336,6 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 
 	check := rApi.NewRunningCheck(HPAConfigured, req)
 
-	// if obj.IsInterceptEnabled() {
-	// 	return check.Completed()
-	// }
-
 	hpaVars := templates.HPATemplateVars{
 		Metadata: metav1.ObjectMeta{
 			Name:            obj.Name,
@@ -338,17 +347,7 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 		HPA: obj.Spec.Hpa,
 	}
 
-	// if obj.Spec.Intercept != nil && obj.Spec.Intercept.Enabled {
-	// 	if obj.Spec.Hpa != nil && obj.Spec.Hpa.Enabled {
-	// 		hpaVars.HPA.MinReplicas = 0
-	// 		hpaVars.HPA.MaxReplicas = 0
-	// 	}
-	// }
-
-	isInterceptEnabled := obj.Spec.Intercept != nil && obj.Spec.Intercept.Enabled
-	isHPAEnabled := obj.Spec.Hpa != nil && obj.Spec.Hpa.Enabled
-
-	if isInterceptEnabled || !isHPAEnabled {
+	if obj.IsInterceptEnabled() || !obj.IsHPAEnabled() {
 		hpa, err := rApi.Get(ctx, r.Client, fn.NN(hpaVars.Metadata.Namespace, hpaVars.Metadata.Name), &autoscalingv2.HorizontalPodAutoscaler{})
 		if err != nil {
 			if apiErrors.IsNotFound(err) {
@@ -389,6 +388,10 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
 	if err != nil {
 		return check.Failed(err)
+	}
+
+	if deployment.Spec.Template.Spec.ServiceAccountName != getServiceAccountName(obj) {
+		return check.StillRunning(r.Delete(ctx, deployment))
 	}
 
 	for _, c := range deployment.Status.Conditions {
