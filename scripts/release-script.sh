@@ -17,38 +17,38 @@ opts=("-R" "${github_repository}")
 
 echo "$chart_version" | grep -i '\-nightly$'
 if [ $? -eq 0 ]; then
-	overwrite_release_assets=true
+  overwrite_release_assets=true
 fi
 
 release=$(gh release list ${opts[@]} | tail -n +1 | (grep -iE "\s+$chart_version\s+" || echo -n "") | awk '{print $3}')
 if [[ -z $release ]]; then
-	echo "going to create release, as RELEASE ($chart_version) does not exist"
-	createOpts="${opts[@]}"
-	if $pre_release; then
-		createOpts+=("--prerelease")
-	fi
-	if ! [[ -z $release_title ]]; then
-		createOpts+=("--title" "'$release_title'")
-	fi
-	createOpts+=("--notes" "'$RELEASE_NOTES'")
+  echo "going to create release, as RELEASE ($chart_version) does not exist"
+  createOpts="${opts[@]}"
+  if $pre_release; then
+    createOpts+=("--prerelease")
+  fi
+  if ! [[ -z $release_title ]]; then
+    createOpts+=("--title" "'$release_title'")
+  fi
+  createOpts+=("--notes" "'$RELEASE_NOTES'")
 
-	echo "creating github release with cmd: \`gh release create $chart_version ${createOpts[@]}\` "
-	eval gh release create "$chart_version" ${createOpts[@]} --generate-notes
+  echo "creating github release with cmd: \`gh release create $chart_version ${createOpts[@]}\` "
+  eval gh release create "$chart_version" ${createOpts[@]} --generate-notes
 else
-	echo "release $release exists, going to build charts, now"
+  echo "release $release exists, going to build charts, now"
 fi
 
 tar_dir=".chart-releases"
 
 # for dir in $(ls -d charts/*); do
 for dir in charts/*/; do
-	echo cr package "$dir" --package-path $tar_dir
-	cr package "$dir" --package-path $tar_dir
+  echo cr package "$dir" --package-path $tar_dir
+  cr package "$dir" --package-path $tar_dir
 done
 
 uploadOpts="${opts[@]}"
 if $overwrite_release_assets; then
-	uploadOpts+=("--clobber")
+  uploadOpts+=("--clobber")
 fi
 
 echo "uploading packaged helm-charts with cmd: \`gh release upload $chart_version ${uploadOpts[*]} $tar_dir/*.tgz\`"
@@ -57,8 +57,8 @@ gh release upload "$chart_version" ${uploadOpts[@]} $tar_dir/*.tgz
 ## updating CRDs
 rm -rf crds/crds-all.yml
 for file in crds/*; do
-	cat "$file" >>crds/crds-all.yml
-	echo "---" >>crds/crds-all.yml
+  cat "$file" >>crds/crds-all.yml
+  echo "---" >>crds/crds-all.yml
 done
 
 gh release upload "$chart_version" ${uploadOpts[@]} crds/*.yml
@@ -86,9 +86,9 @@ cp $tar_dir/index.yaml $tar_dir/new-index.yaml
 keys=$(cat $tar_dir/index.yaml | yq '.entries | keys |.[]' -r)
 pushd $tar_dir
 for key in $keys; do
-	echo "merging for chart: $key"
-	cat index.yaml | yq '.entries[$key] = ($entries|fromjson)' --arg key "$key" --arg entries "$(yq -s '.' index.yaml old-index.yaml | jq --arg key "$key" '(.[0].entries[$key] + .[1].entries[$key])' -r)" -y >new-index.yaml
-	mv new-index.yaml index.yaml
+  echo "merging for chart: $key"
+  cat index.yaml | yq '.entries[$key] = ($entries|fromjson)' --arg key "$key" --arg entries "$(yq -s '.' index.yaml old-index.yaml | jq --arg key "$key" '(.[0].entries[$key] + .[1].entries[$key])' -r)" -y >new-index.yaml
+  mv new-index.yaml index.yaml
 done
 popd
 
@@ -102,7 +102,8 @@ gh release upload "$chart_version" ${uploadOpts[@]} .static-pages/index.yaml
 cat >.static-pages/index.html <<EOF
 <html>
   <head>
-    <title>Kloudlite Helm Charts</title>
+    <title>Kloudlite Helm Charts - $chart_version </title>
+    <meta name="revised" content="$(date -Iseconds)" />
   </head>
 
   <body>
