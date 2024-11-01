@@ -53,6 +53,7 @@ COPY ./jsconfig.json ./jsconfig.json
 COPY ./tsconfig.json ./tsconfig.json
 COPY ./remix.env.d.ts ./remix.env.d.ts
 COPY ./css-plugins ./css-plugins
+COPY ./index.css ./index.css
 
 RUN pnpm build:ts
 
