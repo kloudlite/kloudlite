@@ -1,10 +1,10 @@
 import { useOutletContext } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { useCallback, useMemo, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { dayjs } from '~/components/molecule/dayjs';
-import Profile from '~/components/molecule/profile';
-import { useSort } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
+import Profile from '@kloudlite/design-system/molecule/profile';
+import { useSort } from '@kloudlite/design-system/utils';
 import { EmptyState } from '~/console/components/empty-state';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { Plus, SmileySad } from '~/console/components/icons';

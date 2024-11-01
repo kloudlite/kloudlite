@@ -1,6 +1,6 @@
-import { Avatar } from '~/components/atoms/avatar';
-import { Button } from '~/components/atoms/button';
-import { generateKey } from '~/components/utils';
+import { Avatar } from '@kloudlite/design-system/atoms/avatar';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { generateKey } from '@kloudlite/design-system/utils';
 import List from '~/console/components/list';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { popupWindow } from '~/console/utils/commons';

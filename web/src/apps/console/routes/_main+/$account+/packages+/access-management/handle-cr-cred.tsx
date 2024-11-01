@@ -1,8 +1,8 @@
-import { NumberInput, TextInput } from '~/components/atoms/input';
-import Radio from '~/components/atoms/radio';
-import SelectPrimitive from '~/components/atoms/select-primitive';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import { NumberInput, TextInput } from '@kloudlite/design-system/atoms/input';
+import Radio from '@kloudlite/design-system/atoms/radio';
+import SelectPrimitive from '@kloudlite/design-system/atoms/select-primitive';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IdSelector } from '~/console/components/id-selector';
 import { NameIdView } from '~/console/components/name-id-view';

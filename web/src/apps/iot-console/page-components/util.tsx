@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { FormEventHandler } from 'react';
-import { ChildrenProps } from '~/components/types';
-import { cn } from '~/components/utils';
+import { ChildrenProps } from '@kloudlite/design-system/types';
+import { cn } from '@kloudlite/design-system/utils';
 import { InputMaybe } from '~/root/src/generated/gql/server';
 
 export const FadeIn = ({

@@ -1,6 +1,6 @@
 import * as RovingFocusGroup from '@radix-ui/react-roving-focus';
 import { KeyboardEvent, ReactNode, useRef } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import logger from '~/root/lib/client/helpers/log';
 import { LoadingPlaceHolder } from './loading';
 

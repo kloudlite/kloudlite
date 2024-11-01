@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import Pagination from '~/components/molecule/pagination';
+import Pagination from '@kloudlite/design-system/molecule/pagination';
 import {
   decodeUrl,
   encodeUrl,

@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import FillerAppCompute from '~/iotconsole/assets/app/filler-compute';
 import FillerAppDetail from '~/iotconsole/assets/app/filler-details';
 import FillerAppEnv from '~/iotconsole/assets/app/filler-env';

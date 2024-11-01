@@ -1,8 +1,8 @@
 import { Plus, SmileySad } from '~/iotconsole/components/icons';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import Tabs from '~/components/atoms/tabs';
-import Profile from '~/components/molecule/profile';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Tabs from '@kloudlite/design-system/atoms/tabs';
+import Profile from '@kloudlite/design-system/molecule/profile';
 import Wrapper from '~/iotconsole/components/wrapper';
 import { dummyData } from '~/iotconsole/dummy/data';
 import HandleUser from './handle-user';

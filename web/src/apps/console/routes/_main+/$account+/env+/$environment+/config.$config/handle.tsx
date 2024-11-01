@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { TextArea, TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
+import { TextArea, TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { IDialog, IModifiedItem } from '~/console/components/types.d';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import { parseName } from '~/console/server/r-utils/common';

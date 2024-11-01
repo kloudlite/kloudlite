@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { dayjs } from '~/components/molecule/dayjs';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
 import { ISocketResp, useSubscribe } from './context';
 import { ILog } from '../../components/logger';
 

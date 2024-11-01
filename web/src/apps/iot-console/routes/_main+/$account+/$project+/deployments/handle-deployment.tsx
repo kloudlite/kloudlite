@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { toast } from 'react-toastify';
-import { TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -13,7 +13,7 @@ import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import { useOutletContext } from '@remix-run/react';
 import { IDeployments } from '~/iotconsole/server/gql/queries/iot-deployment-queries';
 import KeyValuePair from '~/iotconsole/components/key-value-pair';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import { useEffect } from 'react';
 import { IProjectContext } from '../_layout';
 

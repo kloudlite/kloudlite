@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { toast } from 'react-toastify';
-import { TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -13,7 +13,7 @@ import {
   validateExternalAppRecordType,
 } from '~/console/server/r-utils/common';
 import { NameIdView } from '~/console/components/name-id-view';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import { IExternalApps } from '~/console/server/gql/queries/external-app-queries';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useOutletContext } from '@remix-run/react';

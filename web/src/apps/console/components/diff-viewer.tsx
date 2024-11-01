@@ -42,13 +42,9 @@ const HighlightIt = ({
     (async () => {
       if (ref.current) {
         // @ts-ignore
-        ref.current.innerHTML = hljs.highlight(
-          inlineData,
-          {
-            language,
-          },
-          false
-        ).value;
+        ref.current.innerHTML = hljs.highlight(inlineData, {
+          language,
+        }).value;
       }
     })();
   }, [inlineData, language]);

@@ -1,7 +1,7 @@
 import Pulsable from 'react-pulsable';
-import { Button, IconButton } from '~/components/atoms/button';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
 import { ReactNode } from 'react';
-import { generateKey } from '~/components/utils';
+import { generateKey } from '@kloudlite/design-system/utils';
 import { DotsSix } from '~/iotconsole/components/icons';
 import Wrapper from '../components/wrapper';
 import CommonTools from '../components/common-tools';

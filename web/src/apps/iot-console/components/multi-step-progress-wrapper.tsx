@@ -1,8 +1,8 @@
 import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { ArrowLeft } from '~/iotconsole/components/icons';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import SplitWrapper from './split-wrapper';
 
 type ITitleSection = {

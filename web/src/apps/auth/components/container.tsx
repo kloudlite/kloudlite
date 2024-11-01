@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import Header from './header';
 import Footer from './footer';
 

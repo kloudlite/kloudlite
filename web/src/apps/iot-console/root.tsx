@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-useless-fragment */
 import Root, { links as baseLinks } from '~/lib/app-setup/root';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 import { SockProvider } from '~/root/lib/client/helpers/socket/context';
 import authStylesUrl from './styles/index.css';
 import highlightCss from './styles/hljs/tokyo-night-dark.min.css';

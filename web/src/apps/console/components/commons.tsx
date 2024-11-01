@@ -1,15 +1,15 @@
 import { ReactNode, useState } from 'react';
-import { ProdLogo } from '~/components/branding/prod-logo';
-import { WorkspacesLogo } from '~/components/branding/workspace-logo';
+import { ProdLogo } from '@kloudlite/design-system/branding/prod-logo';
+import { WorkspacesLogo } from '@kloudlite/design-system/branding/workspace-logo';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncState,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as SyncAction,
 } from '~/root/src/generated/gql/server';
-import Tooltip from '~/components/atoms/tooltip';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
 import { Link } from '@remix-run/react';
-import { Button, IButton } from '~/components/atoms/button';
+import { Button, IButton } from '@kloudlite/design-system/atoms/button';
 import {
   ArrowLeft,
   ArrowRight,

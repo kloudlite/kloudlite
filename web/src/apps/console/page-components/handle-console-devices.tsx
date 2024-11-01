@@ -10,12 +10,12 @@ import {
   X,
 } from '~/console/components/icons';
 import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
-import { NumberInput } from '~/components/atoms/input';
-import { usePagination } from '~/components/molecule/pagination';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
+import { NumberInput } from '@kloudlite/design-system/atoms/input';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import QRCode from '~/console/components/qr-code';
@@ -28,7 +28,7 @@ import { InfoLabel } from '~/console/components/commons';
 import { parseValue } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import { Link } from '@remix-run/react';
 import { ConsoleApiType } from '../server/gql/saved-queries';
 import ExtendedFilledTab from '../components/extended-filled-tab';

@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 
 const OverlaySideDialog = ({
   show = false,

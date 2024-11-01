@@ -1,4 +1,4 @@
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import { Clock, ListNumbers } from '~/console/components/icons';
 import { useDataState } from './common-state';
 

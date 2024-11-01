@@ -1,7 +1,7 @@
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useEffect } from 'react';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { EmptyStorageImage } from '~/console/components/empty-resource-images';
 import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -20,14 +20,14 @@ export const loader = (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
   const promise = pWrapper(async () => {
     const { data: mData, errors: mErrors } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listClusterMSvs({
       pagination: getPagination(ctx),
       search: getSearch(ctx),
     });
 
     const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listMSvTemplates({});
 
     if (mErrors) {

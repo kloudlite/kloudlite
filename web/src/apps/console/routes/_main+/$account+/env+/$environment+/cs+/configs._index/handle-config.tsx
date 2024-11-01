@@ -1,6 +1,6 @@
 import { useParams } from '@remix-run/react';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';

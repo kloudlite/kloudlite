@@ -1,7 +1,7 @@
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import { Trash } from '~/console/components/icons';
 import {
   ExtractNodeType,

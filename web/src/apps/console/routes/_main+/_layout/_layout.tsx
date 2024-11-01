@@ -8,14 +8,14 @@ import {
   useParams,
 } from '@remix-run/react';
 import { cloneElement, useCallback, useState } from 'react';
-import { Avatar } from '~/components/atoms/avatar';
-import { Button, IconButton } from '~/components/atoms/button';
-import Container from '~/components/atoms/container';
-import OptionList from '~/components/atoms/option-list';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import Profile from '~/components/molecule/profile';
-import { TopBar } from '~/components/organisms/top-bar';
-import { generateKey, titleCase } from '~/components/utils';
+import { Avatar } from '@kloudlite/design-system/atoms/avatar';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
+import Container from '@kloudlite/design-system/atoms/container';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
+import Profile from '@kloudlite/design-system/molecule/profile';
+import { TopBar } from '@kloudlite/design-system/organisms/top-bar';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import {
@@ -35,7 +35,7 @@ import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries'
 import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
 import { setupAccountContext } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
-import { LightTitlebarColor } from '~/design-system/tailwind-base';
+import { LightTitlebarColor } from '~/root/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import logger from '~/root/lib/client/helpers/log';
@@ -309,7 +309,7 @@ const NotificationMenu = () => {
             first: 100,
           },
         }),
-      true
+      true,
     );
 
   const notifications = parseNodes(notificationsData);
@@ -482,7 +482,7 @@ const Console = () => {
               {breadcrum.map((bc: any, index) =>
                 cloneElement(bc.handle.breadcrum(bc), {
                   key: generateKey(index),
-                })
+                }),
               )}
             </Breadcrum.Root>
           )

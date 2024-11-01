@@ -12,7 +12,7 @@ import { getPagination, getSearch } from '~/iotconsole/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { Plus } from '~/iotconsole/components/icons';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import fake from '~/root/fake-data-generator/fake';
 import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';

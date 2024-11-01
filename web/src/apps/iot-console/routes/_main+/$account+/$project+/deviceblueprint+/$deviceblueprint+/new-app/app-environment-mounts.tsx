@@ -1,10 +1,10 @@
 import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import SelectPrimitive from '~/components/atoms/select-primitive';
-import { usePagination } from '~/components/molecule/pagination';
-import { cn } from '~/components/utils';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import SelectPrimitive from '@kloudlite/design-system/atoms/select-primitive';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import { cn } from '@kloudlite/design-system/utils';
 import { InfoLabel } from '~/iotconsole/components/commons';
 import List from '~/iotconsole/components/list';
 import NoResultsFound from '~/iotconsole/components/no-results-found';

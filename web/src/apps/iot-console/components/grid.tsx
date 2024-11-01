@@ -6,7 +6,7 @@ import React, {
   ReactNode,
   useRef,
 } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import logger from '~/root/lib/client/helpers/log';
 
 const focusableElement = 'a[href], button, input, select, textarea';

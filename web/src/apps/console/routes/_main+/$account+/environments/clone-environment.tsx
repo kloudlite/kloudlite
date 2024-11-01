@@ -1,9 +1,9 @@
 /* eslint-disable react/destructuring-assignment */
 import { useCallback, useEffect, useState } from 'react';
-import Radio from '~/components/atoms/radio';
-import Select from '~/components/atoms/select';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import Radio from '@kloudlite/design-system/atoms/radio';
+import Select from '@kloudlite/design-system/atoms/select';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';

@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { TextInput } from '~/components/atoms/input';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import AlertModal from './alert-modal';
 
 interface IDeleteDialog {

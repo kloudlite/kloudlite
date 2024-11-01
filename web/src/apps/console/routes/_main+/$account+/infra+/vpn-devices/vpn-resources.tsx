@@ -1,6 +1,6 @@
 import { GearSix } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import { IStatus, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -25,9 +25,9 @@ import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { ISetState } from '~/console/page-components/app-states';
 import { useState } from 'react';
-import { dayjs } from '~/components/molecule/dayjs';
-import { Button } from '~/components/atoms/button';
-import AnimateHide from '~/components/atoms/animate-hide';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
 import LogComp from '~/root/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';
 import { useDataState } from '~/console/page-components/common-state';

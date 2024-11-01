@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import { ReactNode, forwardRef, useEffect, useState } from 'react';
-import { TextInput } from '~/components/atoms/input';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';

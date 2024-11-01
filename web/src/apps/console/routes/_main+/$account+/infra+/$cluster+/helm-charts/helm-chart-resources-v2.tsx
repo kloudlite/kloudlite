@@ -1,5 +1,5 @@
 import { PencilSimple, Trash } from '~/console/components/icons';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListItem,
   ListTitle,
@@ -18,7 +18,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useOutletContext, useParams } from '@remix-run/react';
 import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';

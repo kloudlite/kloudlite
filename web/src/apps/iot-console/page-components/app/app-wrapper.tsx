@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import Wrapper from '~/iotconsole/components/wrapper';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 

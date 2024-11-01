@@ -1,13 +1,13 @@
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { DeleteContainer } from '~/iotconsole/components/common-console-components';
 import { useAppState } from '~/iotconsole/page-components/app-states';
 import { parseName } from '~/iotconsole/server/r-utils/common';
 import DeleteDialog from '~/iotconsole/components/delete-dialog';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { handleError } from '~/lib/utils/common';
 import Wrapper from '~/iotconsole/components/wrapper';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';

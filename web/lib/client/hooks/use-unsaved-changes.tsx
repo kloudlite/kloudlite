@@ -14,7 +14,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { useReload } from '../helpers/reloader';
 
 const UnsavedChanges = createContext<{

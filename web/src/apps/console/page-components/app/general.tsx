@@ -1,8 +1,8 @@
 import { useParams } from '@remix-run/react';
 import { useCallback, useEffect, useState } from 'react';
-import { Checkbox } from '~/components/atoms/checkbox';
-import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
 import { BottomNavigation } from '~/console/components/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useAppState } from '~/console/page-components/app-states';

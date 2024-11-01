@@ -9,7 +9,7 @@ import {
   useParams,
 } from '@remix-run/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import {
   Buildings,
   Check,
@@ -27,9 +27,9 @@ import {
 } from '~/console/server/gql/queries/account-queries';
 import { parseName } from '~/console/server/r-utils/common';
 
-import { Button } from '~/components/atoms/button';
-import OptionList from '~/components/atoms/option-list';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import { cn } from '@kloudlite/design-system/utils';
 import MenuSelect, { SelectItem } from '~/console/components/menu-select';
 import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v3';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -63,14 +63,14 @@ export const loader = async (ctx: IExtRemixCtx) => {
     }
 
     const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listMSvTemplates({});
     if (msvError) {
       throw msvError[0];
     }
 
     const { data: clusterList, errors: clusterError } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listClusterStatus({
       pagination: {
         first: 100,
@@ -382,7 +382,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
 
   const { data: accounts } = useCustomSwr(
     () => '/accounts',
-    async () => api.listAccounts({})
+    async () => api.listAccounts({}),
   );
 
   const [searchText, setSearchText] = useState('');
@@ -399,7 +399,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
       searchText,
       keys: ['searchField'],
     },
-    [searchText, accounts]
+    [searchText, accounts],
   );
 
   const [open, setOpen] = useState(false);
@@ -434,7 +434,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
             aria-label="accounts"
             className={cn(
               'outline-none rounded py-lg px-md mx-md bg-surface-basic-hovered',
-              open || isMouseOver ? 'bg-surface-basic-pressed' : ''
+              open || isMouseOver ? 'bg-surface-basic-pressed' : '',
             )}
             onMouseOver={() => {
               setIsMouseOver(true);
@@ -463,7 +463,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
               focusRing={false}
               placeholder="Search teams"
               compact
-              className="border-0 rounded-none"
+              className="!border-0 !rounded-none"
             />
           </div>
           <OptionList.Separator />
@@ -482,7 +482,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
                   'flex flex-row items-center justify-between',
                   parseName(item) === parseName(account)
                     ? 'bg-surface-basic-pressed hover:!bg-surface-basic-pressed'
-                    : ''
+                    : '',
                 )}
               >
                 <span>{item.displayName}</span>

@@ -1,9 +1,9 @@
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useMemo, useState } from 'react';
-import { Avatar } from '~/components/atoms/avatar';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import { toast } from '~/components/molecule/toast';
+import { Avatar } from '@kloudlite/design-system/atoms/avatar';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { Buildings, CopySimple } from '~/console/components/icons';
 import { parseName } from '~/console/server/r-utils/common';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';

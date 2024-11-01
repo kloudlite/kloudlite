@@ -1,5 +1,5 @@
 import { useNavigate } from '@remix-run/react';
-import { BrandLogo } from '~/components/branding/brand-logo';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
 import { handleError, sleep } from '~/root/lib/utils/common';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { toast } from 'react-toastify';

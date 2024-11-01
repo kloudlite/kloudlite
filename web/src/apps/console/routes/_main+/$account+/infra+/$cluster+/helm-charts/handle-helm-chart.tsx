@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
-import { TextArea, TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
+import { TextArea, TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
@@ -18,13 +18,13 @@ import { useParams } from '@remix-run/react';
 import axios from 'axios';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import { CircleWavyCheckFill } from '~/console/components/icons';
-import { cn, useMapper } from '~/components/utils';
+import { cn, useMapper } from '@kloudlite/design-system/utils';
 import Pulsable from 'react-pulsable';
 import { NameIdView } from '~/console/components/name-id-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import logger from '~/root/lib/client/helpers/log';

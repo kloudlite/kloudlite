@@ -5,7 +5,7 @@ import {
   GoogleCloudlogo,
 } from '~/console/components/icons';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import yup from '~/root/lib/server/helpers/yup';
 import {
   IMSvTemplate,

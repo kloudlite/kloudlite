@@ -1,10 +1,10 @@
 /* eslint-disable react/destructuring-assignment */
 import { useOutletContext, useParams } from '@remix-run/react';
 import { useCallback, useEffect, useState } from 'react';
-import Select from '~/components/atoms/select';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { useMapper } from '~/components/utils';
+import Select from '@kloudlite/design-system/atoms/select';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { useMapper } from '@kloudlite/design-system/utils';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { ListItem } from '~/console/components/console-list-components';
 import ListV2 from '~/console/components/listV2';

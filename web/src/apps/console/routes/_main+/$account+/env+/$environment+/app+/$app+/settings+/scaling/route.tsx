@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import Slider from '~/components/atoms/slider';
+import Slider from '@kloudlite/design-system/atoms/slider';
 import { useAppState } from '~/console/page-components/app-states';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { Checkbox } from '~/components/atoms/checkbox';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
 import AppWrapper from '~/console/page-components/app/app-wrapper';
 
 const SettingCompute = () => {

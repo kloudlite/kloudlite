@@ -1,8 +1,8 @@
 /* eslint-disable react/destructuring-assignment */
 import { toast } from 'react-toastify';
-import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import Popup from '~/components/molecule/popup';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';

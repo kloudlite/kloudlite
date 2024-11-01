@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateKey } from '~/components/utils';
+import { generateKey } from '@kloudlite/design-system/utils';
 import {
   ListBody,
   ListItem,
@@ -14,8 +14,8 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/iotconsole/server/r-utils/common';
 import { useOutletContext, useParams } from '@remix-run/react';
-import AnimateHide from '~/components/atoms/animate-hide';
-import { Button } from '~/components/atoms/button';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { GitBranch, Tag } from '~/iotconsole/components/icons';
 import dayjs from 'dayjs';
 import LogComp from '~/lib/client/components/logger';

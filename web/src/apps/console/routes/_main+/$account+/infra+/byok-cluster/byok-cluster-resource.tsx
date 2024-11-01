@@ -1,6 +1,6 @@
 import { PencilLine, Trash } from '~/console/components/icons';
 import { Link, useParams } from '@remix-run/react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
@@ -17,14 +17,14 @@ import {
 } from '~/console/server/r-utils/common';
 import ListV2 from '~/console/components/listV2';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
-import AnimateHide from '~/components/atoms/animate-hide';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
 import LogComp from '~/root/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useState } from 'react';
 import { useDataState } from '~/console/page-components/common-state';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/root/lib/client/helpers/reloader';

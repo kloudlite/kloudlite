@@ -5,8 +5,8 @@ import type {
   IMenuItemRender,
   ISelect,
 } from '@oshq/react-select';
-import { cn } from '~/components/utils';
-import AnimateHide from '~/components/atoms/animate-hide';
+import { cn } from '@kloudlite/design-system/utils';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
 
 const menuItemRender = (props: IMenuItemRender) => {
   const { innerProps, render, active, focused } = props;

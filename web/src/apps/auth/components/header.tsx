@@ -1,5 +1,5 @@
-import { Button } from '~/components/atoms/button';
-import { BrandLogo } from '~/components/branding/brand-logo';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
 import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
 import Wrapper from './wrapper';

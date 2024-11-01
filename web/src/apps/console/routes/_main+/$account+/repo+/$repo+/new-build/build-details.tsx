@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import { useMapper } from '~/components/utils';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import { useMapper } from '@kloudlite/design-system/utils';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';

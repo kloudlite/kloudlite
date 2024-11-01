@@ -4,7 +4,7 @@ import { Box } from '~/console/components/common-console-components';
 import { parseName } from '~/console/server/r-utils/common';
 import { DownloadSimple } from '~/console/components/icons';
 import { downloadFile, renderCloudProvider } from '~/console/utils/commons';
-import { Chip } from '~/components/atoms/chips';
+import { Chip } from '@kloudlite/design-system/atoms/chips';
 import {
   CopyButton,
   DetailItem,
@@ -12,10 +12,10 @@ import {
 } from '~/console/components/commons';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useState } from 'react';
 import CodeView from '~/console/components/code-view';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { IClusterContext } from '../../_layout';
 
 const KubeConfigDownload = ({ cluster }: { cluster: string }) => {
@@ -127,7 +127,7 @@ const ClusterInfo = () => {
                   label={
                     cluster.spec?.availabilityMode === 'dev'
                       ? 'Development'
-                      : 'Highly Available' || ''
+                      : 'Highly Available'
                   }
                 />
               }

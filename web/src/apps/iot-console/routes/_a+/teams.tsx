@@ -1,9 +1,9 @@
 import { redirect } from '@remix-run/node';
 import { Link, useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { usePagination } from '~/components/molecule/pagination';
-import { cn, generateKey } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import { cn, generateKey } from '@kloudlite/design-system/utils';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';

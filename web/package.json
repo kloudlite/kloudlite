@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@jengaicons/react": "1.6.0",
+    "@kloudlite/design-system": "^0.0.1",
     "@mdx-js/react": "^2.3.0",
     "@monaco-editor/react": "^4.6.0",
     "@oshq/react-select": "^3.2.1",

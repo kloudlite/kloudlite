@@ -1,8 +1,8 @@
 /* eslint-disable no-nested-ternary */
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
-import Popup from '~/components/molecule/popup';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import MultiStep, { useMultiStep } from '~/iotconsole/components/multi-step';
 import NoResultsFound from '~/iotconsole/components/no-results-found';
 import { IDialog } from '~/iotconsole/components/types.d';

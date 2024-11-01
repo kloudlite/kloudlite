@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from '@remix-run/react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -11,8 +11,8 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCloudProvider from '~/console/assets/filler-cloud-provider';
-import { Checkbox } from '~/components/atoms/checkbox';
-import Banner from '~/components/molecule/banner';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+import Banner from '@kloudlite/design-system/molecule/banner';
 
 const AttachNewCluster = () => {
   const { a: accountName } = useParams();

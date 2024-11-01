@@ -1,7 +1,7 @@
 import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import { CopySimple } from '~/console/components/icons';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 
@@ -34,13 +34,9 @@ const CodeView = ({
   useEffect(() => {
     (async () => {
       if (ref.current) {
-        const hr = hljs.highlight(
-          data,
-          {
-            language,
-          },
-          false
-        );
+        const hr = hljs.highlight(data, {
+          language,
+        });
 
         // @ts-ignore
         ref.current.innerHTML = hr.value;

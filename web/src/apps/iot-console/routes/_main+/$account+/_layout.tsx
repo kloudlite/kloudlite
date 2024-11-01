@@ -16,7 +16,7 @@ import {
   useParams,
 } from '@remix-run/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IRemixCtx, LoaderResult } from '~/root/lib/types/common';
@@ -37,10 +37,10 @@ import {
   BreadcrumButtonContent,
   BreadcrumSlash,
 } from '~/iotconsole/utils/commons';
-import OptionList from '~/components/atoms/option-list';
-import { Button } from '~/components/atoms/button';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import { IConsoleRootContext } from '../_layout/_layout';

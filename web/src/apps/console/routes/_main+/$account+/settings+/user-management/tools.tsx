@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import OptionList from '~/components/atoms/option-list';
-import Toolbar from '~/components/atoms/toolbar';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import Toolbar from '@kloudlite/design-system/atoms/toolbar';
 import { ArrowDown, ArrowsDownUp, ArrowUp } from '~/console/components/icons';
 
 interface Props {

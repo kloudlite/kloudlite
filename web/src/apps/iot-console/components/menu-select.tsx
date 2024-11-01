@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import * as Select from '@radix-ui/react-select';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from '~/iotconsole/components/icons';
 import logger from '~/root/lib/client/helpers/log';

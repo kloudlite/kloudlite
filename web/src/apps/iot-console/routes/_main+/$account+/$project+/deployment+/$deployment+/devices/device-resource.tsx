@@ -1,6 +1,6 @@
 import { PencilLine, Trash } from '~/iotconsole/components/icons';
 import { Link, useParams } from '@remix-run/react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import ConsoleAvatar from '~/iotconsole/components/console-avatar';
 import {
   ListItem,
@@ -19,7 +19,7 @@ import { IDevices } from '~/iotconsole/server/gql/queries/iot-device-queries';
 import { useState } from 'react';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import DeleteDialog from '~/iotconsole/components/delete-dialog';
 import { handleError } from '~/root/lib/utils/common';
 import HandleDevice from './handle-device';

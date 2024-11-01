@@ -1,5 +1,5 @@
 import { ComponentType, ReactNode } from 'react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { IDialogBase } from './types.d';
 
 const CommonPopupHandle = <T,>({

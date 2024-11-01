@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from 'react';
-import { ButtonVariants } from '~/components/atoms/button';
-import AlertDialog from '~/components/molecule/alert-dialog';
+import { ButtonVariants } from '@kloudlite/design-system/atoms/button';
+import AlertDialog from '@kloudlite/design-system/molecule/alert-dialog';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 

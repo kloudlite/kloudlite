@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 
 const SplitWrapper = ({
   children,

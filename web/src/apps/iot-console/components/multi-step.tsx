@@ -1,5 +1,5 @@
 import React, { ReactElement, useState } from 'react';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 
 interface IUseMultiStep {
   defaultStep: number;

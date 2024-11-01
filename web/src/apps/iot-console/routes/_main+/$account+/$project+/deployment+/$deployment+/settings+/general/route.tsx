@@ -1,9 +1,9 @@
 import { CopySimple } from '~/iotconsole/components/icons';
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   Box,
   DeleteContainer,
@@ -20,7 +20,7 @@ import { handleError } from '~/root/lib/utils/common';
 import Wrapper from '~/iotconsole/components/wrapper';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import DeleteDialog from '~/iotconsole/components/delete-dialog';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import { IDeployments } from '~/iotconsole/server/gql/queries/iot-deployment-queries';
 import KeyValuePair from '~/iotconsole/components/key-value-pair';
 import { IDeploymentContext } from '../../_layout';

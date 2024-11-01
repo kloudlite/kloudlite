@@ -4,8 +4,8 @@ import {
   TwitterNewLogoFill,
 } from '@jengaicons/react';
 import { Link } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
-import { BrandLogo } from '~/components/branding/brand-logo';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
 import { mainUrl } from '../consts';
 import Wrapper from './wrapper';
 

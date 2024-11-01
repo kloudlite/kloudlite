@@ -1,13 +1,13 @@
 import CodeEditorClient from '~/root/lib/client/components/editor-client';
-import { Button, IconButton } from '~/components/atoms/button';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
 import { useCallback, useEffect, useState } from 'react';
 import { yamlDump, yamlParse } from '~/console/components/diff-viewer';
 import { Box } from '~/console/components/common-console-components';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { X } from '~/console/components/icons';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 
 const YamlEditor = ({

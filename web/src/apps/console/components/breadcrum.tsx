@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { IButton, Button as NativeButton } from '~/components/atoms/button';
+import { IButton, Button as NativeButton } from '@kloudlite/design-system/atoms/button';
 
 interface IBreadcrum {
   children: ReactNode;

@@ -1,8 +1,8 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListItem,
   ListItemV2,

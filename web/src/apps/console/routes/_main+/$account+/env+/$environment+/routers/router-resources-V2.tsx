@@ -1,6 +1,6 @@
 import { Trash, PencilLine } from '~/console/components/icons';
 import { useState } from 'react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListItem,
   ListTitle,
@@ -21,9 +21,9 @@ import { Link, useParams } from '@remix-run/react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
-import { Button } from '~/components/atoms/button';
-import Tooltip from '~/components/atoms/tooltip';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import HandleRouter from './handle-router';

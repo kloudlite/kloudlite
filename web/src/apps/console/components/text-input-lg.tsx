@@ -1,6 +1,6 @@
-import { ITextInput, TextInput } from '~/components/atoms/input';
-import { IconButton } from '~/components/atoms/button';
-import { ArrowRight } from '~/components/icons';
+import { ITextInput, TextInput } from '@kloudlite/design-system/atoms/input';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import { ArrowRight } from '@kloudlite/design-system/icons';
 
 const TextInputLg = ({
   value,

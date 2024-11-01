@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import { ReactNode, isValidElement } from 'react';
-import { Button, IButton } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
+import { Button, IButton } from '@kloudlite/design-system/atoms/button';
+import { cn } from '@kloudlite/design-system/utils';
 
 interface EmptyStateProps {
   image: ReactNode;

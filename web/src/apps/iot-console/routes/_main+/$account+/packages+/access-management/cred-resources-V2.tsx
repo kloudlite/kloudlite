@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListBody,
   ListItem,

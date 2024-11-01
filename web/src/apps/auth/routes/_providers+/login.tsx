@@ -8,11 +8,11 @@ import {
 import { Link, useOutletContext, useSearchParams } from '@remix-run/react';
 import { useEffect } from 'react';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
-import { Button } from '~/components/atoms/button';
-import { PasswordInput, TextInput } from '~/components/atoms/input';
-import { ArrowLeft, ArrowRight } from '~/components/icons';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { PasswordInput, TextInput } from '@kloudlite/design-system/atoms/input';
+import { ArrowLeft, ArrowRight } from '@kloudlite/design-system/icons';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';

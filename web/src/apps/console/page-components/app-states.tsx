@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { ImmerHook, useImmer } from 'use-immer';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 import { NonNullableString } from '~/root/lib/types/common';
 import {
   AppIn,
   Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn as AppSpecContainersIn,
   BuildIn,
 } from '~/root/src/generated/gql/server';
-import { mapper } from '~/components/utils';
+import { mapper } from '@kloudlite/design-system/utils';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IApp } from '../server/gql/queries/app-queries';
 

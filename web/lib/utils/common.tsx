@@ -1,4 +1,4 @@
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import logger from '../client/helpers/log';
 
 export const handleError = (

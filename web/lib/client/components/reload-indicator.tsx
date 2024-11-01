@@ -1,6 +1,6 @@
 import { CircleFill, CircleNotch } from '@jengaicons/react';
 import { useRevalidator } from '@remix-run/react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 
 export const LoadingIndicator = ({
   className,

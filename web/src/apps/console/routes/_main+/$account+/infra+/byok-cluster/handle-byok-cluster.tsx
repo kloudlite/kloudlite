@@ -1,10 +1,10 @@
 /* eslint-disable react/destructuring-assignment */
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { Button } from '~/components/atoms/button';
-import { Checkbox } from '~/components/atoms/checkbox';
-import Banner from '~/components/molecule/banner';
-import Popup from '~/components/molecule/popup';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+import Banner from '@kloudlite/design-system/molecule/banner';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';

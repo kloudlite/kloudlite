@@ -1,7 +1,7 @@
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import { toast } from '~/components/molecule/toast';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import getQueries from '~/root/lib/server/helpers/get-queries';

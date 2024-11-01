@@ -1,8 +1,8 @@
 import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
-import { Avatar } from '~/components/atoms/avatar';
-import { toast } from '~/components/molecule/toast';
-import { titleCase } from '~/components/utils';
+import { Avatar } from '@kloudlite/design-system/atoms/avatar';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { titleCase } from '@kloudlite/design-system/utils';
 import {
   ListItemV2,
   ListTitleV2,

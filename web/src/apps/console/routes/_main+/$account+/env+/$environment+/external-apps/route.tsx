@@ -10,7 +10,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/lib/types/common';
 import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import fake from '~/root/fake-data-generator/fake';
 import { EmptyAppImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';

@@ -2,7 +2,7 @@ import { useOutletContext } from '@remix-run/react';
 import { ApexOptions } from 'apexcharts';
 import axios from 'axios';
 import { useState } from 'react';
-import { dayjs } from '~/components/molecule/dayjs';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
 import Chart from '~/console/components/charts/charts-client';
 import { findClusterStatusv3 } from '~/console/hooks/use-cluster-status';
 import { useClusterStatusV3 } from '~/console/hooks/use-cluster-status-v3';

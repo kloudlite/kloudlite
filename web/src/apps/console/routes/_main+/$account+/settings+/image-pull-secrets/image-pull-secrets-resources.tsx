@@ -1,6 +1,6 @@
 import { Trash, PencilLine } from '~/console/components/icons';
 import { useState } from 'react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListItem,
   ListTitle,
@@ -23,7 +23,7 @@ import { useReload } from '~/lib/client/helpers/reloader';
 import { handleError } from '~/lib/utils/common';
 import { Link, useParams } from '@remix-run/react';
 import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import HandleImagePullSecret from './handle-image-pull-secret';
 
 const RESOURCE_NAME = 'image pull secret';

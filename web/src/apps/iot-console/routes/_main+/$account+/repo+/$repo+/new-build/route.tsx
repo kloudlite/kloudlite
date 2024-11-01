@@ -8,7 +8,7 @@ import MultiStepProgress, {
 import MultiStepProgressWrapper from '~/iotconsole/components/multi-step-progress-wrapper';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import { BottomNavigation } from '~/iotconsole/components/commons';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import Git from '~/iotconsole/components/git';
 import { IGIT_PROVIDERS } from '~/iotconsole/hooks/use-git';
 import { constants } from '~/iotconsole/server/utils/constants';

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { ImmerHook, useImmer } from 'use-immer';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 
 const defaultData = {};
 const stateName = 'common_config_data';

@@ -8,7 +8,7 @@ import { BottomNavigation } from '~/iotconsole/components/commons';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/iotconsole/page-components/app/components';
-import { TextInput } from '~/components/atoms/input';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import { useEffect } from 'react';
 
 import { IDeviceBlueprintContext } from '~/iotconsole/routes/_main+/$account+/$project+/deviceblueprint+/$deviceblueprint+/_layout';

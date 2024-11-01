@@ -1,8 +1,8 @@
 /* eslint-disable react/destructuring-assignment */
 import { useParams } from '@remix-run/react';
-import { TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';

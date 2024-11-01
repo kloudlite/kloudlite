@@ -1,8 +1,8 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { CopyButton, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';

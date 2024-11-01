@@ -1,6 +1,6 @@
 import { GearSix } from '~/iotconsole/components/icons';
 import { Link, useParams } from '@remix-run/react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import ConsoleAvatar from '~/iotconsole/components/console-avatar';
 import {
   ListItem,

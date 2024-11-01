@@ -3,7 +3,7 @@
 // import Chart from '~/iotconsole/components/charts/charts-client';
 // import useDebounce from '~/lib/client/hooks/use-debounce';
 // import { useState } from 'react';
-// import { dayjs } from '~/components/molecule/dayjs';
+// import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
 // import { parseValue } from '~/iotconsole/page-components/util';
 // import { ApexOptions } from 'apexcharts';
 // import { parseName } from '~/iotconsole/server/r-utils/common';

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { IconButton } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import { cn } from '@kloudlite/design-system/utils';
 import {
   ChevronLeft,
   ChevronRight,

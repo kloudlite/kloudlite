@@ -1,4 +1,4 @@
-import { IButton } from '~/components/atoms/button';
+import { IButton } from '@kloudlite/design-system/atoms/button';
 
 // Secret String Data
 export type IConfigOrSecretData = {

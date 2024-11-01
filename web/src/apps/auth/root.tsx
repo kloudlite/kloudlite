@@ -1,5 +1,5 @@
 import Root, { links as baseLinks } from '~/lib/app-setup/root.jsx';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 import ThemeProvider from '~/root/lib/client/hooks/useTheme';
 import authStylesUrl from './styles/index.css';
 import { RECAPTCHA_SITE_KEY } from './consts';

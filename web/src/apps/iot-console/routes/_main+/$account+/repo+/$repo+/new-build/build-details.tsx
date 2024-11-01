@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
 import { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import AdvancedOptions from '../builds/advanced-options';
 

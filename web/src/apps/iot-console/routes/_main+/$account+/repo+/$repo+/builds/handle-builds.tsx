@@ -1,18 +1,18 @@
 /* eslint-disable react/destructuring-assignment */
 import { IDialogBase } from '~/iotconsole/components/types.d';
 import { useOutletContext } from '@remix-run/react';
-import Select from '~/components/atoms/select';
-import { toast } from '~/components/molecule/toast';
+import Select from '@kloudlite/design-system/atoms/select';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import CommonPopupHandle from '~/iotconsole/components/common-popup-handle';
 import { ExtractNodeType } from '~/iotconsole/server/r-utils/common';
 import MultiStep, { useMultiStep } from '~/iotconsole/components/multi-step';
-import { TextInput } from '~/components/atoms/input';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import { GitDetail } from '~/iotconsole/components/commons';
 import { IGIT_PROVIDERS } from '~/iotconsole/hooks/use-git';
 import Git from '~/iotconsole/components/git';

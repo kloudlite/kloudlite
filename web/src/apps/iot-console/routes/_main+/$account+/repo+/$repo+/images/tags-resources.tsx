@@ -5,9 +5,9 @@ import {
   Trash,
 } from '~/iotconsole/components/icons';
 import { useState } from 'react';
-import AnimateHide from '~/components/atoms/animate-hide';
-import { Badge } from '~/components/atoms/badge';
-import { generateKey, titleCase } from '~/components/utils';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import CodeView from '~/iotconsole/components/code-view';
 import { ListItem } from '~/iotconsole/components/console-list-components';
 import List from '~/iotconsole/components/list';
@@ -22,7 +22,7 @@ import { DIALOG_TYPE } from '~/iotconsole/utils/commons';
 import DeleteDialog from '~/iotconsole/components/delete-dialog';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { useOutletContext } from '@remix-run/react';
 import { constants } from '~/iotconsole/server/utils/constants';

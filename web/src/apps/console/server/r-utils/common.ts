@@ -1,6 +1,6 @@
 /* eslint-disable no-prototype-builtins */
 // import { Params } from '@remix-run/react';
-import { dayjs } from '~/components/molecule/dayjs';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
 import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
   Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProvider,

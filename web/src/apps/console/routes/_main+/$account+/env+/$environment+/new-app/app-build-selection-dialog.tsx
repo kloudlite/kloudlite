@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { titleCase, useMapper } from '~/components/utils';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { titleCase, useMapper } from '@kloudlite/design-system/utils';
 import {
   ListItem,
   ListTitle,

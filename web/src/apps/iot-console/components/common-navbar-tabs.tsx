@@ -1,10 +1,10 @@
 import { Link } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useContext, useState } from 'react';
-import ScrollArea from '~/components/atoms/scroll-area';
-import Tabs from '~/components/atoms/tabs';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import { TopBarContext } from '~/components/organisms/top-bar';
+import ScrollArea from '@kloudlite/design-system/atoms/scroll-area';
+import Tabs from '@kloudlite/design-system/atoms/tabs';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
+import { TopBarContext } from '@kloudlite/design-system/organisms/top-bar';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { ChevronLeft } from '~/iotconsole/components/icons';
 

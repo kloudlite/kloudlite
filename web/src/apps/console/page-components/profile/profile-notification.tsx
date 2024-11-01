@@ -1,5 +1,5 @@
-import { Checkbox } from '~/components/atoms/checkbox';
-import { generateKey } from '~/components/utils';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+import { generateKey } from '@kloudlite/design-system/utils';
 import List from '~/console/components/list';
 
 const NOTIFICATION_CATEGORY = ['Web', 'Email'];

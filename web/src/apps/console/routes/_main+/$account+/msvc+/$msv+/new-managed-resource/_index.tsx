@@ -6,10 +6,10 @@ import {
   useParams,
 } from '@remix-run/react';
 import { FormEventHandler, useCallback, useEffect, useState } from 'react';
-import { NumberInput, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import { Switch } from '~/components/atoms/switch';
-import { titleCase, useMapper } from '~/components/utils';
+import { NumberInput, TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import { Switch } from '@kloudlite/design-system/atoms/switch';
+import { titleCase, useMapper } from '@kloudlite/design-system/utils';
 import {
   BottomNavigation,
   ReviewComponent,

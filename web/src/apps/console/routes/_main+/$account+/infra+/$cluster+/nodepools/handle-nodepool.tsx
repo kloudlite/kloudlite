@@ -1,9 +1,9 @@
 /* eslint-disable react/destructuring-assignment */
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { NumberInput, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import Popup from '~/components/molecule/popup';
+import { NumberInput, TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
@@ -17,14 +17,14 @@ import {
 import { Link, useOutletContext } from '@remix-run/react';
 import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import { awsRegions } from '~/console/dummy/consts';
-import { mapper } from '~/components/utils';
+import { mapper } from '@kloudlite/design-system/utils';
 import { IDialogBase } from '~/console/components/types.d';
-import { Switch } from '~/components/atoms/switch';
+import { Switch } from '@kloudlite/design-system/atoms/switch';
 import { NameIdView } from '~/console/components/name-id-view';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import KeyValuePair from '~/console/components/key-value-pair';
 import { InfoLabel } from '~/console/components/commons';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { IClusterContext } from '../_layout';
 import {
   findNodePlan,

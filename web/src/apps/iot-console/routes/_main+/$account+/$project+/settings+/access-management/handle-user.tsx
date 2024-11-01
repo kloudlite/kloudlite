@@ -1,5 +1,5 @@
-import { TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { IHandleProps } from '~/iotconsole/server/utils/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';

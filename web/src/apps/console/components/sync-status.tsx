@@ -12,8 +12,8 @@ import {
   Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as ISyncAction,
   Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn as ICheckList,
 } from '~/root/src/generated/gql/server';
-import { Badge } from '~/components/atoms/badge';
-import TooltipV2 from '~/components/atoms/tooltipV2';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
+import TooltipV2 from '@kloudlite/design-system/atoms/tooltipV2';
 
 interface IStatusMetaV2 {
   recordVersion: number;

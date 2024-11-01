@@ -1,6 +1,6 @@
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import LogComp from '~/root/lib/client/components/logger';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { useParams } from '@remix-run/react';
 import { ExtractNodeType, parseName } from '../server/r-utils/common';
 import LogAction from '../page-components/log-action';

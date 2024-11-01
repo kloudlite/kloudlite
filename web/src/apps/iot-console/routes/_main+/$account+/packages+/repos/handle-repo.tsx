@@ -1,6 +1,6 @@
-import { TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import CommonPopupHandle from '~/iotconsole/components/common-popup-handle';
 import { IDialogBase } from '~/iotconsole/components/types.d';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';

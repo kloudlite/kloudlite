@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { IconButton } from '~/components/atoms/button';
-import { usePagination } from '~/components/molecule/pagination';
-import { cn } from '~/components/utils';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import { cn } from '@kloudlite/design-system/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import {
@@ -13,7 +13,7 @@ import { IApp } from '~/console/server/gql/queries/app-queries';
 import { NN } from '~/root/lib/types/common';
 import { ExtractArrayType, parseValue } from '~/console/page-components/util';
 import { ISetState } from '~/console/page-components/app-states';
-import { NumberInput } from '~/components/atoms/input';
+import { NumberInput } from '@kloudlite/design-system/atoms/input';
 
 export type exposedPortsType = ExtractArrayType<
   NN<NN<IApp['spec']['intercept']>['portMappings']>

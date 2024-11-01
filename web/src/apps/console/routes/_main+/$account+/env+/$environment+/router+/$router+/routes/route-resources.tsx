@@ -5,7 +5,7 @@ import {
   Trash,
 } from '~/console/components/icons';
 import { useEffect, useState } from 'react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListBody,
   ListTitle,
@@ -24,7 +24,7 @@ import { handleError } from '~/lib/utils/common';
 import { IRouter, IRouters } from '~/console/server/gql/queries/router-queries';
 import { NN } from '~/lib/types/common';
 import { useParams } from '@remix-run/react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import HandleRoute from './handle-route';
 import { ModifiedRouter } from './_index';
 

@@ -1,8 +1,8 @@
 /* eslint-disable react/destructuring-assignment */
 // import { useParams } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   ExtractNodeType,
   parseName,
@@ -17,8 +17,8 @@ import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
-import { PasswordInput, TextArea, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
+import { PasswordInput, TextArea, TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
 import logger from '~/root/lib/client/helpers/log';
 
 type IDialog = IDialogBase<ExtractNodeType<IImagePullSecrets>>;

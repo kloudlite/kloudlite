@@ -12,9 +12,9 @@ import AppBuildIntegration from '~/console/page-components/app/app-build-integra
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 // import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { useCallback, useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import Select from '~/components/atoms/select';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Select from '@kloudlite/design-system/atoms/select';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   ArrowClockwise,
   GitMerge,

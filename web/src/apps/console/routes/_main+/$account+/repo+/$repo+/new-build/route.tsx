@@ -10,7 +10,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import Git from '~/console/components/git';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
 import { BottomNavigation } from '~/console/components/commons';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import ReviewBuild from './review-build';
 import BuildDetails from './build-details';
 import { IRepoContext } from '../_layout';

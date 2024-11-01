@@ -1,6 +1,6 @@
 import { Link } from '@remix-run/react';
 import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItemV2,

@@ -1,5 +1,5 @@
 import { useOutletContext } from '@remix-run/react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { CopyButton, DetailItem } from '~/console/components/commons';
 import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import { ExtractNodeType } from '~/console/server/r-utils/common';

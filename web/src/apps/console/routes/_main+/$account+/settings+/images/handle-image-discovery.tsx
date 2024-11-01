@@ -1,9 +1,9 @@
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { Chip } from '~/components/atoms/chips';
-import Banner from '~/components/molecule/banner';
-import Popup from '~/components/molecule/popup';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { Chip } from '@kloudlite/design-system/atoms/chips';
+import Banner from '@kloudlite/design-system/molecule/banner';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';

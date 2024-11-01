@@ -1,5 +1,5 @@
 import { Editor, EditorProps } from '@monaco-editor/react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import logger from '../helpers/log';
 
 type codelang = 'yaml' | 'json';

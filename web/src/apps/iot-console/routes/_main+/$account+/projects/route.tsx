@@ -1,7 +1,7 @@
 import { Plus } from '~/iotconsole/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useParams } from '@remix-run/react';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button.jsx';
 import {
   LoadingComp,
   pWrapper,

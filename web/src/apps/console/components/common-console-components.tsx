@@ -1,8 +1,8 @@
 import { ReactNode, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import TooltipV2 from '~/components/atoms/tooltipV2';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import TooltipV2 from '@kloudlite/design-system/atoms/tooltipV2';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import { Check, Copy } from '~/console/components/icons';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { Truncate } from '~/root/lib/utils/common';

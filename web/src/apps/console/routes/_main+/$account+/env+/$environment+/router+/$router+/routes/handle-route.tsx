@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { useParams } from '@remix-run/react';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   ExtractNodeType,
   parseName,
@@ -14,14 +14,14 @@ import { handleError } from '~/lib/utils/common';
 import { IDialogBase } from '~/console/components/types.d';
 import { IRouters } from '~/console/server/gql/queries/router-queries';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { useMapper } from '~/components/utils';
+import { useMapper } from '@kloudlite/design-system/utils';
 import { NN } from '~/lib/types/common';
-import { TextInput } from '~/components/atoms/input';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import { useEffect, useState } from 'react';
 import { IApps } from '~/console/server/gql/queries/app-queries';
-import { Switch } from '~/components/atoms/switch';
+import { Switch } from '@kloudlite/design-system/atoms/switch';
 import { ModifiedRouter } from './_index';
 
 type IDialog = IDialogBase<

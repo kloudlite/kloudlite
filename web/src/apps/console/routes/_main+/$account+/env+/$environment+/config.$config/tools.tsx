@@ -1,5 +1,5 @@
 import React from 'react';
-import Toolbar from '~/components/atoms/toolbar';
+import Toolbar from '@kloudlite/design-system/atoms/toolbar';
 import ViewMode from '~/console/components/view-mode';
 
 const Tools = ({

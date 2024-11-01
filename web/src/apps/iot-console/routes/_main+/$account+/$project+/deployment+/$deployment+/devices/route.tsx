@@ -13,7 +13,7 @@ import { getPagination, getSearch } from '~/iotconsole/server/utils/common';
 import { IRemixCtx } from '~/lib/types/common';
 import { clearAppState } from '~/iotconsole/page-components/app-states';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import Tools from './tools';
 import DeviceResource from './device-resource';
 import HandleDevice from './handle-device';

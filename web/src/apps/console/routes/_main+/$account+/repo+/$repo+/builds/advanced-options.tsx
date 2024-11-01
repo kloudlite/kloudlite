@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Checkbox } from '~/components/atoms/checkbox';
-import { TextArea, TextInput } from '~/components/atoms/input';
-import { useMapper } from '~/components/utils';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+import { TextArea, TextInput } from '@kloudlite/design-system/atoms/input';
+import { useMapper } from '@kloudlite/design-system/utils';
 import KeyValuePair from '~/console/components/key-value-pair';
 import KeyValuePairSelect from '~/console/components/key-value-pair-select';
 import { useConsoleApi } from '~/console/server/gql/api-provider';

@@ -1,6 +1,6 @@
 import { useNavigate } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import FillerCreateTeam from '~/iotconsole/assets/filler-create-team';
 import { BottomNavigation } from '~/iotconsole/components/commons';
 import { SignOut } from '~/iotconsole/components/icons';

@@ -8,10 +8,10 @@ import {
   useState,
 } from 'react';
 import { toast } from 'react-toastify';
-import { NumberInput, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import { Switch } from '~/components/atoms/switch';
-import { titleCase } from '~/components/utils';
+import { NumberInput, TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import { Switch } from '@kloudlite/design-system/atoms/switch';
+import { titleCase } from '@kloudlite/design-system/utils';
 import {
   BottomNavigation,
   ReviewComponent,

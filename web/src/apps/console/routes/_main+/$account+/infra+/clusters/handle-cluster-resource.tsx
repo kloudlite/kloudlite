@@ -1,6 +1,6 @@
 import { useParams } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
-import Popup from '~/components/molecule/popup';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 

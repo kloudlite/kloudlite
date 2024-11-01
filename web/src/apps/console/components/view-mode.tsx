@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import Toolbar from '~/components/atoms/toolbar';
+import Toolbar from '@kloudlite/design-system/atoms/toolbar';
 import { isBrowser } from '~/root/lib/client/helpers/is-browser';
 import { IListOrGrid } from '../server/r-utils/common';
 

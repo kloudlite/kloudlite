@@ -1,8 +1,8 @@
 import { ArrowsDownUp } from '~/console/components/icons';
 import { useSearchParams } from '@remix-run/react';
 import { useMemo } from 'react';
-import OptionList from '~/components/atoms/option-list';
-import Toolbar from '~/components/atoms/toolbar';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import Toolbar from '@kloudlite/design-system/atoms/toolbar';
 import CommonTools from '~/console/components/common-tools';
 
 interface IFilterByClusterType {

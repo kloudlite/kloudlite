@@ -3,10 +3,10 @@ import { CopySimple } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
 import { ReactNode, useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   Box,
   DeleteContainer,
@@ -32,7 +32,7 @@ import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
-import { mapper } from '~/components/utils';
+import { mapper } from '@kloudlite/design-system/utils';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';

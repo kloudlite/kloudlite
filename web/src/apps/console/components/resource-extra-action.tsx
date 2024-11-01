@@ -1,8 +1,8 @@
 import { DotsThreeVerticalFill } from '~/console/components/icons';
 import { Link } from '@remix-run/react';
 import { Key, useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
-import OptionList from '~/components/atoms/option-list';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
 
 export type IResourceExtraItem =
   | {

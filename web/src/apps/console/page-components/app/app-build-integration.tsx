@@ -1,6 +1,6 @@
 import { useOutletContext } from '@remix-run/react';
-import { Checkbox } from '~/components/atoms/checkbox';
-import { TextArea, TextInput } from '~/components/atoms/input';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+import { TextArea, TextInput } from '@kloudlite/design-system/atoms/input';
 import Git from '~/console/components/git';
 import KeyValuePair from '~/console/components/key-value-pair';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';

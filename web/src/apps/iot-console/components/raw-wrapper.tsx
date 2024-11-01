@@ -1,8 +1,8 @@
 import { Key, ReactNode } from 'react';
-import { Button } from '~/components/atoms/button';
-import { BrandLogo } from '~/components/branding/brand-logo';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
 
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import ProgressTracker from './console-progress-tracker';
 
 interface IRawWrapper<V = any> {

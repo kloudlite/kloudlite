@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
-import { NumberInput } from '~/components/atoms/input';
-import { usePagination } from '~/components/molecule/pagination';
-import { cn } from '~/components/utils';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
+import { NumberInput } from '@kloudlite/design-system/atoms/input';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import { cn } from '@kloudlite/design-system/utils';
 import List from '~/iotconsole/components/list';
 import NoResultsFound from '~/iotconsole/components/no-results-found';
 import { useAppState } from '~/iotconsole/page-components/app-states';

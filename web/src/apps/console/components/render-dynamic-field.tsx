@@ -1,4 +1,4 @@
-import { NumberInput, TextInput } from '~/components/atoms/input';
+import { NumberInput, TextInput } from '@kloudlite/design-system/atoms/input';
 import { IMSvTemplate } from '../server/gql/queries/managed-templates-queries';
 
 const RenderDynamicField = ({

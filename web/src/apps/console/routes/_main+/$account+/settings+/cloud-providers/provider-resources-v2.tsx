@@ -5,8 +5,8 @@ import {
   Check,
 } from '~/console/components/icons';
 import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListBody,
   ListItem,
@@ -27,14 +27,14 @@ import {
 import { asyncPopupWindow, renderCloudProvider } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { Button, IconButton } from '~/components/atoms/button';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import Yup from '~/root/lib/server/helpers/yup';
-import { PasswordInput } from '~/components/atoms/input';
+import { PasswordInput } from '@kloudlite/design-system/atoms/input';
 import useForm from '~/root/lib/client/hooks/use-form';
-import { Badge } from '~/components/atoms/badge';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
 import ListV2 from '~/console/components/listV2';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import Pulsable from '~/root/lib/client/components/pulsable';

@@ -1,10 +1,10 @@
 import { PencilLine } from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
 import { ChangeEvent, useEffect, useState } from 'react';
-import AnimateHide from '~/components/atoms/animate-hide';
-import Chips from '~/components/atoms/chips';
-import { TextInput } from '~/components/atoms/input';
-import Popover from '~/components/molecule/popover';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
+import Chips from '@kloudlite/design-system/atoms/chips';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Popover from '@kloudlite/design-system/molecule/popover';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';

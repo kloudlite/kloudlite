@@ -1,9 +1,9 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
-import { Chip } from '~/components/atoms/chips';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
+import { Chip } from '@kloudlite/design-system/atoms/chips';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,

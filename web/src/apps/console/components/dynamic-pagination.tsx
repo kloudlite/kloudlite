@@ -4,8 +4,8 @@ import {
   SmileySad,
 } from '~/console/components/icons';
 import { ReactNode } from 'react';
-import { IconButton } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import { cn } from '@kloudlite/design-system/utils';
 import NoResultsFound from './no-results-found';
 
 interface IHeader {

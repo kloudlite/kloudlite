@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import Pulsable from '~/components/atoms/pulsable';
+import Pulsable from '@kloudlite/design-system/atoms/pulsable';
 import { EmptyState } from '~/console/components/empty-state';
 import { SmileySad } from '~/console/components/icons';
 import Wrapper from '~/console/components/wrapper';

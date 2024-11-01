@@ -1,6 +1,6 @@
 import { CodeSimpleFill, Tag, TerminalWindow } from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import { IDialog } from '~/console/components/types.d';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';

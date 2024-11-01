@@ -1,7 +1,7 @@
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { EmptyManagedResourceImage } from '~/console/components/empty-resource-images';
 import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';

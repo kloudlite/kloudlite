@@ -1,9 +1,9 @@
 import { CopySimple } from '~/iotconsole/components/icons';
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   Box,
   DeleteContainer,

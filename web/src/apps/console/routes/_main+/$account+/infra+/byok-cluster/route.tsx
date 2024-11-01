@@ -1,7 +1,7 @@
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
@@ -21,7 +21,7 @@ export const loader = (ctx: IRemixCtx) => {
     ensureAccountSet(ctx);
 
     const { data, errors } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listByokClusters({
       pagination: getPagination(ctx),
       search: getSearch(ctx),
@@ -92,9 +92,9 @@ const ByocClusters = () => {
                 },
               }}
               tools={<Tools />}
-            // pagination={{
-            //   pageInfo: byokClusterData.pageInfo,
-            // }}
+              // pagination={{
+              //   pageInfo: byokClusterData.pageInfo,
+              // }}
             >
               <ByokClusterResource items={byocClusterData} />
             </Wrapper>

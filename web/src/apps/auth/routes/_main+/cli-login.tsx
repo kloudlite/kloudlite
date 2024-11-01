@@ -1,4 +1,4 @@
-import { Button, IconButton } from '~/components/atoms/button';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { getCookie } from '~/root/lib/app-setup/cookies';
@@ -9,10 +9,10 @@ import {
   useLocation,
   useNavigate,
 } from '@remix-run/react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import { SignOut } from '@jengaicons/react';
 import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
-import { BrandLogo } from '~/components/branding/brand-logo';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
 import Container from '~/auth/components/container';
 
 function CliLogin() {

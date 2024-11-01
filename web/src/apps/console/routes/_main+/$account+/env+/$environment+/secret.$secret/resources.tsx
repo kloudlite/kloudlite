@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import AlertModal, { IAlertModal } from '~/console/components/alert-modal';
 import {
   ListTitleV2,

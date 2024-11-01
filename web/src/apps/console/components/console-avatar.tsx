@@ -1,5 +1,5 @@
-import { Avatar } from '~/components/atoms/avatar';
-import { titleCase } from '~/components/utils';
+import { Avatar } from '@kloudlite/design-system/atoms/avatar';
+import { titleCase } from '@kloudlite/design-system/utils';
 import generateColor from '~/root/lib/utils/color-generator';
 import { EnvIconComponent } from './icons';
 

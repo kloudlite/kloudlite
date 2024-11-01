@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
-// import { NumberInput } from '~/components/atoms/input';
-import { usePagination } from '~/components/molecule/pagination';
-import { cn } from '~/components/utils';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+// import { NumberInput } from '@kloudlite/design-system/atoms/input';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import { cn } from '@kloudlite/design-system/utils';
 import { BottomNavigation } from '~/console/components/commons';
 import {
   ChevronLeft,
@@ -16,7 +16,7 @@ import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from '~/console/page-components/util';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 // import { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 
 interface IExposedPorts {
   port: number;

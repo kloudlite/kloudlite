@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateKey } from '~/components/utils';
+import { generateKey } from '@kloudlite/design-system/utils';
 import {
   ListBody,
   ListItem,

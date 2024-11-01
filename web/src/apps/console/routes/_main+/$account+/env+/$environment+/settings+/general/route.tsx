@@ -1,9 +1,9 @@
 import { CopySimple } from '~/console/components/icons';
 import { useLocation, useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   Box,
   DeleteContainer,
@@ -19,8 +19,8 @@ import { handleError } from '~/lib/utils/common';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/lib/client/helpers/reloader';
 import Wrapper from '~/console/components/wrapper';
-// import { Checkbox } from '~/components/atoms/checkbox';
-// import Banner from '~/components/molecule/banner';
+// import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+// import Banner from '@kloudlite/design-system/molecule/banner';
 import { IEnvironmentContext } from '../../_layout';
 
 const EnvironmentSettingsGeneral = () => {

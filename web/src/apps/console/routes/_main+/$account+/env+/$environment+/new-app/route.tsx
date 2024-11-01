@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import FillerAppCompute from '~/console/assets/app/filler-compute';
 import FillerAppDetail from '~/console/assets/app/filler-details';
 import FillerAppEnv from '~/console/assets/app/filler-env';

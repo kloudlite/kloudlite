@@ -1,9 +1,9 @@
 import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
-import ActionList, { IActionItem } from '~/components/atoms/action-list';
-import ScrollArea from '~/components/atoms/scroll-area';
-import Tabs from '~/components/atoms/tabs';
-import { SubHeader } from '~/components/organisms/sub-header';
+import ActionList, { IActionItem } from '@kloudlite/design-system/atoms/action-list';
+import ScrollArea from '@kloudlite/design-system/atoms/scroll-area';
+import Tabs from '@kloudlite/design-system/atoms/tabs';
+import { SubHeader } from '@kloudlite/design-system/organisms/sub-header';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 
 interface Item extends Omit<IActionItem, 'children'> {

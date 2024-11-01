@@ -1,7 +1,7 @@
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
@@ -24,7 +24,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listEnvironments({
       pq: getPagination(ctx),
       search: getSearch(ctx),

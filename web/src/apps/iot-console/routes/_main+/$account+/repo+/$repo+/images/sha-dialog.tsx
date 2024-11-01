@@ -1,6 +1,6 @@
 import { CodeSimpleFill, Tag, TerminalWindow } from '~/iotconsole/components/icons';
 import { useParams } from '@remix-run/react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import CodeView from '~/iotconsole/components/code-view';
 import { IDialog } from '~/iotconsole/components/types.d';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';

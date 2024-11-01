@@ -1,7 +1,7 @@
 import { Copy, GearSix } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,

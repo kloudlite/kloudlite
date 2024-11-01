@@ -1,7 +1,7 @@
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { EmptyClusterImage } from '~/console/components/empty-resource-images';
 import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -22,7 +22,7 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     const { data, errors } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listAllClusters({
       pagination: getPagination(ctx),
       search: getSearch(ctx),

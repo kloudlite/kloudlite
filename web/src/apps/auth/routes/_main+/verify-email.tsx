@@ -5,13 +5,13 @@ import getQueries from '~/root/lib/server/helpers/get-queries';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 
 import { redirect } from '@remix-run/node';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import { Button } from '~/components/atoms/button';
-import { toast } from '~/components/molecule/toast';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { ArrowLeft } from '~/components/icons';
-import { cn } from '~/components/utils';
+import { ArrowLeft } from '@kloudlite/design-system/icons';
+import { cn } from '@kloudlite/design-system/utils';
 import Container from '~/auth/components/container';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 

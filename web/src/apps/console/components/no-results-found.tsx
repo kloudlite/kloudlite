@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { IButton } from '~/components/atoms/button';
+import { IButton } from '@kloudlite/design-system/atoms/button';
 import { EmptyState } from './empty-state';
 
 export interface INoResultsFound {

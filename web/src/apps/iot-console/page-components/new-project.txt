@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import { useNavigate, useParams } from '@remix-run/react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';

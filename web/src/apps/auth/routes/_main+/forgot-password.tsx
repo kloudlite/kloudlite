@@ -1,11 +1,11 @@
 import { Link } from '@remix-run/react';
 import { RECAPTCHA_SITE_KEY } from '~/auth/consts';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import { ArrowRight } from '~/components/icons';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { ArrowRight } from '@kloudlite/design-system/icons';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import grecaptcha from '~/root/lib/client/helpers/g-recaptcha';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';

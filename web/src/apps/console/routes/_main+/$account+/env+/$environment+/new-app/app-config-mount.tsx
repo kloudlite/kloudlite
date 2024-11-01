@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
-import { Chip, ChipGroup } from '~/components/atoms/chips';
-import { TextInput } from '~/components/atoms/input';
-import Tooltip from '~/components/atoms/tooltip';
-import { usePagination } from '~/components/molecule/pagination';
-import { cn } from '~/components/utils';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
+import { Chip, ChipGroup } from '@kloudlite/design-system/atoms/chips';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import { cn } from '@kloudlite/design-system/utils';
 import { listFlex } from '~/console/components/console-list-components';
 import {
   ArrowRight,

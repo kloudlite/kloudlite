@@ -4,8 +4,8 @@ import {
   ArrowsDownUp,
 } from '~/iotconsole/components/icons';
 import { useState } from 'react';
-import OptionList from '~/components/atoms/option-list';
-import Toolbar from '~/components/atoms/toolbar';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import Toolbar from '@kloudlite/design-system/atoms/toolbar';
 
 const SortbyOptionList = () => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');

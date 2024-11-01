@@ -1,6 +1,6 @@
 import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { CopySimple } from '~/iotconsole/components/icons';
 

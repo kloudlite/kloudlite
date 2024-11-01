@@ -1,8 +1,8 @@
 import { ReactNode, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { cn } from '@kloudlite/design-system/utils';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { Copy, Check } from '~/iotconsole/components/icons';
 import { ListBody } from './console-list-components';
 

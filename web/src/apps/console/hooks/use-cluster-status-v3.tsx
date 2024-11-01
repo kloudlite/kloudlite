@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 import { useSocketWatch } from '~/root/lib/client/helpers/socket/useWatch';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IAccountContext } from '../routes/_main+/$account+/_layout';

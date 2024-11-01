@@ -1,6 +1,6 @@
 import { useNavigate, useParams, useSearchParams } from '@remix-run/react';
-import Select from '~/components/atoms/select';
-import { toast } from '~/components/molecule/toast';
+import Select from '@kloudlite/design-system/atoms/select';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -14,7 +14,7 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCloudProvider from '~/console/assets/filler-cloud-provider';
-import { TextArea } from '~/components/atoms/input';
+import { TextArea } from '@kloudlite/design-system/atoms/input';
 import { base64Decrypt } from '~/console/server/utils/common';
 
 const NewCloudProvider = () => {

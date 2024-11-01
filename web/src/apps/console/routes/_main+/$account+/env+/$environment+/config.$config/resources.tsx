@@ -1,6 +1,6 @@
 import { PencilLine, SmileySad, Trash } from '~/console/components/icons';
 import { useEffect, useState } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import ListGridView from '~/console/components/list-grid-view';
 import NoResultsFound from '~/console/components/no-results-found';
 import {

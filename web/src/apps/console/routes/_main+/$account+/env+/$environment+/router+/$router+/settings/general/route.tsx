@@ -1,7 +1,7 @@
 import { CopySimple } from '~/console/components/icons';
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
-import { TextInput } from '~/components/atoms/input';
-import { toast } from '~/components/molecule/toast';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import {
   Box,
   DeleteContainer,

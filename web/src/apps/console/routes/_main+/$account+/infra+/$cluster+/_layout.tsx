@@ -6,7 +6,7 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { BrandLogo } from '~/components/branding/brand-logo';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import {

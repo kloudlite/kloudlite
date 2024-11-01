@@ -1,6 +1,6 @@
 import { Link } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { cn } from '@kloudlite/design-system/utils';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { redirectWithContext } from '~/root/lib/app-setup/with-contxt';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';

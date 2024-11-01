@@ -1,10 +1,10 @@
 /* eslint-disable no-nested-ternary */
 import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import { parseName, parseNodes } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { INewProjectFromAccountLoader } from '../routes/_a+/$a+/new-project';

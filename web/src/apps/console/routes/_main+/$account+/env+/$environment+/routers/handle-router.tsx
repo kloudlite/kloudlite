@@ -1,12 +1,12 @@
 /* eslint-disable react/destructuring-assignment */
 import { useParams } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
-import { Checkbox } from '~/components/atoms/checkbox';
-import Select from '~/components/atoms/select';
-import Banner from '~/components/molecule/banner';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { useAppend, useMapper } from '~/components/utils';
+import { Checkbox } from '@kloudlite/design-system/atoms/checkbox';
+import Select from '@kloudlite/design-system/atoms/select';
+import Banner from '@kloudlite/design-system/molecule/banner';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { useAppend, useMapper } from '@kloudlite/design-system/utils';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';

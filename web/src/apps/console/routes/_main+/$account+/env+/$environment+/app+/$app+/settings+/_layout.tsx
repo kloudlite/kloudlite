@@ -1,9 +1,9 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
 import SidebarLayout from '~/console/components/sidebar-layout';
 import {

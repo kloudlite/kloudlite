@@ -1,6 +1,6 @@
 import { DotsThreeVerticalFill } from '~/iotconsole/components/icons';
-import { Avatar } from '~/components/atoms/avatar';
-import { IconButton } from '~/components/atoms/button';
+import { Avatar } from '@kloudlite/design-system/atoms/avatar';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
 import List from '~/iotconsole/components/list';
 
 const Resource = ({

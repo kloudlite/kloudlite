@@ -1,6 +1,6 @@
 import { PencilLine } from '~/console/components/icons';
-import Tooltip from '~/components/atoms/tooltip';
-import { cn } from '~/components/utils';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
+import { cn } from '@kloudlite/design-system/utils';
 import {
   ListBody,
   ListTitle,

@@ -1,6 +1,6 @@
 import { ReactNode, forwardRef } from 'react';
-import Tooltip from '~/components/atoms/tooltip';
-import { cn } from '~/components/utils';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
+import { cn } from '@kloudlite/design-system/utils';
 
 interface IBase {
   className?: string;

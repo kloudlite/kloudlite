@@ -13,7 +13,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/lib/types/common';
 import { useState } from 'react';
 import fake from '~/root/fake-data-generator/fake';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import Tools from './tools';
 import HandleRouter from './handle-router';
 import RouterResourcesV2 from './router-resources-V2';

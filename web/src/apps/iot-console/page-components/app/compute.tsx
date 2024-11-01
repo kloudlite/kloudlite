@@ -1,10 +1,10 @@
-import { NumberInput } from '~/components/atoms/input';
-import Slider from '~/components/atoms/slider';
+import { NumberInput } from '@kloudlite/design-system/atoms/input';
+import Slider from '@kloudlite/design-system/atoms/slider';
 import { useAppState } from '~/iotconsole/page-components/app-states';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { FadeIn, parseValue } from '~/iotconsole/page-components/util';
-import Select from '~/components/atoms/select';
+import Select from '@kloudlite/design-system/atoms/select';
 import ExtendedFilledTab from '~/iotconsole/components/extended-filled-tab';
 import { BottomNavigation } from '~/iotconsole/components/commons';
 import { useEffect } from 'react';

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { parseError } from '../../utils/common';
 import { IExecutorResp } from '../../server/helpers/execute-query-with-context';
 

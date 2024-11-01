@@ -11,11 +11,11 @@ import {
   useSearchParams,
 } from '@remix-run/react';
 import { RECAPTCHA_SITE_KEY, mainUrl } from '~/auth/consts';
-import { Button } from '~/components/atoms/button.jsx';
-import { PasswordInput, TextInput } from '~/components/atoms/input.jsx';
-import { ArrowLeft, ArrowRight } from '~/components/icons';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { Button } from '@kloudlite/design-system/atoms/button.jsx';
+import { PasswordInput, TextInput } from '@kloudlite/design-system/atoms/input.jsx';
+import { ArrowLeft, ArrowRight } from '@kloudlite/design-system/icons';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import grecaptcha from '~/root/lib/client/helpers/g-recaptcha';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm from '~/root/lib/client/hooks/use-form';

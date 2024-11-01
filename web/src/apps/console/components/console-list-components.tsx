@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import Tooltip from '~/components/atoms/tooltip';
-import TooltipV2 from '~/components/atoms/tooltipV2';
-import { cn } from '~/components/utils';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
+import TooltipV2 from '@kloudlite/design-system/atoms/tooltipV2';
+import { cn } from '@kloudlite/design-system/utils';
 import { Truncate } from '~/root/lib/utils/common';
 
 interface IBase {

@@ -1,6 +1,6 @@
 import { useSearchParams } from '@remix-run/react';
 import { useState } from 'react';
-import Pagination from '~/components/molecule/pagination';
+import Pagination from '@kloudlite/design-system/molecule/pagination';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import {
   decodeUrl,

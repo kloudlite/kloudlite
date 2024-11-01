@@ -1,5 +1,5 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { generateKey, titleCase, useMapper } from '~/components/utils';
+import { generateKey, titleCase, useMapper } from '@kloudlite/design-system/utils';
 import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -31,10 +31,10 @@ import logger from '~/root/lib/client/helpers/log';
 
 import { useState } from 'react';
 // import { SyncStatusV2 } from '~/console/components/sync-status';
-import { Badge } from '~/components/atoms/badge';
-import { Button } from '~/components/atoms/button';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import CodeView from '~/console/components/code-view';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { LoadingPlaceHolder } from '~/console/components/loading';
@@ -44,7 +44,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { handleError } from '~/root/lib/utils/common';
 // import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
-import TooltipV2 from '~/components/atoms/tooltipV2';
+import TooltipV2 from '@kloudlite/design-system/atoms/tooltipV2';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { useClusterStatusV3 } from '~/console/hooks/use-cluster-status-v3';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';

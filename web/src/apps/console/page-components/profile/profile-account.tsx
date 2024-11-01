@@ -1,6 +1,6 @@
-import { Avatar } from '~/components/atoms/avatar';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
+import { Avatar } from '@kloudlite/design-system/atoms/avatar';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import {
   BoxPrimitive,
   DeleteContainer,

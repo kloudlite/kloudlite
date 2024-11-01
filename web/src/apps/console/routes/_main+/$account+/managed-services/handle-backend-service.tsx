@@ -5,9 +5,9 @@ import {
   ITextInputBase,
   NumberInput,
   TextInput,
-} from '~/components/atoms/input';
-import { Switch } from '~/components/atoms/switch';
-import Popup from '~/components/molecule/popup';
+} from '@kloudlite/design-system/atoms/input';
+import { Switch } from '@kloudlite/design-system/atoms/switch';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';

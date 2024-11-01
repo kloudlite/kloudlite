@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useState } from 'react';
-import ActionList from '~/components/atoms/action-list';
+import ActionList from '@kloudlite/design-system/atoms/action-list';
 
 interface IItem {
   label: string;

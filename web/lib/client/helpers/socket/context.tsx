@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import logger from '~/root/lib/client/helpers/log';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';

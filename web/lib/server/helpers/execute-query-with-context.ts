@@ -1,7 +1,7 @@
 import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
 import axios, { AxiosError } from 'axios';
-import { uuid } from '~/components/utils';
+import { uuid } from '@kloudlite/design-system/utils';
 import http from 'http';
 import https from 'https';
 import { gatewayUrl } from '../../configs/base-url.cjs';

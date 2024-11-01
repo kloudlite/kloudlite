@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
 import { toast } from 'react-toastify';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -13,8 +13,8 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useCallback, useEffect, useState } from 'react';
 import { IApps } from '~/console/server/gql/queries/app-queries';
-import Select from '~/components/atoms/select';
-import { mapper } from '~/components/utils';
+import Select from '@kloudlite/design-system/atoms/select';
+import { mapper } from '@kloudlite/design-system/utils';
 import { useOutletContext } from '@remix-run/react';
 import { ISetState } from '~/console/page-components/app-states';
 import { useReload } from '~/root/lib/client/helpers/reloader';

@@ -1,7 +1,7 @@
 import { useNavigate } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
-import Select from '~/components/atoms/select';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Select from '@kloudlite/design-system/atoms/select';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import FillerCreateTeam from '~/console/assets/filler-create-team';
 import { BottomNavigation } from '~/console/components/commons';
 import { SignOut } from '~/console/components/icons';

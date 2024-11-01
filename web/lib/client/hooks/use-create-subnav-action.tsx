@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 
 const SubNavDataContext = createContext<{
   data?: ReactNode;

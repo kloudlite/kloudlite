@@ -1,6 +1,6 @@
 import { Key } from 'react';
-import Tabs, { ITab } from '~/components/atoms/tabs';
-import { cn } from '~/components/utils';
+import Tabs, { ITab } from '@kloudlite/design-system/atoms/tabs';
+import { cn } from '@kloudlite/design-system/utils';
 import { NonNullableString } from '~/root/lib/types/common';
 
 export interface IExtendedFilledTab<T = string> {

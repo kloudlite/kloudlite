@@ -7,12 +7,12 @@ import {
   useParams,
 } from '@remix-run/react';
 import { cloneElement, useCallback } from 'react';
-import Container from '~/components/atoms/container';
-import OptionList from '~/components/atoms/option-list';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import Profile from '~/components/molecule/profile';
-import { TopBar } from '~/components/organisms/top-bar';
-import { generateKey, titleCase } from '~/components/utils';
+import Container from '@kloudlite/design-system/atoms/container';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
+import Profile from '@kloudlite/design-system/molecule/profile';
+import { TopBar } from '@kloudlite/design-system/organisms/top-bar';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import Breadcrum from '~/iotconsole/components/breadcrum';
 import { CommonTabs } from '~/iotconsole/components/common-navbar-tabs';
 import LogoWrapper from '~/iotconsole/components/logo-wrapper';
@@ -20,7 +20,7 @@ import { ViewModeProvider } from '~/iotconsole/components/view-mode';
 import { IAccounts } from '~/iotconsole/server/gql/queries/account-queries';
 import { setupAccountContext } from '~/iotconsole/server/utils/auth-utils';
 import { constants } from '~/iotconsole/server/utils/constants';
-import { LightTitlebarColor } from '~/design-system/tailwind-base';
+import { LightTitlebarColor } from '~/root/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
@@ -211,7 +211,7 @@ const Console = () => {
               {breadcrum.map((bc: any, index) =>
                 cloneElement(bc.handle.breadcrum(bc), {
                   key: generateKey(index),
-                })
+                }),
               )}
             </Breadcrum.Root>
           )

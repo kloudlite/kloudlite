@@ -1,10 +1,10 @@
 import { ChangeEventHandler, Dispatch, SetStateAction, useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
-// import { Chip, ChipGroup } from '~/components/atoms/chips';
-import { TextInput } from '~/components/atoms/input';
-import Tooltip from '~/components/atoms/tooltip';
-import Popup from '~/components/molecule/popup';
-import { titleCase, useMapper } from '~/components/utils';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+// import { Chip, ChipGroup } from '@kloudlite/design-system/atoms/chips';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { titleCase, useMapper } from '@kloudlite/design-system/utils';
 import {
   ListItem,
   ListTitle,

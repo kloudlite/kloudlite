@@ -1,4 +1,4 @@
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListBody,
   ListItem,
@@ -18,7 +18,7 @@ import { useState } from 'react';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useOutletContext, useParams } from '@remix-run/react';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';

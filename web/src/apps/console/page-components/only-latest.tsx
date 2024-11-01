@@ -1,4 +1,4 @@
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 
 const OnlyLatest = ({
   children,

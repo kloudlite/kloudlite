@@ -5,9 +5,9 @@ import {
   UnsavedChangesProvider,
   useUnsavedChanges,
 } from '~/lib/client/hooks/use-unsaved-changes';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { handleError } from '~/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { getAppIn } from '~/iotconsole/server/r-utils/resource-getter';
 import useForm from '~/lib/client/hooks/use-form';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';

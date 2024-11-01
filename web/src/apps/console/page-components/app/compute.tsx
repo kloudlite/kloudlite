@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { NumberInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import Slider from '~/components/atoms/slider';
+import { NumberInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import Slider from '@kloudlite/design-system/atoms/slider';
 import { BottomNavigation } from '~/console/components/commons';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { useAppState } from '~/console/page-components/app-states';

@@ -2,8 +2,8 @@
 /* eslint-disable react/destructuring-assignment */
 import { useOutletContext, useParams } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
-import { NumberInput, TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
+import { NumberInput, TextInput } from '@kloudlite/design-system/atoms/input';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
@@ -16,12 +16,12 @@ import {
   IMSvTemplate,
   IMSvTemplates,
 } from '~/console/server/gql/queries/managed-templates-queries';
-import { Switch } from '~/components/atoms/switch';
+import { Switch } from '@kloudlite/design-system/atoms/switch';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import ListV2 from '~/console/components/listV2';
 import { ListItem } from '~/console/components/console-list-components';

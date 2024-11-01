@@ -1,6 +1,6 @@
 import { Plus } from '~/console/components/icons';
 import { Outlet, useOutletContext } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import SidebarLayout from '~/console/components/sidebar-layout';
 
 const navItems = [

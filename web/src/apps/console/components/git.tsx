@@ -8,15 +8,15 @@ import {
   Plus,
   Search,
 } from '~/console/components/icons';
-import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
-import { dayjs } from '~/components/molecule/dayjs';
-import Radio from '~/components/atoms/radio';
-import { useAppend, useMapper } from '~/components/utils';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import Select from '@kloudlite/design-system/atoms/select';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
+import Radio from '@kloudlite/design-system/atoms/radio';
+import { useAppend, useMapper } from '@kloudlite/design-system/utils';
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Button } from '~/components/atoms/button';
-import { toast } from '~/components/molecule/toast';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { gitEnvs } from '~/root/lib/configs/base-url.cjs';
 import Pulsable from '~/root/lib/client/components/pulsable';
 import { ILoginUrls, ILogins } from '../server/gql/queries/git-queries';

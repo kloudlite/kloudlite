@@ -1,9 +1,9 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { DotsThreeOutlineFill, Tag, Trash } from '~/console/components/icons';
 import { useState } from 'react';
-import AnimateHide from '~/components/atoms/animate-hide';
-import { Badge } from '~/components/atoms/badge';
-import { generateKey, titleCase } from '~/components/utils';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import CodeView from '~/console/components/code-view';
 import { ListItem } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
@@ -19,7 +19,7 @@ import { DIALOG_TYPE } from '~/console/utils/commons';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { useOutletContext } from '@remix-run/react';
 import { constants } from '~/console/server/utils/constants';

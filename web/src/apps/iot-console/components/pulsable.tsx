@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo } from 'react';
 import ReactPulsable from 'react-pulsable';
-import { ChildrenProps } from '~/components/types';
+import { ChildrenProps } from '@kloudlite/design-system/types';
 
 const pulsableContext = createContext(false);
 

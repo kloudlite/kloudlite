@@ -1,5 +1,5 @@
 import React, { Children, ReactElement, ReactNode, useState } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import { Check } from '~/console/components/icons';
 
 interface IUseMultiStepProgress {

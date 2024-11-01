@@ -1,7 +1,7 @@
 import { useOutletContext } from '@remix-run/react';
 import Chart from '~/console/components/charts/charts-client';
 import { useState } from 'react';
-import { dayjs } from '~/components/molecule/dayjs';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
 import { ApexOptions } from 'apexcharts';
 import { parseName } from '~/console/server/r-utils/common';
 import { useDataState } from '~/console/page-components/common-state';

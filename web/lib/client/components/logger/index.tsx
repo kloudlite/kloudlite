@@ -16,7 +16,7 @@ import React, {
   useState,
 } from 'react';
 import { ViewportList, ViewportListRef } from 'react-viewport-list';
-import { dayjs } from '~/components/molecule/dayjs';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
 import {
   ISearchInfProps,
   useSearch,
@@ -26,8 +26,8 @@ import { useSocketLogs } from '~/root/lib/client/helpers/socket/useSockLogs';
 import { generatePlainColor } from '~/root/lib/utils/color-generator';
 
 import ReactPulsable from 'react-pulsable';
-import { ChildrenProps } from '~/components/types';
-// import { mapper } from '~/components/utils';
+import { ChildrenProps } from '@kloudlite/design-system/types';
+// import { mapper } from '@kloudlite/design-system/utils';
 // import Select from './log-select';
 import { logsMockData } from './dummy';
 import { LoadingIndicator } from '../reload-indicator';
@@ -169,13 +169,9 @@ const HighlightIt = ({
         if (enableHL) {
           // if (!isScrolledIntoView(ref.current)) return;
           // @ts-ignore
-          ref.current.innerHTML = hljs.highlight(
-            data,
-            {
-              language,
-            },
-            false
-          ).value;
+          ref.current.innerHTML = hljs.highlight(data, {
+            language,
+          }).value;
         } else {
           // @ts-ignore
           ref.current.innerHTML = Anser.ansiToHtml(inlineData);
@@ -249,7 +245,7 @@ const Highlighter: React.FC<HighlightProps> = ({ value, indices }) => {
             inlineData={value.substring(lastIndex, start)}
             enableHL
           />
-        </span>
+        </span>,
       );
     }
     parts.push(
@@ -259,7 +255,7 @@ const Highlighter: React.FC<HighlightProps> = ({ value, indices }) => {
           inlineData={value.substring(start, end + 1)}
           enableHL
         />
-      </span>
+      </span>,
     );
     lastIndex = end + 1;
   });
@@ -285,7 +281,7 @@ const InlineSearch = ({
       threshold,
       remainOrder: true,
     },
-    [inlineData, searchText]
+    [inlineData, searchText],
   );
 
   if (res.length && res[0].searchInf.matches?.length) {
@@ -408,7 +404,7 @@ const LogLine = ({
           'cursor-pointer': selectableLines,
           [hoverClass]: selectableLines && !dark,
           [hoverClassDark]: selectableLines && dark,
-        }
+        },
       )}
       style={{
         fontSize,
@@ -498,7 +494,7 @@ const LogBlock = ({
       threshold,
       remainOrder: true,
     },
-    [data, searchText]
+    [data, searchText],
   );
 
   const [showAll, setShowAll] = useState(true);
@@ -588,7 +584,7 @@ const LogBlock = ({
                     lines={data.length}
                     showAll={showAll}
                     key={getHashId(
-                      `${log.message}${log.timestamp}${log.podName}${index}`
+                      `${log.message}${log.timestamp}${log.podName}${index}`,
                     )}
                     hideLineNumber={hideLineNumber}
                     selectableLines={selectableLines}
@@ -719,7 +715,7 @@ const LogComp = ({
             ...acc,
             [curr.data.podName]: true,
           };
-        }, {})
+        }, {}),
       );
 
       if (sp === 'all') {

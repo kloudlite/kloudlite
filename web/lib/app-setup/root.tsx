@@ -13,23 +13,24 @@ import {
 import rcSlide from 'rc-slider/assets/index.css';
 import { ReactNode, useEffect } from 'react';
 import rcss from 'react-highlightjs-logs/dist/index.css';
+import rootCss from '@kloudlite/design-system/index.css';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
 import styleReactPulsable from 'react-pulsable/index.css';
 import reactToast from 'react-toastify/dist/ReactToastify.css';
-import { Button } from '~/components/atoms/button';
-import Container from '~/components/atoms/container';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Container from '@kloudlite/design-system/atoms/container';
 import ProgressContainer, {
   useProgress,
-} from '~/components/atoms/progress-bar';
-import Tooltip from '~/components/atoms/tooltip';
-import { TooltipContainer } from '~/components/atoms/tooltipV2';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import { ToastContainer } from '~/components/molecule/toast';
-import Page404 from '~/components/organisms/page-404';
-import { TopBar } from '~/components/organisms/top-bar';
-import { ChildrenProps } from '~/components/types';
-import stylesUrl from '~/design-system/index.css';
-import tailwindBase from '~/design-system/tailwind-base.js';
+} from '@kloudlite/design-system/atoms/progress-bar';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
+import { TooltipContainer } from '@kloudlite/design-system/atoms/tooltipV2';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
+import { ToastContainer } from '@kloudlite/design-system/molecule/toast';
+import Page404 from '@kloudlite/design-system/organisms/page-404';
+import { TopBar } from '@kloudlite/design-system/organisms/top-bar';
+import { ChildrenProps } from '@kloudlite/design-system/types';
+import stylesUrl from '~/root/index.css';
+import tailwindBase from '~/root/tailwind-base.js';
 import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
 import { isDev } from '~/lib/client/helpers/log';
 import { getClientEnv, getServerEnv } from '~/root/lib/configs/base-url.cjs';
@@ -37,6 +38,7 @@ import { useDataFromMatches } from '../client/hooks/use-custom-matches';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesUrl },
+  { rel: 'stylesheet', href: rootCss },
   { rel: 'stylesheet', href: reactToast },
   { rel: 'stylesheet', href: skeletonCSS },
   { rel: 'stylesheet', href: rcSlide },

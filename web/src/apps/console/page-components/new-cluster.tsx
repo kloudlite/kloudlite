@@ -1,12 +1,12 @@
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
-import Select from '~/components/atoms/select';
-import { toast } from '~/components/molecule/toast';
-import { mapper, useMapper } from '~/components/utils';
+import Select from '@kloudlite/design-system/atoms/select';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { mapper, useMapper } from '@kloudlite/design-system/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { TextInput } from '~/components/atoms/input';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import { constDatas, awsRegions } from '../dummy/consts';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -50,7 +50,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const cloudProviders = useMemo(
     () => parseNodes(providerSecrets!),
-    [providerSecrets]
+    [providerSecrets],
   );
 
   const { account } = useOutletContext<IAccountContext>();
@@ -94,7 +94,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       name: '',
-      region: 'ap-south-1' || selectedRegion?.Name,
+      region: selectedRegion?.Name || 'ap-south-1',
       cloudProvider: cloudProvider
         ? cloudProvider.cloudProviderName
         : selectedProvider?.provider?.cloudProviderName || '',
@@ -129,7 +129,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   displayName: val.displayName,
                   spec: {
                     cloudProvider: validateClusterCloudProvider(
-                      val.cloudProvider
+                      val.cloudProvider,
                     ),
                     aws: {
                       credentials: {
@@ -146,7 +146,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                       },
                     },
                     availabilityMode: validateAvailabilityMode(
-                      val.availabilityMode
+                      val.availabilityMode,
                     ),
                   },
                   metadata: {
@@ -165,7 +165,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   displayName: val.displayName,
                   spec: {
                     cloudProvider: validateClusterCloudProvider(
-                      val.cloudProvider
+                      val.cloudProvider,
                     ),
                     gcp: {
                       credentialsRef: {
@@ -175,7 +175,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                       region: val.selectedGcpRegion,
                     },
                     availabilityMode: validateAvailabilityMode(
-                      val.availabilityMode
+                      val.availabilityMode,
                     ),
                   },
                   metadata: {
@@ -242,7 +242,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 onChange={(value, v) => {
                   handleChange('credentialsRef')(dummyEvent(v));
                   handleChange('cloudProvider')(
-                    dummyEvent(value.provider?.cloudProviderName || '')
+                    dummyEvent(value.provider?.cloudProviderName || ''),
                   );
                   setSelectedProvider(value);
                 }}

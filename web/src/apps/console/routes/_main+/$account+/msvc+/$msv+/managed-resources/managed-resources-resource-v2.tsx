@@ -1,5 +1,5 @@
 import { LockSimple, PencilSimple, Trash } from '~/console/components/icons';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import {
   ListItem,
   ListItemV2,
@@ -22,14 +22,14 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useParams } from '@remix-run/react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { getManagedTemplate } from '~/console/utils/commons';
-import { Badge } from '~/components/atoms/badge';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
 import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'integrated resource';

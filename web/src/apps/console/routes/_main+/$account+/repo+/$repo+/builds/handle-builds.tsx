@@ -1,15 +1,15 @@
 /* eslint-disable react/destructuring-assignment */
 import { IDialogBase } from '~/console/components/types.d';
 import { useOutletContext } from '@remix-run/react';
-import Select from '~/components/atoms/select';
-import { toast } from '~/components/molecule/toast';
-import { useMapper } from '~/components/utils';
+import Select from '@kloudlite/design-system/atoms/select';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { useMapper } from '@kloudlite/design-system/utils';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IBuilds } from '~/console/server/gql/queries/build-queries';
 import {
@@ -21,7 +21,7 @@ import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Git from '~/console/components/git';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
-import { TextInput } from '~/components/atoms/input';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
 import { GitDetail } from '~/console/components/commons';
 import { IRepoContext } from '../_layout';
 import AdvancedOptions from './advanced-options';

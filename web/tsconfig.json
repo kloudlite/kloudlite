@@ -35,15 +35,6 @@
       "~/dashboard/*": [
         "./src/apps/dashboard/*"
       ],
-      "~/components/*": [
-        "./src/design-system/components/*"
-      ],
-      "~/components/icons/*": [
-        "./src/design-system/components/icons"
-      ],
-      "~/design-system/*": [
-        "./src/design-system/*"
-      ],
       "~/root/*": [
         "*"
       ],

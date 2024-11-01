@@ -2,11 +2,11 @@ import { useLocation, useSearchParams } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactElement, useEffect, useState } from 'react';
 import useSWR from 'swr';
-import { Button } from '~/components/atoms/button';
-import Chips from '~/components/atoms/chips';
-import ScrollArea from '~/components/atoms/scroll-area';
-import { cn } from '~/components/utils';
-import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import Chips from '@kloudlite/design-system/atoms/chips';
+import ScrollArea from '@kloudlite/design-system/atoms/scroll-area';
+import { cn } from '@kloudlite/design-system/utils';
+import { ChipGroupPaddingTop } from '~/root/tailwind-base';
 import {
   IQueryParams,
   decodeUrl,
@@ -55,7 +55,7 @@ const removeFilter = ({
 };
 
 export type IdataFetcher = (
-  s: string
+  s: string,
 ) => Promise<{ content: string; value: string | boolean; type?: string }[]>;
 
 export interface FilterType {
@@ -137,8 +137,8 @@ const Filters = ({ appliedFilters }: { appliedFilters: IAppliedFilters }) => {
             )),
           ];
         },
-        []
-      )
+        [],
+      ),
     );
   }, [appliedFilters]);
   return (

@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
-import AnimateHide from '~/components/atoms/animate-hide';
-import { Button, IconButton } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import { cn, uuid } from '~/components/utils';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { cn, uuid } from '@kloudlite/design-system/utils';
 import { MinusCircle, Plus } from '~/iotconsole/components/icons';
 
 interface IKeyValuePair {

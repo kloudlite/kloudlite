@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
-import { Chip, ChipGroup } from '~/components/atoms/chips';
-import { TextInput } from '~/components/atoms/input';
-import { usePagination } from '~/components/molecule/pagination';
-import { cn } from '~/components/utils';
+import { Button, IconButton } from '@kloudlite/design-system/atoms/button';
+import { Chip, ChipGroup } from '@kloudlite/design-system/atoms/chips';
+import { TextInput } from '@kloudlite/design-system/atoms/input';
+import { usePagination } from '@kloudlite/design-system/molecule/pagination';
+import { cn } from '@kloudlite/design-system/utils';
 import List from '~/iotconsole/components/list';
 import NoResultsFound from '~/iotconsole/components/no-results-found';
 import { IShowDialog } from '~/iotconsole/components/types.d';
@@ -21,7 +21,7 @@ import {
   X,
   XCircleFill,
 } from '~/iotconsole/components/icons';
-import Tooltip from '~/components/atoms/tooltip';
+import Tooltip from '@kloudlite/design-system/atoms/tooltip';
 import { listFlex } from '~/iotconsole/components/console-list-components';
 import { Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret as ConfigOrSecretType } from '~/root/src/generated/gql/server';
 import AppDialog from './app-dialogs';

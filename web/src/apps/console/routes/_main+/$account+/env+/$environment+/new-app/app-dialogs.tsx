@@ -2,8 +2,8 @@
 import { Spinner, ArrowLeft } from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
-import Popup from '~/components/molecule/popup';
+import { IconButton } from '@kloudlite/design-system/atoms/button';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import NoResultsFound from '~/console/components/no-results-found';
 import { IDialog } from '~/console/components/types.d';

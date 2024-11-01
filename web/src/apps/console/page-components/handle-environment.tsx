@@ -1,10 +1,10 @@
 /* eslint-disable no-nested-ternary */
 import { useCallback, useEffect, useState } from 'react';
-import Radio from '~/components/atoms/radio';
-import Select from '~/components/atoms/select';
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import Radio from '@kloudlite/design-system/atoms/radio';
+import Select from '@kloudlite/design-system/atoms/select';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { cn } from '@kloudlite/design-system/utils';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';

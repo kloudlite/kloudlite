@@ -1,9 +1,9 @@
 import { Plus } from '~/console/components/icons';
 import { useOutletContext } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import Wrapper from '~/console/components/wrapper';
 import { useEffect, useState } from 'react';
-import { uuid } from '~/components/utils';
+import { uuid } from '@kloudlite/design-system/utils';
 import { IRouter } from '~/console/server/gql/queries/router-queries';
 import { NN } from '~/lib/types/common';
 import HandleRoute from './handle-route';

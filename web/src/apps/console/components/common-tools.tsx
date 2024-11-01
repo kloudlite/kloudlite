@@ -5,9 +5,9 @@ import {
   Plus,
 } from '~/console/components/icons';
 import { ReactNode, useCallback, useState } from 'react';
-import OptionList from '~/components/atoms/option-list';
-import Toolbar from '~/components/atoms/toolbar';
-import { cn } from '~/components/utils';
+import OptionList from '@kloudlite/design-system/atoms/option-list';
+import Toolbar from '@kloudlite/design-system/atoms/toolbar';
+import { cn } from '@kloudlite/design-system/utils';
 import { CommonFilterOptions } from '~/console/components/common-filter';
 import Filters, {
   FilterType,

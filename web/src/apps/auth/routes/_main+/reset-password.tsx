@@ -1,16 +1,16 @@
-import { Button } from '~/components/atoms/button';
-import { PasswordInput } from '~/components/atoms/input';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { PasswordInput } from '@kloudlite/design-system/atoms/input';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import getQueries from '~/root/lib/server/helpers/get-queries';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import { redirect } from '@remix-run/node';
 import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
-import { ArrowRight } from '~/components/icons';
+import { ArrowRight } from '@kloudlite/design-system/icons';
 import Container from '~/auth/components/container';
 
 const ForgetPassword = () => {

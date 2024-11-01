@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
-import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
+import Popup from '@kloudlite/design-system/molecule/popup';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
@@ -16,8 +16,8 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import Select from '~/components/atoms/select';
-import { useAppend, useMapper } from '~/components/utils';
+import Select from '@kloudlite/design-system/atoms/select';
+import { useAppend, useMapper } from '@kloudlite/design-system/utils';
 
 type IDialog = IDialogBase<ExtractNodeType<IClusterMSvs>>;
 

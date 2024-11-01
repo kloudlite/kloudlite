@@ -5,7 +5,7 @@ import {
 } from '~/root/lib/client/hooks/use-search';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useSearchParams } from '@remix-run/react';
-import Toolbar from '~/components/atoms/toolbar';
+import Toolbar from '@kloudlite/design-system/atoms/toolbar';
 import { useState } from 'react';
 import { Search } from '~/iotconsole/components/icons';
 import { isValidRegex } from '../server/utils/common';

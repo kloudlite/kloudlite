@@ -1,9 +1,9 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
-import TooltipV2 from '~/components/atoms/tooltipV2';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { Badge } from '@kloudlite/design-system/atoms/badge';
+import TooltipV2 from '@kloudlite/design-system/atoms/tooltipV2';
+import { toast } from '@kloudlite/design-system/molecule/toast';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import {
   ListItem,

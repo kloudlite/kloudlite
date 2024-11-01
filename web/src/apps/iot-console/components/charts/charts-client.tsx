@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { cn } from '~/components/utils';
+import { cn } from '@kloudlite/design-system/utils';
 import { type ApexOptions } from 'apexcharts';
 import { LoadingPlaceHolder } from '../loading';
 import { Box } from '../common-console-components';

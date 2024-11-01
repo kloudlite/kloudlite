@@ -2,7 +2,7 @@ import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -18,7 +18,7 @@ export const loader = (ctx: IRemixCtx) => {
   const { cluster } = ctx.params;
   const promise = pWrapper(async () => {
     const { data: mData, errors: mErrors } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listHelmChart({
       clusterName: cluster,
     });

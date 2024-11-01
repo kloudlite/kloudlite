@@ -1,5 +1,5 @@
 import { PencilLine, Trash, Cpu } from '~/console/components/icons';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '@kloudlite/design-system/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
@@ -16,18 +16,18 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useState } from 'react';
-import Popup from '~/components/molecule/popup';
+import Popup from '@kloudlite/design-system/molecule/popup';
 import { HighlightJsLogs } from 'react-highlightjs-logs';
 import { yamlDump } from '~/console/components/diff-viewer';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
+import { toast } from '@kloudlite/design-system/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import AnimateHide from '~/components/atoms/animate-hide';
-import { Button } from '~/components/atoms/button';
-import { dayjs } from '~/components/molecule/dayjs';
+import AnimateHide from '@kloudlite/design-system/atoms/animate-hide';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { dayjs } from '@kloudlite/design-system/molecule/dayjs';
 import LogComp from '~/root/lib/client/components/logger';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';

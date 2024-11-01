@@ -17,9 +17,9 @@ import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
 import { GearSix, VirtualMachine } from '~/iotconsole/components/icons';
 import { ExtractNodeType } from '~/iotconsole/server/r-utils/common';
 import LogoWrapper from '~/iotconsole/components/logo-wrapper';
-import { BrandLogo } from '~/components/branding/brand-logo';
+import { BrandLogo } from '@kloudlite/design-system/branding/brand-logo';
 import { BreadcrumSlash, tabIconSize } from '~/iotconsole/utils/commons';
-import { Button } from '~/components/atoms/button';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import {
   IProject,
   IProjects,
