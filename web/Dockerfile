@@ -5,7 +5,6 @@ RUN npm i --frozen-lockfile
 
 FROM node:22.10.0-alpine AS install
 RUN npm i -g pnpm@9.12.2
-RUN apk add gcc python3 make
 WORKDIR  /app
 COPY ./package.json ./package.json
 COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
@@ -13,8 +12,6 @@ COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
 # typecheck
 ARG APP
 ENV APP=${APP}
-# COPY ./src/generated/package.json ./src/generated/package.json
-# COPY ./src/generated/plugin/package.json ./src/generated/plugin/package.json
 COPY ./src/generated/package.json ./src/generated/pnpm-lock.yaml ./src/generated/
 COPY ./src/generated/plugin/package.json  ./src/generated/plugin/pnpm-lock.yaml ./src/generated/plugin/
 
