@@ -4,9 +4,6 @@ tasks:
     cmds:
       - rm -rf ./node_modules
       - rm -rf ./public
-      - rm -rf ./src/design-system/out
-      - rm -rf ./src/design-system/node_modules
-      - rm -rf ./src/design-system/dist
       - rm -rf ./src/generated/node_modules
       - rm -rf ./src/generated/plugin/dist
       - rm -rf ./src/generated/plugin/node_modules
@@ -96,11 +93,6 @@ tasks:
         pnpm gql:parse
         cd src/generated && pnpm tsgen
         cd ../.. && pnpm fake
-        
-  storybook:
-    cmds:
-      - |
-        cd src/design-system && pnpm dev
         
 
   run:
@@ -194,15 +186,6 @@ tasks:
       - docker build --build-arg APP=console . -t {{.IMAGE}}/console:{{.tag}}
       - docker push {{.IMAGE}}/console:{{.tag}}
   
-  docker-build-website:
-    preconditions:
-      - sh: '[[ -n "{{.tag}}" ]]'
-        msg: "var tag must have a value"
-    silent: false
-    cmds:
-      # - cd ./src/design-system && mkdir -p out && pnpm local:release
-      - docker buildx build  . -t {{.tag}} -f Dockerfile.website
-
   container-build-webinar:
     preconditions:
       - sh: '[[ -n "{{.tag}}" ]]'

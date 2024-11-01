@@ -5,9 +5,8 @@
   "homepage": "https://kloudlite.github.io",
   "type": "module",
   "scripts": {
-    "design-system:install": "if [ -e src/design-system ]; then cd src/design-system && pnpm i; fi",
     "generated:install": "if [ -e src/generated ]; then cd src/generated && pnpm i; fi",
-    "postinstall": "npm run design-system:install && npm run generated:install",
+    "postinstall": "npm run generated:install",
     "fake": "esbuild fake-data-generator/gen.ts --format=cjs --outfile=public/dist/fake-data-generator.cjs --platform=node && node public/dist/fake-data-generator.cjs",
     "dev": "remix dev",
     "serve": "remix-serve ./public/${APP}/server",
