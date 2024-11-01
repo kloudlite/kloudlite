@@ -11,8 +11,8 @@ import {
   useSearchParams,
 } from '@remix-run/react';
 import { RECAPTCHA_SITE_KEY, mainUrl } from '~/auth/consts';
-import { Button } from '@kloudlite/design-system/atoms/button.jsx';
-import { PasswordInput, TextInput } from '@kloudlite/design-system/atoms/input.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import { PasswordInput, TextInput } from '@kloudlite/design-system/atoms/input';
 import { ArrowLeft, ArrowRight } from '@kloudlite/design-system/icons';
 import { toast } from '@kloudlite/design-system/molecule/toast';
 import { cn } from '@kloudlite/design-system/utils';

@@ -1,7 +1,7 @@
 import { Plus } from '~/iotconsole/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { Button } from '@kloudlite/design-system/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import {
   LoadingComp,
   pWrapper,
@@ -24,7 +24,7 @@ export const loader = (ctx: IRemixCtx) => {
     const { project } = ctx.params;
 
     const { data, errors } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listIotDeployments({
       pq: getPagination(ctx),
       search: getSearch(ctx),

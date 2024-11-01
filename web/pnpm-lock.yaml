@@ -9,8 +9,8 @@ dependencies:
     specifier: 1.6.0
     version: 1.6.0(react@18.2.0)
   '@kloudlite/design-system':
-    specifier: ^0.0.1
-    version: 0.0.1(@types/react-dom@18.3.1)(@types/react@18.3.12)(immer@10.1.1)(monaco-editor@0.52.0)(react-dom@18.3.1)(react@18.2.0)(websocket@1.0.35)
+    specifier: ^0.0.2
+    version: 0.0.2(@types/react-dom@18.3.1)(@types/react@18.3.12)(immer@10.1.1)(monaco-editor@0.52.0)(react-dom@18.3.1)(react@18.2.0)(websocket@1.0.35)
   '@mdx-js/react':
     specifier: ^2.3.0
     version: 2.3.0(react@18.2.0)
@@ -2388,8 +2388,8 @@ packages:
     resolution: {integrity: sha512-3sRl+pkyFY/kLmHl0cgHiFp2xEqErA8N3ECjMs7serSUBmoJ70lBa0PG5t0IM6WJgdZNyyI0R8YFfi5wM8+mzg==}
     dev: true
 
-  /@kloudlite/design-system@0.0.1(@types/react-dom@18.3.1)(@types/react@18.3.12)(immer@10.1.1)(monaco-editor@0.52.0)(react-dom@18.3.1)(react@18.2.0)(websocket@1.0.35):
-    resolution: {integrity: sha512-C2cWB3Rx05++dvE6Ju4nXBLFS/5rziadJoPmLtBieVQSDB2DN+vKLS8P6qZq7+ZX1OdRQtFDGaRrs1qh4TWH0w==, tarball: https://npm.pkg.github.com/download/@kloudlite/design-system/0.0.1/14e9a82ef8f1dd5fb0fbe22c2990304e85c76607}
+  /@kloudlite/design-system@0.0.2(@types/react-dom@18.3.1)(@types/react@18.3.12)(immer@10.1.1)(monaco-editor@0.52.0)(react-dom@18.3.1)(react@18.2.0)(websocket@1.0.35):
+    resolution: {integrity: sha512-drLZyJtV5VPWSkuBbw0lyDk9BCCsNt8r9LiiYEWrda9tAlO9ueVbsuxdaFwPuswYbvBCPbwSL5f6IH2QPr5jSQ==}
     peerDependencies:
       react: ^18.2.0 || ^17.0.0 || ^16.0.0
       react-dom: ^18.2.0 || ^17.0.0 || ^16.0.0

@@ -184,7 +184,7 @@ tasks:
       - docker build --build-arg APP=auth . -t {{.IMAGE}}/auth:{{.tag}}
       - docker push {{.IMAGE}}/auth:{{.tag}}
       - docker build --build-arg APP=console . -t {{.IMAGE}}/console:{{.tag}}
-      - docker push {{.IMAGE}}/console:{{.tag}}
+      # - docker push {{.IMAGE}}/console:{{.tag}}
   
   container-build-webinar:
     preconditions:

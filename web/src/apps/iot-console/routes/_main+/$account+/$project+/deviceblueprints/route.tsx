@@ -2,7 +2,7 @@ import { Plus } from '~/iotconsole/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '@kloudlite/design-system/atoms/button.jsx';
+import { Button } from '@kloudlite/design-system/atoms/button';
 import {
   LoadingComp,
   pWrapper,
@@ -23,9 +23,9 @@ export const loader = async (ctx: IRemixCtx) => {
   const { project } = ctx.params;
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(
-      ctx.request
+      ctx.request,
     ).listIotDeviceBlueprints({
-      projectName: 
+      projectName: project,
       pq: getPagination(ctx),
       search: getSearch(ctx),
     });
@@ -56,7 +56,6 @@ const Workspaces = () => {
         // }}
       >
         {({ deviceBlueprintData }) => {
-
           const deviceBlueprints = parseNodes(deviceBlueprintData);
 
           if (!deviceBlueprints) {
