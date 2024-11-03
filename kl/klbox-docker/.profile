@@ -15,7 +15,7 @@
 export PATH=$PATH:/home/kl/.nix-profile/bin
 
 KL_LOCK_PATH=/home/kl/workspace/kl.lock
-[ -f /kl-tmp/env ] && echo "sourcing /kl-tmp/env" && source /kl-tmp/env
+[ -f /kl-tmp/env ] && source /kl-tmp/env
 
 # KL_DEVBOX_PATH=/kl-tmp/devbox
 # KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json
@@ -45,21 +45,20 @@ KL_LOCK_PATH=/home/kl/workspace/kl.lock
 #
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
-	# include .bashrc if it exists
-	if [ -f "$HOME/.bashrc" ]; then
-		. "$HOME/.bashrc"
-	fi
+  # include .bashrc if it exists
+  if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+  fi
 fi
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/bin" ]; then
-	PATH="$HOME/bin:$PATH"
+  PATH="$HOME/bin:$PATH"
 fi
-
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ]; then
-	PATH="$HOME/.local/bin:$PATH"
+  PATH="$HOME/.local/bin:$PATH"
 fi
 
 if [ -f "/kl-tmp/global-profile" ]; then

@@ -27,16 +27,15 @@ chown -R kl /kl-tmp/global-profile
 
 mkdir -p /etc/wireguard
 echo $KL_TEAM_NAME
-set -x
 CLUSTER_IP_RANGE=$(echo $CLUSTER_IP_RANGE | sed 's/\//###/g')
 cat /.cache/kl/kl-workspace-wg.conf | sed "s/#CLUSTER_GATEWAY_IP/${CLUSTER_GATEWAY_IP:-null}/" | sed "s/#CLUSTER_IP_RANGE/${CLUSTER_IP_RANGE:-null}/" >/tmp/wg-cong
 sed -i "s/###/\//" /tmp/wg-cong
-set +x
 sudo cp /tmp/wg-cong /etc/wireguard/kl-workspace-wg.conf
 rm /tmp/wg-cong
 cat /.cache/kl/vpn/${KL_TEAM_NAME}.json | jq -r .wg | base64 -d >/tmp/kl-vpn.conf
 sudo cp /tmp/kl-vpn.conf /etc/wireguard/kl-vpn.conf
 rm /tmp/kl-vpn.conf
+
 sudo wg-quick up kl-vpn
 sudo wg-quick up kl-workspace-wg
 
@@ -74,7 +73,7 @@ if [ $vmounts -gt 0 ]; then
   eval $(cat $KL_HASH_FILE | jq '.config.mounts | to_entries | map_values(. = "echo \"\(.value)\" | base64 -d > \(.key)") | .[]' -r)
 fi
 EOF
-sudo KL_HASH_FILE=$KL_HASH_FILE bash -x /tmp/mount.sh
+sudo KL_HASH_FILE=$KL_HASH_FILE bash /tmp/mount.sh
 
 cat >/tmp/pkg-install.sh <<'EOF'
 set -o errexit
@@ -85,13 +84,35 @@ if [ $npkgs -gt 0 ]; then
   nix shell --log-format bar-with-logs $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command echo "successfully installed packages"
   npath=$(nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command printenv PATH)
   echo export PATH=$PATH:$npath >> /kl-tmp/env
+
+  cat > /kl-tmp/nix-ld-library-and-cpath.sh <<'EOS'
+    dir=$(nix eval "$1" --raw)
+
+    rm -rf /kl-tmp/nix-ld-path /kl-tmp/nix-include
+
+    if [ -d "$dir/lib" ]; then
+      echo -n "$dir/lib:" >> /kl-tmp/nix-ld-path
+    fi
+
+    if [ -d "$dir/include" ]; then
+      echo -n "$dir/include:" >> /kl-tmp/nix-include
+    fi
+EOS
+
+  cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} bash /kl-tmp/nix-ld-library-and-cpath.sh "{}"
+
+  if [ -f /kl-tmp/nix-ld-path ]; then
+    echo export LD_LIBRARY_PATH="$(cat /kl-tmp/nix-ld-path):$LD_LIBRARY_PATH" >> /kl-tmp/env
+  fi
+
+  if [ -f /kl-tmp/nix-include ]; then
+    echo export CPATH="$(cat /kl-tmp/nix-include):$CPATH" >> /kl-tmp/env
+  fi
 fi
 EOF
 
-sudo -u kl KL_HASH_FILE=$KL_HASH_FILE PATH=$PATH bash -x /tmp/pkg-install.sh
+sudo -u kl KL_HASH_FILE=$KL_HASH_FILE PATH=$PATH bash /tmp/pkg-install.sh
 
-#nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command echo "successfully installed packages"
-#echo export PATH=$PATH:$(eval nix shell $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command printenv PATH) >> /tmp/env
 echo "export KL_HASH_FILE=$KL_HASH_FILE" >>/kl-tmp/env
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE"
 

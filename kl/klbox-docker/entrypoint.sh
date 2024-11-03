@@ -10,6 +10,8 @@ usermod -u $HOST_USER_UID kl
 chown -R kl:kl /kl-tmp
 chown -R kl:kl /nix
 
+# sleep 1000000
+
 /start.sh
 
 export SSH_PORT=$SSH_PORT
