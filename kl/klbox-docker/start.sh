@@ -63,7 +63,7 @@ if [ ! -f "$entrypoint_executed" ]; then
   # ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" <<<y >/dev/null 2>&1
 fi
 
-chown -R kl /home/kl/
+# chown -R kl /home/kl/
 sudo -u kl mkdir -p /home/kl/.config/nix
 sudo -u kl echo "experimental-features = nix-command flakes" >/home/kl/.config/nix/nix.conf
 

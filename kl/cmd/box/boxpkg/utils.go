@@ -13,6 +13,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
@@ -290,6 +291,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 		Hostname:     "box",
 		ExposedPorts: nat.PortSet{nat.Port(fmt.Sprintf("%d/tcp", sshPort)): {}},
 	}, &container.HostConfig{
+		UsernsMode: container.UsernsMode("keep-id"),
 		ExtraHosts: []string{
 			fmt.Sprintf("k3s-cluster.local:%s", constants.K3sServerIp),
 		},
@@ -300,14 +302,36 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 				{HostPort: fmt.Sprintf("%d", sshPort)},
 			},
 		},
-		Binds: func() []string {
-			binds := make([]string, 0, len(vmounts))
-			for _, m := range vmounts {
-				binds = append(binds, fmt.Sprintf("%s:%s:z", m.Source, m.Target))
+		Mounts: func() []mount.Mount {
+			resp := make([]mount.Mount, 0)
+			if len(vmounts) == 0 {
+				return nil
 			}
-			binds = append(binds, fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd))
-			return binds
+
+			resp = append(resp, vmounts...)
+
+			resp = append(resp, mount.Mount{
+				Source: c.cwd,
+				Target: "/home/kl/workspace",
+				Type:   mount.TypeBind,
+				BindOptions: &mount.BindOptions{
+					Propagation: mount.PropagationRPrivate,
+				},
+			})
+
+			return resp
 		}(),
+		// Binds: func() []string {
+		// 	binds := make([]string, 0, len(vmounts))
+		// 	for _, m := range vmounts {
+		// 		binds = append(binds, fmt.Sprintf("%s:%s:Z", m.Source, m.Target))
+		// 	}
+		// 	binds = append(binds, fmt.Sprintf("%s:/home/kl/workspace:Z", c.cwd))
+		//
+		// 	fmt.Printf("%#v", binds)
+		//
+		// 	return binds
+		// }(),
 	}, &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
 			"kloudlite": {
@@ -531,13 +555,29 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 		volumes = append(volumes, mount.Mount{Type: mount.TypeBind, Source: gitConfigPath, Target: "/home/kl/.gitconfig", ReadOnly: true})
 	}
 
-	dockerSock := "/var/run/docker.sock"
+	dockerSock := func() string {
+		if s := os.Getenv("DOCKER_HOST"); s != "" {
+			return s
+		}
+
+		return "unix:///var/run/docker.sock"
+	}()
+
+	dockerSockPath := func() string {
+		// extract the path from the docker sock url
+		if strings.HasPrefix(dockerSock, "unix://") {
+			return strings.TrimPrefix(dockerSock, "unix://")
+		}
+
+		return dockerSock
+	}()
+
 	// if runtime.GOOS == constants.RuntimeWindows {
 	// 	dockerSock = "\\\\.\\pipe\\docker_engine"
 	// }
 
 	volumes = append(volumes,
-		mount.Mount{Type: mount.TypeVolume, Source: dockerSock, Target: "/var/run/host-docker.sock"},
+		mount.Mount{Type: mount.TypeBind, Source: dockerSockPath, Target: "/var/run/host-docker.sock"},
 	)
 
 	return volumes, nil
