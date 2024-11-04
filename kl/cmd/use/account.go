@@ -64,15 +64,15 @@ func UseTeam(cmd *cobra.Command) error {
 		return fn.NewE(err)
 	}
 
-	_, err = apic.GetClusterConfig(selectedTeam.Metadata.Name)
-	if err != nil {
-		return err
-	}
-
-	_, err = apic.GetAccVPNConfig(selectedTeam.Metadata.Name)
-	if err != nil {
-		return err
-	}
+	//_, err = apic.GetClusterConfig(selectedTeam.Metadata.Name)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//_, err = apic.GetAccVPNConfig(selectedTeam.Metadata.Name)
+	//if err != nil {
+	//	return err
+	//}
 
 	//k, err := cluster.NewClient()
 	//if err != nil {

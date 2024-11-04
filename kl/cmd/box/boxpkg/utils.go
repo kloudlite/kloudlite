@@ -247,10 +247,37 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 	if err != nil {
 		return "", fn.NewE(err)
 	}
+
+	if currentSystemConfig.SelectedTeam == "" {
+		currentSystemConfig.SelectedTeam = c.klfile.TeamName
+		if err := fileclient.SaveExtraData(currentSystemConfig); err != nil {
+			return "", fn.NewE(err)
+		}
+	}
+
 	clusterConfig, err := c.fc.GetClusterConfig(currentSystemConfig.SelectedTeam)
 
+	env := []string{
+		fmt.Sprintf("KL_HASH_FILE=/.cache/kl/box-hash/%s", boxhashFileName),
+		fmt.Sprintf("SSH_PORT=%d", sshPort),
+		fmt.Sprintf("HOST_USER_UID=%d", os.Getuid()),
+		fmt.Sprintf("HOST_USER_GID=%d", os.Getgid()),
+		fmt.Sprintf("KL_WORKSPACE=%s", c.cwd),
+		"KLCONFIG_PATH=/home/kl/workspace/kl.yml",
+		fmt.Sprintf("KL_DNS=%s", constants.KLDNS),
+		fmt.Sprintf("KL_BASE_URL=%s", constants.BaseURL),
+		fmt.Sprintf("KL_HOST_USER=%s", hostName),
+		fmt.Sprintf("KL_TEAM_NAME=%s", currentSystemConfig.SelectedTeam),
+	}
+
+	if clusterConfig != nil {
+		env = append(env,
+			fmt.Sprintf("CLUSTER_GATEWAY_IP=%s", clusterConfig.GatewayIP),
+			fmt.Sprintf("CLUSTER_IP_RANGE=%s", clusterConfig.ClusterCIDR),
+		)
+	}
+
 	resp, err := c.cli.ContainerCreate(context.Background(), &container.Config{
-		// User:  fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		Image: constants.GetBoxImageName(),
 		Labels: map[string]string{
 			CONT_MARK_KEY:           "true",
@@ -259,20 +286,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 			SSH_PORT_KEY:            fmt.Sprintf("%d", sshPort),
 			KLCONFIG_HASH_KEY:       klconfHash,
 		},
-		Env: []string{
-			fmt.Sprintf("KL_HASH_FILE=/.cache/kl/box-hash/%s", boxhashFileName),
-			fmt.Sprintf("SSH_PORT=%d", sshPort),
-			fmt.Sprintf("HOST_USER_UID=%d", os.Getuid()),
-			fmt.Sprintf("HOST_USER_GID=%d", os.Getgid()),
-			fmt.Sprintf("KL_WORKSPACE=%s", c.cwd),
-			"KLCONFIG_PATH=/home/kl/workspace/kl.yml",
-			fmt.Sprintf("KL_DNS=%s", constants.KLDNS),
-			fmt.Sprintf("KL_BASE_URL=%s", constants.BaseURL),
-			fmt.Sprintf("KL_HOST_USER=%s", hostName),
-			fmt.Sprintf("CLUSTER_GATEWAY_IP=%s", clusterConfig.GatewayIP),
-			fmt.Sprintf("CLUSTER_IP_RANGE=%s", clusterConfig.ClusterCIDR),
-			fmt.Sprintf("KL_TEAM_NAME=%s", currentSystemConfig.SelectedTeam),
-		},
+		Env:          env,
 		Hostname:     "box",
 		ExposedPorts: nat.PortSet{nat.Port(fmt.Sprintf("%d/tcp", sshPort)): {}},
 	}, &container.HostConfig{
@@ -283,9 +297,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 		NetworkMode: "kloudlite",
 		PortBindings: nat.PortMap{
 			nat.Port(fmt.Sprintf("%d/tcp", sshPort)): []nat.PortBinding{
-				{
-					HostPort: fmt.Sprintf("%d", sshPort),
-				},
+				{HostPort: fmt.Sprintf("%d", sshPort)},
 			},
 		},
 		Binds: func() []string {

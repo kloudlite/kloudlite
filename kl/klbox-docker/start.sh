@@ -27,17 +27,28 @@ chown -R kl /kl-tmp/global-profile
 
 mkdir -p /etc/wireguard
 echo $KL_TEAM_NAME
-CLUSTER_IP_RANGE=$(echo $CLUSTER_IP_RANGE | sed 's/\//###/g')
-cat /.cache/kl/kl-workspace-wg.conf | sed "s/#CLUSTER_GATEWAY_IP/${CLUSTER_GATEWAY_IP:-null}/" | sed "s/#CLUSTER_IP_RANGE/${CLUSTER_IP_RANGE:-null}/" >/tmp/wg-cong
-sed -i "s/###/\//" /tmp/wg-cong
-sudo cp /tmp/wg-cong /etc/wireguard/kl-workspace-wg.conf
-rm /tmp/wg-cong
+set -x
+
+if [[ -n "${CLUSTER_GATEWAY_IP}" && -n "${CLUSTER_IP_RANGE}" ]]; then
+    CLUSTER_IP_RANGE=$(echo $CLUSTER_IP_RANGE | sed 's/\//###/g')
+
+    cat /.cache/kl/kl-workspace-wg.conf | \
+        sed "s/#CLUSTER_GATEWAY_IP/${CLUSTER_GATEWAY_IP:-null}/" | \
+        sed "s/#CLUSTER_IP_RANGE/${CLUSTER_IP_RANGE:-null}/" >/tmp/wg-cong
+
+    sed -i "s/###/\//" /tmp/wg-cong
+
+    sudo cp /tmp/wg-cong /etc/wireguard/kl-workspace-wg.conf
+    rm /tmp/wg-cong
+
+    sudo wg-quick up kl-workspace-wg
+fi
+
 cat /.cache/kl/vpn/${KL_TEAM_NAME}.json | jq -r .wg | base64 -d >/tmp/kl-vpn.conf
 sudo cp /tmp/kl-vpn.conf /etc/wireguard/kl-vpn.conf
 rm /tmp/kl-vpn.conf
-
 sudo wg-quick up kl-vpn
-sudo wg-quick up kl-workspace-wg
+set +x
 
 entrypoint_executed="/home/kl/.kloudlite_entrypoint_executed"
 if [ ! -f "$entrypoint_executed" ]; then

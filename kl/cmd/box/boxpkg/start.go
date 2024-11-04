@@ -70,7 +70,7 @@ func (c *client) Start() error {
 	if err != nil {
 		return fn.NewE(err)
 	}
-	if data.SelectedTeam != c.klfile.TeamName {
+	if data.SelectedTeam != c.klfile.TeamName && data.SelectedTeam != "" {
 		functions.Logf(text.Yellow(fmt.Sprintf("[#] this will switch your main team context from %s to %s. do you want to proceed? [Y/n] ", data.SelectedTeam, c.klfile.TeamName)))
 		if !functions.Confirm("y", "y") {
 			return nil
@@ -91,15 +91,22 @@ func (c *client) Start() error {
 			return err
 		}
 
-		_, err = c.apic.GetAccVPNConfig(c.klfile.TeamName)
-		if err != nil {
-			return err
-		}
+	}
 
+	_, err = c.apic.GetAccVPNConfig(c.klfile.TeamName)
+	if err != nil {
+		return err
 	}
 
 	_, err = c.startContainer(boxHash.KLConfHash)
 	if err != nil {
+		return fn.NewE(err)
+	}
+
+	if err = c.SyncProxy(ProxyConfig{
+		ExposedPorts:        c.klfile.Ports,
+		TargetContainerPath: c.cwd,
+	}); err != nil {
 		return fn.NewE(err)
 	}
 

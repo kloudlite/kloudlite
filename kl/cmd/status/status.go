@@ -71,39 +71,39 @@ var Cmd = &cobra.Command{
 		fn.Log(text.Bold("Cluster Status"))
 
 		config, err := fc.GetClusterConfig(data.SelectedTeam)
-		if err != nil {
-			if os.IsNotExist(err) {
-				fn.Log(text.Yellow("cluster not found"))
-				return
+		if err == nil {
+			fn.Log("Name: ", text.Blue(config.ClusterName))
+
+			k3sStatus, _ := k3sClient.CheckK3sRunningLocally()
+			if k3sStatus {
+				fn.Log("Running: ", text.Green("true"))
 			} else {
-				fn.PrintError(err)
-				return
+				fn.Log("Running ", text.Yellow("false"))
 			}
-		}
-		fn.Log("Name: ", text.Blue(config.ClusterName))
 
-		k3sStatus, _ := k3sClient.CheckK3sRunningLocally()
-		if k3sStatus {
-			fn.Log("Running: ", text.Green("true"))
-		} else {
-			fn.Log("Running ", text.Yellow("false"))
-		}
-
-		k3sTracker, err := fc.GetK3sTracker()
-		if err != nil {
-			if flags.IsVerbose {
-				fn.PrintError(err)
-			}
-			fn.Log("Local Cluster: ", text.Yellow("not ready"))
-			fn.Log("Edge Connection:", text.Yellow("offline"))
-		} else {
-			err = getClusterK3sStatus(k3sTracker)
+			k3sTracker, err := fc.GetK3sTracker()
 			if err != nil {
 				if flags.IsVerbose {
 					fn.PrintError(err)
 				}
 				fn.Log("Local Cluster: ", text.Yellow("not ready"))
 				fn.Log("Edge Connection:", text.Yellow("offline"))
+			} else {
+				err = getClusterK3sStatus(k3sTracker)
+				if err != nil {
+					if flags.IsVerbose {
+						fn.PrintError(err)
+					}
+					fn.Log("Local Cluster: ", text.Yellow("not ready"))
+					fn.Log("Edge Connection:", text.Yellow("offline"))
+				}
+			}
+		}
+		if err != nil {
+			if os.IsNotExist(err) {
+				fn.Log(text.Yellow("cluster not found"))
+			} else {
+				fn.PrintError(err)
 			}
 		}
 

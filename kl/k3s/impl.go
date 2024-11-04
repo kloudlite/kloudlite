@@ -248,7 +248,12 @@ func (c *client) generateConnectionScript(clusterConfig *fileclient.TeamClusterC
 
 	vpnTeamConfig, err := c.fc.GetVpnTeamConfig(teamName)
 	if err != nil {
-		return "", err
+		if !os.IsNotExist(err) {
+			return "", nil
+		}
+		vpnTeamConfig = &fileclient.TeamVpnConfig{
+			IpAddress: "",
+		}
 	}
 
 	cc := struct {
@@ -666,4 +671,23 @@ func (c *client) RemoveClusterVolume(clusterName string) error {
 		return fn.NewE(err)
 	}
 	return nil
+}
+
+func (c *client) CheckK3sServerRunning() (string, error) {
+	crlist, err := c.c.ContainerList(c.cmd.Context(), container.ListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("label", fmt.Sprintf("%s=%s", CONT_MARK_KEY, "true")),
+			filters.Arg("label", fmt.Sprintf("%s=%s", "kl-k3s", "true")),
+		),
+		All: true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if len(crlist) > 0 {
+		return crlist[0].Labels["kl-team"], nil
+	}
+
+	return "", nil
 }

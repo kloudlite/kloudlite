@@ -17,6 +17,7 @@ type K3sClient interface {
 	DeletePods() error
 	CheckK3sRunningLocally() (bool, error)
 	RemoveClusterVolume(clusterName string) error
+	CheckK3sServerRunning() (string, error)
 }
 
 type client struct {
