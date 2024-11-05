@@ -1,0 +1,42 @@
+--- ../../terraform/bundles/kl-worker-nodes-on-aws/variables.tf	2024-03-01 16:29:24.155928184 +0530
++++ ./variables-kl-worker-nodes-on-aws.tf	2024-03-01 16:31:11.975128817 +0530
+@@ -1,10 +1,3 @@
+-variable "aws_region" { type = string }
+-
+-variable "tracker_id" {
+-  description = "tracker id, for which this resource is being created"
+-  type        = string
+-}
+-
+ variable "k3s_join_token" {
+   description = "k3s join token, that should be used to join the cluster"
+   type        = string
+@@ -20,11 +13,6 @@
+   type        = string
+ }
+ 
+-variable "vpc_id" {
+-  description = "vpc id"
+-  type        = string
+-}
+-
+ variable "ec2_nodepools" {
+   type = map(object({
+     availability_zone = string
+@@ -97,13 +85,7 @@
+   type        = list(string)
+ }
+ 
+-variable "save_ssh_key_to_path" {
++variable "save_worker_ssh_key_to_path" {
+   description = "save ssh key to this path"
+   type        = string
+-}
+-
+-variable "tags" {
+-  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+-  type        = map(string)
+-  default     = {}
+-}
++}
+\ No newline at end of file

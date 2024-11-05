@@ -1,0 +1,81 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+vars:
+  ImagePrefix: ghcr.io/kloudlite/infrastructure-as-code
+
+tasks:
+  local-build:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
+      - sh: '[[ -n "{{.cloudprovider}}" ]]'
+        msg: 'var cloudprovider must have a value'
+    vars:
+      push: "{{.push | default false}}"
+    # silent: true
+    cmds:
+      - nerdctl build -f DockerfileNIX --build-arg CLOUD_PROVIDER={{.cloudprovider}} -t {{.Image}} . --cache-from=type=local,src=$PWD/.buildx-cache --cache-to=type=local,dest=$PWD/.buildx-cache,mode=max
+      - |+
+        if [ "{{.push}}" == "true" ]; then
+          nerdctl push {{.Image}}
+        fi
+
+  local:build:iac-job:
+    vars:
+      output_dir: ./result
+      nix_store_closure: /tmp/nix-store-closure
+    requires:
+      vars:
+        - Image
+    cmds:
+      - echo OUTPUT DIR is "{{.output_dir}}"
+      - sudo rm -rf {{.output_dir}}
+      - nix build .#container -o {{.output_dir}}
+      - sudo rm -rf {{.nix_store_closure}}
+      - mkdir {{.nix_store_closure}}
+      - cp -R $(nix-store -qR {{.output_dir}}/) {{.nix_store_closure}}
+      - |+
+        export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
+        # for dir in $(ls -d ./infrastructure-templates/{{.cloudprovider}}/*); do
+        for dir in $(ls -d ./infrastructure-templates/{gcp,aws}/*); do
+          terraform -chdir=$dir init -backend=false -upgrade &
+        done
+
+        wait
+
+        echo "compressing"
+        tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
+        # tar cf - $tdir | zstd -12 --compress > tf.zst
+        tar cf - $tdir | zstd --compress > tf.zst
+
+      - |+
+        dir=$(mktemp -d)
+        rm -rf context.tar
+        mv tf.zst  $dir
+        mv {{.nix_store_closure}} $dir/nixstore
+        mv {{.output_dir}} $dir/result
+        pushd $dir
+        tar cf context.tar .
+        popd
+        mv $dir/context.tar .
+
+      - docker buildx build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
+      - rm ./context.tar
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
+    vars:
+      push: true
+    cmds:
+      - echo "building and pushing {{.Image}}"
+      # - docker buildx build -f Dockerfile --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
+      # - docker build -f ./DockerfileNIX -t {{.Image}} . {{.dockerArgs}}
+      # - |+
+      #   if [ "{{.push}}" == "true" ]; then
+      #     docker push {{.Image}}
+      #   fi

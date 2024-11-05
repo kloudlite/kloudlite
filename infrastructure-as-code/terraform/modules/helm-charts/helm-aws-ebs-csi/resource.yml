@@ -1,0 +1,28 @@
+apiVersion: crds.kloudlite.io/v1
+kind: HelmChart
+metadata:
+  name: aws-ebs-csi
+  namespace: kube-system
+spec:
+  chartRepoURL: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+  chartVersion: 2.22.0
+
+  chartName: aws-ebs-csi-driver
+
+  jobVars:
+    tolerations:
+      - operator: Exists
+
+  values:
+    customLabels:
+      kloudlite.io/installed-by: "kloudlite-iac"
+    storageClasses: ${jsonencode(tf_storage_classes)}
+    controller:
+      nodeSelector: ${jsonencode(tf_controller_node_selector)}
+      tolerations: ${jsonencode(tf_controller_tolerations)}
+    node:
+      nodeSelector: ${jsonencode(tf_daemonset_node_selector)}
+      # tolerate any taints
+      tolerations:
+        - operator: "Exists"
+
