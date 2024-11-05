@@ -1,0 +1,240 @@
+{{- /*gotype: github.com/kloudlite/kl/domain/fileclient.AccountClusterConfig */ -}}
+{{- with . }}
+echo "checking whether k3s server is accepting connections"
+while true; do
+  lines=$(kubectl get nodes | wc -l)
+  if [ "$lines" -lt 2 ]; then
+    echo "k3s server is not accepting connections yet, retrying in 1s ..."
+    sleep 1
+    continue
+  fi
+  echo "successful, k3s server is now accepting connections"
+  break
+done
+
+{{/*kubectl delete pods -n kloudlite --all --force --grace-period=0*/}}
+{{/*kubectl delete pods -n kl-gateway --all --force --grace-period=0*/}}
+
+kubectl taint nodes --all shutdown=true:NoExecute-
+
+cat > /tmp/namespace.yml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kl-gateway
+EOF
+
+
+kubectl apply -f /tmp/namespace.yml
+
+
+cat > /tmp/kl-ns.yml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite
+EOF
+
+kubectl apply -f /tmp/kl-ns.yml
+
+cat > /tmp/kl-tracker-ns.yml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kl-tracker
+  labels:
+    kloudlite.io/gateway.enabled: "true"
+EOF
+
+kubectl apply -f /tmp/kl-tracker-ns.yml
+
+cat > /tmp/secrets.yml <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: include-wg-interfaces
+  namespace: kl-gateway
+stringData:
+  wg-extra.conf: |+
+    [Interface]
+    PrivateKey = {{.WGConfig.Proxy.PrivateKey}}
+    Address = 198.18.0.1/32
+    ListenPort = 31820
+    PostUp = iptables -t nat -I POSTROUTING -o wg0 -j MASQUERADE
+    PostDown = iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE
+
+
+    [Peer]
+    # HOST
+    PublicKey = {{.WGConfig.Host.PublicKey}}
+    PersistentKeepalive = 25
+    AllowedIPs = 198.18.0.2/32
+
+    [Peer]
+    # WORKSPACE
+    PublicKey = {{.WGConfig.Workspace.PublicKey}}
+    Endpoint = 172.18.0.3:31820
+    PersistentKeepalive = 25
+    AllowedIPs = 198.18.0.3/32, {{.IpAddress}}/32
+EOF
+
+kubectl apply -f /tmp/secrets.yml
+
+cat > /tmp/service.yml <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: kl-local-proxy
+  namespace: kl-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    kloudlite.io/gateway.name: "default"
+  ports:
+    - protocol: UDP
+      port: 33820
+      targetPort: 31820
+EOF
+
+kubectl apply -f /tmp/service.yml
+
+kubectl apply -f {{.InstallCommand.CRDsURL}} --server-side
+
+{{/*cat > /tmp/helm-chart.yml <<EOF*/}}
+{{/*apiVersion: helm.cattle.io/v1*/}}
+{{/*kind: HelmChart*/}}
+{{/*metadata:*/}}
+{{/*  name: kloudlite*/}}
+{{/*  namespace: kube-system*/}}
+{{/*spec:*/}}
+{{/*  repo: {{.InstallCommand.ChartRepo}}*/}}
+{{/*  chart: kloudlite-agent*/}}
+{{/*  version: {{.InstallCommand.ChartVersion}}*/}}
+{{/*  targetNamespace: kloudlite*/}}
+{{/*  valuesContent: |-*/}}
+{{/*    accountName: {{.InstallCommand.HelmValues.TeamName}}*/}}
+{{/*    clusterName: {{.InstallCommand.HelmValues.ClusterName}}*/}}
+{{/*    clusterToken: {{.InstallCommand.HelmValues.ClusterToken}}*/}}
+{{/*    kloudliteDNSSuffix: {{.InstallCommand.HelmValues.KloudliteDNSSuffix}}*/}}
+{{/*    messageOfficeGRPCAddr: {{.InstallCommand.HelmValues.MessageOfficeGRPCAddr}}*/}}
+{{/*    agentOperator:*/}}
+{{/*      image:*/}}
+{{/*        repository: ghcr.io/kloudlite/operator/agent*/}}
+{{/*        tag: {{.Version}}*/}}
+{{/*      configuration:*/}}
+{{/*        gateway:*/}}
+{{/*          imageIPBindingController:*/}}
+{{/*            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-binding-controller*/}}
+{{/*            tag: {{.Version}}*/}}
+{{/*          imageIPManager:*/}}
+{{/*            repository: ghcr.io/kloudlite/operator/networking/cmd/ip-manager*/}}
+{{/*            tag: {{.Version}}*/}}
+{{/*EOF*/}}
+
+{{/*kubectl apply -f /tmp/helm-chart.yml*/}}
+
+curl -L0 -H 'Authorization: {{.InstallCommand.HelmValues.ClusterToken}}' {{.BaseURL}}/render/helm/kloudlite-agent/{{.InstallCommand.HelmValues.TeamName}}/{{.InstallCommand.HelmValues.ClusterName}} |  kubectl apply -f -
+
+
+cat > /tmp/service-device-router.yml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kl-local
+  labels:
+    kloudlite.io/gateway.enabled: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kl-device-router
+  namespace: kl-local
+  annotations:
+    kloudlite.io/networking.proxy.to: "172.18.0.3"
+spec:
+  ports:
+    - protocol: UDP
+      name: udp-59595
+      port: 59595
+    - protocol: TCP
+      name: tcp-59595
+      port: 59595
+EOF
+
+kubectl apply -f /tmp/service-device-router.yml
+
+## k3s tracker ##
+cat > /tmp/kl-tracker.yml <<EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kl-tracker
+  namespace: kl-tracker
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kl-tracker-rb
+  namespace: kl-tracker
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: "ClusterRole"
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: kl-tracker
+    namespace: kl-tracker
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kl-tracker
+  namespace: kl-tracker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kl-tracker
+  template:
+    metadata:
+      labels:
+        app: kl-tracker
+    spec:
+      containers:
+        - name: kl-tracker
+          image: {{.K3sTrackerImageName}}
+          args:
+            - --output
+            - /.cache/kl/k3s-status.json
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: kl-cache
+              mountPath: /.cache/kl
+      serviceAccountName: kl-tracker
+      restartPolicy: Always
+      volumes:
+        - name: kl-cache
+          hostPath:
+            path: /.cache/kl
+            type: Directory
+EOF
+
+kubectl apply -f /tmp/kl-tracker.yml
+
+{{/*checksum=$(kubectl get secret/include-wg-interfaces -n kl-gateway -o jsonpath='{.data.wg-extra\.conf}' | base64 -d |md5sum)*/}}
+{{/*cat > /tmp/patch.yml <<EOF*/}}
+{{/*spec:*/}}
+{{/*  template:*/}}
+{{/*    metadata:*/}}
+{{/*      annotations:*/}}
+{{/*        kloudlite.io/checksum.include-wg-interfaces: "$checksum"*/}}
+{{/*EOF*/}}
+{{/*kubectl patch deploy/default -n kl-gateway --patch-file /tmp/patch.yml*/}}
+
+kubectl proxy --address 0.0.0.0 --port 8080 --accept-hosts '.*' &
+
+{{- end }}

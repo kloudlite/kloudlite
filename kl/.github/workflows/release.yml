@@ -1,0 +1,579 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      k3s_base_deps_version:
+        description: 'k3s base image version'
+        required: false
+  release:
+    types: [created]
+
+  push:
+    branches:
+      - 'release-*'
+
+jobs:
+  kl-k3s-tracker-docker-build:
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
+
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+
+      - name: Build & Push Image
+        working-directory: ./k3s/k3s-tracker
+        env:
+          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          OVERRIDE_PUSHED_IMAGE: "false"
+        run: |
+          set +e
+          image_name="ghcr.io/kloudlite/kl/k3s-tacker"
+          set -e
+          docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/k3s-tracker:$IMAGE_TAG . --push
+
+  kl-k3s-base-docker-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ amd64, arm64 ]
+        include:
+          - arch: amd64
+            runs-on: warp-ubuntu-2404-x64-8x-spot
+
+          - arch: arm64
+            runs-on: blacksmith-4vcpu-ubuntu-2204-arm
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+                  with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+                    env_file.write(f"IS_NIGHTLY=YES\n")
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'v1.0.8-nightly'  # Adjust this fallback tag as necessary
+
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+
+      - name: Set default values
+        id: defaults
+        run: |
+          I_TAG=${{ steps.tag_name.outputs.TAG_NAME }}
+
+          if [[ "${{ env.IS_NIGHTLY }}" = "YES" ]]; then
+            I_TAG=${{ github.event.inputs.k3s_base_deps_version }}
+            if [[ -z $I_TAG ]]; then
+              I_TAG=${{ secrets.K3S_BASE_DEPS_VERSION }}
+            fi
+          fi
+
+          if [[ -z $I_TAG ]]; then
+            echo "Error: k3s_base_deps_version is required for nightly builds."
+            exit 1
+          fi
+
+          # I_TAG=${{  github.event.inputs.k3s_base_deps_version || steps.tag_name.outputs.TAG_NAME }}
+          echo "image_tag_is:$I_TAG"
+          echo "image_name=$I_TAG" >> $GITHUB_ENV
+
+      - name: Build & Push Image
+        working-directory: ./k3s/k3s-base
+        env:
+          PUSH_IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          K3S_VERSION: "v1.31.1+k3s1"
+          OVERRIDE_PUSHED_IMAGE: "false"
+        run: |
+          IMAGE_TAG=${{ env.image_name }}
+
+          set +e
+          image_name="ghcr.io/kloudlite/kl/k3s-tacker"
+          set -e
+          mkdir -p ./images
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns:$IMAGE_TAG -o ./images/dns.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager:$IMAGE_TAG -o ./images/ip-manager.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy:$IMAGE_TAG -o ./images/logs-proxy.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook:$IMAGE_TAG -o ./images/webhook.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller:$IMAGE_TAG -o ./images/ip-binding-controller.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/api/tenant-agent:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/api/tenant-agent:$IMAGE_TAG -o ./images/kl-agent.tar.gz
+          docker pull ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG
+          docker image save ghcr.io/kloudlite/kloudlite/operator/agent:$IMAGE_TAG -o ./images/kl-agent-operator.tar.gz
+          curl -L "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s-airgap-images-${{ matrix.arch }}.tar" -o ./images/k3s-airgap-images-${{ matrix.arch }}.tar
+          docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/k3s:$PUSH_IMAGE_TAG-${{ matrix.arch }} . --push
+
+  kl-k3s-docker-multiarch-manifest:
+    needs: kl-k3s-base-docker-build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'v1.0.8-nightly'  # Adjust this fallback tag as necessary
+
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: multiarch manifest build
+        env:
+          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          OVERRIDE_PUSHED_IMAGE: "false"
+        shell: bash
+        run: |
+          image_name="ghcr.io/kloudlite/kl/k3s"
+          docker manifest create ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 ${image_name}:${IMAGE_TAG}-arm64
+
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 --os linux --arch amd64
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-arm64 --os linux --arch arm64
+
+          docker manifest push ${image_name}:${IMAGE_TAG}
+
+  klbox-docker-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runs-on: warp-ubuntu-2404-x64-8x-spot
+
+          - arch: arm64
+            runs-on: blacksmith-4vcpu-ubuntu-2204-arm
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+          
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
+          
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+          
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+
+      - name: Build & Push Image
+        # if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
+        env:
+          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          OVERRIDE_PUSHED_IMAGE: "false"
+        run: |
+          set +e
+          image_name="ghcr.io/kloudlite/kl/box"
+
+          # docker manifest inspect $image_name:$IMAGE_TAG
+          # exit_status=$?
+          # if [ $exit_status -eq 0 ]; then
+          #   [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+          #   echo "image exists, but override pushed image is set to true. proceeding with building image"
+          # fi
+
+          set -e
+
+          docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/box:$IMAGE_TAG-${{ matrix.arch }} --build-context project=. --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true ./klbox-docker 
+
+  klbox-docker-multiarch-manifest:
+    needs: klbox-docker-build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+          
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
+          
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+          
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: multiarch manifest build
+        env:
+          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          OVERRIDE_PUSHED_IMAGE: "false"
+        shell: bash
+        run: |
+          image_name="ghcr.io/kloudlite/kl/box"
+          docker manifest create ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 ${image_name}:${IMAGE_TAG}-arm64
+
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-amd64 --os linux --arch amd64
+          docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-arm64 --os linux --arch arm64
+
+          docker manifest push ${image_name}:${IMAGE_TAG}
+
+  build:
+    name: Build ${{ matrix.app }}-${{ matrix.platform }}-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [kl]
+        os:
+          - ubuntu-latest
+          # - windows-latest
+          - macos-14
+          - macos-13
+        arch: [amd64, arm64]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            platform: linux
+          # - os: windows-latest
+          #   goos: windows
+          #   platform: windows
+          - os: macos-13
+            goos: darwin
+            platform: darwin
+          - os: macos-14
+            goos: darwin
+            platform: darwin
+        exclude:
+          - os: macos-14
+            arch: amd64
+          - os: macos-13
+            arch: arm64
+          # - os: ubuntu-latest
+          #   arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.19'
+
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64' && matrix.os == 'ubuntu-latest'
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
+
+      - name: Setup libappindicator3-dev for linux
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc libgtk-3-dev libayatana-appindicator3-dev
+
+      - name: Check Go version
+        run: |
+          go version
+          echo "[PRE] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
+
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+
+      - name: Build Linux & Mac
+        if: matrix.goos == 'linux' || matrix.goos == 'darwin'
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.arch }}
+          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }}"
+        run: |
+          echo "[POST] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
+
+          echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
+          mkdir bin
+          mkdir out
+          go build --tags main -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" main.go
+
+      - name: Build Windows
+        if: matrix.goos == 'windows'
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.arch }}
+          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }}"
+        run: |
+          echo "[POST] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
+
+          echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
+          mkdir bin
+          mkdir out
+          go mod tidy
+          go build --tags main -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" main.go
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+          path: bin/*
+
+  release:
+    permissions:
+      contents: write
+      packages: write
+
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ${{ github.workspace }}/artifacts
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
+
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+      - name: Compress to Zip and gzip
+        run: |
+          out_dir=${{ github.workspace }}/out
+          mkdir -p $out_dir
+
+          cd ${{ github.workspace }}/artifacts
+          for f in *; do
+            if [ -d "$f" ]; then
+              zip -r "$out_dir/$f.zip" "$f"
+              tar -czvf "$out_dir/$f.tar.gz" "$f"
+            fi
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: out/**
+          tag_name: ${{ steps.tag_name.outputs.TAG_NAME }}
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

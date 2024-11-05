@@ -1,0 +1,16 @@
+version: 3
+
+tasks:
+  kl:dev:
+    cmds:
+      - nodemon -q -e 'go,tmpl,yaml,yml,sh' --signal SIGTERM --exec "echo '# building' && task kl:build && echo '# build success' || exit"
+  kl:build:
+    cmds:
+      - go build --tags main -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.0-nightly -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl main.go
+
+  kl:dev:win:
+    cmds:
+      - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kl:build:win && echo '# build success' || exit"
+  kl:build:win:
+    cmds:
+      - go build --tags="main,windows" -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.7-nightly -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl.exe main.go
