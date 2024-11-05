@@ -1,0 +1,6 @@
+extends:
+  - ../.eslintrc.yml
+
+rules:
+  camelcase: 0
+  no-use-before-define: 0

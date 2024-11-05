@@ -1,0 +1,19 @@
+overwrite: true
+schema: "http://gateway-api.kloudlite.svc.cluster.local:3000"
+generates:
+  gql/server.ts:
+    documents:
+      - ./../../gql-queries-generator/doc/*.graphql
+    plugins:
+      - "typescript"
+      - typescript-operations
+    config:
+      onlyOperationTypes: true
+      skipTypename: true
+      ignoreEnumValuesFromSchema: true
+      enumsAsTypes: true
+      maybeValue: 'T'
+    hooks:
+      afterOneFileWrite:
+        - 'eslint --fix'
+

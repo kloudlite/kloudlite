@@ -1,0 +1,6 @@
+overwrite: true
+schema: "http://gateway-api.kloudlite.svc.cluster.local:3000"
+generates:
+  gql/sdl.graphql:
+    plugins:
+      - "schema-ast"

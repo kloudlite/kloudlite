@@ -1,0 +1,111 @@
+import { Plus } from '~/iotconsole/components/icons';
+import { defer } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
+import { Button } from '@kloudlite/design-system/atoms/button';
+import {
+  LoadingComp,
+  pWrapper,
+} from '~/iotconsole/components/loading-component';
+import Wrapper from '~/iotconsole/components/wrapper';
+import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
+import { ensureAccountSet } from '~/iotconsole/server/utils/auth-utils';
+import { getPagination, getSearch } from '~/iotconsole/server/utils/common';
+import logger from '~/root/lib/client/helpers/log';
+import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
+import SecondarySubHeader from '~/iotconsole/components/secondary-sub-header';
+import HandleRepo from './handle-repo';
+import Tools from './tools';
+import RepoResourcesV2 from './repo-resources-v2';
+
+export const loader = async (ctx: IRemixCtx) => {
+  const promise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+    const { data, errors } = await GQLServerHandler(ctx.request).listRepo({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (errors) {
+      logger.error(errors[0]);
+      throw errors[0];
+    }
+
+    return {
+      repository: data || {},
+    };
+  });
+
+  return defer({ promise });
+};
+
+const ContainerRegistryRepos = () => {
+  const [visible, setVisible] = useState(false);
+  const { promise } = useLoaderData<typeof loader>();
+  return (
+    <>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          repository: fake.ConsoleListRepoQuery.cr_listRepos as any,
+        }}
+      >
+        {({ repository }) => {
+          const repos = repository.edges?.map(({ node }) => node);
+
+          return (
+            <div className="flex flex-col gap-6xl">
+              <SecondarySubHeader
+                title={
+                  <div className="flex flex-row gap-xl items-center">
+                    <span>Container Repos</span>
+                  </div>
+                }
+                action={
+                  <Button
+                    content="Create new repository"
+                    variant="primary"
+                    onClick={() => {
+                      setVisible(true);
+                    }}
+                  />
+                }
+              />
+              <Wrapper
+                empty={{
+                  is: repos?.length === 0,
+                  title: 'This is where you’ll manage your repository.',
+                  content: (
+                    <p>
+                      You can create a new repository and manage the listed
+                      repository.
+                    </p>
+                  ),
+                  action: {
+                    content: 'Create repository',
+                    prefix: <Plus />,
+                    onClick: () => {
+                      setVisible(true);
+                    },
+                  },
+                }}
+                tools={<Tools />}
+              >
+                <RepoResourcesV2 items={repos} />
+              </Wrapper>
+            </div>
+          );
+        }}
+      </LoadingComp>
+      <HandleRepo
+        {...{
+          isUpdate: false,
+          visible,
+          setVisible,
+        }}
+      />
+    </>
+  );
+};
+
+export default ContainerRegistryRepos;

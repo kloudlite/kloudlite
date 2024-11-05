@@ -1,0 +1,21 @@
+{
+  "name": "plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=cjs --outfile=dist/out.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@graphql-codegen/plugin-helpers": "^5.0.1",
+    "esbuild": "0.19.2",
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "graphql": "14.7.0"
+  }
+
+}

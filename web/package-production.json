@@ -1,0 +1,13 @@
+{
+	"name": "kloudlite.github.io",
+	"private": true,
+	"version": "0.0.0",
+	"homepage": "https://kloudlite.github.io",
+	"type": "module",
+	"scripts": {
+		"serve": "remix-serve ./public/${APP}/server"
+	},
+	"dependencies": {
+		"@remix-run/serve": "^1.19.2"
+	}
+}
