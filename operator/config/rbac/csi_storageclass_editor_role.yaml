@@ -1,0 +1,24 @@
+# permissions for end users to edit storageclasses.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: storageclass-editor-role
+rules:
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - storageclasses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - storageclasses/status
+  verbs:
+  - get

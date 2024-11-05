@@ -1,0 +1,360 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: nodepools.clusters.kloudlite.io
+spec:
+  group: clusters.kloudlite.io
+  names:
+    kind: NodePool
+    listKind: NodePoolList
+    plural: nodepools
+    singular: nodepool
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.annotations.nodepool-min-max
+      name: Min/Max
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/nodepool\.job-ref
+      name: JobRef
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: NodePool is the Schema for the nodepools API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              allowSSH:
+                type: boolean
+              aws:
+                properties:
+                  availabilityZone:
+                    type: string
+                  ec2Pool:
+                    properties:
+                      instanceType:
+                        type: string
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                          type: object
+                        type: object
+                    required:
+                    - instanceType
+                    type: object
+                  iamInstanceProfileRole:
+                    type: string
+                  nvidiaGpuEnabled:
+                    type: boolean
+                  poolType:
+                    enum:
+                    - ec2
+                    - spot
+                    type: string
+                  region:
+                    type: string
+                  rootVolumeSize:
+                    type: integer
+                  rootVolumeType:
+                    type: string
+                  spotPool:
+                    properties:
+                      cpuNode:
+                        properties:
+                          memoryPerVcpu:
+                            properties:
+                              max:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                              min:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                            required:
+                            - max
+                            - min
+                            type: object
+                          vcpu:
+                            properties:
+                              max:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                              min:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                            required:
+                            - max
+                            - min
+                            type: object
+                        required:
+                        - vcpu
+                        type: object
+                      gpuNode:
+                        properties:
+                          instanceTypes:
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - instanceTypes
+                        type: object
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                          type: object
+                        type: object
+                      spotFleetTaggingRoleName:
+                        type: string
+                    required:
+                    - spotFleetTaggingRoleName
+                    type: object
+                  vpcId:
+                    type: string
+                  vpcSubnetId:
+                    type: string
+                required:
+                - availabilityZone
+                - nvidiaGpuEnabled
+                - poolType
+                - region
+                - rootVolumeSize
+                - rootVolumeType
+                - vpcId
+                - vpcSubnetId
+                type: object
+              cloudProvider:
+                enum:
+                - aws
+                - do
+                - azure
+                - gcp
+                type: string
+              gcp:
+                properties:
+                  availabilityZone:
+                    type: string
+                  bootVolumeSize:
+                    type: integer
+                  bootVolumeType:
+                    type: string
+                  credentials:
+                    description: this secret's `.data` will be unmarshaled into type
+                      `GCPCredentials`
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  gcpProjectID:
+                    type: string
+                  machineType:
+                    type: string
+                  nodes:
+                    additionalProperties:
+                      properties:
+                        lastRecreatedAt:
+                          format: date-time
+                          type: string
+                      type: object
+                    type: object
+                  poolType:
+                    enum:
+                    - STANDARD
+                    - SPOT
+                    type: string
+                  region:
+                    type: string
+                  serviceAccount:
+                    properties:
+                      email:
+                        type: string
+                      enabled:
+                        type: boolean
+                      scopes:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - enabled
+                    type: object
+                  vpc:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - availabilityZone
+                - bootVolumeSize
+                - bootVolumeType
+                - credentials
+                - gcpProjectID
+                - machineType
+                - poolType
+                - region
+                - serviceAccount
+                type: object
+              maxCount:
+                minimum: 0
+                type: integer
+              minCount:
+                minimum: 0
+                type: integer
+              nodeLabels:
+                additionalProperties:
+                  type: string
+                type: object
+              nodeTaints:
+                items:
+                  description: The node this Taint is attached to has the "effect"
+                    on any pod that does not tolerate the Taint.
+                  properties:
+                    effect:
+                      description: Required. The effect of the taint on pods that
+                        do not tolerate the taint. Valid effects are NoSchedule, PreferNoSchedule
+                        and NoExecute.
+                      type: string
+                    key:
+                      description: Required. The taint key to be applied to a node.
+                      type: string
+                    timeAdded:
+                      description: TimeAdded represents the time at which the taint
+                        was added. It is only written for NoExecute taints.
+                      format: date-time
+                      type: string
+                    value:
+                      description: The taint value corresponding to the taint key.
+                      type: string
+                  required:
+                  - effect
+                  - key
+                  type: object
+                type: array
+            required:
+            - cloudProvider
+            - maxCount
+            - minCount
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    hide:
+                      type: boolean
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    info:
+                      type: string
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

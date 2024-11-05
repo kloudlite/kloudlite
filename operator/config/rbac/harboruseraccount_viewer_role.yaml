@@ -1,0 +1,20 @@
+# permissions for end users to view harboruseraccounts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: harboruseraccount-viewer-role
+rules:
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harboruseraccounts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harboruseraccounts/status
+  verbs:
+  - get

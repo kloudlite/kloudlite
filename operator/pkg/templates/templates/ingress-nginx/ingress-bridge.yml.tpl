@@ -1,0 +1,75 @@
+{{- $obj := get . "obj"}}
+{{- $globalIngressClass := get . "global-ingress-class"}}
+{{- $domains := get . "domains" }}
+{{- $ownerRefs := get . "owner-refs"}}
+
+{{- $ingressSvcName := get . "ingress-svc-name"}}
+
+{{- with $obj}}
+{{- /*gotype: github.com/kloudlite/operator/apis/crds/v1.AccountRouter*/ -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+  annotations:
+    {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
+    {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/backend-protocol" "HTTPS"}}
+    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-passthrough" "true" }}
+
+{{/*    {{K8sAnnotation true "nginx.ingress.kubernetes.io/ssl-redirect" .Spec.Https.Enabled }}*/}}
+{{/*    {{K8sAnnotati.on true "nginx.ingress.kubernetes.io/force-ssl-redirect" .Spec.Https.ForceRedirect }}*/}}
+
+{{/*    nginx.ingress.kubernetes.io/proxy-ssl-verify-depth: "false"*/}}
+{{/*    nginx.ingress.kubernetes.io/proxy-ssl-verify: "false"*/}}
+
+{{/*    {{- with .Spec.RateLimit}}*/}}
+{{/*    {{- if .Enabled}}*/}}
+{{/*    {{K8sAnnotation .Rps "nginx.ingress.kubernetes.io/limit-rps" .Rps }}*/}}
+{{/*    {{K8sAnnotation .Rpm "nginx.ingress.kubernetes.io/limit-rpm" .Rpm }}*/}}
+{{/*    {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}*/}}
+{{/*    {{- end}}*/}}
+{{/*    {{- end}}*/}}
+spec:
+  ingressClassName: {{$globalIngressClass}}
+  rules:
+    {{- range $v := $domains  }}
+    - host: {{if hasPrefix "*." $v }}{{$v | quote}}{{else}}{{printf "*.%s" $v | quote}}{{end}}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{$ingressSvcName}}
+                port:
+                  number: 443
+            path: /
+            pathType: Prefix
+    {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{.Name}}-for-cert
+  namespace: {{.Namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+  annotations:
+    {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
+spec:
+  ingressClassName: {{$globalIngressClass}}
+  rules:
+    {{- range $v := $domains  }}
+    - host: {{if hasPrefix "*." $v }}{{$v | quote}}{{else}}{{printf "*.%s" $v | quote}}{{end}}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{$ingressSvcName}}
+                port:
+                  number: 80
+            path: /.well-known
+            pathType: Prefix
+    {{- end }}
+{{- end}}

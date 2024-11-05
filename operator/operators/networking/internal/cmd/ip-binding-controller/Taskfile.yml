@@ -1,0 +1,39 @@
+version: 3
+
+includes:
+  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../../../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  binary: service-binding-controller
+
+tasks:
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          GOARCH: "{{.GOARCH}}"
+          Out: "./bin/{{.binary}}-{{.GOARCH}}"
+
+  run:
+    env:
+      GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
+    cmds:
+      - go run .
+
+  container:build-and-push:
+    preconditions: 
+      - sh: '[ -n "{{.image}}" ]'
+        msg: "image must be set"
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY=./bin/{{.binary}} ."
+          image: "{{.image}}"

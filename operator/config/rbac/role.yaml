@@ -1,0 +1,865 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - clusters
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - clusters
+  resources:
+  - clusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - clusters
+  resources:
+  - clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - clusters
+  resources:
+  - virtualmachines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - clusters
+  resources:
+  - virtualmachines/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - clusters
+  resources:
+  - virtualmachines/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - clusters.kloudlite.io
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - clusters.kloudlite.io
+  resources:
+  - clusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - clusters.kloudlite.io
+  resources:
+  - clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - accounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - accounts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - accounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - apps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - apps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - apps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - crds
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - crds/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - crds/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - envs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - lambdas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - lambdas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - lambdas/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - lifecycles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - lifecycles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - lifecycles/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crdsv1
+  resources:
+  - external_apps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crdsv1
+  resources:
+  - external_apps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crdsv1
+  resources:
+  - external_apps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - elasticsearc.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticsearc.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - elasticsearc.msvc.kloudlite.io
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - kibanas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - kibanas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - elasticsearch.msvc.kloudlite.io
+  resources:
+  - kibanas/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - helm.kloudlite.io
+  resources:
+  - helmcharts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - helm.kloudlite.io
+  resources:
+  - helmcharts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - helm.kloudlite.io
+  resources:
+  - helmcharts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - buckets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - buckets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - buckets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - configmaps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - secrets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - secrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - clusterServices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - clusterServices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - clusterServices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterServices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterServices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterServices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - databases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - standalone
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - standalone/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - standalone/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - neo4j.msvc.kloudlite.io
+  resources:
+  - standaloneServices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - neo4j.msvc.kloudlite.io
+  resources:
+  - standaloneServices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - neo4j.msvc.kloudlite.io
+  resources:
+  - standaloneServices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - aclaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - aclaccounts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - aclaccounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - standaloneservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - standaloneservices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redis.msvc.kloudlite.io
+  resources:
+  - standaloneservices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - aclusers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - aclusers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - aclusers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - admins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - topics
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - topics/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - topics/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - connections
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - connections/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - connections/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - devices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - devices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - devices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - zookeeper.msvc.kloudlite.io
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - zookeeper.msvc.kloudlite.io
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - zookeeper.msvc.kloudlite.io
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -1,0 +1,6 @@
+apiVersion: elasticsearch.msvc.kloudlite.io/v1
+kind: Kibana
+metadata:
+  name: kibana-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,16 @@
+{{- $name :=  get . "name"}}
+{{- $namespace :=  get . "namespace"}}
+{{- $ownerRefs := get . "owner-refs"}}
+{{- $dockerConfig := get . "docker-config-json" }}
+{{- $immutable := get . "immutable" | default false}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{$name}}
+  namespace: {{$namespace}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{$dockerConfig | b64enc}}
+immutable: {{$immutable}}
+

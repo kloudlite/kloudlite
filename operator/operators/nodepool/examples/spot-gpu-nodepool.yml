@@ -1,0 +1,26 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: NodePool
+metadata:
+  name: gpu-np-1-spot
+spec:
+  maxCount: 2
+  minCount: 0
+  targetCount: 1
+
+  cloudProvider: aws
+  aws:
+    imageId: "ami-0fdcdf796bf63edfd"
+    imageSSHUsername: ubuntu
+    nvidiaGpuEnabled: true
+    availabilityZone: ""
+
+    rootVolumeSize: 80
+    rootVolumeType: gp3
+
+    poolType: spot
+    spotPool:
+      spotFleetTaggingRoleName: "aws-ec2-spot-fleet-tagging-role"
+      gpuNode:
+        instanceTypes: ['g5.xlarge']
+      nodes:
+        node-1: {}

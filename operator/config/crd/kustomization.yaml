@@ -1,0 +1,145 @@
+# This kustomization.yaml is not intended to be run by itself,
+# since it depends on service name and namespace that are out of this kustomize package.
+# It should be run by config/default
+resources:
+- bases/serverless.kloudlite.io_lambdas.yaml
+- bases/elasticsearch.msvc.kloudlite.io_services.yaml
+- bases/opensearch.msvc.kloudlite.io_services.yaml
+- bases/influxdb.msvc.kloudlite.io_services.yaml
+- bases/influxdb.msvc.kloudlite.io_buckets.yaml
+- bases/redpanda.msvc.kloudlite.io_services.yaml
+- bases/redpanda.msvc.kloudlite.io_topics.yaml
+- bases/mongodb.msvc.kloudlite.io_standaloneservices.yaml
+- bases/mongodb.msvc.kloudlite.io_clusterservices.yaml
+- bases/mongodb.msvc.kloudlite.io_databases.yaml
+- bases/redis.msvc.kloudlite.io_standaloneservices.yaml
+- bases/redis.msvc.kloudlite.io_clusterservices.yaml
+- bases/redis.msvc.kloudlite.io_aclaccounts.yaml
+- bases/mysql.msvc.kloudlite.io_standaloneservices.yaml
+- bases/mysql.msvc.kloudlite.io_clusterservices.yaml
+- bases/mysql.msvc.kloudlite.io_databases.yaml
+- bases/redis.msvc.kloudlite.io_aclconfigmaps.yaml
+- bases/zookeeper.msvc.kloudlite.io_services.yaml
+- bases/redpanda.msvc.kloudlite.io_aclusers.yaml
+- bases/redpanda.msvc.kloudlite.io_admins.yaml
+- bases/neo4j.msvc.kloudlite.io_standaloneservices.yaml
+- bases/elasticsearch.msvc.kloudlite.io_kibanas.yaml
+- bases/crds.kloudlite.io_configs.yaml
+- bases/crds.kloudlite.io_secrets.yaml
+- bases/crds.kloudlite.io_accounts.yaml
+- bases/clusters.kloudlite.io_nodepools.yaml
+- bases/clusters.kloudlite.io_nodes.yaml
+- bases/clusters.kloudlite.io_clusters.yaml
+- bases/wireguard.kloudlite.io_devices.yaml
+- bases/crds.kloudlite.io_helmcharts.yaml
+- bases/clusters.kloudlite.io_accounts3buckets.yaml
+- bases/distribution.kloudlite.io_builds.yaml
+- bases/distribution.kloudlite.io_buildruns.yaml
+- bases/wireguard.kloudlite.io_dns.yaml
+- bases/crds.kloudlite.io_projectmanagedservices.yaml
+- bases/crds.kloudlite.io_clustermanagedservices.yaml
+- bases/crds.kloudlite.io_environments.yaml
+- bases/clusters.kloudlite.io_awsvpcs.yaml
+- bases/redis.msvc.kloudlite.io_prefixes.yaml
+- bases/wireguard.kloudlite.io_connections.yaml
+- bases/crds.kloudlite.io_lifecycles.yaml
+- bases/clusters.kloudlite.io_gcpvpcs.yaml
+- bases/crds.kloudlite.io_blueprints.yaml
+- bases/clusters.kloudlite.io_virtualmachines.yaml
+- bases/crds.kloudlite.io_refertomanagedresources.yaml
+- bases/crds.kloudlite.io_externalapps.yaml
+- bases/networking.kloudlite.io_podbindings.yaml
+- bases/networking.kloudlite.io_servicebindings.yaml
+- bases/networking.kloudlite.io_gateways.yaml
+- bases/postgres.msvc.kloudlite.io_standalones.yaml
+- bases/postgres.msvc.kloudlite.io_databases.yaml
+- bases/postgres.msvc.kloudlite.io_standalonedatabases.yaml
+- bases/mysql.msvc.kloudlite.io_standalonedatabases.yaml
+- bases/mongodb.msvc.kloudlite.io_standalonedatabases.yaml
+# +kubebuilder:scaffold:crdkustomizeresource
+
+patchesStrategicMerge:
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
+# patches here are for enabling the conversion webhook for each CRD
+# - patches/webhook_in_lambdas.yaml
+# - patches/webhook_in_accounts3buckets.yaml
+# - patches/webhook_in_builds.yaml
+# - patches/webhook_in_buildruns.yaml
+# - patches/webhook_in_dns.yaml
+#- patches/webhook_in_projectmanagedservices.yaml
+#- patches/webhook_in_clustermanagedservices.yaml
+#- patches/webhook_in_environments.yaml
+#- patches/webhook_in_awsvpcs.yaml
+#- patches/webhook_in_prefixes.yaml
+#- patches/webhook_in_connections.yaml
+#- patches/webhook_in_jobs.yaml
+#- patches/webhook_in_gcpvpcs.yaml
+#- patches/webhook_in_blueprints.yaml
+#- patches/webhook_in_virtualmachines.yaml
+#- patches/webhook_in_refertomanagedresources.yaml
+#- patches/webhook_in_externalapps.yaml
+#- patches/webhook_in_ipbinds.yaml
+#- patches/webhook_in_podbindings.yaml
+#- patches/webhook_in_servicebindings.yaml
+#- patches/webhook_in_gateways.yaml
+#- patches/webhook_in_standalones.yaml
+#- patches/webhook_in_databases.yaml
+#- patches/webhook_in_standalonedatabases.yaml
+#+kubebuilder:scaffold:crdkustomizewebhookpatch
+
+# [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
+# patches here are for enabling the CA injection for each CRD
+#- patches/webhook_in_accounts3buckets.yaml
+#- patches/webhook_in_builds.yaml
+#- patches/webhook_in_buildruns.yaml
+#- patches/webhook_in_dns.yaml
+#- patches/webhook_in_projectmanagedservices.yaml
+#- patches/webhook_in_clustermanagedservices.yaml
+#- patches/webhook_in_environments.yaml
+#- patches/webhook_in_awsvpcs.yaml
+#- patches/webhook_in_prefixes.yaml
+#- patches/webhook_in_connections.yaml
+#- patches/webhook_in_jobs.yaml
+#- patches/webhook_in_gcpvpcs.yaml
+#- patches/webhook_in_blueprints.yaml
+#- patches/webhook_in_virtualmachines.yaml
+#- patches/webhook_in_refertomanagedresources.yaml
+#- patches/webhook_in_externalapps.yaml
+#- patches/webhook_in_podbindings.yaml
+#- patches/webhook_in_servicebindings.yaml
+#- patches/webhook_in_gateways.yaml
+#- patches/webhook_in_standalones.yaml
+#- patches/webhook_in_databases.yaml
+#- patches/webhook_in_standalonedatabases.yaml
+#+kubebuilder:scaffold:crdkustomizewebhookpatch
+# - patches/serverless.kloudlite.io_lambdas.yaml
+# - patches/cainjection_in_lambdas.yaml
+#- patches/cainjection_in_accounts3buckets.yaml
+#- patches/cainjection_in_builds.yaml
+#- patches/cainjection_in_buildruns.yaml
+#- patches/cainjection_in_dns.yaml
+#- patches/cainjection_in_projectmanagedservices.yaml
+#- patches/cainjection_in_clustermanagedservices.yaml
+#- patches/cainjection_in_environments.yaml
+#- patches/cainjection_in_awsvpcs.yaml
+#- patches/cainjection_in_prefixes.yaml
+#- patches/cainjection_in_connections.yaml
+#- patches/cainjection_in_jobs.yaml
+#- patches/cainjection_in_gcpvpcs.yaml
+#- patches/cainjection_in_blueprints.yaml
+#- patches/cainjection_in_virtualmachines.yaml
+#- patches/cainjection_in_refertomanagedresources.yaml
+#- patches/cainjection_in_externalapps.yaml
+#- patches/cainjection_in_ipbinds.yaml
+#- patches/cainjection_in_podbindings.yaml
+#- patches/cainjection_in_servicebindings.yaml
+#- patches/cainjection_in_gateways.yaml
+#- patches/cainjection_in_standalones.yaml
+#- patches/cainjection_in_databases.yaml
+#- patches/cainjection_in_standalonedatabases.yaml
+# +kubebuilder:scaffold:crdkustomizecainjectionpatch
+
+# the following config is for teaching kustomize how to do kustomization for CRDs.
+configurations:
+- kustomizeconfig.yaml
+ 

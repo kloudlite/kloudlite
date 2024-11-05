@@ -1,0 +1,284 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: virtualmachines.clusters.kloudlite.io
+spec:
+  group: clusters.kloudlite.io
+  names:
+    kind: VirtualMachine
+    listKind: VirtualMachineList
+    plural: virtualmachines
+    singular: virtualmachine
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .spec.machineState
+      name: Machine_State
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: VirtualMachine is the Schema for the virtualmachines API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: VirtualMachineSpec defines the desired state of VirtualMachine
+            properties:
+              aws:
+                properties:
+                  allowIncomingHttpTraffic:
+                    type: boolean
+                  allowSSH:
+                    type: boolean
+                  availabilityZone:
+                    description: AvailabilityZone AwsAZ `json:"availabilityZone"`
+                    type: string
+                  iamInstanceProfileRole:
+                    type: string
+                  instanceType:
+                    type: string
+                  nvidiaGpuEnabled:
+                    type: boolean
+                  rootVolumeSize:
+                    type: integer
+                  rootVolumeType:
+                    type: string
+                  vpc:
+                    properties:
+                      VPCSubnetID:
+                        type: string
+                      vpcId:
+                        type: string
+                    required:
+                    - VPCSubnetID
+                    - vpcId
+                    type: object
+                required:
+                - allowIncomingHttpTraffic
+                - allowSSH
+                - availabilityZone
+                - instanceType
+                - nvidiaGpuEnabled
+                - rootVolumeSize
+                - rootVolumeType
+                type: object
+              cloudProvider:
+                enum:
+                - aws
+                - do
+                - azure
+                - gcp
+                type: string
+              controllerParams:
+                properties:
+                  jobRef:
+                    properties:
+                      name:
+                        description: .metadata.name of the resource
+                        type: string
+                      namespace:
+                        description: .metadata.namespace of the resource
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  tfWorkspaceName:
+                    type: string
+                  tfWorkspaceNamespace:
+                    type: string
+                required:
+                - jobRef
+                - tfWorkspaceName
+                - tfWorkspaceNamespace
+                type: object
+              gcp:
+                properties:
+                  allowIncomingHttpTraffic:
+                    type: boolean
+                  allowSSH:
+                    type: boolean
+                  availabilityZone:
+                    type: string
+                  bootVolumeSize:
+                    type: integer
+                  credentialsRef:
+                    description: This secret will be unmarshalled into type GCPCredentials
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  gcpProjectID:
+                    type: string
+                  machineType:
+                    type: string
+                  poolType:
+                    enum:
+                    - STANDARD
+                    - SPOT
+                    type: string
+                  region:
+                    type: string
+                  serviceAccount:
+                    properties:
+                      email:
+                        type: string
+                      enabled:
+                        type: boolean
+                      scopes:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - enabled
+                    type: object
+                  startupScript:
+                    type: string
+                  vpc:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - allowIncomingHttpTraffic
+                - allowSSH
+                - bootVolumeSize
+                - credentialsRef
+                - gcpProjectID
+                - machineType
+                - poolType
+                - region
+                - serviceAccount
+                - startupScript
+                type: object
+              kloudliteAccount:
+                type: string
+              machineState:
+                enum:
+                - "on"
+                - "off"
+                type: string
+            required:
+            - cloudProvider
+            - kloudliteAccount
+            - machineState
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    hide:
+                      type: boolean
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    info:
+                      type: string
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

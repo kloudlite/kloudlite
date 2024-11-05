@@ -1,0 +1,24 @@
+# permissions for end users to edit standaloneservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: standaloneservice-editor-role
+rules:
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - standaloneservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - standaloneservices/status
+  verbs:
+  - get

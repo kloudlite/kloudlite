@@ -1,0 +1,29 @@
+version: 3
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+
+vars:
+  app: wireguard-controller
+
+tasks:
+  run:
+    dotenv:
+      - .secrets/env
+
+    cmds:
+      - go run . --dev
+
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "./bin/{{.app}}"
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push

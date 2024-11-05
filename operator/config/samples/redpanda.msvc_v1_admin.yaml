@@ -1,0 +1,6 @@
+apiVersion: redpanda.msvc.kloudlite.io/v1
+kind: Admin
+metadata:
+  name: admin-sample
+spec:
+  # TODO(user): Add fields here

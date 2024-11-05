@@ -1,0 +1,12 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: AwsVPC
+metadata:
+  labels:
+    app.kubernetes.io/name: awsvpc
+    app.kubernetes.io/instance: awsvpc-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: awsvpc-sample
+spec:
+  # TODO(user): Add fields here
