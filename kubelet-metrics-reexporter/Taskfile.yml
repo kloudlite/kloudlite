@@ -1,0 +1,58 @@
+version: 3
+
+tasks:
+  build:
+    env:
+      CGO_ENABLED: 0
+    requires:
+      vars:
+        - out
+        - GOARCH
+    cmds:
+      - go build -ldflags='-s -w' -o ./bin/{{.out}}-{{.GOARCH}} .
+
+  dev:
+    preconditions:
+      - sh: '[ ! -z "{{.NodeName}}" ]'
+        msg: 'var NodeName must be defined'
+    cmds:
+      - fwatcher --ext '.go' --exec '
+          go run main.go --dev 
+                --node-name {{.NodeName}} 
+                --enrich-tag "kl_account_name=KL_ACCOUNT_NAME"
+                --enrich-tag "kl_cluster_name=KL_CLUSTER_NAME"
+                --enrich-from-annotations 
+                --filter-prefix "kloudlite.io/observability"
+                --replace-prefix "kloudlite.io/observability.tracking.id/=kl_tracking_id"
+          ' 
+
+  test:
+    cmds:
+      - go test -v ./internal/parser/...
+
+  test:watch:
+    cmds:
+      - fwatcher --ext '.go' --exec 'go test ./internal/parser/...'
+
+  coverage:
+    cmds:
+      - go-test-cover.sh ./internal/parser/...
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    vars:
+      BINARY: kubelet-metrics-reexporter
+    cmds:
+      - task: build
+        vars:
+          out: "{{.BINARY}}"
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          out: "{{.BINARY}}"
+          GOARCH: arm64
+
+      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg BIN={{.BINARY}} -t {{.image}} . --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true

@@ -1,0 +1,64 @@
+name: 'builds kubelet-metrics-reexporter'
+description: 'builds kubelet-metrics-reexporter'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  cachix_cache_name:
+    description: "cachix.org cache name"
+    required: true
+
+  cachix_auth_token:
+    description: "cachix.org auth token"
+    required: true
+
+  working_directory:
+    description: 'base directory'
+    default: "."
+
+runs:
+  using: 'composite'
+  steps:
+    - name: setup-docker
+      uses: kloudlite/actions/setup-docker@v1
+      with:
+        docker_username: ${{ github.actor }}
+        docker_password: ${{ inputs.github_token }}
+
+    - name: go cache
+      uses: kloudlite/setup-cache-go@v1
+      with:
+        cache_key: "kubelet-metrics-reexporter"
+
+    - name: use nix flakes
+      uses: kloudlite/setup-nix-cachix@v1
+      with:
+        flake_lock: ${{ inputs.working_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.working_directory }}#default"
+
+        cachix_cache_name: "kloudlite"
+        cachix_auth_token: ${{ inputs.cachix_auth_token }}
+
+    - name: generate image tag
+      uses: kloudlite/actions/generate-image-tag@v1
+
+    - name: Build And Push Image
+      working-directory: ${{ inputs.working_directory }}
+      if: ${{ env.IMAGE_TAG != '' }}
+      shell: bash
+      run: |+
+        set +e
+        image_name="ghcr.io/${{ github.repository }}"
+
+        docker manifest inspect $image_name:$IMAGE_TAG
+        exit_status=$?
+        if [ $exit_status -eq 0 ]; then
+          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+          echo "image exists, but override pushed image is set to true. proceeding with building image"
+        fi
+        set -e
+
+        task container:build-and-push image="$image_name:$IMAGE_TAG"
+
