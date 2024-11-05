@@ -1,0 +1,50 @@
+---
+global:
+  gvpn: "default"
+  deviceName: "kloudlite-global-vpn-device"
+  # deviceName: "second-device"
+---
+label: "Create GlobalVPN Device"
+query: |+
+  mutation Infra_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+    infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  gvpnDevice:
+    metadata:
+      name: "{{.deviceName}}"
+    globalVPNName: "{{.gvpn}}"
+---
+
+label: "delete global vpn device"
+query: |+
+  mutation Infra_deleteGlobalVPNDevice($gvpn: String!, $deviceName: String!) {
+    infra_deleteGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName)
+  }
+variables:
+  gvpn: "{{.gvpn}}"
+  deviceName: "{{.deviceName}}"
+
+---
+label: "get global vpn device"
+query: |+
+  query Infra_getGlobalVPNDevice($gvpn: String!, $deviceName: String!) {
+    infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+      metadata {
+        name
+      }
+      ipAddr
+      wireguardConfig {
+        encoding
+        value
+      }
+    }
+  }
+variables:
+  gvpn: "{{.gvpn}}"
+  deviceName: "{{.deviceName}}"
+---

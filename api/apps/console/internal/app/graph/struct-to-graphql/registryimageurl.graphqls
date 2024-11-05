@@ -1,0 +1,16 @@
+type RegistryImageURL @shareable {
+  klWebhookAuthToken: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: [String!]!
+  url: [String!]!
+  urlExample: [String!]!
+}
+
+input RegistryImageURLIn {
+  klWebhookAuthToken: String!
+  scriptUrl: [String!]!
+  scriptUrlExample: [String!]!
+  url: [String!]!
+  urlExample: [String!]!
+}
+

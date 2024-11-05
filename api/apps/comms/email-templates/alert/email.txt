@@ -1,0 +1,7 @@
+{{.Type}}: {{.Titile}}
+
+{{.Body}}
+
+If you have any questions or need assistance, please don't hesitate to contact us.
+
+- Team Kloudlite

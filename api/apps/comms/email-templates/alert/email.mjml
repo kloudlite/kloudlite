@@ -1,0 +1,33 @@
+<!-- vim: set ft=html: -->
+<mjml>
+  <mj-body background-color="#f7f7f7">
+    <mj-section padding="20px 0">
+      <mj-column width="100%">
+        <!-- image-ref: https://github.com/kloudlite/oss/issues/37 -->
+        <mj-image align="left" width="120px" src="https://raw.githubusercontent.com/kloudlite/static-assets/master/kloudlite-logo.png"></mj-image>
+        <mj-divider border-color="#ddd" border-width="1px"></mj-divider>
+
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">          
+          <strong>{{.Type}}:</strong> {{.Titile}}
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          {{.Body}}
+        </mj-text>
+        <mj-button align="left" href="{{.Link}}" rel="noopener noreferrer" background-color="#2563EB" font-size="16px" color="#fff">
+          View Alerts
+        </mj-button>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          Alternatively, you can copy and paste the following URL into your browser:
+          <a href="{{.Link}}" rel="noopener noreferrer">{{.Link}}</a>
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          If you have any questions or need assistance, please don't hesitate to contact us.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          - Team Kloudlite
+        </mj-text>
+        <mj-divider border-color="#ddd" border-width="1px"></mj-divider>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

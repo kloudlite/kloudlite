@@ -1,0 +1,36 @@
+version: 3
+
+includes:
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: gateway
+
+tasks:
+  generate-schema:
+    cmds:
+      - bash ./generate-schema.sh {{.Output}}
+
+  dev:
+    dotenv:
+      - "./.secrets/env"
+    interactive: true
+    cmds:
+      - npm start
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    vars:
+      SupergraphSchemaFile: "./supergraph.graphqls"
+    cmds:
+      - task: generate-schema
+        vars:
+          Output: "{{.SupergraphSchemaFile}}"
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg SUPERGRAPH_FILE={{.SupergraphSchemaFile}} ."
+          image: "{{.image}}"
+

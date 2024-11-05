@@ -1,0 +1,30 @@
+federation_version: =2.3.2
+subgraphs:
+  auth-api:
+    routing_url: http://auth-api:3000/query
+    schema:
+      file: ./schemas/auth-api.schema
+  account-api:
+    routing_url: http://accounts-api:3000/query
+    schema:
+      file: ./schemas/accounts-api.schema
+  container-registry-api:
+    routing_url: http://container-registry-api:3000/query
+    schema:
+      file: ./schemas/container-registry-api.schema
+  console-api:
+    routing_url: http://console-api:3000/query
+    schema:
+      file: ./schemas/console-api.schema
+  comms-api:
+    routing_url: http://comms:3000/query
+    schema:
+      file: ./schemas/comms-api.schema
+  infra-api:
+    routing_url: http://infra-api:3000/query
+    schema:
+      file: ./schemas/infra-api.schema
+  # iot-console-api:
+  #   routing_url: http://iot-console-api:3000/query
+  #   schema:
+  #     file: ./schemas/iot-console-api.schema

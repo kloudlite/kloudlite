@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/auth";
+
+service Auth {
+  rpc GetAccessToken(GetAccessTokenRequest) returns (AccessTokenOut);
+  rpc EnsureUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailOut);
+  rpc GetUser(GetUserIn) returns (GetUserOut);
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message GetUserByEmailOut {
+  string UserId = 1;
+}
+
+message GetAccessTokenRequest {
+  string userId = 1;
+  string provider = 2;
+  string tokenId = 3;
+}
+
+message AccessTokenOut {
+  string id = 5;
+  string userId  = 1;
+  string email  = 2;
+  string provider  = 3;
+  OauthToken oauthToken = 4;
+}
+
+message OauthToken {
+  string access_token=1;
+  string token_type=2;
+  string refresh_token=3;
+  int64 expiry=4;
+  string raw=5;
+}
+
+message GetUserIn {
+  string userId = 1;
+}
+
+message GetUserOut {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+}

@@ -1,0 +1,123 @@
+---
+label: "Create Device"
+query: |+
+  mutation Iot_createDevice($projectName: String!, $deploymentName: String!, $device: IOTDeviceIn!) {
+    iot_createDevice(projectName: $projectName, deploymentName: $deploymentName, device: $device) {
+      id
+      displayName
+      createdBy {
+        userName
+        userId
+        userEmail
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment",
+    "device": {
+      "displayName": "sample device",
+      "ip": "10.10.11.4",
+      "name": "sample-device",
+      "podCIDR": "10.1.1.1",
+      "publicKey": "10.2.2.3",
+      "serviceCIDR": "10.3.3.3",
+      "version": "1"
+    }
+  }
+
+---
+
+label: "update Device"
+query: |+
+  mutation Iot_updateDevice($projectName: String!, $deploymentName: String!, $device: IOTDeviceIn!) {
+    iot_updateDevice(projectName: $projectName, deploymentName: $deploymentName, device: $device) {
+      creationTime
+      createdBy {
+        userName
+        userId
+        userEmail
+      }
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment",
+    "device": {
+      "displayName": "sample device",
+      "ip": "10.10.11.4",
+      "name": "sample-device",
+      "podCIDR": "10.1.1.1",
+      "publicKey": "10.2.2.2",
+      "serviceCIDR": "10.3.3.3",
+      "version": "1"
+    }
+  }
+
+---
+
+label: "delete Device"
+query: |+
+  mutation Iot_deleteDevice($projectName: String!, $deploymentName: String!, $name: String!) {
+    iot_deleteDevice(projectName: $projectName, deploymentName: $deploymentName, name: $name)
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment",
+    "name": "sample-device-one"
+  }
+
+---
+
+label: "get Device"
+query: |+
+  query Iot_getDevice($projectName: String!, $deploymentName: String!, $name: String!) {
+    iot_getDevice(projectName: $projectName, deploymentName: $deploymentName, name: $name) {
+      accountName
+      createdBy {
+        userName
+        userEmail
+        userId
+      }
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment",
+    "name": "sample-device"
+  }
+
+---
+
+label: "list Device"
+query: |+
+  query Iot_listDevices($projectName: String!, $deploymentName: String!) {
+    iot_listDevices(projectName: $projectName, deploymentName: $deploymentName) {
+      totalCount
+      edges {
+        node {
+          deploymentName
+          displayName
+          podCIDR
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment"
+  }
+
+---
+
+

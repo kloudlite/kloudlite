@@ -1,0 +1,52 @@
+version: "3"
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: observability
+  binary: "./bin/{{.app}}"
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  run:
+    dotenv:
+      - .secrets/env
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      # - fwatcher --exec 'go run ./main.go --dev' --ext '.go'
+      - go build -o ./bin/{{.app}} .
+      - ./bin/{{.app}} --dev
+
+  build:
+    cmds:
+      - task: go:build 
+        vars: 
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"
+

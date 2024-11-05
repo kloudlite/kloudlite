@@ -1,0 +1,88 @@
+---
+global:
+  image: "imageName1:imageTag1"
+  query: "gitla"
+---
+
+label: List Registry Images
+query: |+ #graphql
+  query Core_listRegistryImages {
+    core_listRegistryImages {
+      edges {
+        cursor
+        node {
+          id
+          accountName
+          imageName
+          imageTag
+          meta
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPrevPage
+        startCursor
+      }
+      totalCount
+    }
+  }
+
+---
+
+label: Get Registry Image
+query: |+
+  query Core_getRegistryImage($image: String!) {
+    core_getRegistryImage(image: $image) {
+      accountName
+      imageName
+      imageTag
+      meta
+    }
+  }
+variables:
+  image: "{{.image}}"
+
+---
+
+label: Delete Registry Image
+query: |+
+  mutation Core_deleteRegistryImage($image: String!) {
+    core_deleteRegistryImage(image: $image)
+  }
+variables:
+  image: "{{.image}}"
+
+---
+
+label: Get Registry Image URL
+query: |+
+  query Core_getRegistryImageURL {
+    core_getRegistryImageURL {
+      url
+      scriptUrl
+    }
+  }
+variables:
+  image: "{{.image}}"
+  meta:
+    registry: "github"
+    repository: "kloudlite/kloudlite-console"
+    tag: "latest"
+
+---
+
+label: Search Registry Images
+query: |+
+  query Core_searchRegistryImages($query: String!) {
+    core_searchRegistryImages(query: $query) {
+      accountName
+      imageName
+      imageTag
+      meta
+    }
+  }
+variables:
+  query: "{{.query}}"
+---
+    

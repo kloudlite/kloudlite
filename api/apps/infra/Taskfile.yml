@@ -1,0 +1,92 @@
+version: "3"
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: infra
+  binary: "./bin/{{.app}}"
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  protobufs:
+    dir: ./protobufs/
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
+
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Cluster
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.BYOKCluster
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplate
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Node
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.NodePool
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPN
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPNDevice
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.HelmRelease
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolume
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Namespace
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment
+          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/apps/infra/internal/domain.BYOKSetupInstruction
+          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,BYOKCluster,Node,NodePool,GlobalVPN,GlobalVPNDevice,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,HelmRelease,Namespace,VolumeAttachment,PersistentVolume
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
+
+  run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go build -o bin/infra .
+      - ./bin/infra --dev
+      # - ./bin/infra
+
+  gen:constants:
+    cmds:
+      - go generate ./internal/entities/field-constants/gen.go
+
+  build:
+    cmds:
+      - task: protobufs
+      - task: gen:constants
+      - task: go:build
+        vars: 
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"
+
+  test:
+    cmds:
+      - go test -v ./internal/domain

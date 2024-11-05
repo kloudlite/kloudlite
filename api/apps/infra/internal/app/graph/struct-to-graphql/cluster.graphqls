@@ -1,0 +1,42 @@
+type Cluster @shareable {
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  globalVPN: String
+  id: ID!
+  kind: String
+  lastOnlineAt: Date
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata! @goField(name: "objectMeta")
+  ownedBy: String
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ClusterEdge @shareable {
+  cursor: String!
+  node: Cluster!
+}
+
+type ClusterPaginatedRecords @shareable {
+  edges: [ClusterEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ClusterIn {
+  apiVersion: String
+  displayName: String!
+  globalVPN: String
+  kind: String
+  metadata: MetadataIn!
+  ownedBy: String
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
+}
+

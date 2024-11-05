@@ -1,0 +1,75 @@
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Email @shareable {
+  enabled: Boolean!
+  mailAddress: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Slack @shareable {
+  enabled: Boolean!
+  url: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Telegram @shareable {
+  chatId: String!
+  enabled: Boolean!
+  token: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Webhook @shareable {
+  enabled: Boolean!
+  url: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___types__NotifyContent @shareable {
+  body: String!
+  image: String!
+  link: String!
+  subject: String!
+  title: String!
+}
+
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
+type PageInfo @shareable {
+  endCursor: String
+  hasNextPage: Boolean
+  hasPrevPage: Boolean
+  startCursor: String
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__EmailIn {
+  enabled: Boolean!
+  mailAddress: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__SlackIn {
+  enabled: Boolean!
+  url: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__TelegramIn {
+  chatId: String!
+  enabled: Boolean!
+  token: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__WebhookIn {
+  enabled: Boolean!
+  url: String!
+}
+
+enum Github__com___kloudlite___api___apps___comms___types__NotificationType {
+  alert
+  notification
+}
+
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+

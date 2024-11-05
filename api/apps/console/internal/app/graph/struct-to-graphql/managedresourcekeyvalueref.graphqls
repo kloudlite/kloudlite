@@ -1,0 +1,12 @@
+type ManagedResourceKeyValueRef @shareable {
+  key: String!
+  mresName: String!
+  value: String!
+}
+
+input ManagedResourceKeyValueRefIn {
+  key: String!
+  mresName: String!
+  value: String!
+}
+

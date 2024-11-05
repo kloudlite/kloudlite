@@ -1,0 +1,62 @@
+version: "3"
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: accounts
+  binary: ./bin/{{.app}}
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go run main.go --dev
+
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct github.com/kloudlite/api/apps/accounts/internal/entities.Account
+          --struct github.com/kloudlite/api/apps/accounts/internal/domain.AvailableKloudliteRegion
+          --struct github.com/kloudlite/api/apps/accounts/internal/entities.Invitation
+          --struct github.com/kloudlite/api/apps/accounts/internal/entities.AccountMembership
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql 
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
+
+  build:
+    cmds:
+      - task: go:build 
+        vars: 
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"

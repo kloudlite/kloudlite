@@ -1,0 +1,256 @@
+---
+query: |
+  mutation Auth_signup($name: String!, $email: String!, $password: String!) {
+    auth_signup(name: $name, email: $email, password: $password) {
+      id
+      userId
+      userEmail
+      loginMethod
+      userVerified
+    }
+  }
+variables:
+  email: "{{.email}}"
+  password: "{{.password}}"
+  name: Sample Kumar
+
+---
+query: |+
+  query ProjectMemberships {
+    auth_me {
+      projectMemberships {
+        project {
+          id
+          name
+          account {
+            id
+          }
+        }
+      }
+    }
+  }
+---
+label: Login
+query: |
+  mutation Auth_login($email: String!, $password: String!) {
+    auth_login(email: $email, password: $password) {
+      id
+      userId
+      userId
+      userEmail
+      loginMethod
+      userVerified
+    }
+  }
+variables:
+  email: "{{.email}}"
+  password: "{{.password}}"
+
+---
+label: "OAuth Login Request"
+query: |
+  query Query($provider: String!) {
+    oAuth_requestLogin(provider: $provider)
+  }
+variables:
+  provider: github
+
+---
+label: OAuth Login
+query: |
+  mutation OAuth_addLogin($code: String!, $provider: String!) {
+    oAuth_login(code: $code, provider: $provider) {
+      id
+      loginMethod
+      userEmail
+      loginMethod
+      userVerified
+    }
+  }
+variables:
+  code: "***************"
+  provider: github
+  state: "************"
+---
+
+label: Me
+query: |
+  query Me {
+    auth_me {
+      avatar
+      id
+      email
+      name
+      approved
+      verified
+      # providerGitlab
+      # providerGithub
+      # verified
+    }
+  }
+
+---
+label: Get Github Installation Token
+query: |
+  query Query($installationId: Int!) {
+    ci_githubInstallationToken(installationId: $installationId)
+  }
+variables:
+  installationId: "************"
+
+---
+label: List Github Installations
+query: |
+  query Ci {
+    ci_githubInstallations
+  }
+---
+
+label: List Github Repos
+query: |
+  query Query($installationId: Int!) {
+    ci_githubRepos(installationId: $installationId)
+  }
+variables:
+  installationId: "********"
+  # page: 1
+  # limit: 20
+
+---
+
+label: Github Add Webhook
+query: |
+  mutation OAuth_githubAddWebhook($repoUrl: String!) {
+    ci_githubAddWebhook(repoUrl: $repoUrl)
+  }
+variables:
+  repoUrl: https://github.com/nxtcoder17/sample
+
+---
+
+label: Github List Branches
+query: |
+  query Query($page: Int!, $repoUrl: String!, $limit: Int!) {
+    ci_githubRepoBranches(page: $page, repoUrl: $repoUrl, limit: $limit)
+  }
+variables:
+  repoUrl: nxtcoder17/sample
+  page: 1
+  limit: 20
+
+---
+label: create acc
+query: |
+  mutation Finance_createAccount($name: String!, $billing: BillingInput!) {
+    finance_createAccount(name: $name, billing: $billing) {
+      id
+      name
+    }
+  }
+variables:
+  name: sample-accn
+  billing:
+    stripePaymentMethod: "sample"
+    stripeSetupIntentId: "sadfasf"
+    cardholderName: "sdfass"
+    address: 
+      line1: sadfasdf
+---
+
+### gitlab testing
+---
+label: Gitlab Groups
+query: |
+  query Query {
+    ci_gitlabGroups
+  }
+---
+
+---
+label: Gitlab Groups
+query: |
+  query Query($query: String) {
+    ci_gitlabGroups(query: $query)
+  }
+variables:
+  query: madh
+---
+
+label: Gitlab Repos
+query: |
+  query Query($groupId: String!) {
+    ci_gitlabRepos(groupId: $groupId)
+  }
+variables:
+  groupId: "8508925"
+---
+
+label: Gitlab Repos with Search
+query: |
+  query Query($groupId: String!, $search: String) {
+    ci_gitlabRepos(groupId: $groupId, search: $search)
+  }
+
+variables:
+  groupId: "8508925"
+  search: "oper"
+
+---
+
+label: Gitlab Repo Branches
+query: |
+  query Query($repoId: String!) {
+    ci_gitlabRepoBranches(repoId: $repoId)
+  }
+variables:
+  repoId: "26232015"
+---
+
+label: Gitlab Add Webhook
+query: |
+  query Query($repoId: String!) {
+    ci_addWebhook(repoId: $repoId)
+  }
+variables:
+  repoId: "26232015"
+---
+
+label: Verify Email
+query: |+
+  mutation Auth_verifyEmail($token: String!) {
+    auth_verifyEmail(token: $token) {
+      id
+      loginMethod
+    }
+  }
+variables:
+  token: "{{.verify_token}}"
+
+---
+
+label: Request Reset Password
+query: |
+  mutation Auth_requestResetPassword($email: String!) {
+    auth_requestResetPassword(email: $email)
+  }
+variables:
+  email: "{{.email}}"
+
+---
+
+label: Reset Password
+query: |
+  mutation Auth_resetPassword($token: String!, $password: String!) {
+    auth_resetPassword(token: $token, password: $password)
+  }
+variables:
+  token: "{{.reset_token}}"
+  password: "{{.password}}"
+
+---
+label: Auth Logout
+query: |+
+  mutation AuthLogout {
+    auth_logout
+  }
+---
