@@ -35,13 +35,123 @@ spec:
           spec:
             description: BackupSpec defines the desired state of Backup
             properties:
-              foo:
-                description: Foo is an example field of Backup. Edit backup_types.go
-                  to remove/update
+              backupType:
                 type: string
+              cron:
+                description: must be set if backupType is cron
+                properties:
+                  schedule:
+                    description: Cron schedule in cron format, refer https://crontab.guru
+                    type: string
+                required:
+                - schedule
+                type: object
+              msvcRef:
+                properties:
+                  apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                    type: string
+                  kind:
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - backupType
+            - msvcRef
             type: object
           status:
-            description: BackupStatus defines the observed state of Backup
+            properties:
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    hide:
+                      type: boolean
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    info:
+                      type: string
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
             type: object
         type: object
     served: true

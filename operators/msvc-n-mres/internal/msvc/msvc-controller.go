@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
-	mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
-	redisv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	// mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	// mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	// postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
+	// redisv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -20,9 +21,13 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	// "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	// "k8s.io/apimachinery/pkg/runtime/schema"
+	// apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -143,13 +148,15 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepRes
 	req.LogPreCheck("finalizing")
 	defer req.LogPostCheck("finalizing")
 
+	check := rApi.NewRunningCheck("finalizing", req)
+
 	if step := req.EnsureCheckList([]rApi.CheckMeta{
-		{Name: "cleanup", Title: "Cleanup Owned Resources"},
+		{Name: "finalizing", Title: "Cleanup Owned Resources"},
 	}); !step.ShouldProceed() {
 		return step
 	}
 
-	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+	if result := req.CleanupOwnedResourcesV2(check); !result.ShouldProceed() {
 		return result
 	}
 
@@ -188,32 +195,63 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ManagedServiceApplied, req)
 
-	b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
-		"api-version": obj.Spec.ServiceTemplate.APIVersion,
-		"kind":        obj.Spec.ServiceTemplate.Kind,
+	if obj.Spec.ServiceTemplate != nil {
+		b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
+			"api-version": obj.Spec.ServiceTemplate.APIVersion,
+			"kind":        obj.Spec.ServiceTemplate.Kind,
 
-		"name":       obj.Name,
-		"namespace":  obj.Namespace,
-		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"name":       obj.Name,
+			"namespace":  obj.Namespace,
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
-		"labels":      obj.GetLabels(),
-		"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+			"labels":      obj.GetLabels(),
+			"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 
-		"node-selector":         obj.Spec.NodeSelector,
-		"tolerations":           obj.Spec.Tolerations,
-		"service-template-spec": obj.Spec.ServiceTemplate.Spec,
+			"node-selector":         obj.Spec.NodeSelector,
+			"tolerations":           obj.Spec.Tolerations,
+			"service-template-spec": obj.Spec.ServiceTemplate.Spec,
 
-		"output": obj.Output,
-	})
-	if err != nil {
-		return check.Failed(err).NoRequeue()
+			"output": obj.Output,
+		})
+		if err != nil {
+			return check.Failed(err).NoRequeue()
+		}
+
+		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		if err != nil {
+			return check.Failed(err)
+		}
+		req.AddToOwnedResources(rr...)
 	}
 
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
-	if err != nil {
-		return check.Failed(err)
+	if obj.Spec.Plugin != nil {
+		b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
+			"api-version": obj.Spec.Plugin.APIVersion,
+			"kind":        obj.Spec.Plugin.Kind,
+
+			"name":       obj.Name,
+			"namespace":  obj.Namespace,
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+
+			"labels":      obj.GetLabels(),
+			"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+
+			"node-selector":         obj.Spec.NodeSelector,
+			"tolerations":           obj.Spec.Tolerations,
+			"service-template-spec": obj.Spec.Plugin.Spec,
+
+			"output": obj.Output,
+		})
+		if err != nil {
+			return check.Failed(err).NoRequeue()
+		}
+
+		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		if err != nil {
+			return check.Failed(err)
+		}
+		req.AddToOwnedResources(rr...)
 	}
-	req.AddToOwnedResources(rr...)
 
 	return check.Completed()
 }
@@ -222,7 +260,14 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ManagedServiceReady, req)
 
-	uobj := fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.ServiceTemplate.APIVersion, Kind: obj.Spec.ServiceTemplate.Kind})
+	var uobj *unstructured.Unstructured
+	if obj.Spec.ServiceTemplate != nil {
+		uobj = fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.ServiceTemplate.APIVersion, Kind: obj.Spec.ServiceTemplate.Kind})
+	}
+
+	if obj.Spec.Plugin != nil {
+		uobj = fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.Plugin.APIVersion, Kind: obj.Spec.Plugin.Kind})
+	}
 
 	realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), uobj)
 	if err != nil {
@@ -269,31 +314,45 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
 
-	// var msvcPlugins crdsv1.ManagedServicePluginList
-	// ctx, cf := context.WithTimeout(context.TODO(), 2*time.Second)
-	// defer cf()
-	// if err := r.Client.List(ctx, &msvcPlugins); err != nil {
-	// 	return err
-	// }
-	//
-	// for _, msvcPlugin := range msvcPlugins.Items {
-	// 	for _, gvk := range msvcPlugin.Spec.GVKs {
-	// 		obj := &unstructured.Unstructured{}
-	// 		obj.SetGroupVersionKind(schema.GroupVersionKind{
-	// 			Group:   gvk.Group,
-	// 			Version: gvk.Version,
-	// 			Kind:    gvk.Kind,
-	// 		})
-	// 		builder.Owns(obj)
-	// 	}
-	// }
+	var msvcPlugins crdsv1.ManagedServicePluginList
+	ctx, cf := context.WithTimeout(context.TODO(), 2*time.Second)
+	defer cf()
+
+	if err := r.List(ctx, &msvcPlugins); err != nil {
+		return err
+	}
+
+	for _, msvcPlugin := range msvcPlugins.Items {
+		for _, gvk := range msvcPlugin.Spec.Kinds {
+			obj := &unstructured.Unstructured{}
+			gv, err := schema.ParseGroupVersion(msvcPlugin.Spec.APIVersion)
+			if err != nil {
+				return err
+			}
+
+			obj.SetGroupVersionKind(schema.GroupVersionKind{
+				Group:   gv.Group,
+				Version: gv.Version,
+				Kind:    gvk.Kind,
+			})
+
+			_, err = r.IsObjectNamespaced(obj)
+			if err != nil && strings.HasPrefix(err.Error(), "failed to get restmapping: failed to find API group") {
+				// it means plugin CRDs are not installed on the cluster as of now
+				continue
+			}
+			// if apiErrors.IsNotFound(err error)
+
+			builder.Owns(obj)
+		}
+	}
 
 	owns := []client.Object{
-		&mongov1.StandaloneService{},
-		&mongov1.ClusterService{},
-		&mysqlv1.StandaloneService{},
-		&postgresv1.Standalone{},
-		&redisv1.StandaloneService{},
+		// &mongov1.StandaloneService{},
+		// &mongov1.ClusterService{},
+		// &mysqlv1.StandaloneService{},
+		// &postgresv1.Standalone{},
+		// &redisv1.StandaloneService{},
 	}
 
 	for _, obj := range owns {

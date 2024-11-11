@@ -185,12 +185,12 @@ func (r *Reconciler) createBackupLifecycle(req *rApi.Request[*mongov1.Backup]) s
 							Spec: corev1.PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:       "backup",
-										Image:      "mongo:latest",
-										Command:    []string{
-										  "sh",
-										  "-c",
-										  "mongodump --host $MONGODB_HOST --port $MONGODB_PORT --username $MONGODB_USERNAME --password $MONGODB_PASSWORD --authenticationDatabase $MONGODB_AUTHENTICATION_DATABASE --db $MONGODB_DATABASE --out /backups/$BACKUP_NAME"
+										Name:  "backup",
+										Image: "mongo:latest",
+										Command: []string{
+											"sh",
+											"-c",
+											"mongodump --host $MONGODB_HOST --port $MONGODB_PORT --username $MONGODB_USERNAME --password $MONGODB_PASSWORD --authenticationDatabase $MONGODB_AUTHENTICATION_DATABASE --db $MONGODB_DATABASE --out /backups/$BACKUP_NAME",
 										},
 										Args:       []string{},
 										WorkingDir: "",

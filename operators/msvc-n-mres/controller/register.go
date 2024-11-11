@@ -12,19 +12,19 @@ import (
 	// redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	// zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
 	"github.com/kloudlite/operator/operator"
-	cmsvc "github.com/kloudlite/operator/operators/msvc-n-mres/internal/cluster-msvc"
+	// cmsvc "github.com/kloudlite/operator/operators/msvc-n-mres/internal/cluster-msvc"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
-	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/mres"
+	// "github.com/kloudlite/operator/operators/msvc-n-mres/internal/mres"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc"
-	refer_to_mres "github.com/kloudlite/operator/operators/msvc-n-mres/internal/refer-to-mres"
+	// refer_to_mres "github.com/kloudlite/operator/operators/msvc-n-mres/internal/refer-to-mres"
 )
 
 func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(
 		crdsv1.AddToScheme,
-		// mongodbMsvcv1.AddToScheme,
 
+		// mongodbMsvcv1.AddToScheme,
 		// mysqlMsvcv1.AddToScheme,
 		// redisMsvcv1.AddToScheme,
 		// elasticsearchMsvcv1.AddToScheme,
@@ -34,9 +34,9 @@ func RegisterInto(mgr operator.Operator) {
 		// neo4jMsvcv1.AddToScheme,
 	)
 	mgr.RegisterControllers(
-		&cmsvc.Reconciler{Name: "cluster-msvc", Env: ev},
+		// &cmsvc.Reconciler{Name: "cluster-msvc", Env: ev},
 		&msvc.Reconciler{Name: "msvc", Env: ev},
-		&mres.Reconciler{Name: "mres", Env: ev},
-		&refer_to_mres.Reconciler{Name: "refer-to-mres", Env: ev},
+		// &mres.Reconciler{Name: "mres", Env: ev},
+		// &refer_to_mres.Reconciler{Name: "refer-to-mres", Env: ev},
 	)
 }

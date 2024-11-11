@@ -71,6 +71,22 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  plugin:
+                    description: SharedSecret                  *string         `json:"sharedSecret,omitempty"
+                      graphql:"ignore"`
+                    properties:
+                      apiVersion:
+                        type: string
+                      kind:
+                        type: string
+                      spec:
+                        additionalProperties:
+                          x-kubernetes-preserve-unknown-fields: true
+                        type: object
+                    required:
+                    - apiVersion
+                    - kind
+                    type: object
                   serviceTemplate:
                     properties:
                       apiVersion:
@@ -85,8 +101,6 @@ spec:
                     - apiVersion
                     - kind
                     type: object
-                  sharedSecret:
-                    type: string
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
@@ -127,8 +141,6 @@ spec:
                           type: string
                       type: object
                     type: array
-                required:
-                - serviceTemplate
                 type: object
               sharedSecret:
                 type: string
