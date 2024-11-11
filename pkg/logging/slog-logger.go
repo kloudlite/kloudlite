@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 

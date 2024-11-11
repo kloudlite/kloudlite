@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: testing-plugin-mongo
+---
+
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: testing-mongo
+  namespace: testing-plugin-mongo
+spec:
+  plugin:
+    apiVersion: "plugin-mongodb.kloudlite.github.com/v1"
+    kind: StandaloneService
+    spec:
+      nodeSelector: {}
+      tolerations: []
+      resources:
+        cpu:
+          min: 400m
+          max: 400m
+
+        memory:
+          min: 500Mi
+          max: 500Mi
+
+        storage:
+          size: 10Gi
+          storageClass: ""

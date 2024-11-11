@@ -7,11 +7,11 @@ import (
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
-	mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
-	// influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
-	redis "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	// mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	// mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	// postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
+	// // influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
+	// redis "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -253,22 +253,22 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Secret{})
 
-	owns := []client.Object{
-		&mongov1.StandaloneDatabase{},
-		&mysqlv1.StandaloneDatabase{},
-		&postgresv1.StandaloneDatabase{},
-	}
+	// owns := []client.Object{
+	// 	&mongov1.StandaloneDatabase{},
+	// 	&mysqlv1.StandaloneDatabase{},
+	// 	&postgresv1.StandaloneDatabase{},
+	// }
 
-	for i := range owns {
-		builder.Owns(owns[i])
-	}
+	// for i := range owns {
+	// 	builder.Owns(owns[i])
+	// }
 
 	watchlist := []client.Object{
-		&mongov1.StandaloneService{},
-		&mongov1.ClusterService{},
-		&redis.StandaloneService{},
-		&postgresv1.Standalone{},
-		&mysqlv1.StandaloneService{},
+		// &mongov1.StandaloneService{},
+		// &mongov1.ClusterService{},
+		// &redis.StandaloneService{},
+		// &postgresv1.Standalone{},
+		// &mysqlv1.StandaloneService{},
 	}
 
 	for _, obj := range watchlist {

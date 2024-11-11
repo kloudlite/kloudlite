@@ -24,8 +24,9 @@ func (s *ServiceTemplate) GroupVersionKind() schema.GroupVersionKind {
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
 	ct.NodeSelectorAndTolerations `json:",inline"`
-	ServiceTemplate               ServiceTemplate `json:"serviceTemplate"`
-	SharedSecret                  *string         `json:"sharedSecret,omitempty" graphql:"ignore"`
+	ServiceTemplate               *ServiceTemplate `json:"serviceTemplate,omitempty"`
+	// SharedSecret                  *string         `json:"sharedSecret,omitempty" graphql:"ignore"`
+	Plugin *ServiceTemplate `json:"plugin,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -42,7 +43,6 @@ type ManagedService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec ManagedServiceSpec `json:"spec"`
-	// json.RawMessage
 
 	// +kubebuilder:default=true
 	Enabled *bool       `json:"enabled,omitempty"`
@@ -69,7 +69,17 @@ func (m *ManagedService) GetEnsuredLabels() map[string]string {
 
 func (m *ManagedService) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		"kloudlite.io/service-gvk": m.Spec.ServiceTemplate.GroupVersionKind().String(),
+		"kloudlite.io/service-gvk": func() string {
+			if m.Spec.ServiceTemplate != nil {
+				return m.Spec.ServiceTemplate.GroupVersionKind().String()
+			}
+
+			if m.Spec.Plugin != nil {
+				return m.Spec.Plugin.GroupVersionKind().String()
+			}
+
+			return ""
+		}(),
 	}
 }
 
