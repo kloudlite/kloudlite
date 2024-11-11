@@ -198,8 +198,9 @@ while true; do
     wg-quick up kloudlite-wg
     %s
     echo "[SUCCESS] wireguard is up"
+
     echo "search $POD_NAMESPACE.svc.cluster.local svc.cluster.local cluster.local" >> /etc/resolv.conf
-    echo "options ndots:5" >> /etc/resolv.conf
+    echo "options ndots:1" >> /etc/resolv.conf
     exit 0
   fi
   echo "[RETRY] wireguard configuration could not be fetched from gateway ip-manager, retrying in 1 seconds"
