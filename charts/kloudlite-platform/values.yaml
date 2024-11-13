@@ -1,6 +1,6 @@
 # -- kloudlite release version, defaults to `Chart.AppVersion`
 # @ignored
-kloudliteRelease: "v1.0.7"
+kloudliteRelease: ""
 
 # -- base domain
 baseDomain: ""
