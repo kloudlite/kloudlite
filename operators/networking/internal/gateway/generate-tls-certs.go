@@ -42,7 +42,7 @@ func GenTLSCert(dnsNames []string) (caBundle []byte, tlsCert []byte, tlsKey []by
 	caCertPEM := new(bytes.Buffer)
 	err = pem.Encode(caCertPEM, &pem.Block{Type: "CERTIFICATE", Bytes: caCertBytes})
 	if err != nil {
-		return nil, nil, nil, err
+		// return nil, nil, nil, err
 	}
 
 	// Encode the CA private key to PEM

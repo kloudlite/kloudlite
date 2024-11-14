@@ -214,6 +214,7 @@ func (r *Reconciler) checkSvcIntercept(req *rApi.Request[*crdsv1.ServiceIntercep
 						svciGenerationLabel: fmt.Sprintf("%d", obj.Generation),
 						CreatedForLabel:     "intercept",
 					},
+					obj.Status.Selector,
 				),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"device-host":      deviceHost,
