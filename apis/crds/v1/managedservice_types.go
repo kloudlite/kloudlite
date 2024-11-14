@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/pkg/plugin"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -15,6 +16,7 @@ type ServiceTemplate struct {
 	Kind       string                          `json:"kind"`
 	APIVersion string                          `json:"apiVersion"`
 	Spec       map[string]apiextensionsv1.JSON `json:"spec,omitempty"`
+	Export     plugin.Export                   `json:"export,omitempty"`
 }
 
 func (s *ServiceTemplate) GroupVersionKind() schema.GroupVersionKind {

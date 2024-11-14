@@ -28,3 +28,6 @@ spec:
         storage:
           size: 10Gi
           storageClass: ""
+output:
+  credentialsRef:
+    name: "testing-mongo"

@@ -134,6 +134,11 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedService]) st
 		obj.Output.CredentialsRef.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
 	}
 
+	if obj.Spec.Plugin != nil && obj.Spec.Plugin.Export.ViaSecret == "" {
+		hasUpdate = true
+		obj.Spec.Plugin.Export.ViaSecret = obj.Name + "-export"
+	}
+
 	if hasUpdate {
 		if err := r.Update(ctx, obj); err != nil {
 			return check.Failed(err)
@@ -240,7 +245,11 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 			"tolerations":           obj.Spec.Tolerations,
 			"service-template-spec": obj.Spec.Plugin.Spec,
 
-			"output": obj.Output,
+			"export": obj.Spec.Plugin.Export,
+
+			"output": map[string]string{
+				"secretName": obj.Output.CredentialsRef.Name,
+			},
 		})
 		if err != nil {
 			return check.Failed(err).NoRequeue()

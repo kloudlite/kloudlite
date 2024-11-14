@@ -79,6 +79,17 @@ spec:
                 properties:
                   apiVersion:
                     type: string
+                  export:
+                    properties:
+                      kv:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      viaSecret:
+                        type: string
+                    required:
+                    - kv
+                    type: object
                   kind:
                     type: string
                   spec:
@@ -93,6 +104,17 @@ spec:
                 properties:
                   apiVersion:
                     type: string
+                  export:
+                    properties:
+                      kv:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      viaSecret:
+                        type: string
+                    required:
+                    - kv
+                    type: object
                   kind:
                     type: string
                   spec:
