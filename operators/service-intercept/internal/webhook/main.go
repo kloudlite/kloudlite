@@ -55,8 +55,6 @@ const (
 )
 
 type Env struct {
-	GatewayAdminApiAddr string `env:"GATEWAY_ADMIN_API_ADDR" required:"true"`
-
 	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY" required:"true"`
 }
 

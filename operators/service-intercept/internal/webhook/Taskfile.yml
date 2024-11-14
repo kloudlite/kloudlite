@@ -1,8 +1,8 @@
 version: 3
 
 includes:
-  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
-  docker: ../../../../../.tools/taskfiles/docker.Taskfile.yml
+  go: ../../../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../../../.tools/taskfiles/docker.Taskfile.yml
 
 vars:
   app: svci-mutation-webhook
@@ -19,7 +19,7 @@ tasks:
     env:
       # KEY=value
     cmds:
-      - go run ./main.go --debug --addr ":8443"
+      - go run ./main.go --addr ":8443"
 
   debug:
     env:
