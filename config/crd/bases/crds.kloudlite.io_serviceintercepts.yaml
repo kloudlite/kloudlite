@@ -33,6 +33,24 @@ spec:
           metadata:
             type: object
           spec:
+            properties:
+              portMappings:
+                items:
+                  properties:
+                    containerPort:
+                      type: integer
+                    servicePort:
+                      type: integer
+                  required:
+                  - containerPort
+                  - servicePort
+                  type: object
+                type: array
+              toAddress:
+                type: string
+            required:
+            - portMappings
+            - toAddress
             type: object
           status:
             properties:
@@ -114,6 +132,10 @@ spec:
                   - namespace
                   type: object
                 type: array
+              selector:
+                additionalProperties:
+                  type: string
+                type: object
             type: object
         type: object
     served: true

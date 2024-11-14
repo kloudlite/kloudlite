@@ -6,7 +6,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type SvcInterceptPortMappings struct {
+	ContainerPort uint16 `json:"containerPort"`
+	ServicePort   uint16 `json:"servicePort"`
+}
+
 type ServiceInterceptSpec struct {
+	ToAddr       string                     `json:"toAddress"`
+	PortMappings []SvcInterceptPortMappings `json:"portMappings"`
+}
+
+type ServiceInterceptStatus struct {
+	rApi.Status `json:",inline"`
+	Selector    map[string]string `json:"selector,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -17,23 +29,23 @@ type ServiceIntercept struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ServiceInterceptSpec `json:"spec,omitempty"`
-	Status rApi.Status          `json:"status,omitempty" graphql:"noinput"`
+	Spec   ServiceInterceptSpec   `json:"spec,omitempty"`
+	Status ServiceInterceptStatus `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (svci *ServiceIntercept) EnsureGVK() {
 	if svci != nil {
-		svci.SetGroupVersionKind(GroupVersion.WithKind("App"))
+		svci.SetGroupVersionKind(GroupVersion.WithKind("ServiceIntercept"))
 	}
 }
 
 func (svci *ServiceIntercept) GetStatus() *rApi.Status {
-	return &svci.Status
+	return &svci.Status.Status
 }
 
 func (svci *ServiceIntercept) GetEnsuredLabels() map[string]string {
 	m := map[string]string{
-		"kloudlite.io/app.name": svci.Name,
+		"kloudlite.io/svci.name": svci.Name,
 	}
 
 	return m
@@ -41,7 +53,7 @@ func (svci *ServiceIntercept) GetEnsuredLabels() map[string]string {
 
 func (svci *ServiceIntercept) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("App").String(),
+		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ServiceIntercept").String(),
 	}
 }
 
