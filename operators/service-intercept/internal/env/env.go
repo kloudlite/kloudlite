@@ -5,8 +5,7 @@ import (
 )
 
 type Env struct {
-	MaxConcurrentReconciles int    `env:"MAX_CONCURRENT_RECONCILES"`
-	ClusterInternalDNS      string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
+	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
 }
 
 func GetEnvOrDie() *Env {

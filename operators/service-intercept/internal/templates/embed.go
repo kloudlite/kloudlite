@@ -14,10 +14,7 @@ type templateFile string
 
 const (
 	// TODO: (user) add your template files here
-	// ClusterJobTemplate        templateFile = "./cluster-job.yml.tpl"
-	AppDeployment templateFile = "./app-deployment-svc-hpa.yml.tpl"
-	HPATemplate   templateFile = "./hpa-template.yml.tpl"
-	AppIntercept templateFile = "./app-intercept.yml.tpl"
+	SvcIntercept templateFile = "./svc-intercept.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {
