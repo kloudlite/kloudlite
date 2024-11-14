@@ -6,7 +6,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/aws/aws-sdk-go v1.50.10
 	github.com/cert-manager/cert-manager v1.13.0
-	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/charmbracelet/log v0.4.0
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/evanphx/json-patch/v5 v5.6.0
@@ -30,6 +29,7 @@ require (
 	github.com/shamaton/msgpack/v2 v2.2.0
 	github.com/twmb/franz-go v1.14.4
 	github.com/urfave/cli/v2 v2.25.7
+	github.com/valyala/fasttemplate v1.2.1
 	github.com/yext/yerrors v0.0.0-20230716030415-7ebf68e23868
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/zap v1.25.0
@@ -53,6 +53,7 @@ require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/charmbracelet/lipgloss v0.10.0 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect

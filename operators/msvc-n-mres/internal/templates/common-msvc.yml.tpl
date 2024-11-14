@@ -16,6 +16,8 @@
 
 {{- $output := get . "output" }}
 
+{{- $export := get . "export" }}
+
 apiVersion: {{$apiVersion}}
 kind: {{$kind}}
 metadata:
@@ -27,5 +29,10 @@ metadata:
 spec: 
   nodeSelector: {{$nodeSelector |toYAML | nindent 2}}
   tolerations: {{$tolerations |toYAML | nindent 2}}
+
   {{$serviceTemplateSpec | toYAML | nindent 2 }}
+
+{{- if $export }}
+export: {{ $export | toYAML | nindent 2 }}
+{{- end }}
 output: {{$output | toYAML | nindent 2}}
