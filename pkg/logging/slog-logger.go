@@ -45,7 +45,7 @@ func NewSlogLogger(opts SlogOptions) *slog.Logger {
 	styles := log.DefaultStyles()
 	// styles.Caller = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Dark: "#5b717f", Light: "#36cbfa"}).Faint(true)
 	styles.Caller = lipgloss.NewStyle().Foreground(lipgloss.Color("#878a8a"))
-	styles.Levels[log.DebugLevel] = styles.Levels[log.DebugLevel].Foreground(lipgloss.Color("#5b717f"))
+	styles.Levels[log.DebugLevel] = styles.Levels[log.DebugLevel].Foreground(lipgloss.Color("#6b717f"))
 	styles.Levels[log.InfoLevel] = styles.Levels[log.InfoLevel].Foreground(lipgloss.Color("#36cbfa"))
 
 	styles.Key = lipgloss.NewStyle().Foreground(lipgloss.Color("#36cbfa")).Bold(true)

@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
@@ -13,6 +15,7 @@ import (
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/repos"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type grpcServer struct {
@@ -32,12 +35,39 @@ func (g *grpcServer) GetClusterGatewayResource(ctx context.Context, in *infra.Ge
 		return nil, err
 	}
 
-	b, err := fn.K8sObjToYAML(gw)
+	b, err := json.Marshal(gw.ParsedWgParams)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]string)
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      gw.Spec.WireguardKeysRef.Name,
+			Namespace: "kl-gateway",
+		},
+		StringData: m,
+	}
+
+	gwSecret, err := fn.K8sObjToYAML(secret)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	return &infra.GetClusterGatewayResourceOut{Gateway: b}, nil
+	b2, err := fn.K8sObjToYAML(&gw.Gateway)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return &infra.GetClusterGatewayResourceOut{Gateway: []byte(fmt.Sprintf("%s\n---\n%s", gwSecret, b2))}, nil
 }
 
 // EnsureGlobalVPNConnection implements infra.InfraServer.

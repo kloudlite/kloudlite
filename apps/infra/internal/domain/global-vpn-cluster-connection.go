@@ -90,7 +90,7 @@ func (d *domain) getGlobalVPNConnectionPeers(args getGlobalVPNConnectionPeersArg
 }
 
 // GetGatewayResource implements Domain.
-func (d *domain) GetGatewayResource(ctx context.Context, accountName string, clusterName string) (*networkingv1.Gateway, error) {
+func (d *domain) GetGatewayResource(ctx context.Context, accountName string, clusterName string) (*entities.GlobalVPNConnection, error) {
 	gw, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
 		fc.AccountName: accountName,
 		fc.ClusterName: clusterName,
@@ -103,7 +103,7 @@ func (d *domain) GetGatewayResource(ctx context.Context, accountName string, clu
 		return nil, fmt.Errorf("failed to find gateway resource")
 	}
 
-	return &gw.Gateway, nil
+	return gw, nil
 }
 
 func (d *domain) listGlobalVPNConnections(ctx InfraContext, vpnName string) ([]*entities.GlobalVPNConnection, error) {
@@ -581,20 +581,10 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, dispatchAd
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	if xconn == nil {
 		return errors.ErrNotFound{Message: "global vpn connection not found"}
 	}
-
-	// INFO: BYOK cluster does not have any status update message
-	// if d.isBYOKCluster(ctx, xconn.ClusterName) {
-	// 	if _, err := d.byokClusterRepo.PatchOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
-	// 		fc.SyncStatusState:        t.SyncStateUpdatedAtAgent,
-	// 		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
-	// 		fc.SyncStatusError:        nil,
-	// 	}); err != nil {
-	// 		return errors.NewE(err)
-	// 	}
-	// }
 
 	recordVersion, err := d.matchRecordVersion(gvpn.Annotations, xconn.RecordVersion)
 	if err != nil {
