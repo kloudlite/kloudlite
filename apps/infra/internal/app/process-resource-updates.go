@@ -165,7 +165,8 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnGlobalVPNConnectionDeleteMessage(dctx, ru.ClusterName, gvpn)
+					// return d.OnGlobalVPNConnectionDeleteMessage(dctx, ru.ClusterName, gvpn)
+					return nil
 				}
 				return d.OnGlobalVPNConnectionUpdateMessage(dctx, entities.DispatchAddr{AccountName: ru.AccountName, ClusterName: ru.ClusterName}, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
