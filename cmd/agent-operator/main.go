@@ -20,6 +20,7 @@ import (
 	routers "github.com/kloudlite/operator/operators/routers/controller"
 	// nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	// wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
+	serviceIntercept "github.com/kloudlite/operator/operators/service-intercept/controller"
 )
 
 func main() {
@@ -49,6 +50,8 @@ func main() {
 	// distribution.RegisterInto(mgr)
 
 	networkingv1.RegisterInto(mgr)
+
+	serviceIntercept.RegisterInto(mgr)
 
 	mgr.Start()
 }
