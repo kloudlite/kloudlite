@@ -1,4 +1,4 @@
-package gateway
+package tls_utils
 
 import (
 	"bytes"
@@ -8,12 +8,42 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"time"
+
+	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
-func GenTLSCert(dnsNames []string) (caBundle []byte, tlsCert []byte, tlsKey []byte, err error) {
+type GenTLSCertArgs struct {
+	// DNSNames is SANs for which certs will be generated
+	DNSNames []string
+
+	NotBefore *time.Time
+	NotAfter  *time.Time
+
+	CertificateLabel string
+}
+
+func GenTLSCert(args GenTLSCertArgs) (caBundle []byte, tlsCert []byte, tlsKey []byte, err error) {
 	// Generate a private key for the CA
+
+	if len(args.DNSNames) == 0 {
+		return nil, nil, nil, fmt.Errorf("at least 1 SAN must be provided")
+	}
+
+	if args.NotBefore == nil {
+		args.NotBefore = fn.New(time.Now())
+	}
+
+	if args.NotAfter == nil {
+		args.NotAfter = fn.New(time.Now().Add(100 * 365 * 24 * time.Hour)) // 100 years
+	}
+
+	if args.CertificateLabel == "" {
+		args.CertificateLabel = "My Certificate"
+	}
+
 	caPriv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, nil, nil, err
@@ -23,10 +53,10 @@ func GenTLSCert(dnsNames []string) (caBundle []byte, tlsCert []byte, tlsKey []by
 	caTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"My Organization CA"},
+			Organization: []string{"Kloudlite CA"},
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().Add(100 * 365 * 24 * time.Hour), // 100 years
+		NotBefore:             *args.NotBefore,
+		NotAfter:              args.NotAfter.Add(24 * time.Hour),
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
@@ -42,7 +72,7 @@ func GenTLSCert(dnsNames []string) (caBundle []byte, tlsCert []byte, tlsKey []by
 	caCertPEM := new(bytes.Buffer)
 	err = pem.Encode(caCertPEM, &pem.Block{Type: "CERTIFICATE", Bytes: caCertBytes})
 	if err != nil {
-		return nil, nil, nil, err
+		// return nil, nil, nil, err
 	}
 
 	// Encode the CA private key to PEM
@@ -66,13 +96,13 @@ func GenTLSCert(dnsNames []string) (caBundle []byte, tlsCert []byte, tlsKey []by
 	serverTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(2),
 		Subject: pkix.Name{
-			Organization: []string{"My Organization"},
+			Organization: []string{args.CertificateLabel},
 		},
-		NotBefore:   time.Now(),
-		NotAfter:    time.Now().Add(99 * 365 * 24 * time.Hour), // 99 years
+		NotBefore:   *args.NotBefore,
+		NotAfter:    *args.NotAfter,
 		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		DNSNames:    dnsNames, // Add the DNS names here
+		DNSNames:    args.DNSNames,
 	}
 
 	caCert, err := x509.ParseCertificate(caCertBytes)

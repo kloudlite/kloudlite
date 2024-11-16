@@ -1,15 +1,17 @@
-package main
+package webhook
 
 import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
+	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/operators/service-intercept/internal/controllers/svci"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,9 +26,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/kloudlite/operator/common"
-	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/logging"
 
+	fn "github.com/kloudlite/operator/pkg/functions"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -42,35 +45,81 @@ const (
 )
 
 const (
-	podBindingIP        string = "kloudlite.io/podbinding.ip"
-	podReservationToken string = "kloudlite.io/podbinding.reservation-token"
-
-	svcBindingIPLabel            string = "kloudlite.io/servicebinding.ip"
-	svcReservationTokenLabel     string = "kloudlite.io/servicebinding.reservation-token"
-	kloudliteWebhookTriggerLabel string = "kloudlite.io/webhook.trigger"
-)
-
-const (
 	debugWebhookAnnotation string = "kloudlite.io/networking.webhook.debug"
 )
 
 type Env struct {
-	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY" required:"true"`
-}
-
-type Flags struct {
-	WgImage           string
-	WgImagePullPolicy string
+	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY"`
 }
 
 type HandlerContext struct {
 	context.Context
-	Env
-	Flags
 	Resource
 	*slog.Logger
 
-	client *dynamic.DynamicClient
+	client          *dynamic.DynamicClient
+	CreatedForLabel string
+}
+
+type RunArgs struct {
+	Addr            string
+	LogLevel        string
+	KubeRestConfig  *rest.Config
+	CreatedForLabel string
+
+	TLSCertFile string
+	TLSKeyFile  string
+}
+
+func Run(args RunArgs) error {
+	start := time.Now()
+
+	if args.CreatedForLabel == "" {
+		args.CreatedForLabel = "kloudlite.io/created-for"
+	}
+
+	if args.TLSCertFile == "" || args.TLSKeyFile == "" {
+		return fmt.Errorf("must provide TLSCertFile and TLSKeyFile")
+	}
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{
+		Prefix:        "[webhook]",
+		ShowCaller:    true,
+		ShowDebugLogs: strings.ToLower(args.LogLevel) == "debug",
+	})
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+
+	httpLogger := logging.NewHttpLogger(logging.HttpLoggerOptions{})
+	r.Use(httpLogger.Use)
+
+	dclient, err := dynamic.NewForConfig(args.KubeRestConfig)
+	if err != nil {
+		return errors.NewEf(err, "creating kubernetes dynamic client")
+	}
+
+	r.HandleFunc("/mutate/pod", func(w http.ResponseWriter, r *http.Request) {
+		requestID := middleware.GetReqID(r.Context())
+		handleMutate(HandlerContext{
+			client:          dclient,
+			Context:         r.Context(),
+			Resource:        ResourcePod,
+			Logger:          logger.With("request-id", requestID),
+			CreatedForLabel: args.CreatedForLabel,
+		}, w, r)
+	})
+
+	server := &http.Server{
+		Addr:    args.Addr,
+		Handler: r,
+	}
+	logger.Info("starting http server", "addr", args.Addr)
+
+	common.PrintReadyBanner2(time.Since(start))
+
+	// return server.ListenAndServeTLS("/tmp/tls/tls.crt", "/tmp/tls/tls.key")
+	return server.ListenAndServeTLS(args.TLSCertFile, args.TLSKeyFile)
 }
 
 func main() {
@@ -85,49 +134,25 @@ func main() {
 	var logLevel string
 	flag.StringVar(&logLevel, "log-level", "info", "--log-level <debug|warn|info|error>")
 
-	var flags Flags
-
-	flag.StringVar(&flags.WgImage, "wg-image", "ghcr.io/kloudlite/hub/wireguard:latest", "--wg-image <image>")
-
-	flag.StringVar(&flags.WgImagePullPolicy, "wg-image-pull-policy", "IfNotPresent", "--wg-image-pull-policy <image-pull-policy>")
-
 	flag.Parse()
 
-	logger := logging.NewSlogLogger(logging.SlogOptions{
-		Prefix:        "[webhook]",
-		ShowCaller:    true,
-		ShowDebugLogs: logLevel == "debug",
-	})
-
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-
-	httpLogger := logging.NewHttpLogger(logging.HttpLoggerOptions{})
-	r.Use(httpLogger.Use)
-
-	dclient, err := dynamic.NewForConfig(&rest.Config{
-		Host: ev.KubernetesApiProxy,
-	})
+	kubeConfig, err := func() (*rest.Config, error) {
+		if ev.KubernetesApiProxy == "" {
+			return &rest.Config{Host: ev.KubernetesApiProxy}, nil
+		}
+		return rest.InClusterConfig()
+	}()
 	if err != nil {
 		panic(err)
 	}
 
-	r.HandleFunc("/mutate/pod", func(w http.ResponseWriter, r *http.Request) {
-		requestID := middleware.GetReqID(r.Context())
-		handleMutate(HandlerContext{
-			client:  dclient,
-			Context: r.Context(), Env: ev, Flags: flags, Resource: ResourcePod, Logger: logger.With("request-id", requestID)}, w, r)
-	})
-
-	server := &http.Server{
-		Addr:    addr,
-		Handler: r,
-	}
-	logger.Info("starting http server", "addr", addr)
-
-	common.PrintReadyBanner()
-
-	if err := server.ListenAndServeTLS("/tmp/tls/tls.crt", "/tmp/tls/tls.key"); err != nil {
+	if err := Run(RunArgs{
+		Addr:           addr,
+		LogLevel:       logLevel,
+		KubeRestConfig: kubeConfig,
+		TLSCertFile:    "/tmp/tls/tls.crt",
+		TLSKeyFile:     "/tmp/tls/tls.key",
+	}); err != nil {
 		panic(err)
 	}
 }
@@ -176,6 +201,12 @@ func processPodAdmission(ctx HandlerContext, review admissionv1.AdmissionReview)
 		}
 	}
 
+	if _, ok := pod.Labels[ctx.CreatedForLabel]; ok {
+		return mutateAndAllow(review, nil)
+	}
+
+	ctx.InfoContext(ctx, "pod-info", "name", pod.Name, "namespace", pod.Namespace)
+
 	gcr := crdsv1.GroupVersion.WithResource("serviceintercepts")
 	ul, err := ctx.client.Resource(gcr).Namespace(pod.Namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -183,18 +214,22 @@ func processPodAdmission(ctx HandlerContext, review admissionv1.AdmissionReview)
 	}
 
 	var svciList crdsv1.ServiceInterceptList
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(ul.UnstructuredContent(), svciList); err != nil {
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(ul.UnstructuredContent(), &svciList); err != nil {
 		return errResponse(ctx, err, review.Request.UID)
 	}
 
 	isMatched, err := func() (bool, error) {
 		for _, si := range svciList.Items {
-			s, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: si.Status.Selector})
+			if si.DeletionTimestamp != nil {
+				continue
+			}
+
+			s, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: pod.Labels})
 			if err != nil {
 				return false, err
 			}
 
-			if !s.Matches(labels.Set(pod.Labels)) {
+			if !s.Matches(labels.Set(si.Status.Selector)) {
 				return true, nil
 			}
 		}
@@ -214,18 +249,14 @@ func processPodAdmission(ctx HandlerContext, review admissionv1.AdmissionReview)
 		{
 			ctx.Info("[INCOMING] pod", "op", review.Request.Operation, "uid", review.Request.UID, "name", review.Request.Name, "namespace", review.Request.Namespace)
 
-			if pod.GetLabels()[constants.KloudliteGatewayEnabledLabel] == "false" {
-				return mutateAndAllow(review, nil)
-			}
-
-			pod.Spec.NodeName = "non-existent"
+			pod.Spec.NodeSelector = fn.MapMerge(pod.Spec.NodeSelector, map[string]string{"kloudlite.io/no-schedule": "true"})
 
 			lb := pod.GetLabels()
 			if lb == nil {
 				lb = make(map[string]string, 1)
 			}
 
-			lb[svci.CreatedForLabel] = "intercept"
+			lb[ctx.CreatedForLabel] = "intercept"
 
 			patchBytes, err := json.Marshal([]map[string]any{
 				{
@@ -284,7 +315,6 @@ func mutateAndAllow(review admissionv1.AdmissionReview, patch []byte) admissionv
 
 	return admissionv1.AdmissionReview{
 		TypeMeta: review.TypeMeta,
-		// Request:  review.Request,
 		Response: &resp,
 	}
 }

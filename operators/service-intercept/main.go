@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	mgr := operator.New("app-n-lambda")
+	mgr := operator.New("service-intercept")
 	controller.RegisterInto(mgr)
 	mgr.Start()
 }
