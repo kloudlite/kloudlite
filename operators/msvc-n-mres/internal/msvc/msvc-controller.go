@@ -20,7 +20,9 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	// "k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -266,6 +268,26 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
+
+	// var msvcPlugins crdsv1.ManagedServicePluginList
+	// ctx, cf := context.WithTimeout(context.TODO(), 2*time.Second)
+	// defer cf()
+	// if err := r.Client.List(ctx, &msvcPlugins); err != nil {
+	// 	return err
+	// }
+	//
+	// for _, msvcPlugin := range msvcPlugins.Items {
+	// 	for _, gvk := range msvcPlugin.Spec.GVKs {
+	// 		obj := &unstructured.Unstructured{}
+	// 		obj.SetGroupVersionKind(schema.GroupVersionKind{
+	// 			Group:   gvk.Group,
+	// 			Version: gvk.Version,
+	// 			Kind:    gvk.Kind,
+	// 		})
+	// 		builder.Owns(obj)
+	// 	}
+	// }
+
 	owns := []client.Object{
 		&mongov1.StandaloneService{},
 		&mongov1.ClusterService{},
@@ -273,6 +295,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&postgresv1.Standalone{},
 		&redisv1.StandaloneService{},
 	}
+
 	for _, obj := range owns {
 		builder.Owns(obj)
 	}

@@ -2,7 +2,7 @@ package controller
 
 import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	// mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 
 	// elasticsearchMsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
 	// influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
@@ -23,7 +23,7 @@ func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(
 		crdsv1.AddToScheme,
-		mongodbMsvcv1.AddToScheme,
+		// mongodbMsvcv1.AddToScheme,
 
 		// mysqlMsvcv1.AddToScheme,
 		// redisMsvcv1.AddToScheme,
