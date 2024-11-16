@@ -9,3 +9,12 @@ type HPATemplateVars struct {
 	Metadata metav1.ObjectMeta
 	*crdsv1.HPA
 }
+
+type WebhookTemplateArgs struct {
+	CaBundle          string
+	ServiceName       string
+	ServiceNamespace  string
+	ServiceHTTPSPort  uint16
+	ServiceSelector   map[string]string
+	NamespaceSelector metav1.LabelSelector
+}

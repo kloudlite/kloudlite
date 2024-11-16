@@ -13,8 +13,8 @@ var templatesDir embed.FS
 type templateFile string
 
 const (
-	// TODO: (user) add your template files here
-	SvcIntercept templateFile = "./svc-intercept.yml.tpl"
+	SvcIntercept    templateFile = "./svc-intercept.yml.tpl"
+	WebhookTemplate templateFile = "./webhook.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {

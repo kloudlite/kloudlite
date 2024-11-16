@@ -15,7 +15,20 @@ spec:
     singular: serviceintercept
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: ServiceIntercept is the Schema for the serviceintercepts API

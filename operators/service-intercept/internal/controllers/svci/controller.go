@@ -3,18 +3,23 @@ package svci
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
 
 	"k8s.io/client-go/tools/record"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operators/service-intercept/internal/cmd/webhook"
 	"github.com/kloudlite/operator/operators/service-intercept/internal/env"
 	"github.com/kloudlite/operator/operators/service-intercept/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/pkg/tls_utils"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,14 +32,16 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	Logger     logging.Logger
-	Name       string
-	Env        *env.Env
-	YamlClient kubectl.YAMLClient
+	Scheme *runtime.Scheme
+	Logger logging.Logger
+	Name   string
+	Env    *env.Env
+
+	yamlClient kubectl.YAMLClient
 	recorder   record.EventRecorder
 
 	svcInterceptTemplate []byte
+	templateWebhook      []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -44,13 +51,13 @@ func (r *Reconciler) GetName() string {
 const (
 	CreatedForLabel string = "kloudlite.io/created-for"
 
-	SvcIReconDone           string = "intercept-performed"
+	CreateIntercept         string = "create-intercept"
 	InterceptClosePerformed string = "cleanup"
-	SvcInterceptCreated     string = "svc-intercept-created"
+	TrackInterceptedSvc     string = "tracks-intercept-svc"
 )
 
 var DeleteChecklist = []rApi.CheckMeta{
-	{Name: SvcIReconDone, Title: "Intercept close performed"},
+	{Name: CreateIntercept, Title: "Intercept close performed"},
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -78,7 +85,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureCheckList([]rApi.CheckMeta{
-		{Name: SvcIReconDone, Title: func() string {
+		{Name: CreateIntercept, Title: func() string {
 			return "Intercept performed"
 		}(), Hide: false},
 	}); !step.ShouldProceed() {
@@ -97,11 +104,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.checkSvcIntercept(req); !step.ShouldProceed() {
+	if step := r.createSvcIntercept(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconSvcIntercept(req); !step.ShouldProceed() {
+	if step := r.trackInterceptSvc(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -145,13 +152,101 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ServiceIntercept]) stepR
 	return req.Finalize()
 }
 
-func (r *Reconciler) reconSvcIntercept(req *rApi.Request[*crdsv1.ServiceIntercept]) stepResult.Result {
+const (
+	ServiceInterceptServiceName string = "service-intercept"
+)
+
+type SetupWebhookArgs struct {
+	Client          client.Client
+	YAMLClient      kubectl.YAMLClient
+	Env             *env.Env
+	templateWebhook []byte
+}
+
+func setupAdmissionWebhook(ctx context.Context, args SetupWebhookArgs) (map[string][]byte, error) {
+	certSecretName := ServiceInterceptServiceName + "-webhook-cert"
+	certSecretNamespace := args.Env.KloudliteNamespace
+
+	webhookCert, err := rApi.Get(ctx, args.Client, fn.NN(certSecretNamespace, certSecretName), &corev1.Secret{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+
+		caBundle, cert, key, err := tls_utils.GenTLSCert(tls_utils.GenTLSCertArgs{
+			DNSNames: []string{
+				fmt.Sprintf("%s.%s.svc", ServiceInterceptServiceName, args.Env.KloudliteNamespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", ServiceInterceptServiceName, args.Env.KloudliteNamespace),
+			},
+			CertificateLabel: "service intercept webhook cert",
+		})
+		if err != nil {
+			return nil, errors.NewEf(err, "failed to generate TLS certificates")
+		}
+
+		webhookCert = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      certSecretName,
+				Namespace: certSecretNamespace,
+			},
+			Data: map[string][]byte{
+				"ca.crt":  caBundle,
+				"tls.crt": cert,
+				"tls.key": key,
+			},
+		}
+		if err := args.Client.Create(ctx, webhookCert); err != nil {
+			return nil, err
+		}
+	}
+
+	b, err := templates.ParseBytes(args.templateWebhook, templates.WebhookTemplateArgs{
+		CaBundle:         string(webhookCert.Data["ca.crt"]),
+		ServiceName:      ServiceInterceptServiceName,
+		ServiceNamespace: certSecretNamespace,
+		ServiceHTTPSPort: 9443,
+		ServiceSelector:  args.Env.ServiceInterceptWebhookServiceSelector,
+
+		NamespaceSelector: metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				"kloudlite.io/gateway.enabled": "true",
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := args.YAMLClient.ApplyYAML(ctx, b); err != nil {
+		return nil, err
+	}
+
+	return webhookCert.Data, nil
+}
+
+func (r *Reconciler) trackInterceptSvc(req *rApi.Request[*crdsv1.ServiceIntercept]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(SvcIReconDone, req)
+	check := rApi.NewRunningCheck(TrackInterceptedSvc, req)
 
 	svc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
 	if err != nil {
 		return check.Failed(err)
+	}
+
+	if !fn.IsOwner(obj, fn.AsOwner(svc, true)) {
+		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(svc, true)))
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+		return check.StillRunning(fmt.Errorf("waiting for reconcilation")).RequeueAfter(1 * time.Second)
+	}
+
+	if !fn.MapEqual(obj.Status.Selector, svc.Spec.Selector) {
+		obj.Status.Selector = svc.Spec.Selector
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+		return check.StillRunning(fmt.Errorf("waiting for reconcilation")).RequeueAfter(1 * time.Second)
 	}
 
 	var podList corev1.PodList
@@ -175,21 +270,14 @@ func (r *Reconciler) reconSvcIntercept(req *rApi.Request[*crdsv1.ServiceIntercep
 	return check.Completed()
 }
 
-func (r *Reconciler) checkSvcIntercept(req *rApi.Request[*crdsv1.ServiceIntercept]) stepResult.Result {
+func (r *Reconciler) createSvcIntercept(req *rApi.Request[*crdsv1.ServiceIntercept]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
-	check := rApi.NewRunningCheck(SvcInterceptCreated, req)
+	check := rApi.NewRunningCheck(CreateIntercept, req)
 
 	podname := obj.Name + "-intercept"
 	podns := obj.Namespace
 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podname, Namespace: podns}}
-
-	// if err := r.Delete(ctx, pod); err != nil {
-	// 	if !apiErrors.IsNotFound(err) {
-	// 		return check.Failed(err)
-	// 	}
-	// }
-	// return check.Completed()
 
 	svciGenerationLabel := "kloudlite.io/svci-generation"
 
@@ -206,15 +294,20 @@ func (r *Reconciler) checkSvcIntercept(req *rApi.Request[*crdsv1.ServiceIntercep
 				return check.Failed(fmt.Errorf("no address configured on service intercept, failed to intercept")).NoRequeue()
 			}
 
+			svc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
+			if err != nil {
+				return check.Failed(err)
+			}
+
 			b, err := templates.ParseBytes(r.svcInterceptTemplate, map[string]any{
 				"name":      podname,
 				"namespace": podns,
-				"labels": fn.MapMerge(fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"),
+				"labels": fn.MapMerge(
 					map[string]string{
 						svciGenerationLabel: fmt.Sprintf("%d", obj.Generation),
 						CreatedForLabel:     "intercept",
 					},
-					obj.Status.Selector,
+					svc.Spec.Selector,
 				),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"device-host":      deviceHost,
@@ -224,7 +317,7 @@ func (r *Reconciler) checkSvcIntercept(req *rApi.Request[*crdsv1.ServiceIntercep
 				return check.Failed(err).NoRequeue()
 			}
 
-			if _, err := r.YamlClient.ApplyYAML(ctx, b); err != nil {
+			if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 				return check.Failed(err).NoRequeue()
 			}
 
@@ -250,7 +343,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.Logger = logger.WithName(r.Name)
-	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	var err error
@@ -259,9 +352,41 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return err
 	}
 
+	templateWebhook, err := templates.Read(templates.WebhookTemplate)
+	if err != nil {
+		return err
+	}
+
+	webhookCertData, err := setupAdmissionWebhook(context.TODO(), SetupWebhookArgs{
+		Client:          r.Client,
+		YAMLClient:      r.yamlClient,
+		Env:             r.Env,
+		templateWebhook: templateWebhook,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile("/tmp/tls.crt", webhookCertData["tls.crt"], 0o666); err != nil {
+		return err
+	}
+	if err := os.WriteFile("/tmp/tls.key", webhookCertData["tls.key"], 0o666); err != nil {
+		return err
+	}
+
+	go webhook.Run(webhook.RunArgs{
+		Addr:            ":9443",
+		LogLevel:        "info",
+		KubeRestConfig:  mgr.GetConfig(),
+		CreatedForLabel: CreatedForLabel,
+		TLSCertFile:     "/tmp/tls.crt",
+		TLSKeyFile:      "/tmp/tls.key",
+	})
+
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ServiceIntercept{})
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+	builder.Owns(&corev1.Pod{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

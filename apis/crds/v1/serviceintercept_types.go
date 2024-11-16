@@ -21,9 +21,12 @@ type ServiceInterceptStatus struct {
 	Selector    map[string]string `json:"selector,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // ServiceIntercept is the Schema for the serviceintercepts API
 type ServiceIntercept struct {
 	metav1.TypeMeta   `json:",inline"`
