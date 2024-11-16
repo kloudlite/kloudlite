@@ -108,4 +108,6 @@ resources:
 - mysql.msvc_v1_standalonedatabase.yaml
 - mongodb.msvc_v1_standalonedatabase.yaml
 - crds_v1_serviceintercept.yaml
+- mongodb.msvc_v1_backup.yaml
+- crds_v1_managedserviceplugin.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
