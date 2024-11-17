@@ -104,6 +104,14 @@ type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRefIn struct
 	Namespace string `json:"namespace"`
 }
 
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata struct {
+	Name string `json:"name"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn struct {
+	Name string `json:"name"`
+}
+
 type GithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor struct {
 	Name         string                                                       `json:"name"`
 	Namespace    string                                                       `json:"namespace"`
@@ -898,6 +906,12 @@ type SearchRouters struct {
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
+type SearchSecretVariables struct {
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
+}
+
 type SearchSecrets struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
@@ -924,6 +938,28 @@ type SecretPaginatedRecords struct {
 	Edges      []*SecretEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
+}
+
+type SecretVariableEdge struct {
+	Cursor string                   `json:"cursor"`
+	Node   *entities.SecretVariable `json:"node"`
+}
+
+type SecretVariableKeyRef struct {
+	Key      string `json:"key"`
+	SvarName string `json:"svarName"`
+}
+
+type SecretVariableKeyValueRefIn struct {
+	Key      string `json:"key"`
+	SvarName string `json:"svarName"`
+	Value    string `json:"value"`
+}
+
+type SecretVariablePaginatedRecords struct {
+	Edges      []*SecretVariableEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount int                   `json:"totalCount"`
 }
 
 type GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat string
