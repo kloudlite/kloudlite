@@ -291,6 +291,11 @@ const (
 	SecretCreatedForResourceType = "resourceType"
 )
 
+// constant vars generated for struct SecretVariable
+const (
+	SecretVariableStringData = "stringData"
+)
+
 // constant vars generated for struct ServiceBinding
 const (
 	ServiceBindingSpec                    = "spec"
