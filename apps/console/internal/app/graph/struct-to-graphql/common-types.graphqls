@@ -4,6 +4,10 @@ type Github__com___kloudlite___api___apps___console___internal___entities__Manag
   namespace: String!
 }
 
+type Github__com___kloudlite___api___apps___console___internal___entities__Metadata @shareable {
+  name: String!
+}
+
 type Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor @shareable {
   name: String!
   namespace: String!
@@ -353,6 +357,10 @@ input Github__com___kloudlite___api___apps___console___internal___entities__Mana
   id: String!
   name: String!
   namespace: String!
+}
+
+input Github__com___kloudlite___api___apps___console___internal___entities__MetadataIn {
+  name: String!
 }
 
 input Github__com___kloudlite___api___pkg___types__SyncStatusIn {

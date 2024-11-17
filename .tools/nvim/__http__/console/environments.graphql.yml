@@ -57,6 +57,23 @@ query: |+ #graphql
 
 ---
 
+label: Create Secret Variable
+mutation: |+ #graphql
+  mutation Core_createSecretVariable($secretVariable: SecretVariableIn!) {
+    core_createSecretVariable(secretVariable: $secretVariable) {
+      id
+    }
+  }
+variables:
+  {
+    "secretVariable": {
+      "key": "he",
+      "value": "hello"
+    }
+  }
+
+---
+
 label: Create Environment
 query: |+ #graphql
   mutation Core_createEnvironment($env: EnvironmentIn!) {

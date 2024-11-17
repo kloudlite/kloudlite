@@ -87,6 +87,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ServiceBinding]("service_bindings", "svcb", entities.ServiceBindingIndexes),
 	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cluster_managed_services", "cmsvc", entities.ClusterManagedServiceIndices),
 	repos.NewFxMongoRepo[*entities.RegistryImage]("registry_images", "reg_img", entities.RegistryImageIndexes),
+	repos.NewFxMongoRepo[*entities.SecretVariable]("secret_variables", "sec_var", entities.SecretVariableIndexes),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
