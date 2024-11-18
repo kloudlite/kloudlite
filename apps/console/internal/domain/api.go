@@ -188,6 +188,13 @@ type Domain interface {
 	ListRegistryImages(ctx ConsoleContext, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.RegistryImage], error)
 	SearchRegistryImages(ctx ConsoleContext, query string) ([]*entities.RegistryImage, error)
 
+	ListHelmCharts(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmChart], error)
+	GetHelmChart(ctx ResourceContext, name string) (*entities.HelmChart, error)
+
+	CreateHelmChart(ctx ResourceContext, app entities.HelmChart) (*entities.HelmChart, error)
+	UpdateHelmChart(ctx ResourceContext, app entities.HelmChart) (*entities.HelmChart, error)
+	DeleteHelmChart(ctx ResourceContext, name string) error
+
 	ListApps(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.App], error)
 	GetApp(ctx ResourceContext, name string) (*entities.App, error)
 
@@ -199,6 +206,10 @@ type Domain interface {
 	InterceptAppOnLocalCluster(ctx ResourceContext, appName string, clusterName string, ipAddr string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error)
 	RestartApp(ctx ResourceContext, appName string) error
 	RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) error
+
+	OnHelmChartApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
+	OnHelmChartDeleteMessage(ctx ResourceContext, app entities.HelmChart) error
+	OnHelmChartUpdateMessage(ctx ResourceContext, app entities.HelmChart, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	OnAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
 	OnAppDeleteMessage(ctx ResourceContext, app entities.App) error

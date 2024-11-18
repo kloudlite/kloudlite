@@ -71,6 +71,8 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 			}
 
 			switch resType {
+			case entities.ResourceTypeHelmChart:
+				return checkResourceName(ctx, filter, d.helmChartRepo)
 			case entities.ResourceTypeApp:
 				return checkResourceName(ctx, filter, d.appRepo)
 			case entities.ResourceTypeExternalApp:
