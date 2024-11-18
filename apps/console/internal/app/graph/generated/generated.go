@@ -289,10 +289,6 @@ type ComplexityRoot struct {
 		Namespace func(childComplexity int) int
 	}
 
-	Github__com___kloudlite___api___apps___console___internal___entities__Metadata struct {
-		Name func(childComplexity int) int
-	}
-
 	Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor struct {
 		Name         func(childComplexity int) int
 		Namespace    func(childComplexity int) int
@@ -991,7 +987,7 @@ type ComplexityRoot struct {
 		Id                func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
-		Metadata          func(childComplexity int) int
+		Name              func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		StringData        func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
@@ -1237,8 +1233,6 @@ type SecretResolver interface {
 type SecretVariableResolver interface {
 	CreationTime(ctx context.Context, obj *entities.SecretVariable) (string, error)
 
-	Metadata(ctx context.Context, obj *entities.SecretVariable) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata, error)
-
 	StringData(ctx context.Context, obj *entities.SecretVariable) (map[string]interface{}, error)
 	UpdateTime(ctx context.Context, obj *entities.SecretVariable) (string, error)
 }
@@ -1299,7 +1293,6 @@ type SecretInResolver interface {
 	Type(ctx context.Context, obj *entities.Secret, data *model.K8sIoAPICoreV1SecretType) error
 }
 type SecretVariableInResolver interface {
-	Metadata(ctx context.Context, obj *entities.SecretVariable, data *model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn) error
 	StringData(ctx context.Context, obj *entities.SecretVariable, data map[string]interface{}) error
 }
 
@@ -2250,13 +2243,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef.Namespace(childComplexity), true
-
-	case "Github__com___kloudlite___api___apps___console___internal___entities__Metadata.name":
-		if e.complexity.Github__com___kloudlite___api___apps___console___internal___entities__Metadata.Name == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___api___apps___console___internal___entities__Metadata.Name(childComplexity), true
 
 	case "Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor.name":
 		if e.complexity.Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor.Name == nil {
@@ -5899,12 +5885,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SecretVariable.MarkedForDeletion(childComplexity), true
 
-	case "SecretVariable.metadata":
-		if e.complexity.SecretVariable.Metadata == nil {
+	case "SecretVariable.name":
+		if e.complexity.SecretVariable.Name == nil {
 			break
 		}
 
-		return e.complexity.SecretVariable.Metadata(childComplexity), true
+		return e.complexity.SecretVariable.Name(childComplexity), true
 
 	case "SecretVariable.recordVersion":
 		if e.complexity.SecretVariable.RecordVersion == nil {
@@ -6022,7 +6008,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputEnvironmentIn,
 		ec.unmarshalInputExternalAppIn,
 		ec.unmarshalInputGithub__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn,
-		ec.unmarshalInputGithub__com___kloudlite___api___apps___console___internal___entities__MetadataIn,
 		ec.unmarshalInputGithub__com___kloudlite___api___pkg___types__SyncStatusIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn,
@@ -6536,10 +6521,6 @@ input ClusterManagedServiceIn {
   namespace: String!
 }
 
-type Github__com___kloudlite___api___apps___console___internal___entities__Metadata @shareable {
-  name: String!
-}
-
 type Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor @shareable {
   name: String!
   namespace: String!
@@ -6889,10 +6870,6 @@ input Github__com___kloudlite___api___apps___console___internal___entities__Mana
   id: String!
   name: String!
   namespace: String!
-}
-
-input Github__com___kloudlite___api___apps___console___internal___entities__MetadataIn {
-  name: String!
 }
 
 input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
@@ -7860,7 +7837,7 @@ input SecretKeyValueRefIn {
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Github__com___kloudlite___api___apps___console___internal___entities__Metadata!
+  name: String!
   recordVersion: Int!
   stringData: Map!
   updateTime: Date!
@@ -7879,7 +7856,7 @@ type SecretVariablePaginatedRecords @shareable {
 
 input SecretVariableIn {
   displayName: String!
-  metadata: Github__com___kloudlite___api___apps___console___internal___entities__MetadataIn!
+  name: String!
   stringData: Map!
 }
 
@@ -19256,50 +19233,6 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_namespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___api___apps___console___internal___entities__Metadata_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__Metadata_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__Metadata_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__Metadata",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -35888,8 +35821,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createSecretVariable(ctx 
 				return ec.fieldContext_SecretVariable_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_SecretVariable_markedForDeletion(ctx, field)
-			case "metadata":
-				return ec.fieldContext_SecretVariable_metadata(ctx, field)
+			case "name":
+				return ec.fieldContext_SecretVariable_name(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_SecretVariable_recordVersion(ctx, field)
 			case "stringData":
@@ -35993,8 +35926,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateSecretVariable(ctx 
 				return ec.fieldContext_SecretVariable_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_SecretVariable_markedForDeletion(ctx, field)
-			case "metadata":
-				return ec.fieldContext_SecretVariable_metadata(ctx, field)
+			case "name":
+				return ec.fieldContext_SecretVariable_name(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_SecretVariable_recordVersion(ctx, field)
 			case "stringData":
@@ -40195,8 +40128,8 @@ func (ec *executionContext) fieldContext_Query_core_getSecretVariable(ctx contex
 				return ec.fieldContext_SecretVariable_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_SecretVariable_markedForDeletion(ctx, field)
-			case "metadata":
-				return ec.fieldContext_SecretVariable_metadata(ctx, field)
+			case "name":
+				return ec.fieldContext_SecretVariable_name(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_SecretVariable_recordVersion(ctx, field)
 			case "stringData":
@@ -44921,8 +44854,8 @@ func (ec *executionContext) fieldContext_SecretVariable_markedForDeletion(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _SecretVariable_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.SecretVariable) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SecretVariable_metadata(ctx, field)
+func (ec *executionContext) _SecretVariable_name(ctx context.Context, field graphql.CollectedField, obj *entities.SecretVariable) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SecretVariable_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -44935,7 +44868,7 @@ func (ec *executionContext) _SecretVariable_metadata(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SecretVariable().Metadata(rctx, obj)
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -44947,23 +44880,19 @@ func (ec *executionContext) _SecretVariable_metadata(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___apps___console___internal___entities__Metadata2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretVariable_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretVariable_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretVariable",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__Metadata_name(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___apps___console___internal___entities__Metadata", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -45198,8 +45127,8 @@ func (ec *executionContext) fieldContext_SecretVariableEdge_node(_ context.Conte
 				return ec.fieldContext_SecretVariable_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_SecretVariable_markedForDeletion(ctx, field)
-			case "metadata":
-				return ec.fieldContext_SecretVariable_metadata(ctx, field)
+			case "name":
+				return ec.fieldContext_SecretVariable_name(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_SecretVariable_recordVersion(ctx, field)
 			case "stringData":
@@ -47963,33 +47892,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 				return it, err
 			}
 			it.Namespace = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps___console___internal___entities__MetadataIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn, error) {
-	var it model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
 		}
 	}
 
@@ -51443,7 +51345,7 @@ func (ec *executionContext) unmarshalInputSecretVariableIn(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "metadata", "stringData"}
+	fieldsInOrder := [...]string{"displayName", "name", "stringData"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -51457,15 +51359,13 @@ func (ec *executionContext) unmarshalInputSecretVariableIn(ctx context.Context, 
 				return it, err
 			}
 			it.DisplayName = data
-		case "metadata":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__MetadataIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn(ctx, v)
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.SecretVariableIn().Metadata(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.Name = data
 		case "stringData":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stringData"))
 			data, err := ec.unmarshalNMap2map(ctx, v)
@@ -53472,45 +53372,6 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 			}
 		case "namespace":
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_namespace(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var github__com___kloudlite___api___apps___console___internal___entities__MetadataImplementors = []string{"Github__com___kloudlite___api___apps___console___internal___entities__Metadata"}
-
-func (ec *executionContext) _Github__com___kloudlite___api___apps___console___internal___entities__Metadata(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___console___internal___entities__MetadataImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___console___internal___entities__Metadata")
-		case "name":
-			out.Values[i] = ec._Github__com___kloudlite___api___apps___console___internal___entities__Metadata_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -59957,42 +59818,11 @@ func (ec *executionContext) _SecretVariable(ctx context.Context, sel ast.Selecti
 			}
 		case "markedForDeletion":
 			out.Values[i] = ec._SecretVariable_markedForDeletion(ctx, field, obj)
-		case "metadata":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SecretVariable_metadata(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+		case "name":
+			out.Values[i] = ec._SecretVariable_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "recordVersion":
 			out.Values[i] = ec._SecretVariable_recordVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -61122,30 +60952,6 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___conso
 
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRefIn, error) {
 	res, err := ec.unmarshalInputGithub__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___console___internal___entities__Metadata2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata) graphql.Marshaler {
-	return ec._Github__com___kloudlite___api___apps___console___internal___entities__Metadata(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___console___internal___entities__Metadata2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___api___apps___console___internal___entities__Metadata(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__MetadataIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn, error) {
-	res, err := ec.unmarshalInputGithub__com___kloudlite___api___apps___console___internal___entities__MetadataIn(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__MetadataIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn, error) {
-	res, err := ec.unmarshalInputGithub__com___kloudlite___api___apps___console___internal___entities__MetadataIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

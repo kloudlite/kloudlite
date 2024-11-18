@@ -104,14 +104,6 @@ type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRefIn struct
 	Namespace string `json:"namespace"`
 }
 
-type GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata struct {
-	Name string `json:"name"`
-}
-
-type GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn struct {
-	Name string `json:"name"`
-}
-
 type GithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor struct {
 	Name         string                                                       `json:"name"`
 	Namespace    string                                                       `json:"namespace"`
