@@ -293,6 +293,7 @@ const (
 
 // constant vars generated for struct SecretVariable
 const (
+	SecretVariableName       = "name"
 	SecretVariableStringData = "stringData"
 )
 
