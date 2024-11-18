@@ -6,8 +6,8 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -25,12 +25,26 @@ func (r *secretVariableResolver) CreationTime(ctx context.Context, obj *entities
 
 // Metadata is the resolver for the metadata field.
 func (r *secretVariableResolver) Metadata(ctx context.Context, obj *entities.SecretVariable) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata, error) {
-	panic(fmt.Errorf("not implemented: Metadata - metadata"))
+	if obj == nil {
+		return nil, errNilSecretVariable
+	}
+	m := model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata{}
+	if err := fn.JsonConversion(obj.Metadata, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return &m, nil
 }
 
 // StringData is the resolver for the stringData field.
 func (r *secretVariableResolver) StringData(ctx context.Context, obj *entities.SecretVariable) (map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented: StringData - stringData"))
+	if obj == nil {
+		return nil, errNilSecretVariable
+	}
+	m := map[string]interface{}{}
+	if err := fn.JsonConversion(obj.StringData, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -44,12 +58,32 @@ func (r *secretVariableResolver) UpdateTime(ctx context.Context, obj *entities.S
 
 // Metadata is the resolver for the metadata field.
 func (r *secretVariableInResolver) Metadata(ctx context.Context, obj *entities.SecretVariable, data *model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn) error {
-	panic(fmt.Errorf("not implemented: Metadata - metadata"))
+	if obj == nil {
+		return errNilApp
+	}
+	if data != nil {
+		obj.Metadata.Name = data.Name
+	}
+	return nil
 }
 
 // StringData is the resolver for the stringData field.
 func (r *secretVariableInResolver) StringData(ctx context.Context, obj *entities.SecretVariable, data map[string]interface{}) error {
-	panic(fmt.Errorf("not implemented: StringData - stringData"))
+	if obj == nil {
+		return errNilSecretVariable
+	}
+	if data != nil {
+		converted := make(map[string]string)
+		for k, v := range data {
+			strVal, ok := v.(string)
+			if !ok {
+				return errors.Newf("value for key %q is not a string", k)
+			}
+			converted[k] = strVal
+		}
+		obj.StringData = converted
+	}
+	return nil
 }
 
 // SecretVariable returns generated.SecretVariableResolver implementation.

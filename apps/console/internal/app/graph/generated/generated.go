@@ -768,7 +768,7 @@ type ComplexityRoot struct {
 		CoreDeleteRegistryImage           func(childComplexity int, image string) int
 		CoreDeleteRouter                  func(childComplexity int, envName string, routerName string) int
 		CoreDeleteSecret                  func(childComplexity int, envName string, secretName string) int
-		CoreDeleteSecretVariable          func(childComplexity int, keyName string) int
+		CoreDeleteSecretVariable          func(childComplexity int, name string) int
 		CoreImportManagedResource         func(childComplexity int, envName string, msvcName string, mresName string, importName string) int
 		CoreInterceptApp                  func(childComplexity int, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreInterceptAppOnLocalCluster    func(childComplexity int, envName string, appname string, clusterName string, ipAddr string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
@@ -1163,7 +1163,7 @@ type MutationResolver interface {
 	CoreDeleteImportedManagedResource(ctx context.Context, envName string, importName string) (bool, error)
 	CoreCreateSecretVariable(ctx context.Context, secretVariable entities.SecretVariable) (*entities.SecretVariable, error)
 	CoreUpdateSecretVariable(ctx context.Context, secretVariable entities.SecretVariable) (*entities.SecretVariable, error)
-	CoreDeleteSecretVariable(ctx context.Context, keyName string) (bool, error)
+	CoreDeleteSecretVariable(ctx context.Context, name string) (bool, error)
 }
 type QueryResolver interface {
 	CoreCheckNameAvailability(ctx context.Context, envName *string, msvcName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
@@ -4468,7 +4468,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteSecretVariable(childComplexity, args["keyName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteSecretVariable(childComplexity, args["name"].(string)), true
 
 	case "Mutation.core_importManagedResource":
 		if e.complexity.Mutation.CoreImportManagedResource == nil {
@@ -6418,7 +6418,7 @@ type Mutation {
 
 	core_createSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
 	core_updateSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
-	core_deleteSecretVariable(keyName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_deleteSecretVariable(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {
@@ -9059,28 +9059,28 @@ func (ec *executionContext) field_Mutation_core_deleteRouter_argsRouterName(
 func (ec *executionContext) field_Mutation_core_deleteSecretVariable_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_core_deleteSecretVariable_argsKeyName(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_core_deleteSecretVariable_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["keyName"] = arg0
+	args["name"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_core_deleteSecretVariable_argsKeyName(
+func (ec *executionContext) field_Mutation_core_deleteSecretVariable_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
-	_, ok := rawArgs["keyName"]
+	_, ok := rawArgs["name"]
 	if !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("keyName"))
-	if tmp, ok := rawArgs["keyName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -36034,7 +36034,7 @@ func (ec *executionContext) _Mutation_core_deleteSecretVariable(ctx context.Cont
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteSecretVariable(rctx, fc.Args["keyName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteSecretVariable(rctx, fc.Args["name"].(string))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
