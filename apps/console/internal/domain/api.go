@@ -129,6 +129,17 @@ type ManagedResourceKeyValueRef struct {
 	Value    string `json:"value"`
 }
 
+type SecretVariableKeyRef struct {
+	SvarName string `json:"svarName"` // Refers to the SecretVariable metadata.name
+	Key      string `json:"key"`      // Key within the SecretVariable's data
+}
+
+type SecretVariableKeyValueRef struct {
+	SvarName string `json:"svarName"` // Refers to the SecretVariable metadata.name
+	Key      string `json:"key"`      // Key within the SecretVariable's data
+	Value    string `json:"value"`    // Value associated with the key
+}
+
 type ResType string
 
 type UpdateAndDeleteOpts struct {
@@ -315,6 +326,7 @@ type Domain interface {
 
 	ServiceBinding
 	ClusterManagedService
+	SecretVariable
 }
 
 type ServiceBinding interface {
@@ -336,6 +348,19 @@ type ClusterManagedService interface {
 	OnClusterManagedServiceApplyError(ctx ConsoleContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error
 	OnClusterManagedServiceDeleteMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService) error
 	OnClusterManagedServiceUpdateMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+}
+
+type SecretVariable interface {
+	ListSecretVariables(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.SecretVariable], error)
+
+	GetSecretVariable(ctx ConsoleContext, name string) (*entities.SecretVariable, error)
+
+	CreateSecretVariable(ctx ConsoleContext, secret entities.SecretVariable) (*entities.SecretVariable, error)
+	UpdateSecretVariable(ctx ConsoleContext, secret entities.SecretVariable) (*entities.SecretVariable, error)
+	DeleteSecretVariable(ctx ConsoleContext, name string) error
+
+	GetSecretVariableOutputKVs(ctx ConsoleContext, keyrefs []SecretVariableKeyRef) ([]*SecretVariableKeyValueRef, error)
+	GetSecretVariableOutputKeys(ctx ConsoleContext, name string) ([]string, error)
 }
 
 type PublishMsg string

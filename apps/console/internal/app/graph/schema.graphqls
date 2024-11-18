@@ -38,6 +38,12 @@ input SearchEnvironments {
 	markedForDeletion: MatchFilterIn
 }
 
+input SearchSecretVariables {
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
+}
+
 input SearchRegistryImages {
 	text: MatchFilterIn
 }
@@ -156,6 +162,12 @@ type Query {
 	core_getManagedResource(msvcName: String, envName: String, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_resyncManagedResource(msvcName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_listImportedManagedResources(envName: String!, search: SearchImportedManagedResources, pq: CursorPaginationIn): ImportedManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
+
+	core_listSecretVariables(search: SearchSecretVariables, pq: CursorPaginationIn): SecretVariablePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getSecretVariable(name: String!): SecretVariable @isLoggedInAndVerified @hasAccount
+
+	core_getSecretVariableOutputKeys(name: String!): [String!]! @isLoggedInAndVerified @hasAccount
+	core_getSecretVariableOutputKeyValues( keyrefs: [SecretVariableKeyRefIn]): [SecretVariableKeyValueRef!]! @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -207,6 +219,10 @@ type Mutation {
 
 	core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ImportedManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+	core_createSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
+	core_updateSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
+	core_deleteSecretVariable(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {

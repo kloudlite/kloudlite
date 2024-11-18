@@ -57,6 +57,23 @@ query: |+ #graphql
 
 ---
 
+label: Create Secret Variable
+mutation: |+ #graphql
+  mutation Core_createSecretVariable($secretVariable: SecretVariableIn!) {
+    core_createSecretVariable(secretVariable: $secretVariable) {
+      id
+    }
+  }
+variables:
+  {
+    "secretVariable": {
+      "key": "he",
+      "value": "hello"
+    }
+  }
+
+---
+
 label: Create Environment
 query: |+ #graphql
   mutation Core_createEnvironment($env: EnvironmentIn!) {
@@ -78,9 +95,9 @@ query: |+ #graphql
 variables:
   env:
     displayName: Display Name of a sample environment
-    clusterName: "__kloudlite_enabled_cluster"
+    clusterName: "dev-1"
     metadata:
-      name: "{{.envName}}8"
+      name: "test-env-bb"
 ---
 
 label: resync environment
