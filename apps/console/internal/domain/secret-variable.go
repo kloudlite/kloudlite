@@ -3,6 +3,7 @@ package domain
 import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
+	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
@@ -87,6 +88,10 @@ func (d *domain) GetSecretVariableOutputKeys(ctx ConsoleContext, name string) ([
 }
 
 func (d *domain) ListSecretVariables(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.SecretVariable], error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.ListSecretsAndVariable); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	filter := repos.Filter{
 		fields.AccountName: ctx.AccountName,
 	}
@@ -102,6 +107,10 @@ func (d *domain) GetSecretVariable(ctx ConsoleContext, name string) (*entities.S
 }
 
 func (d *domain) CreateSecretVariable(ctx ConsoleContext, secret entities.SecretVariable) (*entities.SecretVariable, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.CreateSecretsAndVariable); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	secret.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
@@ -118,13 +127,26 @@ func (d *domain) CreateSecretVariable(ctx ConsoleContext, secret entities.Secret
 }
 
 func (d *domain) UpdateSecretVariable(ctx ConsoleContext, secret entities.SecretVariable) (*entities.SecretVariable, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.UpdateSecretsAndVariable); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	existingSecret, err := d.findSecretVariable(ctx, secret.Metadata.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
+	mergedStringData := existingSecret.StringData
+	if mergedStringData == nil {
+		mergedStringData = make(map[string]string)
+	}
+
+	for key, value := range secret.StringData {
+		mergedStringData[key] = value
+	}
+
 	patchForUpdate := repos.Document{
-		fc.SecretVariableStringData: secret.StringData,
+		fc.SecretVariableStringData: mergedStringData,
 	}
 
 	updatedSecret, err := d.secretVariableRepo.Patch(
@@ -143,6 +165,10 @@ func (d *domain) UpdateSecretVariable(ctx ConsoleContext, secret entities.Secret
 }
 
 func (d *domain) DeleteSecretVariable(ctx ConsoleContext, name string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteSecretsAndVariable); err != nil {
+		return errors.NewE(err)
+	}
+
 	if _, err := d.findSecretVariable(ctx, name); err != nil {
 		return err
 	}

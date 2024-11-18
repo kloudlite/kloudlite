@@ -95,9 +95,9 @@ query: |+ #graphql
 variables:
   env:
     displayName: Display Name of a sample environment
-    clusterName: "__kloudlite_enabled_cluster"
+    clusterName: "dev-1"
     metadata:
-      name: "{{.envName}}8"
+      name: "test-env-bb"
 ---
 
 label: resync environment
