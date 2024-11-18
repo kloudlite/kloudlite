@@ -473,6 +473,36 @@ func (r *mutationResolver) CoreDeleteImportedManagedResource(ctx context.Context
 	return true, nil
 }
 
+// CoreCreateSecretVariable is the resolver for the core_createSecretVariable field.
+func (r *mutationResolver) CoreCreateSecretVariable(ctx context.Context, secretVariable entities.SecretVariable) (*entities.SecretVariable, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateSecretVariable(cc, secretVariable)
+}
+
+// CoreUpdateSecretVariable is the resolver for the core_updateSecretVariable field.
+func (r *mutationResolver) CoreUpdateSecretVariable(ctx context.Context, secretVariable entities.SecretVariable) (*entities.SecretVariable, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateSecretVariable(cc, secretVariable)
+}
+
+// CoreDeleteSecretVariable is the resolver for the core_deleteSecretVariable field.
+func (r *mutationResolver) CoreDeleteSecretVariable(ctx context.Context, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteSecretVariable(cc, name); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
 // CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
 func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, envName *string, msvcName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	cc, err := toConsoleContext(ctx)
@@ -1099,6 +1129,69 @@ func (r *queryResolver) CoreListImportedManagedResources(ctx context.Context, en
 		return nil, errors.NewE(err)
 	}
 	return fn.JsonConvertP[model.ImportedManagedResourcePaginatedRecords](pr)
+}
+
+// CoreListSecretVariables is the resolver for the core_listSecretVariables field.
+func (r *queryResolver) CoreListSecretVariables(ctx context.Context, search *model.SearchSecretVariables, pq *repos.CursorPagination) (*model.SecretVariablePaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	filter := map[string]repos.MatchFilter{}
+
+	if search != nil {
+		if search.Text != nil {
+			filter[fc.ImportedManagedResourceName] = *search.Text
+		}
+
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+
+		if search.MarkedForDeletion != nil {
+			filter[fc.MarkedForDeletion] = *search.MarkedForDeletion
+		}
+	}
+
+	pr, err := r.Domain.ListSecretVariables(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return fn.JsonConvertP[model.SecretVariablePaginatedRecords](pr)
+}
+
+// CoreGetSecretVariable is the resolver for the core_getSecretVariable field.
+func (r *queryResolver) CoreGetSecretVariable(ctx context.Context, name string) (*entities.SecretVariable, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetSecretVariable(cc, name)
+}
+
+// CoreGetSecretVariableOutputKeys is the resolver for the core_getSecretVariableOutputKeys field.
+func (r *queryResolver) CoreGetSecretVariableOutputKeys(ctx context.Context, name string) ([]string, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetSecretVariableOutputKeys(cc, name)
+}
+
+// CoreGetSecretVariableOutputKeyValues is the resolver for the core_getSecretVariableOutputKeyValues field.
+func (r *queryResolver) CoreGetSecretVariableOutputKeyValues(ctx context.Context, keyrefs []*domain.SecretVariableKeyRef) ([]*domain.SecretVariableKeyValueRef, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	m := make([]domain.SecretVariableKeyRef, len(keyrefs))
+	for i := range keyrefs {
+		m[i] = *keyrefs[i]
+	}
+
+	return r.Domain.GetSecretVariableOutputKVs(cc, m)
 }
 
 // Mutation returns generated.MutationResolver implementation.
