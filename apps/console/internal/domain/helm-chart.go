@@ -105,6 +105,7 @@ func (d *domain) DeleteHelmChart(ctx ResourceContext, name string) error {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
+
 	uhelmc, err := d.helmChartRepo.Patch(
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, name),
@@ -113,6 +114,7 @@ func (d *domain) DeleteHelmChart(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeHelmChart, uhelmc.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, uhelmc.EnvironmentName, &uhelmc.HelmChart); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
@@ -134,13 +136,13 @@ func (d *domain) UpdateHelmChart(ctx ResourceContext, helmcIn entities.HelmChart
 		return nil, errors.NewE(err)
 	}
 
-	xhelmc, err := d.appRepo.FindOne(ctx, ctx.DBFilters().Add(fields.MetadataName, helmcIn.Name))
+	xhelmc, err := d.helmChartRepo.FindOne(ctx, ctx.DBFilters().Add(fields.MetadataName, helmcIn.Name))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if xhelmc == nil {
-		return nil, errors.Newf("hlem-chart does not exist")
+		return nil, errors.Newf("helm-chart does not exist")
 	}
 
 	patchDoc := repos.Document{

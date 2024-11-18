@@ -7,8 +7,9 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -196,7 +197,7 @@ func (r *mutationResolver) CoreDeleteHelmChart(ctx context.Context, envName stri
 	if err != nil {
 		return false, errors.NewE(err)
 	}
-	if err := r.Domain.DeleteApp(newResourceContext(cc, envName), helmChartName); err != nil {
+	if err := r.Domain.DeleteHelmChart(newResourceContext(cc, envName), helmChartName); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -689,7 +690,7 @@ func (r *queryResolver) CoreListHelmCharts(ctx context.Context, envName string, 
 		}
 	}
 
-	pHelmCharts, err := r.Domain.ListApps(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pHelmCharts, err := r.Domain.ListHelmCharts(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -1121,5 +1122,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
