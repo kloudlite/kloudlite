@@ -1,0 +1,170 @@
+---
+global:
+  envName: nxt-1
+  helmchartName: "sample-helm"
+---
+
+label: List Helm Charts
+query: |+ #graphql
+  query Core_listHelmCharts($envName: String!) {
+    core_listHelmCharts(envName: $envName) {
+      totalCount
+      edges {
+        node {
+          kind
+          metadata {
+            name
+            namespace
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+variables:
+  envName: "{{.envName}}"
+
+---
+
+label: Create Helm Chart
+query: |+ #graphql
+  mutation Core_createHelmChart($envName: String!, $helmchart: HelmChartIn!) {
+    core_createHelmChart(envName: $envName, helmchart: $helmchart) {
+      accountName
+      apiVersion
+      createdBy {
+        userEmail
+        userId
+        userName
+      }
+      creationTime
+      displayName
+      environmentName
+      id
+      kind
+      lastUpdatedBy {
+        userEmail
+        userId
+        userName
+      }
+      markedForDeletion
+      metadata {
+        annotations
+        creationTimestamp
+        deletionTimestamp
+        generation
+        labels
+        name
+        namespace
+      }
+      recordVersion
+      spec {
+        chartName
+        chartRepoURL
+        chartVersion
+        jobVars {
+          backOffLimit
+          nodeSelector
+          tolerations {
+            effect
+            key
+            operator
+            tolerationSeconds
+            value
+          }
+        }
+        postInstall
+        postUninstall
+        preInstall
+        preUninstall
+        releaseName
+        values
+      }
+      status {
+        checkList {
+          debug
+          description
+          hide
+          name
+          title
+        }
+        checks
+        isReady
+        lastReadyGeneration
+        lastReconcileTime
+        message {
+          RawMessage
+        }
+        releaseNotes
+        releaseStatus
+        resources {
+          apiVersion
+          kind
+          name
+          namespace
+        }
+      }
+      syncStatus {
+        action
+        error
+        lastSyncedAt
+        recordVersion
+        state
+        syncScheduledAt
+      }
+      updateTime
+    }
+  }
+variables:
+  envName: "{{.envName}}"
+  helmchart:
+    displayName: "sample helm"
+    metadata:
+      name: "sample-helm"
+    spec:
+      chartRepoURL: "https://nxtcoder17.github.io/helm-charts"
+      chartVersion: v1.0.0
+      chartName: playground
+      values: {}
+---
+
+label: Update Helm Chart
+query: |+ #graphql
+  mutation Core_updateHelmChart($envName: String!, $helmchart: HelmChartIn!) {
+    core_updateHelmChart(envName: $envName, helmchart: $helmchart) {
+      spec {
+        chartName
+        chartRepoURL
+        chartVersion
+
+        values
+      }
+    }
+  }
+variables:
+  envName: "{{.envName}}"
+  helmchart:
+    displayName: "udpated helm chart"
+    metadata:
+      name: "sample-helm"
+    spec:
+      chartRepoURL: "https://nxtcoder17.github.io/helm-charts"
+      chartVersion: v1.0.0
+      chartName: playground
+      values:
+        hi: hello
+
+---
+
+label: Delete Helm Chart
+query: |+ #graphql
+  mutation Core_deleteHelmChart($envName: String!, $helmChartName: String!) {
+    core_deleteHelmChart(envName: $envName, helmChartName: $helmChartName)
+  }
+variables:
+  envName: "{{.envName}}"
+  helmChartName: "{{.helmchartName}}"
+
+---

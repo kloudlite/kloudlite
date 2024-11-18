@@ -144,7 +144,6 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 		Action: t.ActionApply,
 		Object: m,
 	})
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -751,6 +750,7 @@ var Module = fx.Module("domain",
 			routerRepo:                routerRepo,
 			secretRepo:                secretRepo,
 			mresRepo:                  mresRepo,
+			helmChartRepo:             helmChartRepo,
 			importedMresRepo:          importedMresRepo,
 			pullSecretsRepo:           ipsRepo,
 			resourceMappingRepo:       resourceMappingRepo,
