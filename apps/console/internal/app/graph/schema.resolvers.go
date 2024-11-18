@@ -172,6 +172,36 @@ func (r *mutationResolver) CoreDeleteRegistryImage(ctx context.Context, image st
 	return true, nil
 }
 
+// CoreCreateHelmChart is the resolver for the core_createHelmChart field.
+func (r *mutationResolver) CoreCreateHelmChart(ctx context.Context, envName string, helmchart entities.HelmChart) (*entities.HelmChart, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateHelmChart(newResourceContext(cc, envName), helmchart)
+}
+
+// CoreUpdateHelmChart is the resolver for the core_updateHelmChart field.
+func (r *mutationResolver) CoreUpdateHelmChart(ctx context.Context, envName string, helmchart entities.HelmChart) (*entities.HelmChart, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateHelmChart(newResourceContext(cc, envName), helmchart)
+}
+
+// CoreDeleteHelmChart is the resolver for the core_deleteHelmChart field.
+func (r *mutationResolver) CoreDeleteHelmChart(ctx context.Context, envName string, helmChartName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteApp(newResourceContext(cc, envName), helmChartName); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
 // CoreCreateApp is the resolver for the core_createApp field.
 func (r *mutationResolver) CoreCreateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error) {
 	cc, err := toConsoleContext(ctx)
@@ -633,6 +663,42 @@ func (r *queryResolver) CoreSearchRegistryImages(ctx context.Context, query stri
 		return nil, errors.NewE(err)
 	}
 	return images, nil
+}
+
+// CoreListHelmCharts is the resolver for the core_listHelmCharts field.
+func (r *queryResolver) CoreListHelmCharts(ctx context.Context, envName string, search *model.SearchHelmCharts, pq *repos.CursorPagination) (*model.HelmChartPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
+	}
+
+	pHelmCharts, err := r.Domain.ListApps(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return fn.JsonConvertP[model.HelmChartPaginatedRecords](pHelmCharts)
+}
+
+// CoreGetHelmChart is the resolver for the core_getHelmChart field.
+func (r *queryResolver) CoreGetHelmChart(ctx context.Context, envName string, name string) (*entities.HelmChart, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetHelmChart(newResourceContext(cc, envName), name)
 }
 
 // CoreListApps is the resolver for the core_listApps field.

@@ -91,6 +91,24 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 				return d.OnEnvironmentDeleteMessage(dctx, p)
 			}
+		case helmChartsGVK.String():
+			{
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeHelmChart, em.ClusterName, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				app, err := fn.JsonConvert[entities.HelmChart](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnAppApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+
+				return d.OnHelmChartDeleteMessage(rctx, app)
+			}
 		case appsGVK.String():
 			{
 				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeApp, em.ClusterName, obj)

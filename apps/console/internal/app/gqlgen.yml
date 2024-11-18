@@ -114,6 +114,10 @@ models:
   ConfigKeyValueRef:
     model: github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
 
+  HelmChart: &helmc-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.HelmChart
+  HelmChartIn: *helmc-model
+
   App: &app-model
     fields:
       build:
