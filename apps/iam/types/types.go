@@ -137,6 +137,12 @@ const (
 	MutateResourcesInEnvironment Action = "mutate-resources-in-environment"
 	ReadResourcesInEnvironment   Action = "read-resources-in-environment"
 
+	// secrets and variables
+	CreateSecretsAndVariable Action = "create-secrets-and-variable"
+	UpdateSecretsAndVariable Action = "update-secrets-and-variable"
+	DeleteSecretsAndVariable Action = "delete-secrets-and-variable"
+	ListSecretsAndVariable   Action = "list-secrets-and-variable"
+
 	ListVPNDevices Action = "list-vpn-devices"
 	GetVPNDevice   Action = "get-vpn-device"
 

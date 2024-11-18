@@ -492,12 +492,12 @@ func (r *mutationResolver) CoreUpdateSecretVariable(ctx context.Context, secretV
 }
 
 // CoreDeleteSecretVariable is the resolver for the core_deleteSecretVariable field.
-func (r *mutationResolver) CoreDeleteSecretVariable(ctx context.Context, keyName string) (bool, error) {
+func (r *mutationResolver) CoreDeleteSecretVariable(ctx context.Context, name string) (bool, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return false, errors.NewE(err)
 	}
-	if err := r.Domain.DeleteSecretVariable(cc, keyName); err != nil {
+	if err := r.Domain.DeleteSecretVariable(cc, name); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil

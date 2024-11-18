@@ -222,7 +222,7 @@ type Mutation {
 
 	core_createSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
 	core_updateSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
-	core_deleteSecretVariable(keyName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_deleteSecretVariable(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {
