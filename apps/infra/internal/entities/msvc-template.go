@@ -20,18 +20,16 @@ type OutputField struct {
 }
 
 type MsvcTemplateEntry struct {
-	// TOOD (nxtcoder17): remove omitempty ASAP
-	ApiVersion  string       `json:"apiVersion,omitempty"`
-	Kind        string       `json:"kind,omitempty"`
-	Name        string       `json:"name"`
-	LogoUrl     string       `json:"logoUrl"`
-	DisplayName string       `json:"displayName"`
-	Description string       `json:"description"`
-	Active      bool         `json:"active"`
-	Fields      []InputField `json:"fields"`
-	// InputMiddleware *string        `json:"inputMiddleware"`
-	Outputs   []OutputField  `json:"outputs"`
-	Resources []MresTemplate `json:"resources"`
+	ApiVersion  string         `json:"apiVersion,omitempty"`
+	Kind        string         `json:"kind,omitempty"`
+	Name        string         `json:"name"`
+	LogoUrl     string         `json:"logoUrl"`
+	DisplayName string         `json:"displayName"`
+	Description string         `json:"description"`
+	Active      bool           `json:"active"`
+	Fields      []InputField   `json:"fields"`
+	Outputs     []OutputField  `json:"outputs"`
+	Resources   []MresTemplate `json:"resources"`
 }
 
 type MresTemplate struct {

@@ -39,6 +39,8 @@ type Env struct {
 
 	DefaultEnvTemplateAccountName string `env:"DEFAULT_ENV_TEMPLATE_ACCOUNT_NAME"`
 	DefaultEnvTemplateName        string `env:"DEFAULT_ENV_TEMPLATE_NAME"`
+
+	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

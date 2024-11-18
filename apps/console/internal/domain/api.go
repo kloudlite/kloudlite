@@ -326,6 +326,7 @@ type Domain interface {
 
 	ServiceBinding
 	ClusterManagedService
+	ManagedServicePlugin
 }
 
 type ServiceBinding interface {
@@ -347,6 +348,11 @@ type ClusterManagedService interface {
 	OnClusterManagedServiceApplyError(ctx ConsoleContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error
 	OnClusterManagedServiceDeleteMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService) error
 	OnClusterManagedServiceUpdateMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+}
+
+type ManagedServicePlugin interface {
+	ListManagedServicePlugins() ([]*entities.ManagedServicePlugins, error)
+	GetManagedServicePlugin(category string, name string) (*entities.ManagedServicePlugin, error)
 }
 
 type PublishMsg string
