@@ -36,6 +36,8 @@ tasks:
         --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
         --struct github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugins
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugin
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
         --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImage
         --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImageURL

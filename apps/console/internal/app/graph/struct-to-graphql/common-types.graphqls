@@ -4,6 +4,48 @@ type Github__com___kloudlite___api___apps___console___internal___entities__Manag
   namespace: String!
 }
 
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugin @shareable {
+  meta: Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginMeta
+  plugin: String!
+  spec: Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginSpec!
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputField @shareable {
+  defaultValue: Any
+  displayUnit: String
+  input: String!
+  label: String!
+  max: Float
+  min: Float
+  multiplier: Float
+  required: Boolean
+  type: String!
+  unit: String
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginMeta @shareable {
+  logo: String!
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginSpec @shareable {
+  apiVersion: String!
+  services: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginSpecServices!]!
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginSpecServices @shareable {
+  active: Boolean!
+  description: String!
+  inputs: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputField!]!
+  kind: String!
+  resources: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginSpecServicesResources!]!
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginSpecServicesResources @shareable {
+  description: String!
+  inputs: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputField!]!
+  kind: String!
+}
+
 type Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor @shareable {
   name: String!
   namespace: String!
@@ -223,7 +265,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec 
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
   nodeSelector: Map
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
+  plugin: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate
   tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
@@ -272,6 +315,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec @shareabl
 
 type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
   apiVersion: String!
+  export: Github__com___kloudlite___operator___pkg___plugin__Export
   kind: String!
   spec: Map
 }
@@ -318,6 +362,11 @@ type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
   lastReconcileTime: Date
   message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
   resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+type Github__com___kloudlite___operator___pkg___plugin__Export @shareable {
+  kv: Map!
+  viaSecret: String
 }
 
 type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
@@ -440,6 +489,19 @@ input Github__com___kloudlite___api___apps___console___internal___entities__Mana
   id: String!
   name: String!
   namespace: String!
+}
+
+input Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputFieldIn {
+  defaultValue: Any
+  displayUnit: String
+  input: String!
+  label: String!
+  max: Float
+  min: Float
+  multiplier: Float
+  required: Boolean
+  type: String!
+  unit: String
 }
 
 input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
@@ -632,7 +694,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
   nodeSelector: Map
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
+  plugin: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
   tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
@@ -681,6 +744,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
 
 input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   apiVersion: String!
+  export: Github__com___kloudlite___operator___pkg___plugin__ExportIn
   kind: String!
   spec: Map
 }
@@ -727,6 +791,11 @@ input Github__com___kloudlite___operator___pkg___operator__StatusIn {
   lastReconcileTime: Date
   message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
   resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
+}
+
+input Github__com___kloudlite___operator___pkg___plugin__ExportIn {
+  kv: Map!
+  viaSecret: String
 }
 
 input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {

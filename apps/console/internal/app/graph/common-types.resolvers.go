@@ -12,6 +12,7 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
@@ -20,6 +21,16 @@ import (
 	v11 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Meta is the resolver for the meta field.
+func (r *github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver) Meta(ctx context.Context, obj *entities.ManagedServicePlugin) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginMeta, error) {
+	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginMeta](obj.Meta)
+}
+
+// Spec is the resolver for the spec field.
+func (r *github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver) Spec(ctx context.Context, obj *entities.ManagedServicePlugin) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpec, error) {
+	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpec](obj.Spec)
+}
 
 // UserID is the resolver for the userId field.
 func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
@@ -213,6 +224,11 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 	return nil
 }
 
+// Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugin returns generated.Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugin() generated.Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver {
+	return &github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver{r}
+}
+
 // Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
 func (r *Resolver) Github__com___kloudlite___api___common__CreatedOrUpdatedBy() generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver {
 	return &github__com___kloudlite___api___common__CreatedOrUpdatedByResolver{r}
@@ -249,6 +265,7 @@ func (r *Resolver) Github__com___kloudlite___operator___apis___crds___v1__AppInt
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
+type github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver struct{ *Resolver }
 type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
 type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }

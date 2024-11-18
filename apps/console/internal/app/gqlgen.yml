@@ -168,6 +168,12 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
   ClusterManagedServiceIn: *custer-managed-service-model
 
+  ManagedServicePlugins: &managed-service-plugins
+    model: github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugins
+
+  ManagedServicePlugin: &managed-service-plugin
+    model: github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugin
+
   ManagedResourceKeyRefIn:
     model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
 
@@ -227,3 +233,9 @@ models:
   Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn:
     model: github.com/kloudlite/operator/apis/crds/v1.AppInterceptPortMappings
 
+  Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugins:
+    model: github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugins
+
+
+  Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugin:
+    model: github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugin

@@ -503,6 +503,11 @@ func (r *mutationResolver) CoreDeleteImportedManagedResource(ctx context.Context
 	return true, nil
 }
 
+// CoreListManagedServicePlugins is the resolver for the core_listManagedServicePlugins field.
+func (r *mutationResolver) CoreListManagedServicePlugins(ctx context.Context) ([]*entities.ManagedServicePlugins, error) {
+	return r.Domain.ListManagedServicePlugins()
+}
+
 // CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
 func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, envName *string, msvcName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	cc, err := toConsoleContext(ctx)
@@ -913,63 +918,6 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, envName string, sea
 	}
 
 	return fn.JsonConvertP[model.SecretPaginatedRecords](pSecrets)
-}
-
-// CoreGetSecret is the resolver for the core_getSecret field.
-func (r *queryResolver) CoreGetSecret(ctx context.Context, envName string, name string) (*entities.Secret, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.GetSecret(newResourceContext(cc, envName), name)
-}
-
-// CoreResyncSecret is the resolver for the core_resyncSecret field.
-func (r *queryResolver) CoreResyncSecret(ctx context.Context, envName string, name string) (bool, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	if err := r.Domain.ResyncSecret(newResourceContext(cc, envName), name); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// CoreListRouters is the resolver for the core_listRouters field.
-func (r *queryResolver) CoreListRouters(ctx context.Context, envName string, search *model.SearchRouters, pq *repos.CursorPagination) (*model.RouterPaginatedRecords, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-		if search.MarkedForDeletion != nil {
-			filter["markedForDeletion"] = *search.MarkedForDeletion
-		}
-	}
-
-	pRouters, err := r.Domain.ListRouters(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return fn.JsonConvertP[model.RouterPaginatedRecords](pRouters)
-}
-
-// CoreGetRouter is the resolver for the core_getRouter field.
-func (r *queryResolver) CoreGetRouter(ctx context.Context, envName string, name string) (*entities.Router, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.GetRouter(newResourceContext(cc, envName), name)
 }
 
 // CoreResyncRouter is the resolver for the core_resyncRouter field.

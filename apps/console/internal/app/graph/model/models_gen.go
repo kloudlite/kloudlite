@@ -104,6 +104,55 @@ type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRefIn struct
 	Namespace string `json:"namespace"`
 }
 
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputField struct {
+	DefaultValue any      `json:"defaultValue,omitempty"`
+	DisplayUnit  *string  `json:"displayUnit,omitempty"`
+	Input        string   `json:"input"`
+	Label        string   `json:"label"`
+	Max          *float64 `json:"max,omitempty"`
+	Min          *float64 `json:"min,omitempty"`
+	Multiplier   *float64 `json:"multiplier,omitempty"`
+	Required     *bool    `json:"required,omitempty"`
+	Type         string   `json:"type"`
+	Unit         *string  `json:"unit,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputFieldIn struct {
+	DefaultValue any      `json:"defaultValue,omitempty"`
+	DisplayUnit  *string  `json:"displayUnit,omitempty"`
+	Input        string   `json:"input"`
+	Label        string   `json:"label"`
+	Max          *float64 `json:"max,omitempty"`
+	Min          *float64 `json:"min,omitempty"`
+	Multiplier   *float64 `json:"multiplier,omitempty"`
+	Required     *bool    `json:"required,omitempty"`
+	Type         string   `json:"type"`
+	Unit         *string  `json:"unit,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginMeta struct {
+	Logo string `json:"logo"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpec struct {
+	APIVersion string                                                                              `json:"apiVersion"`
+	Services   []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpecServices `json:"services"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpecServices struct {
+	Active      bool                                                                                         `json:"active"`
+	Description string                                                                                       `json:"description"`
+	Inputs      []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputField            `json:"inputs"`
+	Kind        string                                                                                       `json:"kind"`
+	Resources   []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpecServicesResources `json:"resources"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpecServicesResources struct {
+	Description string                                                                            `json:"description"`
+	Inputs      []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputField `json:"inputs"`
+	Kind        string                                                                            `json:"kind"`
+}
+
 type GithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor struct {
 	Name         string                                                       `json:"name"`
 	Namespace    string                                                       `json:"namespace"`
@@ -482,13 +531,15 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
 	NodeSelector    map[string]interface{}                               `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
+	Plugin          *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"plugin,omitempty"`
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate,omitempty"`
 	Tolerations     []*K8sIoAPICoreV1Toleration                          `json:"tolerations,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
 	NodeSelector    map[string]interface{}                                 `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
+	Plugin          *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"plugin,omitempty"`
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate,omitempty"`
 	Tolerations     []*K8sIoAPICoreV1TolerationIn                          `json:"tolerations,omitempty"`
 }
 
@@ -579,15 +630,17 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec,omitempty"`
+	APIVersion string                                     `json:"apiVersion"`
+	Export     *GithubComKloudliteOperatorPkgPluginExport `json:"export,omitempty"`
+	Kind       string                                     `json:"kind"`
+	Spec       map[string]interface{}                     `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec,omitempty"`
+	APIVersion string                                       `json:"apiVersion"`
+	Export     *GithubComKloudliteOperatorPkgPluginExportIn `json:"export,omitempty"`
+	Kind       string                                       `json:"kind"`
+	Spec       map[string]interface{}                       `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ShellProbe struct {
@@ -666,6 +719,16 @@ type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
 	LastReconcileTime   *string                                               `json:"lastReconcileTime,omitempty"`
 	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSONIn        `json:"message,omitempty"`
 	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRefIn `json:"resources,omitempty"`
+}
+
+type GithubComKloudliteOperatorPkgPluginExport struct {
+	Kv        map[string]interface{} `json:"kv"`
+	ViaSecret *string                `json:"viaSecret,omitempty"`
+}
+
+type GithubComKloudliteOperatorPkgPluginExportIn struct {
+	Kv        map[string]interface{} `json:"kv"`
+	ViaSecret *string                `json:"viaSecret,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
@@ -908,6 +971,58 @@ type ManagedResourcePaginatedRecords struct {
 	Edges      []*ManagedResourceEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount int                    `json:"totalCount"`
+}
+
+type ManagedServicePluginIn struct {
+	Meta   *ManagedServicePluginMetaIn `json:"meta,omitempty"`
+	Plugin string                      `json:"plugin"`
+	Spec   *ManagedServicePluginSpecIn `json:"spec"`
+}
+
+type ManagedServicePluginMeta struct {
+	Logo string `json:"logo"`
+}
+
+type ManagedServicePluginMetaIn struct {
+	Logo string `json:"logo"`
+}
+
+type ManagedServicePluginSpec struct {
+	APIVersion string                              `json:"apiVersion"`
+	Services   []*ManagedServicePluginSpecServices `json:"services"`
+}
+
+type ManagedServicePluginSpecIn struct {
+	APIVersion string                                `json:"apiVersion"`
+	Services   []*ManagedServicePluginSpecServicesIn `json:"services"`
+}
+
+type ManagedServicePluginSpecServices struct {
+	Active      bool                                                                              `json:"active"`
+	Description string                                                                            `json:"description"`
+	Inputs      []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputField `json:"inputs"`
+	Kind        string                                                                            `json:"kind"`
+	Resources   []*ManagedServicePluginSpecServicesResources                                      `json:"resources"`
+}
+
+type ManagedServicePluginSpecServicesIn struct {
+	Active      bool                                                                                `json:"active"`
+	Description string                                                                              `json:"description"`
+	Inputs      []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputFieldIn `json:"inputs"`
+	Kind        string                                                                              `json:"kind"`
+	Resources   []*ManagedServicePluginSpecServicesResourcesIn                                      `json:"resources"`
+}
+
+type ManagedServicePluginSpecServicesResources struct {
+	Description string                                                                            `json:"description"`
+	Inputs      []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputField `json:"inputs"`
+	Kind        string                                                                            `json:"kind"`
+}
+
+type ManagedServicePluginSpecServicesResourcesIn struct {
+	Description string                                                                              `json:"description"`
+	Inputs      []*GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginInputFieldIn `json:"inputs"`
+	Kind        string                                                                              `json:"kind"`
 }
 
 type Mutation struct {
