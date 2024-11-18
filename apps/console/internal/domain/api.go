@@ -129,6 +129,17 @@ type ManagedResourceKeyValueRef struct {
 	Value    string `json:"value"`
 }
 
+type SecretVariableKeyRef struct {
+	SvarName string `json:"svarName"` // Refers to the SecretVariable metadata.name
+	Key      string `json:"key"`      // Key within the SecretVariable's data
+}
+
+type SecretVariableKeyValueRef struct {
+	SvarName string `json:"svarName"` // Refers to the SecretVariable metadata.name
+	Key      string `json:"key"`      // Key within the SecretVariable's data
+	Value    string `json:"value"`    // Value associated with the key
+}
+
 type ResType string
 
 type UpdateAndDeleteOpts struct {
@@ -327,6 +338,7 @@ type Domain interface {
 	ServiceBinding
 	ClusterManagedService
 	ManagedServicePlugin
+	SecretVariable
 }
 
 type ServiceBinding interface {
@@ -353,7 +365,20 @@ type ClusterManagedService interface {
 type ManagedServicePlugin interface {
 	ListManagedServicePlugins() ([]*entities.ManagedServicePlugins, error)
 	GetManagedServicePlugin(category string, name string) (*entities.ManagedServicePlugin, error)
+
 }
+
+type SecretVariable interface {
+	ListSecretVariables(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.SecretVariable], error)
+
+	GetSecretVariable(ctx ConsoleContext, name string) (*entities.SecretVariable, error)
+
+	CreateSecretVariable(ctx ConsoleContext, secret entities.SecretVariable) (*entities.SecretVariable, error)
+	UpdateSecretVariable(ctx ConsoleContext, secret entities.SecretVariable) (*entities.SecretVariable, error)
+	DeleteSecretVariable(ctx ConsoleContext, name string) error
+
+	GetSecretVariableOutputKVs(ctx ConsoleContext, keyrefs []SecretVariableKeyRef) ([]*SecretVariableKeyValueRef, error)
+	GetSecretVariableOutputKeys(ctx ConsoleContext, name string) ([]string, error)
 
 type PublishMsg string
 

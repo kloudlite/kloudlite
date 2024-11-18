@@ -156,6 +156,10 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
 
+  SecretVariable: &secret-variable-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.SecretVariable
+  SecretVariableIn: *secret-variable-model
+
   ImportedManagedResource: &managed-resource-model
     model: github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
     fields:
@@ -179,6 +183,12 @@ models:
 
   ManagedResourceKeyValueRef:
     model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyValueRef
+
+  SecretVariableKeyRefIn:
+    model: github.com/kloudlite/api/apps/console/internal/domain.SecretVariableKeyRef
+
+  SecretVariableKeyValueRef:
+    model: github.com/kloudlite/api/apps/console/internal/domain.SecretVariableKeyValueRef
 
   ImagePullSecret: &image-pull-secret-model
     model: github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
