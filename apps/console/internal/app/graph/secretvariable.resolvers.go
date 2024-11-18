@@ -7,12 +7,11 @@ package graph
 import (
 	"context"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
-	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 // CreationTime is the resolver for the creationTime field.
@@ -21,18 +20,6 @@ func (r *secretVariableResolver) CreationTime(ctx context.Context, obj *entities
 		return "", errNilSecretVariable
 	}
 	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
-}
-
-// Metadata is the resolver for the metadata field.
-func (r *secretVariableResolver) Metadata(ctx context.Context, obj *entities.SecretVariable) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata, error) {
-	if obj == nil {
-		return nil, errNilSecretVariable
-	}
-	m := model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadata{}
-	if err := fn.JsonConversion(obj.Metadata, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return &m, nil
 }
 
 // StringData is the resolver for the stringData field.
@@ -54,17 +41,6 @@ func (r *secretVariableResolver) UpdateTime(ctx context.Context, obj *entities.S
 	}
 
 	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
-}
-
-// Metadata is the resolver for the metadata field.
-func (r *secretVariableInResolver) Metadata(ctx context.Context, obj *entities.SecretVariable, data *model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMetadataIn) error {
-	if obj == nil {
-		return errNilApp
-	}
-	if data != nil {
-		obj.Metadata.Name = data.Name
-	}
-	return nil
 }
 
 // StringData is the resolver for the stringData field.
@@ -98,3 +74,34 @@ func (r *Resolver) SecretVariableIn() generated.SecretVariableInResolver {
 
 type secretVariableResolver struct{ *Resolver }
 type secretVariableInResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *secretVariableResolver) Metadata(ctx context.Context, obj *entities.SecretVariable) (string, error) {
+	if obj == nil {
+		return nil, errNilSecretVariable
+	}
+
+	// Convert obj.Metadata (assuming it is a JSON-like structure) to the required model
+	m := model.SecretVariableMetadata{}
+	if err := fn.JsonConversion(obj.Metadata, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return &m, nil
+}
+func (r *secretVariableInResolver) Metadata(ctx context.Context, obj *entities.SecretVariable, data string) error {
+	if obj == nil {
+		return errNilApp
+	}
+	if data != "" {
+		obj.Name = data
+	}
+	return nil
+}
+*/

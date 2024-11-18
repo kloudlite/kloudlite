@@ -1,6 +1,7 @@
 package entities
 
 import (
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
@@ -9,13 +10,9 @@ import (
 type SecretVariable struct {
 	repos.BaseEntity        `json:",inline" graphql:"noinput"`
 	AccountName             string            `json:"accountName" graphql:"noinput"`
-	Metadata                Metadata          `json:"metadata"`
+	Name                    string            `json:"name"`
 	StringData              map[string]string `json:"stringData"`
 	common.ResourceMetadata `json:",inline"`
-}
-
-type Metadata struct {
-	Name string `json:"name"`
 }
 
 var SecretVariableIndexes = []repos.IndexField{
@@ -28,7 +25,7 @@ var SecretVariableIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fields.MetadataName, Value: repos.IndexAsc},
+			{Key: fc.SecretVariableName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

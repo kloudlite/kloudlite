@@ -12,8 +12,8 @@ import (
 
 func (d *domain) findSecretVariable(ctx ConsoleContext, name string) (*entities.SecretVariable, error) {
 	sec, err := d.secretVariableRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:  ctx.AccountName,
-		fields.MetadataName: name,
+		fields.AccountName:    ctx.AccountName,
+		fc.SecretVariableName: name,
 	})
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (d *domain) findSecretVariable(ctx ConsoleContext, name string) (*entities.
 
 func (d *domain) GetSecretVariableOutputKVs(ctx ConsoleContext, keyrefs []SecretVariableKeyRef) ([]*SecretVariableKeyValueRef, error) {
 	filters := repos.Filter{
-		fields.AccountName: ctx.AccountName, // Match the account context
+		fields.AccountName: ctx.AccountName,
 	}
 
 	names := make([]any, 0, len(keyrefs))
@@ -35,7 +35,7 @@ func (d *domain) GetSecretVariableOutputKVs(ctx ConsoleContext, keyrefs []Secret
 	}
 
 	filters = d.secretVariableRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
-		fields.MetadataName: {
+		fc.SecretVariableName: {
 			MatchType: repos.MatchTypeArray,
 			Array:     names,
 		},
@@ -54,7 +54,7 @@ func (d *domain) GetSecretVariableOutputKVs(ctx ConsoleContext, keyrefs []Secret
 			m[k] = v
 		}
 
-		data[secretVariables[i].Metadata.Name] = m
+		data[secretVariables[i].Name] = m
 	}
 
 	results := make([]*SecretVariableKeyValueRef, 0, len(keyrefs))
@@ -131,7 +131,7 @@ func (d *domain) UpdateSecretVariable(ctx ConsoleContext, secret entities.Secret
 		return nil, errors.NewE(err)
 	}
 
-	existingSecret, err := d.findSecretVariable(ctx, secret.Metadata.Name)
+	existingSecret, err := d.findSecretVariable(ctx, secret.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -152,8 +152,8 @@ func (d *domain) UpdateSecretVariable(ctx ConsoleContext, secret entities.Secret
 	updatedSecret, err := d.secretVariableRepo.Patch(
 		ctx,
 		repos.Filter{
-			fields.AccountName:  ctx.AccountName,
-			fields.MetadataName: existingSecret.Metadata.Name,
+			fields.AccountName:    ctx.AccountName,
+			fc.SecretVariableName: existingSecret.Name,
 		},
 		patchForUpdate,
 	)
@@ -173,8 +173,8 @@ func (d *domain) DeleteSecretVariable(ctx ConsoleContext, name string) error {
 		return err
 	}
 	err := d.secretVariableRepo.DeleteOne(ctx, repos.Filter{
-		fields.AccountName:  ctx.AccountName,
-		fields.MetadataName: name,
+		fields.AccountName:    ctx.AccountName,
+		fc.SecretVariableName: name,
 	})
 	if err != nil {
 		return err

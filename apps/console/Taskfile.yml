@@ -60,7 +60,7 @@ tasks:
         sh: go env GOARCH
       GOARCH: "{{ .GOARCH | default .platform_GOARCH }}"
     cmds:
-      - task: gen:constants
+#      - task: gen:constants
       - task: go:build
         vars:
           out: "{{.binary}}-{{.GOARCH}}"
