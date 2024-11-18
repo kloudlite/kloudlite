@@ -70,6 +70,7 @@ type domain struct {
 
 	serviceBindingRepo        repos.DbRepo[*entities.ServiceBinding]
 	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
+	secretVariableRepo        repos.DbRepo[*entities.SecretVariable]
 
 	envVars *env.Env
 
@@ -696,6 +697,7 @@ var Module = fx.Module("domain",
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
 		serviceBindingRepo repos.DbRepo[*entities.ServiceBinding],
 		clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService],
+		secretVariableRepo repos.DbRepo[*entities.SecretVariable],
 
 		logger logging.Logger,
 		resourceEventPublisher ResourceEventPublisher,
@@ -757,7 +759,9 @@ var Module = fx.Module("domain",
 			serviceBindingRepo:        serviceBindingRepo,
 			clusterManagedServiceRepo: clusterManagedServiceRepo,
 			registryImageRepo:         registryImageRepo,
-			envVars:                   ev,
+			secretVariableRepo:        secretVariableRepo,
+
+			envVars: ev,
 
 			resourceEventPublisher: resourceEventPublisher,
 			consoleCacheStore:      consoleCacheStore,
