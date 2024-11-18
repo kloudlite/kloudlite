@@ -128,6 +128,35 @@ const (
 	ExternalAppSpecRecordType                = "spec.recordType"
 )
 
+// constant vars generated for struct HelmChart
+const (
+	HelmChartSpec                                                                                           = "spec"
+	HelmChartSpecChartName                                                                                  = "spec.chartName"
+	HelmChartSpecChartRepoURL                                                                               = "spec.chartRepoURL"
+	HelmChartSpecChartVersion                                                                               = "spec.chartVersion"
+	HelmChartSpecJobVars                                                                                    = "spec.jobVars"
+	HelmChartSpecJobVarsAffinity                                                                            = "spec.jobVars.affinity"
+	HelmChartSpecJobVarsAffinityNodeAffinity                                                                = "spec.jobVars.affinity.nodeAffinity"
+	HelmChartSpecJobVarsAffinityNodeAffinityPreferredDuringSchedulingIgnoredDuringExecution                 = "spec.jobVars.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityNodeAffinityRequiredDuringSchedulingIgnoredDuringExecution                  = "spec.jobVars.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityNodeAffinityRequiredDuringSchedulingIgnoredDuringExecutionNodeSelectorTerms = "spec.jobVars.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms"
+	HelmChartSpecJobVarsAffinityPodAffinity                                                                 = "spec.jobVars.affinity.podAffinity"
+	HelmChartSpecJobVarsAffinityPodAffinityPreferredDuringSchedulingIgnoredDuringExecution                  = "spec.jobVars.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityPodAffinityRequiredDuringSchedulingIgnoredDuringExecution                   = "spec.jobVars.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityPodAntiAffinity                                                             = "spec.jobVars.affinity.podAntiAffinity"
+	HelmChartSpecJobVarsAffinityPodAntiAffinityPreferredDuringSchedulingIgnoredDuringExecution              = "spec.jobVars.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityPodAntiAffinityRequiredDuringSchedulingIgnoredDuringExecution               = "spec.jobVars.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsBackOffLimit                                                                        = "spec.jobVars.backOffLimit"
+	HelmChartSpecJobVarsNodeSelector                                                                        = "spec.jobVars.nodeSelector"
+	HelmChartSpecJobVarsTolerations                                                                         = "spec.jobVars.tolerations"
+	HelmChartSpecPostInstall                                                                                = "spec.postInstall"
+	HelmChartSpecPostUninstall                                                                              = "spec.postUninstall"
+	HelmChartSpecPreInstall                                                                                 = "spec.preInstall"
+	HelmChartSpecPreUninstall                                                                               = "spec.preUninstall"
+	HelmChartSpecReleaseName                                                                                = "spec.releaseName"
+	HelmChartSpecValues                                                                                     = "spec.values"
+)
+
 // constant vars generated for struct ImagePullSecret
 const (
 	ImagePullSecretDockerConfigJson   = "dockerConfigJson"
@@ -347,6 +376,8 @@ const (
 	StatusLastReconcileTime            = "status.lastReconcileTime"
 	StatusMessage                      = "status.message"
 	StatusMessageItems                 = "status.message.items"
+	StatusReleaseNotes                 = "status.releaseNotes"
+	StatusReleaseStatus                = "status.releaseStatus"
 	StatusResources                    = "status.resources"
 	SyncStatus                         = "syncStatus"
 	SyncStatusAction                   = "syncStatus.action"

@@ -94,6 +94,7 @@ var (
 	errNilRegistryImage           = errors.Newf("registry image obj is nil")
 	errNilVPNDevice               = errors.Newf("vpn device obj is nil")
 	errNilImagePullSecret         = errors.Newf("imagePullSecret obj is nil")
+	errNilHelmChart               = errors.Newf("helmChart obj is nil")
 	errNilManagedResource         = errors.Newf("managed resource obj is nil")
 	errNilClusterManagedService   = errors.Newf("cluster managed service obj is nil")
 	errNilImportedManagedResource = errors.Newf("imported managed resource obj is nil")

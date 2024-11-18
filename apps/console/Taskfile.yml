@@ -21,6 +21,7 @@ tasks:
       - go run ../../cmd/struct-to-graphql
         --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
         --struct github.com/kloudlite/api/apps/console/internal/entities.App
+        --struct github.com/kloudlite/api/apps/console/internal/entities.HelmChart
         --struct github.com/kloudlite/api/apps/console/internal/entities.ExternalApp
         --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
         --struct github.com/kloudlite/api/apps/console/internal/entities.Config
@@ -43,7 +44,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ClusterManagedService,RegistryImage
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,HelmChart,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ClusterManagedService,RegistryImage
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -95,6 +96,6 @@ tasks:
 
       - task: docker:build-and-push
         vars:
-          args: "--platform linux/amd64,linux/arm64 -t {{.image}} . --build-arg BINARY={{.binary}}"
+          args: "--platform linux/amd64 -t {{.image}} . --build-arg BINARY={{.binary}}"
           image: "{{.image}}"
 

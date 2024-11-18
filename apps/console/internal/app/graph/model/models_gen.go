@@ -381,6 +381,43 @@ type GithubComKloudliteOperatorApisCrdsV1HPAIn struct {
 	ThresholdMemory *int `json:"thresholdMemory,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
+	ChartName     string                                       `json:"chartName"`
+	ChartRepoURL  string                                       `json:"chartRepoURL"`
+	ChartVersion  string                                       `json:"chartVersion"`
+	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVars `json:"jobVars,omitempty"`
+	PostInstall   *string                                      `json:"postInstall,omitempty"`
+	PostUninstall *string                                      `json:"postUninstall,omitempty"`
+	PreInstall    *string                                      `json:"preInstall,omitempty"`
+	PreUninstall  *string                                      `json:"preUninstall,omitempty"`
+	ReleaseName   *string                                      `json:"releaseName,omitempty"`
+	Values        map[string]interface{}                       `json:"values"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
+	ChartName     string                                         `json:"chartName"`
+	ChartRepoURL  string                                         `json:"chartRepoURL"`
+	ChartVersion  string                                         `json:"chartVersion"`
+	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVarsIn `json:"jobVars,omitempty"`
+	PostInstall   *string                                        `json:"postInstall,omitempty"`
+	PostUninstall *string                                        `json:"postUninstall,omitempty"`
+	PreInstall    *string                                        `json:"preInstall,omitempty"`
+	PreUninstall  *string                                        `json:"preUninstall,omitempty"`
+	Values        map[string]interface{}                         `json:"values"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1HelmChartStatus struct {
+	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMeta   `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                              `json:"checks,omitempty"`
+	IsReady             bool                                                `json:"isReady"`
+	LastReadyGeneration *int                                                `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                             `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON        `json:"message,omitempty"`
+	ReleaseNotes        string                                              `json:"releaseNotes"`
+	ReleaseStatus       string                                              `json:"releaseStatus"`
+	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRef `json:"resources,omitempty"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe struct {
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
@@ -417,6 +454,20 @@ type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
 	PortMappings []*v1.AppInterceptPortMappings `json:"portMappings,omitempty"`
 	ToDevice     *string                        `json:"toDevice,omitempty"`
 	ToIPAddr     *string                        `json:"toIPAddr,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1JobVars struct {
+	Affinity     *K8sIoAPICoreV1Affinity     `json:"affinity,omitempty"`
+	BackOffLimit *int                        `json:"backOffLimit,omitempty"`
+	NodeSelector map[string]interface{}      `json:"nodeSelector,omitempty"`
+	Tolerations  []*K8sIoAPICoreV1Toleration `json:"tolerations,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1JobVarsIn struct {
+	Affinity     *K8sIoAPICoreV1AffinityIn     `json:"affinity,omitempty"`
+	BackOffLimit *int                          `json:"backOffLimit,omitempty"`
+	NodeSelector map[string]interface{}        `json:"nodeSelector,omitempty"`
+	Tolerations  []*K8sIoAPICoreV1TolerationIn `json:"tolerations,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
@@ -625,6 +676,17 @@ type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
 	RawMessage any `json:"RawMessage,omitempty"`
 }
 
+type HelmChartEdge struct {
+	Cursor string              `json:"cursor"`
+	Node   *entities.HelmChart `json:"node"`
+}
+
+type HelmChartPaginatedRecords struct {
+	Edges      []*HelmChartEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
+}
+
 type ImagePullSecretEdge struct {
 	Cursor string                    `json:"cursor"`
 	Node   *entities.ImagePullSecret `json:"node"`
@@ -654,6 +716,106 @@ type ImportedManagedResourcePaginatedRecords struct {
 	Edges      []*ImportedManagedResourceEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount int                            `json:"totalCount"`
+}
+
+type K8sIoAPICoreV1Affinity struct {
+	NodeAffinity    *K8sIoAPICoreV1NodeAffinity    `json:"nodeAffinity,omitempty"`
+	PodAffinity     *K8sIoAPICoreV1PodAffinity     `json:"podAffinity,omitempty"`
+	PodAntiAffinity *K8sIoAPICoreV1PodAntiAffinity `json:"podAntiAffinity,omitempty"`
+}
+
+type K8sIoAPICoreV1AffinityIn struct {
+	NodeAffinity    *K8sIoAPICoreV1NodeAffinityIn    `json:"nodeAffinity,omitempty"`
+	PodAffinity     *K8sIoAPICoreV1PodAffinityIn     `json:"podAffinity,omitempty"`
+	PodAntiAffinity *K8sIoAPICoreV1PodAntiAffinityIn `json:"podAntiAffinity,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeAffinity struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1PreferredSchedulingTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  *K8sIoAPICoreV1NodeSelector              `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeAffinityIn struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1PreferredSchedulingTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  *K8sIoAPICoreV1NodeSelectorIn              `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelector struct {
+	NodeSelectorTerms []*K8sIoAPICoreV1NodeSelectorTerm `json:"nodeSelectorTerms"`
+}
+
+type K8sIoAPICoreV1NodeSelectorIn struct {
+	NodeSelectorTerms []*K8sIoAPICoreV1NodeSelectorTermIn `json:"nodeSelectorTerms"`
+}
+
+type K8sIoAPICoreV1NodeSelectorRequirement struct {
+	Key      string                             `json:"key"`
+	Operator K8sIoAPICoreV1NodeSelectorOperator `json:"operator"`
+	Values   []string                           `json:"values,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelectorRequirementIn struct {
+	Key      string                             `json:"key"`
+	Operator K8sIoAPICoreV1NodeSelectorOperator `json:"operator"`
+	Values   []string                           `json:"values,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelectorTerm struct {
+	MatchExpressions []*K8sIoAPICoreV1NodeSelectorRequirement `json:"matchExpressions,omitempty"`
+	MatchFields      []*K8sIoAPICoreV1NodeSelectorRequirement `json:"matchFields,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelectorTermIn struct {
+	MatchExpressions []*K8sIoAPICoreV1NodeSelectorRequirementIn `json:"matchExpressions,omitempty"`
+	MatchFields      []*K8sIoAPICoreV1NodeSelectorRequirementIn `json:"matchFields,omitempty"`
+}
+
+type K8sIoAPICoreV1PodAffinity struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTerm         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PodAffinityIn struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTermIn         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PodAffinityTerm struct {
+	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"labelSelector,omitempty"`
+	MatchLabelKeys    []string                                     `json:"matchLabelKeys,omitempty"`
+	MismatchLabelKeys []string                                     `json:"mismatchLabelKeys,omitempty"`
+	Namespaces        []string                                     `json:"namespaces,omitempty"`
+	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"namespaceSelector,omitempty"`
+	TopologyKey       string                                       `json:"topologyKey"`
+}
+
+type K8sIoAPICoreV1PodAffinityTermIn struct {
+	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"labelSelector,omitempty"`
+	MatchLabelKeys    []string                                       `json:"matchLabelKeys,omitempty"`
+	MismatchLabelKeys []string                                       `json:"mismatchLabelKeys,omitempty"`
+	Namespaces        []string                                       `json:"namespaces,omitempty"`
+	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"namespaceSelector,omitempty"`
+	TopologyKey       string                                         `json:"topologyKey"`
+}
+
+type K8sIoAPICoreV1PodAntiAffinity struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTerm         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PodAntiAffinityIn struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTermIn         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PreferredSchedulingTerm struct {
+	Preference *K8sIoAPICoreV1NodeSelectorTerm `json:"preference"`
+	Weight     int                             `json:"weight"`
+}
+
+type K8sIoAPICoreV1PreferredSchedulingTermIn struct {
+	Preference *K8sIoAPICoreV1NodeSelectorTermIn `json:"preference"`
+	Weight     int                               `json:"weight"`
 }
 
 type K8sIoAPICoreV1Toleration struct {
@@ -692,6 +854,16 @@ type K8sIoAPICoreV1TopologySpreadConstraintIn struct {
 	NodeTaintsPolicy   *string                                        `json:"nodeTaintsPolicy,omitempty"`
 	TopologyKey        string                                         `json:"topologyKey"`
 	WhenUnsatisfiable  K8sIoAPICoreV1UnsatisfiableConstraintAction    `json:"whenUnsatisfiable"`
+}
+
+type K8sIoAPICoreV1WeightedPodAffinityTerm struct {
+	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTerm `json:"podAffinityTerm"`
+	Weight          int                            `json:"weight"`
+}
+
+type K8sIoAPICoreV1WeightedPodAffinityTermIn struct {
+	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTermIn `json:"podAffinityTerm"`
+	Weight          int                              `json:"weight"`
 }
 
 type K8sIoApimachineryPkgApisMetaV1LabelSelector struct {
@@ -855,6 +1027,12 @@ type SearchExternalApps struct {
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
+type SearchHelmCharts struct {
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
+}
+
 type SearchImagePullSecrets struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
@@ -975,6 +1153,7 @@ const (
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig                  GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "config"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment             GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "environment"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp             GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "external_app"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeHlemChart               GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "hlem_chart"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret         GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "image_pull_secret"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "imported_managed_resource"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource         GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "managed_resource"
@@ -989,6 +1168,7 @@ var AllGithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = []GithubCo
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeHlemChart,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource,
@@ -999,7 +1179,7 @@ var AllGithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = []GithubCo
 
 func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType) IsValid() bool {
 	switch e {
-	case GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeClusterManagedService, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeServiceBinding:
+	case GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeClusterManagedService, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeHlemChart, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeServiceBinding:
 		return true
 	}
 	return false
@@ -1152,6 +1332,55 @@ func (e *GithubComKloudliteOperatorPkgOperatorState) UnmarshalGQL(v interface{})
 }
 
 func (e GithubComKloudliteOperatorPkgOperatorState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1NodeSelectorOperator string
+
+const (
+	K8sIoAPICoreV1NodeSelectorOperatorDoesNotExist K8sIoAPICoreV1NodeSelectorOperator = "DoesNotExist"
+	K8sIoAPICoreV1NodeSelectorOperatorExists       K8sIoAPICoreV1NodeSelectorOperator = "Exists"
+	K8sIoAPICoreV1NodeSelectorOperatorGt           K8sIoAPICoreV1NodeSelectorOperator = "Gt"
+	K8sIoAPICoreV1NodeSelectorOperatorIn           K8sIoAPICoreV1NodeSelectorOperator = "In"
+	K8sIoAPICoreV1NodeSelectorOperatorLt           K8sIoAPICoreV1NodeSelectorOperator = "Lt"
+	K8sIoAPICoreV1NodeSelectorOperatorNotIn        K8sIoAPICoreV1NodeSelectorOperator = "NotIn"
+)
+
+var AllK8sIoAPICoreV1NodeSelectorOperator = []K8sIoAPICoreV1NodeSelectorOperator{
+	K8sIoAPICoreV1NodeSelectorOperatorDoesNotExist,
+	K8sIoAPICoreV1NodeSelectorOperatorExists,
+	K8sIoAPICoreV1NodeSelectorOperatorGt,
+	K8sIoAPICoreV1NodeSelectorOperatorIn,
+	K8sIoAPICoreV1NodeSelectorOperatorLt,
+	K8sIoAPICoreV1NodeSelectorOperatorNotIn,
+}
+
+func (e K8sIoAPICoreV1NodeSelectorOperator) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1NodeSelectorOperatorDoesNotExist, K8sIoAPICoreV1NodeSelectorOperatorExists, K8sIoAPICoreV1NodeSelectorOperatorGt, K8sIoAPICoreV1NodeSelectorOperatorIn, K8sIoAPICoreV1NodeSelectorOperatorLt, K8sIoAPICoreV1NodeSelectorOperatorNotIn:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1NodeSelectorOperator) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1NodeSelectorOperator) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1NodeSelectorOperator(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__NodeSelectorOperator", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1NodeSelectorOperator) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

@@ -31,6 +31,6 @@ tasks:
 
       - task: docker:build-and-push
         vars:
-          args: "--platform linux/amd64,linux/arm64 --build-arg SUPERGRAPH_FILE={{.SupergraphSchemaFile}} ."
+          args: "--platform linux/amd64 --build-arg SUPERGRAPH_FILE={{.SupergraphSchemaFile}} ."
           image: "{{.image}}"
 

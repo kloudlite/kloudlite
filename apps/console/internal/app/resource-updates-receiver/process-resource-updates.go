@@ -37,6 +37,7 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 
 var (
 	appsGVK            = fn.GVK("crds.kloudlite.io/v1", "App")
+	helmChartsGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	externalAppsGVK    = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
 	environmentGVK     = fn.GVK("crds.kloudlite.io/v1", "Environment")
 	deviceGVK          = fn.GVK("wireguard.kloudlite.io/v1", "Device")
@@ -158,6 +159,23 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return d.OnEnvironmentDeleteMessage(dctx, ws)
 				}
 				return d.OnEnvironmentUpdateMessage(dctx, ws, resStatus, opts)
+			}
+		case helmChartsGVK.String():
+			{
+				var helmc entities.HelmChart
+				if err := fn.JsonConversion(rwu.Object, &helmc); err != nil {
+					return errors.NewE(err)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, ru.ClusterName, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnHelmChartDeleteMessage(rctx, helmc)
+				}
+				return d.OnHelmChartUpdateMessage(rctx, helmc, resStatus, opts)
 			}
 		case appsGVK.String():
 			{

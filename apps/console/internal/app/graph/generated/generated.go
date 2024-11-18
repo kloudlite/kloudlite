@@ -58,6 +58,7 @@ type ResolverRoot interface {
 	Github__com___kloudlite___api___common__CreatedOrUpdatedBy() Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver
 	Github__com___kloudlite___api___pkg___types__SyncStatus() Github__com___kloudlite___api___pkg___types__SyncStatusResolver
 	Github__com___kloudlite___operator___pkg___operator__Status() Github__com___kloudlite___operator___pkg___operator__StatusResolver
+	HelmChart() HelmChartResolver
 	ImagePullSecret() ImagePullSecretResolver
 	ImportedManagedResource() ImportedManagedResourceResolver
 	K8s__io___api___core___v1__Secret() K8s__io___api___core___v1__SecretResolver
@@ -75,6 +76,7 @@ type ResolverRoot interface {
 	ExternalAppIn() ExternalAppInResolver
 	Github__com___kloudlite___api___pkg___types__SyncStatusIn() Github__com___kloudlite___api___pkg___types__SyncStatusInResolver
 	Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn() Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver
+	HelmChartIn() HelmChartInResolver
 	ImagePullSecretIn() ImagePullSecretInResolver
 	ManagedResourceIn() ManagedResourceInResolver
 	MetadataIn() MetadataInResolver
@@ -448,6 +450,31 @@ type ComplexityRoot struct {
 		ThresholdMemory func(childComplexity int) int
 	}
 
+	Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec struct {
+		ChartName     func(childComplexity int) int
+		ChartRepoURL  func(childComplexity int) int
+		ChartVersion  func(childComplexity int) int
+		JobVars       func(childComplexity int) int
+		PostInstall   func(childComplexity int) int
+		PostUninstall func(childComplexity int) int
+		PreInstall    func(childComplexity int) int
+		PreUninstall  func(childComplexity int) int
+		ReleaseName   func(childComplexity int) int
+		Values        func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus struct {
+		CheckList           func(childComplexity int) int
+		Checks              func(childComplexity int) int
+		IsReady             func(childComplexity int) int
+		LastReadyGeneration func(childComplexity int) int
+		LastReconcileTime   func(childComplexity int) int
+		Message             func(childComplexity int) int
+		ReleaseNotes        func(childComplexity int) int
+		ReleaseStatus       func(childComplexity int) int
+		Resources           func(childComplexity int) int
+	}
+
 	Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe struct {
 		HTTPHeaders func(childComplexity int) int
 		Path        func(childComplexity int) int
@@ -465,6 +492,13 @@ type ComplexityRoot struct {
 		PortMappings func(childComplexity int) int
 		ToDevice     func(childComplexity int) int
 		ToIPAddr     func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___crds___v1__JobVars struct {
+		Affinity     func(childComplexity int) int
+		BackOffLimit func(childComplexity int) int
+		NodeSelector func(childComplexity int) int
+		Tolerations  func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec struct {
@@ -575,6 +609,36 @@ type ComplexityRoot struct {
 		RawMessage func(childComplexity int) int
 	}
 
+	HelmChart struct {
+		APIVersion        func(childComplexity int) int
+		AccountName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
+		EnvironmentName   func(childComplexity int) int
+		Id                func(childComplexity int) int
+		Kind              func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		ObjectMeta        func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		Spec              func(childComplexity int) int
+		Status            func(childComplexity int) int
+		SyncStatus        func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+	}
+
+	HelmChartEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	HelmChartPaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	ImagePullSecret struct {
 		AccountName       func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
@@ -636,6 +700,56 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	K8s__io___api___core___v1__Affinity struct {
+		NodeAffinity    func(childComplexity int) int
+		PodAffinity     func(childComplexity int) int
+		PodAntiAffinity func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NodeAffinity struct {
+		PreferredDuringSchedulingIgnoredDuringExecution func(childComplexity int) int
+		RequiredDuringSchedulingIgnoredDuringExecution  func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NodeSelector struct {
+		NodeSelectorTerms func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NodeSelectorRequirement struct {
+		Key      func(childComplexity int) int
+		Operator func(childComplexity int) int
+		Values   func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NodeSelectorTerm struct {
+		MatchExpressions func(childComplexity int) int
+		MatchFields      func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__PodAffinity struct {
+		PreferredDuringSchedulingIgnoredDuringExecution func(childComplexity int) int
+		RequiredDuringSchedulingIgnoredDuringExecution  func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__PodAffinityTerm struct {
+		LabelSelector     func(childComplexity int) int
+		MatchLabelKeys    func(childComplexity int) int
+		MismatchLabelKeys func(childComplexity int) int
+		NamespaceSelector func(childComplexity int) int
+		Namespaces        func(childComplexity int) int
+		TopologyKey       func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__PodAntiAffinity struct {
+		PreferredDuringSchedulingIgnoredDuringExecution func(childComplexity int) int
+		RequiredDuringSchedulingIgnoredDuringExecution  func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__PreferredSchedulingTerm struct {
+		Preference func(childComplexity int) int
+		Weight     func(childComplexity int) int
+	}
+
 	K8s__io___api___core___v1__Secret struct {
 		APIVersion func(childComplexity int) int
 		Data       func(childComplexity int) int
@@ -663,6 +777,11 @@ type ComplexityRoot struct {
 		NodeTaintsPolicy   func(childComplexity int) int
 		TopologyKey        func(childComplexity int) int
 		WhenUnsatisfiable  func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__WeightedPodAffinityTerm struct {
+		PodAffinityTerm func(childComplexity int) int
+		Weight          func(childComplexity int) int
 	}
 
 	K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector struct {
@@ -747,6 +866,7 @@ type ComplexityRoot struct {
 		CoreCreateConfig                  func(childComplexity int, envName string, config entities.Config) int
 		CoreCreateEnvironment             func(childComplexity int, env entities.Environment) int
 		CoreCreateExternalApp             func(childComplexity int, envName string, externalApp entities.ExternalApp) int
+		CoreCreateHelmChart               func(childComplexity int, envName string, helmchart entities.HelmChart) int
 		CoreCreateImagePullSecret         func(childComplexity int, pullSecret entities.ImagePullSecret) int
 		CoreCreateManagedResource         func(childComplexity int, msvcName string, mres entities.ManagedResource) int
 		CoreCreateRouter                  func(childComplexity int, envName string, router entities.Router) int
@@ -755,6 +875,7 @@ type ComplexityRoot struct {
 		CoreDeleteConfig                  func(childComplexity int, envName string, configName string) int
 		CoreDeleteEnvironment             func(childComplexity int, envName string) int
 		CoreDeleteExternalApp             func(childComplexity int, envName string, externalAppName string) int
+		CoreDeleteHelmChart               func(childComplexity int, envName string, helmChartName string) int
 		CoreDeleteImagePullSecret         func(childComplexity int, name string) int
 		CoreDeleteImportedManagedResource func(childComplexity int, envName string, importName string) int
 		CoreDeleteManagedResource         func(childComplexity int, msvcName string, mresName string) int
@@ -771,6 +892,7 @@ type ComplexityRoot struct {
 		CoreUpdateConfig                  func(childComplexity int, envName string, config entities.Config) int
 		CoreUpdateEnvironment             func(childComplexity int, env entities.Environment) int
 		CoreUpdateExternalApp             func(childComplexity int, envName string, externalApp entities.ExternalApp) int
+		CoreUpdateHelmChart               func(childComplexity int, envName string, helmchart entities.HelmChart) int
 		CoreUpdateImagePullSecret         func(childComplexity int, pullSecret entities.ImagePullSecret) int
 		CoreUpdateManagedResource         func(childComplexity int, msvcName string, mres entities.ManagedResource) int
 		CoreUpdateRouter                  func(childComplexity int, envName string, router entities.Router) int
@@ -806,6 +928,7 @@ type ComplexityRoot struct {
 		CoreGetDNSHostSuffix                 func(childComplexity int) int
 		CoreGetEnvironment                   func(childComplexity int, name string) int
 		CoreGetExternalApp                   func(childComplexity int, envName string, name string) int
+		CoreGetHelmChart                     func(childComplexity int, envName string, name string) int
 		CoreGetImagePullSecret               func(childComplexity int, name string) int
 		CoreGetManagedResouceOutputKeyValues func(childComplexity int, msvcName *string, envName *string, keyrefs []*domain.ManagedResourceKeyRef) int
 		CoreGetManagedResouceOutputKeys      func(childComplexity int, msvcName *string, envName *string, name string) int
@@ -819,6 +942,7 @@ type ComplexityRoot struct {
 		CoreListConfigs                      func(childComplexity int, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) int
 		CoreListEnvironments                 func(childComplexity int, search *model.SearchEnvironments, pq *repos.CursorPagination) int
 		CoreListExternalApps                 func(childComplexity int, envName string, search *model.SearchExternalApps, pq *repos.CursorPagination) int
+		CoreListHelmCharts                   func(childComplexity int, envName string, search *model.SearchHelmCharts, pq *repos.CursorPagination) int
 		CoreListImagePullSecrets             func(childComplexity int, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
 		CoreListImportedManagedResources     func(childComplexity int, envName string, search *model.SearchImportedManagedResources, pq *repos.CursorPagination) int
 		CoreListManagedResources             func(childComplexity int, search *model.SearchManagedResources, pq *repos.CursorPagination) int
@@ -1034,6 +1158,14 @@ type Github__com___kloudlite___operator___pkg___operator__StatusResolver interfa
 	Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error)
 	Resources(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, error)
 }
+type HelmChartResolver interface {
+	CreationTime(ctx context.Context, obj *entities.HelmChart) (string, error)
+
+	Spec(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec, error)
+	Status(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus, error)
+
+	UpdateTime(ctx context.Context, obj *entities.HelmChart) (string, error)
+}
 type ImagePullSecretResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ImagePullSecret) (string, error)
 
@@ -1084,6 +1216,9 @@ type MutationResolver interface {
 	CoreUpdateImagePullSecret(ctx context.Context, pullSecret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	CoreDeleteImagePullSecret(ctx context.Context, name string) (bool, error)
 	CoreDeleteRegistryImage(ctx context.Context, image string) (bool, error)
+	CoreCreateHelmChart(ctx context.Context, envName string, helmchart entities.HelmChart) (*entities.HelmChart, error)
+	CoreUpdateHelmChart(ctx context.Context, envName string, helmchart entities.HelmChart) (*entities.HelmChart, error)
+	CoreDeleteHelmChart(ctx context.Context, envName string, helmChartName string) (bool, error)
 	CoreCreateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreUpdateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreDeleteApp(ctx context.Context, envName string, appName string) (bool, error)
@@ -1126,6 +1261,8 @@ type QueryResolver interface {
 	CoreGetRegistryImage(ctx context.Context, image string) (*entities.RegistryImage, error)
 	CoreListRegistryImages(ctx context.Context, pq *repos.CursorPagination) (*model.RegistryImagePaginatedRecords, error)
 	CoreSearchRegistryImages(ctx context.Context, query string) ([]*entities.RegistryImage, error)
+	CoreListHelmCharts(ctx context.Context, envName string, search *model.SearchHelmCharts, pq *repos.CursorPagination) (*model.HelmChartPaginatedRecords, error)
+	CoreGetHelmChart(ctx context.Context, envName string, name string) (*entities.HelmChart, error)
 	CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
 	CoreGetApp(ctx context.Context, envName string, name string) (*entities.App, error)
 	CoreResyncApp(ctx context.Context, envName string, name string) (bool, error)
@@ -1210,6 +1347,10 @@ type Github__com___kloudlite___api___pkg___types__SyncStatusInResolver interface
 type Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver interface {
 	AppPort(ctx context.Context, obj *v1.AppInterceptPortMappings, data int) error
 	DevicePort(ctx context.Context, obj *v1.AppInterceptPortMappings, data int) error
+}
+type HelmChartInResolver interface {
+	Metadata(ctx context.Context, obj *entities.HelmChart, data *v12.ObjectMeta) error
+	Spec(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn) error
 }
 type ImagePullSecretInResolver interface {
 	Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) error
@@ -2848,6 +2989,139 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HPA.ThresholdMemory(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartName":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartName == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartName(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartRepoURL":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepoURL == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepoURL(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartVersion":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartVersion == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartVersion(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.jobVars":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.JobVars == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.JobVars(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.postInstall":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostInstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostInstall(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.postUninstall":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostUninstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostUninstall(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.preInstall":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreInstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreInstall(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.preUninstall":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreUninstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreUninstall(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.releaseName":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ReleaseName == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ReleaseName(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.values":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.Values == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.Values(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.checkList":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.CheckList == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.CheckList(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.checks":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Checks == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Checks(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.isReady":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.IsReady == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.IsReady(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.lastReadyGeneration":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReadyGeneration == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReadyGeneration(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.lastReconcileTime":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReconcileTime == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReconcileTime(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.message":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Message == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Message(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.releaseNotes":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseNotes == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseNotes(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.releaseStatus":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseStatus == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseStatus(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.resources":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Resources == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Resources(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe.httpHeaders":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe.HTTPHeaders == nil {
 			break
@@ -2917,6 +3191,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Intercept.ToIPAddr(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.affinity":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Affinity == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Affinity(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.backOffLimit":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.BackOffLimit == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.BackOffLimit(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.nodeSelector":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.NodeSelector == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.NodeSelector(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.tolerations":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Tolerations == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Tolerations(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.resourceNamePrefix":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ResourceNamePrefix == nil {
@@ -3359,6 +3661,153 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___pkg___raw____json__RawJson.RawMessage(childComplexity), true
 
+	case "HelmChart.apiVersion":
+		if e.complexity.HelmChart.APIVersion == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.APIVersion(childComplexity), true
+
+	case "HelmChart.accountName":
+		if e.complexity.HelmChart.AccountName == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.AccountName(childComplexity), true
+
+	case "HelmChart.createdBy":
+		if e.complexity.HelmChart.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.CreatedBy(childComplexity), true
+
+	case "HelmChart.creationTime":
+		if e.complexity.HelmChart.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.CreationTime(childComplexity), true
+
+	case "HelmChart.displayName":
+		if e.complexity.HelmChart.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.DisplayName(childComplexity), true
+
+	case "HelmChart.environmentName":
+		if e.complexity.HelmChart.EnvironmentName == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.EnvironmentName(childComplexity), true
+
+	case "HelmChart.id":
+		if e.complexity.HelmChart.Id == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.Id(childComplexity), true
+
+	case "HelmChart.kind":
+		if e.complexity.HelmChart.Kind == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.Kind(childComplexity), true
+
+	case "HelmChart.lastUpdatedBy":
+		if e.complexity.HelmChart.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.LastUpdatedBy(childComplexity), true
+
+	case "HelmChart.markedForDeletion":
+		if e.complexity.HelmChart.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.MarkedForDeletion(childComplexity), true
+
+	case "HelmChart.metadata":
+		if e.complexity.HelmChart.ObjectMeta == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.ObjectMeta(childComplexity), true
+
+	case "HelmChart.recordVersion":
+		if e.complexity.HelmChart.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.RecordVersion(childComplexity), true
+
+	case "HelmChart.spec":
+		if e.complexity.HelmChart.Spec == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.Spec(childComplexity), true
+
+	case "HelmChart.status":
+		if e.complexity.HelmChart.Status == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.Status(childComplexity), true
+
+	case "HelmChart.syncStatus":
+		if e.complexity.HelmChart.SyncStatus == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.SyncStatus(childComplexity), true
+
+	case "HelmChart.updateTime":
+		if e.complexity.HelmChart.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.UpdateTime(childComplexity), true
+
+	case "HelmChartEdge.cursor":
+		if e.complexity.HelmChartEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.HelmChartEdge.Cursor(childComplexity), true
+
+	case "HelmChartEdge.node":
+		if e.complexity.HelmChartEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.HelmChartEdge.Node(childComplexity), true
+
+	case "HelmChartPaginatedRecords.edges":
+		if e.complexity.HelmChartPaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.HelmChartPaginatedRecords.Edges(childComplexity), true
+
+	case "HelmChartPaginatedRecords.pageInfo":
+		if e.complexity.HelmChartPaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.HelmChartPaginatedRecords.PageInfo(childComplexity), true
+
+	case "HelmChartPaginatedRecords.totalCount":
+		if e.complexity.HelmChartPaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.HelmChartPaginatedRecords.TotalCount(childComplexity), true
+
 	case "ImagePullSecret.accountName":
 		if e.complexity.ImagePullSecret.AccountName == nil {
 			break
@@ -3660,6 +4109,167 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ImportedManagedResourcePaginatedRecords.TotalCount(childComplexity), true
 
+	case "K8s__io___api___core___v1__Affinity.nodeAffinity":
+		if e.complexity.K8s__io___api___core___v1__Affinity.NodeAffinity == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__Affinity.NodeAffinity(childComplexity), true
+
+	case "K8s__io___api___core___v1__Affinity.podAffinity":
+		if e.complexity.K8s__io___api___core___v1__Affinity.PodAffinity == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__Affinity.PodAffinity(childComplexity), true
+
+	case "K8s__io___api___core___v1__Affinity.podAntiAffinity":
+		if e.complexity.K8s__io___api___core___v1__Affinity.PodAntiAffinity == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__Affinity.PodAntiAffinity(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeAffinity.preferredDuringSchedulingIgnoredDuringExecution":
+		if e.complexity.K8s__io___api___core___v1__NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeAffinity.requiredDuringSchedulingIgnoredDuringExecution":
+		if e.complexity.K8s__io___api___core___v1__NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeSelector.nodeSelectorTerms":
+		if e.complexity.K8s__io___api___core___v1__NodeSelector.NodeSelectorTerms == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeSelector.NodeSelectorTerms(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeSelectorRequirement.key":
+		if e.complexity.K8s__io___api___core___v1__NodeSelectorRequirement.Key == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeSelectorRequirement.Key(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeSelectorRequirement.operator":
+		if e.complexity.K8s__io___api___core___v1__NodeSelectorRequirement.Operator == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeSelectorRequirement.Operator(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeSelectorRequirement.values":
+		if e.complexity.K8s__io___api___core___v1__NodeSelectorRequirement.Values == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeSelectorRequirement.Values(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeSelectorTerm.matchExpressions":
+		if e.complexity.K8s__io___api___core___v1__NodeSelectorTerm.MatchExpressions == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeSelectorTerm.MatchExpressions(childComplexity), true
+
+	case "K8s__io___api___core___v1__NodeSelectorTerm.matchFields":
+		if e.complexity.K8s__io___api___core___v1__NodeSelectorTerm.MatchFields == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NodeSelectorTerm.MatchFields(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinity.preferredDuringSchedulingIgnoredDuringExecution":
+		if e.complexity.K8s__io___api___core___v1__PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinity.requiredDuringSchedulingIgnoredDuringExecution":
+		if e.complexity.K8s__io___api___core___v1__PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinityTerm.labelSelector":
+		if e.complexity.K8s__io___api___core___v1__PodAffinityTerm.LabelSelector == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinityTerm.LabelSelector(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinityTerm.matchLabelKeys":
+		if e.complexity.K8s__io___api___core___v1__PodAffinityTerm.MatchLabelKeys == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinityTerm.MatchLabelKeys(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinityTerm.mismatchLabelKeys":
+		if e.complexity.K8s__io___api___core___v1__PodAffinityTerm.MismatchLabelKeys == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinityTerm.MismatchLabelKeys(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinityTerm.namespaceSelector":
+		if e.complexity.K8s__io___api___core___v1__PodAffinityTerm.NamespaceSelector == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinityTerm.NamespaceSelector(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinityTerm.namespaces":
+		if e.complexity.K8s__io___api___core___v1__PodAffinityTerm.Namespaces == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinityTerm.Namespaces(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAffinityTerm.topologyKey":
+		if e.complexity.K8s__io___api___core___v1__PodAffinityTerm.TopologyKey == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAffinityTerm.TopologyKey(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution":
+		if e.complexity.K8s__io___api___core___v1__PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution(childComplexity), true
+
+	case "K8s__io___api___core___v1__PodAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution":
+		if e.complexity.K8s__io___api___core___v1__PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution(childComplexity), true
+
+	case "K8s__io___api___core___v1__PreferredSchedulingTerm.preference":
+		if e.complexity.K8s__io___api___core___v1__PreferredSchedulingTerm.Preference == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PreferredSchedulingTerm.Preference(childComplexity), true
+
+	case "K8s__io___api___core___v1__PreferredSchedulingTerm.weight":
+		if e.complexity.K8s__io___api___core___v1__PreferredSchedulingTerm.Weight == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PreferredSchedulingTerm.Weight(childComplexity), true
+
 	case "K8s__io___api___core___v1__Secret.apiVersion":
 		if e.complexity.K8s__io___api___core___v1__Secret.APIVersion == nil {
 			break
@@ -3799,6 +4409,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.K8s__io___api___core___v1__TopologySpreadConstraint.WhenUnsatisfiable(childComplexity), true
+
+	case "K8s__io___api___core___v1__WeightedPodAffinityTerm.podAffinityTerm":
+		if e.complexity.K8s__io___api___core___v1__WeightedPodAffinityTerm.PodAffinityTerm == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__WeightedPodAffinityTerm.PodAffinityTerm(childComplexity), true
+
+	case "K8s__io___api___core___v1__WeightedPodAffinityTerm.weight":
+		if e.complexity.K8s__io___api___core___v1__WeightedPodAffinityTerm.Weight == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__WeightedPodAffinityTerm.Weight(childComplexity), true
 
 	case "K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector.matchExpressions":
 		if e.complexity.K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector.MatchExpressions == nil {
@@ -4203,6 +4827,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreCreateExternalApp(childComplexity, args["envName"].(string), args["externalApp"].(entities.ExternalApp)), true
 
+	case "Mutation.core_createHelmChart":
+		if e.complexity.Mutation.CoreCreateHelmChart == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_createHelmChart_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreCreateHelmChart(childComplexity, args["envName"].(string), args["helmchart"].(entities.HelmChart)), true
+
 	case "Mutation.core_createImagePullSecret":
 		if e.complexity.Mutation.CoreCreateImagePullSecret == nil {
 			break
@@ -4298,6 +4934,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreDeleteExternalApp(childComplexity, args["envName"].(string), args["externalAppName"].(string)), true
+
+	case "Mutation.core_deleteHelmChart":
+		if e.complexity.Mutation.CoreDeleteHelmChart == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_deleteHelmChart_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreDeleteHelmChart(childComplexity, args["envName"].(string), args["helmChartName"].(string)), true
 
 	case "Mutation.core_deleteImagePullSecret":
 		if e.complexity.Mutation.CoreDeleteImagePullSecret == nil {
@@ -4485,6 +5133,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreUpdateExternalApp(childComplexity, args["envName"].(string), args["externalApp"].(entities.ExternalApp)), true
+
+	case "Mutation.core_updateHelmChart":
+		if e.complexity.Mutation.CoreUpdateHelmChart == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_updateHelmChart_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreUpdateHelmChart(childComplexity, args["envName"].(string), args["helmchart"].(entities.HelmChart)), true
 
 	case "Mutation.core_updateImagePullSecret":
 		if e.complexity.Mutation.CoreUpdateImagePullSecret == nil {
@@ -4717,6 +5377,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreGetExternalApp(childComplexity, args["envName"].(string), args["name"].(string)), true
 
+	case "Query.core_getHelmChart":
+		if e.complexity.Query.CoreGetHelmChart == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getHelmChart_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetHelmChart(childComplexity, args["envName"].(string), args["name"].(string)), true
+
 	case "Query.core_getImagePullSecret":
 		if e.complexity.Query.CoreGetImagePullSecret == nil {
 			break
@@ -4867,6 +5539,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CoreListExternalApps(childComplexity, args["envName"].(string), args["search"].(*model.SearchExternalApps), args["pq"].(*repos.CursorPagination)), true
+
+	case "Query.core_listHelmCharts":
+		if e.complexity.Query.CoreListHelmCharts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_listHelmCharts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreListHelmCharts(childComplexity, args["envName"].(string), args["search"].(*model.SearchHelmCharts), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listImagePullSecrets":
 		if e.complexity.Query.CoreListImagePullSecrets == nil {
@@ -5736,9 +6420,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ExternalAppSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HPAIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HttpsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__InterceptIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn,
@@ -5754,10 +6440,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___pkg___operator__ResourceRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___pkg___operator__StatusIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___pkg___raw____json__RawJsonIn,
+		ec.unmarshalInputHelmChartIn,
 		ec.unmarshalInputImagePullSecretIn,
 		ec.unmarshalInputImportedManagedResourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__AffinityIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NodeAffinityIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorRequirementIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorTermIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PodAffinityIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PodAffinityTermIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PodAntiAffinityIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PreferredSchedulingTermIn,
 		ec.unmarshalInputK8s__io___api___core___v1__TolerationIn,
 		ec.unmarshalInputK8s__io___api___core___v1__TopologySpreadConstraintIn,
+		ec.unmarshalInputK8s__io___api___core___v1__WeightedPodAffinityTermIn,
 		ec.unmarshalInputK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn,
 		ec.unmarshalInputK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn,
 		ec.unmarshalInputManagedResourceIn,
@@ -5775,6 +6472,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSearchConfigs,
 		ec.unmarshalInputSearchEnvironments,
 		ec.unmarshalInputSearchExternalApps,
+		ec.unmarshalInputSearchHelmCharts,
 		ec.unmarshalInputSearchImagePullSecrets,
 		ec.unmarshalInputSearchImportedManagedResources,
 		ec.unmarshalInputSearchManagedResources,
@@ -5933,6 +6631,12 @@ input SearchApps {
 	markedForDeletion: MatchFilterIn
 }
 
+input SearchHelmCharts {
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
+}
+
 input SearchExternalApps {
 	text: MatchFilterIn
 	isReady: MatchFilterIn
@@ -6008,6 +6712,9 @@ type Query {
 	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_searchRegistryImages(query: String!): [RegistryImage!]! @isLoggedInAndVerified @hasAccount
 
+	core_listHelmCharts(envName: String!, search: SearchHelmCharts, pq: CursorPaginationIn): HelmChartPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getHelmChart(envName: String!, name: String!): HelmChart @isLoggedInAndVerified @hasAccount
+
 	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -6044,7 +6751,7 @@ type Query {
 }
 
 type Mutation {
-  	core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
+  core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -6056,6 +6763,10 @@ type Mutation {
 	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_deleteRegistryImage(image: String!): Boolean!  @isLoggedInAndVerified @hasAccount
+
+	core_createHelmChart(envName: String!, helmchart: HelmChartIn!): HelmChart @isLoggedInAndVerified @hasAccount
+	core_updateHelmChart(envName: String!, helmchart: HelmChartIn!): HelmChart @isLoggedInAndVerified @hasAccount
+	core_deleteHelmChart(envName: String!, helmChartName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
@@ -6370,6 +7081,31 @@ type Github__com___kloudlite___operator___apis___crds___v1__HPA @shareable {
   thresholdMemory: Int
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @shareable {
+  chartName: String!
+  chartRepoURL: String!
+  chartVersion: String!
+  jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVars
+  postInstall: String
+  postUninstall: String
+  preInstall: String
+  preUninstall: String
+  releaseName: String
+  values: Map!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus @shareable {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  releaseNotes: String!
+  releaseStatus: String!
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe @shareable {
   httpHeaders: Map
   path: String!
@@ -6387,6 +7123,13 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
   toDevice: String
   toIPAddr: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__JobVars @shareable {
+  affinity: K8s__io___api___core___v1__Affinity
+  backOffLimit: Int
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
@@ -6497,6 +7240,56 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
+type K8s__io___api___core___v1__Affinity @shareable {
+  nodeAffinity: K8s__io___api___core___v1__NodeAffinity
+  podAffinity: K8s__io___api___core___v1__PodAffinity
+  podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinity
+}
+
+type K8s__io___api___core___v1__NodeAffinity @shareable {
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PreferredSchedulingTerm!]
+  requiredDuringSchedulingIgnoredDuringExecution: K8s__io___api___core___v1__NodeSelector
+}
+
+type K8s__io___api___core___v1__NodeSelector @shareable {
+  nodeSelectorTerms: [K8s__io___api___core___v1__NodeSelectorTerm!]!
+}
+
+type K8s__io___api___core___v1__NodeSelectorRequirement @shareable {
+  key: String!
+  operator: K8s__io___api___core___v1__NodeSelectorOperator!
+  values: [String!]
+}
+
+type K8s__io___api___core___v1__NodeSelectorTerm @shareable {
+  matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+  matchFields: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+}
+
+type K8s__io___api___core___v1__PodAffinity @shareable {
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTerm!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
+}
+
+type K8s__io___api___core___v1__PodAffinityTerm @shareable {
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  matchLabelKeys: [String!]
+  mismatchLabelKeys: [String!]
+  namespaces: [String!]
+  namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  topologyKey: String!
+}
+
+type K8s__io___api___core___v1__PodAntiAffinity @shareable {
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTerm!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
+}
+
+type K8s__io___api___core___v1__PreferredSchedulingTerm @shareable {
+  preference: K8s__io___api___core___v1__NodeSelectorTerm!
+  weight: Int!
+}
+
 type K8s__io___api___core___v1__Secret @shareable {
   apiVersion: String
   data: Map
@@ -6524,6 +7317,11 @@ type K8s__io___api___core___v1__TopologySpreadConstraint @shareable {
   nodeTaintsPolicy: String
   topologyKey: String!
   whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
+type K8s__io___api___core___v1__WeightedPodAffinityTerm @shareable {
+  podAffinityTerm: K8s__io___api___core___v1__PodAffinityTerm!
+  weight: Int!
 }
 
 type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector @shareable {
@@ -6705,6 +7503,18 @@ input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
   thresholdMemory: Int
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
+  chartName: String!
+  chartRepoURL: String!
+  chartVersion: String!
+  jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn
+  postInstall: String
+  postUninstall: String
+  preInstall: String
+  preUninstall: String
+  values: Map!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn {
   httpHeaders: Map
   path: String!
@@ -6722,6 +7532,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
   toDevice: String
   toIPAddr: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn {
+  affinity: K8s__io___api___core___v1__AffinityIn
+  backOffLimit: Int
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
@@ -6832,6 +7649,56 @@ input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
   RawMessage: Any
 }
 
+input K8s__io___api___core___v1__AffinityIn {
+  nodeAffinity: K8s__io___api___core___v1__NodeAffinityIn
+  podAffinity: K8s__io___api___core___v1__PodAffinityIn
+  podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinityIn
+}
+
+input K8s__io___api___core___v1__NodeAffinityIn {
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PreferredSchedulingTermIn!]
+  requiredDuringSchedulingIgnoredDuringExecution: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+input K8s__io___api___core___v1__NodeSelectorIn {
+  nodeSelectorTerms: [K8s__io___api___core___v1__NodeSelectorTermIn!]!
+}
+
+input K8s__io___api___core___v1__NodeSelectorRequirementIn {
+  key: String!
+  operator: K8s__io___api___core___v1__NodeSelectorOperator!
+  values: [String!]
+}
+
+input K8s__io___api___core___v1__NodeSelectorTermIn {
+  matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+  matchFields: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+}
+
+input K8s__io___api___core___v1__PodAffinityIn {
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTermIn!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
+}
+
+input K8s__io___api___core___v1__PodAffinityTermIn {
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  matchLabelKeys: [String!]
+  mismatchLabelKeys: [String!]
+  namespaces: [String!]
+  namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  topologyKey: String!
+}
+
+input K8s__io___api___core___v1__PodAntiAffinityIn {
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTermIn!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
+}
+
+input K8s__io___api___core___v1__PreferredSchedulingTermIn {
+  preference: K8s__io___api___core___v1__NodeSelectorTermIn!
+  weight: Int!
+}
+
 input K8s__io___api___core___v1__TolerationIn {
   effect: K8s__io___api___core___v1__TaintEffect
   key: String
@@ -6849,6 +7716,11 @@ input K8s__io___api___core___v1__TopologySpreadConstraintIn {
   nodeTaintsPolicy: String
   topologyKey: String!
   whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
+input K8s__io___api___core___v1__WeightedPodAffinityTermIn {
+  podAffinityTerm: K8s__io___api___core___v1__PodAffinityTermIn!
+  weight: Int!
 }
 
 input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn {
@@ -6880,6 +7752,7 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__Resou
   config
   environment
   external_app
+  hlem_chart
   image_pull_secret
   imported_managed_resource
   managed_resource
@@ -6931,6 +7804,15 @@ enum Github__com___kloudlite___operator___pkg___operator__State {
   finished____reconcilation
   under____reconcilation
   yet____to____be____reconciled
+}
+
+enum K8s__io___api___core___v1__NodeSelectorOperator {
+  DoesNotExist
+  Exists
+  Gt
+  In
+  Lt
+  NotIn
 }
 
 enum K8s__io___api___core___v1__SecretType {
@@ -7143,6 +8025,45 @@ input ExternalAppIn {
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpecIn
   status: Github__com___kloudlite___operator___pkg___operator__StatusIn
+}
+
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/helmchart.graphqls", Input: `type HelmChart @shareable {
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec
+  status: Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type HelmChartEdge @shareable {
+  cursor: String!
+  node: HelmChart!
+}
+
+type HelmChartPaginatedRecords @shareable {
+  edges: [HelmChartEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input HelmChartIn {
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn
 }
 
 `, BuiltIn: false},
@@ -7974,6 +8895,65 @@ func (ec *executionContext) field_Mutation_core_createExternalApp_argsExternalAp
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_core_createHelmChart_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_core_createHelmChart_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["envName"] = arg0
+	arg1, err := ec.field_Mutation_core_createHelmChart_argsHelmchart(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["helmchart"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_createHelmChart_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_createHelmChart_argsHelmchart(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.HelmChart, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["helmchart"]
+	if !ok {
+		var zeroVal entities.HelmChart
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("helmchart"))
+	if tmp, ok := rawArgs["helmchart"]; ok {
+		return ec.unmarshalNHelmChartIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx, tmp)
+	}
+
+	var zeroVal entities.HelmChart
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_core_createImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -8385,6 +9365,65 @@ func (ec *executionContext) field_Mutation_core_deleteExternalApp_argsExternalAp
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("externalAppName"))
 	if tmp, ok := rawArgs["externalAppName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteHelmChart_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_core_deleteHelmChart_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["envName"] = arg0
+	arg1, err := ec.field_Mutation_core_deleteHelmChart_argsHelmChartName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["helmChartName"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_deleteHelmChart_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteHelmChart_argsHelmChartName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["helmChartName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("helmChartName"))
+	if tmp, ok := rawArgs["helmChartName"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -9520,6 +10559,65 @@ func (ec *executionContext) field_Mutation_core_updateExternalApp_argsExternalAp
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_core_updateHelmChart_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_core_updateHelmChart_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["envName"] = arg0
+	arg1, err := ec.field_Mutation_core_updateHelmChart_argsHelmchart(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["helmchart"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_core_updateHelmChart_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateHelmChart_argsHelmchart(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (entities.HelmChart, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["helmchart"]
+	if !ok {
+		var zeroVal entities.HelmChart
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("helmchart"))
+	if tmp, ok := rawArgs["helmchart"]; ok {
+		return ec.unmarshalNHelmChartIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx, tmp)
+	}
+
+	var zeroVal entities.HelmChart
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_core_updateImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -10383,6 +11481,65 @@ func (ec *executionContext) field_Query_core_getExternalApp_argsName(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Query_core_getHelmChart_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_core_getHelmChart_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["envName"] = arg0
+	arg1, err := ec.field_Query_core_getHelmChart_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Query_core_getHelmChart_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_getHelmChart_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_core_getImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -11178,6 +12335,92 @@ func (ec *executionContext) field_Query_core_listExternalApps_argsSearch(
 }
 
 func (ec *executionContext) field_Query_core_listExternalApps_argsPq(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pq"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+	if tmp, ok := rawArgs["pq"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listHelmCharts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_core_listHelmCharts_argsEnvName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["envName"] = arg0
+	arg1, err := ec.field_Query_core_listHelmCharts_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg1
+	arg2, err := ec.field_Query_core_listHelmCharts_argsPq(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["pq"] = arg2
+	return args, nil
+}
+func (ec *executionContext) field_Query_core_listHelmCharts_argsEnvName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["envName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listHelmCharts_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchHelmCharts, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchHelmCharts
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchHelmCharts2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchHelmCharts(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchHelmCharts
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_core_listHelmCharts_argsPq(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*repos.CursorPagination, error) {
@@ -22872,6 +24115,842 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChartName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChartRepoURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChartVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobVars, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1JobVars)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVars2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVars(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "affinity":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx, field)
+			case "backOffLimit":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx, field)
+			case "nodeSelector":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx, field)
+			case "tolerations":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__JobVars", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PostInstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PostUninstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreInstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreUninstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReleaseName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Values, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CheckList, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__CheckMeta2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorCheckMetaᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "debug":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field)
+			case "description":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field)
+			case "hide":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field)
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
+			case "title":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__CheckMeta", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Checks, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsReady, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastReadyGeneration, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastReconcileTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_message(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorPkgRawJSONRawJSON)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___raw____json__RawJson2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgRawJSONRawJSON(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "RawMessage":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___raw____json__RawJson", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReleaseNotes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReleaseStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Resources, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__ResourceRef2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorResourceRefᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx, field)
+			case "kind":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx, field)
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__ResourceRef", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_httpHeaders(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_httpHeaders(ctx, field)
 	if err != nil {
@@ -23292,6 +25371,190 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Affinity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1Affinity)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__Affinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Affinity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nodeAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__Affinity_nodeAffinity(ctx, field)
+			case "podAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__Affinity_podAffinity(ctx, field)
+			case "podAntiAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__Affinity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BackOffLimit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeSelector, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tolerations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1Toleration)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__Toleration2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Tolerationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "effect":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_effect(ctx, field)
+			case "key":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_key(ctx, field)
+			case "operator":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_operator(ctx, field)
+			case "tolerationSeconds":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_tolerationSeconds(ctx, field)
+			case "value":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_value(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__Toleration", field.Name)
 		},
 	}
 	return fc, nil
@@ -26069,6 +28332,1050 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 	return fc, nil
 }
 
+func (ec *executionContext) _HelmChart_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_apiVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.APIVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HelmChart().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_environmentName(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_environmentName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EnvironmentName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_id(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Id, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_kind(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_metadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ObjectMeta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(v12.ObjectMeta)
+	fc.Result = res
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_spec(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_spec(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HelmChart().Spec(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpec(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "chartName":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field)
+			case "chartRepoURL":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field)
+			case "chartVersion":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field)
+			case "jobVars":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx, field)
+			case "postInstall":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx, field)
+			case "postUninstall":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx, field)
+			case "preInstall":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx, field)
+			case "preUninstall":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx, field)
+			case "releaseName":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx, field)
+			case "values":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_status(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HelmChart().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "checkList":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx, field)
+			case "checks":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx, field)
+			case "isReady":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx, field)
+			case "lastReadyGeneration":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx, field)
+			case "lastReconcileTime":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx, field)
+			case "message":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_message(ctx, field)
+			case "releaseNotes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx, field)
+			case "releaseStatus":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx, field)
+			case "resources":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_syncStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SyncStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.SyncStatus)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "action":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field)
+			case "error":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field)
+			case "state":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field)
+			case "syncScheduledAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___pkg___types__SyncStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HelmChart().UpdateTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChartEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.HelmChartEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChartEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChartEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChartEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChartEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.HelmChartEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChartEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.HelmChart)
+	fc.Result = res
+	return ec.marshalNHelmChart2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChartEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChartEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_HelmChart_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_HelmChart_apiVersion(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_HelmChart_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_HelmChart_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_HelmChart_displayName(ctx, field)
+			case "environmentName":
+				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "id":
+				return ec.fieldContext_HelmChart_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_HelmChart_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_HelmChart_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_HelmChart_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_HelmChart_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_HelmChart_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_HelmChart_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_HelmChart_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_HelmChart_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_HelmChart_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HelmChart", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChartPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.HelmChartPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChartPaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.HelmChartEdge)
+	fc.Result = res
+	return ec.marshalNHelmChartEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐHelmChartEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChartPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChartPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_HelmChartEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_HelmChartEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HelmChartEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChartPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.HelmChartPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChartPaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChartPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChartPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChartPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.HelmChartPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChartPaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChartPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChartPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ImagePullSecret_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.ImagePullSecret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImagePullSecret_accountName(ctx, field)
 	if err != nil {
@@ -28178,6 +31485,1075 @@ func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords
 	return fc, nil
 }
 
+func (ec *executionContext) _K8s__io___api___core___v1__Affinity_nodeAffinity(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1Affinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__Affinity_nodeAffinity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeAffinity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NodeAffinity)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NodeAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeAffinity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Affinity_nodeAffinity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__Affinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "preferredDuringSchedulingIgnoredDuringExecution":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field)
+			case "requiredDuringSchedulingIgnoredDuringExecution":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeAffinity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__Affinity_podAffinity(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1Affinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__Affinity_podAffinity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PodAffinity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PodAffinity)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PodAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Affinity_podAffinity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__Affinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "preferredDuringSchedulingIgnoredDuringExecution":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field)
+			case "requiredDuringSchedulingIgnoredDuringExecution":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PodAffinity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1Affinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PodAntiAffinity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PodAntiAffinity)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PodAntiAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Affinity_podAntiAffinity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__Affinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "preferredDuringSchedulingIgnoredDuringExecution":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAntiAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field)
+			case "requiredDuringSchedulingIgnoredDuringExecution":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAntiAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PodAntiAffinity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeAffinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreferredDuringSchedulingIgnoredDuringExecution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1PreferredSchedulingTerm)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PreferredSchedulingTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeAffinity_preferredDuringSchedulingIgnoredDuringExecution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeAffinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "preference":
+				return ec.fieldContext_K8s__io___api___core___v1__PreferredSchedulingTerm_preference(ctx, field)
+			case "weight":
+				return ec.fieldContext_K8s__io___api___core___v1__PreferredSchedulingTerm_weight(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PreferredSchedulingTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeAffinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequiredDuringSchedulingIgnoredDuringExecution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NodeSelector)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NodeSelector2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelector(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeAffinity_requiredDuringSchedulingIgnoredDuringExecution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeAffinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nodeSelectorTerms":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelector_nodeSelectorTerms(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeSelector", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelector_nodeSelectorTerms(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeSelector) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeSelector_nodeSelectorTerms(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeSelectorTerms, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1NodeSelectorTerm)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___core___v1__NodeSelectorTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeSelector_nodeSelectorTerms(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeSelector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "matchExpressions":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchExpressions(ctx, field)
+			case "matchFields":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchFields(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeSelectorTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorRequirement_key(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeSelectorRequirement) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_key(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Key, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeSelectorRequirement",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorRequirement_operator(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeSelectorRequirement) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_operator(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Operator, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.K8sIoAPICoreV1NodeSelectorOperator)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_operator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeSelectorRequirement",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type K8s__io___api___core___v1__NodeSelectorOperator does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorRequirement_values(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeSelectorRequirement) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_values(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Values, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_values(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeSelectorRequirement",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorTerm_matchExpressions(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeSelectorTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchExpressions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MatchExpressions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1NodeSelectorRequirement)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NodeSelectorRequirement2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchExpressions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeSelectorTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_key(ctx, field)
+			case "operator":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_operator(ctx, field)
+			case "values":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_values(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeSelectorRequirement", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorTerm_matchFields(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NodeSelectorTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchFields(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MatchFields, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1NodeSelectorRequirement)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NodeSelectorRequirement2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NodeSelectorTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_key(ctx, field)
+			case "operator":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_operator(ctx, field)
+			case "values":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_values(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeSelectorRequirement", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreferredDuringSchedulingIgnoredDuringExecution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1WeightedPodAffinityTerm)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__WeightedPodAffinityTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "podAffinityTerm":
+				return ec.fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx, field)
+			case "weight":
+				return ec.fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_weight(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__WeightedPodAffinityTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequiredDuringSchedulingIgnoredDuringExecution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1PodAffinityTerm)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PodAffinityTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinity_requiredDuringSchedulingIgnoredDuringExecution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "labelSelector":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_labelSelector(ctx, field)
+			case "matchLabelKeys":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_matchLabelKeys(ctx, field)
+			case "mismatchLabelKeys":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_mismatchLabelKeys(ctx, field)
+			case "namespaces":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaces(ctx, field)
+			case "namespaceSelector":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(ctx, field)
+			case "topologyKey":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_topologyKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PodAffinityTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm_labelSelector(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_labelSelector(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LabelSelector, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoApimachineryPkgApisMetaV1LabelSelector)
+	fc.Result = res
+	return ec.marshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelector(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinityTerm_labelSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "matchExpressions":
+				return ec.fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchExpressions(ctx, field)
+			case "matchLabels":
+				return ec.fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchLabels(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm_matchLabelKeys(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_matchLabelKeys(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MatchLabelKeys, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinityTerm_matchLabelKeys(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm_mismatchLabelKeys(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_mismatchLabelKeys(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MismatchLabelKeys, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinityTerm_mismatchLabelKeys(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm_namespaces(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaces(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespaces, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NamespaceSelector, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoApimachineryPkgApisMetaV1LabelSelector)
+	fc.Result = res
+	return ec.marshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelector(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "matchExpressions":
+				return ec.fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchExpressions(ctx, field)
+			case "matchLabels":
+				return ec.fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchLabels(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm_topologyKey(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_topologyKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TopologyKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAffinityTerm_topologyKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAntiAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAntiAffinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAntiAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreferredDuringSchedulingIgnoredDuringExecution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1WeightedPodAffinityTerm)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__WeightedPodAffinityTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAntiAffinity_preferredDuringSchedulingIgnoredDuringExecution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAntiAffinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "podAffinityTerm":
+				return ec.fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx, field)
+			case "weight":
+				return ec.fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_weight(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__WeightedPodAffinityTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAntiAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAntiAffinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAntiAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequiredDuringSchedulingIgnoredDuringExecution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1PodAffinityTerm)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PodAffinityTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAntiAffinity_requiredDuringSchedulingIgnoredDuringExecution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PodAntiAffinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "labelSelector":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_labelSelector(ctx, field)
+			case "matchLabelKeys":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_matchLabelKeys(ctx, field)
+			case "mismatchLabelKeys":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_mismatchLabelKeys(ctx, field)
+			case "namespaces":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaces(ctx, field)
+			case "namespaceSelector":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(ctx, field)
+			case "topologyKey":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_topologyKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PodAffinityTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PreferredSchedulingTerm_preference(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PreferredSchedulingTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PreferredSchedulingTerm_preference(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Preference, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NodeSelectorTerm)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___core___v1__NodeSelectorTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTerm(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PreferredSchedulingTerm_preference(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PreferredSchedulingTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "matchExpressions":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchExpressions(ctx, field)
+			case "matchFields":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorTerm_matchFields(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeSelectorTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PreferredSchedulingTerm_weight(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PreferredSchedulingTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PreferredSchedulingTerm_weight(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Weight, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PreferredSchedulingTerm_weight(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PreferredSchedulingTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _K8s__io___api___core___v1__Secret_apiVersion(ctx context.Context, field graphql.CollectedField, obj *v11.Secret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_K8s__io___api___core___v1__Secret_apiVersion(ctx, field)
 	if err != nil {
@@ -29024,6 +33400,108 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpre
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type K8s__io___api___core___v1__UnsatisfiableConstraintAction does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1WeightedPodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PodAffinityTerm, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PodAffinityTerm)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___core___v1__PodAffinityTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTerm(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__WeightedPodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "labelSelector":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_labelSelector(ctx, field)
+			case "matchLabelKeys":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_matchLabelKeys(ctx, field)
+			case "mismatchLabelKeys":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_mismatchLabelKeys(ctx, field)
+			case "namespaces":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaces(ctx, field)
+			case "namespaceSelector":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(ctx, field)
+			case "topologyKey":
+				return ec.fieldContext_K8s__io___api___core___v1__PodAffinityTerm_topologyKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PodAffinityTerm", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__WeightedPodAffinityTerm_weight(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1WeightedPodAffinityTerm) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_weight(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Weight, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_weight(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__WeightedPodAffinityTerm",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -32195,6 +36673,320 @@ func (ec *executionContext) fieldContext_Mutation_core_deleteRegistryImage(ctx c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_core_deleteRegistryImage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_createHelmChart(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_createHelmChart(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreCreateHelmChart(rctx, fc.Args["envName"].(string), fc.Args["helmchart"].(entities.HelmChart))
+		}
+
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				var zeroVal *entities.HelmChart
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				var zeroVal *entities.HelmChart
+				return zeroVal, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.HelmChart); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/entities.HelmChart`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.HelmChart)
+	fc.Result = res
+	return ec.marshalOHelmChart2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_createHelmChart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_HelmChart_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_HelmChart_apiVersion(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_HelmChart_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_HelmChart_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_HelmChart_displayName(ctx, field)
+			case "environmentName":
+				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "id":
+				return ec.fieldContext_HelmChart_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_HelmChart_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_HelmChart_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_HelmChart_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_HelmChart_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_HelmChart_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_HelmChart_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_HelmChart_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_HelmChart_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_HelmChart_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HelmChart", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_createHelmChart_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_updateHelmChart(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_updateHelmChart(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreUpdateHelmChart(rctx, fc.Args["envName"].(string), fc.Args["helmchart"].(entities.HelmChart))
+		}
+
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				var zeroVal *entities.HelmChart
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				var zeroVal *entities.HelmChart
+				return zeroVal, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.HelmChart); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/entities.HelmChart`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.HelmChart)
+	fc.Result = res
+	return ec.marshalOHelmChart2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_updateHelmChart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_HelmChart_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_HelmChart_apiVersion(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_HelmChart_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_HelmChart_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_HelmChart_displayName(ctx, field)
+			case "environmentName":
+				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "id":
+				return ec.fieldContext_HelmChart_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_HelmChart_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_HelmChart_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_HelmChart_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_HelmChart_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_HelmChart_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_HelmChart_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_HelmChart_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_HelmChart_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_HelmChart_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HelmChart", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_updateHelmChart_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_deleteHelmChart(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_deleteHelmChart(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreDeleteHelmChart(rctx, fc.Args["envName"].(string), fc.Args["helmChartName"].(string))
+		}
+
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				var zeroVal bool
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				var zeroVal bool
+				return zeroVal, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_deleteHelmChart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_deleteHelmChart_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -36546,6 +41338,210 @@ func (ec *executionContext) fieldContext_Query_core_searchRegistryImages(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_core_searchRegistryImages_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_core_listHelmCharts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_listHelmCharts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CoreListHelmCharts(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchHelmCharts), fc.Args["pq"].(*repos.CursorPagination))
+		}
+
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				var zeroVal *model.HelmChartPaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				var zeroVal *model.HelmChartPaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.HelmChartPaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/app/graph/model.HelmChartPaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HelmChartPaginatedRecords)
+	fc.Result = res
+	return ec.marshalOHelmChartPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐHelmChartPaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_listHelmCharts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_HelmChartPaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_HelmChartPaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_HelmChartPaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HelmChartPaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_listHelmCharts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_core_getHelmChart(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_getHelmChart(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CoreGetHelmChart(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
+		}
+
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				var zeroVal *entities.HelmChart
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				var zeroVal *entities.HelmChart
+				return zeroVal, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.HelmChart); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/entities.HelmChart`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.HelmChart)
+	fc.Result = res
+	return ec.marshalOHelmChart2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_getHelmChart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_HelmChart_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_HelmChart_apiVersion(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_HelmChart_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_HelmChart_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_HelmChart_displayName(ctx, field)
+			case "environmentName":
+				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "id":
+				return ec.fieldContext_HelmChart_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_HelmChart_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_HelmChart_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_HelmChart_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_HelmChart_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_HelmChart_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_HelmChart_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_HelmChart_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_HelmChart_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_HelmChart_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HelmChart", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_getHelmChart_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -46641,6 +51637,89 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn, error) {
+	var it model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"chartName", "chartRepoURL", "chartVersion", "jobVars", "postInstall", "postUninstall", "preInstall", "preUninstall", "values"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "chartName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChartName = data
+		case "chartRepoURL":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartRepoURL"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChartRepoURL = data
+		case "chartVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartVersion"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChartVersion = data
+		case "jobVars":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("jobVars"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVarsIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.JobVars = data
+		case "postInstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postInstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostInstall = data
+		case "postUninstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postUninstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostUninstall = data
+		case "preInstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preInstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreInstall = data
+		case "preUninstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preUninstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreUninstall = data
+		case "values":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
+			data, err := ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Values = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbeIn, error) {
 	var it model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbeIn
 	asMap := map[string]interface{}{}
@@ -46765,6 +51844,54 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.ToIPAddr = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1JobVarsIn, error) {
+	var it model.GithubComKloudliteOperatorApisCrdsV1JobVarsIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"affinity", "backOffLimit", "nodeSelector", "tolerations"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "affinity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("affinity"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AffinityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Affinity = data
+		case "backOffLimit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backOffLimit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BackOffLimit = data
+		case "nodeSelector":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NodeSelector = data
+		case "tolerations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Tolerations = data
 		}
 	}
 
@@ -47512,6 +52639,65 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputHelmChartIn(ctx context.Context, obj interface{}) (entities.HelmChart, error) {
+	var it entities.HelmChart
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIVersion = data
+		case "displayName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisplayName = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "metadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.HelmChartIn().Metadata(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "spec":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.HelmChartIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context, obj interface{}) (entities.ImagePullSecret, error) {
 	var it entities.ImagePullSecret
 	asMap := map[string]interface{}{}
@@ -47654,6 +52840,347 @@ func (ec *executionContext) unmarshalInputImportedManagedResourceIn(ctx context.
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AffinityIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1AffinityIn, error) {
+	var it model.K8sIoAPICoreV1AffinityIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"nodeAffinity", "podAffinity", "podAntiAffinity"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "nodeAffinity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeAffinity"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeAffinityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NodeAffinity = data
+		case "podAffinity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAffinity"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PodAffinity = data
+		case "podAntiAffinity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAntiAffinity"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAntiAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PodAntiAffinity = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeAffinityIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NodeAffinityIn, error) {
+	var it model.K8sIoAPICoreV1NodeAffinityIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"preferredDuringSchedulingIgnoredDuringExecution", "requiredDuringSchedulingIgnoredDuringExecution"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "preferredDuringSchedulingIgnoredDuringExecution":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PreferredSchedulingTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreferredDuringSchedulingIgnoredDuringExecution = data
+		case "requiredDuringSchedulingIgnoredDuringExecution":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequiredDuringSchedulingIgnoredDuringExecution = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelectorIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NodeSelectorIn, error) {
+	var it model.K8sIoAPICoreV1NodeSelectorIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"nodeSelectorTerms"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "nodeSelectorTerms":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelectorTerms"))
+			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NodeSelectorTerms = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelectorRequirementIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NodeSelectorRequirementIn, error) {
+	var it model.K8sIoAPICoreV1NodeSelectorRequirementIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"key", "operator", "values"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "operator":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
+			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Operator = data
+		case "values":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Values = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelectorTermIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NodeSelectorTermIn, error) {
+	var it model.K8sIoAPICoreV1NodeSelectorTermIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"matchExpressions", "matchFields"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "matchExpressions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchExpressions"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MatchExpressions = data
+		case "matchFields":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchFields"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MatchFields = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinityIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PodAffinityIn, error) {
+	var it model.K8sIoAPICoreV1PodAffinityIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"preferredDuringSchedulingIgnoredDuringExecution", "requiredDuringSchedulingIgnoredDuringExecution"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "preferredDuringSchedulingIgnoredDuringExecution":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreferredDuringSchedulingIgnoredDuringExecution = data
+		case "requiredDuringSchedulingIgnoredDuringExecution":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequiredDuringSchedulingIgnoredDuringExecution = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinityTermIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PodAffinityTermIn, error) {
+	var it model.K8sIoAPICoreV1PodAffinityTermIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"labelSelector", "matchLabelKeys", "mismatchLabelKeys", "namespaces", "namespaceSelector", "topologyKey"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "labelSelector":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelSelector"))
+			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LabelSelector = data
+		case "matchLabelKeys":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchLabelKeys"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MatchLabelKeys = data
+		case "mismatchLabelKeys":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mismatchLabelKeys"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MismatchLabelKeys = data
+		case "namespaces":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespaces"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Namespaces = data
+		case "namespaceSelector":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespaceSelector"))
+			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NamespaceSelector = data
+		case "topologyKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topologyKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TopologyKey = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAntiAffinityIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PodAntiAffinityIn, error) {
+	var it model.K8sIoAPICoreV1PodAntiAffinityIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"preferredDuringSchedulingIgnoredDuringExecution", "requiredDuringSchedulingIgnoredDuringExecution"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "preferredDuringSchedulingIgnoredDuringExecution":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreferredDuringSchedulingIgnoredDuringExecution = data
+		case "requiredDuringSchedulingIgnoredDuringExecution":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequiredDuringSchedulingIgnoredDuringExecution = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PreferredSchedulingTermIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PreferredSchedulingTermIn, error) {
+	var it model.K8sIoAPICoreV1PreferredSchedulingTermIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"preference", "weight"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "preference":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preference"))
+			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Preference = data
+		case "weight":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Weight = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1TolerationIn, error) {
 	var it model.K8sIoAPICoreV1TolerationIn
 	asMap := map[string]interface{}{}
@@ -47779,6 +53306,40 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 				return it, err
 			}
 			it.WhenUnsatisfiable = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__WeightedPodAffinityTermIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1WeightedPodAffinityTermIn, error) {
+	var it model.K8sIoAPICoreV1WeightedPodAffinityTermIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"podAffinityTerm", "weight"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "podAffinityTerm":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAffinityTerm"))
+			data, err := ec.unmarshalNK8s__io___api___core___v1__PodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PodAffinityTerm = data
+		case "weight":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Weight = data
 		}
 	}
 
@@ -48504,6 +54065,47 @@ func (ec *executionContext) unmarshalInputSearchEnvironments(ctx context.Context
 
 func (ec *executionContext) unmarshalInputSearchExternalApps(ctx context.Context, obj interface{}) (model.SearchExternalApps, error) {
 	var it model.SearchExternalApps
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		case "isReady":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsReady = data
+		case "markedForDeletion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarkedForDeletion = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSearchHelmCharts(ctx context.Context, obj interface{}) (model.SearchHelmCharts, error) {
+	var it model.SearchHelmCharts
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -52109,6 +57711,133 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return out
 }
 
+var github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec")
+		case "chartName":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "chartRepoURL":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "chartVersion":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "jobVars":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx, field, obj)
+		case "postInstall":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx, field, obj)
+		case "postUninstall":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx, field, obj)
+		case "preInstall":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx, field, obj)
+		case "preUninstall":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx, field, obj)
+		case "releaseName":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx, field, obj)
+		case "values":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___operator___apis___crds___v1__HelmChartStatusImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__HelmChartStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus")
+		case "checkList":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx, field, obj)
+		case "checks":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx, field, obj)
+		case "isReady":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastReadyGeneration":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx, field, obj)
+		case "lastReconcileTime":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx, field, obj)
+		case "message":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_message(ctx, field, obj)
+		case "releaseNotes":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "releaseStatus":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resources":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe) graphql.Marshaler {
@@ -52217,6 +57946,48 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(ctx, field, obj)
 		case "toIPAddr":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___operator___apis___crds___v1__JobVarsImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__JobVars"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__JobVarsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__JobVars")
+		case "affinity":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx, field, obj)
+		case "backOffLimit":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx, field, obj)
+		case "nodeSelector":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx, field, obj)
+		case "tolerations":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -53094,6 +58865,319 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___raw____j
 	return out
 }
 
+var helmChartImplementors = []string{"HelmChart"}
+
+func (ec *executionContext) _HelmChart(ctx context.Context, sel ast.SelectionSet, obj *entities.HelmChart) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, helmChartImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HelmChart")
+		case "accountName":
+			out.Values[i] = ec._HelmChart_accountName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "apiVersion":
+			out.Values[i] = ec._HelmChart_apiVersion(ctx, field, obj)
+		case "createdBy":
+			out.Values[i] = ec._HelmChart_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HelmChart_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "displayName":
+			out.Values[i] = ec._HelmChart_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "environmentName":
+			out.Values[i] = ec._HelmChart_environmentName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "id":
+			out.Values[i] = ec._HelmChart_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "kind":
+			out.Values[i] = ec._HelmChart_kind(ctx, field, obj)
+		case "lastUpdatedBy":
+			out.Values[i] = ec._HelmChart_lastUpdatedBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "markedForDeletion":
+			out.Values[i] = ec._HelmChart_markedForDeletion(ctx, field, obj)
+		case "metadata":
+			out.Values[i] = ec._HelmChart_metadata(ctx, field, obj)
+		case "recordVersion":
+			out.Values[i] = ec._HelmChart_recordVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "spec":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HelmChart_spec(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HelmChart_status(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "syncStatus":
+			out.Values[i] = ec._HelmChart_syncStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updateTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HelmChart_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var helmChartEdgeImplementors = []string{"HelmChartEdge"}
+
+func (ec *executionContext) _HelmChartEdge(ctx context.Context, sel ast.SelectionSet, obj *model.HelmChartEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, helmChartEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HelmChartEdge")
+		case "cursor":
+			out.Values[i] = ec._HelmChartEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._HelmChartEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var helmChartPaginatedRecordsImplementors = []string{"HelmChartPaginatedRecords"}
+
+func (ec *executionContext) _HelmChartPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.HelmChartPaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, helmChartPaginatedRecordsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HelmChartPaginatedRecords")
+		case "edges":
+			out.Values[i] = ec._HelmChartPaginatedRecords_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._HelmChartPaginatedRecords_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._HelmChartPaginatedRecords_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var imagePullSecretImplementors = []string{"ImagePullSecret"}
 
 func (ec *executionContext) _ImagePullSecret(ctx context.Context, sel ast.SelectionSet, obj *entities.ImagePullSecret) graphql.Marshaler {
@@ -53796,6 +59880,376 @@ func (ec *executionContext) _ImportedManagedResourcePaginatedRecords(ctx context
 	return out
 }
 
+var k8s__io___api___core___v1__AffinityImplementors = []string{"K8s__io___api___core___v1__Affinity"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__Affinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1Affinity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AffinityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__Affinity")
+		case "nodeAffinity":
+			out.Values[i] = ec._K8s__io___api___core___v1__Affinity_nodeAffinity(ctx, field, obj)
+		case "podAffinity":
+			out.Values[i] = ec._K8s__io___api___core___v1__Affinity_podAffinity(ctx, field, obj)
+		case "podAntiAffinity":
+			out.Values[i] = ec._K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__NodeAffinityImplementors = []string{"K8s__io___api___core___v1__NodeAffinity"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeAffinity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeAffinityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeAffinity")
+		case "preferredDuringSchedulingIgnoredDuringExecution":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
+		case "requiredDuringSchedulingIgnoredDuringExecution":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__NodeSelectorImplementors = []string{"K8s__io___api___core___v1__NodeSelector"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelector(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeSelector) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeSelectorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeSelector")
+		case "nodeSelectorTerms":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelector_nodeSelectorTerms(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__NodeSelectorRequirementImplementors = []string{"K8s__io___api___core___v1__NodeSelectorRequirement"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorRequirement(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeSelectorRequirement) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeSelectorRequirementImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeSelectorRequirement")
+		case "key":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorRequirement_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "operator":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorRequirement_operator(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "values":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorRequirement_values(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__NodeSelectorTermImplementors = []string{"K8s__io___api___core___v1__NodeSelectorTerm"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeSelectorTerm) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeSelectorTermImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeSelectorTerm")
+		case "matchExpressions":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorTerm_matchExpressions(ctx, field, obj)
+		case "matchFields":
+			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorTerm_matchFields(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__PodAffinityImplementors = []string{"K8s__io___api___core___v1__PodAffinity"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PodAffinity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PodAffinityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PodAffinity")
+		case "preferredDuringSchedulingIgnoredDuringExecution":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
+		case "requiredDuringSchedulingIgnoredDuringExecution":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__PodAffinityTermImplementors = []string{"K8s__io___api___core___v1__PodAffinityTerm"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PodAffinityTerm) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PodAffinityTermImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PodAffinityTerm")
+		case "labelSelector":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_labelSelector(ctx, field, obj)
+		case "matchLabelKeys":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_matchLabelKeys(ctx, field, obj)
+		case "mismatchLabelKeys":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_mismatchLabelKeys(ctx, field, obj)
+		case "namespaces":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_namespaces(ctx, field, obj)
+		case "namespaceSelector":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(ctx, field, obj)
+		case "topologyKey":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_topologyKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__PodAntiAffinityImplementors = []string{"K8s__io___api___core___v1__PodAntiAffinity"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PodAntiAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PodAntiAffinity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PodAntiAffinityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PodAntiAffinity")
+		case "preferredDuringSchedulingIgnoredDuringExecution":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAntiAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
+		case "requiredDuringSchedulingIgnoredDuringExecution":
+			out.Values[i] = ec._K8s__io___api___core___v1__PodAntiAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__PreferredSchedulingTermImplementors = []string{"K8s__io___api___core___v1__PreferredSchedulingTerm"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PreferredSchedulingTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PreferredSchedulingTerm) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PreferredSchedulingTermImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PreferredSchedulingTerm")
+		case "preference":
+			out.Values[i] = ec._K8s__io___api___core___v1__PreferredSchedulingTerm_preference(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "weight":
+			out.Values[i] = ec._K8s__io___api___core___v1__PreferredSchedulingTerm_weight(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var k8s__io___api___core___v1__SecretImplementors = []string{"K8s__io___api___core___v1__Secret"}
 
 func (ec *executionContext) _K8s__io___api___core___v1__Secret(ctx context.Context, sel ast.SelectionSet, obj *v11.Secret) graphql.Marshaler {
@@ -54014,6 +60468,50 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 			}
 		case "whenUnsatisfiable":
 			out.Values[i] = ec._K8s__io___api___core___v1__TopologySpreadConstraint_whenUnsatisfiable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var k8s__io___api___core___v1__WeightedPodAffinityTermImplementors = []string{"K8s__io___api___core___v1__WeightedPodAffinityTerm"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__WeightedPodAffinityTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1WeightedPodAffinityTerm) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__WeightedPodAffinityTermImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__WeightedPodAffinityTerm")
+		case "podAffinityTerm":
+			out.Values[i] = ec._K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "weight":
+			out.Values[i] = ec._K8s__io___api___core___v1__WeightedPodAffinityTerm_weight(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -54821,6 +61319,21 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "core_createHelmChart":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_createHelmChart(ctx, field)
+			})
+		case "core_updateHelmChart":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_updateHelmChart(ctx, field)
+			})
+		case "core_deleteHelmChart":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_deleteHelmChart(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "core_createApp":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_createApp(ctx, field)
@@ -55372,6 +61885,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "core_listHelmCharts":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_listHelmCharts(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "core_getHelmChart":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getHelmChart(ctx, field)
 				return res
 			}
 
@@ -58563,6 +65114,75 @@ func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___pkg__
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNHelmChart2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx context.Context, sel ast.SelectionSet, v *entities.HelmChart) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HelmChart(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNHelmChartEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐHelmChartEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HelmChartEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNHelmChartEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐHelmChartEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHelmChartEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐHelmChartEdge(ctx context.Context, sel ast.SelectionSet, v *model.HelmChartEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HelmChartEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNHelmChartIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx context.Context, v interface{}) (entities.HelmChart, error) {
+	res, err := ec.unmarshalInputHelmChartIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := repos.ID(tmp)
@@ -58742,6 +65362,137 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx context.Context, v interface{}) (model.K8sIoAPICoreV1NodeSelectorOperator, error) {
+	var res model.K8sIoAPICoreV1NodeSelectorOperator
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx context.Context, sel ast.SelectionSet, v model.K8sIoAPICoreV1NodeSelectorOperator) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__NodeSelectorRequirement2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirement(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NodeSelectorRequirement) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NodeSelectorRequirement(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NodeSelectorRequirementIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorRequirementIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__NodeSelectorTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1NodeSelectorTerm) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNK8s__io___api___core___v1__NodeSelectorTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTerm(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__NodeSelectorTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTerm(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NodeSelectorTerm) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NodeSelectorTerm(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermInᚄ(ctx context.Context, v interface{}) ([]*model.K8sIoAPICoreV1NodeSelectorTermIn, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.K8sIoAPICoreV1NodeSelectorTermIn, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermIn(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NodeSelectorTermIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorTermIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__PodAffinityTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTerm(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PodAffinityTerm) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PodAffinityTerm(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__PodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PodAffinityTermIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PodAffinityTermIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__PreferredSchedulingTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTerm(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PreferredSchedulingTerm) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PreferredSchedulingTerm(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__PreferredSchedulingTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PreferredSchedulingTermIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PreferredSchedulingTermIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNK8s__io___api___core___v1__Toleration2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Toleration(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1Toleration) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -58780,6 +65531,21 @@ func (ec *executionContext) unmarshalNK8s__io___api___core___v1__UnsatisfiableCo
 
 func (ec *executionContext) marshalNK8s__io___api___core___v1__UnsatisfiableConstraintAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1UnsatisfiableConstraintAction(ctx context.Context, sel ast.SelectionSet, v model.K8sIoAPICoreV1UnsatisfiableConstraintAction) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__WeightedPodAffinityTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTerm(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1WeightedPodAffinityTerm) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__WeightedPodAffinityTerm(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1WeightedPodAffinityTermIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__WeightedPodAffinityTermIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(ctx context.Context, v interface{}) (model.K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator, error) {
@@ -60711,6 +67477,28 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartStatus(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbe2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPGetProbe(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -60753,6 +67541,21 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__InterceptIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVars2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVars(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1JobVars) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVarsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1JobVarsIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -61060,6 +67863,20 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___pkg__
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOHelmChart2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx context.Context, sel ast.SelectionSet, v *entities.HelmChart) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HelmChart(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHelmChartPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐHelmChartPaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.HelmChartPaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HelmChartPaginatedRecords(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOID2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (*repos.ID, error) {
 	if v == nil {
 		return nil, nil
@@ -61155,6 +67972,282 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__Affinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Affinity(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1Affinity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__Affinity(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AffinityIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1AffinityIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__AffinityIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NodeAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeAffinity(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NodeAffinity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NodeAffinity(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeAffinityIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NodeAffinityIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NodeAffinityIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NodeSelector2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelector(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NodeSelector) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NodeSelector(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NodeSelectorIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NodeSelectorRequirement2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1NodeSelectorRequirement) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNK8s__io___api___core___v1__NodeSelectorRequirement2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirement(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx context.Context, v interface{}) ([]*model.K8sIoAPICoreV1NodeSelectorRequirementIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.K8sIoAPICoreV1NodeSelectorRequirementIn, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementIn(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PodAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinity(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PodAffinity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PodAffinity(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PodAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PodAffinityIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PodAffinityIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PodAffinityTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1PodAffinityTerm) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNK8s__io___api___core___v1__PodAffinityTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTerm(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx context.Context, v interface{}) ([]*model.K8sIoAPICoreV1PodAffinityTermIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.K8sIoAPICoreV1PodAffinityTermIn, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNK8s__io___api___core___v1__PodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermIn(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PodAntiAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinity(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PodAntiAffinity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PodAntiAffinity(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PodAntiAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinityIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PodAntiAffinityIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PodAntiAffinityIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PreferredSchedulingTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1PreferredSchedulingTerm) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNK8s__io___api___core___v1__PreferredSchedulingTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTerm(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PreferredSchedulingTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermInᚄ(ctx context.Context, v interface{}) ([]*model.K8sIoAPICoreV1PreferredSchedulingTermIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.K8sIoAPICoreV1PreferredSchedulingTermIn, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNK8s__io___api___core___v1__PreferredSchedulingTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermIn(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOK8s__io___api___core___v1__Secret2ᚖk8sᚗioᚋapiᚋcoreᚋv1ᚐSecret(ctx context.Context, sel ast.SelectionSet, v *v11.Secret) graphql.Marshaler {
@@ -61339,6 +68432,73 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__TopologySpreadC
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
 		res[i], err = ec.unmarshalNK8s__io___api___core___v1__TopologySpreadConstraintIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TopologySpreadConstraintIn(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__WeightedPodAffinityTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1WeightedPodAffinityTerm) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNK8s__io___api___core___v1__WeightedPodAffinityTerm2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTerm(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx context.Context, v interface{}) ([]*model.K8sIoAPICoreV1WeightedPodAffinityTermIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.K8sIoAPICoreV1WeightedPodAffinityTermIn, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermIn(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -61578,6 +68738,14 @@ func (ec *executionContext) unmarshalOSearchExternalApps2ᚖgithubᚗcomᚋkloud
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputSearchExternalApps(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOSearchHelmCharts2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchHelmCharts(ctx context.Context, v interface{}) (*model.SearchHelmCharts, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSearchHelmCharts(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

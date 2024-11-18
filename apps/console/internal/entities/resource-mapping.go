@@ -11,6 +11,7 @@ type ResourceType string
 const (
 	ResourceTypeEnvironment             ResourceType = "environment"
 	ResourceTypeApp                     ResourceType = "app"
+	ResourceTypeHelmChart               ResourceType = "hlem_chart"
 	ResourceTypeExternalApp             ResourceType = "external_app"
 	ResourceTypeConfig                  ResourceType = "config"
 	ResourceTypeSecret                  ResourceType = "secret"

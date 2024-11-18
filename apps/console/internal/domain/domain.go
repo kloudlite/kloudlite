@@ -53,6 +53,7 @@ type domain struct {
 
 	environmentRepo repos.DbRepo[*entities.Environment]
 
+	helmChartRepo    repos.DbRepo[*entities.HelmChart]
 	appRepo          repos.DbRepo[*entities.App]
 	externalAppRepo  repos.DbRepo[*entities.ExternalApp]
 	configRepo       repos.DbRepo[*entities.Config]
@@ -137,6 +138,7 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 		Action: t.ActionApply,
 		Object: m,
 	})
+
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -677,6 +679,7 @@ var Module = fx.Module("domain",
 		environmentRepo repos.DbRepo[*entities.Environment],
 		registryImageRepo repos.DbRepo[*entities.RegistryImage],
 
+		helmChartRepo repos.DbRepo[*entities.HelmChart],
 		appRepo repos.DbRepo[*entities.App],
 		externalAppRepo repos.DbRepo[*entities.ExternalApp],
 		configRepo repos.DbRepo[*entities.Config],
@@ -721,8 +724,7 @@ var Module = fx.Module("domain",
 			serviceBindingRepo:        serviceBindingRepo,
 			clusterManagedServiceRepo: clusterManagedServiceRepo,
 			registryImageRepo:         registryImageRepo,
-
-			envVars: ev,
+			envVars:                   ev,
 
 			resourceEventPublisher: resourceEventPublisher,
 			consoleCacheStore:      consoleCacheStore,
