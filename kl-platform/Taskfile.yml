@@ -1,0 +1,19 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+  build:
+    cmds:
+      - go build -o ./bin/klp ./main.go
+  run:
+    cmds:
+      - go run ./main.go
+  dev:
+    cmds:
+      - nodemon -q -e 'go,tmpl,yaml,yml,sh' --signal SIGTERM --exec "echo '# building' && task build && echo '# build success' || exit"
+
+  container:
+    cmds:
+      - docker run --privileged --rm -it -v ./bin:/app --entrypoint "sh" ghcr.io/kloudlite/kl/k3s:v1.1.3
