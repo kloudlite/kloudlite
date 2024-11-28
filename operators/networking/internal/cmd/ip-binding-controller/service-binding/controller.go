@@ -142,6 +142,36 @@ func (r *Reconciler) reconcileService(ctx context.Context, request ctrl.Request)
 		logger.Info("finished reconciling")
 	}()
 
+	// hasNamedPort := false
+	// for i := range svc.Spec.Ports {
+	// 	if svc.Spec.Ports[i].TargetPort.Type == intstr.String {
+	// 		hasNamedPort = true
+	// 		break
+	// 	}
+	// }
+	//
+	// if hasNamedPort {
+	// 	var podsList corev1.PodList
+	// 	if err := r.List(ctx, &podsList, &client.ListOptions{
+	// 		Limit:         1,
+	// 		LabelSelector: apiLabels.SelectorFromValidatedSet(svc.Spec.Selector),
+	// 	}); err != nil {
+	// 		return ctrl.Result{}, err
+	// 	}
+	//
+	// 	for _, pod := range podsList.Items {
+	// 		for _, c := range pod.Spec.Containers {
+	// 			for _, cp := range c.Ports {
+	// 				for i := range svc.Spec.Ports {
+	// 					if svc.Spec.Ports[i].TargetPort.String() == cp.Name {
+	// 						svc.Spec.Ports[i].TargetPort = intstr.FromInt32(cp.ContainerPort)
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
 	if svc.GetDeletionTimestamp() != nil {
 		return ctrl.Result{}, nil
 	}
@@ -240,7 +270,7 @@ func (r *Reconciler) reconcileService(ctx context.Context, request ctrl.Request)
 		ann["kloudlite.io/global.hostname"] = svcHost
 		sb.SetAnnotations(ann)
 
-		return err
+		return nil
 	}); err != nil {
 		return ctrl.Result{}, err
 	}
