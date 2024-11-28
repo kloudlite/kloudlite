@@ -7,6 +7,7 @@ import (
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+
 	// mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	// mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
 	// postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
@@ -26,10 +27,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Reconciler struct {
@@ -41,6 +41,9 @@ type Reconciler struct {
 	Env                *env.Env
 	yamlClient         kubectl.YAMLClient
 	templateCommonMres []byte
+
+	builder       *builder.Builder
+	watchingTypes map[string]struct{}
 }
 
 func (r *Reconciler) GetName() string {
@@ -171,6 +174,10 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(UnderlyingManagedResourceCreated, req)
 
+	if !fn.IsGVKInstalled(r.Client, obj.Spec.ResourceTemplate.APIVersion, obj.Spec.ResourceTemplate.Kind) {
+		return check.Failed(fmt.Errorf("CRD not installed for (apiVersion: %s, kind: %s)", obj.Spec.ResourceTemplate.APIVersion, obj.Spec.ResourceTemplate.Kind))
+	}
+
 	b, err := templates.ParseBytes(r.templateCommonMres, map[string]any{
 		"api-version": obj.Spec.ResourceTemplate.APIVersion,
 		"kind":        obj.Spec.ResourceTemplate.Kind,
@@ -189,6 +196,10 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 		return check.Failed(err).Err(nil)
 	}
 
+	if err := r.OwnDynamicResource(obj.Spec.ResourceTemplate.APIVersion, obj.Spec.ResourceTemplate.Kind); err != nil {
+		return check.Failed(err)
+	}
+
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.Failed(err)
@@ -196,6 +207,28 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 
 	req.AddToOwnedResources(rr...)
 	return check.Completed()
+}
+
+func (r *Reconciler) OwnDynamicResource(apiVersion, kind string) error {
+	if _, ok := r.watchingTypes[fmt.Sprintf("%s.%s", apiVersion, kind)]; ok {
+		return nil
+	}
+
+	r.watchingTypes[fmt.Sprintf("%s.%s", apiVersion, kind)] = struct{}{}
+
+	if !fn.IsGVKInstalled(r.Client, apiVersion, kind) {
+		r.logger.Warnf("plugin CRD not installed, APIVersion: %s, Kind=%s", apiVersion, kind)
+		return nil
+	}
+
+	// Dynamically add the watch
+	r.builder.Owns(fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind}))
+	if err := r.builder.Complete(r); err != nil {
+		r.logger.Errorf(err, "failed to call Complete() on builder")
+		return err
+	}
+	r.logger.Infof("ADDED watch for owned-resources with GVK %s/%s", apiVersion, kind)
+	return nil
 }
 
 func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
@@ -225,7 +258,7 @@ func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResour
 
 	if !realMresObj.Status.IsReady {
 		if realMresObj.Status.Message == nil {
-			return check.Failed(fmt.Errorf("waiting for real managed service to reconcile ...")).Err(nil)
+			return check.StillRunning(fmt.Errorf("waiting for real managed service to reconcile")).NoRequeue()
 		}
 		b, err := realMresObj.Status.Message.MarshalJSON()
 		if err != nil {
@@ -253,6 +286,65 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Secret{})
 
+	r.builder = builder
+	r.watchingTypes = make(map[string]struct{})
+
+	// var msvcPlugins crdsv1.ManagedServicePluginList
+	// ctx, cf := context.WithTimeout(context.TODO(), 2*time.Second)
+	// defer cf()
+	//
+	// if err := r.List(ctx, &msvcPlugins); err != nil {
+	// 	return err
+	// }
+
+	// var watchlist []client.Object
+
+	// for _, plugin := range msvcPlugins.Items {
+	// 	for _, pluginService := range plugin.Spec.Services {
+	// 		obj := &unstructured.Unstructured{}
+	// 		gv, err := schema.ParseGroupVersion(plugin.Spec.APIVersion)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		obj.SetGroupVersionKind(schema.GroupVersionKind{
+	// 			Group:   gv.Group,
+	// 			Version: gv.Version,
+	// 			Kind:    pluginService.Kind,
+	// 		})
+	//
+	// 		_, err = r.IsObjectNamespaced(obj)
+	// 		if err != nil && strings.HasPrefix(err.Error(), "failed to get restmapping: failed to find API group") {
+	// 			// INFO: it means plugin CRDs are not installed on the cluster as of now
+	// 			continue
+	// 		}
+	//
+	// 		watchlist = append(watchlist, obj)
+	//
+	// 		for _, pluginResource := range pluginService.Resources {
+	// 			obj := &unstructured.Unstructured{}
+	// 			gv, err := schema.ParseGroupVersion(plugin.Spec.APIVersion)
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	//
+	// 			obj.SetGroupVersionKind(schema.GroupVersionKind{
+	// 				Group:   gv.Group,
+	// 				Version: gv.Version,
+	// 				Kind:    pluginResource.Kind,
+	// 			})
+	//
+	// 			_, err = r.IsObjectNamespaced(obj)
+	// 			if err != nil && strings.HasPrefix(err.Error(), "failed to get restmapping: failed to find API group") {
+	// 				// INFO: it means plugin CRDs are not installed on the cluster as of now
+	// 				continue
+	// 			}
+	//
+	// 			builder.Owns(obj)
+	// 		}
+	// 	}
+	// }
+
 	// owns := []client.Object{
 	// 	&mongov1.StandaloneDatabase{},
 	// 	&mysqlv1.StandaloneDatabase{},
@@ -263,24 +355,24 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	// 	builder.Owns(owns[i])
 	// }
 
-	watchlist := []client.Object{
-		// &mongov1.StandaloneService{},
-		// &mongov1.ClusterService{},
-		// &redis.StandaloneService{},
-		// &postgresv1.Standalone{},
-		// &mysqlv1.StandaloneService{},
-	}
+	// watchlist := []client.Object{
+	// 	// &mongov1.StandaloneService{},
+	// 	// &mongov1.ClusterService{},
+	// 	// &redis.StandaloneService{},
+	// 	// &postgresv1.Standalone{},
+	// 	// &mysqlv1.StandaloneService{},
+	// }
 
-	for _, obj := range watchlist {
-		builder.Watches(
-			obj,
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-				if v, ok := obj.GetLabels()[constants.MresNameKey]; ok {
-					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
-				}
-				return nil
-			}))
-	}
+	// for _, obj := range watchlist {
+	// 	builder.Watches(
+	// 		obj,
+	// 		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+	// 			if v, ok := obj.GetLabels()[constants.MresNameKey]; ok {
+	// 				return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
+	// 			}
+	// 			return nil
+	// 		}))
+	// }
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

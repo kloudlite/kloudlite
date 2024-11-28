@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	"github.com/kloudlite/operator/pkg/plugin"
@@ -33,7 +35,7 @@ type ManagedServiceSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/service-gvk",name=Service GVK,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -71,13 +73,15 @@ func (m *ManagedService) GetEnsuredLabels() map[string]string {
 func (m *ManagedService) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		"kloudlite.io/service-gvk": func() string {
-			// if m.Spec.ServiceTemplate != nil {
-			// 	return m.Spec.ServiceTemplate.GroupVersionKind().String()
-			// }
-			//
-			// if m.Spec.Plugin != nil {
-			// 	return m.Spec.Plugin.GroupVersionKind().String()
-			// }
+			if m.Spec.ServiceTemplate != nil {
+				return fmt.Sprintf("%s|%s", m.Spec.ServiceTemplate.APIVersion, m.Spec.ServiceTemplate.Kind)
+				// return m.Spec.ServiceTemplate.GroupVersionKind().String()
+			}
+
+			if m.Spec.Plugin != nil {
+				return fmt.Sprintf("%s|%s", m.Spec.Plugin.APIVersion, m.Spec.Plugin.Kind)
+				// return m.Spec.Plugin.GroupVersionKind().String()
+			}
 
 			return ""
 		}(),

@@ -23,4 +23,7 @@ spec:
   {{- if $resourceTemplateSpec }}
   {{ $resourceTemplateSpec | toYAML | nindent 2 }}
   {{- end}}
+{{- if $output }}
 output: {{$output | toYAML | nindent 2 }}
+{{- end }}
+
