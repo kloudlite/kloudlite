@@ -4,14 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	// mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
-	// mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	// postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
-	// redisv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -22,22 +17,21 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	// "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	// "k8s.io/apimachinery/pkg/runtime/schema"
-	// apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
+	Scheme *runtime.Scheme
+
+	builder       *builder.Builder
+	watchingTypes map[string]struct{}
+
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
@@ -53,8 +47,7 @@ func (r *Reconciler) GetName() string {
 const (
 	ManagedServiceApplied string = "managed-service-applied"
 	ManagedServiceReady   string = "managed-service-ready"
-
-	OwnManagedResources string = "own-managed-resources"
+	OwnManagedResources   string = "own-managed-resources"
 
 	ManagedServiceDeleted string = "managed-service-deleted"
 	DefaultsPatched       string = "defaults-patched"
@@ -143,7 +136,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedService]) st
 		if err := r.Update(ctx, obj); err != nil {
 			return check.Failed(err)
 		}
-		return req.Done().RequeueAfter(200 * time.Millisecond)
+		return check.StillRunning(fmt.Errorf("waiting for resource to reconcile")).RequeueAfter(200 * time.Millisecond)
 	}
 
 	return check.Completed()
@@ -212,13 +205,17 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 			"labels":      obj.GetLabels(),
 			"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 
-			"node-selector":         obj.Spec.NodeSelector,
-			"tolerations":           obj.Spec.Tolerations,
+			// "node-selector":         obj.Spec.NodeSelector,
+			// "tolerations":           obj.Spec.Tolerations,
 			"service-template-spec": obj.Spec.ServiceTemplate.Spec,
 
 			"output": obj.Output,
 		})
 		if err != nil {
+			return check.Failed(err).NoRequeue()
+		}
+
+		if err := r.OwnDynamicResource(obj.Spec.ServiceTemplate.APIVersion, obj.Spec.ServiceTemplate.Kind); err != nil {
 			return check.Failed(err).NoRequeue()
 		}
 
@@ -241,8 +238,6 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 			"labels":      obj.GetLabels(),
 			"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 
-			"node-selector":         obj.Spec.NodeSelector,
-			"tolerations":           obj.Spec.Tolerations,
 			"service-template-spec": obj.Spec.Plugin.Spec,
 
 			"export": obj.Spec.Plugin.Export,
@@ -252,6 +247,10 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 			},
 		})
 		if err != nil {
+			return check.Failed(err).NoRequeue()
+		}
+
+		if err := r.OwnDynamicResource(obj.Spec.Plugin.APIVersion, obj.Spec.Plugin.Kind); err != nil {
 			return check.Failed(err).NoRequeue()
 		}
 
@@ -309,11 +308,35 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 	return check.Completed()
 }
 
+func (r *Reconciler) OwnDynamicResource(apiVersion, kind string) error {
+	if _, ok := r.watchingTypes[fmt.Sprintf("%s.%s", apiVersion, kind)]; ok {
+		return nil
+	}
+
+	r.watchingTypes[fmt.Sprintf("%s.%s", apiVersion, kind)] = struct{}{}
+
+	obj2 := fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind})
+	if !fn.IsGVKInstalled(r.Client, obj2) {
+		r.logger.Warnf("plugin CRD not installed, APIVersion: %s, Kind=%s", apiVersion, kind)
+		return nil
+	}
+
+	// Dynamically add the watch
+	r.builder.Owns(obj2)
+	if err := r.builder.Complete(r); err != nil {
+		r.logger.Errorf(err, "failed to call Complete() on builder")
+		return err
+	}
+	r.logger.Infof("ADDED watch for owned-resources with GVK %s/%s", apiVersion, kind)
+	return nil
+}
+
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+	r.watchingTypes = make(map[string]struct{})
 
 	var err error
 	r.templateCommonMsvc, err = templates.Read(templates.CommonMsvcTemplate)
@@ -322,66 +345,24 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
+	builder.Owns(&crdsv1.ManagedResource{})
 
-	var msvcPlugins crdsv1.ManagedServicePluginList
-	ctx, cf := context.WithTimeout(context.TODO(), 2*time.Second)
-	defer cf()
+	r.builder = builder
 
-	if err := r.List(ctx, &msvcPlugins); err != nil {
-		return err
-	}
-
-	for _, msvcPlugin := range msvcPlugins.Items {
-		for _, gvk := range msvcPlugin.Spec.Kinds {
-			obj := &unstructured.Unstructured{}
-			gv, err := schema.ParseGroupVersion(msvcPlugin.Spec.APIVersion)
-			if err != nil {
-				return err
-			}
-
-			obj.SetGroupVersionKind(schema.GroupVersionKind{
-				Group:   gv.Group,
-				Version: gv.Version,
-				Kind:    gvk.Kind,
-			})
-
-			_, err = r.IsObjectNamespaced(obj)
-			if err != nil && strings.HasPrefix(err.Error(), "failed to get restmapping: failed to find API group") {
-				// it means plugin CRDs are not installed on the cluster as of now
-				continue
-			}
-			// if apiErrors.IsNotFound(err error)
-
-			builder.Owns(obj)
-		}
-	}
-
-	owns := []client.Object{
-		// &mongov1.StandaloneService{},
-		// &mongov1.ClusterService{},
-		// &mysqlv1.StandaloneService{},
-		// &postgresv1.Standalone{},
-		// &redisv1.StandaloneService{},
-	}
-
-	for _, obj := range owns {
-		builder.Owns(obj)
-	}
-
-	watchlist := []client.Object{
-		&crdsv1.ManagedResource{},
-	}
-
-	for _, obj := range watchlist {
-		builder.Watches(obj, handler.EnqueueRequestsFromMapFunc(
-			func(_ context.Context, obj client.Object) []reconcile.Request {
-				if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
-					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
-				}
-				return nil
-			}))
-		builder.Owns(obj)
-	}
+	// watchlist := []client.Object{
+	// 	&crdsv1.ManagedResource{},
+	// }
+	//
+	// for _, obj := range watchlist {
+	// 	builder.Watches(obj, handler.EnqueueRequestsFromMapFunc(
+	// 		func(_ context.Context, obj client.Object) []reconcile.Request {
+	// 			if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
+	// 				return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
+	// 			}
+	// 			return nil
+	// 		}))
+	// 	builder.Owns(obj)
+	// }
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
