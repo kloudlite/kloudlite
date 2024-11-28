@@ -9,9 +9,6 @@
 {{- $labels := get . "labels" }}
 {{- $annotations := get . "annotations" }}
 
-{{- $nodeSelector := get . "node-selector" }}
-{{- $tolerations := get . "tolerations" }}
-
 {{- $serviceTemplateSpec := get . "service-template-spec" }}
 
 {{- $output := get . "output" }}
@@ -27,12 +24,12 @@ metadata:
   annotations: {{ $annotations | toYAML | nindent 4 }}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec: 
-  nodeSelector: {{$nodeSelector |toYAML | nindent 2}}
-  tolerations: {{$tolerations |toYAML | nindent 2}}
-
   {{$serviceTemplateSpec | toYAML | nindent 2 }}
 
 {{- if $export }}
 export: {{ $export | toYAML | nindent 2 }}
 {{- end }}
+
+{{- if $output }}
 output: {{$output | toYAML | nindent 2}}
+{{- end }}

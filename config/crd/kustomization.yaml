@@ -58,7 +58,6 @@ resources:
 - bases/mongodb.msvc.kloudlite.io_standalonedatabases.yaml
 - bases/crds.kloudlite.io_serviceintercepts.yaml
 - bases/mongodb.msvc.kloudlite.io_backups.yaml
-- bases/crds.kloudlite.io_managedserviceplugins.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
