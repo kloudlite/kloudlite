@@ -18,6 +18,7 @@ import (
 	project "github.com/kloudlite/operator/operators/project/controller"
 	resourceWatcher "github.com/kloudlite/operator/operators/resource-watcher/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
+
 	// nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	// wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
 	serviceIntercept "github.com/kloudlite/operator/operators/service-intercept/controller"

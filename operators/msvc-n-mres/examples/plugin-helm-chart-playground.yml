@@ -14,25 +14,17 @@ spec:
     apiVersion: "plugin-helm-chart.kloudlite.github.com/v1"
     kind: HelmChart
     spec:
-      nodeSelector: {}
-      tolerations: []
-      resources:
-        cpu:
-          min: 400m
-          max: 400m
+      jobVars:
+        nodeSelector: {}
+        tolerations: []
+        resources:
+          cpu:
+            min: 400m
+            max: 400m
 
-        memory:
-          min: 500Mi
-          max: 500Mi
-
-        storage:
-          size: 10Gi
-          storageClass: ""
-
-      # chart:
-      #   url: "https://helm.github.io/examples"
-      #   name: "hello-world"
-      #   version: "0.1.0"
+          memory:
+            min: 500Mi
+            max: 500Mi
 
       chart:
         url: "https://nxtcoder17.github.io/helm-charts"
@@ -42,11 +34,11 @@ spec:
       helmValues: {}
 
     export:
-      kv:
+      template: |+
         k1: v1
         k2: v2
-        k3: "this should come from a secret {secret/testing-helm-chart-sample-secret/key1}"
+        k3: "this is from a secret | {{secret (printf "%s-secret/key1" .HelmReleaseName)}} |"
 
-output:
-  credentialsRef:
-    name: "testing-mongo"
+# output:
+#   credentialsRef:
+#     name: "testing-mongo"

@@ -20,7 +20,7 @@ spec:
       name: Service GVK
       type: string
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
       name: Checks

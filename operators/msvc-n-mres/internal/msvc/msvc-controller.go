@@ -194,6 +194,11 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 	check := rApi.NewRunningCheck(ManagedServiceApplied, req)
 
 	if obj.Spec.ServiceTemplate != nil {
+
+		if !fn.IsGVKInstalled(r.Client, obj.Spec.ServiceTemplate.APIVersion, obj.Spec.ServiceTemplate.Kind) {
+			return check.Failed(fmt.Errorf("CRD not installed for (apiVersion: %s, kind: %s)", obj.Spec.ServiceTemplate.APIVersion, obj.Spec.ServiceTemplate.Kind))
+		}
+
 		b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
 			"api-version": obj.Spec.ServiceTemplate.APIVersion,
 			"kind":        obj.Spec.ServiceTemplate.Kind,
@@ -315,14 +320,13 @@ func (r *Reconciler) OwnDynamicResource(apiVersion, kind string) error {
 
 	r.watchingTypes[fmt.Sprintf("%s.%s", apiVersion, kind)] = struct{}{}
 
-	obj2 := fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind})
-	if !fn.IsGVKInstalled(r.Client, obj2) {
+	if !fn.IsGVKInstalled(r.Client, apiVersion, kind) {
 		r.logger.Warnf("plugin CRD not installed, APIVersion: %s, Kind=%s", apiVersion, kind)
 		return nil
 	}
 
 	// Dynamically add the watch
-	r.builder.Owns(obj2)
+	r.builder.Owns(fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind}))
 	if err := r.builder.Complete(r); err != nil {
 		r.logger.Errorf(err, "failed to call Complete() on builder")
 		return err
