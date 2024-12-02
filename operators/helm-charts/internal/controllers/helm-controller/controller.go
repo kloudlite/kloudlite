@@ -307,16 +307,7 @@ func valuesToYaml(values map[string]apiextensionsv1.JSON) (string, error) {
 
 func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := HelmInstallJobAppliedAndCompleted
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(HelmInstallJobAppliedAndCompleted, req)
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
@@ -325,7 +316,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 
 	values, err := valuesToYaml(obj.Spec.Values)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).NoRequeue()
 	}
 
 	if job == nil {
@@ -360,30 +351,28 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 			"values-yaml":  values,
 		})
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).NoRequeue()
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return req.CheckFailed(installOrUpgradeJob, check, err.Error())
+			return check.Failed(err)
 		}
 
 		req.AddToOwnedResources(rr...)
-		return req.Done().RequeueAfter(1 * time.Second).Err(fmt.Errorf("waiting for job to be created")).Err(nil)
+		return check.StillRunning(fmt.Errorf("waiting for job to be created")).NoRequeue()
 	}
 
 	isMyJob := job.Labels[LabelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[LabelInstallOrUpgradeJob] == "true"
 
 	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(installOrUpgradeJob, check, "waiting for previous jobs to finish execution").Err(nil)
+		if job_manager.HasJobFinished(ctx, r.Client, job) {
+			if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
+				return check.Failed(err)
+			}
 		}
 
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return req.CheckFailed(installOrUpgradeJob, check, err.Error())
-		}
-
-		return req.Done().RequeueAfter(1 * time.Second)
+		return check.StillRunning(fmt.Errorf("waiting for previous jobs to finish execution")).NoRequeue()
 	}
 
 	// pod, err := job_manager.GetLatestPod(ctx, r.Client, job.Namespace, job.Name)
@@ -403,37 +392,20 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 	// }
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return fail(fmt.Errorf("waiting for job to finish execution")).Err(nil)
+		return check.StillRunning(fmt.Errorf("waiting for job to finish execution")).NoRequeue()
 	}
 
 	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 	if job.Status.Failed > 0 {
-		return fail(fmt.Errorf("install or upgrade job failed"))
+		return check.Failed(fmt.Errorf("install or upgrade job failed"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := HelmUninstallJobAppliedAndCompleted
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(HelmUninstallJobAppliedAndCompleted, req)
 
 	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getJobName(obj.Name)), &batchv1.Job{})
 	if err != nil {
@@ -464,12 +436,12 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 			"post-uninstall": obj.Spec.PostUninstall,
 		})
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).NoRequeue()
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err)
 		}
 
 		req.AddToOwnedResources(rr...)
@@ -479,37 +451,26 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 	isMyJob := job.Labels[LabelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[LabelUninstallJob] == "true"
 
 	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return fail(fmt.Errorf("waiting for previous jobs to finish execution")).Err(nil)
+		if job_manager.HasJobFinished(ctx, r.Client, job) {
+			if err := r.Delete(ctx, job, &client.DeleteOptions{
+				GracePeriodSeconds: fn.New(int64(10)),
+				Preconditions:      &metav1.Preconditions{},
+				PropagationPolicy:  fn.New(metav1.DeletePropagationBackground),
+			}); err != nil {
+				return check.Failed(err)
+			}
 		}
 
-		// deleting that job
-		if err := r.Delete(ctx, job, &client.DeleteOptions{
-			GracePeriodSeconds: fn.New(int64(10)),
-			Preconditions:      &metav1.Preconditions{},
-			PropagationPolicy:  fn.New(metav1.DeletePropagationBackground),
-		}); err != nil {
-			return fail(err)
-		}
-
-		return req.Done().RequeueAfter(1 * time.Second)
+		return check.StillRunning(fmt.Errorf("waiting for previous jobs to finish execution")).NoRequeue()
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return fail(fmt.Errorf("waiting for job to finish execution")).Err(nil)
+		return check.StillRunning(fmt.Errorf("waiting for job to finish execution")).NoRequeue()
 	}
 
 	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 	if job.Status.Failed > 0 {
-		return fail(fmt.Errorf("helm deletion job failed"))
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
+		return check.Failed(fmt.Errorf("helm deletion job failed")).NoRequeue()
 	}
 
 	// deleting that job
@@ -518,10 +479,10 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 		Preconditions:      &metav1.Preconditions{},
 		PropagationPolicy:  fn.New(metav1.DeletePropagationBackground),
 	}); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

@@ -27,7 +27,7 @@
             pre-commit
 
             # programming tools
-            go_1_21
+            go
             operator-sdk
             mongosh
 

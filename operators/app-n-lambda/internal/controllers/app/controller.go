@@ -266,6 +266,12 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 		obj.Spec.Intercept.PortMappings = make([]crdsv1.AppInterceptPortMappings, len(obj.Spec.Services))
 		for i := range obj.Spec.Services {
 			obj.Spec.Intercept.PortMappings[i] = crdsv1.AppInterceptPortMappings{
+				Protocol: func() crdsv1.ServiceProtocol {
+					if obj.Spec.Services[i].Protocol != nil {
+						return *obj.Spec.Services[i].Protocol
+					}
+					return crdsv1.ServiceProtocolTCP
+				}(),
 				AppPort:    obj.Spec.Services[i].Port,
 				DevicePort: obj.Spec.Services[i].Port,
 			}
@@ -281,9 +287,20 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 
 	if err := r.Get(ctx, client.ObjectKeyFromObject(pod), pod); err != nil {
 		if apiErrors.IsNotFound(err) {
-			portMappings := make(map[uint16]uint16, len(obj.Spec.Intercept.PortMappings))
+			tcpPortMappings := make(map[uint16]uint16, len(obj.Spec.Intercept.PortMappings))
+			udpPortMappings := make(map[uint16]uint16, len(obj.Spec.Intercept.PortMappings))
+
 			for _, pm := range obj.Spec.Intercept.PortMappings {
-				portMappings[pm.AppPort] = pm.DevicePort
+				switch pm.Protocol {
+				case crdsv1.ServiceProtocolTCP:
+					{
+						tcpPortMappings[pm.AppPort] = pm.DevicePort
+					}
+				case crdsv1.ServiceProtocolUDP:
+					{
+						udpPortMappings[pm.AppPort] = pm.DevicePort
+					}
+				}
 			}
 
 			deviceHostSuffix := "device.local"
@@ -302,8 +319,9 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 				"labels":           fn.MapMerge(fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				// "device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
-				"device-host":   deviceHost,
-				"port-mappings": portMappings,
+				"device-host":       deviceHost,
+				"tcp-port-mappings": tcpPortMappings,
+				"udp-port-mappings": udpPortMappings,
 			})
 			if err != nil {
 				return check.Failed(err).NoRequeue()

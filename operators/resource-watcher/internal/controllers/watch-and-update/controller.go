@@ -273,13 +273,12 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			})
 		}
 
-
-  case HelmChartGVK.String():
-    {
+	case HelmChartGVK.String():
+		{
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
 				Object: obj,
 			})
-    }
+		}
 
 	case /*NodePoolGVK.String(),*/ PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
 		{

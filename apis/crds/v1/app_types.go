@@ -245,8 +245,9 @@ type AppSpec struct {
 }
 
 type AppInterceptPortMappings struct {
-	AppPort    uint16 `json:"appPort"`
-	DevicePort uint16 `json:"devicePort"`
+	Protocol   ServiceProtocol `json:"protocol"`
+	AppPort    uint16          `json:"appPort"`
+	DevicePort uint16          `json:"devicePort"`
 }
 
 type Intercept struct {
