@@ -220,12 +220,29 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 		return check.StillRunning(err).NoRequeue()
 	}
 
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+	var helmList crdsv1.HelmChartList
+	if err := findResourceBelongingToEnvironment(ctx, r.Client, &helmList, obj.Spec.TargetNamespace); err != nil {
+		return check.Failed(err)
+	}
+
+	helmCharts := make([]client.Object, len(helmList.Items))
+	for i := range helmList.Items {
+		helmCharts[i] = &helmList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, helmCharts...); err != nil {
+		return check.StillRunning(err).NoRequeue()
+	}
+
+	if step := req.CleanupOwnedResourcesV2(check); !step.ShouldProceed() {
 		return step
 	}
 
 	// deleting namespace
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}); err != nil {
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, &corev1.Namespace{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace},
+	}); err != nil {
 		return check.StillRunning(err).NoRequeue()
 	}
 
