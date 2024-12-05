@@ -9,7 +9,7 @@ const (
 )
 
 const (
-	AnnotationResourceReady  string = "kloudlite.io/operator.resource-ready"
+	AnnotationResourceReady  string = "kloudlite.io/operator.resource.ready"
 	AnnotationResourceChecks string = "kloudlite.io/operator.checks"
 )
 

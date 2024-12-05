@@ -35,12 +35,3 @@ func (s *slogger) WithGroup(name string) slog.Handler {
 }
 
 var _ Slogger = (*slogger)(nil)
-
-func NewX() {
-  slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-  	AddSource: false,
-  	Level:     nil,
-  	ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-  	},
-  })
-}

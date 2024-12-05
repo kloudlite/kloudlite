@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+// +kubebuilder:object:generate=true
 type CPUResource struct {
 	// +kubebuilder:validation:Pattern=[\d]+m$
 	Min string `json:"min"`
@@ -13,6 +14,7 @@ type CPUResource struct {
 	Max string `json:"max"`
 }
 
+// +kubebuilder:object:generate=true
 type MemoryResource struct {
 	// +kubebuilder:validation:Pattern=[\d]+Mi$
 	Min string `json:"min"`
