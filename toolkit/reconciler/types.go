@@ -27,9 +27,6 @@ type ResourceRef struct {
 }
 
 // +kubebuilder:object:generate=true
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
-// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
-
 type Status struct {
 	// +kubebuilder:validation:Optional
 	IsReady   bool          `json:"isReady"`
