@@ -336,6 +336,9 @@ apps:
       enabled: false
       minReplicas: 1
       maxReplicas: 2
+
+    # -- ideally, should be left, it will use default value
+    kloudliteRelease: ""
     globalVpnKubeReverseProxyAuthzToken: ""
 
   messageOfficeApi:
