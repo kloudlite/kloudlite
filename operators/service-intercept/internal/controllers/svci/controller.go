@@ -283,12 +283,6 @@ func (r *Reconciler) createSvcIntercept(req *rApi.Request[*crdsv1.ServiceInterce
 
 	if err := r.Get(ctx, client.ObjectKeyFromObject(pod), pod); err != nil {
 		if apiErrors.IsNotFound(err) {
-			portMappings := make(map[uint16]uint16, len(obj.Spec.PortMappings))
-			for _, pm := range obj.Spec.PortMappings {
-				portMappings[pm.ContainerPort] = pm.ServicePort
-			}
-
-			deviceHost := obj.Spec.ToAddr
 
 			if obj.Spec.ToAddr == "" {
 				return check.Failed(fmt.Errorf("no address configured on service intercept, failed to intercept")).NoRequeue()
@@ -297,6 +291,31 @@ func (r *Reconciler) createSvcIntercept(req *rApi.Request[*crdsv1.ServiceInterce
 			svc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
 			if err != nil {
 				return check.Failed(err)
+			}
+
+			udpPorts := make(map[int32]corev1.ServicePort)
+			tcpPorts := make(map[int32]corev1.ServicePort)
+
+			for _, port := range svc.Spec.Ports {
+				switch port.Protocol {
+				case corev1.ProtocolTCP:
+					tcpPorts[port.Port] = port
+				case corev1.ProtocolUDP:
+					udpPorts[port.Port] = port
+				}
+			}
+
+			tcpPortMappings := make(map[uint16]uint16)
+			udpPortMappings := make(map[uint16]uint16)
+
+			for _, pm := range obj.Spec.PortMappings {
+				if _, ok := tcpPorts[int32(pm.ServicePort)]; ok {
+					tcpPortMappings[pm.ServicePort] = pm.DevicePort
+				}
+
+				if _, ok := udpPorts[int32(pm.ServicePort)]; ok {
+					udpPortMappings[pm.ServicePort] = pm.DevicePort
+				}
 			}
 
 			b, err := templates.ParseBytes(r.svcInterceptTemplate, map[string]any{
@@ -310,8 +329,10 @@ func (r *Reconciler) createSvcIntercept(req *rApi.Request[*crdsv1.ServiceInterce
 					svc.Spec.Selector,
 				),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"device-host":      deviceHost,
-				"port-mappings":    portMappings,
+				"device-host":      obj.Spec.ToAddr,
+
+				"tcp-port-mappings": tcpPortMappings,
+				"udp-port-mappings": udpPortMappings,
 			})
 			if err != nil {
 				return check.Failed(err).NoRequeue()
