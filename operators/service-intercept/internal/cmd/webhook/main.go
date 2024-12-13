@@ -171,9 +171,7 @@ func handleMutate(ctx HandlerContext, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response admissionv1.AdmissionReview
-
-	response = processPodAdmission(ctx, review)
+	response := processPodAdmission(ctx, review)
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, "could not marshal response", http.StatusInternalServerError)

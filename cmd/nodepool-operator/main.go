@@ -16,6 +16,7 @@ func main() {
 	mgr := operator.New("nodepool-operator")
 
 	mgr.AddToSchemes(crdsv1.AddToScheme) // just for lifecycle resource type
+
 	nodepool.RegisterInto(mgr)
 
 	if enableLifecycleController {

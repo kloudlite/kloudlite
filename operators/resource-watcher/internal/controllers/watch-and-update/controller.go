@@ -275,12 +275,22 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 
 	case HelmChartGVK.String():
 		{
-			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+			if err := r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
 				Object: obj,
-			})
+			}); err != nil {
+				return err
+			}
+
+			if err := r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
+			}); err != nil {
+				return err
+			}
+
+			return nil
 		}
 
-	case /*NodePoolGVK.String(),*/ PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
+	case /*NodePoolGVK.String(),*/ PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), NamespaceGVK.String():
 		{
 			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
 				Object: obj,
@@ -489,13 +499,36 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				func(_ context.Context, obj client.Object) []reconcile.Request {
 					gvk := obj.GetObjectKind().GroupVersionKind().String()
 
-					if (gvk == SecretGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.SecretWatchingAnnotation) {
-						return nil
+					switch gvk {
+					case SecretGVK.String():
+						{
+							shouldReconcile := obj.GetLabels()["app.kubernetes.io/managed-by"] == "Helm"
+							shouldReconcile = shouldReconcile || fn.MapContains(obj.GetAnnotations(), t.SecretWatchingAnnotation)
+
+							if !shouldReconcile {
+								return nil
+							}
+						}
+					case ConfigmapGVK.String():
+						{
+
+							shouldReconcile := obj.GetLabels()["app.kubernetes.io/managed-by"] == "Helm"
+							shouldReconcile = shouldReconcile || fn.MapContains(obj.GetAnnotations(), t.ConfigWatchingAnnotation)
+
+							if !shouldReconcile {
+								return nil
+							}
+						}
 					}
 
-					if (gvk == ConfigmapGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.ConfigWatchingAnnotation) {
-						return nil
-					}
+					// if (gvk == SecretGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.SecretWatchingAnnotation) {
+					// 	return nil
+					// }
+					//
+					// if (gvk == ConfigmapGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.ConfigWatchingAnnotation) {
+					// 	return nil
+					// }
+					//
 
 					b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
 					if len(b64Group) == 0 {

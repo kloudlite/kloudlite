@@ -23,17 +23,27 @@ func genNginxStreamConfig(svcID string, protocol string, fromAddr string, toAddr
 		protocol = ""
 	}
 
-	return strings.TrimSpace(fmt.Sprintf(`
-upstream %s {
-  server %s;
-  server 127.0.0.1:80 backup;
-}
+	// 	return strings.TrimSpace(fmt.Sprintf(`
+	// upstream %s {
+	//   server 127.0.0.1:80 backup;
+	//   server %s max_fails=3 ;
+	// }
+	//
+	// server {
+	//   listen %s %s;
+	//   proxy_pass %s;
+	// }
+	// `, svcID, toAddr, fromAddr, protocol, svcID))
 
+	// SOURCE: https://sandro-keil.de/blog/let-nginx-start-if-upstream-host-is-unavailable-or-down/
+	return strings.TrimSpace(fmt.Sprintf(`
 server {
+  set $upstream %s;
+
   listen %s %s;
-  proxy_pass %s;
+  proxy_pass $upstream;
 }
-`, svcID, toAddr, fromAddr, protocol, svcID))
+`, toAddr, fromAddr, protocol))
 }
 
 func RegisterNginxStreamConfig(svcBinding *networkingv1.ServiceBinding) []string {
