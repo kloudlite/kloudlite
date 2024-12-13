@@ -7,8 +7,8 @@ import (
 )
 
 type SvcInterceptPortMappings struct {
-	ContainerPort uint16 `json:"containerPort"`
-	ServicePort   uint16 `json:"servicePort"`
+	ServicePort uint16 `json:"servicePort"`
+	DevicePort  uint16 `json:"devicePort"`
 }
 
 type ServiceInterceptSpec struct {
