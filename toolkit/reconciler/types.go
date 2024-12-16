@@ -1,7 +1,6 @@
 package reconciler
 
 import (
-	"github.com/kloudlite/operator/toolkit/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,6 +26,8 @@ type ResourceRef struct {
 }
 
 // +kubebuilder:object:generate=true
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 type Status struct {
 	// +kubebuilder:validation:Optional
 	IsReady   bool          `json:"isReady"`
@@ -40,7 +41,8 @@ type Status struct {
 
 type Reconciler interface {
 	reconcile.Reconciler
-	SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error
+	// SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error
+	SetupWithManager(mgr ctrl.Manager) error
 	GetName() string
 }
 
