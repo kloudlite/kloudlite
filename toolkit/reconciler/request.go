@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"maps"
 	"slices"
 	"strconv"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/go-logr/logr"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,6 +22,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/logging"
+
 	// "github.com/kloudlite/operator/pkg/logging"
 	// raw_json "github.com/kloudlite/operator/pkg/raw-json"
 
@@ -32,9 +34,9 @@ type Request[T Resource] struct {
 	ctx            context.Context
 	client         client.Client
 	Object         T
-	Logger         *logr.Logger
 	anchorName     string
-	internalLogger *logr.Logger
+	Logger         *slog.Logger
+	internalLogger *slog.Logger
 	locals         map[string]any
 
 	reconStartTime time.Time
@@ -72,14 +74,13 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 	}
 
 	logger := log.FromContext(ctx, "NN", nn.String())
-	internalLogger := logger.WithCallDepth(1)
 
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         &logger,
-		internalLogger: &internalLogger,
+		Logger:         logging.New(logger),
+		internalLogger: logging.New(logger, logging.WithCallDepth(1)),
 		anchorName:     anchorName,
 		locals:         map[string]any{},
 		timerMap:       map[string]time.Time{},

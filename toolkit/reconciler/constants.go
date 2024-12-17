@@ -30,3 +30,7 @@ const (
 	LastAppliedKey string = "kloudlite.io/last-applied"
 	GVKKey         string = "kloudlite.io/group-version-kind"
 )
+
+const (
+	KloudliteDNSHostnameKey string = "kloudlite.io/dns.hostname"
+)

@@ -1,13 +1,10 @@
 package functions
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"os/exec"
 	"strings"
 
-	"github.com/kloudlite/operator/toolkit/logging"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,43 +16,6 @@ import (
 
 	"github.com/gobuffalo/flect"
 )
-
-func Kubectl(args ...string) (stdout *bytes.Buffer, err error) {
-	c := exec.Command("kubectl", args...)
-	outStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
-	c.Stdout = outStream
-	c.Stderr = errStream
-	if err := c.Run(); err != nil {
-		return outStream, errors.NewEf(err, errStream.String())
-	}
-	return outStream, nil
-}
-
-func KubectlApplyExec(ctx context.Context, stdin ...[]byte) (err error) {
-	c := exec.Command("kubectl", "apply", "-f", "-")
-	outStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
-	inputYAML := bytes.Join(stdin, []byte("\n---\n"))
-	c.Stdin = bytes.NewBuffer(inputYAML)
-	c.Stdout = outStream
-	c.Stderr = errStream
-
-	logger, hasLogger := ctx.Value("logger").(logging.Logger)
-	// if hasLogger {
-	// 	logger = logger.WithName("kubectl")
-	// }
-
-	if err := c.Run(); err != nil {
-		if hasLogger {
-			logger.Debugf("input YAML: \n#---START---\n%s\n#---END---", inputYAML)
-			logger.Errorf(err, errStream.String())
-		}
-		return errors.NewEf(err, errStream.String())
-	}
-	if hasLogger {
-		logger.Infof(outStream.String())
-	}
-	return nil
-}
 
 func toUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
 	b, err := json.Marshal(obj)
@@ -142,30 +102,6 @@ func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) err
 		t.Object["stringData"] = j["stringData"]
 	}
 	return cli.Update(ctx, t)
-}
-
-func KubectlGet(namespace string, resourceRef string) ([]byte, error) {
-	c := exec.Command("kubectl", "get", "-o", "json", "-n", namespace, resourceRef)
-	errB := bytes.NewBuffer([]byte{})
-	outB := bytes.NewBuffer([]byte{})
-	c.Stderr = errB
-	c.Stdout = outB
-	if err := c.Run(); err != nil {
-		return nil, errors.NewEf(err, errB.String())
-	}
-	return outB.Bytes(), nil
-}
-
-func KubectlDelete(namespace, resourceRef string) error {
-	c := exec.Command("kubectl", "delete", "-n", namespace, resourceRef)
-	errB := bytes.NewBuffer([]byte{})
-	outB := bytes.NewBuffer([]byte{})
-	c.Stderr = errB
-	c.Stdout = outB
-	if err := c.Run(); err != nil {
-		return errors.NewEf(err, errB.String())
-	}
-	return nil
 }
 
 func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
