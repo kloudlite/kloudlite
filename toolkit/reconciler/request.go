@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"go.uber.org/zap"
+	"github.com/go-logr/logr"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,11 +19,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	fn "github.com/kloudlite/operator/toolkit/functions"
 	// "github.com/kloudlite/operator/pkg/logging"
 	// raw_json "github.com/kloudlite/operator/pkg/raw-json"
-	"github.com/kloudlite/operator/toolkit/logging"
+
 	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 )
 
@@ -31,9 +32,9 @@ type Request[T Resource] struct {
 	ctx            context.Context
 	client         client.Client
 	Object         T
-	Logger         logging.Logger
+	Logger         *logr.Logger
 	anchorName     string
-	internalLogger logging.Logger
+	internalLogger *logr.Logger
 	locals         map[string]any
 
 	reconStartTime time.Time
@@ -42,13 +43,7 @@ type Request[T Resource] struct {
 	resourceRefs []ResourceRef
 }
 
-type ReconcilerCtx context.Context
-
-func NewReconcilerCtx(parent context.Context, logger logging.Logger) ReconcilerCtx {
-	return context.WithValue(parent, "logger", logger)
-}
-
-func NewRequest[T Resource](ctx ReconcilerCtx, c client.Client, nn types.NamespacedName, resource T) (*Request[T], error) {
+func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.NamespacedName, resource T) (*Request[T], error) {
 	if err := c.Get(ctx, nn, resource); err != nil {
 		return nil, err
 	}
@@ -64,11 +59,6 @@ func NewRequest[T Resource](ctx ReconcilerCtx, c client.Client, nn types.Namespa
 		}
 	}
 
-	logger, ok := ctx.Value("logger").(logging.Logger)
-	if !ok {
-		panic("no logger passed into NewRequest")
-	}
-
 	anchorName := func() string {
 		x := strings.ToLower(fmt.Sprintf("%s-%s", resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
 		if len(x) >= 63 {
@@ -81,12 +71,15 @@ func NewRequest[T Resource](ctx ReconcilerCtx, c client.Client, nn types.Namespa
 		resource.GetStatus().Checks = map[string]Check{}
 	}
 
+	logger := log.FromContext(ctx, "NN", nn.String())
+	internalLogger := logger.WithCallDepth(1)
+
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         logger.WithKV("NN", nn.String()),
-		internalLogger: logger.WithKV("NN", nn.String()).WithOptions(zap.AddCallerSkip(1)),
+		Logger:         &logger,
+		internalLogger: &internalLogger,
 		anchorName:     anchorName,
 		locals:         map[string]any{},
 		timerMap:       map[string]time.Time{},
@@ -294,7 +287,7 @@ func (r *Request[T]) Finalize() stepResult.Result {
 func (r *Request[T]) PreReconcile() {
 	blue := color.New(color.FgBlue).SprintFunc()
 	r.reconStartTime = time.Now()
-	r.internalLogger.Infof(blue("[reconcile:start] start"))
+	r.internalLogger.Info(blue("[reconcile:start] start"))
 }
 
 var checkStates = map[State]string{
@@ -324,7 +317,7 @@ func (r *Request[T]) PostReconcile() {
 	if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
 		if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
 			red := color.New(color.FgHiRed, color.Bold).SprintFunc()
-			r.internalLogger.Infof(red("[reconcile:end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
+			r.internalLogger.Info(fmt.Sprintf(red("[reconcile:end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff))
 		}
 	}
 
@@ -368,18 +361,18 @@ func (r *Request[T]) PostReconcile() {
 	if !fn.MapEqual(r.Object.GetAnnotations(), m) {
 		r.Object.SetAnnotations(m)
 		if err := r.client.Update(r.Context(), r.Object); err != nil {
-			r.internalLogger.Infof("[reconcile:end] failed to update resource annotations")
+			r.internalLogger.Info("[reconcile:end] failed to update resource annotations")
 		}
 	}
 
 	if !isReady {
 		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
-		r.internalLogger.Infof(yellow("[reconcile:end] (took: %.2fs) complete"), tDiff)
+		r.internalLogger.Info(fmt.Sprintf(yellow("[reconcile:end] (took: %.2fs) complete"), tDiff))
 		return
 	}
 
 	green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
-	r.internalLogger.Infof(green("[reconcile:end] (took: %.2fs) complete"), tDiff)
+	r.internalLogger.Info(fmt.Sprintf(green("[reconcile:end] (took: %.2fs) complete"), tDiff))
 }
 
 func (r *Request[T]) LogPreCheck(checkName string) {
@@ -387,7 +380,7 @@ func (r *Request[T]) LogPreCheck(checkName string) {
 	r.timerMap[checkName] = time.Now()
 	check, ok := r.Object.GetStatus().Checks[checkName]
 	if ok {
-		r.internalLogger.Infof(blue("[check:start] %-20s [status] %-5v"), checkName, check.Status)
+		r.internalLogger.Info(fmt.Sprintf(blue("[check:start] %-20s [status] %-5v"), checkName, check.Status))
 	}
 }
 
@@ -397,11 +390,11 @@ func (r *Request[T]) LogPostCheck(checkName string) {
 	if ok {
 		if !check.Status {
 			red := color.New(color.FgRed).SprintFunc()
-			r.internalLogger.Infof(red("[check:end] (took: %.2fs) %-20s [status] %v [message] %v"), tDiff, checkName, check.Status, check.Message)
+			r.internalLogger.Info(fmt.Sprintf(red("[check:end] (took: %.2fs) %-20s [status] %v [message] %v"), tDiff, checkName, check.Status, check.Message))
 			return
 		}
 		green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
-		r.internalLogger.Infof(green("[check:end] (took: %.2fs) %-20s [status] %v"), tDiff, checkName, check.Status)
+		r.internalLogger.Info(fmt.Sprintf(green("[check:end] (took: %.2fs) %-20s [status] %v"), tDiff, checkName, check.Status))
 	}
 }
 

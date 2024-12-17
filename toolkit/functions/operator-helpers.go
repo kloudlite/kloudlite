@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloudlite/operator/toolkit/logging"
+	"github.com/go-logr/logr"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -154,7 +154,7 @@ func FilterObservabilityAnnotations(ann map[string]string) map[string]string {
 	return m
 }
 
-func DeleteAndWait[T client.Object](ctx context.Context, logger logging.Logger, kcli client.Client, resources ...T) error {
+func DeleteAndWait[T client.Object](ctx context.Context, logger *logr.Logger, kcli client.Client, resources ...T) error {
 	deletionStatus := make(map[string]bool)
 
 	for i := range resources {
@@ -171,7 +171,7 @@ func DeleteAndWait[T client.Object](ctx context.Context, logger logging.Logger, 
 		}
 
 		if resources[i].GetDeletionTimestamp() == nil {
-			logger.Infof("deleting %s", resourceRef)
+			logger.Info("deleting", "resource-ref", resourceRef)
 
 			if err := kcli.Delete(ctx, resources[i], &client.DeleteOptions{
 				GracePeriodSeconds: New(int64(30)),
@@ -194,7 +194,7 @@ func DeleteAndWait[T client.Object](ctx context.Context, logger logging.Logger, 
 	return nil
 }
 
-func ForceDelete[T client.Object](ctx context.Context, logger logging.Logger, kcli client.Client, resources ...T) error {
+func ForceDelete[T client.Object](ctx context.Context, logger *logr.Logger, kcli client.Client, resources ...T) error {
 	deletionStatus := make(map[string]bool)
 
 	for i := range resources {
@@ -211,7 +211,8 @@ func ForceDelete[T client.Object](ctx context.Context, logger logging.Logger, kc
 		}
 
 		if resources[i].GetDeletionTimestamp() == nil {
-			logger.Infof("deleting %s", resourceRef)
+			logger.Info("deleting", "resource", resourceRef)
+			logger.Info("deleting %s", resourceRef)
 
 			if err := kcli.Delete(ctx, resources[i], &client.DeleteOptions{
 				GracePeriodSeconds: New(int64(30)),
