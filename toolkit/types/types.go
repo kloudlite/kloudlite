@@ -51,6 +51,7 @@ func (s StorageSize) ToInt() (int64, error) {
 	return size, nil
 }
 
+// +kubebuilder:object:generate=true
 type ResourceWithStorage struct {
 	Cpu     *CPUResource    `json:"cpu,omitempty"`
 	Memory  *MemoryResource `json:"memory,omitempty"`
