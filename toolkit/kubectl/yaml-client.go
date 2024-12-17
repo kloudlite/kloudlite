@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/kloudlite/operator/toolkit/errors"
-	"github.com/kloudlite/operator/toolkit/logging"
 
 	rApi "github.com/kloudlite/operator/toolkit/reconciler"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -414,10 +413,7 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 }
 
 type YAMLClientOpts struct {
-	// Deprecated: use Slogger
-	Logger logging.Logger
-
-	Slogger *slog.Logger
+	Logger *slog.Logger
 }
 
 func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error) {
@@ -438,22 +434,15 @@ func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error)
 
 	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
-	if opts.Slogger == nil {
-		opts.Slogger = slog.Default()
-		// opts.Logger, err = logging.New(&logging.Options{
-		// 	Name:        "k8s-yaml-client",
-		// 	CallerTrace: true,
-		// })
-		// if err != nil {
-		// 	return nil, err
-		// }
+	if opts.Logger == nil {
+		opts.Logger = slog.Default()
 	}
 
 	return &yamlClient{
 		k8sClient:     c,
 		dynamicClient: dc,
 		mapper:        mapper,
-		logger:        opts.Slogger,
+		logger:        opts.Logger,
 	}, nil
 }
 

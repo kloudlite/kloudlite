@@ -29,7 +29,6 @@ require (
 	github.com/shamaton/msgpack/v2 v2.2.0
 	github.com/twmb/franz-go v1.14.4
 	github.com/urfave/cli/v2 v2.25.7
-	github.com/valyala/fasttemplate v1.2.1
 	github.com/yext/yerrors v0.0.0-20230716030415-7ebf68e23868
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/zap v1.25.0
