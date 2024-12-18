@@ -3,19 +3,19 @@ package watch_and_update
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/errors"
-	"github.com/kloudlite/operator/pkg/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
 type grpcMsgSender struct {
-	logger                 logging.Logger
+	logger                 *slog.Logger
 	accessToken            string
 	msgDispatchCli         messages.MessageDispatchServiceClient
 	messageProtocolVersion string
@@ -52,7 +52,7 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx MessageSend
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		ctx.logger.Infof("dispatched container registry resource update to message office api")
+		ctx.logger.Info("dispatched container registry resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -91,7 +91,7 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx MessageSenderContext, r
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		ctx.logger.WithKV("timestamp", time.Now()).Infof("dispatched infra resource update to message office api")
+		ctx.logger.With("timestamp", time.Now()).Info("dispatched infra resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -131,7 +131,7 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx MessageSenderContext,
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		ctx.logger.Infof("dispatched console resource update to message office api")
+		ctx.logger.Info("dispatched console resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -171,14 +171,14 @@ func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx MessageSenderConte
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		ctx.logger.Infof("dispatched iot console resource update to message office api")
+		ctx.logger.Info("dispatched iot console resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
 	}
 }
 
-func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env, logger logging.Logger) (MessageSender, error) {
+func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env, logger *slog.Logger) (MessageSender, error) {
 	msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
 
 	authzGrpcCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", ev.AccessToken))
@@ -192,7 +192,7 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 
 	if validationOut == nil || !validationOut.Valid {
 		err := errors.Newf("accessToken is invalid, aborting")
-		logger.Error(err)
+		logger.Error(err.Error())
 		return nil, err
 	}
 

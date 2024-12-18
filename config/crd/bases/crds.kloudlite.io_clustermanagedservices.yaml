@@ -15,12 +15,12 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .metadata.annotations.kloudlite\.io\/service-gvk
-      name: Service GVK
-      type: string
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
+      name: Checks
+      type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
       name: Ready
       type: string
@@ -50,21 +50,6 @@ spec:
             type: string
           metadata:
             type: object
-          output:
-            properties:
-              credentialsRef:
-                description: refers to a k8s secret that exists in the same namespace
-                  as managed service
-                properties:
-                  name:
-                    description: .metadata.name of the resource
-                    type: string
-                required:
-                - name
-                type: object
-            required:
-            - credentialsRef
-            type: object
           spec:
             description: ClusterManagedServiceSpec defines the desired state of ClusterManagedService
             properties:
@@ -83,6 +68,7 @@ spec:
                             type: string
                         required:
                         - template
+                        - viaSecret
                         type: object
                       kind:
                         type: string
@@ -106,6 +92,7 @@ spec:
                             type: string
                         required:
                         - template
+                        - viaSecret
                         type: object
                       kind:
                         type: string
@@ -118,8 +105,6 @@ spec:
                     - kind
                     type: object
                 type: object
-              sharedSecret:
-                type: string
               targetNamespace:
                 type: string
             required:
@@ -179,9 +164,6 @@ spec:
               lastReconcileTime:
                 format: date-time
                 type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
               resources:
                 items:
                   properties:

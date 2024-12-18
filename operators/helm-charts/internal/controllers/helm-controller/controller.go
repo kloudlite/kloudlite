@@ -10,12 +10,11 @@ import (
 	"github.com/kloudlite/operator/operators/helm-charts/internal/controllers/helm-controller/templates"
 	"github.com/kloudlite/operator/operators/helm-charts/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -33,11 +32,10 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	Env        *env.Env
-	logger     logging.Logger
-	Name       string
-	yamlClient kubectl.YAMLClient
+	Scheme *runtime.Scheme
+	Env    *env.Env
+
+	YAMLClient kubectl.YAMLClient
 
 	templateJobRBAC             []byte
 	templateInstallOrUpgradeJob []byte
@@ -45,7 +43,7 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "helmchart-controller"
 }
 
 const (
@@ -101,7 +99,7 @@ func getJobSvcAccountName() string {
 // +kubebuilder:rbac:groups=helm.kloudlite.io,resources=helmcharts/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.HelmChart{})
+	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.HelmChart{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -154,16 +152,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
 	hasPatched := false
 	if obj.Spec.ReleaseName == "" {
@@ -173,47 +162,27 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.HelmChart]) stepRes
 
 	if hasPatched {
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
+		return check.StillRunning(fmt.Errorf("waiting for reconcilation"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	obj := req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := "finalizing"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	check := rApi.NewRunningCheck("finalizing", req)
 
 	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
 		if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
 			return step
 		}
-		return req.Done().RequeueAfter(1 * time.Second)
+		return check.StillRunning(fmt.Errorf("waiting for reconcilation"))
 	}
 
 	if step := r.startUninstallJob(req); !step.ShouldProceed() {
 		return step
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
 	}
 
 	return req.Finalize()
@@ -221,16 +190,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.HelmChart]) stepResult.R
 
 func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := HelmJobRBACReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(HelmJobRBACReady, req)
 
 	jobSvcAcc := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: getJobSvcAccountName(), Namespace: obj.Namespace}}
 
@@ -271,18 +231,10 @@ func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.HelmChart]) stepRes
 		}
 		return nil
 	}); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func valuesToYaml(values map[string]apiextensionsv1.JSON) (string, error) {
@@ -354,7 +306,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 			return check.Failed(err).NoRequeue()
 		}
 
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 		if err != nil {
 			return check.Failed(err)
 		}
@@ -439,7 +391,7 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 			return check.Failed(err).NoRequeue()
 		}
 
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 		if err != nil {
 			return check.Failed(err)
 		}
@@ -485,11 +437,13 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 	return check.Completed()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("yamlClient must be set")
+	}
 
 	var err error
 	r.templateJobRBAC, err = templates.Read(templates.JobRBACTemplate)

@@ -47,3 +47,4 @@ config/crd/bases/_.yaml
 .cache_ggshield
 
 .direnv
+go.work*

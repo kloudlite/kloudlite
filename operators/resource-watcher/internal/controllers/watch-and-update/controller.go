@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -26,24 +28,23 @@ import (
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/logging"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	logger      logging.Logger
-	Name        string
+	Scheme *runtime.Scheme
+
 	Env         *env.Env
 	accessToken string
 	MsgSender   MessageSender
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "resource-watcher"
 }
 
 func unmarshalUnstructured(obj *unstructured.Unstructured, resource client.Object) error {
@@ -61,7 +62,7 @@ const (
 	DispatchToKloudliteInfra string = "kloudlite.io/dispatch-to-infra"
 )
 
-func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, obj *unstructured.Unstructured) error {
+func (r *Reconciler) dispatchEvent(ctx context.Context, logger *slog.Logger, obj *unstructured.Unstructured) error {
 	mctx, cf := func() (context.Context, context.CancelFunc) {
 		if r.Env.IsDev {
 			return context.WithCancel(context.TODO())
@@ -83,7 +84,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 	switch gvk.String() {
 	case ProjectGVK.String(), AppGVK.String(), ExternalAppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), ConfigmapGVK.String():
 		{
-			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, r.logger}, t.ResourceUpdate{
+			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
 				Object: obj,
 			})
 		}
@@ -118,7 +119,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 
 			mresSecret := &corev1.Secret{}
 			if err := r.Get(ctx, fn.NN(mr.Namespace, mr.Output.CredentialsRef.Name), mresSecret); err != nil {
-				r.logger.Infof("mres secret for resource (%s), not found", obj.GetName())
+				logger.Info(fmt.Sprintf("mres secret for resource (%s), not found", obj.GetName()))
 				mresSecret = nil
 			}
 
@@ -140,7 +141,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 
 			pmsvcSecret := &corev1.Secret{}
 			if err := r.Get(ctx, fn.NN(pmsvc.Spec.TargetNamespace, pmsvc.Output.CredentialsRef.Name), pmsvcSecret); err != nil {
-				r.logger.Infof("pmsvc secret for service (%s), not found", obj.GetName())
+				logger.Info(fmt.Sprintf("pmsvc secret for service (%s), not found", obj.GetName()))
 				pmsvcSecret = nil
 			}
 
@@ -161,9 +162,12 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			}
 
 			cmsvcSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, cmsvc.Output.CredentialsRef.Name), cmsvcSecret); err != nil {
-				r.logger.Infof("cmsvc secret for service (%s), not found", obj.GetName())
-				cmsvcSecret = nil
+
+			if cmsvc.Spec.MSVCSpec.Plugin != nil && cmsvc.Spec.MSVCSpec.Plugin.Export.ViaSecret != "" {
+				if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, cmsvc.Spec.MSVCSpec.Plugin.Export.ViaSecret), cmsvcSecret); err != nil {
+					logger.Info(fmt.Sprintf("cmsvc secret for service (%s), not found", obj.GetName()))
+					cmsvcSecret = nil
+				}
 			}
 
 			if cmsvcSecret != nil {
@@ -299,13 +303,13 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 
 	default:
 		{
-			r.logger.Infof("message sender is not configured for resource (%s) of gvk(%s). Ignoring resource update", fmt.Sprintf(obj.GetNamespace(), obj.GetName()), obj.GetObjectKind().GroupVersionKind().String())
+			logger.Info(fmt.Sprintf("message sender is not configured for resource (%s) of gvk(%s). Ignoring resource update", fmt.Sprintf(obj.GetNamespace(), obj.GetName()), obj.GetObjectKind().GroupVersionKind().String()))
 			return nil
 		}
 	}
 }
 
-func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger logging.Logger) (ctrl.Result, error) {
+func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger *slog.Logger) (ctrl.Result, error) {
 	obj.SetManagedFields(nil)
 
 	if obj.GetDeletionTimestamp() != nil {
@@ -354,8 +358,10 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/finalizers,verbs=update
 func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
+	logger := logging.New(log.FromContext(ctx))
+
 	if r.MsgSender == nil {
-		r.logger.Infof("message-sender is nil")
+		logger.Info("message-sender is nil")
 		return ctrl.Result{}, errors.New("waiting for message sender to be initialized")
 	}
 
@@ -367,7 +373,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 	gvk, err := wName.ParseGroup()
 	fmt.Println(gvk.Group)
 	if err != nil {
-		r.logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
+		logger.Error(fmt.Sprintf("badly formatted group-version-kind (%s) received, aborting ...", wName.Group))
 		return ctrl.Result{}, nil
 	}
 
@@ -375,10 +381,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, nil
 	}
 
-	logger := r.logger.WithKV("NN", fn.NN(oReq.Namespace, wName.Name).String()).WithKV("gvk", gvk.String())
-	logger.Infof("resource update received")
+	logger = logger.With("NN", fn.NN(oReq.Namespace, wName.Name).String(), "gvk", gvk.String())
+	logger.Info("resource update received")
 	defer func() {
-		logger.Infof("resource update processed")
+		logger.Info("resource update processed")
 	}()
 
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
@@ -449,10 +455,9 @@ var (
 )
 
 // SetupWithManager sets up the controllers with the Manager.
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&corev1.Node{})

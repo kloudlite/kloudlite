@@ -2,14 +2,14 @@ package watch_and_update
 
 import (
 	"context"
+	"log/slog"
 
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
-	"github.com/kloudlite/operator/pkg/logging"
 )
 
 type MessageSenderContext struct {
 	context.Context
-	logger logging.Logger
+	logger *slog.Logger
 }
 
 type MessageSender interface {

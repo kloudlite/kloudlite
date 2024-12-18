@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -48,10 +49,20 @@ type operator struct {
 
 	registeredControllers map[string]struct{}
 
-	IsDev         bool
-	schemesAdded  bool
-	Scheme        *runtime.Scheme
+	IsDev        bool
+	schemesAdded bool
+	Scheme       *runtime.Scheme
+
 	k8sYamlClient kubectl.YAMLClient
+	logger        *slog.Logger
+}
+
+func (op *operator) KubeYAMLClient() kubectl.YAMLClient {
+	return op.k8sYamlClient
+}
+
+func (op *operator) Logger() *slog.Logger {
+	return op.logger
 }
 
 func New(name string) Operator {
@@ -106,7 +117,7 @@ func New(name string) Operator {
 		}
 		if isDev {
 			cOpts.Metrics.BindAddress = "0"
-			ctrl.Log.Info("dev mode enabled, using dev server host: %s", devServerHost)
+			ctrl.Log.Info("dev mode enabled, using", "server-host", devServerHost)
 			return &rest.Config{Host: devServerHost}, cOpts
 		}
 
@@ -115,7 +126,8 @@ func New(name string) Operator {
 		return ctrl.GetConfigOrDie(), cOpts
 	}()
 
-	k8sYamlClient, err := kubectl.NewYAMLClient(mgrConfig, kubectl.YAMLClientOpts{Logger: logging.New(ctrl.Log)})
+	logger := logging.New(ctrl.Log)
+	k8sYamlClient, err := kubectl.NewYAMLClient(mgrConfig, kubectl.YAMLClientOpts{Logger: logger})
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -126,6 +138,7 @@ func New(name string) Operator {
 		mgrOptions:    mgrOptions,
 		IsDev:         isDev,
 		k8sYamlClient: k8sYamlClient,
+		logger:        logger,
 	}
 }
 
@@ -143,21 +156,21 @@ func (op *operator) RegisterControllers(controllers ...reconciler.Reconciler) {
 		op.controllers = append(op.controllers, func(mgr manager.Manager) {
 			_, ok := op.registeredControllers[controller.GetName()]
 			if ok {
+				return
 				// ctrl.Log.Info("controller %s already registered, skipping", controller.GetName())
 			}
-			if !ok {
-				if op.registeredControllers == nil {
-					op.registeredControllers = make(map[string]struct{})
-				}
-				op.registeredControllers[controller.GetName()] = struct{}{}
-				setupLog.Info("registering controller", "controller", controller.GetName())
-				go func() {
-					if err := controller.SetupWithManager(mgr); err != nil {
-						setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
-						os.Exit(1)
-					}
-				}()
+			if op.registeredControllers == nil {
+				op.registeredControllers = make(map[string]struct{})
 			}
+			op.registeredControllers[controller.GetName()] = struct{}{}
+			setupLog.Info("registering controller", "controller", controller.GetName())
+			// go func() {
+			// controller.Client = mgr.GetClient()
+			if err := controller.SetupWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
+				os.Exit(1)
+			}
+			// }()
 		})
 	}
 }

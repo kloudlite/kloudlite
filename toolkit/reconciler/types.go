@@ -46,6 +46,15 @@ type Reconciler interface {
 	GetName() string
 }
 
+type NamedReconciler interface {
+	GetName() string
+}
+
+type Reconciler2 struct {
+	reconcile.Reconciler
+	NamedReconciler
+}
+
 type Resource interface {
 	client.Object
 	runtime.Object

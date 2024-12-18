@@ -11,10 +11,9 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -29,17 +28,16 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	Env        *env.Env
-	logger     logging.Logger
-	Name       string
-	yamlClient kubectl.YAMLClient
+	Scheme *runtime.Scheme
+	Env    *env.Env
+
+	YAMLClient kubectl.YAMLClient
 
 	templateJobRBAC []byte
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "lifecycle"
 }
 
 const (
@@ -74,7 +72,7 @@ func getJobSvcAccountName() string {
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Lifecycle{})
+	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.Lifecycle{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -221,12 +219,12 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResul
 		case rApi.ErroredState:
 			if obj.Spec.RetryOnFailure {
 				if obj.Status.LastReconcileTime != nil {
-					r.logger.Infof("time since last reconcilation: %s", time.Since(obj.Status.LastReconcileTime.Time).String())
+					req.Logger.Info(fmt.Sprintf("time since last reconcilation: %s", time.Since(obj.Status.LastReconcileTime.Time).String()))
 					if time.Since(obj.Status.LastReconcileTime.Time) < obj.Spec.RetryOnFailureDelay.Duration {
 						return check.Completed().RequeueAfter(obj.Spec.RetryOnFailureDelay.Duration)
 					}
 
-					r.logger.Infof("re-creatingjob for lifecycle %s/%s, as it failed and is past the retry delay", obj.Namespace, obj.Name)
+					req.Logger.Info(fmt.Sprintf("re-creating job for lifecycle %s/%s, as it failed and is past the retry delay", obj.Namespace, obj.Name))
 					if err := r.Delete(ctx, &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}); err != nil {
 						if !apiErrors.IsNotFound(err) {
 							return check.Failed(err)
@@ -394,11 +392,13 @@ func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResu
 	return check.StillRunning(fmt.Errorf("job is pending, waiting for job to start"))
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("yamlclient must be set")
+	}
 
 	var err error
 	r.templateJobRBAC, err = templates.Read(templates.JobRBACTemplate)
