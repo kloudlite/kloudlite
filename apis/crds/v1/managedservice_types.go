@@ -4,10 +4,9 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/operator/pkg/constants"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	"github.com/kloudlite/operator/pkg/plugin"
+	"github.com/kloudlite/operator/toolkit/plugin"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
 
-	ct "github.com/kloudlite/operator/apis/common-types"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +31,17 @@ type ManagedServiceSpec struct {
 	Plugin          *ServiceTemplate `json:"plugin,omitempty"`
 }
 
+func (obj *ManagedService) PatchWithDefaults() (hasPatched bool) {
+	hasPatched = false
+
+	if obj.Spec.Plugin != nil && obj.Spec.Plugin.Export.ViaSecret == "" {
+		hasPatched = true
+		obj.Spec.Plugin.Export.ViaSecret = obj.Name + "-export"
+	}
+
+	return hasPatched
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/service-gvk",name=Service GVK,type=string
@@ -47,11 +57,7 @@ type ManagedService struct {
 
 	Spec ManagedServiceSpec `json:"spec"`
 
-	// +kubebuilder:default=true
-	Enabled *bool       `json:"enabled,omitempty"`
-	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
-
-	Output ct.ManagedServiceOutput `json:"output,omitempty" graphql:"ignore"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (m *ManagedService) EnsureGVK() {

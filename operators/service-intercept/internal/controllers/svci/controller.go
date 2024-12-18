@@ -14,12 +14,11 @@ import (
 	"github.com/kloudlite/operator/operators/service-intercept/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/errors"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/tls_utils"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,11 +32,9 @@ import (
 type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Logger logging.Logger
-	Name   string
 	Env    *env.Env
 
-	yamlClient kubectl.YAMLClient
+	YAMLClient kubectl.YAMLClient
 	recorder   record.EventRecorder
 
 	svcInterceptTemplate []byte
@@ -45,7 +42,7 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "service-intercept"
 }
 
 const (
@@ -65,7 +62,7 @@ var DeleteChecklist = []rApi.CheckMeta{
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.Logger), r.Client, request.NamespacedName, &crdsv1.ServiceIntercept{})
+	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.ServiceIntercept{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -145,7 +142,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ServiceIntercept]) stepR
 		}
 	}
 
-	if step := req.CleanupOwnedResourcesV2(check); !step.ShouldProceed() {
+	if step := req.CleanupOwnedResources(check); !step.ShouldProceed() {
 		return step
 	}
 
@@ -338,7 +335,7 @@ func (r *Reconciler) createSvcIntercept(req *rApi.Request[*crdsv1.ServiceInterce
 				return check.Failed(err).NoRequeue()
 			}
 
-			if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+			if _, err := r.YAMLClient.ApplyYAML(ctx, b); err != nil {
 				return check.Failed(err).NoRequeue()
 			}
 
@@ -360,11 +357,14 @@ func (r *Reconciler) createSvcIntercept(req *rApi.Request[*crdsv1.ServiceInterce
 	return check.Completed()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.Logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("yaml client must be set")
+	}
+
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	var err error
@@ -378,31 +378,37 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return err
 	}
 
-	webhookCertData, err := setupAdmissionWebhook(context.TODO(), SetupWebhookArgs{
-		Client:          r.Client,
-		YAMLClient:      r.yamlClient,
-		Env:             r.Env,
-		templateWebhook: templateWebhook,
-	})
-	if err != nil {
-		return err
-	}
+	go func() {
+		<-time.After(5 * time.Second)
+		webhookCertData, err := setupAdmissionWebhook(context.TODO(), SetupWebhookArgs{
+			Client:          r.Client,
+			YAMLClient:      r.YAMLClient,
+			Env:             r.Env,
+			templateWebhook: templateWebhook,
+		})
+		if err != nil {
+			panic(err)
+		}
 
-	if err := os.WriteFile("/tmp/tls.crt", webhookCertData["tls.crt"], 0o666); err != nil {
-		return err
-	}
-	if err := os.WriteFile("/tmp/tls.key", webhookCertData["tls.key"], 0o666); err != nil {
-		return err
-	}
+		if err := os.WriteFile("/tmp/tls.crt", webhookCertData["tls.crt"], 0o666); err != nil {
+			panic(err)
+		}
 
-	go webhook.Run(webhook.RunArgs{
-		Addr:            ":9443",
-		LogLevel:        "info",
-		KubeRestConfig:  mgr.GetConfig(),
-		CreatedForLabel: CreatedForLabel,
-		TLSCertFile:     "/tmp/tls.crt",
-		TLSKeyFile:      "/tmp/tls.key",
-	})
+		if err := os.WriteFile("/tmp/tls.key", webhookCertData["tls.key"], 0o666); err != nil {
+			panic(err)
+		}
+
+		if err := webhook.Run(webhook.RunArgs{
+			Addr:            ":9443",
+			LogLevel:        "info",
+			KubeRestConfig:  mgr.GetConfig(),
+			CreatedForLabel: CreatedForLabel,
+			TLSCertFile:     "/tmp/tls.crt",
+			TLSKeyFile:      "/tmp/tls.key",
+		}); err != nil {
+			panic(err)
+		}
+	}()
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ServiceIntercept{})
 

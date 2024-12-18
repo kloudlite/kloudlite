@@ -125,9 +125,6 @@ spec:
               lastReconcileTime:
                 format: date-time
                 type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
               resources:
                 items:
                   properties:

@@ -14,7 +14,7 @@ type ValueRef string
 
 // +kubebuilder:object:generate=true
 type Export struct {
-	ViaSecret string `json:"viaSecret,omitempty"`
+	ViaSecret string `json:"viaSecret"`
 	Template  string `json:"template"`
 }
 

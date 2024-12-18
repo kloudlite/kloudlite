@@ -8,11 +8,10 @@ import (
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,17 +24,16 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	logger     logging.Logger
-	Name       string
+	Scheme *runtime.Scheme
+
 	Env        *env.Env
-	yamlClient kubectl.YAMLClient
+	YAMLClient kubectl.YAMLClient
 
 	templateCommonMsvc []byte
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "cluster-managed-service"
 }
 
 const (
@@ -61,7 +59,7 @@ var DeleteCheckList = []rApi.CheckMeta{
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ClusterManagedService{})
+	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.ClusterManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -116,22 +114,11 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ClusterManagedServi
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
-	hasUpdate := false
-	if obj.Output.CredentialsRef.Name == "" {
-		hasUpdate = true
-		obj.Output.CredentialsRef.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
-	}
-
-	if obj.Spec.TargetNamespace == "" {
-		hasUpdate = true
-		obj.Spec.TargetNamespace = fmt.Sprintf("cmsvc-%s", obj.Name)
-	}
-
-	if hasUpdate {
+	if hasPatched := obj.PatchWithDefaults(); hasPatched {
 		if err := r.Update(ctx, obj); err != nil {
 			return check.Failed(err)
 		}
-		return check.StillRunning(fmt.Errorf("waiting for defaults to be patched"))
+		return check.StillRunning(fmt.Errorf("waiting for reconcilation"))
 	}
 
 	return check.Completed()
@@ -141,11 +128,11 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ClusterManagedService]) 
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck("finalizing", req)
 
-	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+	if result := req.CleanupOwnedResources(check); !result.ShouldProceed() {
 		return result
 	}
 
-	req.Logger.Infof("proceeding forward to delete msvc %s/%s", obj.Spec.TargetNamespace, obj.Name)
+	req.Logger.Info("proceeding forward to delete msvc %s/%s", obj.Spec.TargetNamespace, obj.Name)
 	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, obj.Name), &crdsv1.ManagedService{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -155,12 +142,12 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ClusterManagedService]) 
 	}
 
 	if msvc != nil {
-		if err := fn.DeleteAndWait(ctx, r.logger, r.Client, msvc); err != nil {
+		if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, msvc); err != nil {
 			return check.Failed(err)
 		}
 	}
 
-	req.Logger.Infof("proceeding forward to delete namespace %s", obj.Spec.TargetNamespace)
+	req.Logger.Info(fmt.Sprintf("proceeding forward to delete namespace %s", obj.Spec.TargetNamespace))
 	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -211,7 +198,6 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ClusterMa
 		fn.MapSet(&msvc.Labels, constants.ClusterManagedServiceNameKey, obj.Name)
 
 		msvc.Spec = obj.Spec.MSVCSpec
-		msvc.Output = obj.Output
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -226,11 +212,13 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ClusterMa
 	return check.Completed()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("yaml client must be set")
+	}
 
 	var err error
 	r.templateCommonMsvc, err = templates.Read(templates.CommonMsvcTemplate)

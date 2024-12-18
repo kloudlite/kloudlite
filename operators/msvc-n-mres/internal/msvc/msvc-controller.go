@@ -4,17 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	"github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -27,21 +25,18 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme     *runtime.Scheme
+	Env        *env.Env
+	YAMLClient kubectl.YAMLClient
 
 	builder       *builder.Builder
 	watchingTypes map[string]struct{}
-
-	logger     logging.Logger
-	Name       string
-	Env        *env.Env
-	yamlClient kubectl.YAMLClient
 
 	templateCommonMsvc []byte
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "managed-services"
 }
 
 const (
@@ -53,7 +48,7 @@ const (
 	DefaultsPatched       string = "defaults-patched"
 )
 
-var ApplyCheckList = []rApi.CheckMeta{
+var ApplyCheckList = []reconciler.CheckMeta{
 	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
 	{Name: OwnManagedResources, Title: "Own Managed Resources"},
 	{Name: ManagedServiceApplied, Title: "Managed Service Applied"},
@@ -65,7 +60,7 @@ var ApplyCheckList = []rApi.CheckMeta{
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ManagedService{})
+	req, err := reconciler.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.ManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -116,54 +111,43 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+func (r *Reconciler) patchDefaults(req *reconciler.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(DefaultsPatched, req)
+	check := reconciler.NewRunningCheck(DefaultsPatched, req)
 
-	hasUpdate := false
-
-	if obj.Output.CredentialsRef.Name == "" {
-		hasUpdate = true
-		obj.Output.CredentialsRef.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
-	}
-
-	if obj.Spec.Plugin != nil && obj.Spec.Plugin.Export.ViaSecret == "" {
-		hasUpdate = true
-		obj.Spec.Plugin.Export.ViaSecret = obj.Name + "-export"
-	}
-
-	if hasUpdate {
+	if hasPatched := obj.PatchWithDefaults(); hasPatched {
 		if err := r.Update(ctx, obj); err != nil {
 			return check.Failed(err)
 		}
-		return check.StillRunning(fmt.Errorf("waiting for resource to reconcile")).RequeueAfter(200 * time.Millisecond)
+
+		return check.StillRunning(fmt.Errorf("waiting for reconcilation"))
 	}
 
 	return check.Completed()
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+func (r *Reconciler) finalize(req *reconciler.Request[*crdsv1.ManagedService]) stepResult.Result {
 	req.LogPreCheck("finalizing")
 	defer req.LogPostCheck("finalizing")
 
-	check := rApi.NewRunningCheck("finalizing", req)
+	check := reconciler.NewRunningCheck("finalizing", req)
 
-	if step := req.EnsureCheckList([]rApi.CheckMeta{
+	if step := req.EnsureCheckList([]reconciler.CheckMeta{
 		{Name: "finalizing", Title: "Cleanup Owned Resources"},
 	}); !step.ShouldProceed() {
 		return step
 	}
 
-	if result := req.CleanupOwnedResourcesV2(check); !result.ShouldProceed() {
+	if result := req.CleanupOwnedResources(check); !result.ShouldProceed() {
 		return result
 	}
 
 	return req.Finalize()
 }
 
-func (r *Reconciler) ownManagedResources(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+func (r *Reconciler) ownManagedResources(req *reconciler.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(OwnManagedResources, req)
+	check := reconciler.NewRunningCheck(OwnManagedResources, req)
 
 	result, err := kubectl.PaginatedList[*crdsv1.ManagedResource](ctx, r.Client, &crdsv1.ManagedResourceList{}, &client.ListOptions{
 		Namespace: obj.Namespace,
@@ -183,15 +167,15 @@ func (r *Reconciler) ownManagedResources(req *rApi.Request[*crdsv1.ManagedServic
 				return check.Failed(err)
 			}
 		}
-		req.AddToOwnedResources(rApi.ParseResourceRef(mr))
+		req.AddToOwnedResources(reconciler.ParseResourceRef(mr))
 	}
 
 	return check.Completed()
 }
 
-func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+func (r *Reconciler) ensureRealMsvcCreated(req *reconciler.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(ManagedServiceApplied, req)
+	check := reconciler.NewRunningCheck(ManagedServiceApplied, req)
 
 	if obj.Spec.ServiceTemplate != nil {
 
@@ -213,18 +197,16 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 			// "node-selector":         obj.Spec.NodeSelector,
 			// "tolerations":           obj.Spec.Tolerations,
 			"service-template-spec": obj.Spec.ServiceTemplate.Spec,
-
-			"output": obj.Output,
 		})
 		if err != nil {
 			return check.Failed(err).NoRequeue()
 		}
 
-		if err := r.OwnDynamicResource(obj.Spec.ServiceTemplate.APIVersion, obj.Spec.ServiceTemplate.Kind); err != nil {
+		if err := r.OwnDynamicResource(req, obj.Spec.ServiceTemplate.APIVersion, obj.Spec.ServiceTemplate.Kind); err != nil {
 			return check.Failed(err).NoRequeue()
 		}
 
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 		if err != nil {
 			return check.Failed(err)
 		}
@@ -247,19 +229,19 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 
 			"export": obj.Spec.Plugin.Export,
 
-			"output": map[string]string{
-				"secretName": obj.Output.CredentialsRef.Name,
-			},
+			// "output": map[string]string{
+			// 	"secretName": obj.Output.CredentialsRef.Name,
+			// },
 		})
 		if err != nil {
 			return check.Failed(err).NoRequeue()
 		}
 
-		if err := r.OwnDynamicResource(obj.Spec.Plugin.APIVersion, obj.Spec.Plugin.Kind); err != nil {
+		if err := r.OwnDynamicResource(req, obj.Spec.Plugin.APIVersion, obj.Spec.Plugin.Kind); err != nil {
 			return check.Failed(err).NoRequeue()
 		}
 
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 		if err != nil {
 			return check.Failed(err)
 		}
@@ -269,9 +251,9 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 	return check.Completed()
 }
 
-func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+func (r *Reconciler) ensureRealMsvcReady(req *reconciler.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(ManagedServiceReady, req)
+	check := reconciler.NewRunningCheck(ManagedServiceReady, req)
 
 	var uobj *unstructured.Unstructured
 	if obj.Spec.ServiceTemplate != nil {
@@ -282,7 +264,7 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 		uobj = fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.Plugin.APIVersion, Kind: obj.Spec.Plugin.Kind})
 	}
 
-	realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), uobj)
+	realMsvc, err := reconciler.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), uobj)
 	if err != nil {
 		return check.Failed(err).NoRequeue()
 	}
@@ -293,27 +275,32 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 	}
 
 	var realMsvcObj struct {
-		Status rApi.Status `json:"status"`
+		Status reconciler.Status `json:"status"`
 	}
 	if err := json.Unmarshal(b, &realMsvcObj); err != nil {
 		return check.Failed(err).NoRequeue()
 	}
 
 	if !realMsvcObj.Status.IsReady {
-		if realMsvcObj.Status.Message == nil {
+		errorMsg := ""
+		for _, v := range realMsvcObj.Status.CheckList {
+			if realMsvcObj.Status.Checks[v.Name].State == reconciler.ErroredState && realMsvcObj.Status.Checks[v.Name].Message != "" {
+				errorMsg = realMsvcObj.Status.Checks[v.Name].Message
+				break
+			}
+		}
+
+		if errorMsg == "" {
 			return check.Failed(fmt.Errorf("waiting for real managed service to reconcile")).NoRequeue()
 		}
-		b, err := realMsvcObj.Status.Message.MarshalJSON()
-		if err != nil {
-			return check.Failed(err).NoRequeue()
-		}
+
 		return check.Failed(fmt.Errorf("%s", b)).NoRequeue()
 	}
 
 	return check.Completed()
 }
 
-func (r *Reconciler) OwnDynamicResource(apiVersion, kind string) error {
+func (r *Reconciler) OwnDynamicResource(req *reconciler.Request[*crdsv1.ManagedService], apiVersion, kind string) error {
 	if _, ok := r.watchingTypes[fmt.Sprintf("%s.%s", apiVersion, kind)]; ok {
 		return nil
 	}
@@ -321,25 +308,28 @@ func (r *Reconciler) OwnDynamicResource(apiVersion, kind string) error {
 	r.watchingTypes[fmt.Sprintf("%s.%s", apiVersion, kind)] = struct{}{}
 
 	if !fn.IsGVKInstalled(r.Client, apiVersion, kind) {
-		r.logger.Warnf("plugin CRD not installed, APIVersion: %s, Kind=%s", apiVersion, kind)
+		req.Logger.Warn("plugin CRD not installed", "APIVersion", apiVersion, "kind", kind)
 		return nil
 	}
 
 	// Dynamically add the watch
 	r.builder.Owns(fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind}))
 	if err := r.builder.Complete(r); err != nil {
-		r.logger.Errorf(err, "failed to call Complete() on builder")
+		req.Logger.Error("failed to call Complete() on builder, got", "err", err)
 		return err
 	}
-	r.logger.Infof("ADDED watch for owned-resources with GVK %s/%s", apiVersion, kind)
+	req.Logger.Info(fmt.Sprintf("ADDED watch for owned-resources GVK %s/%s", apiVersion, kind))
 	return nil
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("yaml client must be set")
+	}
+
 	r.watchingTypes = make(map[string]struct{})
 
 	var err error
@@ -369,6 +359,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	// }
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
-	builder.WithEventFilter(rApi.ReconcileFilter())
+	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor(r.GetName())))
 	return builder.Complete(r)
 }

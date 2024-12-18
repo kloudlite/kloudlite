@@ -11,9 +11,8 @@ import (
 	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +28,6 @@ type ExternalAppReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	Env        *env.Env
-	logger     logging.Logger
 	Name       string
 	yamlClient kubectl.YAMLClient
 
@@ -50,7 +48,7 @@ const (
 // +kubebuilder:rbac:groups=crdsv1,resources=external_apps/finalizers,verbs=update
 
 func (r *ExternalAppReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ExternalApp{})
+	req, err := reconciler.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.ExternalApp{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -73,7 +71,7 @@ func (r *ExternalAppReconciler) Reconcile(ctx context.Context, request ctrl.Requ
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList([]rApi.CheckMeta{
+	if step := req.EnsureCheckList([]reconciler.CheckMeta{
 		{Name: createExternalNameService, Title: "Creates External Name Service", Hide: req.Object.IsInterceptEnabled()},
 		{Name: createAppIntercept, Title: "Create App Intercept", Hide: !req.Object.IsInterceptEnabled()},
 	}); !step.ShouldProceed() {
@@ -96,9 +94,9 @@ func (r *ExternalAppReconciler) Reconcile(ctx context.Context, request ctrl.Requ
 	return ctrl.Result{}, nil
 }
 
-func (r *ExternalAppReconciler) createExternalService(req *rApi.Request[*crdsv1.ExternalApp]) stepResult.Result {
+func (r *ExternalAppReconciler) createExternalService(req *reconciler.Request[*crdsv1.ExternalApp]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(createExternalNameService, req)
+	check := reconciler.NewRunningCheck(createExternalNameService, req)
 
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
@@ -145,14 +143,14 @@ func (r *ExternalAppReconciler) createExternalService(req *rApi.Request[*crdsv1.
 	return check.Completed()
 }
 
-func (r *ExternalAppReconciler) checkAppIntercept(req *rApi.Request[*crdsv1.ExternalApp]) stepResult.Result {
+func (r *ExternalAppReconciler) checkAppIntercept(req *reconciler.Request[*crdsv1.ExternalApp]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
 	podname := obj.Name + "-intercept"
 	podns := obj.Namespace
 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podname, Namespace: podns}}
 
-	check := rApi.NewRunningCheck(createAppIntercept, req)
+	check := reconciler.NewRunningCheck(createAppIntercept, req)
 
 	if !obj.IsInterceptEnabled() {
 		if err := r.Delete(ctx, pod); err != nil {
@@ -215,15 +213,13 @@ func (r *ExternalAppReconciler) checkAppIntercept(req *rApi.Request[*crdsv1.Exte
 	return check.Completed()
 }
 
-func (r *ExternalAppReconciler) finalize(req *rApi.Request[*crdsv1.ExternalApp]) stepResult.Result {
+func (r *ExternalAppReconciler) finalize(req *reconciler.Request[*crdsv1.ExternalApp]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *ExternalAppReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *ExternalAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	var err error
 	r.appInterceptTemplate, err = templates.Read(templates.AppIntercept)

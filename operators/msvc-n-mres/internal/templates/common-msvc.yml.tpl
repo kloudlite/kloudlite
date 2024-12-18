@@ -11,7 +11,7 @@
 
 {{- $serviceTemplateSpec := get . "service-template-spec" }}
 
-{{- $output := get . "output" }}
+{{- /* {{- $output := get . "output" }} */}}
 
 {{- $export := get . "export" }}
 
@@ -30,6 +30,6 @@ spec:
 export: {{ $export | toYAML | nindent 2 }}
 {{- end }}
 
-{{- if $output }}
-output: {{$output | toYAML | nindent 2}}
-{{- end }}
+{{- /* {{- if $output }} */}}
+{{- /* output: {{$output | toYAML | nindent 2}} */}}
+{{- /* {{- end }} */}}

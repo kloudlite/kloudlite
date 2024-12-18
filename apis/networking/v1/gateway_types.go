@@ -2,7 +2,7 @@ package v1
 
 import (
 	ct "github.com/kloudlite/operator/apis/common-types"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

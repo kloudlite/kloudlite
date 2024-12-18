@@ -14,11 +14,10 @@ import (
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	"github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -34,8 +33,8 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	Logger     logging.Logger
+	Scheme *runtime.Scheme
+
 	Name       string
 	Env        *env.Env
 	YamlClient kubectl.YAMLClient
@@ -64,7 +63,7 @@ const (
 	AppRouterReady string = "app-router-ready"
 )
 
-var DeleteChecklist = []rApi.CheckMeta{
+var DeleteChecklist = []reconciler.CheckMeta{
 	{Name: CleanedOwnedResources, Title: "Cleaning up resources"},
 }
 
@@ -73,7 +72,7 @@ var DeleteChecklist = []rApi.CheckMeta{
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.Logger), r.Client, request.NamespacedName, &crdsv1.App{})
+	req, err := reconciler.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.App{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -92,7 +91,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList([]rApi.CheckMeta{
+	if step := req.EnsureCheckList([]reconciler.CheckMeta{
 		{Name: DeploymentSvcCreated, Title: func() string {
 			if len(req.Object.Spec.Services) > 0 {
 				return "Deployment And Service Created"
@@ -147,21 +146,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) finalize(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	if step := req.EnsureCheckList(DeleteChecklist); !step.ShouldProceed() {
 		return step
 	}
 
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+	check := reconciler.NewRunningCheck("finalizing", req)
+
+	if step := req.CleanupOwnedResources(check); !step.ShouldProceed() {
 		return step
 	}
 
 	return req.Finalize()
 }
 
-func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) reconLabellingImages(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(ImagesLabelled, req)
+	check := reconciler.NewRunningCheck(ImagesLabelled, req)
 
 	newLabels := make(map[string]string, len(obj.GetLabels()))
 	for s, v := range obj.GetLabels() {
@@ -200,9 +201,9 @@ func getServiceAccountName(obj *crdsv1.App) string {
 	return ""
 }
 
-func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) ensureDeploymentThings(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(DeploymentSvcCreated, req)
+	check := reconciler.NewRunningCheck(DeploymentSvcCreated, req)
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
@@ -240,10 +241,10 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	return check.Completed()
 }
 
-func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) checkAppIntercept(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
-	check := rApi.NewRunningCheck(AppInterceptCreated, req)
+	check := reconciler.NewRunningCheck(AppInterceptCreated, req)
 
 	podname := obj.Name + "-intercept"
 	podns := obj.Namespace
@@ -349,10 +350,10 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 	return check.Completed()
 }
 
-func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) ensureHPA(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
-	check := rApi.NewRunningCheck(HPAConfigured, req)
+	check := reconciler.NewRunningCheck(HPAConfigured, req)
 
 	hpaVars := templates.HPATemplateVars{
 		Metadata: metav1.ObjectMeta{
@@ -366,7 +367,7 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 	}
 
 	if obj.IsInterceptEnabled() || !obj.IsHPAEnabled() {
-		hpa, err := rApi.Get(ctx, r.Client, fn.NN(hpaVars.Metadata.Namespace, hpaVars.Metadata.Name), &autoscalingv2.HorizontalPodAutoscaler{})
+		hpa, err := reconciler.Get(ctx, r.Client, fn.NN(hpaVars.Metadata.Namespace, hpaVars.Metadata.Name), &autoscalingv2.HorizontalPodAutoscaler{})
 		if err != nil {
 			if apiErrors.IsNotFound(err) {
 				return check.Completed()
@@ -395,15 +396,15 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 	return check.Completed()
 }
 
-func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) checkDeploymentReady(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(DeploymentReady, req)
+	check := reconciler.NewRunningCheck(DeploymentReady, req)
 
 	if obj.IsInterceptEnabled() {
 		return check.Completed()
 	}
 
-	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
+	deployment, err := reconciler.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -427,7 +428,7 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 				}
 
 				if len(podList.Items) > 0 {
-					pMessages := rApi.GetMessagesFromPods(podList.Items...)
+					pMessages := fn.GetMessagesFromPods(podList.Items...)
 					bMsg, err := json.Marshal(pMessages)
 					if err != nil {
 						return check.StillRunning(err)
@@ -449,9 +450,9 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	return check.Completed()
 }
 
-func (r *Reconciler) checkAppRouter(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) checkAppRouter(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(AppRouterReady, req)
+	check := reconciler.NewRunningCheck(AppRouterReady, req)
 
 	if obj.Spec.Router == nil {
 		return check.Completed()
@@ -487,11 +488,14 @@ func (r *Reconciler) checkAppRouter(req *rApi.Request[*crdsv1.App]) stepResult.R
 	return check.Completed()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.Logger = logger.WithName(r.Name)
-	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
+
+	if r.YamlClient == nil {
+		return fmt.Errorf("yamlClient must be set")
+	}
+
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	var err error
@@ -517,6 +521,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
-	builder.WithEventFilter(rApi.ReconcileFilter())
+	builder.WithEventFilter(reconciler.ReconcileFilter())
 	return builder.Complete(r)
 }
