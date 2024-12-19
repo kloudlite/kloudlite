@@ -136,17 +136,8 @@ func (d *domain) UpdateSecretVariable(ctx ConsoleContext, secret entities.Secret
 		return nil, errors.NewE(err)
 	}
 
-	mergedStringData := existingSecret.StringData
-	if mergedStringData == nil {
-		mergedStringData = make(map[string]string)
-	}
-
-	for key, value := range secret.StringData {
-		mergedStringData[key] = value
-	}
-
 	patchForUpdate := repos.Document{
-		fc.SecretVariableStringData: mergedStringData,
+		fc.SecretVariableStringData: secret.StringData,
 	}
 
 	updatedSecret, err := d.secretVariableRepo.Patch(

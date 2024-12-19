@@ -5,42 +5,77 @@ global:
 
 label: List Configs
 query: |+ #graphql
-  query Core_listConfigs($projectName: String!, $envName: String!) {
-    core_listConfigs(projectName: $projectName, envName: $envName) {
-        edges {
-          cursor
-          node {
-            creationTime
-            accountName
-            apiVersion
-            kind
-            metadata {
-              name
-              namespace
-              generation
-            }
-            syncStatus {
-              state
-              error
-              recordVersion
-              action
-              lastSyncedAt
-            }
-            recordVersion
-          }
+  query Core_listConfigs($envName: String!) {
+    core_listConfigs(envName: $envName) {
+      edges {
+        node {
+          data
         }
-        pageInfo {
-          endCursor
-          hasNextPage
-          hasPreviousPage
-          startCursor
-        }
-        totalCount
+      }
     }
   }
 variables:
-  projectName: "{{.projectName}}"
   envName: "{{.envName}}"
+
+---
+---
+label: testing
+query: |+ #graphql
+  query Core_getConfigValues(
+    $envName: String!
+    $configQueries: [ConfigKeyRefIn!]
+    $secretQueries: [SecretKeyRefIn!]
+    $mresQueries: [SecretKeyRefIn!]
+  ) {
+    configs: core_getConfigValues(
+      envName: $envName
+      queries: $configQueries
+    ) {
+      configName
+      key
+      value
+    }
+    secrets: core_getSecretValues(
+      envName: $envName
+      queries: $secretQueries
+    ) {
+      key
+      secretName
+      value
+    }
+    mreses: core_getSecretValues(envName: $envName, queries: $mresQueries) {
+      key
+      secretName
+      value
+    }
+  }
+variables:
+  # envName: "{{ .envName }}"
+  # envName: "nxt17-env-1"
+  # configQueries: 
+  #   - configName: cfg-1
+  #     key: k1
+  # secretQueries: 
+  #   - secretName: secret-1
+  #     key: k1
+  # mresQueries: []
+  {
+  "configQueries": [
+    {
+      "configName": "cfg-1",
+      "key": "k1"
+    }
+  ],
+  "envName": "nxt17-env-1",
+  "mresQueries": null,
+  "secretQueries": [
+    {
+      "key": "k1",
+      "secretName": "secret-1"
+    }
+  ]
+}
+
 ---
 
 label: Create Config

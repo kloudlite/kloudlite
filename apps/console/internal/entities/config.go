@@ -18,6 +18,8 @@ type Config struct {
 
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+
+	CreatedByHelm *string `json:"createdByHelm,omitempty" graphql:"noinput"`
 }
 
 func (c *Config) GetDisplayName() string {

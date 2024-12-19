@@ -87,6 +87,7 @@ func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {
 
 var (
 	errNilApp                     = errors.Newf("app obj is nil")
+	errNilServiceBinding          = errors.Newf("service binding is nil")
 	errNilExternalApp             = errors.Newf("external app obj is nil")
 	errNilConfig                  = errors.Newf("config obj is nil")
 	errNilSecret                  = errors.Newf("secret obj is nil")
