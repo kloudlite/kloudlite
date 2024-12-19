@@ -15,6 +15,7 @@ import (
 	// routers "github.com/kloudlite/operator/operators/routers/controller"
 
 	serviceIntercept "github.com/kloudlite/operator/operators/service-intercept/controller"
+	pluginHelmChart "github.com/kloudlite/plugin-helm-chart/kloudlite"
 	pluginMongoDB "github.com/kloudlite/plugin-mongodb/kloudlite"
 )
 
@@ -47,6 +48,7 @@ func main() {
 	serviceIntercept.RegisterInto(mgr)
 
 	pluginMongoDB.RegisterInto(mgr)
+	pluginHelmChart.RegisterInto(mgr)
 
 	mgr.Start()
 }
