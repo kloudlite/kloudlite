@@ -243,9 +243,24 @@ models:
   Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn:
     model: github.com/kloudlite/operator/apis/crds/v1.AppInterceptPortMappings
 
+  Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn:
+    model: github.com/kloudlite/operator/apis/crds/v1.SvcInterceptPortMappings
+
   Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugins:
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugins
-
-
   Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugin:
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugin
+
+  # -- Service Binding
+  ServiceBinding: &service-binding
+    model: github.com/kloudlite/api/apps/console/internal/entities.ServiceBinding
+
+  # Github__com___kloudlite___operator___apis___networking___v1__ServiceBindingSpec: &model-servicebinding-spec
+  #   model: github.com/kloudlite/operator/apis/networking/v1.ServiceBindingSpec
+  # Github__com___kloudlite___operator___apis___networking___v1__ServiceBindingSpecIn: *model-servicebinding-spec
+  #
+  # Github__com___kloudlite___operator___apis___common____types__NamespacedResourceRef:
+  #   model: github.com/kloudlite/operator/apis/common-types.NamespacedResourceRef
+
+  # K8s__io___api___core___v1__ServicePort:
+  #   model: k8s.io/api/core/v1.ServicePort

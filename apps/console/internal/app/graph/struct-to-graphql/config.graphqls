@@ -3,6 +3,7 @@ type Config @shareable {
   apiVersion: String
   binaryData: Map
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  createdByHelm: String
   creationTime: Date!
   data: Map
   displayName: String!

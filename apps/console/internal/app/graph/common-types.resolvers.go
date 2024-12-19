@@ -7,8 +7,9 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -19,7 +20,7 @@ import (
 	v12 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
 	v11 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Meta is the resolver for the meta field.
@@ -204,6 +205,24 @@ func (r *github__com___kloudlite___operator___apis___crds___v1__AppInterceptPort
 	return nil
 }
 
+// Protocol is the resolver for the protocol field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver) Protocol(ctx context.Context, obj *v12.AppInterceptPortMappings, data model.GithubComKloudliteOperatorApisCrdsV1ServiceProtocol) error {
+	obj.Protocol = v12.ServiceProtocol(data)
+	return nil
+}
+
+// DevicePort is the resolver for the devicePort field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver) DevicePort(ctx context.Context, obj *v12.SvcInterceptPortMappings, data int) error {
+	obj.DevicePort = uint16(data)
+	return nil
+}
+
+// ServicePort is the resolver for the servicePort field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver) ServicePort(ctx context.Context, obj *v12.SvcInterceptPortMappings, data int) error {
+	obj.ServicePort = uint16(data)
+	return nil
+}
+
 // Annotations is the resolver for the annotations field.
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	var m map[string]string
@@ -262,15 +281,36 @@ func (r *Resolver) Github__com___kloudlite___operator___apis___crds___v1__AppInt
 	return &github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver{r}
 }
 
+// Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn returns generated.Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn() generated.Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver {
+	return &github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver{r}
+}
+
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
-type github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver struct{ *Resolver }
-type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
-type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
-type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
-type k8s__io___api___core___v1__SecretResolver struct{ *Resolver }
-type metadataResolver struct{ *Resolver }
-type github__com___kloudlite___api___pkg___types__SyncStatusInResolver struct{ *Resolver }
-type github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver struct{ *Resolver }
-type metadataInResolver struct{ *Resolver }
+type (
+	github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver struct{ *Resolver }
+	github__com___kloudlite___api___common__CreatedOrUpdatedByResolver                                 struct{ *Resolver }
+	github__com___kloudlite___api___pkg___types__SyncStatusResolver                                    struct{ *Resolver }
+	github__com___kloudlite___operator___pkg___operator__StatusResolver                                struct{ *Resolver }
+	k8s__io___api___core___v1__SecretResolver                                                          struct{ *Resolver }
+	metadataResolver                                                                                   struct{ *Resolver }
+	github__com___kloudlite___api___pkg___types__SyncStatusInResolver                                  struct{ *Resolver }
+	github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver          struct{ *Resolver }
+	github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver          struct{ *Resolver }
+	metadataInResolver                                                                                 struct{ *Resolver }
+)
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver) ContainerPort(ctx context.Context, obj *v12.SvcInterceptPortMappings, data int) error {
+	obj.ContainerPort = uint16(data)
+	return nil
+}
+*/

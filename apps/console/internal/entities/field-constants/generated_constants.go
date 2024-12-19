@@ -62,13 +62,20 @@ const (
 	ClusterManagedServiceOutputCredentialsRefName                                = "output.credentialsRef.name"
 	ClusterManagedServiceSpec                                                    = "spec"
 	ClusterManagedServiceSpecMsvcSpec                                            = "spec.msvcSpec"
-	ClusterManagedServiceSpecMsvcSpecNodeSelector                                = "spec.msvcSpec.nodeSelector"
+	ClusterManagedServiceSpecMsvcSpecPlugin                                      = "spec.msvcSpec.plugin"
+	ClusterManagedServiceSpecMsvcSpecPluginApiVersion                            = "spec.msvcSpec.plugin.apiVersion"
+	ClusterManagedServiceSpecMsvcSpecPluginExport                                = "spec.msvcSpec.plugin.export"
+	ClusterManagedServiceSpecMsvcSpecPluginExportTemplate                        = "spec.msvcSpec.plugin.export.template"
+	ClusterManagedServiceSpecMsvcSpecPluginExportViaSecret                       = "spec.msvcSpec.plugin.export.viaSecret"
+	ClusterManagedServiceSpecMsvcSpecPluginKind                                  = "spec.msvcSpec.plugin.kind"
+	ClusterManagedServiceSpecMsvcSpecPluginSpec                                  = "spec.msvcSpec.plugin.spec"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplate                             = "spec.msvcSpec.serviceTemplate"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateApiVersion                   = "spec.msvcSpec.serviceTemplate.apiVersion"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateExport                       = "spec.msvcSpec.serviceTemplate.export"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateExportTemplate               = "spec.msvcSpec.serviceTemplate.export.template"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateExportViaSecret              = "spec.msvcSpec.serviceTemplate.export.viaSecret"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateKind                         = "spec.msvcSpec.serviceTemplate.kind"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateSpec                         = "spec.msvcSpec.serviceTemplate.spec"
-	ClusterManagedServiceSpecMsvcSpecSharedSecret                                = "spec.msvcSpec.sharedSecret"
-	ClusterManagedServiceSpecMsvcSpecTolerations                                 = "spec.msvcSpec.tolerations"
 	ClusterManagedServiceSpecSharedSecret                                        = "spec.sharedSecret"
 	ClusterManagedServiceSpecTargetNamespace                                     = "spec.targetNamespace"
 	ClusterManagedServiceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
@@ -180,6 +187,13 @@ const (
 	ImportedManagedResourceSecretRefNamespace          = "secretRef.namespace"
 )
 
+// constant vars generated for struct InterceptStatus
+const (
+	InterceptStatusIntercepted  = "intercepted"
+	InterceptStatusPortMappings = "portMappings"
+	InterceptStatusToAddr       = "toAddr"
+)
+
 // constant vars generated for struct KLoudliteEdgeCluster
 const (
 	KLoudliteEdgeClusterComments       = "comments"
@@ -238,6 +252,56 @@ const (
 const (
 	ManagedResourceRefName      = "name"
 	ManagedResourceRefNamespace = "namespace"
+)
+
+// constant vars generated for struct ManagedServicePlugin
+const (
+	ManagedServicePluginMeta           = "meta"
+	ManagedServicePluginMetaLogo       = "meta.logo"
+	ManagedServicePluginPlugin         = "plugin"
+	ManagedServicePluginSpec           = "spec"
+	ManagedServicePluginSpecApiVersion = "spec.apiVersion"
+	ManagedServicePluginSpecServices   = "spec.services"
+)
+
+// constant vars generated for struct ManagedServicePluginInputField
+const (
+	ManagedServicePluginInputFieldDefaultValue = "defaultValue"
+	ManagedServicePluginInputFieldDescription  = "description"
+	ManagedServicePluginInputFieldDisplayUnit  = "displayUnit"
+	ManagedServicePluginInputFieldInput        = "input"
+	ManagedServicePluginInputFieldLabel        = "label"
+	ManagedServicePluginInputFieldMax          = "max"
+	ManagedServicePluginInputFieldMin          = "min"
+	ManagedServicePluginInputFieldMultiplier   = "multiplier"
+	ManagedServicePluginInputFieldRequired     = "required"
+	ManagedServicePluginInputFieldType         = "type"
+	ManagedServicePluginInputFieldUnit         = "unit"
+)
+
+// constant vars generated for struct ManagedServicePluginMetadata
+const (
+	ManagedServicePluginMetadataLogo = "logo"
+)
+
+// constant vars generated for struct ManagedServicePluginResources
+const (
+	ManagedServicePluginResourcesDescription = "description"
+	ManagedServicePluginResourcesInputs      = "inputs"
+)
+
+// constant vars generated for struct ManagedServicePluginServices
+const (
+	ManagedServicePluginServicesActive      = "active"
+	ManagedServicePluginServicesDescription = "description"
+	ManagedServicePluginServicesFields      = "fields"
+	ManagedServicePluginServicesResources   = "resources"
+)
+
+// constant vars generated for struct ManagedServicePlugins
+const (
+	ManagedServicePluginsCategory = "category"
+	ManagedServicePluginsItems    = "items"
 )
 
 // constant vars generated for struct RegistryImage
@@ -328,14 +392,18 @@ const (
 
 // constant vars generated for struct ServiceBinding
 const (
-	ServiceBindingSpec                    = "spec"
-	ServiceBindingSpecGlobalIP            = "spec.globalIP"
-	ServiceBindingSpecHostname            = "spec.hostname"
-	ServiceBindingSpecPorts               = "spec.ports"
-	ServiceBindingSpecServiceIP           = "spec.serviceIP"
-	ServiceBindingSpecServiceRef          = "spec.serviceRef"
-	ServiceBindingSpecServiceRefName      = "spec.serviceRef.name"
-	ServiceBindingSpecServiceRefNamespace = "spec.serviceRef.namespace"
+	ServiceBindingInterceptStatus             = "interceptStatus"
+	ServiceBindingInterceptStatusIntercepted  = "interceptStatus.intercepted"
+	ServiceBindingInterceptStatusPortMappings = "interceptStatus.portMappings"
+	ServiceBindingInterceptStatusToAddr       = "interceptStatus.toAddr"
+	ServiceBindingSpec                        = "spec"
+	ServiceBindingSpecGlobalIP                = "spec.globalIP"
+	ServiceBindingSpecHostname                = "spec.hostname"
+	ServiceBindingSpecPorts                   = "spec.ports"
+	ServiceBindingSpecServiceIP               = "spec.serviceIP"
+	ServiceBindingSpecServiceRef              = "spec.serviceRef"
+	ServiceBindingSpecServiceRefName          = "spec.serviceRef.name"
+	ServiceBindingSpecServiceRefNamespace     = "spec.serviceRef.namespace"
 )
 
 // constant vars generated for struct
@@ -347,9 +415,11 @@ const (
 	CreatedByUserEmail                 = "createdBy.userEmail"
 	CreatedByUserId                    = "createdBy.userId"
 	CreatedByUserName                  = "createdBy.userName"
+	CreatedByHelm                      = "createdByHelm"
 	CreationTime                       = "creationTime"
 	DisplayName                        = "displayName"
 	EnvironmentName                    = "environmentName"
+	EnvironmentNamespace               = "environmentNamespace"
 	Id                                 = "id"
 	Kind                               = "kind"
 	LastUpdatedBy                      = "lastUpdatedBy"

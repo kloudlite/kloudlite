@@ -1,0 +1,45 @@
+type ServiceBinding @shareable {
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  creationTime: Date!
+  environmentName: String!
+  environmentNamespace: String!
+  id: ID!
+  interceptStatus: Github__com___kloudlite___api___apps___console___internal___entities__InterceptStatus
+  kind: String
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___networking___v1__ServiceBindingSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  updateTime: Date!
+}
+
+type ServiceBindingEdge @shareable {
+  cursor: String!
+  node: ServiceBinding!
+}
+
+type ServiceBindingPaginatedRecords @shareable {
+  edges: [ServiceBindingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ServiceBindingIn {
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  creationTime: Date!
+  id: ID!
+  interceptStatus: Github__com___kloudlite___api___apps___console___internal___entities__InterceptStatusIn
+  kind: String
+  markedForDeletion: Boolean
+  metadata: MetadataIn
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___networking___v1__ServiceBindingSpecIn
+  status: Github__com___kloudlite___operator___pkg___operator__StatusIn
+  updateTime: Date!
+}
+

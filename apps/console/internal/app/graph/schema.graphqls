@@ -13,6 +13,7 @@ enum ConsoleResType {
 	environment
 	registry_image
 	vpn_device
+	helm_chart
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
@@ -154,6 +155,11 @@ type Query {
 
 	core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
 	core_listSecrets(envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getSecret(envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
+	core_resyncSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+	core_listRouters(envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getRouter(envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
 	core_resyncRouter(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_getManagedResouceOutputKeys(msvcName: String, envName:String , name: String!): [String!]! @isLoggedInAndVerified @hasAccount
@@ -172,6 +178,11 @@ type Query {
 
 	core_getSecretVariableOutputKeys(name: String!): [String!]! @isLoggedInAndVerified @hasAccount
 	core_getSecretVariableOutputKeyValues( keyrefs: [SecretVariableKeyRefIn]): [SecretVariableKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+
+  core_listServiceBindings(envName: String!, pagination: CursorPaginationIn): ServiceBindingPaginatedRecords @isLoggedInAndVerified @hasAccount
+
+	core_listManagedServicePlugins: [ManagedServicePlugins!]
+	core_getManagedServicePlugin(category: String!, name: String!): ManagedServicePlugin
 }
 
 type Mutation {
@@ -228,10 +239,13 @@ type Mutation {
 	core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ImportedManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	core_listManagedServicePlugins: [ManagedServicePlugins!]
 	core_createSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
 	core_updateSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
 	core_deleteSecretVariable(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+  core_createServiceIntercept(envName: String!, serviceName: String!, interceptTo: String!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
+
+  core_deleteServiceIntercept(envName: String!, serviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {
@@ -251,6 +265,10 @@ extend type App {
 	build: Build
 	serviceHost: String
   onlineStatus: OnlineStatus
+}
+
+extend type ServiceBinding {
+	serviceHost: String
 }
 
 extend type ImportedManagedResource {

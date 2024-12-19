@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -274,6 +275,14 @@ func (d *domain) deleteSecret(ctx ResourceContext, name string) error {
 }
 
 func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secret) error {
+	if v, ok := secret.GetLabels()["app.kubernetes.io/managed-by"]; ok && v == "Helm" {
+		err := d.secretRepo.DeleteOne(ctx, ctx.DBFilters().Add(fields.MetadataName, secret.Name).Add(fields.MetadataNamespace, secret.Namespace))
+		if err != nil {
+			return errors.NewE(err)
+		}
+		d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, secret.Name, PublishDelete)
+	}
+
 	s, err := d.findSecret(ctx, secret.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -308,6 +317,39 @@ func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secr
 }
 
 func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	if v, ok := secretIn.GetLabels()["app.kubernetes.io/managed-by"]; ok && v == "Helm" {
+		// INFO: configmap created with Helm, we should just upsert it
+
+		ctx.DBFilters().Add(fc.MetadataName, secretIn.Name).Add(fc.MetadataNamespace, secretIn.Namespace)
+
+		secretIn.AccountName = ctx.AccountName
+		secretIn.EnvironmentName = ctx.EnvironmentName
+		secretIn.ResourceMetadata = common.ResourceMetadata{
+			DisplayName:   secretIn.Name,
+			CreatedBy:     common.CreatedOrUpdatedByResourceSync,
+			LastUpdatedBy: common.CreatedOrUpdatedByResourceSync,
+		}
+		secretIn.CreatedByHelm = fn.New(fmt.Sprintf("%s/%s", secretIn.GetAnnotations()["meta.helm.sh/release-namespace"], secretIn.GetAnnotations()["meta.helm.sh/release-name"]))
+		secretIn.SyncStatus = t.SyncStatus{
+			LastSyncedAt:  opts.MessageTimestamp,
+			Action:        t.SyncActionApply,
+			RecordVersion: 0,
+			State:         t.SyncStateAppliedAtAgent,
+			Error:         nil,
+		}
+
+		_, err := d.secretRepo.Upsert(ctx, repos.Filter{
+			fc.MetadataName:      secretIn.Name,
+			fc.MetadataNamespace: secretIn.Namespace,
+			fc.EnvironmentName:   ctx.EnvironmentName,
+		}, &secretIn)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		return nil
+	}
+
 	xSecret, err := d.findSecret(ctx, secretIn.Name)
 	if err != nil {
 		return errors.NewE(err)

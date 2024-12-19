@@ -1,3 +1,9 @@
+type Github__com___kloudlite___api___apps___console___internal___entities__InterceptStatus @shareable {
+  intercepted: Boolean
+  portMappings: [Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappings!]
+  toAddr: String!
+}
+
 type Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef @shareable {
   id: String!
   name: String!
@@ -12,6 +18,7 @@ type Github__com___kloudlite___api___apps___console___internal___entities__Manag
 
 type Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputField @shareable {
   defaultValue: Any
+  description: String
   displayUnit: String
   input: String!
   label: String!
@@ -75,6 +82,11 @@ type Github__com___kloudlite___operator___apis___common____types__MsvcRef @share
   namespace: String!
 }
 
+type Github__com___kloudlite___operator___apis___common____types__NamespacedResourceRef @shareable {
+  name: String!
+  namespace: String!
+}
+
 type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
   name: String!
   namespace: String
@@ -98,6 +110,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppContainer @sharea
 type Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings @shareable {
   appPort: Int!
   devicePort: Int!
+  protocol: Github__com___kloudlite___operator___apis___crds___v1__ServiceProtocol!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppRouter @shareable {
@@ -264,10 +277,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec 
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
-  nodeSelector: Map
   plugin: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate
   serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate
-  tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
@@ -324,8 +335,21 @@ type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe @shareabl
   command: [String!]
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappings @shareable {
+  devicePort: Int!
+  servicePort: Int!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe @shareable {
   port: Int!
+}
+
+type Github__com___kloudlite___operator___apis___networking___v1__ServiceBindingSpec @shareable {
+  globalIP: String!
+  hostname: String
+  ports: [K8s__io___api___core___v1__ServicePort!]
+  serviceIP: String
+  serviceRef: Github__com___kloudlite___operator___apis___common____types__NamespacedResourceRef
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -365,7 +389,7 @@ type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
 }
 
 type Github__com___kloudlite___operator___pkg___plugin__Export @shareable {
-  kv: Map!
+  template: String!
   viaSecret: String
 }
 
@@ -433,6 +457,15 @@ type K8s__io___api___core___v1__Secret @shareable {
   type: K8s__io___api___core___v1__SecretType
 }
 
+type K8s__io___api___core___v1__ServicePort @shareable {
+  appProtocol: String
+  name: String
+  nodePort: Int
+  port: Int!
+  protocol: K8s__io___api___core___v1__Protocol
+  targetPort: K8s__io___apimachinery___pkg___util___intstr__IntOrString
+}
+
 type K8s__io___api___core___v1__Toleration @shareable {
   effect: K8s__io___api___core___v1__TaintEffect
   key: String
@@ -468,6 +501,12 @@ type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement @
   values: [String!]
 }
 
+type K8s__io___apimachinery___pkg___util___intstr__IntOrString @shareable {
+  IntVal: Int!
+  StrVal: String!
+  Type: Int!
+}
+
 type Metadata @shareable {
   annotations: Map
   creationTimestamp: Date!
@@ -485,6 +524,12 @@ type PageInfo @shareable {
   startCursor: String
 }
 
+input Github__com___kloudlite___api___apps___console___internal___entities__InterceptStatusIn {
+  intercepted: Boolean
+  portMappings: [Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn!]
+  toAddr: String!
+}
+
 input Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn {
   id: String!
   name: String!
@@ -493,6 +538,7 @@ input Github__com___kloudlite___api___apps___console___internal___entities__Mana
 
 input Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputFieldIn {
   defaultValue: Any
+  description: String
   displayUnit: String
   input: String!
   label: String!
@@ -520,6 +566,11 @@ input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   namespace: String!
 }
 
+input Github__com___kloudlite___operator___apis___common____types__NamespacedResourceRefIn {
+  name: String!
+  namespace: String!
+}
+
 input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   name: String!
   namespace: String
@@ -543,6 +594,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
 input Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn {
   appPort: Int!
   devicePort: Int!
+  protocol: Github__com___kloudlite___operator___apis___crds___v1__ServiceProtocol!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppRouterIn {
@@ -693,10 +745,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
-  nodeSelector: Map
   plugin: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
   serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
-  tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
@@ -753,8 +803,21 @@ input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {
   command: [String!]
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn {
+  devicePort: Int!
+  servicePort: Int!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn {
   port: Int!
+}
+
+input Github__com___kloudlite___operator___apis___networking___v1__ServiceBindingSpecIn {
+  globalIP: String!
+  hostname: String
+  ports: [K8s__io___api___core___v1__ServicePortIn!]
+  serviceIP: String
+  serviceRef: Github__com___kloudlite___operator___apis___common____types__NamespacedResourceRefIn
 }
 
 input Github__com___kloudlite___operator___pkg___operator__CheckIn {
@@ -794,7 +857,7 @@ input Github__com___kloudlite___operator___pkg___operator__StatusIn {
 }
 
 input Github__com___kloudlite___operator___pkg___plugin__ExportIn {
-  kv: Map!
+  template: String!
   viaSecret: String
 }
 
@@ -852,6 +915,15 @@ input K8s__io___api___core___v1__PreferredSchedulingTermIn {
   weight: Int!
 }
 
+input K8s__io___api___core___v1__ServicePortIn {
+  appProtocol: String
+  name: String
+  nodePort: Int
+  port: Int!
+  protocol: K8s__io___api___core___v1__Protocol
+  targetPort: K8s__io___apimachinery___pkg___util___intstr__IntOrStringIn
+}
+
 input K8s__io___api___core___v1__TolerationIn {
   effect: K8s__io___api___core___v1__TaintEffect
   key: String
@@ -887,6 +959,12 @@ input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementI
   values: [String!]
 }
 
+input K8s__io___apimachinery___pkg___util___intstr__IntOrStringIn {
+  IntVal: Int!
+  StrVal: String!
+  Type: Int!
+}
+
 input MetadataIn {
   annotations: Map
   labels: Map
@@ -905,7 +983,7 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__Resou
   config
   environment
   external_app
-  hlem_chart
+  helm_chart
   image_pull_secret
   imported_managed_resource
   managed_resource
@@ -952,6 +1030,11 @@ enum Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordTyp
   IPAddr
 }
 
+enum Github__com___kloudlite___operator___apis___crds___v1__ServiceProtocol {
+  TCP
+  UDP
+}
+
 enum Github__com___kloudlite___operator___pkg___operator__State {
   errored____during____reconcilation
   finished____reconcilation
@@ -966,6 +1049,12 @@ enum K8s__io___api___core___v1__NodeSelectorOperator {
   In
   Lt
   NotIn
+}
+
+enum K8s__io___api___core___v1__Protocol {
+  SCTP
+  TCP
+  UDP
 }
 
 enum K8s__io___api___core___v1__SecretType {

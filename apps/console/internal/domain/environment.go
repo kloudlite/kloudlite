@@ -71,6 +71,19 @@ func (d *domain) findEnvironment(ctx ConsoleContext, name string) (*entities.Env
 	return env, nil
 }
 
+func (d *domain) GetEnvironmentByTargetNamespace(ctx ConsoleContext, targetNamespace string) (*entities.Environment, error) {
+	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{fc.EnvironmentSpecTargetNamespace: targetNamespace})
+	if err != nil {
+		return nil, err
+	}
+
+	if env == nil {
+		return nil, errors.Newf("no environment with target namespace (%s)", targetNamespace)
+	}
+
+	return env, nil
+}
+
 func (d *domain) getClusterAttachedToEnvironment(ctx K8sContext, name string) (*string, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.GetAccountName(),

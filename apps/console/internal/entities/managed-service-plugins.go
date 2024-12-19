@@ -1,16 +1,21 @@
 package entities
 
 type ManagedServicePluginInputField struct {
-	Input        string   `json:"input"`
-	Label        string   `json:"label"`
+	Input       string `json:"input"`
+	Label       string `json:"label"`
+	Description string `json:"description,omitempty"`
+
+	Unit        *string `json:"unit,omitempty"`
+	DisplayUnit *string `json:"displayUnit,omitempty"`
+
 	Type         string   `json:"type"`
 	DefaultValue any      `json:"defaultValue,omitempty"`
 	Min          *float64 `json:"min,omitempty"`
 	Max          *float64 `json:"max,omitempty"`
-	Required     *bool    `json:"required,omitempty"`
-	Unit         *string  `json:"unit,omitempty"`
-	DisplayUnit  *string  `json:"displayUnit,omitempty"`
-	Multiplier   *float64 `json:"multiplier,omitempty"`
+
+	Required *bool `json:"required,omitempty"`
+
+	Multiplier *float64 `json:"multiplier,omitempty"`
 }
 
 // type ManagedServicePluginSpec struct {

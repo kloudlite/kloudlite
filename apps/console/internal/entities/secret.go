@@ -23,7 +23,8 @@ type Secret struct {
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 
-	IsReadOnly bool `json:"isReadyOnly" graphql:"noinput"`
+	IsReadOnly    bool    `json:"isReadyOnly" graphql:"noinput"`
+	CreatedByHelm *string `json:"createdByHelm,omitempty" graphql:"noinput"`
 }
 
 type SecretCreatedFor struct {

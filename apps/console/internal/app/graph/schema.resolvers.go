@@ -7,9 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -449,7 +448,7 @@ func (r *mutationResolver) InfraDeleteClusterManagedService(ctx context.Context,
 
 // InfraCloneClusterManagedService is the resolver for the infra_cloneClusterManagedService field.
 func (r *mutationResolver) InfraCloneClusterManagedService(ctx context.Context, clusterName string, sourceMsvcName string, destinationMsvcName string, displayName string) (*entities.ClusterManagedService, error) {
-	panic(fmt.Errorf("not implemented: InfraCloneClusterManagedService - infra_cloneClusterManagedService"))
+	return nil, fmt.Errorf("not implemented: InfraCloneClusterManagedService - infra_cloneClusterManagedService")
 }
 
 // CoreCreateManagedResource is the resolver for the core_createManagedResource field.
@@ -504,12 +503,6 @@ func (r *mutationResolver) CoreDeleteImportedManagedResource(ctx context.Context
 	return true, nil
 }
 
-// CoreListManagedServicePlugins is the resolver for the core_listManagedServicePlugins field.
-func (r *mutationResolver) CoreListManagedServicePlugins(ctx context.Context) ([]*entities.ManagedServicePlugins, error) {
-	return r.Domain.ListManagedServicePlugins()
-}
-	
-
 // CoreCreateSecretVariable is the resolver for the core_createSecretVariable field.
 func (r *mutationResolver) CoreCreateSecretVariable(ctx context.Context, secretVariable entities.SecretVariable) (*entities.SecretVariable, error) {
 	cc, err := toConsoleContext(ctx)
@@ -535,6 +528,30 @@ func (r *mutationResolver) CoreDeleteSecretVariable(ctx context.Context, name st
 		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteSecretVariable(cc, name); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// CoreCreateServiceIntercept is the resolver for the core_createServiceIntercept field.
+func (r *mutationResolver) CoreCreateServiceIntercept(ctx context.Context, envName string, serviceName string, interceptTo string, portMappings []*v11.SvcInterceptPortMappings) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if _, err := r.Domain.CreateServiceIntercept(cc, envName, serviceName, interceptTo, portMappings); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// CoreDeleteServiceIntercept is the resolver for the core_deleteServiceIntercept field.
+func (r *mutationResolver) CoreDeleteServiceIntercept(ctx context.Context, envName string, serviceName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteServiceIntercept(cc, envName, serviceName); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -952,6 +969,63 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, envName string, sea
 	return fn.JsonConvertP[model.SecretPaginatedRecords](pSecrets)
 }
 
+// CoreGetSecret is the resolver for the core_getSecret field.
+func (r *queryResolver) CoreGetSecret(ctx context.Context, envName string, name string) (*entities.Secret, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetSecret(newResourceContext(cc, envName), name)
+}
+
+// CoreResyncSecret is the resolver for the core_resyncSecret field.
+func (r *queryResolver) CoreResyncSecret(ctx context.Context, envName string, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.ResyncSecret(newResourceContext(cc, envName), name); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// CoreListRouters is the resolver for the core_listRouters field.
+func (r *queryResolver) CoreListRouters(ctx context.Context, envName string, search *model.SearchRouters, pq *repos.CursorPagination) (*model.RouterPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
+	}
+
+	pRouters, err := r.Domain.ListRouters(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return fn.JsonConvertP[model.RouterPaginatedRecords](pRouters)
+}
+
+// CoreGetRouter is the resolver for the core_getRouter field.
+func (r *queryResolver) CoreGetRouter(ctx context.Context, envName string, name string) (*entities.Router, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetRouter(newResourceContext(cc, envName), name)
+}
+
 // CoreResyncRouter is the resolver for the core_resyncRouter field.
 func (r *queryResolver) CoreResyncRouter(ctx context.Context, envName string, name string) (bool, error) {
 	cc, err := toConsoleContext(ctx)
@@ -1210,13 +1284,43 @@ func (r *queryResolver) CoreGetSecretVariableOutputKeyValues(ctx context.Context
 	return r.Domain.GetSecretVariableOutputKVs(cc, m)
 }
 
+// CoreListServiceBindings is the resolver for the core_listServiceBindings field.
+func (r *queryResolver) CoreListServiceBindings(ctx context.Context, envName string, pagination *repos.CursorPagination) (*model.ServiceBindingPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	serviceBindings, err := r.Domain.ListServiceBindings(cc, envName, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+	return fn.JsonConvertP[model.ServiceBindingPaginatedRecords](serviceBindings)
+}
+
+// CoreListManagedServicePlugins is the resolver for the core_listManagedServicePlugins field.
+func (r *queryResolver) CoreListManagedServicePlugins(ctx context.Context) ([]*entities.ManagedServicePlugins, error) {
+	return r.Domain.ListManagedServicePlugins()
+}
+
+// CoreGetManagedServicePlugin is the resolver for the core_getManagedServicePlugin field.
+func (r *queryResolver) CoreGetManagedServicePlugin(ctx context.Context, category string, name string) (*entities.ManagedServicePlugin, error) {
+	return r.Domain.GetManagedServicePlugin(category, name)
+}
+
+// ServiceHost is the resolver for the serviceHost field.
+func (r *serviceBindingResolver) ServiceHost(ctx context.Context, obj *entities.ServiceBinding) (*string, error) {
+	if obj == nil {
+		return nil, errNilServiceBinding
+	}
+	return fn.New(fmt.Sprintf("%s.%s.%s", obj.Spec.Hostname, obj.AccountName, r.EnvVars.KloudliteDNSSuffix)), nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

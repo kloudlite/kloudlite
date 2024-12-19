@@ -44,6 +44,12 @@ func (c ConsoleContext) GetAccountName() string {
 	return c.AccountName
 }
 
+func (r ConsoleContext) DBFilters() repos.Filter {
+	return repos.Filter{
+		fields.AccountName: r.AccountName,
+	}
+}
+
 type ResourceContext struct {
 	ConsoleContext
 	EnvironmentName string
@@ -178,6 +184,7 @@ type Domain interface {
 
 	ListEnvironments(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Environment], error)
 	GetEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error)
+	GetEnvironmentByTargetNamespace(ctx ConsoleContext, targetNamespace string) (*entities.Environment, error)
 
 	SetupDefaultEnvTemplate(ctx ConsoleContext) error
 	CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
@@ -342,6 +349,9 @@ type Domain interface {
 }
 
 type ServiceBinding interface {
+	CreateServiceIntercept(ctx ConsoleContext, envName string, serviceName string, interceptTo string, portMappings []*crdsv1.SvcInterceptPortMappings) (*entities.ServiceBinding, error)
+	DeleteServiceIntercept(ctx ConsoleContext, envName string, serviceName string) error
+	ListServiceBindings(ctx ConsoleContext, envName string, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ServiceBinding], error)
 	OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnServiceBindingDeleteMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding) error
 }
@@ -365,7 +375,6 @@ type ClusterManagedService interface {
 type ManagedServicePlugin interface {
 	ListManagedServicePlugins() ([]*entities.ManagedServicePlugins, error)
 	GetManagedServicePlugin(category string, name string) (*entities.ManagedServicePlugin, error)
-
 }
 
 type SecretVariable interface {
@@ -379,6 +388,7 @@ type SecretVariable interface {
 
 	GetSecretVariableOutputKVs(ctx ConsoleContext, keyrefs []SecretVariableKeyRef) ([]*SecretVariableKeyValueRef, error)
 	GetSecretVariableOutputKeys(ctx ConsoleContext, name string) ([]string, error)
+}
 
 type PublishMsg string
 
