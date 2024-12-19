@@ -52,18 +52,23 @@ var (
 
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
 	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj *unstructured.Unstructured) (domain.ResourceContext, error) {
-		if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
-			return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: v}, nil
-		}
-		mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
+		// if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
+		// 	return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: v}, nil
+		// }
+		// mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
+		// if err != nil {
+		// 	return domain.ResourceContext{}, err
+		// }
+		// if mapping == nil {
+		// 	return domain.ResourceContext{}, errors.Newf("mapping not found for %s %s/%s", rt, obj.GetNamespace(), obj.GetName())
+		// }
+
+		e, err := d.GetEnvironmentByTargetNamespace(ctx, obj.GetNamespace())
 		if err != nil {
 			return domain.ResourceContext{}, err
 		}
-		if mapping == nil {
-			return domain.ResourceContext{}, errors.Newf("mapping not found for %s %s/%s", rt, obj.GetNamespace(), obj.GetName())
-		}
 
-		return newResourceContext(ctx, mapping.EnvironmentName), nil
+		return newResourceContext(ctx, e.Name), nil
 	}
 
 	counter := 0

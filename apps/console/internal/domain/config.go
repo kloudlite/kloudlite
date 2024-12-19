@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -217,7 +219,7 @@ func (d *domain) OnConfigApplyError(ctx ResourceContext, errMsg, name string, op
 }
 
 func (d *domain) OnConfigDeleteMessage(ctx ResourceContext, config entities.Config) error {
-	err := d.configRepo.DeleteOne(ctx, ctx.DBFilters().Add(fields.MetadataName, config.Name))
+	err := d.configRepo.DeleteOne(ctx, ctx.DBFilters().Add(fields.MetadataName, config.Name).Add(fields.MetadataNamespace, config.Namespace))
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -226,6 +228,41 @@ func (d *domain) OnConfigDeleteMessage(ctx ResourceContext, config entities.Conf
 }
 
 func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, configIn entities.Config, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	if v, ok := configIn.GetLabels()["app.kubernetes.io/managed-by"]; ok && v == "Helm" {
+		// INFO: configmap created with Helm, we should just upsert it
+
+		ctx.DBFilters().Add(fc.MetadataName, configIn.Name).Add(fc.MetadataNamespace, configIn.Namespace)
+		// meta.helm.sh/release-name: playground
+		// meta.helm.sh/release-namespace: env-nxt17-env-1
+
+		configIn.AccountName = ctx.AccountName
+		configIn.EnvironmentName = ctx.EnvironmentName
+		configIn.CreatedByHelm = fn.New(fmt.Sprintf("%s/%s", configIn.GetAnnotations()["meta.helm.sh/release-namespace"], configIn.GetAnnotations()["meta.helm.sh/release-name"]))
+		configIn.ResourceMetadata = common.ResourceMetadata{
+			DisplayName:   configIn.Name,
+			CreatedBy:     common.CreatedOrUpdatedByResourceSync,
+			LastUpdatedBy: common.CreatedOrUpdatedByResourceSync,
+		}
+		configIn.SyncStatus = t.SyncStatus{
+			LastSyncedAt:  opts.MessageTimestamp,
+			Action:        t.SyncActionApply,
+			RecordVersion: 0,
+			State:         t.SyncStateAppliedAtAgent,
+			Error:         nil,
+		}
+
+		_, err := d.configRepo.Upsert(ctx, repos.Filter{
+			fc.MetadataName:      configIn.Name,
+			fc.MetadataNamespace: configIn.Namespace,
+			fc.EnvironmentName:   ctx.EnvironmentName,
+		}, &configIn)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		return nil
+	}
+
 	xconfig, err := d.findConfig(ctx, configIn.Name)
 	if err != nil {
 		return errors.NewE(err)

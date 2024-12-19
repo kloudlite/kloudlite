@@ -16,6 +16,10 @@ query: |+ #graphql
             name
             namespace
           }
+          status {
+            isReady
+            checks
+          }
         }
       }
       pageInfo {

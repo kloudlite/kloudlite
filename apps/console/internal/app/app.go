@@ -19,7 +19,7 @@ import (
 	infra_service "github.com/kloudlite/api/apps/console/internal/app/adapters/infra-service"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
-	"github.com/kloudlite/api/apps/console/internal/app/resource-updates-receiver"
+	resource_updates_receiver "github.com/kloudlite/api/apps/console/internal/app/resource-updates-receiver"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
