@@ -32,8 +32,12 @@ type (
 )
 
 func (f Filter) Add(key string, value interface{}) Filter {
-	f[key] = value
-	return f
+	nm := make(map[string]any, len(f)+1)
+	for k, v := range f {
+		nm[k] = v
+	}
+	nm[key] = value
+	return nm
 }
 
 type Query struct {
