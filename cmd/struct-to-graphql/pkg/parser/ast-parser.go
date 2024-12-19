@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"go/constant"
 	"go/types"
-	"golang.org/x/tools/go/packages"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 func parseConstantsFromPkg(packagePath string, typeName string) ([]string, error) {

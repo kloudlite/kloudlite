@@ -40,7 +40,7 @@ func main() {
 
 			if varObj.Type().String() == obj.Type().String() {
 				if val, ok := varObj.(*types.Const); ok {
-					//fmt.Println(varObj.Name())
+					// fmt.Println(varObj.Name())
 					fmt.Println(val.Val())
 				}
 			}
