@@ -18,7 +18,7 @@ type res struct {
 	// } `json:"overrides,omitempty"`
 	Status struct {
 		Checks  map[string]Check `json:"checks,omitempty"`
-		IsReady *bool            `json:"isReady"`
+		IsReady *bool            `json:"isReady,omitempty"`
 	} `json:"status"`
 }
 
@@ -115,13 +115,13 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 			}
 
 			if oldRes.Status.IsReady == nil || newRes.Status.IsReady == nil {
-				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
-				fireEvent(newObj, ReasonStatusIsReadyChanged, fmt.Sprintf("resource isReady changed from (%+v) to (%+v)", newRes.Status.IsReady, oldRes.Status.IsReady))
+				// INFO:  it means this resource is not a kloudlite resource, in that case,
+				// it should just be always allowed, as it can be a pod or a job, that some kloudlite resource is watching over
 				return true
 			}
 
 			if *oldRes.Status.IsReady != *newRes.Status.IsReady {
-				fireEvent(newObj, ReasonStatusIsReadyChanged, fmt.Sprintf("resource isReady changed from (%+v) to (%+v)", newRes.Status.IsReady, oldRes.Status.IsReady))
+				fireEvent(newObj, ReasonStatusIsReadyChanged, fmt.Sprintf("resource isReady changed from (%v) to (%v)", newRes.Status.IsReady, oldRes.Status.IsReady))
 				return true
 			}
 
