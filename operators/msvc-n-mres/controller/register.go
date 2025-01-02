@@ -7,6 +7,7 @@ import (
 
 	cluster_msvc "github.com/kloudlite/operator/operators/msvc-n-mres/internal/cluster-msvc"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
+	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/mres"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc"
 )
 
@@ -17,6 +18,7 @@ func RegisterInto(mgr operator.Operator) {
 	)
 	mgr.RegisterControllers(
 		&msvc.Reconciler{Env: ev, YAMLClient: mgr.Operator().KubeYAMLClient()},
+		&mres.Reconciler{Env: mres.GetEnvOrDie(), YAMLClient: mgr.Operator().KubeYAMLClient()},
 		&cluster_msvc.Reconciler{Env: ev, YAMLClient: mgr.Operator().KubeYAMLClient()},
 	)
 }

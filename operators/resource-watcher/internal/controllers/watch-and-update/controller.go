@@ -118,7 +118,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger *slog.Logger, obj
 			}
 
 			mresSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(mr.Namespace, mr.Output.CredentialsRef.Name), mresSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(mr.Namespace, mr.Spec.Plugin.Export.ViaSecret), mresSecret); err != nil {
 				logger.Info(fmt.Sprintf("mres secret for resource (%s), not found", obj.GetName()))
 				mresSecret = nil
 			}

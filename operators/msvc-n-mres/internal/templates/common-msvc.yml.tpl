@@ -27,7 +27,14 @@ spec:
   {{$serviceTemplateSpec | toYAML | nindent 2 }}
 
 {{- if $export }}
-export: {{ $export | toYAML | nindent 2 }}
+export:
+  {{- if $export.ViaSecret }}
+  viaSecret: {{ $export.ViaSecret }}
+  {{- end }}
+
+  {{- if $export.Template }}
+  template: {{ $export.Template }}
+  {{- end }}
 {{- end }}
 
 {{- /* {{- if $output }} */}}

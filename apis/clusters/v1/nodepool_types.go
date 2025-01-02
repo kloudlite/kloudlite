@@ -7,7 +7,7 @@ import (
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -40,7 +40,7 @@ type AwsSpotPoolConfig struct {
 }
 
 type AWSNodePoolConfig struct {
-	Region string `json:"region" graphql:"noinput"`
+	Region           string `json:"region" graphql:"noinput"`
 	AvailabilityZone string `json:"availabilityZone"`
 
 	VPCId       string `json:"vpcId" graphql:"noinput"`
@@ -123,8 +123,8 @@ type NodePool struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   NodePoolSpec `json:"spec"`
-	Status rApi.Status  `json:"status,omitempty" graphql:"noinput"`
+	Spec   NodePoolSpec      `json:"spec"`
+	Status reconciler.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (n *NodePool) EnsureGVK() {
@@ -133,7 +133,7 @@ func (n *NodePool) EnsureGVK() {
 	}
 }
 
-func (n *NodePool) GetStatus() *rApi.Status {
+func (n *NodePool) GetStatus() *reconciler.Status {
 	return &n.Status
 }
 

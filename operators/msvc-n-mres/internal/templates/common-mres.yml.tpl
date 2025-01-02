@@ -9,7 +9,7 @@
 {{- $msvcRef := get . "msvc-ref" }}
 {{- $resourceTemplateSpec := get . "resource-template-spec" }}
 
-{{- $output := get . "output" }}
+{{- $export := get . "export" }}
 
 apiVersion: {{$apiVersion}}
 kind: {{$kind}}
@@ -19,11 +19,22 @@ metadata:
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
   labels: {{ $labels | toYAML | nindent 4}}
 spec:
-  msvcRef: {{$msvcRef | toYAML | nindent 4 }}
+  managedServiceRef: {{$msvcRef | toYAML | nindent 4 }}
   {{- if $resourceTemplateSpec }}
   {{ $resourceTemplateSpec | toYAML | nindent 2 }}
   {{- end}}
-{{- if $output }}
-output: {{$output | toYAML | nindent 2 }}
-{{- end }}
 
+{{- /* {{- if $output }} */}}
+{{- /* output: {{$output | toYAML | nindent 2 }} */}}
+{{- /* {{- end }} */}}
+
+{{- if $export }}
+export:
+  {{- if $export.ViaSecret }}
+  viaSecret: {{ $export.ViaSecret }}
+  {{- end }}
+
+  {{- if $export.Template }}
+  template: {{ $export.Template }}
+  {{- end }}
+{{- end }}

@@ -67,7 +67,6 @@ spec:
                           viaSecret:
                             type: string
                         required:
-                        - template
                         - viaSecret
                         type: object
                       kind:
@@ -91,7 +90,6 @@ spec:
                           viaSecret:
                             type: string
                         required:
-                        - template
                         - viaSecret
                         type: object
                       kind:

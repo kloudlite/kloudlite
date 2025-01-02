@@ -14,21 +14,21 @@ import (
 )
 
 // +kubebuilder:object:generate=true
-type ServiceTemplate struct {
+type PluginTemplate struct {
 	APIVersion string                          `json:"apiVersion"`
 	Kind       string                          `json:"kind"`
 	Spec       map[string]apiextensionsv1.JSON `json:"spec,omitempty"`
 	Export     plugin.Export                   `json:"export,omitempty"`
 }
 
-func (s *ServiceTemplate) GroupVersionKind() schema.GroupVersionKind {
+func (s *PluginTemplate) GroupVersionKind() schema.GroupVersionKind {
 	return fn.ParseGVK(s.APIVersion, s.Kind)
 }
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	ServiceTemplate *ServiceTemplate `json:"serviceTemplate,omitempty"`
-	Plugin          *ServiceTemplate `json:"plugin,omitempty"`
+	ServiceTemplate *PluginTemplate `json:"serviceTemplate,omitempty"`
+	Plugin          *PluginTemplate `json:"plugin,omitempty"`
 }
 
 func (obj *ManagedService) PatchWithDefaults() (hasPatched bool) {
