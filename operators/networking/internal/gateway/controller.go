@@ -12,11 +12,10 @@ import (
 	"github.com/kloudlite/operator/operators/networking/internal/gateway/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/errors"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -32,11 +31,10 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	Env        *env.Env
-	logger     logging.Logger
-	Name       string
-	yamlClient kubectl.YAMLClient
+	Scheme *runtime.Scheme
+	Env    *env.Env
+
+	YAMLClient kubectl.YAMLClient
 
 	templateDeployment []byte
 	templateWebhook    []byte
@@ -44,7 +42,7 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "gateway"
 }
 
 const (
@@ -73,7 +71,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &networkingv1.Gateway{})
+	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &networkingv1.Gateway{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -159,7 +157,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*networkingv1.Gateway]) stepResu
 
 	check := rApi.NewRunningCheck(finalizing, req)
 
-	if step := req.CleanupOwnedResourcesV2(check); !step.ShouldProceed() {
+	if step := req.CleanupOwnedResources(check); !step.ShouldProceed() {
 		return step
 	}
 
@@ -301,7 +299,7 @@ func (r *Reconciler) setupDeploymentRBAC(req *rApi.Request[*networkingv1.Gateway
 		return check.Failed(err)
 	}
 
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -421,7 +419,7 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 
 	fmt.Printf("deployment:\n\n%s\n\n", b)
 
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -506,7 +504,7 @@ func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gatew
 		return check.Failed(err)
 	}
 
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -593,11 +591,13 @@ func (r *Reconciler) trackLoadBalancer(req *rApi.Request[*networkingv1.Gateway])
 	return check.Completed()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("yamlclient must be set")
+	}
 
 	var err error
 	r.templateDeployment, err = templates.Read(templates.GatewayDeploymentTemplate)

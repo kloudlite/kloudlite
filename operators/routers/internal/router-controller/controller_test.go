@@ -53,7 +53,7 @@ var _ = Describe("router controller [CREATE] says", Ordered, func() {
 
 	It("should add some finalizers to the resource", func() {
 		Promise(func(g Gomega) {
-			Reconcile(reconciler, client.ObjectKeyFromObject(&routerCr))
+			Reconcile(r, client.ObjectKeyFromObject(&routerCr))
 			var obj crdsv1.Router
 			err := Suite.K8sClient.Get(Suite.Context, fn.NN(routerCr.Namespace, routerCr.Name), &obj)
 			g.Expect(err).NotTo(HaveOccurred())
@@ -64,7 +64,7 @@ var _ = Describe("router controller [CREATE] says", Ordered, func() {
 
 	It("should create a k8s ingress resource, owned by Router", func() {
 		Promise(func(g Gomega) {
-			Reconcile(reconciler, fn.NN(routerCr.Namespace, routerCr.Name))
+			Reconcile(r, fn.NN(routerCr.Namespace, routerCr.Name))
 			var ing networkingv1.Ingress
 			err := Suite.K8sClient.Get(Suite.Context, fn.NN(routerCr.Namespace, routerCr.Name), &ing)
 			g.Expect(err).NotTo(HaveOccurred())
@@ -81,7 +81,7 @@ var _ = Describe("router controller [DELETE] says", Ordered, func() {
 	BeforeAll(func() {
 		Expect(Suite.K8sClient.Create(Suite.Context, &routerCr)).NotTo(HaveOccurred())
 		Promise(func(g Gomega) {
-			Reconcile(reconciler, fn.NN(routerCr.Namespace, routerCr.Name))
+			Reconcile(r, fn.NN(routerCr.Namespace, routerCr.Name))
 			var obj crdsv1.Router
 			err := Suite.K8sClient.Get(Suite.Context, fn.NN(routerCr.Namespace, routerCr.Name), &obj)
 			g.Expect(err).NotTo(HaveOccurred())
@@ -96,7 +96,7 @@ var _ = Describe("router controller [DELETE] says", Ordered, func() {
 	It("k8s ingress resources owned by router, does not exist", func() {
 		Expect(Suite.K8sClient.Delete(Suite.Context, &routerCr))
 		Promise(func(g Gomega) {
-			Reconcile(reconciler, client.ObjectKeyFromObject(&routerCr))
+			Reconcile(r, client.ObjectKeyFromObject(&routerCr))
 
 			var obj crdsv1.Router
 			err := Suite.K8sClient.Get(Suite.Context, fn.NN(routerCr.Namespace, routerCr.Name), &obj)
@@ -110,7 +110,7 @@ var _ = Describe("router controller [DELETE] says", Ordered, func() {
 
 	It("after ingress resource is deleted, router itself does not exist", func() {
 		Promise(func(g Gomega) {
-			Reconcile(reconciler, client.ObjectKeyFromObject(&routerCr))
+			Reconcile(r, client.ObjectKeyFromObject(&routerCr))
 
 			var obj crdsv1.Router
 			err := Suite.K8sClient.Get(Suite.Context, fn.NN(routerCr.Namespace, routerCr.Name), &obj)
@@ -138,7 +138,7 @@ var _ = Describe("router controller [UPDATE] says", func() {
 		}
 
 		Promise(func(g Gomega) {
-			Reconcile(reconciler, fn.NN(routerCr.Namespace, routerCr.Name))
+			Reconcile(r, fn.NN(routerCr.Namespace, routerCr.Name))
 			var ing networkingv1.Ingress
 			err := Suite.K8sClient.Get(Suite.Context, fn.NN(routerCr.Namespace, routerCr.Name), &ing)
 			g.Expect(err).NotTo(HaveOccurred())
@@ -170,7 +170,7 @@ var _ = Describe("router controller [UPDATE] says", func() {
 		}
 
 		Promise(func(g Gomega) {
-			Reconcile(reconciler, fn.NN(routerCr.Namespace, routerCr.Name))
+			Reconcile(r, fn.NN(routerCr.Namespace, routerCr.Name))
 			var ing networkingv1.Ingress
 			err := Suite.K8sClient.Get(Suite.Context, fn.NN(routerCr.Namespace, routerCr.Name), &ing)
 			g.Expect(err).NotTo(HaveOccurred())

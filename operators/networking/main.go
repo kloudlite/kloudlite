@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kloudlite/operator/operator"
 	"github.com/kloudlite/operator/operators/networking/register"
+	"github.com/kloudlite/operator/toolkit/operator"
 )
 
 func main() {

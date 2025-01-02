@@ -9,11 +9,10 @@ import (
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/operators/project/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	reconcinler "github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,17 +30,16 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme                   *runtime.Scheme
-	Env                      *env.Env
-	logger                   logging.Logger
-	Name                     string
-	yamlClient               kubectl.YAMLClient
+	Scheme     *runtime.Scheme
+	Env        *env.Env
+	YAMLClient kubectl.YAMLClient
+
 	templateNamespaceRBAC    []byte
 	templateHelmIngressNginx []byte
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "environment"
 }
 
 const (
@@ -57,7 +55,7 @@ const (
 	envServiceAccount string = "kloudlite-env-sa"
 )
 
-var DestroyChecklist = []rApi.CheckMeta{
+var DestroyChecklist = []reconcinler.CheckMeta{
 	{Name: envFinalizing, Title: "Finalizing Environment"},
 }
 
@@ -66,7 +64,7 @@ var DestroyChecklist = []rApi.CheckMeta{
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Environment{})
+	req, err := reconcinler.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.Environment{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -89,7 +87,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList([]rApi.CheckMeta{
+	if step := req.EnsureCheckList([]reconcinler.CheckMeta{
 		{Name: patchDefaults, Title: "Patching Defaults"},
 		{Name: ensureNamespace, Title: "Ensuring Namespace"},
 		{Name: ensureNamespaceRBACs, Title: "Ensuring Namespace RBACs"},
@@ -134,9 +132,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+func (r *Reconciler) finalize(req *reconcinler.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(envFinalizing, req)
+	check := reconcinler.NewRunningCheck(envFinalizing, req)
 
 	if step := req.EnsureCheckList(DestroyChecklist); !step.ShouldProceed() {
 		return step
@@ -153,7 +151,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 		mres[i] = &mresList.Items[i]
 	}
 
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, mres...); err != nil {
+	if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, mres...); err != nil {
 		return check.StillRunning(err).NoRequeue()
 	}
 
@@ -168,7 +166,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 		routers[i] = &routersList.Items[i]
 	}
 
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, routers...); err != nil {
+	if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, routers...); err != nil {
 		return check.StillRunning(err).NoRequeue()
 	}
 
@@ -183,7 +181,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 		apps[i] = &appsList.Items[i]
 	}
 
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, apps...); err != nil {
+	if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, apps...); err != nil {
 		return check.StillRunning(err).NoRequeue()
 	}
 
@@ -201,7 +199,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 		configs = append(configs, &configsList.Items[i])
 	}
 
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, configs...); err != nil {
+	if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, configs...); err != nil {
 		return check.StillRunning(err).NoRequeue()
 	}
 
@@ -216,25 +214,42 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 		secrets[i] = &secretsList.Items[i]
 	}
 
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, secrets...); err != nil {
+	if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, secrets...); err != nil {
 		return check.StillRunning(err).NoRequeue()
 	}
 
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+	var helmList crdsv1.HelmChartList
+	if err := findResourceBelongingToEnvironment(ctx, r.Client, &helmList, obj.Spec.TargetNamespace); err != nil {
+		return check.Failed(err)
+	}
+
+	helmCharts := make([]client.Object, len(helmList.Items))
+	for i := range helmList.Items {
+		helmCharts[i] = &helmList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, helmCharts...); err != nil {
+		return check.StillRunning(err).NoRequeue()
+	}
+
+	if step := req.CleanupOwnedResources(check); !step.ShouldProceed() {
 		return step
 	}
 
 	// deleting namespace
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}); err != nil {
+	if err := fn.DeleteAndWait(ctx, req.Logger, r.Client, &corev1.Namespace{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace},
+	}); err != nil {
 		return check.StillRunning(err).NoRequeue()
 	}
 
 	return req.Finalize()
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+func (r *Reconciler) patchDefaults(req *reconcinler.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(patchDefaults, req)
+	check := reconcinler.NewRunningCheck(patchDefaults, req)
 
 	hasUpdated := false
 
@@ -269,9 +284,9 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 	return check.Completed()
 }
 
-func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+func (r *Reconciler) ensureNamespace(req *reconcinler.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(ensureNamespace, req)
+	check := reconcinler.NewRunningCheck(ensureNamespace, req)
 
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
@@ -299,9 +314,9 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 	return check.Completed()
 }
 
-func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+func (r *Reconciler) ensureNamespaceRBACs(req *reconcinler.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(ensureNamespaceRBACs, req)
+	check := reconcinler.NewRunningCheck(ensureNamespaceRBACs, req)
 
 	var pullSecrets corev1.SecretList
 	if err := r.List(ctx, &pullSecrets, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
@@ -325,7 +340,7 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 		return check.Failed(err).Err(nil)
 	}
 
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -336,55 +351,55 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 }
 
 // DEPRECATED: no use as of now
-func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(setupEnvIngress, req)
-
-	// releaseName := fmt.Sprintf("%s-env-ingress-%s", obj.Spec.TargetNamespace, obj.Name)
-	releaseName := obj.Spec.Routing.PrivateIngressClass
-	releaseNamespace := obj.Spec.TargetNamespace
-
-	b, err := templates.ParseBytes(r.templateHelmIngressNginx, map[string]any{
-		"release-name":      releaseName,
-		"release-namespace": releaseNamespace,
-
-		"labels": map[string]string{
-			constants.EnvironmentNameKey: obj.Name,
-		},
-
-		"ingress-class-name": obj.Spec.Routing.PrivateIngressClass,
-	})
-	if err != nil {
-		return check.Failed(err).Err(nil)
-	}
-
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
-	if err != nil {
-		return check.StillRunning(err)
-	}
-
-	req.AddToOwnedResources(rr...)
-
-	// wait for helm chart to be ready
-	hc, err := rApi.Get(ctx, r.Client, fn.NN(releaseNamespace, releaseName), &crdsv1.HelmChart{})
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	if !hc.Status.IsReady {
-		if hc.Status.Message != nil {
-			check.Message = hc.Status.Message.ToString()
-		}
-		return check.StillRunning(fmt.Errorf("waiting for helm chart to be ready")).NoRequeue()
-	}
-
-	return check.Completed()
-}
+// func (r *Reconciler) setupEnvIngressController(req *reconcinler.Request[*crdsv1.Environment]) stepResult.Result {
+// 	ctx, obj := req.Context(), req.Object
+// 	check := reconcinler.NewRunningCheck(setupEnvIngress, req)
+//
+// 	// releaseName := fmt.Sprintf("%s-env-ingress-%s", obj.Spec.TargetNamespace, obj.Name)
+// 	releaseName := obj.Spec.Routing.PrivateIngressClass
+// 	releaseNamespace := obj.Spec.TargetNamespace
+//
+// 	b, err := templates.ParseBytes(r.templateHelmIngressNginx, map[string]any{
+// 		"release-name":      releaseName,
+// 		"release-namespace": releaseNamespace,
+//
+// 		"labels": map[string]string{
+// 			constants.EnvironmentNameKey: obj.Name,
+// 		},
+//
+// 		"ingress-class-name": obj.Spec.Routing.PrivateIngressClass,
+// 	})
+// 	if err != nil {
+// 		return check.Failed(err).Err(nil)
+// 	}
+//
+// 	rr, err := r.YAMLClient.ApplyYAML(ctx, b)
+// 	if err != nil {
+// 		return check.StillRunning(err)
+// 	}
+//
+// 	req.AddToOwnedResources(rr...)
+//
+// 	// wait for helm chart to be ready
+// 	hc, err := reconcinler.Get(ctx, r.Client, fn.NN(releaseNamespace, releaseName), &crdsv1.HelmChart{})
+// 	if err != nil {
+// 		return check.Failed(err)
+// 	}
+//
+// 	if !hc.Status.IsReady {
+// 		if hc.Status.Message != nil {
+// 			check.Message = hc.Status.Message.ToString()
+// 		}
+// 		return check.StillRunning(fmt.Errorf("waiting for helm chart to be ready")).NoRequeue()
+// 	}
+//
+// 	return check.Completed()
+// }
 
 // DEPRECATED: no use as of now
-func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+func (r *Reconciler) updateRouterIngressClasses(req *reconcinler.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(updateRouterIngress, req)
+	check := reconcinler.NewRunningCheck(updateRouterIngress, req)
 
 	var routers crdsv1.RouterList
 	if err := r.List(ctx, &routers, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
@@ -413,9 +428,9 @@ func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Enviro
 	return check.Completed()
 }
 
-func (r *Reconciler) suspendEnvironment(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+func (r *Reconciler) suspendEnvironment(req *reconcinler.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(suspendEnvironment, req)
+	check := reconcinler.NewRunningCheck(suspendEnvironment, req)
 
 	rquota := &corev1.ResourceQuota{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-quota", obj.Name), Namespace: obj.Spec.TargetNamespace}}
 
@@ -454,12 +469,13 @@ func (r *Reconciler) suspendEnvironment(req *rApi.Request[*crdsv1.Environment]) 
 	return check.Completed()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
 
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+	if r.YAMLClient == nil {
+		return fmt.Errorf("yamlclient must be set")
+	}
 
 	var err error
 	r.templateNamespaceRBAC, err = templates.Read(templates.NamespaceRBAC)
@@ -511,6 +527,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
-	builder.WithEventFilter(rApi.ReconcileFilter())
+	builder.WithEventFilter(reconcinler.ReconcileFilter())
 	return builder.Complete(r)
 }

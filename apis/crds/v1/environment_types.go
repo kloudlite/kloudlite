@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/operator/pkg/constants"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -45,8 +45,8 @@ type Environment struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EnvironmentSpec `json:"spec,omitempty"`
-	Status rApi.Status     `json:"status,omitempty" graphql:"noinput"`
+	Spec   EnvironmentSpec   `json:"spec,omitempty"`
+	Status reconciler.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (e *Environment) EnsureGVK() {
@@ -67,7 +67,7 @@ func (e *Environment) GetIngressClassName() string {
 	return string(e.Spec.Routing.PrivateIngressClass)
 }
 
-func (e *Environment) GetStatus() *rApi.Status {
+func (e *Environment) GetStatus() *reconciler.Status {
 	return &e.Status
 }
 

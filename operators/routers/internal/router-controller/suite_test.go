@@ -1,10 +1,11 @@
 package router_controller
 
 import (
-	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/kloudlite/operator/pkg/logging"
 	"os"
 	"testing"
+
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/kloudlite/operator/pkg/logging"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/routers/internal/env"
@@ -21,7 +22,7 @@ func TestController(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
-var reconciler *Reconciler
+var r *Reconciler
 
 var testNamespace = "sample-" + rand.String(10)
 
@@ -36,7 +37,7 @@ var _ = BeforeSuite(func() {
 	ns := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: testNamespace}}
 	Expect(Suite.K8sClient.Create(Suite.Context, &ns)).NotTo(HaveOccurred())
 
-	reconciler = &Reconciler{
+	r = &Reconciler{
 		Client: Suite.K8sClient,
 		Scheme: Suite.Scheme,
 		logger: logging.NewOrDie(&logging.Options{Name: "router", Dev: true}),
@@ -44,6 +45,6 @@ var _ = BeforeSuite(func() {
 		Env: &env.Env{
 			MaxConcurrentReconciles: 10,
 		},
-		yamlClient: Suite.K8sYamlClient,
+		YAMLClient: Suite.K8sYamlClient,
 	}
 })

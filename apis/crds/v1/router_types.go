@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/operator/pkg/constants"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type Route struct {
@@ -76,8 +76,8 @@ type Router struct {
 
 	Spec RouterSpec `json:"spec"`
 	// +kubebuilder:default=true
-	Enabled bool        `json:"enabled,omitempty"`
-	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
+	Enabled bool              `json:"enabled,omitempty"`
+	Status  reconciler.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (r *Router) EnsureGVK() {
@@ -86,7 +86,7 @@ func (r *Router) EnsureGVK() {
 	}
 }
 
-func (r *Router) GetStatus() *rApi.Status {
+func (r *Router) GetStatus() *reconciler.Status {
 	return &r.Status
 }
 
