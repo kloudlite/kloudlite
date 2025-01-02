@@ -97,28 +97,3 @@ func (r *Resolver) CloudProviderSecretIn() generated.CloudProviderSecretInResolv
 
 type cloudProviderSecretResolver struct{ *Resolver }
 type cloudProviderSecretInResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *cloudProviderSecretResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials, error) {
-	if obj == nil || obj.CreationTime.IsZero() {
-		return nil, errors.Newf("CloudProviderSecret object is nil")
-	}
-
-	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials](obj.AWS)
-}
-func (r *cloudProviderSecretResolver) Gcp(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials, error) {
-	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials](obj.GCP)
-}
-func (r *cloudProviderSecretInResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn) error {
-	return fn.JsonConversion(data, &obj.AWS)
-}
-func (r *cloudProviderSecretInResolver) Gcp(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn) error {
-	return fn.JsonConversion(data, &obj.GCP)
-}
-*/

@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -193,19 +192,6 @@ func (r *mutationResolver) InfraDeleteBYOKCluster(ctx context.Context, name stri
 	return true, nil
 }
 
-// InfraUpgradeHelmKloudliteAgent is the resolver for the infra_upgradeHelmKloudliteAgent field.
-func (r *mutationResolver) InfraUpgradeHelmKloudliteAgent(ctx context.Context, clusterName string) (bool, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	if err := r.Domain.UpgradeHelmKloudliteAgent(ictx, clusterName); err != nil {
-		return false, errors.NewE(err)
-	}
-
-	return true, nil
-}
-
 // InfraCreateProviderSecret is the resolver for the infra_createProviderSecret field.
 func (r *mutationResolver) InfraCreateProviderSecret(ctx context.Context, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	ictx, err := toInfraContext(ctx)
@@ -297,36 +283,6 @@ func (r *mutationResolver) InfraDeleteNodePool(ctx context.Context, clusterName 
 	}
 
 	if err := r.Domain.DeleteNodePool(ictx, clusterName, poolName); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// InfraCreateHelmRelease is the resolver for the infra_createHelmRelease field.
-func (r *mutationResolver) InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.CreateHelmRelease(ictx, clusterName, release)
-}
-
-// InfraUpdateHelmRelease is the resolver for the infra_updateHelmRelease field.
-func (r *mutationResolver) InfraUpdateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.UpdateHelmRelease(ictx, clusterName, release)
-}
-
-// InfraDeleteHelmRelease is the resolver for the infra_deleteHelmRelease field.
-func (r *mutationResolver) InfraDeleteHelmRelease(ctx context.Context, clusterName string, releaseName string) (bool, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	if err := r.Domain.DeleteHelmRelease(ictx, clusterName, releaseName); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -681,47 +637,6 @@ func (r *queryResolver) InfraCheckAWSAccess(ctx context.Context, cloudproviderNa
 	panic(fmt.Errorf("not implemented: InfraCheckAWSAccess - infra_checkAwsAccess"))
 }
 
-// InfraListHelmReleases is the resolver for the infra_listHelmReleases field.
-func (r *queryResolver) InfraListHelmReleases(ctx context.Context, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) (*model.HelmReleasePaginatedRecords, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if pagination == nil {
-		pagination = &repos.DefaultCursorPagination
-	}
-
-	filter := map[string]repos.MatchFilter{}
-
-	if search != nil {
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-	}
-
-	pRelease, err := r.Domain.ListHelmReleases(ictx, clusterName, filter, *pagination)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return fn.JsonConvertP[model.HelmReleasePaginatedRecords](pRelease)
-}
-
-// InfraGetHelmRelease is the resolver for the infra_getHelmRelease field.
-func (r *queryResolver) InfraGetHelmRelease(ctx context.Context, clusterName string, name string) (*entities.HelmRelease, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.GetHelmRelease(ictx, clusterName, name)
-}
-
 // InfraListManagedServiceTemplates is the resolver for the infra_listManagedServiceTemplates field.
 func (r *queryResolver) InfraListManagedServiceTemplates(ctx context.Context) ([]*entities.MsvcTemplate, error) {
 	return r.Domain.ListManagedSvcTemplates()
@@ -863,32 +778,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *queryResolver) InfraCheckAwsAccess(ctx context.Context, cloudproviderName string) (*model.CheckAwsAccessOutput, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	output, err := r.Domain.ValidateProviderSecretAWSAccess(ictx, cloudproviderName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return &model.CheckAwsAccessOutput{
-		Result:          output.Result,
-		InstallationURL: output.InstallationURL,
-	}, nil
-}
-*/
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

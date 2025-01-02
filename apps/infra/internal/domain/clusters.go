@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -19,7 +18,6 @@ import (
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
-	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -30,7 +28,6 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/api/pkg/wgutils"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -382,10 +379,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, nCluster.Name, PublishAdd)
-
-	if err := d.applyHelmKloudliteAgent(ctx, string(tokenScrt.Data[keyClusterToken]), nCluster); err != nil {
-		return nil, errors.NewE(err)
-	}
 
 	return nCluster, nil
 }
@@ -795,124 +788,6 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, cluster *entities.Cluster) error {
-	b, err := templates.Read(templates.HelmKloudliteAgent)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	values := map[string]any{
-		"account-name": ctx.AccountName,
-
-		"cluster-name":  cluster.Name,
-		"cluster-token": clusterToken,
-
-		"kloudlite-release":        d.env.KloudliteRelease,
-		"message-office-grpc-addr": d.env.MessageOfficeExternalGrpcAddr,
-
-		"public-dns-host": cluster.Spec.PublicDNSHost,
-		"cloudprovider":   cluster.Spec.CloudProvider,
-	}
-
-	if cluster.Spec.CloudProvider == ct.CloudProviderGCP {
-		var credsSecret corev1.Secret
-		if err := d.k8sClient.Get(ctx, fn.NN(cluster.Spec.GCP.CredentialsRef.Namespace, cluster.Spec.GCP.CredentialsRef.Name), &credsSecret); err != nil {
-			return err
-		}
-
-		m := make(map[string]string)
-		for k, v := range credsSecret.Data {
-			m[k] = string(v)
-		}
-
-		gcpCreds, err := fn.JsonConvert[clustersv1.GCPCredentials](m)
-		if err != nil {
-			return err
-		}
-
-		values["gcp-service-account-json"] = base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON))
-	}
-
-	b2, err := templates.ParseBytes(b, values)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	var m map[string]any
-	if err := yaml.Unmarshal(b2, &m); err != nil {
-		return errors.NewE(err)
-	}
-
-	helmChart, err := fn.JsonConvert[crdsv1.HelmChart](m)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	hr := entities.HelmRelease{
-		HelmChart: helmChart,
-		ResourceMetadata: common.ResourceMetadata{
-			DisplayName: fmt.Sprintf("kloudlite agent %s", d.env.KloudliteRelease),
-			CreatedBy: common.CreatedOrUpdatedBy{
-				UserId:    "kloudlite-platform",
-				UserName:  "kloudlite-platform",
-				UserEmail: "kloudlite-platform",
-			},
-			LastUpdatedBy: common.CreatedOrUpdatedBy{
-				UserId:    "kloudlite-platform",
-				UserName:  "kloudlite-platform",
-				UserEmail: "kloudlite-platform",
-			},
-		},
-		AccountName: ctx.AccountName,
-		ClusterName: cluster.Name,
-		SyncStatus:  t.GenSyncStatus(t.SyncActionApply, 0),
-	}
-
-	hr.IncrementRecordVersion()
-
-	uhr, err := d.upsertHelmRelease(ctx, cluster.Name, &hr)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, &entities.DispatchAddr{AccountName: ctx.AccountName, ClusterName: cluster.Name}, &uhr.HelmChart, uhr.RecordVersion); err != nil {
-		return errors.NewE(err)
-	}
-
-	return nil
-}
-
-func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error {
-	out, err := d.moSvc.GetClusterToken(ctx, &ports.GetClusterTokenIn{
-		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	cluster, err := d.findCluster(ctx, clusterName)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.applyHelmKloudliteAgent(ctx, out.ClusterToken, cluster); err != nil {
-		return errors.NewE(err)
-	}
-
-	if cluster.GlobalVPN != nil {
-		gvpn, err := d.findGlobalVPNConnection(ctx, cluster.AccountName, cluster.Name, *cluster.GlobalVPN)
-		if err != nil {
-			return errors.NewE(err)
-		}
-		if err := d.applyGlobalVPNConnection(ctx, gvpn); err != nil {
-			return errors.NewE(err)
-		}
 	}
 
 	return nil
