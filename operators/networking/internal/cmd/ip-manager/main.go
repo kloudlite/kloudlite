@@ -53,10 +53,6 @@ func main() {
 
 	cli, err := client.New(restCfg, client.Options{
 		Scheme: scheme,
-		WarningHandler: client.WarningHandlerOptions{
-			SuppressWarnings:   true,
-			AllowDuplicateLogs: false,
-		},
 	})
 	if err != nil {
 		panic(err)
