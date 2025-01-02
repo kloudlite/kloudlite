@@ -434,57 +434,6 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
-	ChartName     string                                       `json:"chartName"`
-	ChartRepoURL  string                                       `json:"chartRepoURL"`
-	ChartVersion  string                                       `json:"chartVersion"`
-	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVars `json:"jobVars,omitempty"`
-	PostInstall   *string                                      `json:"postInstall,omitempty"`
-	PostUninstall *string                                      `json:"postUninstall,omitempty"`
-	PreInstall    *string                                      `json:"preInstall,omitempty"`
-	PreUninstall  *string                                      `json:"preUninstall,omitempty"`
-	ReleaseName   *string                                      `json:"releaseName,omitempty"`
-	Values        map[string]interface{}                       `json:"values"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
-	ChartName     string                                         `json:"chartName"`
-	ChartRepoURL  string                                         `json:"chartRepoURL"`
-	ChartVersion  string                                         `json:"chartVersion"`
-	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVarsIn `json:"jobVars,omitempty"`
-	PostInstall   *string                                        `json:"postInstall,omitempty"`
-	PostUninstall *string                                        `json:"postUninstall,omitempty"`
-	PreInstall    *string                                        `json:"preInstall,omitempty"`
-	PreUninstall  *string                                        `json:"preUninstall,omitempty"`
-	Values        map[string]interface{}                         `json:"values"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1HelmChartStatus struct {
-	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMeta `json:"checkList,omitempty"`
-	Checks              map[string]interface{}                            `json:"checks,omitempty"`
-	IsReady             bool                                              `json:"isReady"`
-	LastReadyGeneration *int                                              `json:"lastReadyGeneration,omitempty"`
-	LastReconcileTime   *string                                           `json:"lastReconcileTime,omitempty"`
-	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON      `json:"message,omitempty"`
-	ReleaseNotes        string                                            `json:"releaseNotes"`
-	ReleaseStatus       string                                            `json:"releaseStatus"`
-	Resources           []*operator.ResourceRef                           `json:"resources,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1JobVars struct {
-	Affinity     *K8sIoAPICoreV1Affinity     `json:"affinity,omitempty"`
-	BackOffLimit *int                        `json:"backOffLimit,omitempty"`
-	NodeSelector map[string]interface{}      `json:"nodeSelector,omitempty"`
-	Tolerations  []*K8sIoAPICoreV1Toleration `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1JobVarsIn struct {
-	Affinity     *K8sIoAPICoreV1AffinityIn     `json:"affinity,omitempty"`
-	BackOffLimit *int                          `json:"backOffLimit,omitempty"`
-	NodeSelector map[string]interface{}        `json:"nodeSelector,omitempty"`
-	Tolerations  []*K8sIoAPICoreV1TolerationIn `json:"tolerations,omitempty"`
-}
-
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
@@ -493,8 +442,44 @@ type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Title       string  `json:"title"`
 }
 
+type GithubComKloudliteOperatorPkgOperatorStatus struct {
+	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMeta `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                            `json:"checks,omitempty"`
+	IsReady             bool                                              `json:"isReady"`
+	LastReadyGeneration *int                                              `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                           `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON      `json:"message,omitempty"`
+	Resources           []*operator.ResourceRef                           `json:"resources,omitempty"`
+}
+
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage any `json:"RawMessage,omitempty"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerCheck struct {
+	Debug      *string                                           `json:"debug,omitempty"`
+	Error      *string                                           `json:"error,omitempty"`
+	Generation *int                                              `json:"generation,omitempty"`
+	Info       *string                                           `json:"info,omitempty"`
+	Message    *string                                           `json:"message,omitempty"`
+	StartedAt  *string                                           `json:"startedAt,omitempty"`
+	State      *GithubComKloudliteOperatorToolkitReconcilerState `json:"state,omitempty"`
+	Status     bool                                              `json:"status"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerCheckMeta struct {
+	Debug       *bool   `json:"debug,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerResourceRef struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 type GlobalVPNDeviceEdge struct {
@@ -529,17 +514,6 @@ type GlobalVPNPaginatedRecords struct {
 	TotalCount int              `json:"totalCount"`
 }
 
-type HelmReleaseEdge struct {
-	Cursor string                `json:"cursor"`
-	Node   *entities.HelmRelease `json:"node"`
-}
-
-type HelmReleasePaginatedRecords struct {
-	Edges      []*HelmReleaseEdge `json:"edges"`
-	PageInfo   *PageInfo          `json:"pageInfo"`
-	TotalCount int                `json:"totalCount"`
-}
-
 type K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource struct {
 	FsType    *string `json:"fsType,omitempty"`
 	Partition *int    `json:"partition,omitempty"`
@@ -552,18 +526,6 @@ type K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn struct {
 	Partition *int    `json:"partition,omitempty"`
 	ReadOnly  *bool   `json:"readOnly,omitempty"`
 	VolumeID  string  `json:"volumeID"`
-}
-
-type K8sIoAPICoreV1Affinity struct {
-	NodeAffinity    *K8sIoAPICoreV1NodeAffinity    `json:"nodeAffinity,omitempty"`
-	PodAffinity     *K8sIoAPICoreV1PodAffinity     `json:"podAffinity,omitempty"`
-	PodAntiAffinity *K8sIoAPICoreV1PodAntiAffinity `json:"podAntiAffinity,omitempty"`
-}
-
-type K8sIoAPICoreV1AffinityIn struct {
-	NodeAffinity    *K8sIoAPICoreV1NodeAffinityIn    `json:"nodeAffinity,omitempty"`
-	PodAffinity     *K8sIoAPICoreV1PodAffinityIn     `json:"podAffinity,omitempty"`
-	PodAntiAffinity *K8sIoAPICoreV1PodAntiAffinityIn `json:"podAntiAffinity,omitempty"`
 }
 
 type K8sIoAPICoreV1AzureDiskVolumeSource struct {
@@ -830,16 +792,6 @@ type K8sIoAPICoreV1NamespaceStatusIn struct {
 	Phase      *K8sIoAPICoreV1NamespacePhase         `json:"phase,omitempty"`
 }
 
-type K8sIoAPICoreV1NodeAffinity struct {
-	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1PreferredSchedulingTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
-	RequiredDuringSchedulingIgnoredDuringExecution  *K8sIoAPICoreV1NodeSelector              `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
-}
-
-type K8sIoAPICoreV1NodeAffinityIn struct {
-	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1PreferredSchedulingTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
-	RequiredDuringSchedulingIgnoredDuringExecution  *K8sIoAPICoreV1NodeSelectorIn              `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
-}
-
 type K8sIoAPICoreV1NodeSelector struct {
 	NodeSelectorTerms []*K8sIoAPICoreV1NodeSelectorTerm `json:"nodeSelectorTerms"`
 }
@@ -1046,44 +998,6 @@ type K8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn struct {
 	PdID   string  `json:"pdID"`
 }
 
-type K8sIoAPICoreV1PodAffinity struct {
-	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
-	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTerm         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
-}
-
-type K8sIoAPICoreV1PodAffinityIn struct {
-	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
-	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTermIn         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
-}
-
-type K8sIoAPICoreV1PodAffinityTerm struct {
-	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"labelSelector,omitempty"`
-	MatchLabelKeys    []string                                     `json:"matchLabelKeys,omitempty"`
-	MismatchLabelKeys []string                                     `json:"mismatchLabelKeys,omitempty"`
-	Namespaces        []string                                     `json:"namespaces,omitempty"`
-	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"namespaceSelector,omitempty"`
-	TopologyKey       string                                       `json:"topologyKey"`
-}
-
-type K8sIoAPICoreV1PodAffinityTermIn struct {
-	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"labelSelector,omitempty"`
-	MatchLabelKeys    []string                                       `json:"matchLabelKeys,omitempty"`
-	MismatchLabelKeys []string                                       `json:"mismatchLabelKeys,omitempty"`
-	Namespaces        []string                                       `json:"namespaces,omitempty"`
-	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"namespaceSelector,omitempty"`
-	TopologyKey       string                                         `json:"topologyKey"`
-}
-
-type K8sIoAPICoreV1PodAntiAffinity struct {
-	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
-	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTerm         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
-}
-
-type K8sIoAPICoreV1PodAntiAffinityIn struct {
-	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
-	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTermIn         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
-}
-
 type K8sIoAPICoreV1PortworxVolumeSource struct {
 	FsType   *string `json:"fsType,omitempty"`
 	ReadOnly *bool   `json:"readOnly,omitempty"`
@@ -1094,16 +1008,6 @@ type K8sIoAPICoreV1PortworxVolumeSourceIn struct {
 	FsType   *string `json:"fsType,omitempty"`
 	ReadOnly *bool   `json:"readOnly,omitempty"`
 	VolumeID string  `json:"volumeID"`
-}
-
-type K8sIoAPICoreV1PreferredSchedulingTerm struct {
-	Preference *K8sIoAPICoreV1NodeSelectorTerm `json:"preference"`
-	Weight     int                             `json:"weight"`
-}
-
-type K8sIoAPICoreV1PreferredSchedulingTermIn struct {
-	Preference *K8sIoAPICoreV1NodeSelectorTermIn `json:"preference"`
-	Weight     int                               `json:"weight"`
 }
 
 type K8sIoAPICoreV1QuobyteVolumeSource struct {
@@ -1212,22 +1116,6 @@ type K8sIoAPICoreV1TaintIn struct {
 	Value     *string                   `json:"value,omitempty"`
 }
 
-type K8sIoAPICoreV1Toleration struct {
-	Effect            *K8sIoAPICoreV1TaintEffect        `json:"effect,omitempty"`
-	Key               *string                           `json:"key,omitempty"`
-	Operator          *K8sIoAPICoreV1TolerationOperator `json:"operator,omitempty"`
-	TolerationSeconds *int                              `json:"tolerationSeconds,omitempty"`
-	Value             *string                           `json:"value,omitempty"`
-}
-
-type K8sIoAPICoreV1TolerationIn struct {
-	Effect            *K8sIoAPICoreV1TaintEffect        `json:"effect,omitempty"`
-	Key               *string                           `json:"key,omitempty"`
-	Operator          *K8sIoAPICoreV1TolerationOperator `json:"operator,omitempty"`
-	TolerationSeconds *int                              `json:"tolerationSeconds,omitempty"`
-	Value             *string                           `json:"value,omitempty"`
-}
-
 type K8sIoAPICoreV1TypedLocalObjectReference struct {
 	APIGroup *string `json:"apiGroup,omitempty"`
 	Kind     string  `json:"kind"`
@@ -1284,16 +1172,6 @@ type K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn struct {
 	StoragePolicyID   *string `json:"storagePolicyID,omitempty"`
 	StoragePolicyName *string `json:"storagePolicyName,omitempty"`
 	VolumePath        string  `json:"volumePath"`
-}
-
-type K8sIoAPICoreV1WeightedPodAffinityTerm struct {
-	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTerm `json:"podAffinityTerm"`
-	Weight          int                            `json:"weight"`
-}
-
-type K8sIoAPICoreV1WeightedPodAffinityTermIn struct {
-	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTermIn `json:"podAffinityTerm"`
-	Weight          int                              `json:"weight"`
 }
 
 type K8sIoAPIStorageV1VolumeAttachmentSource struct {
@@ -1467,11 +1345,6 @@ type SearchGlobalVPNDevices struct {
 
 type SearchGlobalVPNs struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
-}
-
-type SearchHelmRelease struct {
-	Text    *repos.MatchFilter `json:"text,omitempty"`
-	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
 }
 
 type SearchNamespaces struct {
@@ -1805,6 +1678,51 @@ func (e GithubComKloudliteOperatorPkgOperatorState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type GithubComKloudliteOperatorToolkitReconcilerState string
+
+const (
+	GithubComKloudliteOperatorToolkitReconcilerStateErroredDuringReconcilation GithubComKloudliteOperatorToolkitReconcilerState = "errored____during____reconcilation"
+	GithubComKloudliteOperatorToolkitReconcilerStateFinishedReconcilation      GithubComKloudliteOperatorToolkitReconcilerState = "finished____reconcilation"
+	GithubComKloudliteOperatorToolkitReconcilerStateUnderReconcilation         GithubComKloudliteOperatorToolkitReconcilerState = "under____reconcilation"
+	GithubComKloudliteOperatorToolkitReconcilerStateYetToBeReconciled          GithubComKloudliteOperatorToolkitReconcilerState = "yet____to____be____reconciled"
+)
+
+var AllGithubComKloudliteOperatorToolkitReconcilerState = []GithubComKloudliteOperatorToolkitReconcilerState{
+	GithubComKloudliteOperatorToolkitReconcilerStateErroredDuringReconcilation,
+	GithubComKloudliteOperatorToolkitReconcilerStateFinishedReconcilation,
+	GithubComKloudliteOperatorToolkitReconcilerStateUnderReconcilation,
+	GithubComKloudliteOperatorToolkitReconcilerStateYetToBeReconciled,
+}
+
+func (e GithubComKloudliteOperatorToolkitReconcilerState) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorToolkitReconcilerStateErroredDuringReconcilation, GithubComKloudliteOperatorToolkitReconcilerStateFinishedReconcilation, GithubComKloudliteOperatorToolkitReconcilerStateUnderReconcilation, GithubComKloudliteOperatorToolkitReconcilerStateYetToBeReconciled:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorToolkitReconcilerState) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorToolkitReconcilerState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorToolkitReconcilerState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___operator___toolkit___reconciler__State", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorToolkitReconcilerState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type K8sIoAPICoreV1ConditionStatus string
 
 const (
@@ -1988,22 +1906,26 @@ func (e K8sIoAPICoreV1NodeSelectorOperator) MarshalGQL(w io.Writer) {
 type K8sIoAPICoreV1PersistentVolumeClaimConditionType string
 
 const (
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeControllerResizeError   K8sIoAPICoreV1PersistentVolumeClaimConditionType = "ControllerResizeError"
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending K8sIoAPICoreV1PersistentVolumeClaimConditionType = "FileSystemResizePending"
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume         K8sIoAPICoreV1PersistentVolumeClaimConditionType = "ModifyingVolume"
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError       K8sIoAPICoreV1PersistentVolumeClaimConditionType = "ModifyVolumeError"
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeNodeResizeError         K8sIoAPICoreV1PersistentVolumeClaimConditionType = "NodeResizeError"
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing                K8sIoAPICoreV1PersistentVolumeClaimConditionType = "Resizing"
 )
 
 var AllK8sIoAPICoreV1PersistentVolumeClaimConditionType = []K8sIoAPICoreV1PersistentVolumeClaimConditionType{
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeControllerResizeError,
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending,
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume,
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError,
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeNodeResizeError,
 	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing,
 }
 
 func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) IsValid() bool {
 	switch e {
-	case K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing:
+	case K8sIoAPICoreV1PersistentVolumeClaimConditionTypeControllerResizeError, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyingVolume, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeModifyVolumeError, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeNodeResizeError, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing:
 		return true
 	}
 	return false
@@ -2246,47 +2168,6 @@ func (e *K8sIoAPICoreV1TaintEffect) UnmarshalGQL(v interface{}) error {
 }
 
 func (e K8sIoAPICoreV1TaintEffect) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type K8sIoAPICoreV1TolerationOperator string
-
-const (
-	K8sIoAPICoreV1TolerationOperatorEqual  K8sIoAPICoreV1TolerationOperator = "Equal"
-	K8sIoAPICoreV1TolerationOperatorExists K8sIoAPICoreV1TolerationOperator = "Exists"
-)
-
-var AllK8sIoAPICoreV1TolerationOperator = []K8sIoAPICoreV1TolerationOperator{
-	K8sIoAPICoreV1TolerationOperatorEqual,
-	K8sIoAPICoreV1TolerationOperatorExists,
-}
-
-func (e K8sIoAPICoreV1TolerationOperator) IsValid() bool {
-	switch e {
-	case K8sIoAPICoreV1TolerationOperatorEqual, K8sIoAPICoreV1TolerationOperatorExists:
-		return true
-	}
-	return false
-}
-
-func (e K8sIoAPICoreV1TolerationOperator) String() string {
-	return string(e)
-}
-
-func (e *K8sIoAPICoreV1TolerationOperator) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = K8sIoAPICoreV1TolerationOperator(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__TolerationOperator", str)
-	}
-	return nil
-}
-
-func (e K8sIoAPICoreV1TolerationOperator) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

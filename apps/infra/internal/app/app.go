@@ -62,7 +62,6 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("cloud_provider_secrets", "cps", entities.CloudProviderSecretIndices),
-	repos.NewFxMongoRepo[*entities.HelmRelease]("helm_releases", "hr", entities.HelmReleaseIndices),
 
 	// kubernetes native resources, not managed by kloudlite
 	repos.NewFxMongoRepo[*entities.PersistentVolumeClaim]("pvcs", "pvc", entities.PersistentVolumeClaimIndices),

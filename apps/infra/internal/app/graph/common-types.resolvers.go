@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -112,41 +114,23 @@ func (r *github__com___kloudlite___operator___pkg___operator__CheckResolver) Sta
 }
 
 // CheckList is the resolver for the checkList field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) CheckList(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta, error) {
-	return fn.JsonConvert[[]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta](obj.CheckList)
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) CheckList(ctx context.Context, obj *reconciler.Status) ([]*model.GithubComKloudliteOperatorToolkitReconcilerCheckMeta, error) {
+	panic(fmt.Errorf("not implemented: CheckList - checkList"))
 }
 
 // Checks is the resolver for the checks field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
-	var m map[string]any
-	if err := fn.JsonConversion(obj.Checks, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return m, nil
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) Checks(ctx context.Context, obj *reconciler.Status) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented: Checks - checks"))
 }
 
 // LastReconcileTime is the resolver for the lastReconcileTime field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error) {
-	if obj == nil {
-		return nil, errors.Newf("syncStatus is nil")
-	}
-	if obj.LastReconcileTime == nil {
-		return fn.New(time.Now().Format(time.RFC3339)), nil
-	}
-	return fn.New(obj.LastReconcileTime.Format(time.RFC3339)), nil
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) LastReconcileTime(ctx context.Context, obj *reconciler.Status) (*string, error) {
+	panic(fmt.Errorf("not implemented: LastReconcileTime - lastReconcileTime"))
 }
 
-// Message is the resolver for the message field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error) {
-	if obj == nil {
-		return nil, errors.Newf("syncStatus is nil")
-	}
-	if obj.Message == nil {
-		return nil, nil
-	}
-	return &model.GithubComKloudliteOperatorPkgRawJSONRawJSON{
-		RawMessage: obj.Message.RawMessage,
-	}, nil
+// Resources is the resolver for the resources field.
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) Resources(ctx context.Context, obj *reconciler.Status) ([]*model.GithubComKloudliteOperatorToolkitReconcilerResourceRef, error) {
+	panic(fmt.Errorf("not implemented: Resources - resources"))
 }
 
 // Annotations is the resolver for the annotations field.
@@ -228,9 +212,9 @@ func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Check() 
 	return &github__com___kloudlite___operator___pkg___operator__CheckResolver{r}
 }
 
-// Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
-func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
-	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
+// Github__com___kloudlite___operator___toolkit___reconciler__Status returns generated.Github__com___kloudlite___operator___toolkit___reconciler__StatusResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___toolkit___reconciler__Status() generated.Github__com___kloudlite___operator___toolkit___reconciler__StatusResolver {
+	return &github__com___kloudlite___operator___toolkit___reconciler__StatusResolver{r}
 }
 
 // Metadata returns generated.MetadataResolver implementation.
@@ -243,6 +227,6 @@ type github__com___kloudlite___api___apps___infra___internal___entities__MsvcTem
 type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
 type github__com___kloudlite___operator___pkg___operator__CheckResolver struct{ *Resolver }
-type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
+type github__com___kloudlite___operator___toolkit___reconciler__StatusResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

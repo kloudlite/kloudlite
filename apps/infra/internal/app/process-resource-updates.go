@@ -222,19 +222,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				return d.OnVolumeAttachmentUpdateMessage(dctx, ru.ClusterName, volatt, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
-		case helmreleaseGVK.String():
-			{
-				var hr entities.HelmRelease
-				if err := fn.JsonConversion(su.Object, &hr); err != nil {
-					return errors.NewE(err)
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnHelmReleaseDeleteMessage(dctx, ru.ClusterName, hr)
-				}
-				return d.OnHelmReleaseUpdateMessage(dctx, ru.ClusterName, hr, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
-			}
-
 		case namespaceGVK.String():
 			{
 				var ns entities.Namespace

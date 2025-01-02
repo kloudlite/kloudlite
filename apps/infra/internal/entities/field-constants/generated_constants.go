@@ -252,38 +252,6 @@ const (
 	GlobalVPNDevicePublicKey      = "publicKey"
 )
 
-// constant vars generated for struct HelmRelease
-const (
-	HelmReleaseDispatchAddr                                                                                   = "dispatchAddr"
-	HelmReleaseDispatchAddrAccountName                                                                        = "dispatchAddr.accountName"
-	HelmReleaseDispatchAddrClusterName                                                                        = "dispatchAddr.clusterName"
-	HelmReleaseSpec                                                                                           = "spec"
-	HelmReleaseSpecChartName                                                                                  = "spec.chartName"
-	HelmReleaseSpecChartRepoURL                                                                               = "spec.chartRepoURL"
-	HelmReleaseSpecChartVersion                                                                               = "spec.chartVersion"
-	HelmReleaseSpecJobVars                                                                                    = "spec.jobVars"
-	HelmReleaseSpecJobVarsAffinity                                                                            = "spec.jobVars.affinity"
-	HelmReleaseSpecJobVarsAffinityNodeAffinity                                                                = "spec.jobVars.affinity.nodeAffinity"
-	HelmReleaseSpecJobVarsAffinityNodeAffinityPreferredDuringSchedulingIgnoredDuringExecution                 = "spec.jobVars.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution"
-	HelmReleaseSpecJobVarsAffinityNodeAffinityRequiredDuringSchedulingIgnoredDuringExecution                  = "spec.jobVars.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution"
-	HelmReleaseSpecJobVarsAffinityNodeAffinityRequiredDuringSchedulingIgnoredDuringExecutionNodeSelectorTerms = "spec.jobVars.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms"
-	HelmReleaseSpecJobVarsAffinityPodAffinity                                                                 = "spec.jobVars.affinity.podAffinity"
-	HelmReleaseSpecJobVarsAffinityPodAffinityPreferredDuringSchedulingIgnoredDuringExecution                  = "spec.jobVars.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution"
-	HelmReleaseSpecJobVarsAffinityPodAffinityRequiredDuringSchedulingIgnoredDuringExecution                   = "spec.jobVars.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution"
-	HelmReleaseSpecJobVarsAffinityPodAntiAffinity                                                             = "spec.jobVars.affinity.podAntiAffinity"
-	HelmReleaseSpecJobVarsAffinityPodAntiAffinityPreferredDuringSchedulingIgnoredDuringExecution              = "spec.jobVars.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution"
-	HelmReleaseSpecJobVarsAffinityPodAntiAffinityRequiredDuringSchedulingIgnoredDuringExecution               = "spec.jobVars.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution"
-	HelmReleaseSpecJobVarsBackOffLimit                                                                        = "spec.jobVars.backOffLimit"
-	HelmReleaseSpecJobVarsNodeSelector                                                                        = "spec.jobVars.nodeSelector"
-	HelmReleaseSpecJobVarsTolerations                                                                         = "spec.jobVars.tolerations"
-	HelmReleaseSpecPostInstall                                                                                = "spec.postInstall"
-	HelmReleaseSpecPostUninstall                                                                              = "spec.postUninstall"
-	HelmReleaseSpecPreInstall                                                                                 = "spec.preInstall"
-	HelmReleaseSpecPreUninstall                                                                               = "spec.preUninstall"
-	HelmReleaseSpecReleaseName                                                                                = "spec.releaseName"
-	HelmReleaseSpecValues                                                                                     = "spec.values"
-)
-
 // constant vars generated for struct InputField
 const (
 	InputFieldDefaultValue = "defaultValue"
@@ -877,8 +845,6 @@ const (
 	StatusModifyVolumeStatusTargetVolumeAttributesClassName = "status.modifyVolumeStatus.targetVolumeAttributesClassName"
 	StatusPhase                                             = "status.phase"
 	StatusReason                                            = "status.reason"
-	StatusReleaseNotes                                      = "status.releaseNotes"
-	StatusReleaseStatus                                     = "status.releaseStatus"
 	StatusResources                                         = "status.resources"
 	SyncStatus                                              = "syncStatus"
 	SyncStatusAction                                        = "syncStatus.action"

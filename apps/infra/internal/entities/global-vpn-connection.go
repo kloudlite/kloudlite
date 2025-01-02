@@ -7,7 +7,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type GlobalVPNConnDeviceRef struct {
@@ -65,7 +65,7 @@ func (c *GlobalVPNConnection) GetDisplayName() string {
 	return c.DisplayName
 }
 
-func (c *GlobalVPNConnection) GetStatus() operator.Status {
+func (c *GlobalVPNConnection) GetStatus() reconciler.Status {
 	return c.Status
 }
 

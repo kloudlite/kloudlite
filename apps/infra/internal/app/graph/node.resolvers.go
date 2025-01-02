@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -39,6 +40,11 @@ func (r *nodeResolver) Spec(ctx context.Context, obj *entities.Node) (*model.Git
 		return nil, errors.NewE(err)
 	}
 	return &m, nil
+}
+
+// Status is the resolver for the status field.
+func (r *nodeResolver) Status(ctx context.Context, obj *entities.Node) (*model.GithubComKloudliteOperatorPkgOperatorStatus, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
 // UpdateTime is the resolver for the updateTime field.

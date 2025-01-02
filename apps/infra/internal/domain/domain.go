@@ -37,7 +37,6 @@ type domain struct {
 
 	clusterRepo     repos.DbRepo[*entities.Cluster]
 	byokClusterRepo repos.DbRepo[*entities.BYOKCluster]
-	helmReleaseRepo repos.DbRepo[*entities.HelmRelease]
 	nodeRepo        repos.DbRepo[*entities.Node]
 	nodePoolRepo    repos.DbRepo[*entities.NodePool]
 
@@ -180,7 +179,7 @@ var Module = fx.Module("domain",
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
 			domainNameRepo repos.DbRepo[*entities.DomainEntry],
 			resourceDispatcher ResourceDispatcher,
-			helmReleaseRepo repos.DbRepo[*entities.HelmRelease],
+			// helmReleaseRepo repos.DbRepo[*entities.HelmRelease],
 
 			gvpnConnRepo repos.DbRepo[*entities.GlobalVPNConnection],
 			gvpnRepo repos.DbRepo[*entities.GlobalVPN],
@@ -264,7 +263,6 @@ var Module = fx.Module("domain",
 				accountsSvc:            accountsSvc,
 				moSvc:                  moSvc,
 				resourceEventPublisher: resourceEventPublisher,
-				helmReleaseRepo:        helmReleaseRepo,
 
 				pvcRepo:              pvcRepo,
 				volumeAttachmentRepo: volumeAttachmentRepo,
