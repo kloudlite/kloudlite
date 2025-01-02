@@ -13,7 +13,7 @@ type ClusterManagedService @shareable {
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec
-  status: Github__com___kloudlite___operator___pkg___operator__Status
+  status: Github__com___kloudlite___operator___toolkit___reconciler__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }

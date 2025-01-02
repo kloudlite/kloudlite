@@ -142,7 +142,7 @@ models:
   PatchIn: *patch-model
 
   Check:
-    model: github.com/kloudlite/operator/pkg/operator.Check
+    model: github.com/kloudlite/operator/toolkit/reconciler.Check
 
   ManagedService: &managed-service-model
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedService
@@ -227,8 +227,8 @@ models:
   Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
     model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
 
-  Github__com___kloudlite___operator___pkg___operator__Status:
-    model: github.com/kloudlite/operator/pkg/operator.Status
+  Github__com___kloudlite___operator___toolkit___reconciler__Status:
+    model: github.com/kloudlite/operator/toolkit/reconciler.Status
 
   Github__com___kloudlite___api___pkg___types__SyncStatus: &sync-status-model
     model: github.com/kloudlite/api/pkg/types.SyncStatus

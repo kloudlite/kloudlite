@@ -10,7 +10,6 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -221,11 +220,14 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 		return nil, errors.NewE(err)
 	}
 
-	if mres.Spec.ResourceTemplate.TypeMeta.GroupVersionKind().GroupKind().Empty() {
+	// if mres.Spec.ResourceTemplate.TypeMeta.GroupVersionKind().GroupKind().Empty() {
+	if mres.Spec.ManagedServiceRef.APIVersion == "" || mres.Spec.ManagedServiceRef.Kind == "" {
 		return nil, errors.New(".spec.resourceTemplate.apiVersion, and .spec.resourceTemplate.kind must be set")
 	}
 
 	mres.Namespace = cms.Spec.TargetNamespace
+
+	mres.Spec.Plugin.Export.ViaSecret = fmt.Sprintf("%s-export", mres.Name)
 
 	mres.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
@@ -259,7 +261,7 @@ func genMresCredentialsSecretName(name string) string {
 }
 
 func (d *domain) createAndApplyManagedResource(ctx ManagedResourceContext, clusterName string, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
-	mres.Spec.ResourceNamePrefix = nil
+	// mres.Spec.ResourceNamePrefix = nil
 	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
 	m, err := d.mresRepo.Create(ctx, mres)
@@ -281,7 +283,7 @@ func (d *domain) createAndApplyManagedResource(ctx ManagedResourceContext, clust
 }
 
 func (d *domain) importAndApplyManagedResourceSecret(ctx ConsoleContext, envName string, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
-	mres.Spec.ResourceNamePrefix = fn.New(genMresResourceName(envName, mres.Name))
+	// mres.Spec.ResourceNamePrefix = fn.New(genMresResourceName(envName, mres.Name))
 	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
 	if mres.SyncedOutputSecretRef == nil {
@@ -369,7 +371,7 @@ func (d *domain) UpdateManagedResource(ctx ManagedResourceContext, mres entities
 		&mres,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.ManagedResourceSpecResourceTemplateSpec: mres.Spec.ResourceTemplate.Spec,
+				fc.ManagedResourceSpecPluginSpec: mres.Spec.Plugin.Spec,
 			},
 		})
 

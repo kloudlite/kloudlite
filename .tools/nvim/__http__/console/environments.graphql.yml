@@ -32,6 +32,12 @@ query: |+ #graphql
               mode
             }
           }
+          status {
+            isReady
+            checkList {
+              name
+            }
+          }
           syncStatus {
             state
             error

@@ -5,7 +5,7 @@ import (
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -26,8 +26,8 @@ func (c *Config) GetDisplayName() string {
 	return c.ResourceMetadata.DisplayName
 }
 
-func (c *Config) GetStatus() operator.Status {
-	return operator.Status{}
+func (c *Config) GetStatus() reconciler.Status {
+	return reconciler.Status{}
 }
 
 func (c *Config) GetResourceType() ResourceType {
