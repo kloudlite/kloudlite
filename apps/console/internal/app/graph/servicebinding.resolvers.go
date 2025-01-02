@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -53,6 +54,11 @@ func (r *serviceBindingResolver) Spec(ctx context.Context, obj *entities.Service
 			Namespace: obj.Spec.ServiceRef.Namespace,
 		},
 	}, nil
+}
+
+// Status is the resolver for the status field.
+func (r *serviceBindingResolver) Status(ctx context.Context, obj *entities.ServiceBinding) (*model.GithubComKloudliteOperatorPkgOperatorStatus, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
 // UpdateTime is the resolver for the updateTime field.

@@ -2,13 +2,14 @@ package entities
 
 import (
 	"fmt"
+
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -46,8 +47,8 @@ func (ips *ImagePullSecret) GetDisplayName() string {
 	return ips.ResourceMetadata.DisplayName
 }
 
-func (ips *ImagePullSecret) GetStatus() operator.Status {
-	return operator.Status{}
+func (ips *ImagePullSecret) GetStatus() reconciler.Status {
+	return reconciler.Status{}
 }
 
 func (ips *ImagePullSecret) GetResourceType() ResourceType {

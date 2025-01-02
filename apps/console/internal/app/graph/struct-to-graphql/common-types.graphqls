@@ -75,13 +75,6 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
   syncScheduledAt: Date
 }
 
-type Github__com___kloudlite___operator___apis___common____types__MsvcRef @shareable {
-  apiVersion: String
-  kind: String
-  name: String!
-  namespace: String!
-}
-
 type Github__com___kloudlite___operator___apis___common____types__NamespacedResourceRef @shareable {
   name: String!
   namespace: String!
@@ -234,15 +227,14 @@ type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @share
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus @shareable {
-  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int
   lastReconcileTime: Date
-  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
   releaseNotes: String!
   releaseStatus: String!
-  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe @shareable {
@@ -272,19 +264,19 @@ type Github__com___kloudlite___operator___apis___crds___v1__JobVars @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
-  resourceNamePrefix: String
-  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
+  managedServiceRef: Github__com___kloudlite___operator___toolkit___types__ObjectReference!
+  plugin: Github__com___kloudlite___operator___apis___crds___v1__PluginTemplate!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
-  plugin: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate
+  plugin: Github__com___kloudlite___operator___apis___crds___v1__PluginTemplate
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__PluginTemplate
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
+type Github__com___kloudlite___operator___apis___crds___v1__PluginTemplate @shareable {
   apiVersion: String!
+  export: Github__com___kloudlite___operator___toolkit___plugin__Export
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRef!
   spec: Map
 }
 
@@ -322,13 +314,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec @shareabl
   maxBodySizeInMB: Int
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
   routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
-  apiVersion: String!
-  export: Github__com___kloudlite___operator___pkg___plugin__Export
-  kind: String!
-  spec: Map
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe @shareable {
@@ -388,13 +373,55 @@ type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
   resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
 }
 
-type Github__com___kloudlite___operator___pkg___plugin__Export @shareable {
-  template: String!
-  viaSecret: String
-}
-
 type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
   RawMessage: Any
+}
+
+type Github__com___kloudlite___operator___toolkit___plugin__Export @shareable {
+  template: String
+  viaSecret: String!
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__Check @shareable {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___toolkit___reconciler__State
+  status: Boolean!
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta @shareable {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__Status @shareable {
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef!]
+}
+
+type Github__com___kloudlite___operator___toolkit___types__ObjectReference @shareable {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
 }
 
 type K8s__io___api___core___v1__Affinity @shareable {
@@ -557,13 +584,6 @@ input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
   recordVersion: Int!
   state: Github__com___kloudlite___api___pkg___types__SyncState!
   syncScheduledAt: Date
-}
-
-input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
-  apiVersion: String
-  kind: String
-  name: String!
-  namespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___common____types__NamespacedResourceRefIn {
@@ -740,19 +760,19 @@ input Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
-  resourceNamePrefix: String
-  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
+  managedServiceRef: Github__com___kloudlite___operator___toolkit___types__ObjectReferenceIn!
+  plugin: Github__com___kloudlite___operator___apis___crds___v1__PluginTemplateIn!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
-  plugin: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
+  plugin: Github__com___kloudlite___operator___apis___crds___v1__PluginTemplateIn
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__PluginTemplateIn
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
+input Github__com___kloudlite___operator___apis___crds___v1__PluginTemplateIn {
   apiVersion: String!
+  export: Github__com___kloudlite___operator___toolkit___plugin__ExportIn
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRefIn!
   spec: Map
 }
 
@@ -790,13 +810,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
   maxBodySizeInMB: Int
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
   routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
-  apiVersion: String!
-  export: Github__com___kloudlite___operator___pkg___plugin__ExportIn
-  kind: String!
-  spec: Map
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {
@@ -856,13 +869,55 @@ input Github__com___kloudlite___operator___pkg___operator__StatusIn {
   resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
 }
 
-input Github__com___kloudlite___operator___pkg___plugin__ExportIn {
-  template: String!
-  viaSecret: String
-}
-
 input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
   RawMessage: Any
+}
+
+input Github__com___kloudlite___operator___toolkit___plugin__ExportIn {
+  template: String
+  viaSecret: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__CheckIn {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___toolkit___reconciler__State
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__StatusIn {
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn!]
+}
+
+input Github__com___kloudlite___operator___toolkit___types__ObjectReferenceIn {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
 }
 
 input K8s__io___api___core___v1__AffinityIn {
@@ -1036,6 +1091,13 @@ enum Github__com___kloudlite___operator___apis___crds___v1__ServiceProtocol {
 }
 
 enum Github__com___kloudlite___operator___pkg___operator__State {
+  errored____during____reconcilation
+  finished____reconcilation
+  under____reconcilation
+  yet____to____be____reconciled
+}
+
+enum Github__com___kloudlite___operator___toolkit___reconciler__State {
   errored____during____reconcilation
   finished____reconcilation
   under____reconcilation
