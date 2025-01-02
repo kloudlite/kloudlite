@@ -28,6 +28,14 @@ type Resource struct {
 	Memory *MemoryResource `json:"memory,omitempty"`
 }
 
+// +kubebuilder:object:generate=true
+type ObjectReference struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Namespace  string `json:"namespace"`
+	Name       string `json:"name"`
+}
+
 // +kubebuilder:validation:Pattern=[\d]+(M|G)i$
 type StorageSize string
 

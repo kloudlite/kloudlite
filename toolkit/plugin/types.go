@@ -2,28 +2,61 @@ package plugin
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
 
 	"github.com/kloudlite/operator/toolkit/errors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
-
-type ValueRef string
 
 // +kubebuilder:object:generate=true
 type Export struct {
 	ViaSecret string `json:"viaSecret"`
-	Template  string `json:"template"`
+	Template  string `json:"template,omitempty"`
 }
 
 type (
-	GetSecret    func(secretName string) (map[string]string, error)
-	GetConfigMap func(secretName string) (map[string]string, error)
+	getSecret    func(secretName string) (map[string]string, error)
+	getConfigMap func(secretName string) (map[string]string, error)
 )
 
-func (ex Export) ParseKV(getSecret GetSecret, getConfigMap GetConfigMap, constantsStruct any) (map[string]string, error) {
+func (ex Export) ParseKV(ctx context.Context, client client.Client, namespace string, constantsStruct any) (map[string]string, error) {
+	getSecret := func(secretName string) (map[string]string, error) {
+		secret := &corev1.Secret{}
+		if err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: secretName}, secret); err != nil {
+			return nil, err
+		}
+		m := make(map[string]string, len(secret.Data))
+		for k, v := range secret.Data {
+			m[k] = string(v)
+		}
+		return m, nil
+	}
+
+	getConfigMap := func(secretName string) (map[string]string, error) {
+		cfgmap := &corev1.ConfigMap{}
+		if err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: secretName}, cfgmap); err != nil {
+			return nil, err
+		}
+		m := make(map[string]string, len(cfgmap.Data)+len(cfgmap.BinaryData))
+		for k, v := range cfgmap.Data {
+			m[k] = string(v)
+		}
+		for k, v := range cfgmap.BinaryData {
+			m[k] = string(v)
+		}
+		return m, nil
+	}
+
+	return parseKV(&ex, getSecret, getConfigMap, constantsStruct)
+}
+
+func parseKV(ex *Export, getSecret getSecret, getConfigMap getConfigMap, constantsStruct any) (map[string]string, error) {
 	secrets := make(map[string]map[string]string)
 	configs := make(map[string]map[string]string)
 

@@ -10,7 +10,11 @@ import (
 )
 
 func GetLocal[T any, V Resource](r *Request[V], key string) (T, bool) {
-	x := r.locals[key]
+	x, err := r.KV.Get(key)
+	if err != nil {
+		return *new(T), false
+	}
+
 	t, ok := x.(T)
 	if !ok {
 		return *new(T), ok
@@ -19,10 +23,7 @@ func GetLocal[T any, V Resource](r *Request[V], key string) (T, bool) {
 }
 
 func SetLocal[T any, V Resource](r *Request[V], key string, value T) {
-	if r.locals == nil {
-		r.locals = map[string]any{}
-	}
-	r.locals[key] = value
+	r.KV.Set(key, value)
 }
 
 func Get[T client.Object](ctx context.Context, cli client.Client, nn types.NamespacedName, obj T) (T, error) {

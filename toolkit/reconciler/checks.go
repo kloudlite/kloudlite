@@ -106,7 +106,7 @@ func (cw *checkWrapper[T]) Completed() step_result.Result {
 	cw.Check.Status = true
 
 	cw.request.Object.GetStatus().Checks[cw.checkName] = cw.Check
-	cw.request.Object.GetStatus().IsReady = true
+	// cw.request.Object.GetStatus().IsReady = true
 
 	if err := cw.request.client.Status().Update(cw.request.Context(), cw.request.Object); err != nil {
 		return step_result.New().Err(err)

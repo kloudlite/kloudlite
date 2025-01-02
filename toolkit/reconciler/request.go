@@ -24,11 +24,27 @@ import (
 	fn "github.com/kloudlite/operator/toolkit/functions"
 	"github.com/kloudlite/operator/toolkit/logging"
 
-	// "github.com/kloudlite/operator/pkg/logging"
-	// raw_json "github.com/kloudlite/operator/pkg/raw-json"
-
 	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 )
+
+type KV struct {
+	data map[string]any
+}
+
+func (kv *KV) Set(k string, v any) {
+	if kv.data == nil {
+		kv.data = make(map[string]any)
+	}
+	kv.data[k] = v
+}
+
+func (kv *KV) Get(k string) (any, error) {
+	a, ok := kv.data[k]
+	if !ok {
+		return nil, fmt.Errorf("key (%s) not found in req.KV", k)
+	}
+	return a, nil
+}
 
 type Request[T Resource] struct {
 	ctx            context.Context
@@ -37,7 +53,7 @@ type Request[T Resource] struct {
 	anchorName     string
 	Logger         *slog.Logger
 	internalLogger *slog.Logger
-	locals         map[string]any
+	KV             KV
 
 	reconStartTime time.Time
 	timerMap       map[string]time.Time
@@ -80,9 +96,9 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		client:         c,
 		Object:         resource,
 		Logger:         logging.New(logger),
-		internalLogger: logging.New(logger, logging.WithCallDepth(1)),
+		internalLogger: logging.New(logger, logging.WithCallDepth(3)),
 		anchorName:     anchorName,
-		locals:         map[string]any{},
+		KV:             KV{},
 		timerMap:       map[string]time.Time{},
 	}, nil
 }
