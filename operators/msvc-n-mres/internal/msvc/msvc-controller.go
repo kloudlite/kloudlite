@@ -2,11 +2,14 @@ package msvc
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
+	templates2 "github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc/templates"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/toolkit/functions"
@@ -18,9 +21,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -29,11 +33,15 @@ type Reconciler struct {
 	Env        *env.Env
 	YAMLClient kubectl.YAMLClient
 
-	builder       *builder.Builder
+	dynamicWatch func(apiVersion, kind string) error
+
 	watchingTypes map[string]struct{}
 
 	templateCommonMsvc []byte
 }
+
+//go:embed templates/common-msvc.yml.tpl
+var templateCommonManagedService []byte
 
 func (r *Reconciler) GetName() string {
 	return "managed-services"
@@ -47,13 +55,6 @@ const (
 	ManagedServiceDeleted string = "managed-service-deleted"
 	DefaultsPatched       string = "defaults-patched"
 )
-
-var ApplyCheckList = []reconciler.CheckMeta{
-	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
-	{Name: OwnManagedResources, Title: "Own Managed Resources"},
-	{Name: ManagedServiceApplied, Title: "Managed Service Applied"},
-	{Name: ManagedServiceReady, Title: "Managed Service Ready"},
-}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
@@ -87,7 +88,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]reconciler.CheckMeta{
+		{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+		{Name: OwnManagedResources, Title: "Own Managed Resources"},
+		{Name: ManagedServiceApplied, Title: "Managed Service Applied"},
+		{Name: ManagedServiceReady, Title: "Managed Service Ready"},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -178,7 +184,6 @@ func (r *Reconciler) ensureRealMsvcCreated(req *reconciler.Request[*crdsv1.Manag
 	check := reconciler.NewRunningCheck(ManagedServiceApplied, req)
 
 	if obj.Spec.ServiceTemplate != nil {
-
 		if !fn.IsGVKInstalled(r.Client, obj.Spec.ServiceTemplate.APIVersion, obj.Spec.ServiceTemplate.Kind) {
 			return check.Failed(fmt.Errorf("CRD not installed for (apiVersion: %s, kind: %s)", obj.Spec.ServiceTemplate.APIVersion, obj.Spec.ServiceTemplate.Kind))
 		}
@@ -214,28 +219,40 @@ func (r *Reconciler) ensureRealMsvcCreated(req *reconciler.Request[*crdsv1.Manag
 	}
 
 	if obj.Spec.Plugin != nil {
-		b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
-			"api-version": obj.Spec.Plugin.APIVersion,
-			"kind":        obj.Spec.Plugin.Kind,
-
-			"name":       obj.Name,
-			"namespace":  obj.Namespace,
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			"labels":      obj.GetLabels(),
-			"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
-
-			"service-template-spec": obj.Spec.Plugin.Spec,
-
-			"export": obj.Spec.Plugin.Export,
-
-			// "output": map[string]string{
-			// 	"secretName": obj.Output.CredentialsRef.Name,
-			// },
+		b, err := templates.ParseBytes(templateCommonManagedService, templates2.CommonManagedServiceParams{
+			Metadata: metav1.ObjectMeta{
+				Name:            obj.Name,
+				Namespace:       obj.Namespace,
+				Labels:          obj.GetLabels(),
+				Annotations:     fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			},
+			PluginTemplate: *obj.Spec.Plugin,
 		})
+		// b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
+		// 	"api-version": obj.Spec.Plugin.APIVersion,
+		// 	"kind":        obj.Spec.Plugin.Kind,
+		//
+		// 	"name":       obj.Name,
+		// 	"namespace":  obj.Namespace,
+		// 	"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		//
+		// 	"labels":      obj.GetLabels(),
+		// 	"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+		//
+		// 	"service-template-spec": obj.Spec.Plugin.Spec,
+		//
+		// 	"export": obj.Spec.Plugin.Export,
+		//
+		// 	// "output": map[string]string{
+		// 	// 	"secretName": obj.Output.CredentialsRef.Name,
+		// 	// },
+		// })
 		if err != nil {
 			return check.Failed(err).NoRequeue()
 		}
+
+		os.WriteFile("/tmp/sample.yml", b, 0o666)
 
 		if err := r.OwnDynamicResource(req, obj.Spec.Plugin.APIVersion, obj.Spec.Plugin.Kind); err != nil {
 			return check.Failed(err).NoRequeue()
@@ -294,7 +311,7 @@ func (r *Reconciler) ensureRealMsvcReady(req *reconciler.Request[*crdsv1.Managed
 			return check.Failed(fmt.Errorf("waiting for real managed service to reconcile")).NoRequeue()
 		}
 
-		return check.Failed(fmt.Errorf("%s", b)).NoRequeue()
+		return check.Failed(fmt.Errorf(errorMsg)).NoRequeue()
 	}
 
 	return check.Completed()
@@ -312,12 +329,21 @@ func (r *Reconciler) OwnDynamicResource(req *reconciler.Request[*crdsv1.ManagedS
 		return nil
 	}
 
-	// Dynamically add the watch
-	r.builder.Owns(fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind}))
-	if err := r.builder.Complete(r); err != nil {
+	if err := r.dynamicWatch(apiVersion, kind); err != nil {
 		req.Logger.Error("failed to call Complete() on builder, got", "err", err)
 		return err
 	}
+
+	// r.controller.Watch(source.TypedKind(cache cache.Cache, obj object, handler handler.TypedEventHandler[object, request], predicates ...predicate.TypedPredicate[object]))
+
+	// r.builder.Watches(source.Kind(cache, &Type{}, handler.EnqueueRequestForOwner(&source.Kind{Type: obj},, &OwnerType{}, OnlyControllerOwner()))).
+
+	// Dynamically add the watch
+	// r.builder.Owns(fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind}))
+	// if err := r.builder.Complete(r); err != nil {
+	// 	req.Logger.Error("failed to call Complete() on builder, got", "err", err)
+	// 	return err
+	// }
 	req.Logger.Info(fmt.Sprintf("ADDED watch for owned-resources GVK %s/%s", apiVersion, kind))
 	return nil
 }
@@ -338,10 +364,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{}).Named(r.GetName())
 	builder.Owns(&crdsv1.ManagedResource{})
-
-	r.builder = builder
 
 	// watchlist := []client.Object{
 	// 	&crdsv1.ManagedResource{},
@@ -360,5 +384,21 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor(r.GetName())))
-	return builder.Complete(r)
+
+	// r.dynamicWatch = func(apiVersion, kind string) error {
+	// 	return nil
+	// }
+
+	tc, err := builder.Build(r)
+	if err != nil {
+		return err
+	}
+
+	r.dynamicWatch = func(apiVersion, kind string) error {
+		obj := fn.NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind})
+		return tc.Watch(source.Kind(mgr.GetCache(), obj, handler.TypedEnqueueRequestForOwner[*unstructured.Unstructured](mgr.GetScheme(), mgr.GetRESTMapper(), &crdsv1.ManagedService{}, handler.OnlyControllerOwner())))
+	}
+
+	// return builder.Complete(r)
+	return nil
 }

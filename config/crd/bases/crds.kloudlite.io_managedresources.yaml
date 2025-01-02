@@ -55,77 +55,51 @@ spec:
             type: string
           metadata:
             type: object
-          output:
-            properties:
-              credentialsRef:
-                description: refers to a k8s secret that exists in the same namespace
-                  as managed resource
-                properties:
-                  name:
-                    description: .metadata.name of the resource
-                    type: string
-                required:
-                - name
-                type: object
-            required:
-            - credentialsRef
-            type: object
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
-              resourceNamePrefix:
-                type: string
-              resourceTemplate:
+              managedServiceRef:
                 properties:
                   apiVersion:
-                    description: |-
-                      APIVersion defines the versioned schema of this representation of an object.
-                      Servers should convert recognized schemas to the latest internal value, and
-                      may reject unrecognized values.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
                     type: string
                   kind:
-                    description: |-
-                      Kind is a string value representing the REST resource this object represents.
-                      Servers may infer this from the endpoint the client submits requests to.
-                      Cannot be updated.
-                      In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
-                  msvcRef:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                type: object
+              plugin:
+                properties:
+                  apiVersion:
+                    type: string
+                  export:
                     properties:
-                      apiVersion:
-                        description: |-
-                          APIVersion defines the versioned schema of this representation of an object.
-                          Servers should convert recognized schemas to the latest internal value, and
-                          may reject unrecognized values.
-                          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                      template:
                         type: string
-                      kind:
-                        description: |-
-                          Kind is a string value representing the REST resource this object represents.
-                          Servers may infer this from the endpoint the client submits requests to.
-                          Cannot be updated.
-                          In CamelCase.
-                          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-                        type: string
-                      name:
-                        type: string
-                      namespace:
+                      viaSecret:
                         type: string
                     required:
-                    - name
-                    - namespace
+                    - viaSecret
                     type: object
+                  kind:
+                    type: string
                   spec:
                     additionalProperties:
                       x-kubernetes-preserve-unknown-fields: true
                     type: object
                 required:
-                - msvcRef
+                - apiVersion
+                - kind
                 type: object
             required:
-            - resourceTemplate
+            - managedServiceRef
+            - plugin
             type: object
           status:
             properties:
@@ -180,9 +154,6 @@ spec:
               lastReconcileTime:
                 format: date-time
                 type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
               resources:
                 items:
                   properties:
