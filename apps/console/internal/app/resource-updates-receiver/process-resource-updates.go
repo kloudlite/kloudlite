@@ -277,6 +277,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnRouterUpdateMessage(rctx, router, resStatus, opts)
 			}
+
 		case managedResourceGVK.String():
 			{
 				var mres crdsv1.ManagedResource
@@ -296,9 +297,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres)
+					return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ManagedServiceRef.Name, mres)
 				}
-				return d.OnManagedResourceUpdateMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres, outputSecret, resStatus, opts)
+				return d.OnManagedResourceUpdateMessage(dctx, mres.Spec.ManagedServiceRef.Name, mres, outputSecret, resStatus, opts)
 			}
 
 		case serviceBindingGVK.String():

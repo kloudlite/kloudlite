@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/aws/aws-sdk-go v1.50.10
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
-	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
+	github.com/codingconcepts/env v0.0.0-20240618133406-5b0845441187
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gobuffalo/flect v1.0.2
 	github.com/gofiber/adaptor/v2 v2.1.23
@@ -27,17 +27,17 @@ require (
 	github.com/yext/yerrors v0.0.0-20230716030415-7ebf68e23868 // indirect
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/fx v1.17.1
-	go.uber.org/zap v1.26.0
+	go.uber.org/zap v1.27.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.8.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/api v0.31.1
+	k8s.io/api v0.31.3
 	k8s.io/apiextensions-apiserver v0.31.1
-	k8s.io/apimachinery v0.31.1
+	k8s.io/apimachinery v0.31.3
 	k8s.io/client-go v0.31.1
-	sigs.k8s.io/controller-runtime v0.19.0
+	sigs.k8s.io/controller-runtime v0.19.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -50,6 +50,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
 	github.com/kloudlite/operator v1.0.1-0.20241024180107-6c3c50b884a6
+	github.com/kloudlite/operator/toolkit v0.0.0-20241217090940-496defd03e03
 	github.com/miekg/dns v1.1.57
 	github.com/mittwald/go-helm-client v0.12.14
 	github.com/nats-io/nats.go v1.31.0
@@ -178,7 +179,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/fasthttp/websocket v1.5.0 // indirect
-	github.com/fatih/color v1.16.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect

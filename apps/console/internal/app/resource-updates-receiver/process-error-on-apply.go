@@ -204,9 +204,9 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 				}
 
 				if errObj.Action == t.ActionApply {
-					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.Spec.ResourceTemplate.MsvcRef.Name, obj.GetName(), opts)
+					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.Spec.ManagedServiceRef.Name, obj.GetName(), opts)
 				}
-				return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres)
+				return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ManagedServiceRef.Name, mres)
 			}
 		case clusterMsvcGVK.String():
 			{

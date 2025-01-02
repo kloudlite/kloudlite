@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type ExternalApp struct {
@@ -25,7 +25,7 @@ func (e *ExternalApp) GetDisplayName() string {
 	return e.ResourceMetadata.DisplayName
 }
 
-func (e *ExternalApp) GetStatus() operator.Status {
+func (e *ExternalApp) GetStatus() reconciler.Status {
 	return e.ExternalApp.Status
 }
 

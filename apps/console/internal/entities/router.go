@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type Router struct {
@@ -24,7 +24,7 @@ func (r *Router) GetDisplayName() string {
 	return r.ResourceMetadata.DisplayName
 }
 
-func (r *Router) GetStatus() operator.Status {
+func (r *Router) GetStatus() reconciler.Status {
 	return r.Router.Status
 }
 

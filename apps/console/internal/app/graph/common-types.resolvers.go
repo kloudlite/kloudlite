@@ -18,9 +18,9 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
 	v12 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	v11 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Meta is the resolver for the meta field.
@@ -52,16 +52,16 @@ func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) SyncSc
 }
 
 // CheckList is the resolver for the checkList field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) CheckList(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta, error) {
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) CheckList(ctx context.Context, obj *reconciler.Status) ([]*model.GithubComKloudliteOperatorToolkitReconcilerCheckMeta, error) {
 	if obj == nil {
 		return nil, errors.Newf("obj is nil")
 	}
 
-	return fn.JsonConvert[[]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta](obj.CheckList)
+	return fn.JsonConvert[[]*model.GithubComKloudliteOperatorToolkitReconcilerCheckMeta](obj.CheckList)
 }
 
 // Checks is the resolver for the checks field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) Checks(ctx context.Context, obj *reconciler.Status) (map[string]interface{}, error) {
 	if obj == nil {
 		return nil, errors.Newf("obj is nil")
 	}
@@ -73,7 +73,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Ch
 }
 
 // LastReconcileTime is the resolver for the lastReconcileTime field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error) {
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) LastReconcileTime(ctx context.Context, obj *reconciler.Status) (*string, error) {
 	if obj == nil {
 		return nil, errors.Newf("obj is nil")
 	}
@@ -85,16 +85,9 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) La
 	return fn.New(obj.LastReconcileTime.Format(time.RFC3339)), nil
 }
 
-// Message is the resolver for the message field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error) {
-	return &model.GithubComKloudliteOperatorPkgRawJSONRawJSON{
-		RawMessage: obj.Message,
-	}, nil
-}
-
 // Resources is the resolver for the resources field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Resources(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, error) {
-	var m []*model.GithubComKloudliteOperatorPkgOperatorResourceRef
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) Resources(ctx context.Context, obj *reconciler.Status) ([]*model.GithubComKloudliteOperatorToolkitReconcilerResourceRef, error) {
+	var m []*model.GithubComKloudliteOperatorToolkitReconcilerResourceRef
 	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -258,9 +251,9 @@ func (r *Resolver) Github__com___kloudlite___api___pkg___types__SyncStatus() gen
 	return &github__com___kloudlite___api___pkg___types__SyncStatusResolver{r}
 }
 
-// Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
-func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
-	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
+// Github__com___kloudlite___operator___toolkit___reconciler__Status returns generated.Github__com___kloudlite___operator___toolkit___reconciler__StatusResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___toolkit___reconciler__Status() generated.Github__com___kloudlite___operator___toolkit___reconciler__StatusResolver {
+	return &github__com___kloudlite___operator___toolkit___reconciler__StatusResolver{r}
 }
 
 // K8s__io___api___core___v1__Secret returns generated.K8s__io___api___core___v1__SecretResolver implementation.
@@ -293,7 +286,7 @@ type (
 	github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver struct{ *Resolver }
 	github__com___kloudlite___api___common__CreatedOrUpdatedByResolver                                 struct{ *Resolver }
 	github__com___kloudlite___api___pkg___types__SyncStatusResolver                                    struct{ *Resolver }
-	github__com___kloudlite___operator___pkg___operator__StatusResolver                                struct{ *Resolver }
+	github__com___kloudlite___operator___toolkit___reconciler__StatusResolver                          struct{ *Resolver }
 	k8s__io___api___core___v1__SecretResolver                                                          struct{ *Resolver }
 	metadataResolver                                                                                   struct{ *Resolver }
 	github__com___kloudlite___api___pkg___types__SyncStatusInResolver                                  struct{ *Resolver }
@@ -301,16 +294,3 @@ type (
 	github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver          struct{ *Resolver }
 	metadataInResolver                                                                                 struct{ *Resolver }
 )
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver) ContainerPort(ctx context.Context, obj *v12.SvcInterceptPortMappings, data int) error {
-	obj.ContainerPort = uint16(data)
-	return nil
-}
-*/

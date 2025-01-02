@@ -8,7 +8,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,7 +25,7 @@ type ResourceForSync interface {
 	GetDisplayName() string
 	GetAnnotations() map[string]string
 	GetGeneration() int64
-	GetStatus() rApi.Status
+	GetStatus() reconciler.Status
 	GetRecordVersion() int
 }
 
@@ -42,7 +42,7 @@ type ResourceForSyncFromAgent interface {
 	GetLabels() map[string]string
 	GetAnnotations() map[string]string
 	GetGeneration() int64
-	GetStatus() rApi.Status
+	GetStatus() reconciler.Status
 }
 
 func PatchForSyncFromAgent(

@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type HelmChart struct {
@@ -29,7 +29,7 @@ func (a *HelmChart) GetGeneration() int64 {
 	return a.ObjectMeta.Generation
 }
 
-func (a *HelmChart) GetStatus() operator.Status {
+func (a *HelmChart) GetStatus() reconciler.Status {
 	return a.HelmChart.Status.Status
 }
 

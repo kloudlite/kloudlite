@@ -11,10 +11,11 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	common_types "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/plugin"
+	"github.com/kloudlite/operator/toolkit/reconciler"
+	toolkit_types "github.com/kloudlite/operator/toolkit/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -357,7 +358,7 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx ConsoleContext, cluste
 		fc.ClusterManagedServiceSyncedOutputSecretRef: service.SyncedOutputSecretRef,
 	}
 
-	if service.SyncedOutputSecretRef != nil {
+	if service.SyncedOutputSecretRef != nil && xService.Spec.MSVCSpec.Plugin != nil {
 		service.SyncedOutputSecretRef.Namespace = xService.Spec.TargetNamespace
 
 		if _, err := d.createRootManagedResource(ctx, &entities.ManagedResource{
@@ -367,26 +368,40 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx ConsoleContext, cluste
 					Namespace: xService.Spec.TargetNamespace,
 				},
 				Spec: crdsv1.ManagedResourceSpec{
-					ResourceTemplate: crdsv1.MresResourceTemplate{
-						TypeMeta: metav1.TypeMeta{
-							Kind:       "RootCredentials",
-							APIVersion: xService.Spec.MSVCSpec.ServiceTemplate.APIVersion,
-						},
-						MsvcRef: common_types.MsvcRef{
-							Name:      xService.Name,
-							Namespace: xService.Spec.TargetNamespace,
+					ManagedServiceRef: toolkit_types.ObjectReference{
+						APIVersion: xService.Spec.MSVCSpec.Plugin.APIVersion,
+						Kind:       "RootCredentials",
+						Namespace:  xService.Spec.TargetNamespace,
+						Name:       xService.Name,
+					},
+					Plugin: crdsv1.PluginTemplate{
+						APIVersion: xService.Spec.MSVCSpec.Plugin.APIVersion,
+						Kind:       "RootCredentials",
+						Spec:       nil,
+						Export: plugin.Export{
+							ViaSecret: xService.SyncedOutputSecretRef.Name,
 						},
 					},
+					// ResourceTemplate: crdsv1.MresResourceTemplate{
+					// 	TypeMeta: metav1.TypeMeta{
+					// 		Kind:       "RootCredentials",
+					// 		APIVersion: xService.Spec.MSVCSpec.ServiceTemplate.APIVersion,
+					// 	},
+					// 	MsvcRef: common_types.MsvcRef{
+					// 		Name:      xService.Name,
+					// 		Namespace: xService.Spec.TargetNamespace,
+					// 	},
 				},
-				Status: operator.Status{
+				Status: reconciler.Status{
 					IsReady: true,
 				},
-				Output: common_types.ManagedResourceOutput{
-					CredentialsRef: common_types.LocalObjectReference{
-						Name: service.SyncedOutputSecretRef.Name,
-					},
-				},
 			},
+			// Output: common_types.ManagedResourceOutput{
+			// 	CredentialsRef: common_types.LocalObjectReference{
+			// 		Name: service.SyncedOutputSecretRef.Name,
+			// 	},
+			// },
+			// },
 			ResourceMetadata: common.ResourceMetadata{
 				DisplayName:   fmt.Sprintf("%s/%s", xService.Name, "root-credentials"),
 				CreatedBy:     xService.CreatedBy,

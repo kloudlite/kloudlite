@@ -175,20 +175,6 @@ type GithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor struct {
 	ResourceType GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType `json:"resourceType"`
 }
 
-type GithubComKloudliteOperatorApisCommonTypesMsvcRef struct {
-	APIVersion *string `json:"apiVersion,omitempty"`
-	Kind       *string `json:"kind,omitempty"`
-	Name       string  `json:"name"`
-	Namespace  string  `json:"namespace"`
-}
-
-type GithubComKloudliteOperatorApisCommonTypesMsvcRefIn struct {
-	APIVersion *string `json:"apiVersion,omitempty"`
-	Kind       *string `json:"kind,omitempty"`
-	Name       string  `json:"name"`
-	Namespace  string  `json:"namespace"`
-}
-
 type GithubComKloudliteOperatorApisCommonTypesNamespacedResourceRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
@@ -482,15 +468,14 @@ type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HelmChartStatus struct {
-	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMeta   `json:"checkList,omitempty"`
-	Checks              map[string]interface{}                              `json:"checks,omitempty"`
-	IsReady             bool                                                `json:"isReady"`
-	LastReadyGeneration *int                                                `json:"lastReadyGeneration,omitempty"`
-	LastReconcileTime   *string                                             `json:"lastReconcileTime,omitempty"`
-	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON        `json:"message,omitempty"`
-	ReleaseNotes        string                                              `json:"releaseNotes"`
-	ReleaseStatus       string                                              `json:"releaseStatus"`
-	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRef `json:"resources,omitempty"`
+	CheckList           []*GithubComKloudliteOperatorToolkitReconcilerCheckMeta   `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                                    `json:"checks,omitempty"`
+	IsReady             bool                                                      `json:"isReady"`
+	LastReadyGeneration *int                                                      `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                                   `json:"lastReconcileTime,omitempty"`
+	ReleaseNotes        string                                                    `json:"releaseNotes"`
+	ReleaseStatus       string                                                    `json:"releaseStatus"`
+	Resources           []*GithubComKloudliteOperatorToolkitReconcilerResourceRef `json:"resources,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe struct {
@@ -546,37 +531,37 @@ type GithubComKloudliteOperatorApisCrdsV1JobVarsIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
-	ResourceNamePrefix *string                                                   `json:"resourceNamePrefix,omitempty"`
-	ResourceTemplate   *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate `json:"resourceTemplate"`
+	ManagedServiceRef *GithubComKloudliteOperatorToolkitTypesObjectReference `json:"managedServiceRef"`
+	Plugin            *GithubComKloudliteOperatorApisCrdsV1PluginTemplate    `json:"plugin"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
-	ResourceNamePrefix *string                                                     `json:"resourceNamePrefix,omitempty"`
-	ResourceTemplate   *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn `json:"resourceTemplate"`
+	ManagedServiceRef *GithubComKloudliteOperatorToolkitTypesObjectReferenceIn `json:"managedServiceRef"`
+	Plugin            *GithubComKloudliteOperatorApisCrdsV1PluginTemplateIn    `json:"plugin"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
-	Plugin          *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"plugin,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate,omitempty"`
+	Plugin          *GithubComKloudliteOperatorApisCrdsV1PluginTemplate `json:"plugin,omitempty"`
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1PluginTemplate `json:"serviceTemplate,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
-	Plugin          *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"plugin,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate,omitempty"`
+	Plugin          *GithubComKloudliteOperatorApisCrdsV1PluginTemplateIn `json:"plugin,omitempty"`
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1PluginTemplateIn `json:"serviceTemplate,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {
-	APIVersion string                                            `json:"apiVersion"`
-	Kind       string                                            `json:"kind"`
-	MsvcRef    *GithubComKloudliteOperatorApisCommonTypesMsvcRef `json:"msvcRef"`
-	Spec       map[string]interface{}                            `json:"spec,omitempty"`
+type GithubComKloudliteOperatorApisCrdsV1PluginTemplate struct {
+	APIVersion string                                         `json:"apiVersion"`
+	Export     *GithubComKloudliteOperatorToolkitPluginExport `json:"export,omitempty"`
+	Kind       string                                         `json:"kind"`
+	Spec       map[string]interface{}                         `json:"spec,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn struct {
-	APIVersion string                                              `json:"apiVersion"`
-	Kind       string                                              `json:"kind"`
-	MsvcRef    *GithubComKloudliteOperatorApisCommonTypesMsvcRefIn `json:"msvcRef"`
-	Spec       map[string]interface{}                              `json:"spec,omitempty"`
+type GithubComKloudliteOperatorApisCrdsV1PluginTemplateIn struct {
+	APIVersion string                                           `json:"apiVersion"`
+	Export     *GithubComKloudliteOperatorToolkitPluginExportIn `json:"export,omitempty"`
+	Kind       string                                           `json:"kind"`
+	Spec       map[string]interface{}                           `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Probe struct {
@@ -649,20 +634,6 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecIn struct {
 	MaxBodySizeInMb *int                                             `json:"maxBodySizeInMB,omitempty"`
 	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
 	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
-	APIVersion string                                     `json:"apiVersion"`
-	Export     *GithubComKloudliteOperatorPkgPluginExport `json:"export,omitempty"`
-	Kind       string                                     `json:"kind"`
-	Spec       map[string]interface{}                     `json:"spec,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
-	APIVersion string                                       `json:"apiVersion"`
-	Export     *GithubComKloudliteOperatorPkgPluginExportIn `json:"export,omitempty"`
-	Kind       string                                       `json:"kind"`
-	Spec       map[string]interface{}                       `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ShellProbe struct {
@@ -754,6 +725,16 @@ type GithubComKloudliteOperatorPkgOperatorResourceRefIn struct {
 	Namespace  string `json:"namespace"`
 }
 
+type GithubComKloudliteOperatorPkgOperatorStatus struct {
+	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMeta   `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                              `json:"checks,omitempty"`
+	IsReady             bool                                                `json:"isReady"`
+	LastReadyGeneration *int                                                `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                             `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON        `json:"message,omitempty"`
+	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRef `json:"resources,omitempty"`
+}
+
 type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
 	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMetaIn   `json:"checkList,omitempty"`
 	Checks              map[string]interface{}                                `json:"checks,omitempty"`
@@ -764,22 +745,97 @@ type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
 	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRefIn `json:"resources,omitempty"`
 }
 
-type GithubComKloudliteOperatorPkgPluginExport struct {
-	Template  string  `json:"template"`
-	ViaSecret *string `json:"viaSecret,omitempty"`
-}
-
-type GithubComKloudliteOperatorPkgPluginExportIn struct {
-	Template  string  `json:"template"`
-	ViaSecret *string `json:"viaSecret,omitempty"`
-}
-
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage any `json:"RawMessage,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
 	RawMessage any `json:"RawMessage,omitempty"`
+}
+
+type GithubComKloudliteOperatorToolkitPluginExport struct {
+	Template  *string `json:"template,omitempty"`
+	ViaSecret string  `json:"viaSecret"`
+}
+
+type GithubComKloudliteOperatorToolkitPluginExportIn struct {
+	Template  *string `json:"template,omitempty"`
+	ViaSecret string  `json:"viaSecret"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerCheck struct {
+	Debug      *string                                           `json:"debug,omitempty"`
+	Error      *string                                           `json:"error,omitempty"`
+	Generation *int                                              `json:"generation,omitempty"`
+	Info       *string                                           `json:"info,omitempty"`
+	Message    *string                                           `json:"message,omitempty"`
+	StartedAt  *string                                           `json:"startedAt,omitempty"`
+	State      *GithubComKloudliteOperatorToolkitReconcilerState `json:"state,omitempty"`
+	Status     bool                                              `json:"status"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerCheckIn struct {
+	Debug      *string                                           `json:"debug,omitempty"`
+	Error      *string                                           `json:"error,omitempty"`
+	Generation *int                                              `json:"generation,omitempty"`
+	Info       *string                                           `json:"info,omitempty"`
+	Message    *string                                           `json:"message,omitempty"`
+	StartedAt  *string                                           `json:"startedAt,omitempty"`
+	State      *GithubComKloudliteOperatorToolkitReconcilerState `json:"state,omitempty"`
+	Status     bool                                              `json:"status"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerCheckMeta struct {
+	Debug       *bool   `json:"debug,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerCheckMetaIn struct {
+	Debug       *bool   `json:"debug,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerResourceRef struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerResourceRefIn struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerStatusIn struct {
+	CheckList           []*GithubComKloudliteOperatorToolkitReconcilerCheckMetaIn   `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                                      `json:"checks,omitempty"`
+	IsReady             bool                                                        `json:"isReady"`
+	LastReadyGeneration *int                                                        `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                                     `json:"lastReconcileTime,omitempty"`
+	Resources           []*GithubComKloudliteOperatorToolkitReconcilerResourceRefIn `json:"resources,omitempty"`
+}
+
+type GithubComKloudliteOperatorToolkitTypesObjectReference struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorToolkitTypesObjectReferenceIn struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 type HelmChartEdge struct {
@@ -1616,6 +1672,51 @@ func (e *GithubComKloudliteOperatorPkgOperatorState) UnmarshalGQL(v interface{})
 }
 
 func (e GithubComKloudliteOperatorPkgOperatorState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteOperatorToolkitReconcilerState string
+
+const (
+	GithubComKloudliteOperatorToolkitReconcilerStateErroredDuringReconcilation GithubComKloudliteOperatorToolkitReconcilerState = "errored____during____reconcilation"
+	GithubComKloudliteOperatorToolkitReconcilerStateFinishedReconcilation      GithubComKloudliteOperatorToolkitReconcilerState = "finished____reconcilation"
+	GithubComKloudliteOperatorToolkitReconcilerStateUnderReconcilation         GithubComKloudliteOperatorToolkitReconcilerState = "under____reconcilation"
+	GithubComKloudliteOperatorToolkitReconcilerStateYetToBeReconciled          GithubComKloudliteOperatorToolkitReconcilerState = "yet____to____be____reconciled"
+)
+
+var AllGithubComKloudliteOperatorToolkitReconcilerState = []GithubComKloudliteOperatorToolkitReconcilerState{
+	GithubComKloudliteOperatorToolkitReconcilerStateErroredDuringReconcilation,
+	GithubComKloudliteOperatorToolkitReconcilerStateFinishedReconcilation,
+	GithubComKloudliteOperatorToolkitReconcilerStateUnderReconcilation,
+	GithubComKloudliteOperatorToolkitReconcilerStateYetToBeReconciled,
+}
+
+func (e GithubComKloudliteOperatorToolkitReconcilerState) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorToolkitReconcilerStateErroredDuringReconcilation, GithubComKloudliteOperatorToolkitReconcilerStateFinishedReconcilation, GithubComKloudliteOperatorToolkitReconcilerStateUnderReconcilation, GithubComKloudliteOperatorToolkitReconcilerStateYetToBeReconciled:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorToolkitReconcilerState) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorToolkitReconcilerState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorToolkitReconcilerState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___operator___toolkit___reconciler__State", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorToolkitReconcilerState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
