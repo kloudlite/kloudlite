@@ -242,3 +242,12 @@ func ForceDelete[T client.Object](ctx context.Context, logger logging.Logger, kc
 
 	return nil
 }
+
+// checks whether CRD are installed on the cluster
+func IsGVKInstalled(client client.Client, apiVersion, kind string) bool {
+	obj := NewUnstructured(metav1.TypeMeta{APIVersion: apiVersion, Kind: kind})
+	if _, err := client.IsObjectNamespaced(obj); err != nil && strings.HasPrefix(err.Error(), "failed to get restmapping: failed to find API group") {
+		return false
+	}
+	return true
+}

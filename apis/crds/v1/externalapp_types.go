@@ -1,7 +1,7 @@
 package v1
 
 import (
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,8 +33,8 @@ type ExternalApp struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ExternalAppSpec `json:"spec,omitempty"`
-	Status rApi.Status     `json:"status,omitempty"`
+	Spec   ExternalAppSpec   `json:"spec,omitempty"`
+	Status reconciler.Status `json:"status,omitempty"`
 }
 
 func (p *ExternalApp) EnsureGVK() {
@@ -43,7 +43,7 @@ func (p *ExternalApp) EnsureGVK() {
 	}
 }
 
-func (p *ExternalApp) GetStatus() *rApi.Status {
+func (p *ExternalApp) GetStatus() *reconciler.Status {
 	return &p.Status
 }
 

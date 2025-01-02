@@ -9,7 +9,7 @@ import (
 
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"k8s.io/apimachinery/pkg/util/intstr"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type genNginxStreamArgs struct {
@@ -17,35 +17,51 @@ type genNginxStreamArgs struct {
 	ToAddr   string
 }
 
-func genNginxStreamConfig(protocol string, fromAddr string, toAddr string) string {
+func genNginxStreamConfig(svcID string, protocol string, fromAddr string, toAddr string) string {
 	protocol = strings.ToLower(protocol)
 	if protocol == "tcp" {
 		protocol = ""
 	}
+
+	// 	return strings.TrimSpace(fmt.Sprintf(`
+	// upstream %s {
+	//   server 127.0.0.1:80 backup;
+	//   server %s max_fails=3 ;
+	// }
+	//
+	// server {
+	//   listen %s %s;
+	//   proxy_pass %s;
+	// }
+	// `, svcID, toAddr, fromAddr, protocol, svcID))
+
+	// SOURCE: https://sandro-keil.de/blog/let-nginx-start-if-upstream-host-is-unavailable-or-down/
 	return strings.TrimSpace(fmt.Sprintf(`
 server {
+  set $upstream %s;
+
   listen %s %s;
-  proxy_pass %s;
+  proxy_pass $upstream;
 }
-`, fromAddr, protocol, toAddr))
+`, toAddr, fromAddr, protocol))
 }
 
 func RegisterNginxStreamConfig(svcBinding *networkingv1.ServiceBinding) []string {
 	result := make([]string, 0, len(svcBinding.Spec.Ports))
 	for _, port := range svcBinding.Spec.Ports {
 		addr := fmt.Sprintf("%s:%d", svcBinding.Spec.GlobalIP, port.Port)
-		if port.TargetPort == intstr.FromString("") {
-			port.TargetPort = intstr.FromInt(int(port.Port))
+
+		if svcBinding.Spec.ServiceIP == nil || *svcBinding.Spec.ServiceIP == corev1.ClusterIPNone {
+			host := fmt.Sprintf("%s.%s.svc.cluster.local", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace)
+			svcBinding.Spec.ServiceIP = &host
 		}
 
-		if svcBinding.Spec.ServiceIP != nil {
-			result = append(result,
-				genNginxStreamConfig(
-					strings.ToLower(string(port.Protocol)),
-					addr,
-					// fmt.Sprintf("%s.%s.svc.cluster.local:%d", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace, port.TargetPort.IntValue()),
-					fmt.Sprintf("%s:%d", *svcBinding.Spec.ServiceIP, port.TargetPort.IntValue())))
-		}
+		result = append(result,
+			genNginxStreamConfig(
+				fmt.Sprintf("%s_%d_%s", svcBinding.Name, port.Port, port.Protocol),
+				strings.ToLower(string(port.Protocol)),
+				addr,
+				fmt.Sprintf("%s:%d", *svcBinding.Spec.ServiceIP, port.Port)))
 	}
 
 	return result

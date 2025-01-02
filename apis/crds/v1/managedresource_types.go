@@ -3,10 +3,9 @@ package v1
 import (
 	"fmt"
 
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
+	"github.com/kloudlite/operator/toolkit/types"
 
-	ct "github.com/kloudlite/operator/apis/common-types"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,16 +19,19 @@ type mresKind struct {
 	Kind string `json:"kind"`
 }
 
-type MresResourceTemplate struct {
-	metav1.TypeMeta `json:",inline" graphql:"children-required"`
-	MsvcRef         ct.MsvcRef                      `json:"msvcRef"`
-	Spec            map[string]apiextensionsv1.JSON `json:"spec,omitempty"`
-}
+// type MresResourceTemplate struct {
+// 	metav1.TypeMeta `json:",inline" graphql:"children-required"`
+// 	MsvcRef         ct.MsvcRef                      `json:"msvcRef"`
+// 	Spec            map[string]apiextensionsv1.JSON `json:"spec,omitempty"`
+// }
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	ResourceNamePrefix *string              `json:"resourceNamePrefix,omitempty"`
-	ResourceTemplate   MresResourceTemplate `json:"resourceTemplate"`
+	// 	ResourceNamePrefix *string              `json:"resourceNamePrefix,omitempty"`
+	// ResourceTemplate MresResourceTemplate `json:"resourceTemplate"`
+
+	ManagedServiceRef types.ObjectReference `json:"managedServiceRef"`
+	Plugin            PluginTemplate        `json:"plugin"`
 }
 
 // +kubebuilder:object:root=true
@@ -45,11 +47,10 @@ type ManagedResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              ManagedResourceSpec `json:"spec"`
-	// +kubebuilder:default=true
-	Enabled *bool       `json:"enabled,omitempty"`
-	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
 
-	Output ct.ManagedResourceOutput `json:"output,omitempty" graphql:"ignore"`
+	// +kubebuilder:default=true
+	Enabled *bool             `json:"enabled,omitempty"`
+	Status  reconciler.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (m *ManagedResource) EnsureGVK() {
@@ -62,21 +63,19 @@ func (m *ManagedResource) NameRef() string {
 	return fmt.Sprintf("%s/%s/%s", m.GroupVersionKind().Group, m.Namespace, m.Name)
 }
 
-func (m *ManagedResource) GetStatus() *rApi.Status {
+func (m *ManagedResource) GetStatus() *reconciler.Status {
 	return &m.Status
 }
 
 func (m *ManagedResource) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		"kloudlite.io/msvc.name": m.Spec.ResourceTemplate.MsvcRef.Name,
+		"kloudlite.io/msvc.name": m.Spec.ManagedServiceRef.Name,
 		"kloudlite.io/mres.name": m.Name,
 	}
 }
 
 func (m *ManagedResource) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{
-		"kloudlite.io/resource-gvk": m.Spec.ResourceTemplate.GroupVersionKind().String(),
-	}
+	return map[string]string{}
 }
 
 func (m *ManagedResource) OwnedByMsvc(svc *ManagedService) bool {

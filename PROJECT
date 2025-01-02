@@ -515,6 +515,8 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: ServiceIntercept
-  path: github.com/kloudlite/operator/apis/crds/v1
+  group: mongodb.msvc
+  kind: Backup
+  path: github.com/kloudlite/operator/apis/mongodb.msvc/v1
   version: v1
 version: "3"

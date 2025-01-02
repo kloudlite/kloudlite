@@ -3,15 +3,16 @@
 
   inputs = {
     nixpkgs = {
-        url = "nixpkgs/nixos-unstable";
-      };
+      url = "nixpkgs/nixos-unstable";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }: 
-    flake-utils.lib.eachDefaultSystem(system: 
-      let 
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
         pkgs = import nixpkgs { inherit system; };
-      in {
+      in
+      {
         devShells.default = pkgs.mkShell {
           hardeningDisable = [ "all" ];
           buildInputs = with pkgs; [
@@ -26,7 +27,7 @@
             pre-commit
 
             # programming tools
-            go_1_21
+            go
             operator-sdk
             mongosh
 
@@ -51,7 +52,7 @@
           #shellHook = ''
           #  echo "You are using nix flakes"
           #'';
-          };
-        }
-      );
+        };
+      }
+    );
 }

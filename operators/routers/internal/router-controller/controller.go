@@ -24,20 +24,18 @@ import (
 	"github.com/kloudlite/operator/operators/routers/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	"github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 )
 
 type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient kubectl.YAMLClient
+	YAMLClient kubectl.YAMLClient
 
 	templateIngress []byte
 }
@@ -64,13 +62,13 @@ const (
 )
 
 var (
-	ApplyChecklist = []rApi.CheckMeta{
+	ApplyChecklist = []reconciler.CheckMeta{
 		{Name: DefaultsPatched, Title: "Defaults Patched"},
 		{Name: EnsuringHttpsCertsIfEnabled, Title: "Ensuring HTTPS Cert if enabled"},
 		{Name: SettingUpBasicAuthIfEnabled, Title: "Setting Up Basic Auth if enabled"},
 	}
 
-	DeleteChecklist = []rApi.CheckMeta{
+	DeleteChecklist = []reconciler.CheckMeta{
 		{Name: CleaningUpResources, Title: "Cleaning Up Resources"},
 	}
 )
@@ -80,7 +78,7 @@ var (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Router{})
+	req, err := reconciler.NewRequest(ctx, r.Client, request.NamespacedName, &crdsv1.Router{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -135,9 +133,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+func (r *Reconciler) patchDefaults(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(DefaultsPatched, req)
+	check := reconciler.NewRunningCheck(DefaultsPatched, req)
 
 	hasUpdate := false
 
@@ -161,13 +159,9 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 	return check.Completed()
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	checkName := CleaningUpResources
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+func (r *Reconciler) finalize(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
+	check := reconciler.NewRunningCheck("finalizing", req)
+	if step := req.CleanupOwnedResources(check); !step.ShouldProceed() {
 		return step
 	}
 
@@ -192,9 +186,9 @@ func isHttpsEnabled(obj *crdsv1.Router) bool {
 	return obj.Spec.Https != nil && obj.Spec.Https.Enabled
 }
 
-func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+func (r *Reconciler) EnsuringHttpsCerts(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(EnsuringHttpsCertsIfEnabled, req)
+	check := reconciler.NewRunningCheck(EnsuringHttpsCertsIfEnabled, req)
 
 	if !isHttpsEnabled(obj) {
 		return check.Completed()
@@ -215,7 +209,7 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 			}
 		}
 
-		cert, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
+		cert, err := reconciler.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return check.StillRunning(err)
@@ -264,7 +258,7 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 			// return check.StillRunning(err).RequeueAfter(1 * time.Second)
 		}
 
-		certSecret, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
+		certSecret, err := reconciler.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
 		if err != nil {
 			return check.StillRunning(err)
 		}
@@ -287,9 +281,9 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 	return check.Completed()
 }
 
-func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+func (r *Reconciler) reconBasicAuth(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(SettingUpBasicAuthIfEnabled, req)
+	check := reconciler.NewRunningCheck(SettingUpBasicAuthIfEnabled, req)
 
 	if obj.Spec.BasicAuth != nil && obj.Spec.BasicAuth.Enabled {
 		if len(obj.Spec.BasicAuth.Username) == 0 {
@@ -318,15 +312,15 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 			return check.StillRunning(err)
 		}
 
-		req.AddToOwnedResources(rApi.ParseResourceRef(basicAuthScrt))
+		req.AddToOwnedResources(reconciler.ParseResourceRef(basicAuthScrt))
 	}
 
 	return check.Completed()
 }
 
-func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+func (r *Reconciler) ensureIngresses(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(CreatingIngressResources, req)
+	check := reconciler.NewRunningCheck(CreatingIngressResources, req)
 
 	wcDomains, nonWcDomains, err := r.parseAndExtractDomains(req)
 	if err != nil {
@@ -366,7 +360,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 			return check.Failed(err).Err(nil)
 		}
 
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 		if err != nil {
 			return check.StillRunning(err)
 		}
@@ -377,11 +371,13 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	return check.Completed()
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("r.YAMLClient must be set")
+	}
 
 	var err error
 	r.templateIngress, err = templates.ReadIngressTemplate()
@@ -411,6 +407,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}))
 	// builder.Owns(&certmanagerv1.Certificate{})
 
-	builder.WithEventFilter(rApi.ReconcileFilter())
+	builder.WithEventFilter(reconciler.ReconcileFilter())
 	return builder.Complete(r)
 }

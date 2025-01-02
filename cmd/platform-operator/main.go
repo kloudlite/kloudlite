@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kloudlite/operator/operator"
 	app "github.com/kloudlite/operator/operators/app-n-lambda/controller"
+	"github.com/kloudlite/operator/toolkit/operator"
 
 	// clusters "github.com/kloudlite/operator/operators/clusters/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
@@ -20,10 +20,6 @@ import (
 
 	// wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
 
-	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
-	msvcMysql "github.com/kloudlite/operator/operators/msvc-mysql/controller"
-	msvcPostgres "github.com/kloudlite/operator/operators/msvc-postgres/controller"
-	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 	serviceIntercept "github.com/kloudlite/operator/operators/service-intercept/controller"
 )
 
@@ -36,10 +32,11 @@ func main() {
 	helmCharts.RegisterInto(mgr)
 
 	msvcAndMres.RegisterInto(mgr)
-	msvcMongo.RegisterInto(mgr)
-	msvcRedis.RegisterInto(mgr)
-	msvcMysql.RegisterInto(mgr)
-	msvcPostgres.RegisterInto(mgr)
+
+	// msvcMongo.RegisterInto(mgr)
+	// msvcRedis.RegisterInto(mgr)
+	// msvcMysql.RegisterInto(mgr)
+	// msvcPostgres.RegisterInto(mgr)
 
 	lifecycle.RegisterInto(mgr)
 

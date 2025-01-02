@@ -33,7 +33,7 @@ var _ = BeforeSuite(func() {
 			Dev:  true,
 		}),
 		Name:       "env",
-		yamlClient: Suite.K8sYamlClient,
+		YAMLClient: Suite.K8sYamlClient,
 	}
 
 })

@@ -2,13 +2,13 @@ package v1
 
 import (
 	"github.com/kloudlite/operator/pkg/constants"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type SvcInterceptPortMappings struct {
-	ContainerPort uint16 `json:"containerPort"`
-	ServicePort   uint16 `json:"servicePort"`
+	ServicePort uint16 `json:"servicePort"`
+	DevicePort  uint16 `json:"devicePort"`
 }
 
 type ServiceInterceptSpec struct {

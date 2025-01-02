@@ -1,9 +1,10 @@
 package v1
 
 import (
-	ct "github.com/kloudlite/operator/apis/common-types"
+	"fmt"
+
 	"github.com/kloudlite/operator/pkg/constants"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -11,15 +12,13 @@ import (
 type ClusterManagedServiceSpec struct {
 	TargetNamespace string             `json:"targetNamespace" graphql:"noinput"`
 	MSVCSpec        ManagedServiceSpec `json:"msvcSpec"`
-
-	SharedSecret *string `json:"sharedSecret,omitempty" graphql:"ignore"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/service-gvk",name=Service GVK,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -30,8 +29,22 @@ type ClusterManagedService struct {
 
 	Spec   ClusterManagedServiceSpec `json:"spec,omitempty"`
 	Status rApi.Status               `json:"status,omitempty" graphql:"noinput"`
+}
 
-	Output ct.ManagedServiceOutput `json:"output,omitempty" graphql:"ignore"`
+func (obj *ClusterManagedService) PatchWithDefaults() (hasPatched bool) {
+	hasPatched = false
+
+	if obj.Spec.TargetNamespace == "" {
+		hasPatched = true
+		obj.Spec.TargetNamespace = fmt.Sprintf("cmsvc-%s", obj.Name)
+	}
+
+	if obj.Spec.MSVCSpec.Plugin != nil && obj.Spec.MSVCSpec.Plugin.Export.ViaSecret == "" {
+		hasPatched = true
+		obj.Spec.MSVCSpec.Plugin.Export.ViaSecret = obj.Name + "-export"
+	}
+
+	return hasPatched
 }
 
 func (m *ClusterManagedService) EnsureGVK() {

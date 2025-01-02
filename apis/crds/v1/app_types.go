@@ -5,7 +5,7 @@ import (
 
 	"github.com/kloudlite/operator/pkg/constants"
 	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -245,8 +245,9 @@ type AppSpec struct {
 }
 
 type AppInterceptPortMappings struct {
-	AppPort    uint16 `json:"appPort"`
-	DevicePort uint16 `json:"devicePort"`
+	Protocol   ServiceProtocol `json:"protocol"`
+	AppPort    uint16          `json:"appPort"`
+	DevicePort uint16          `json:"devicePort"`
 }
 
 type Intercept struct {
@@ -283,7 +284,7 @@ type App struct {
 	// +kubebuilder:default=true
 	Enabled *bool `json:"enabled,omitempty"`
 
-	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
+	Status reconciler.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (app *App) EnsureGVK() {
@@ -292,7 +293,7 @@ func (app *App) EnsureGVK() {
 	}
 }
 
-func (app *App) GetStatus() *rApi.Status {
+func (app *App) GetStatus() *reconciler.Status {
 	return &app.Status
 }
 
