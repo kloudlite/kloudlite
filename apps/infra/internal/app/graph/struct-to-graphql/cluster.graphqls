@@ -36,7 +36,6 @@ input ClusterIn {
   globalVPN: String
   kind: String
   metadata: MetadataIn!
-  ownedBy: String
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
 }
 

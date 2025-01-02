@@ -96,17 +96,17 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				fields.MetadataName: name,
 			}, d.nodePoolRepo)
 		}
-	case ResTypeHelmRelease:
-		{
-			if clusterName == nil || *clusterName == "" {
-				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
-			}
-			return checkResourceName(ctx, repos.Filter{
-				fields.AccountName:  ctx.AccountName,
-				fields.ClusterName:  clusterName,
-				fields.MetadataName: name,
-			}, d.helmReleaseRepo)
-		}
+	// case ResTypeHelmRelease:
+	// 	{
+	// 		if clusterName == nil || *clusterName == "" {
+	// 			return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
+	// 		}
+	// 		return checkResourceName(ctx, repos.Filter{
+	// 			fields.AccountName:  ctx.AccountName,
+	// 			fields.ClusterName:  clusterName,
+	// 			fields.MetadataName: name,
+	// 		}, d.helmReleaseRepo)
+	// }
 	default:
 		{
 			return &CheckNameAvailabilityOutput{Result: false}, errors.Newf("unknown resource type provided: %q", typeArg)
