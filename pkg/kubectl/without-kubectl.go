@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/kloudlite/operator/pkg/errors"
@@ -46,7 +47,7 @@ type yamlClient struct {
 	k8sClient     *kubernetes.Clientset
 	dynamicClient dynamic.Interface
 	mapper        meta.RESTMapper
-	logger        logging.Logger
+	logger        *slog.Logger
 }
 
 func (yc *yamlClient) Client() *kubernetes.Clientset {
@@ -100,6 +101,8 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			return yc.dynamicClient.Resource(mapping.Resource)
 		}()
 
+		logger := yc.logger.With("gvk", gvk.String(), "resource", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()))
+
 		ann := obj.GetAnnotations()
 		delete(ann, constants.LastAppliedKey)
 		obj.SetAnnotations(ann)
@@ -132,7 +135,8 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			if err != nil {
 				return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 			}
-			yc.logger.Infof("created resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
+
+			logger.Info("created resource")
 			continue
 		}
 
@@ -140,7 +144,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			prevLastApplied, ok := cobj.GetAnnotations()[constants.LastAppliedKey]
 			if ok {
 				if prevLastApplied == ann[constants.LastAppliedKey] {
-					yc.logger.Infof("No changes for resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
+					logger.Info("No changes for resource")
 					continue
 				}
 
@@ -175,7 +179,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		if _, err = resourceClient.Update(ctx, &obj, metav1.UpdateOptions{}); err != nil {
 			return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 		}
-		yc.logger.Infof("updated resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
+		logger.Info("Updated Resource")
 	}
 	return resources, nil
 }
@@ -411,7 +415,10 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 }
 
 type YAMLClientOpts struct {
+	// Deprecated: use Slogger
 	Logger logging.Logger
+
+	Slogger *slog.Logger
 }
 
 func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error) {
@@ -432,21 +439,22 @@ func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error)
 
 	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
-	if opts.Logger == nil {
-		opts.Logger, err = logging.New(&logging.Options{
-			Name:        "k8s-yaml-client",
-			CallerTrace: true,
-		})
-		if err != nil {
-			return nil, err
-		}
+	if opts.Slogger == nil {
+		opts.Slogger = slog.Default()
+		// opts.Logger, err = logging.New(&logging.Options{
+		// 	Name:        "k8s-yaml-client",
+		// 	CallerTrace: true,
+		// })
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	return &yamlClient{
 		k8sClient:     c,
 		dynamicClient: dc,
 		mapper:        mapper,
-		logger:        opts.Logger,
+		logger:        opts.Slogger,
 	}, nil
 }
 
