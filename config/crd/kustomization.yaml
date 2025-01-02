@@ -56,6 +56,7 @@ resources:
 - bases/postgres.msvc.kloudlite.io_standalonedatabases.yaml
 - bases/mysql.msvc.kloudlite.io_standalonedatabases.yaml
 - bases/mongodb.msvc.kloudlite.io_standalonedatabases.yaml
+- bases/crds.kloudlite.io_serviceintercepts.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -85,6 +86,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_standalones.yaml
 #- patches/webhook_in_databases.yaml
 #- patches/webhook_in_standalonedatabases.yaml
+#- patches/webhook_in_serviceintercepts.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
@@ -111,6 +113,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_standalones.yaml
 #- patches/webhook_in_databases.yaml
 #- patches/webhook_in_standalonedatabases.yaml
+#- patches/webhook_in_serviceintercepts.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 # - patches/serverless.kloudlite.io_lambdas.yaml
 # - patches/cainjection_in_lambdas.yaml
@@ -137,6 +140,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_standalones.yaml
 #- patches/cainjection_in_databases.yaml
 #- patches/cainjection_in_standalonedatabases.yaml
+#- patches/cainjection_in_serviceintercepts.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

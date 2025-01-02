@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/networking/internal/cmd/ip-binding-controller/env"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/prometheus-community/pro-bing"
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -156,12 +157,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return requeue(fmt.Errorf("multiple pod bindings with same reservation found, exiting"))
 	}
 
-	if out, err := exec.CommandContext(ctx, "timeout", "5", "ping", "-c", "1", pblist.Items[0].Spec.GlobalIP).CombinedOutput(); err != nil {
-		logger.Error("failed to ping", "global-ip", pblist.Items[0].Spec.GlobalIP, "output", string(out))
+	pinger, err := probing.NewPinger(pblist.Items[0].Spec.GlobalIP)
+	if err != nil {
+		return requeue(errors.NewEf(err, "failed to create pinger"))
+	}
+
+	pinger.ResolveTimeout = 2 * time.Second
+	pinger.Timeout = 2 * time.Second
+	pinger.Count = 1
+	pctx, cf := context.WithTimeout(ctx, pinger.Timeout)
+	defer cf()
+
+	if err := pinger.RunWithContext(pctx); err != nil {
+		logger.Error("failed to ping", "global-ip", pblist.Items[0].Spec.GlobalIP)
 		return deletePod(fmt.Sprintf("ping failed, got err: %s", err.Error()))
 	}
 
-	logger.Debug("ping success, requeing after 5s")
+	logger.Debug("ping success, requeing after 5s", "ping.packets-received", pinger.Statistics().PacketsRecv)
 
 	return requeue(nil)
 }

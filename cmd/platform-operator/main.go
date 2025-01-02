@@ -24,6 +24,7 @@ import (
 	msvcMysql "github.com/kloudlite/operator/operators/msvc-mysql/controller"
 	msvcPostgres "github.com/kloudlite/operator/operators/msvc-postgres/controller"
 	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
+	serviceIntercept "github.com/kloudlite/operator/operators/service-intercept/controller"
 )
 
 func main() {
@@ -41,6 +42,8 @@ func main() {
 	msvcPostgres.RegisterInto(mgr)
 
 	lifecycle.RegisterInto(mgr)
+
+	serviceIntercept.RegisterInto(mgr)
 
 	// clusters.RegisterInto(mgr)
 	// nodepool.RegisterInto(mgr) // MIGRATE
