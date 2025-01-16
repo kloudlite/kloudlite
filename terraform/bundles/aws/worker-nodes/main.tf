@@ -127,9 +127,9 @@ module "aws-ec2-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          # kloudlite_release          = var.kloudlite_release
-          kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
-
+          k3s_download_url              = var.k3s_download_url
+          kloudlite_runner_download_url = var.kloudlite_runner_download_url
+          kloudlite_config_directory    = module.k3s-templates.kloudlite_config_directory
         })
 
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
@@ -138,7 +138,7 @@ module "aws-ec2-nodepool" {
           var.node_taints != null ? var.node_taints : [],
           var.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
         )
-        tf_node_labels = jsonencode(merge(
+        tf_node_labels = merge(
           local.common_node_labels,
           {
             (module.constants.node_labels.provider_az)   = var.availability_zone
@@ -147,7 +147,7 @@ module "aws-ec2-nodepool" {
             (module.constants.node_labels.provider_aws_instance_profile_name) : var.iam_instance_profile
           },
           var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
-        ))
+        )
         tf_node_name                 = "${var.nodepool_name}-${name}"
         tf_use_cloudflare_nameserver = true
         tf_extra_agent_args          = var.extra_agent_args
@@ -184,7 +184,6 @@ module "aws-spot-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          # kloudlite_release          = var.kloudlite_release
           k3s_download_url              = var.k3s_download_url
           kloudlite_runner_download_url = var.kloudlite_runner_download_url
           kloudlite_config_directory    = module.k3s-templates.kloudlite_config_directory

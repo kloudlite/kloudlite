@@ -62,7 +62,8 @@ tasks:
         popd
         mv $dir/context.tar .
 
-      - docker buildx build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
+      # - docker buildx build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
+      - docker buildx build -f DockerfileNIX2 -o type=image,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
       - rm ./context.tar
 
   container:build-and-push:
