@@ -104,7 +104,7 @@ resource "aws_security_group" "k3s_master_sg" {
   }
 
   dynamic "egress" {
-    for_each = {for k, v in local.outgoing_to_all_internet : k => v}
+    for_each = { for k, v in local.outgoing_to_all_internet : k => v }
     content {
       description = egress.value.description
       from_port   = egress.value.from_port
@@ -115,7 +115,7 @@ resource "aws_security_group" "k3s_master_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.incoming_ssh : k => v}
+    for_each = { for k, v in local.incoming_ssh : k => v }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -126,7 +126,7 @@ resource "aws_security_group" "k3s_master_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.incoming_metrics_server : k => v}
+    for_each = { for k, v in local.incoming_metrics_server : k => v }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -137,7 +137,7 @@ resource "aws_security_group" "k3s_master_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic}
+    for_each = { for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -148,7 +148,7 @@ resource "aws_security_group" "k3s_master_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.k8s_node_ports : k => v if var.expose_k8s_node_ports}
+    for_each = { for k, v in local.k8s_node_ports : k => v if var.expose_k8s_node_ports }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -178,7 +178,7 @@ resource "aws_security_group" "k3s_agent_sg" {
   }
 
   dynamic "egress" {
-    for_each = {for k, v in local.outgoing_to_all_internet : k => v}
+    for_each = { for k, v in local.outgoing_to_all_internet : k => v }
     content {
       description = egress.value.description
       from_port   = egress.value.from_port
@@ -189,7 +189,7 @@ resource "aws_security_group" "k3s_agent_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.incoming_ssh : k => v}
+    for_each = { for k, v in local.incoming_ssh : k => v }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -200,7 +200,7 @@ resource "aws_security_group" "k3s_agent_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.incoming_metrics_server : k => v}
+    for_each = { for k, v in local.incoming_metrics_server : k => v }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -211,7 +211,7 @@ resource "aws_security_group" "k3s_agent_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic}
+    for_each = { for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -222,7 +222,7 @@ resource "aws_security_group" "k3s_agent_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.k8s_node_ports : k => v if var.expose_k8s_node_ports}
+    for_each = { for k, v in local.k8s_node_ports : k => v if var.expose_k8s_node_ports }
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port

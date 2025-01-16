@@ -24,7 +24,8 @@ tasks:
       - |+
         for bundleName in $bundleNames; do
           echo $bundleName
-          bundlePath="../../terraform/bundles/$bundleName"
+          bundlePath="../../../terraform/bundles/aws/$bundleName"
+          echo "bundlepath is '$bundlePath'"
           if [ -f "./variables-$bundleName.tf" ]; then
             chmod 600 "./variables-$bundleName.tf"
           fi
