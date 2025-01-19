@@ -98,25 +98,27 @@ module "k3s-templates" {
   source     = "../../../modules/kloudlite/k3s/k3s-templates"
 }
 
-module "aws-amis" {
-  source = "../../../modules/aws/AMIs"
-}
-
+# module "aws-amis" {
+#   source = "../../../modules/aws/AMIs"
+# }
+#
 module "aws-ec2-nodepool" {
-  count                = var.ec2_nodepool != null ? 1 : 0
-  source               = "../../../modules/aws/aws-ec2-nodepool"
-  depends_on           = [null_resource.variable_validations, module.aws-security-groups.sg_for_k3s_agents_ids]
-  tracker_id           = "${var.tracker_id}-${var.nodepool_name}"
-  ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
-  availability_zone    = var.availability_zone
-  iam_instance_profile = var.iam_instance_profile
+  count      = var.ec2_nodepool != null ? 1 : 0
+  source     = "../../../modules/aws/aws-ec2-nodepool"
+  depends_on = [null_resource.variable_validations, module.aws-security-groups.sg_for_k3s_agents_ids]
+  tracker_id = "${var.tracker_id}-${var.nodepool_name}"
+
+  ami                  = var.ec2_nodepool.ami
   instance_type        = var.ec2_nodepool.instance_type
-  nvidia_gpu_enabled   = var.nvidia_gpu_enabled
-  root_volume_size     = var.ec2_nodepool.root_volume_size
-  root_volume_type     = var.ec2_nodepool.root_volume_type
-  security_groups      = module.aws-security-groups.sg_for_k3s_agents_names
-  ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
-  tags                 = var.tags
+  iam_instance_profile = var.iam_instance_profile
+
+  availability_zone  = var.availability_zone
+  nvidia_gpu_enabled = var.nvidia_gpu_enabled
+  root_volume_size   = var.ec2_nodepool.root_volume_size
+  root_volume_type   = var.ec2_nodepool.root_volume_type
+  security_groups    = module.aws-security-groups.sg_for_k3s_agents_names
+  ssh_key_name       = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
+  tags               = var.tags
   vpc = {
     subnet_id              = var.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
@@ -162,9 +164,11 @@ module "aws-spot-nodepool" {
   depends_on = [
     null_resource.variable_validations, module.aws-security-groups.sg_for_k3s_agents_ids
   ]
-  count                        = var.spot_nodepool != null ? 1 : 0
+  count = var.spot_nodepool != null ? 1 : 0
+
+  ami = var.spot_nodepool.ami
+
   tracker_id                   = "${var.tracker_id}-${var.nodepool_name}"
-  ami                          = module.aws-amis.ubuntu_amd64_cpu_ami_id
   availability_zone            = var.availability_zone
   root_volume_size             = var.spot_nodepool.root_volume_size
   root_volume_type             = var.spot_nodepool.root_volume_type

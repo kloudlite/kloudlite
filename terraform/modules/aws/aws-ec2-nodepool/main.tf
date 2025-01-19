@@ -1,6 +1,6 @@
 module "ec2-nodes" {
   source               = "../ec2-node"
-  for_each             = {for name, cfg in var.nodes : name => cfg}
+  for_each             = { for name, cfg in var.nodes : name => cfg }
   tracker_id           = var.tracker_id
   ami                  = var.ami
   availability_zone    = var.availability_zone
@@ -17,3 +17,4 @@ module "ec2-nodes" {
   user_data_base64     = each.value.user_data_base64 != null ? each.value.user_data_base64 : ""
   tags                 = var.tags
 }
+

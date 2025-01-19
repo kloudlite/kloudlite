@@ -1,7 +1,7 @@
 locals {
   check_satisifies_minimum_root_volume_size = {
     error_message = "when node is nvidia gpu enabled, root volume size must be greater than 75GiB, otherwise greater than 50Gi"
-    condition     = var.root_volume_size >= (var.is_nvidia_gpu_node == true  ? 75 : 50)
+    condition     = var.root_volume_size >= (var.is_nvidia_gpu_node == true ? 75 : 50)
   }
 }
 
@@ -16,7 +16,7 @@ resource "null_resource" "variable_validation" {
 
 resource "null_resource" "lifecycle_resource" {
   depends_on = [null_resource.variable_validation]
-  triggers   = {
+  triggers = {
     on_recreate = var.last_recreated_at
   }
 }
