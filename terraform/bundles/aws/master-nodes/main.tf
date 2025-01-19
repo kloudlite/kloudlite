@@ -65,11 +65,13 @@ module "aws-amis" {
 }
 
 module "k3s-master-instances" {
-  source               = "../../../modules/aws/ec2-node"
-  for_each             = { for name, cfg in var.k3s_masters.nodes : name => cfg }
-  ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
+  source   = "../../../modules/aws/ec2-node"
+  for_each = { for name, cfg in var.k3s_masters.nodes : name => cfg }
+
+  ami           = var.k3s_masters.ami
+  instance_type = var.k3s_masters.instance_type
+
   availability_zone    = each.value.availability_zone
-  instance_type        = var.k3s_masters.instance_type
   iam_instance_profile = var.k3s_masters.iam_instance_profile
   is_nvidia_gpu_node   = var.enable_nvidia_gpu_support
   node_name            = each.key
@@ -120,11 +122,13 @@ module "kloudlite-k3s-masters" {
   public_dns_host              = var.k3s_masters.public_dns_host
   restore_from_latest_snapshot = var.k3s_masters.restore_from_latest_snapshot
   ssh_private_key              = module.ssh-rsa-key.private_key
-  ssh_username                 = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
-  taint_master_nodes           = var.k3s_masters.taint_master_nodes
-  tracker_id                   = var.tracker_id
-  save_kubeconfig_to_path      = var.save_kubeconfig_to_path
-  cloudprovider_name           = "aws"
-  cloudprovider_region         = var.aws_region
-  k3s_service_cidr             = var.k3s_service_cidr
+
+  ssh_username = var.k3s_masters.ssh_username
+
+  taint_master_nodes      = var.k3s_masters.taint_master_nodes
+  tracker_id              = var.tracker_id
+  save_kubeconfig_to_path = var.save_kubeconfig_to_path
+  cloudprovider_name      = "aws"
+  cloudprovider_region    = var.aws_region
+  k3s_service_cidr        = var.k3s_service_cidr
 }

@@ -16,7 +16,10 @@ variable "vpc_id" {
 variable "k3s_masters" {
   description = "k3s masters configuration"
   type = object({
-    instance_type        = string
+    ami           = string
+    instance_type = string
+    ssh_username  = string
+
     nvidia_gpu_enabled   = optional(bool)
     root_volume_size     = string
     root_volume_type     = string
@@ -71,6 +74,11 @@ variable "k3s_masters" {
       var.k3s_masters.cloudflare.zone_id != "",
       var.k3s_masters.cloudflare.domain != "",
     ]))
+  }
+
+  validation {
+    error_message = "must specify ami, and instance_type"
+    condition     = var.k3s_masters.ami != "" && var.k3s_masters.instance_type != ""
   }
 }
 

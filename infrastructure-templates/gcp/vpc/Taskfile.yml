@@ -26,3 +26,48 @@ tasks:
         
         cat $bundlePath/variables.tf >> ./variables-$bundleName.tf
         chmod 400 "./variables-$bundleName.tf"
+
+  init:
+    silent: true
+    cmds:
+      - terraform init
+
+  validate:
+    requires:
+      vars:
+        - tfvars_file
+    cmds:
+      - terraform validate
+
+  create:plan:
+    requires:
+      vars:
+        - plan_file
+        - tfvars_file
+    cmds:
+      - task: init
+      - task: validate
+      - terraform plan --var-file "{{.tfvars_file}}" --out "{{.plan_file}}"
+
+  create:apply:
+    requires:
+      vars:
+        - plan_file
+    cmds:
+      - task: init
+      - terraform apply "{{.plan_file}}"
+
+  destroy:plan:
+    requires:
+      vars:
+        - plan_file
+        - tfvars_file
+    cmds:
+      - terraform plan --var-file="{{.tfvars_file}}" --destroy --out "{{.plan_file}}"
+
+  destroy:apply:
+    requires:
+      vars:
+        - plan_file
+    cmds:
+      - terraform apply "{{.plan_file}}"
