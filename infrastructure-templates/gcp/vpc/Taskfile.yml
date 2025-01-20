@@ -30,7 +30,7 @@ tasks:
   init:
     silent: true
     cmds:
-      - terraform init
+      - terraform init -reconfigure -lockfile=readonly
 
   validate:
     requires:
@@ -53,9 +53,10 @@ tasks:
     requires:
       vars:
         - plan_file
+        - state_file
     cmds:
       - task: init
-      - terraform apply "{{.plan_file}}"
+      - terraform apply -state "{{.state_file}}" "{{.plan_file}}" 
 
   destroy:plan:
     requires:
@@ -69,5 +70,6 @@ tasks:
     requires:
       vars:
         - plan_file
+        - state_file
     cmds:
-      - terraform apply "{{.plan_file}}"
+      - terraform apply -state "{{.state_file}}"  "{{.plan_file}}"
