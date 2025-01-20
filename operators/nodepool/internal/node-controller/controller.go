@@ -209,7 +209,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 		return check.Completed()
 	}
 
-	return check.StillRunning(fmt.Errorf("node will be deleted at %s", t.Format(time.RFC3339))).NoRequeue().RequeueAfter(time.Since(t))
+	requeueAfter := time.Since(t)
+	return check.StillRunning(fmt.Errorf("node will be deleted at %s, requeueing after %.2fs", t.Format(time.RFC3339), requeueAfter.Seconds())).NoRequeue().RequeueAfter(requeueAfter)
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -228,16 +229,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return []reconcile.Request{{NamespacedName: fn.NN("", obj.GetName())}}
 		}),
 	)
-
-	// builder.Watches(
-	// 	&source.Kind{Type: &corev1.Node{}},
-	// 	handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-	// 		if v, ok := obj.GetLabels()[constants.NodeNameKey]; ok {
-	// 			return []reconcile.Request{{NamespacedName: fn.NN("", v)}}
-	// 		}
-	// 		return nil
-	// 	}),
-	// )
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
