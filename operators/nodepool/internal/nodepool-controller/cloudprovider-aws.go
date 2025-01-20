@@ -95,7 +95,9 @@ func (r *Reconciler) AwsJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 			"kloudlite-account": r.Env.AccountName,
 			"kloudlite-cluster": r.Env.ClusterName,
 		},
-		"kloudlite_release": r.Env.KloudliteRelease,
+		"kloudlite_release":             r.Env.KloudliteRelease,
+		"k3s_download_url":              "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/k3s",
+		"kloudlite_runner_download_url": "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/runner-amd64",
 	}
 
 	b, err := json.Marshal(variables)

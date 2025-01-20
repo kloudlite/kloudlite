@@ -304,8 +304,7 @@ func (r *Reconciler) ensureNamespace(req *reconcinler.Request[*crdsv1.Environmen
 
 		ns.Annotations[constants.DescriptionKey] = fmt.Sprintf("this namespace is now being managed by kloudlite environment (%s)", obj.Name)
 
-		ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-
+		// ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		return nil
 	}); err != nil {
 		return check.StillRunning(err)
