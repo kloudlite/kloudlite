@@ -44,10 +44,16 @@ tasks:
       vars:
         - plan_file
         - tfvars_file
+        # - state_file
     cmds:
       - task: init
       - task: validate
-      - terraform plan --var-file "{{.tfvars_file}}" --out "{{.plan_file}}"
+      - |+
+        state_args=""
+        if [ -f "{{.state_file}}" ]; then
+          state_args="-state={{.state_file}}"
+        fi
+        terraform plan --var-file "{{.tfvars_file}}" --out "{{.plan_file}}" $state_args
 
   create:apply:
     requires:
@@ -56,6 +62,7 @@ tasks:
         - state_file
     cmds:
       - task: init
+      - terraform plan -refresh-only -state="{{.state_file}}"
       - terraform apply -state "{{.state_file}}" "{{.plan_file}}" 
 
   destroy:plan:
