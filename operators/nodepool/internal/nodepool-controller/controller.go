@@ -11,17 +11,16 @@ import (
 	"github.com/kloudlite/operator/operators/nodepool/internal/env"
 	"github.com/kloudlite/operator/operators/nodepool/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	fn "github.com/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubernetes/pkg/util/taints"
@@ -33,9 +32,8 @@ type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	Env        *env.Env
-	logger     logging.Logger
 	Name       string
-	yamlClient kubectl.YAMLClient
+	YAMLClient kubectl.YAMLClient
 
 	templateNodePoolJob   []byte
 	templateNamespaceRBAC []byte
@@ -58,12 +56,12 @@ const (
 	deletingNodepool = "delete-nodepool"
 )
 
-var DeleteChecklist = []rApi.CheckMeta{
+var DeleteChecklist = []reconciler.CheckMeta{
 	{Name: deletingNodepool, Title: "Deleting Nodepool"},
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.NodePool{})
+	req, err := reconciler.NewRequest(ctx, r.Client, request.NamespacedName, &clustersv1.NodePool{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -91,7 +89,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureCheckList(
-		[]rApi.CheckMeta{
+		[]reconciler.CheckMeta{
 			{Name: defaultsPatched, Title: "Defaults Patched", Hide: true},
 			{Name: updateNodeTaintsAndLabels, Title: "Update Node Taints and Labels"},
 			{Name: ensureJobNamespaceRBACs, Title: "Configure Lifecycle Namespace RBACs"},
@@ -120,9 +118,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+func (r *Reconciler) finalize(req *reconciler.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(deletingNodepool, req)
+	check := reconciler.NewRunningCheck(deletingNodepool, req)
 
 	if step := req.EnsureCheckList(DeleteChecklist); !step.ShouldProceed() {
 		return step
@@ -137,16 +135,16 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResul
 		return check.Failed(err)
 	}
 
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+	if step := req.CleanupOwnedResources(check); !step.ShouldProceed() {
 		return step
 	}
 
 	return req.Finalize()
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+func (r *Reconciler) patchDefaults(req *reconciler.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(defaultsPatched, req)
+	check := reconciler.NewRunningCheck(defaultsPatched, req)
 
 	hasUpdated := false
 
@@ -165,9 +163,9 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 	return check.Completed()
 }
 
-func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+func (r *Reconciler) updateNodeTaintsAndLabels(req *reconciler.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(updateNodeTaintsAndLabels, req)
+	check := reconciler.NewRunningCheck(updateNodeTaintsAndLabels, req)
 
 	nodes, err := realNodesBelongingToNodepool(ctx, r.Client, obj.Name)
 	if err != nil {
@@ -197,9 +195,9 @@ func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.Nod
 	return check.Completed()
 }
 
-func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+func (r *Reconciler) ensureJobNamespaceRBACs(req *reconciler.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx := req.Context()
-	check := rApi.NewRunningCheck(ensureJobNamespaceRBACs, req)
+	check := reconciler.NewRunningCheck(ensureJobNamespaceRBACs, req)
 
 	b, err := templates.ParseBytes(r.templateNamespaceRBAC, map[string]any{
 		"namespace": r.Env.JobsNamespace,
@@ -208,7 +206,7 @@ func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodeP
 		return check.Failed(err).NoRequeue()
 	}
 
-	_, err = r.yamlClient.ApplyYAML(ctx, b)
+	_, err = r.YAMLClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -216,9 +214,9 @@ func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodeP
 	return check.Completed()
 }
 
-func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+func (r *Reconciler) syncNodepool(req *reconciler.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(syncNodepool, req)
+	check := reconciler.NewRunningCheck(syncNodepool, req)
 
 	nodes, err := nodesBelongingToNodepool(ctx, r.Client, obj.Name)
 	if err != nil {
@@ -265,14 +263,14 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 		return check.Failed(err)
 	}
 
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	rr, err := r.YAMLClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.StillRunning(err)
 	}
 
 	req.AddToOwnedResources(rr...)
 
-	job, err := rApi.Get(ctx, r.Client, fn.NN(jobNamespace, jobName), &crdsv1.Lifecycle{})
+	job, err := reconciler.Get(ctx, r.Client, fn.NN(jobNamespace, jobName), &crdsv1.Lifecycle{})
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -310,11 +308,13 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 	}
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("YAMLClient must be set")
+	}
 
 	var err error
 	r.templateNodePoolJob, err = templates.Read(templates.NodepoolJob)
@@ -350,6 +350,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
-	builder.WithEventFilter(rApi.ReconcileFilter())
+	builder.WithEventFilter(reconciler.ReconcileFilter())
 	return builder.Complete(r)
 }

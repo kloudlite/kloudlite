@@ -16,7 +16,7 @@ import (
 
 // +kubebuilder:object:generate=true
 type Export struct {
-	ViaSecret string `json:"viaSecret"`
+	ViaSecret string `json:"viaSecret,omitempty"`
 	Template  string `json:"template,omitempty"`
 }
 

@@ -9,10 +9,9 @@ import (
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/toolkit/kubectl"
+	rApi "github.com/kloudlite/operator/toolkit/reconciler"
+	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,9 +28,8 @@ type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	Env        *env.Env
-	logger     logging.Logger
 	Name       string
-	yamlClient kubectl.YAMLClient
+	YAMLClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -52,7 +50,7 @@ const (
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.Node{})
+	req, err := rApi.NewRequest(ctx, r.Client, request.NamespacedName, &clustersv1.Node{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -187,7 +185,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 
 	t, err := time.Parse(time.RFC3339, node.Annotations[deleteAfterTimestamp])
 	if err != nil {
-		req.Logger.Infof("Failed to parse deleteAfterTimestamp: %v", err)
+		req.Logger.Info("Failed to parse deleteAfterTimestamp, got", "err", err)
 		t = time.Now().Add(-1 * time.Minute)
 	}
 
@@ -211,14 +209,17 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 		return check.Completed()
 	}
 
-	return check.StillRunning(fmt.Errorf("node will be deleted at %s", t.Format(time.RFC3339))).NoRequeue().RequeueAfter(time.Since(t))
+	requeueAfter := time.Since(t)
+	return check.StillRunning(fmt.Errorf("node will be deleted at %s, requeueing after %.2fs", t.Format(time.RFC3339), requeueAfter.Seconds())).NoRequeue().RequeueAfter(requeueAfter)
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
+
+	if r.YAMLClient == nil {
+		return fmt.Errorf("YAMLClient must be provided")
+	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Node{})
 
@@ -228,16 +229,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			return []reconcile.Request{{NamespacedName: fn.NN("", obj.GetName())}}
 		}),
 	)
-
-	// builder.Watches(
-	// 	&source.Kind{Type: &corev1.Node{}},
-	// 	handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-	// 		if v, ok := obj.GetLabels()[constants.NodeNameKey]; ok {
-	// 			return []reconcile.Request{{NamespacedName: fn.NN("", v)}}
-	// 		}
-	// 		return nil
-	// 	}),
-	// )
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())

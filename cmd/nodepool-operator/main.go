@@ -4,9 +4,9 @@ import (
 	"flag"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/operator"
 	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
+	"github.com/kloudlite/operator/toolkit/operator"
 )
 
 func main() {
