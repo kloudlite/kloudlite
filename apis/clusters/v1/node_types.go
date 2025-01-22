@@ -4,7 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/operator/pkg/constants"
-	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type NodeType string
@@ -26,7 +26,7 @@ type Node struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   NodeSpec    `json:"spec"`
-	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
+	Status reconciler.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (n *Node) EnsureGVK() {
@@ -35,7 +35,7 @@ func (n *Node) EnsureGVK() {
 	}
 }
 
-func (n *Node) GetStatus() *rApi.Status {
+func (n *Node) GetStatus() *reconciler.Status {
 	return &n.Status
 }
 
