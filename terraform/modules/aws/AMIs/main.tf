@@ -23,7 +23,7 @@ data "aws_ami" "ubuntu_amd64_cpu_ami" {
   }
 
   filter {
-    name = "state"
+    name   = "state"
     values = ["available"]
   }
 }
@@ -38,3 +38,4 @@ data "aws_ami" "ubuntu_amd64_gpu_ami" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
 }
+
