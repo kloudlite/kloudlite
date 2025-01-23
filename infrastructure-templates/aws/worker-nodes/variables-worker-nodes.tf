@@ -81,6 +81,7 @@ variable "iam_instance_profile" {
 variable "ec2_nodepool" {
   description = "EC2 nodepool spec"
   type = object({
+    ami           = string
     instance_type = string
 
     root_volume_size = number
@@ -96,6 +97,8 @@ variable "ec2_nodepool" {
 variable "spot_nodepool" {
   description = "SPOT nodepool spec"
   type = object({
+    ami = string
+
     root_volume_size = number
     root_volume_type = string
 
