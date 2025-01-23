@@ -29,8 +29,11 @@ tasks:
 
   init:
     silent: true
+    requires:
+      vars:
+        - backend_config
     cmds:
-      - terraform init -reconfigure -lockfile=readonly
+      - terraform init -reconfigure -lockfile=readonly -backend-config="{{.backend_config}}"
 
   validate:
     requires:
@@ -42,41 +45,79 @@ tasks:
   create:plan:
     requires:
       vars:
+        - backend_config
         - plan_file
         - tfvars_file
-        # - state_file
     cmds:
       - task: init
+        vars:
+          backend_config: "{{ .backend_config }}"
       - task: validate
       - |+
-        state_args=""
-        if [ -f "{{.state_file}}" ]; then
-          state_args="-state={{.state_file}}"
-        fi
-        terraform plan --var-file "{{.tfvars_file}}" --out "{{.plan_file}}" $state_args
+        terraform plan --var-file "{{.tfvars_file}}" --out "{{.plan_file}}"
 
   create:apply:
     requires:
       vars:
+        - backend_config
         - plan_file
-        - state_file
+        - tfvars_file
     cmds:
       - task: init
-      - terraform plan -refresh-only -state="{{.state_file}}"
-      - terraform apply -state "{{.state_file}}" "{{.plan_file}}" 
+        vars:
+          backend_config: "{{ .backend_config }}"
+
+      - task: create:plan
+        vars:
+          plan_file: "/tmp/new.tfplan"
+          tfvars_file: "{{.tfvars_file}}"
+
+      - |+
+        if diff -q /tmp/new.tfplan "{{.plan_file}}"; then
+          echo "plan is stale, please generate plan ({{.plan_file}}) again"
+          exit 1
+        fi
+
+        terraform apply "{{.plan_file}}"
 
   destroy:plan:
     requires:
       vars:
+        - backend_config
         - plan_file
         - tfvars_file
     cmds:
+      - task: init
+        vars:
+          backend_config: "{{ .backend_config }}"
+      - task: validate
       - terraform plan --var-file="{{.tfvars_file}}" --destroy --out "{{.plan_file}}"
 
   destroy:apply:
     requires:
       vars:
+        - backend_config
         - plan_file
-        - state_file
+        - tfvars_file
+    vars:
+      tmp_plan:
+        sh: mktemp
     cmds:
-      - terraform apply -state "{{.state_file}}"  "{{.plan_file}}"
+      - task: init
+        vars:
+          backend_config: "{{ .backend_config }}"
+
+      - terraform apply "{{.plan_file}}"
+
+      - task: create:plan
+        vars:
+          plan_file: "{{.tmp_plan }}"
+          tfvars_file: "{{.tfvars_file}}"
+
+      - |+
+        if diff -q "{{.tmp_plan}}" "{{.plan_file}}"; then
+          echo "plan is stale, please generate plan ({{.plan_file}}) again"
+          exit 1
+        fi
+
+        terraform apply "{{.plan_file}}"
