@@ -10,6 +10,7 @@ resource "random_id" "name_suffix" {
 module "master-nodes-on-gcp" {
   source                        = "../../../terraform/bundles/gcp/master-nodes"
   machine_type                  = var.machine_type
+  gcp_region                    = var.gcp_region
   name_prefix                   = "${var.name_prefix}-${random_id.name_suffix.hex}"
   nodes                         = var.nodes
   provision_mode                = var.provision_mode

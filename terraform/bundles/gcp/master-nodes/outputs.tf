@@ -1,5 +1,5 @@
 output "public_ips" {
-  value = {for name, cfg in module.master-nodes : name => cfg.public_ip}
+  value = { for name, cfg in module.master-nodes : name => cfg.public_ip }
 }
 
 output "k3s_masters" {

@@ -158,7 +158,11 @@ resource "google_compute_firewall" "k3s_master_nodes_public" {
 
   // This specifies the source ranges that are allowed to access the instances
   // 0.0.0.0/0 allows access from any IP address. Adjust as necessary for your security requirements.
-  source_ranges = ["0.0.0.0/0"]
+  # source_ranges = ["0.0.0.0/0"]
+
+  # GCP Load Balancer IP ranges: ["130.211.0.0/22", "35.191.0.0/16"]
+
+  source_ranges = var.only_allow_gcp_load_balancer_sources ? ["130.211.0.0/22", "35.191.0.0/16"] : ["0.0.0.0/0"]
 }
 
 resource "google_compute_firewall" "k3s_worker_nodes" {

@@ -52,3 +52,9 @@ variable "allow_dns_traffic" {
   description = "should allow dns traffic ?"
   default     = false
 }
+
+variable "only_allow_gcp_load_balancer_sources" {
+  type        = bool
+  default     = false
+  description = "should only allow GCP load balancer sources"
+}
