@@ -133,3 +133,8 @@ variable "kloudlite_runner_download_url" {
 variable "machine_state" {
   type = string
 }
+
+variable "gcp_region" {
+  type        = string
+  description = "gcp region"
+}

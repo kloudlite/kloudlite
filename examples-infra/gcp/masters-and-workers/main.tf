@@ -10,9 +10,9 @@ module "master-nodes" {
   public_dns_host               = var.public_dns_host
   save_kubeconfig_to_path       = var.save_kubeconfig_to_path
   labels                        = var.labels
-  label_cloudprovider_region    = var.gcp_region
+  # label_cloudprovider_region    = var.gcp_region
   network                       = var.network
-  use_as_longhorn_storage_nodes = var.use_as_longhorn_storage_nodes
+  # use_as_longhorn_storage_nodes = var.use_as_longhorn_storage_nodes
   service_account               = var.service_account
   k3s_download_url              = var.k3s_download_url
   kloudlite_runner_download_url = var.kloudlite_runner_download_url

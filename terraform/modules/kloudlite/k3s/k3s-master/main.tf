@@ -111,7 +111,7 @@ k3s_flags: ${jsonencode(concat(
 EOF2
 
   sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
-  sudo systemctl restart kloudlite-k3s.service
+  # sudo systemctl restart kloudlite-k3s.service
 EOT
 ]
 }
@@ -135,8 +135,8 @@ resource "ssh_resource" "k3s_primary_master_upgrade" {
 
   commands = [
     <<EOT
-sudo kloudlite-install-or-upgrade.sh
-sudo systemctl restart kloudlite-k3s.service
+# sudo kloudlite-install-or-upgrade.sh
+# sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
 }
@@ -242,9 +242,9 @@ resource "ssh_resource" "k3s_secondary_masters" {
   commands = [
     <<EOT
 if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
-  sudo systemctl stop kloudlite-k3s.service
+  # sudo systemctl stop kloudlite-k3s.service
   sudo rm -rf /var/lib/rancher/k3s/server/db/
-  sudo systemctl start kloudlite-k3s.service
+  # sudo systemctl start kloudlite-k3s.service
 fi
 
 cat > /tmp/runner-config.yml<<EOF2
@@ -264,7 +264,7 @@ k3s_flags: ${jsonencode(concat(
 EOF2
 
 sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
-sudo systemctl restart kloudlite-k3s.service
+# sudo systemctl restart kloudlite-k3s.service
 EOT
 ]
 }
@@ -288,8 +288,8 @@ resource "ssh_resource" "k3s_secondary_masters_upgrade" {
 
   commands = [
     <<EOT
-sudo kloudlite-install-or-upgrade.sh
-sudo systemctl restart kloudlite-k3s.service
+# sudo kloudlite-install-or-upgrade.sh
+# sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
 }
@@ -368,8 +368,8 @@ if [ "${var.restore_from_latest_s3_snapshot}" != "true" ]; then
   exit 0
 fi
 
-sudo systemctl stop kloudlite-k3s.service
-sudo rm -rf /var/lib/rancher/k3s/server/db/
+# sudo systemctl stop kloudlite-k3s.service
+# sudo rm -rf /var/lib/rancher/k3s/server/db/
 
 EOC
   ]
@@ -395,7 +395,7 @@ resource "ssh_resource" "k3s_restore_step_3_start_k3s_on_primary_master" {
     if [ "${var.restore_from_latest_s3_snapshot}" != "true" ]; then
       exit 0
     fi
-    sudo systemctl start kloudlite-k3s.service
+    # sudo systemctl start kloudlite-k3s.service
 EOT
   ]
 }

@@ -26,18 +26,29 @@ locals {
 module "master-nodes-firewall" {
   source = "../../../modules/gcp/firewall"
 
-  name_prefix                 = "${var.name_prefix}-fw"
-  for_master_nodes            = true
-  allow_incoming_http_traffic = true
-  allow_node_ports            = true
-  network_name                = var.network
-  target_tags                 = local.k3s_masters_tags
-  allow_ssh                   = true
-  allow_dns_traffic           = true
+  name_prefix                          = "${var.name_prefix}-fw"
+  for_master_nodes                     = true
+  allow_incoming_http_traffic          = true
+  allow_node_ports                     = true
+  network_name                         = var.network
+  target_tags                          = local.k3s_masters_tags
+  allow_ssh                            = true
+  allow_dns_traffic                    = true
+  only_allow_gcp_load_balancer_sources = false
+}
+
+resource "random_password" "k3s_server_token" {
+  length  = 64
+  special = false
+}
+
+resource "random_password" "k3s_agent_token" {
+  length  = 64
+  special = false
 }
 
 module "master-nodes" {
-  source = "../../../modules/gcp/machine"
+  source = "../../../modules/gcp/machine-v2"
 
   for_each = { for name, cfg in var.nodes : name => cfg }
 
@@ -51,17 +62,29 @@ module "master-nodes" {
   network_tags = local.k3s_masters_tags
   labels       = var.labels
 
-  startup_script = templatefile(module.kloudlite-k3s-templates.k3s-vm-setup-template-path, {
+  startup_script = templatefile(module.kloudlite-k3s-templates.k3s-master-setup-template-path, {
     # kloudlite_release          = var.kloudlite_params.release
-    k3s_download_url              = var.k3s_download_url
-    kloudlite_runner_download_url = var.kloudlite_runner_download_url
-    kloudlite_config_directory    = module.kloudlite-k3s-templates.kloudlite_config_directory
+    k3s_server_host = "masters"
+
+    k3s_server_token = random_password.k3s_server_token.result
+    k3s_agent_token = random_password.k3s_agent_token.result
   })
+
   bootvolume_size = each.value.bootvolume_size
   bootvolume_type = each.value.bootvolume_type
   service_account = var.service_account
 
   machine_state = var.machine_state
+  gcp_storage_class = "pd-ssd"
+}
+
+module "master-nodes-load-balancer" {
+  source = "../../../modules/gcp/regional-load-balancer"
+
+  name_prefix = var.name_prefix
+  gcp_region  = var.gcp_region
+  network     = var.network
+  target_tags = local.k3s_masters_tags
 }
 
 module "kloudlite-k3s-masters" {
