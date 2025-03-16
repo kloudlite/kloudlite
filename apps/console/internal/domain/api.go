@@ -44,6 +44,12 @@ func (c ConsoleContext) GetAccountName() string {
 	return c.AccountName
 }
 
+func (r ConsoleContext) DBFilters() repos.Filter {
+	return repos.Filter{
+		fields.AccountName: r.AccountName,
+	}
+}
+
 type ResourceContext struct {
 	ConsoleContext
 	EnvironmentName string
@@ -178,6 +184,7 @@ type Domain interface {
 
 	ListEnvironments(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Environment], error)
 	GetEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error)
+	GetEnvironmentByTargetNamespace(ctx ConsoleContext, targetNamespace string) (*entities.Environment, error)
 
 	SetupDefaultEnvTemplate(ctx ConsoleContext) error
 	CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
@@ -199,6 +206,13 @@ type Domain interface {
 	ListRegistryImages(ctx ConsoleContext, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.RegistryImage], error)
 	SearchRegistryImages(ctx ConsoleContext, query string) ([]*entities.RegistryImage, error)
 
+	ListHelmCharts(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmChart], error)
+	GetHelmChart(ctx ResourceContext, name string) (*entities.HelmChart, error)
+
+	CreateHelmChart(ctx ResourceContext, app entities.HelmChart) (*entities.HelmChart, error)
+	UpdateHelmChart(ctx ResourceContext, app entities.HelmChart) (*entities.HelmChart, error)
+	DeleteHelmChart(ctx ResourceContext, name string) error
+
 	ListApps(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.App], error)
 	GetApp(ctx ResourceContext, name string) (*entities.App, error)
 
@@ -210,6 +224,10 @@ type Domain interface {
 	InterceptAppOnLocalCluster(ctx ResourceContext, appName string, clusterName string, ipAddr string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error)
 	RestartApp(ctx ResourceContext, appName string) error
 	RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) error
+
+	OnHelmChartApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
+	OnHelmChartDeleteMessage(ctx ResourceContext, app entities.HelmChart) error
+	OnHelmChartUpdateMessage(ctx ResourceContext, app entities.HelmChart, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	OnAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
 	OnAppDeleteMessage(ctx ResourceContext, app entities.App) error
@@ -326,10 +344,14 @@ type Domain interface {
 
 	ServiceBinding
 	ClusterManagedService
+	ManagedServicePlugin
 	SecretVariable
 }
 
 type ServiceBinding interface {
+	CreateServiceIntercept(ctx ConsoleContext, envName string, serviceName string, interceptTo string, portMappings []*crdsv1.SvcInterceptPortMappings) (*entities.ServiceBinding, error)
+	DeleteServiceIntercept(ctx ConsoleContext, envName string, serviceName string) error
+	ListServiceBindings(ctx ConsoleContext, envName string, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ServiceBinding], error)
 	OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnServiceBindingDeleteMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding) error
 }
@@ -348,6 +370,11 @@ type ClusterManagedService interface {
 	OnClusterManagedServiceApplyError(ctx ConsoleContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error
 	OnClusterManagedServiceDeleteMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService) error
 	OnClusterManagedServiceUpdateMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+}
+
+type ManagedServicePlugin interface {
+	ListManagedServicePlugins() ([]*entities.ManagedServicePlugins, error)
+	GetManagedServicePlugin(category string, name string) (*entities.ManagedServicePlugin, error)
 }
 
 type SecretVariable interface {

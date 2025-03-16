@@ -8,7 +8,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type Cluster struct {
@@ -26,15 +26,16 @@ type Cluster struct {
 
 	LastOnlineAt *time.Time `json:"lastOnlineAt,omitempty" graphql:"noinput"`
 
-	OwnedBy *string `json:"ownedBy,omitempty", graphql:"noinput"`
+	OwnedBy *string `json:"ownedBy,omitempty" graphql:"noinput"`
 }
 
 func (c *Cluster) GetDisplayName() string {
 	return c.ResourceMetadata.DisplayName
 }
 
-func (c *Cluster) GetStatus() operator.Status {
-	return c.Cluster.Status
+func (c *Cluster) GetStatus() reconciler.Status {
+	return reconciler.Status{}
+	// return c.Cluster.Status
 }
 
 var ClusterIndices = []repos.IndexField{

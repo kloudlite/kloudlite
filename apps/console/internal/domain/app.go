@@ -25,10 +25,7 @@ func (d *domain) ListApps(ctx ResourceContext, search map[string]repos.MatchFilt
 }
 
 func (d *domain) findApp(ctx ResourceContext, name string) (*entities.App, error) {
-	app, err := d.appRepo.FindOne(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, name),
-	)
+	app, err := d.appRepo.FindOne(ctx, ctx.DBFilters().Add(fields.MetadataName, name))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -388,7 +385,6 @@ func (d *domain) listAppsByImage(ctx ConsoleContext, image string) ([]*entities.
 }
 
 func (d *domain) RolloutAppsByImage(ctx ConsoleContext, imageName string) error {
-
 	iName, iTag := getImageNameTag(imageName)
 
 	apps, err := d.listAppsByImage(ctx, fmt.Sprintf("%s:%s", iName, iTag))

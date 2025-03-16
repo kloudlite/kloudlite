@@ -5,7 +5,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type NodePool struct {
@@ -26,7 +26,7 @@ func (n *NodePool) GetDisplayName() string {
 	return n.ResourceMetadata.DisplayName
 }
 
-func (n *NodePool) GetStatus() operator.Status {
+func (n *NodePool) GetStatus() reconciler.Status {
 	return n.NodePool.Status
 }
 

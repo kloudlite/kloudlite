@@ -1,0 +1,179 @@
+---
+global:
+  environmentName: "nxt17-env-1"
+---
+
+label: List Service Bindings
+query: |+ #graphql
+  query Core_listServiceBindings($envName: String!) {
+    core_listServiceBindings(envName: $envName) {
+      edges {
+        node {
+          accountName
+          environmentName
+          apiVersion
+          clusterName
+          creationTime
+          id
+          interceptStatus {
+            intercepted
+            portMappings {
+              containerPort
+              servicePort
+            }
+          }
+          kind
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          recordVersion
+          spec {
+            globalIP
+            hostname
+            ports {
+              appProtocol
+              name
+              nodePort
+              port
+              protocol
+              targetPort {
+                IntVal
+                StrVal
+                Type
+              }
+            }
+            serviceIP
+            serviceRef {
+              name
+              namespace
+            }
+          }
+          status {
+            checkList {
+              debug
+              description
+              hide
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          updateTime
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPrevPage
+        startCursor
+      }
+      totalCount
+    }
+  }
+variables:
+  envName: "{{.environmentName}}"
+---
+
+label: Create Secret
+query: |+
+  mutation Core_createSecret($projectName: String!, $envName: String!, $secret: SecretIn!) {
+    core_createSecret(projectName: $projectName, envName: $envName, secret: $secret) {
+      metadata {
+        name
+        namespace
+      }
+      stringData
+      syncStatus {
+        state
+        action
+        recordVersion
+      }
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  secret:
+    displayName: "Secret Display Name"
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    stringData:
+      key1: value1
+      key2: value2
+---
+
+label: Get Secret
+query: |+
+  query Core_getSecret($namespace: String!, $name: String!) {
+    core_getSecret(namespace: $namespace, name: $name) {
+      metadata {
+        name
+        deletionTimestamp
+        namespace
+      }
+      data
+      stringData
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.namespace}}'
+
+---
+
+label: Update Secret
+query: |+
+  mutation Core_updateSecret($projectName: String!, $envName: String!, $secret: SecretIn!) {
+    core_updateSecret(projectName: $projectName, envName: $envName, secret: $secret) {
+        metadata {
+          name
+          generation
+        }
+        stringData
+        recordVersion
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  secret:
+    displayName: "Hello Hi"
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    stringData:
+      key1: v1
+      key3: v2
+---
+
+label: Delete Secret
+query: |+
+  mutation Core_deleteSecret($projectName: String!, $envName: String!, $secretName: String!) {
+    core_deleteSecret(projectName: $projectName, envName: $envName, secretName: $secretName)
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  secretName: "{{.name}}16"
+
+---

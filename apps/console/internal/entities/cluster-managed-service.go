@@ -5,7 +5,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -28,7 +28,7 @@ func (c *ClusterManagedService) GetDisplayName() string {
 	return c.DisplayName
 }
 
-func (c *ClusterManagedService) GetStatus() operator.Status {
+func (c *ClusterManagedService) GetStatus() reconciler.Status {
 	return c.Status
 }
 

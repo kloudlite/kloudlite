@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -40,7 +39,7 @@ func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[st
 
 // For is the resolver for the for field.
 func (r *secretResolver) For(ctx context.Context, obj *entities.Secret) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor, error) {
-	panic(fmt.Errorf("not implemented: For - for"))
+	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor](obj.For)
 }
 
 // IsReadyOnly is the resolver for the isReadyOnly field.

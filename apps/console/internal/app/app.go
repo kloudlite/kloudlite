@@ -19,7 +19,7 @@ import (
 	infra_service "github.com/kloudlite/api/apps/console/internal/app/adapters/infra-service"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
-	"github.com/kloudlite/api/apps/console/internal/app/resource-updates-receiver"
+	resource_updates_receiver "github.com/kloudlite/api/apps/console/internal/app/resource-updates-receiver"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -75,6 +75,7 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string) (dom
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
+	repos.NewFxMongoRepo[*entities.HelmChart]("helm-charts", "helms", entities.HelmChartIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.ExternalApp]("ext_apps", "extapp", entities.ExternalAppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),

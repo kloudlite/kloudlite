@@ -4,7 +4,7 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/api/pkg/types"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	storagev1 "k8s.io/api/storage/v1"
 )
 
@@ -23,8 +23,8 @@ func (v *VolumeAttachment) GetDisplayName() string {
 	return v.ResourceMetadata.DisplayName
 }
 
-func (v *VolumeAttachment) GetStatus() operator.Status {
-	return operator.Status{}
+func (v *VolumeAttachment) GetStatus() reconciler.Status {
+	return reconciler.Status{}
 }
 
 var VolumeAttachmentIndices = []repos.IndexField{

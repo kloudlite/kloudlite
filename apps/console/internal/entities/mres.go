@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -32,7 +32,7 @@ func (m *ManagedResource) GetDisplayName() string {
 	return m.ResourceMetadata.DisplayName
 }
 
-func (m *ManagedResource) GetStatus() operator.Status {
+func (m *ManagedResource) GetStatus() reconciler.Status {
 	return m.ManagedResource.Status
 }
 

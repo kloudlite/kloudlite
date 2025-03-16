@@ -12,14 +12,25 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
 	v12 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 	v11 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Meta is the resolver for the meta field.
+func (r *github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver) Meta(ctx context.Context, obj *entities.ManagedServicePlugin) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginMeta, error) {
+	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginMeta](obj.Meta)
+}
+
+// Spec is the resolver for the spec field.
+func (r *github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver) Spec(ctx context.Context, obj *entities.ManagedServicePlugin) (*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpec, error) {
+	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedServicePluginSpec](obj.Spec)
+}
 
 // UserID is the resolver for the userId field.
 func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
@@ -40,16 +51,16 @@ func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) SyncSc
 }
 
 // CheckList is the resolver for the checkList field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) CheckList(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta, error) {
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) CheckList(ctx context.Context, obj *reconciler.Status) ([]*model.GithubComKloudliteOperatorToolkitReconcilerCheckMeta, error) {
 	if obj == nil {
 		return nil, errors.Newf("obj is nil")
 	}
 
-	return fn.JsonConvert[[]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta](obj.CheckList)
+	return fn.JsonConvert[[]*model.GithubComKloudliteOperatorToolkitReconcilerCheckMeta](obj.CheckList)
 }
 
 // Checks is the resolver for the checks field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) Checks(ctx context.Context, obj *reconciler.Status) (map[string]interface{}, error) {
 	if obj == nil {
 		return nil, errors.Newf("obj is nil")
 	}
@@ -61,7 +72,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Ch
 }
 
 // LastReconcileTime is the resolver for the lastReconcileTime field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error) {
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) LastReconcileTime(ctx context.Context, obj *reconciler.Status) (*string, error) {
 	if obj == nil {
 		return nil, errors.Newf("obj is nil")
 	}
@@ -73,16 +84,9 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) La
 	return fn.New(obj.LastReconcileTime.Format(time.RFC3339)), nil
 }
 
-// Message is the resolver for the message field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error) {
-	return &model.GithubComKloudliteOperatorPkgRawJSONRawJSON{
-		RawMessage: obj.Message,
-	}, nil
-}
-
 // Resources is the resolver for the resources field.
-func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Resources(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, error) {
-	var m []*model.GithubComKloudliteOperatorPkgOperatorResourceRef
+func (r *github__com___kloudlite___operator___toolkit___reconciler__StatusResolver) Resources(ctx context.Context, obj *reconciler.Status) ([]*model.GithubComKloudliteOperatorToolkitReconcilerResourceRef, error) {
+	var m []*model.GithubComKloudliteOperatorToolkitReconcilerResourceRef
 	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -193,6 +197,24 @@ func (r *github__com___kloudlite___operator___apis___crds___v1__AppInterceptPort
 	return nil
 }
 
+// Protocol is the resolver for the protocol field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver) Protocol(ctx context.Context, obj *v12.AppInterceptPortMappings, data model.GithubComKloudliteOperatorApisCrdsV1ServiceProtocol) error {
+	obj.Protocol = v12.ServiceProtocol(data)
+	return nil
+}
+
+// DevicePort is the resolver for the devicePort field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver) DevicePort(ctx context.Context, obj *v12.SvcInterceptPortMappings, data int) error {
+	obj.DevicePort = uint16(data)
+	return nil
+}
+
+// ServicePort is the resolver for the servicePort field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver) ServicePort(ctx context.Context, obj *v12.SvcInterceptPortMappings, data int) error {
+	obj.ServicePort = uint16(data)
+	return nil
+}
+
 // Annotations is the resolver for the annotations field.
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	var m map[string]string
@@ -213,6 +235,11 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 	return nil
 }
 
+// Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugin returns generated.Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePlugin() generated.Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver {
+	return &github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver{r}
+}
+
 // Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
 func (r *Resolver) Github__com___kloudlite___api___common__CreatedOrUpdatedBy() generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver {
 	return &github__com___kloudlite___api___common__CreatedOrUpdatedByResolver{r}
@@ -223,9 +250,9 @@ func (r *Resolver) Github__com___kloudlite___api___pkg___types__SyncStatus() gen
 	return &github__com___kloudlite___api___pkg___types__SyncStatusResolver{r}
 }
 
-// Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
-func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
-	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
+// Github__com___kloudlite___operator___toolkit___reconciler__Status returns generated.Github__com___kloudlite___operator___toolkit___reconciler__StatusResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___toolkit___reconciler__Status() generated.Github__com___kloudlite___operator___toolkit___reconciler__StatusResolver {
+	return &github__com___kloudlite___operator___toolkit___reconciler__StatusResolver{r}
 }
 
 // K8s__io___api___core___v1__Secret returns generated.K8s__io___api___core___v1__SecretResolver implementation.
@@ -246,14 +273,21 @@ func (r *Resolver) Github__com___kloudlite___operator___apis___crds___v1__AppInt
 	return &github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver{r}
 }
 
+// Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn returns generated.Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn() generated.Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver {
+	return &github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver{r}
+}
+
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
+type github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginResolver struct{ *Resolver }
 type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
-type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
+type github__com___kloudlite___operator___toolkit___reconciler__StatusResolver struct{ *Resolver }
 type k8s__io___api___core___v1__SecretResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type github__com___kloudlite___api___pkg___types__SyncStatusInResolver struct{ *Resolver }
 type github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver struct{ *Resolver }
+type github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsInResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

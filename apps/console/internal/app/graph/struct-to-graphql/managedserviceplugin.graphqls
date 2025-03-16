@@ -1,0 +1,58 @@
+type ManagedServicePlugin @shareable {
+  meta: ManagedServicePluginMeta
+  plugin: String!
+  spec: ManagedServicePluginSpec!
+}
+
+type ManagedServicePluginMeta @shareable {
+  logo: String!
+}
+
+type ManagedServicePluginSpec @shareable {
+  apiVersion: String!
+  services: [ManagedServicePluginSpecServices!]!
+}
+
+type ManagedServicePluginSpecServices @shareable {
+  active: Boolean!
+  description: String!
+  inputs: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputField!]!
+  kind: String!
+  resources: [ManagedServicePluginSpecServicesResources!]!
+}
+
+type ManagedServicePluginSpecServicesResources @shareable {
+  description: String!
+  inputs: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputField!]!
+  kind: String!
+}
+
+input ManagedServicePluginIn {
+  meta: ManagedServicePluginMetaIn
+  plugin: String!
+  spec: ManagedServicePluginSpecIn!
+}
+
+input ManagedServicePluginMetaIn {
+  logo: String!
+}
+
+input ManagedServicePluginSpecIn {
+  apiVersion: String!
+  services: [ManagedServicePluginSpecServicesIn!]!
+}
+
+input ManagedServicePluginSpecServicesIn {
+  active: Boolean!
+  description: String!
+  inputs: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputFieldIn!]!
+  kind: String!
+  resources: [ManagedServicePluginSpecServicesResourcesIn!]!
+}
+
+input ManagedServicePluginSpecServicesResourcesIn {
+  description: String!
+  inputs: [Github__com___kloudlite___api___apps___console___internal___entities__ManagedServicePluginInputFieldIn!]!
+  kind: String!
+}
+

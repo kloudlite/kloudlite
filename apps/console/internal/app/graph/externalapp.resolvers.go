@@ -62,7 +62,7 @@ func (r *externalAppInResolver) Spec(ctx context.Context, obj *entities.External
 }
 
 // Status is the resolver for the status field.
-func (r *externalAppInResolver) Status(ctx context.Context, obj *entities.ExternalApp, data *model.GithubComKloudliteOperatorPkgOperatorStatusIn) error {
+func (r *externalAppInResolver) Status(ctx context.Context, obj *entities.ExternalApp, data *model.GithubComKloudliteOperatorToolkitReconcilerStatusIn) error {
 	if obj == nil {
 		return errNilExternalApp
 	}

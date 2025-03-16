@@ -71,6 +71,19 @@ func (d *domain) findEnvironment(ctx ConsoleContext, name string) (*entities.Env
 	return env, nil
 }
 
+func (d *domain) GetEnvironmentByTargetNamespace(ctx ConsoleContext, targetNamespace string) (*entities.Environment, error) {
+	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{fc.EnvironmentSpecTargetNamespace: targetNamespace})
+	if err != nil {
+		return nil, err
+	}
+
+	if env == nil {
+		return nil, errors.Newf("no environment with target namespace (%s)", targetNamespace)
+	}
+
+	return env, nil
+}
+
 func (d *domain) getClusterAttachedToEnvironment(ctx K8sContext, name string) (*string, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.GetAccountName(),
@@ -524,6 +537,30 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 		return nil, err
 	}
 
+	helmCharts, err := d.helmChartRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	for i := range helmCharts {
+		if _, err := d.createAndApplyHelmChart(resCtx, &entities.HelmChart{
+			HelmChart: crdsv1.HelmChart{
+				TypeMeta:   helmCharts[i].TypeMeta,
+				ObjectMeta: objectMeta(helmCharts[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Spec:       helmCharts[i].Spec,
+			},
+			AccountName:      ctx.AccountName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(helmCharts[i].DisplayName),
+			// SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	return destEnv, nil
 }
 
@@ -672,6 +709,13 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 	if err := d.environmentRepo.DeleteOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
 		fields.MetadataName: env.Name,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.helmChartRepo.DeleteMany(ctx, repos.Filter{
+		fields.AccountName:     ctx.AccountName,
+		fields.EnvironmentName: env.Name,
 	}); err != nil {
 		return errors.NewE(err)
 	}

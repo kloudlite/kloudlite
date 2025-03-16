@@ -107,18 +107,6 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger *slog.Logger, d d
 				}
 				return d.OnNodePoolDeleteMessage(dctx, em.ClusterName, nodepool)
 			}
-		case helmreleaseGVK.String():
-			{
-				helmRelease, err := fn.JsonConvert[entities.HelmRelease](obj.Object)
-				if err != nil {
-					return err
-				}
-
-				if errObj.Action == t.ActionApply {
-					return d.OnHelmReleaseApplyError(dctx, em.ClusterName, obj.GetName(), errObj.Error, opts)
-				}
-				return d.OnHelmReleaseDeleteMessage(dctx, em.ClusterName, helmRelease)
-			}
 		default:
 			{
 				return errors.Newf("infra error-on-apply reader does not acknowledge resource with gvk (%s)", gvkstr)
