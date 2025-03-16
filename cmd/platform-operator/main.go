@@ -5,10 +5,11 @@ import (
 	"github.com/kloudlite/operator/toolkit/operator"
 
 	// clusters "github.com/kloudlite/operator/operators/clusters/controller"
-	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
+	// helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
 	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
 
+	// msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	// msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 
 	// networkingv1 "github.com/kloudlite/operator/operators/networking/register"
@@ -21,6 +22,7 @@ import (
 	// wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
 
 	serviceIntercept "github.com/kloudlite/operator/operators/service-intercept/controller"
+	pluginMongoDB "github.com/kloudlite/plugin-mongodb/kloudlite"
 )
 
 func main() {
@@ -29,7 +31,7 @@ func main() {
 	app.RegisterInto(mgr)
 	routers.RegisterInto(mgr)
 	project.RegisterInto(mgr)
-	helmCharts.RegisterInto(mgr)
+	// helmCharts.RegisterInto(mgr)
 
 	msvcAndMres.RegisterInto(mgr)
 
@@ -47,7 +49,9 @@ func main() {
 	// virtualMachine.RegisterInto(mgr)
 
 	// wireguard.RegisterInto(mgr)    // MIGRATE
-	// networkingv1.RegisterInto(mgr) // MIGRATE
+	// networkingv0.RegisterInto(mgr) // MIGRATE
+
+	pluginMongoDB.RegisterInto(mgr)
 
 	mgr.Start()
 }

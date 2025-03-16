@@ -20,9 +20,9 @@ require (
 	github.com/gobuffalo/flect v1.0.3
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
-	github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85
+	github.com/kloudlite/operator/toolkit v0.0.0-20250316093242-493e9b587c10
 	github.com/kloudlite/plugin-helm-chart v0.0.0-20241220114210-b6d65e34990d
-	github.com/kloudlite/plugin-mongodb v0.0.0-20241221132659-be42e75f149f
+	github.com/kloudlite/plugin-mongodb v0.0.0-20250316143614-628cc21496dc
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/miekg/dns v1.1.62
 	github.com/nats-io/nats.go v1.38.0
