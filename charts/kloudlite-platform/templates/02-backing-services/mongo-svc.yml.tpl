@@ -24,7 +24,7 @@ output:
   credentialsRef:
     name: msvc-{{$name}}-creds
 {{ else }}
-apiVersion: mongodb.msvc.kloudlite.io/v1
+apiVersion: plugin-mongodb.kloudlite.github.com/v1
 kind: StandaloneService
 metadata:
   name: {{$name}}

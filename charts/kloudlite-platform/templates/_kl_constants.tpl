@@ -73,8 +73,6 @@
 {{- define "apps.gatewayKubeReverseProxy.secret.name" -}} gvpn-gateway-reverse-proxy-authz {{- end -}}
 {{- define "apps.gatewayKubeReverseProxy.secret.key" -}} authz-token {{- end -}}
 
-
-
 {{- define "self-edge-gateway.public.host" -}} wg-gateways.{{.Values.baseDomain}} {{- end -}}
 
 {{- /* mongodb databases */}}

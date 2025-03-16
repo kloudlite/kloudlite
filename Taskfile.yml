@@ -103,6 +103,10 @@ tasks:
         # cert manager CRDs
         # curl -L0 https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.crds.yaml > {{.OutputDir}}/crds-cert-manager.yml
 
+  plugin:crds:
+    cmds:
+      - |+
+
   test-release-script:
     dir: .
     env:
