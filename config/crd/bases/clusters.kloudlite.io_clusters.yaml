@@ -135,6 +135,8 @@ spec:
                   nodePools:
                     additionalProperties:
                       properties:
+                        ami:
+                          type: string
                         instanceType:
                           type: string
                         nodes:
@@ -146,6 +148,7 @@ spec:
                             type: object
                           type: object
                       required:
+                      - ami
                       - instanceType
                       type: object
                     type: object
@@ -155,6 +158,8 @@ spec:
                   spotNodePools:
                     additionalProperties:
                       properties:
+                        ami:
+                          type: string
                         cpuNode:
                           properties:
                             memoryPerVcpu:
@@ -204,6 +209,7 @@ spec:
                         spotFleetTaggingRoleName:
                           type: string
                       required:
+                      - ami
                       - spotFleetTaggingRoleName
                       type: object
                     type: object

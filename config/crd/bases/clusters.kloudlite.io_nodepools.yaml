@@ -62,6 +62,8 @@ spec:
                     type: string
                   ec2Pool:
                     properties:
+                      ami:
+                        type: string
                       instanceType:
                         type: string
                       nodes:
@@ -73,6 +75,7 @@ spec:
                           type: object
                         type: object
                     required:
+                    - ami
                     - instanceType
                     type: object
                   iamInstanceProfileRole:
@@ -92,6 +95,8 @@ spec:
                     type: string
                   spotPool:
                     properties:
+                      ami:
+                        type: string
                       cpuNode:
                         properties:
                           memoryPerVcpu:
@@ -141,6 +146,7 @@ spec:
                       spotFleetTaggingRoleName:
                         type: string
                     required:
+                    - ami
                     - spotFleetTaggingRoleName
                     type: object
                   vpcId:
