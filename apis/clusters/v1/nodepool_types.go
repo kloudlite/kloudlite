@@ -28,11 +28,13 @@ const (
 )
 
 type AwsEC2PoolConfig struct {
+	AMI          string               `json:"ami"`
 	InstanceType string               `json:"instanceType"`
 	Nodes        map[string]NodeProps `json:"nodes,omitempty"`
 }
 
 type AwsSpotPoolConfig struct {
+	AMI                      string               `json:"ami"`
 	SpotFleetTaggingRoleName string               `json:"spotFleetTaggingRoleName" graphql:"noinput"`
 	CpuNode                  *AwsSpotCpuNode      `json:"cpuNode,omitempty"`
 	GpuNode                  *AwsSpotGpuNode      `json:"gpuNode,omitempty"`
