@@ -12,11 +12,8 @@ func (r *Reconciler) AwsJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 		return "", fmt.Errorf(".spec.aws is nil")
 	}
 
-	// ec2Nodepools := make(map[string]any, 1)
-	// spotNodepools := make(map[string]any, 1)
-
-	ec2Nodepool := map[string]any{}
-	spotNodepool := map[string]any{}
+	ec2Nodepool := make(map[string]any)
+	spotNodepool := make(map[string]any)
 
 	switch obj.Spec.AWS.PoolType {
 	case clustersv1.AWSPoolTypeEC2:
@@ -25,6 +22,7 @@ func (r *Reconciler) AwsJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 				"root_volume_type": obj.Spec.AWS.RootVolumeType,
 				"root_volume_size": obj.Spec.AWS.RootVolumeSize,
 				"instance_type":    obj.Spec.AWS.EC2Pool.InstanceType,
+				"ami":              obj.Spec.AWS.EC2Pool.AMI,
 				"nodes":            nodesMap,
 			}
 			spotNodepool = nil
@@ -36,6 +34,7 @@ func (r *Reconciler) AwsJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 			}
 
 			spotNodepool = map[string]any{
+				"ami":                          obj.Spec.AWS.SpotPool.AMI,
 				"root_volume_type":             obj.Spec.AWS.RootVolumeType,
 				"root_volume_size":             obj.Spec.AWS.RootVolumeSize,
 				"spot_fleet_tagging_role_name": obj.Spec.AWS.SpotPool.SpotFleetTaggingRoleName,
