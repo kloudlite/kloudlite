@@ -1,14 +1,11 @@
-apiVersion: mongodb.msvc.kloudlite.io/v1
+apiVersion: plugin-mongodb.kloudlite.github.com/v1
 kind: {{.Values.mongo.runAsCluster | ternary "Database" "StandaloneDatabase" }}
 metadata:
   name: {{ include "mongo.accounts-db" . }}
   namespace: {{.Release.Namespace}}
 spec:
-  msvcRef:
-    apiVersion: mongodb.msvc.kloudlite.io/v1
-    kind: {{.Values.mongo.runAsCluster | ternary "ClusterService" "StandaloneService" }}
+  managedServiceRef:
     name: mongo-svc
     namespace: {{.Release.Namespace}}
 output:
-  credentialsRef:
-    name: mres-{{ include "mongo.accounts-db" . }}-creds
+  name: mres-{{ include "mongo.accounts-db" . }}-creds

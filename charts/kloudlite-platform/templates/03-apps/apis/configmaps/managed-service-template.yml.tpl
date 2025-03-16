@@ -4,164 +4,166 @@ metadata:
   name: managed-svc-template
   namespace: {{.Release.Namespace}}
 data:
-managed-svc-templates.yml: |+
-  - category: ""
-    items:
-      - plugin: HelmChart
-        meta:
-          logo: "https://www.vectorlogo.zone/logos/helmsh/helmsh-icon.svg"
-        spec:
-          apiVersion: "plugin-helm-chart.kloudlite.github.com/v1"
-          services:
-            - kind: "HelmChart"
-              description: "Manages Helm Lifeycle"
-              inputs:
-                - input: "chart.url"
-                  label: "Helm Chart Repo URL"
-                  type: "text"
-                  required: true
+  managed-svc-templates.yml: |+
+    - category: ""
+      items:
+        - plugin: HelmChart
+          meta:
+            logo: "https://www.vectorlogo.zone/logos/helmsh/helmsh-icon.svg"
+          spec:
+            apiVersion: "plugin-helm-chart.kloudlite.github.com/v1"
+            services:
+              - kind: "HelmChart"
+                label: "Helm Chart"
+                description: "Manages Helm Lifeycle"
+                inputs:
+                  - input: "chart.url"
+                    label: "Helm Chart Repo URL"
+                    type: "text"
+                    required: true
 
-                - input: "chart.name"
-                  label: "Helm Chart Name"
-                  type: "text"
-                  required: true
+                  - input: "chart.name"
+                    label: "Helm Chart Name"
+                    type: "text"
+                    required: true
 
-                - input: "chart.version"
-                  label: "Helm Chart Version"
-                  type: "text"
-                  required: false
+                  - input: "chart.version"
+                    label: "Helm Chart Version"
+                    type: "text"
+                    required: false
 
-                - input: "helmValues"
-                  label: "values.yaml"
-                  type: "text/yaml"
-                  required: true
-                  default: {}
+                  - input: "helmValues"
+                    label: "values.yaml"
+                    type: "text/yaml"
+                    required: true
+                    default: {}
 
-                # - input: "preInstall"
-                #   type: "text/bash"
-                #   required: true
-                #   default: ""
-                #
-                # - input: "postInstall"
-                #   type: "text/bash"
-                #   required: false
-                #   default: ""
-                #
-                # - input: "preUninstall"
-                #   type: "text/bash"
-                #   required: false
-                #   default: ""
-                #
-                # - input: "postUninstall"
-                #   type: "text/bash"
-                #   required: false
-                #   default: ""
+                  # - input: "preInstall"
+                  #   type: "text/bash"
+                  #   required: true
+                  #   default: ""
+                  #
+                  # - input: "postInstall"
+                  #   type: "text/bash"
+                  #   required: false
+                  #   default: ""
+                  #
+                  # - input: "preUninstall"
+                  #   type: "text/bash"
+                  #   required: false
+                  #   default: ""
+                  #
+                  # - input: "postUninstall"
+                  #   type: "text/bash"
+                  #   required: false
+                  #   default: ""
 
-      # - kind: "DockerCompose"
-      #   description: "create/manage resources directly from a docker-compose file"
-      #   inputs:
-      #     - input: "nodeSelector"
-      #       label: "Node Selector"
-      #       description: "Node Selector"
-      #       type: "nodeSelector"
-      #       required: false
-      #
-      #     - input: "tolerations"
-      #       label: "Tolerations"
-      #       description: "Tolerations"
-      #       type: array
-      #       required: false
-      #
-      #     - input: "resources.cpu"
-      #       label: "CPU"
-      #       description: "Allocates specified CPU resources"
-      #       type: float-range
-      #       required: false
-      #
-      #     - input: "resources.memory"
-      #       label: "Memory"
-      #       description: "Allocates specified CPU resources"
-      #       type: float-range
-      #       required: false
-      #
-      #     - input: "resources.storage"
-      #       label: "Storage"
-      #       description: "Allocates specified CPU resources"
-      #       type: float-range
-      #       required: false
+        # - kind: "DockerCompose"
+        #   description: "create/manage resources directly from a docker-compose file"
+        #   inputs:
+        #     - input: "nodeSelector"
+        #       label: "Node Selector"
+        #       description: "Node Selector"
+        #       type: "nodeSelector"
+        #       required: false
+        #
+        #     - input: "tolerations"
+        #       label: "Tolerations"
+        #       description: "Tolerations"
+        #       type: array
+        #       required: false
+        #
+        #     - input: "resources.cpu"
+        #       label: "CPU"
+        #       description: "Allocates specified CPU resources"
+        #       type: float-range
+        #       required: false
+        #
+        #     - input: "resources.memory"
+        #       label: "Memory"
+        #       description: "Allocates specified CPU resources"
+        #       type: float-range
+        #       required: false
+        #
+        #     - input: "resources.storage"
+        #       label: "Storage"
+        #       description: "Allocates specified CPU resources"
+        #       type: float-range
+        #       required: false
 
-  - category: Databases
-    items:
-      - plugin: MongoDB
-        meta:
-          logo: "https://cdn.iconscout.com/icon/free/png-128/mongodb-5-1175140.png"
-        spec:
-          apiVersion: "plugin-mongodb.kloudlite.github.com/v1"
-          services:
-            - kind: "StandaloneService"
-              description: "creates a single instance mongodb server"
-              inputs:
-                - input: "nodeSelector"
-                  label: "Node Selector"
-                  description: "[read more](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)"
-                  type: "text/yaml"
-                  required: false
+    - category: Databases
+      items:
+        - plugin: MongoDB
+          meta:
+            logo: "https://cdn.iconscout.com/icon/free/png-128/mongodb-5-1175140.png"
+          spec:
+            apiVersion: "plugin-mongodb.kloudlite.github.com/v1"
+            services:
+              - kind: "StandaloneService"
+                label: "Standalone Service"
+                description: "creates a single instance mongodb server"
+                inputs:
+                  - input: "nodeSelector"
+                    label: "Node Selector"
+                    description: "[read more](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)"
+                    type: "text/yaml"
+                    required: false
 
-                - input: "tolerations"
-                  label: "Pod Tolerations"
-                  description: "[read more](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/#concepts)"
-                  type: "text/yaml"
-                  required: false
+                  - input: "tolerations"
+                    label: "Pod Tolerations"
+                    description: "[read more](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/#concepts)"
+                    type: "text/yaml"
+                    required: false
 
-                - input: "resources.cpu"
-                  unit: "m"
-                  displayUnit: "vCPU"
-                  label: "Allocate CPU"
-                  description: "Allocates specified CPU resources"
-                  type: int-range
-                  required: true
-                  default: 400
-                  min: 200
-                  step: 100
-                  max: 2000
+                  - input: "resources.cpu"
+                    unit: "m"
+                    displayUnit: "vCPU"
+                    label: "Allocate CPU"
+                    description: "Allocates specified CPU resources"
+                    type: int-range
+                    required: true
+                    default: 400
+                    min: 200
+                    step: 100
+                    max: 2000
 
-                - input: "resources.memory"
-                  unit: "Mi"
-                  displayUnit: "MB"
-                  label: "Allocate Memory"
-                  description: "Allocates specified CPU resources"
-                  type: int-range
-                  required: true
-                  default: 400
-                  min: 200
-                  step: 100
-                  max: 2000
+                  - input: "resources.memory"
+                    unit: "Mi"
+                    displayUnit: "MB"
+                    label: "Allocate Memory"
+                    description: "Allocates specified CPU resources"
+                    type: int-range
+                    required: true
+                    default: 400
+                    min: 200
+                    step: 100
+                    max: 2000
 
-                - input: "resources.storage"
-                  label: "Storage"
-                  description: "Allocates specified CPU resources"
-                  type: int-range
-                  unit: "GiB"
-                  displayUnit: "GB"
-                  required: true
-                  default: 5
-                  min: 1
-                  step: 1
-                  max: 10
+                  - input: "resources.storage"
+                    label: "Storage"
+                    description: "Allocates specified CPU resources"
+                    type: Number
+                    unit: "GiB"
+                    displayUnit: "GB"
+                    required: true
+                    default: 5
+                    min: 1
+                    max: 10
 
-              resources:
-                - kind: "StandaloneDatabase"
-                  description: "creates a mongodb database on standalone service"
-                  inputs: []
+                resources:
+                  - kind: "StandaloneDatabase"
+                    label: "Standalone Database"
+                    description: "creates a mongodb database on standalone service"
+                    inputs: []
 
-                # - kind: "StandaloneServiceBackup"
-                #   description: ""
-                #   inputs: []
-                #
-                # - kind: "StandaloneDatabaseBackup"
-                #   description: ""
-                #   inputs: []
-                #
+                  # - kind: "StandaloneServiceBackup"
+                  #   description: ""
+                  #   inputs: []
+                  #
+                  # - kind: "StandaloneDatabaseBackup"
+                  #   description: ""
+                  #   inputs: []
+                  #
   {{- /* managed-svc-templates.yml: |+ #yaml */}}
   {{- /*   - category: db */}}
   {{- /*     displayName: Databases */}}
