@@ -12,7 +12,7 @@ jobs:
           - name: auth-api
           - name: comms-api
           - name: console-api
-          - name: container-registry-api
+          # - name: container-registry-api
           - name: gateway-api
           - name: iam-api
           - name: infra-api
