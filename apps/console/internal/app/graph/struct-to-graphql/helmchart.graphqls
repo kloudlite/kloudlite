@@ -1,11 +1,10 @@
-type HelmRelease @shareable {
+type HelmChart @shareable {
   accountName: String!
   apiVersion: String
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  dispatchAddr: Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr
   displayName: String!
+  environmentName: String!
   id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -18,18 +17,18 @@ type HelmRelease @shareable {
   updateTime: Date!
 }
 
-type HelmReleaseEdge @shareable {
+type HelmChartEdge @shareable {
   cursor: String!
-  node: HelmRelease!
+  node: HelmChart!
 }
 
-type HelmReleasePaginatedRecords @shareable {
-  edges: [HelmReleaseEdge!]!
+type HelmChartPaginatedRecords @shareable {
+  edges: [HelmChartEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input HelmReleaseIn {
+input HelmChartIn {
   apiVersion: String
   displayName: String!
   kind: String

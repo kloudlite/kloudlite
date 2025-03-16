@@ -21,7 +21,9 @@ tasks:
       - go run ../../cmd/struct-to-graphql
         --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
         --struct github.com/kloudlite/api/apps/console/internal/entities.App
+        --struct github.com/kloudlite/api/apps/console/internal/entities.HelmChart
         --struct github.com/kloudlite/api/apps/console/internal/entities.ExternalApp
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ServiceBinding
         --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
         --struct github.com/kloudlite/api/apps/console/internal/entities.Config
         --struct github.com/kloudlite/operator/apis/wireguard/v1.Port
@@ -37,6 +39,8 @@ tasks:
         --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
         --struct github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugins
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugin
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
         --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImage
         --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImageURL
@@ -46,7 +50,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ClusterManagedService,RegistryImage,SecretVariable
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ClusterManagedService,RegistryImage,SecretVariable,HelmChart,ServiceBinding
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -60,7 +64,7 @@ tasks:
         sh: go env GOARCH
       GOARCH: "{{ .GOARCH | default .platform_GOARCH }}"
     cmds:
-#      - task: gen:constants
+      - task: gen:constants
       - task: go:build
         vars:
           out: "{{.binary}}-{{.GOARCH}}"
@@ -98,6 +102,6 @@ tasks:
 
       - task: docker:build-and-push
         vars:
-          args: "--platform linux/amd64,linux/arm64 -t {{.image}} . --build-arg BINARY={{.binary}}"
+          args: "--platform linux/amd64 -t {{.image}} . --build-arg BINARY={{.binary}}"
           image: "{{.image}}"
 

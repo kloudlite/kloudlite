@@ -85,7 +85,7 @@ type Domain interface {
 	DeleteBYOKCluster(ctx InfraContext, name string) error
 	UpsertBYOKClusterKubeconfig(ctx InfraContext, clusterName string, kubeconfig []byte) error
 
-	UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error
+	// UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error
 
 	ListClusters(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error)
 	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
@@ -136,16 +136,6 @@ type Domain interface {
 
 	OnNodeUpdateMessage(ctx InfraContext, clusterName string, node entities.Node) error
 	OnNodeDeleteMessage(ctx InfraContext, clusterName string, node entities.Node) error
-
-	ListHelmReleases(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmRelease], error)
-	GetHelmRelease(ctx InfraContext, clusterName string, serviceName string) (*entities.HelmRelease, error)
-	CreateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
-	UpdateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
-
-	DeleteHelmRelease(ctx InfraContext, clusterName string, name string) error
-	OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
-	OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
-	OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, service entities.HelmRelease, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
 	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 
 	"github.com/kloudlite/api/pkg/grpc"
@@ -26,6 +28,7 @@ import (
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -53,6 +56,7 @@ type domain struct {
 
 	environmentRepo repos.DbRepo[*entities.Environment]
 
+	helmChartRepo    repos.DbRepo[*entities.HelmChart]
 	appRepo          repos.DbRepo[*entities.App]
 	externalAppRepo  repos.DbRepo[*entities.ExternalApp]
 	configRepo       repos.DbRepo[*entities.Config]
@@ -73,6 +77,9 @@ type domain struct {
 	resourceEventPublisher ResourceEventPublisher
 	consoleCacheStore      kv.BinaryDataRepo
 	resourceMappingRepo    repos.DbRepo[*entities.ResourceMapping]
+
+	managedServicePlugins    []*entities.ManagedServicePlugins
+	managedServicePluginsMap map[string]map[string]*entities.ManagedServicePlugin
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
@@ -678,6 +685,7 @@ var Module = fx.Module("domain",
 		environmentRepo repos.DbRepo[*entities.Environment],
 		registryImageRepo repos.DbRepo[*entities.RegistryImage],
 
+		helmChartRepo repos.DbRepo[*entities.HelmChart],
 		appRepo repos.DbRepo[*entities.App],
 		externalAppRepo repos.DbRepo[*entities.ExternalApp],
 		configRepo repos.DbRepo[*entities.Config],
@@ -697,7 +705,34 @@ var Module = fx.Module("domain",
 		ev *env.Env,
 
 		consoleCacheStore ConsoleCacheStore,
-	) Domain {
+	) (Domain, error) {
+		open, err := os.Open(ev.MsvcTemplateFilePath)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+
+		b, err := io.ReadAll(open)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+
+		var plugins []*entities.ManagedServicePlugins
+
+		if err := yaml.Unmarshal(b, &plugins); err != nil {
+			return nil, errors.NewE(err)
+		}
+
+		msvcPluginsMap := map[string]map[string]*entities.ManagedServicePlugin{}
+
+		for _, t := range plugins {
+			if _, ok := msvcPluginsMap[t.Category]; !ok {
+				msvcPluginsMap[t.Category] = make(map[string]*entities.ManagedServicePlugin, len(t.Items))
+			}
+			for i := range t.Items {
+				msvcPluginsMap[t.Category][t.Items[i].Plugin] = &t.Items[i]
+			}
+		}
+
 		return &domain{
 			k8sClient: k8sClient,
 
@@ -717,6 +752,7 @@ var Module = fx.Module("domain",
 			routerRepo:                routerRepo,
 			secretRepo:                secretRepo,
 			mresRepo:                  mresRepo,
+			helmChartRepo:             helmChartRepo,
 			importedMresRepo:          importedMresRepo,
 			pullSecretsRepo:           ipsRepo,
 			resourceMappingRepo:       resourceMappingRepo,
@@ -729,5 +765,8 @@ var Module = fx.Module("domain",
 
 			resourceEventPublisher: resourceEventPublisher,
 			consoleCacheStore:      consoleCacheStore,
-		}
+
+			managedServicePlugins:    plugins,
+			managedServicePluginsMap: msvcPluginsMap,
+		}, nil
 	}))

@@ -1,8 +1,9 @@
 ---
 global:
-  namespace: kl-core
+  msvcName: 'mongodb'
   # name: s1
   name: test-db
+  mresName: test-mres
 ---
 
 label: List Managed Resources
@@ -32,7 +33,7 @@ variables:
     # after: NjY5NTUxMTk3YTU0Njk4MTBkZWNlNDRm
 
     last: 5
-    before: NjY5NTUxMTk3YTU0Njk4MTBkZWNlNDRm
+    # before: NjY5NTUxMTk3YTU0Njk4MTBkZWNlNDRm
   search:
     managedServiceName: 
       matchType: exact
@@ -48,13 +49,18 @@ query: |+ #graphql
       accountName
       mresRef
       spec {
-        resourceTemplate {
+        managedServiceRef {
           apiVersion
           kind
-          msvcRef {
-            name
-            namespace
-            clusterName
+          namespace
+          name
+        }
+        plugin {
+          apiVersion 
+          kind
+          spec
+          export {
+            viaSecret
           }
         }
       }
@@ -63,36 +69,37 @@ query: |+ #graphql
 variables:
   #   projectName: "{{.projectName}}"
   #   envName: "{{.environmentName}}"
-  msvcName: "msvc-one"
+  msvcName: "mongodb"
   mres:
     displayName: "test mres"
     metadata:
       name: "test-mres"
     spec:
-      resourceTemplate:
-        apiVersion: mongodb.msvc.kloudlite.io/v1
-        kind: Database
-        msvcRef:
-          apiVersion: mongodb.msvc.kloudlite.io/v1
-          kind: StandaloneService
-          name: "msvc-one"
-          namespace: "cmsvc-msvc-one"
-          clusterName: "test-cluster1"
+      managedServiceRef:
+        apiVersion: plugin-mongodb.kloudlite.github.com/v1
+        kind: StandaloneService
+        name: mongodb
+        namespace: "cmsvc-mongodb"
+      plugin:
+        apiVersion: plugin-mongodb.kloudlite.github.com/v1
+        kind: StandaloneDatabase
         spec: {}
+        export:
+          viaSecret: "hello"
         #   resourceName: "sample"
 
 ---
 
 label: Get Managed resource
-query: |+
+query: |+ #graphql
   query Core_getManagedResource($msvcName: String!, $name: String!) {
     core_getManagedResource(msvcName: $msvcName, name: $name) {
       id
     }
   }
 variables:
-  msvcName: 'msvc-one'
-  name: 'test-mres'
+  msvcName: "{{.msvcName}}"
+  name: "{{.mresName}}"
 
 ---
 
@@ -121,14 +128,14 @@ variables:
         kind: Database
 ---
 
-label: Delete ManagedService
-query: |+
-  mutation Core_deleteManagedResource($namespace: String!, $name: String!) {
-    core_deleteManagedResource(namespace: $namespace, name: $name)
+label: Delete ManagedResource
+query: |+ #graphql
+  mutation Core_deleteManagedResource($msvcName: String!, $mresName: String!) {
+    core_deleteManagedResource(msvcName: $msvcName, mresName: $mresName)
   }
 variables:
-  namespace: '{{.namespace}}'
-  name: "{{.name}}"
+  msvcName: "{{.msvcName}}"
+  mresName: "{{.mresName}}"
 
 ---
 

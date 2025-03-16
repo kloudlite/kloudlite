@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/api/pkg/errors"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
@@ -142,8 +142,8 @@ func (cps *CloudProviderSecret) GetDisplayName() string {
 	return cps.ResourceMetadata.DisplayName
 }
 
-func (cps *CloudProviderSecret) GetStatus() operator.Status {
-	return operator.Status{}
+func (cps *CloudProviderSecret) GetStatus() reconciler.Status {
+	return reconciler.Status{}
 }
 
 var CloudProviderSecretIndices = []repos.IndexField{

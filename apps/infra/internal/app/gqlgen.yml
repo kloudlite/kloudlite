@@ -159,8 +159,8 @@ models:
     model: github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderName
   Github__com___kloudlite___api___apps___infra___internal___entities__CloudProviderNameIn: *cloudprovider-name
 
-  Github__com___kloudlite___operator___pkg___operator__Status:
-    model: github.com/kloudlite/operator/pkg/operator.Status
+  Github__com___kloudlite___operator___toolkit___reconciler__Status:
+    model: github.com/kloudlite/operator/toolkit/reconciler.Status
 
   Github__com___kloudlite___operator___pkg___operator__Check:
     model: github.com/kloudlite/operator/pkg/operator.Check

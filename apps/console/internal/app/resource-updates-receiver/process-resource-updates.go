@@ -37,6 +37,7 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 
 var (
 	appsGVK            = fn.GVK("crds.kloudlite.io/v1", "App")
+	helmChartsGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	externalAppsGVK    = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
 	environmentGVK     = fn.GVK("crds.kloudlite.io/v1", "Environment")
 	deviceGVK          = fn.GVK("wireguard.kloudlite.io/v1", "Device")
@@ -51,18 +52,23 @@ var (
 
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
 	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj *unstructured.Unstructured) (domain.ResourceContext, error) {
-		if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
-			return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: v}, nil
-		}
-		mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
+		// if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
+		// 	return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: v}, nil
+		// }
+		// mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
+		// if err != nil {
+		// 	return domain.ResourceContext{}, err
+		// }
+		// if mapping == nil {
+		// 	return domain.ResourceContext{}, errors.Newf("mapping not found for %s %s/%s", rt, obj.GetNamespace(), obj.GetName())
+		// }
+
+		e, err := d.GetEnvironmentByTargetNamespace(ctx, obj.GetNamespace())
 		if err != nil {
 			return domain.ResourceContext{}, err
 		}
-		if mapping == nil {
-			return domain.ResourceContext{}, errors.Newf("mapping not found for %s %s/%s", rt, obj.GetNamespace(), obj.GetName())
-		}
 
-		return newResourceContext(ctx, mapping.EnvironmentName), nil
+		return newResourceContext(ctx, e.Name), nil
 	}
 
 	counter := 0
@@ -159,6 +165,23 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnEnvironmentUpdateMessage(dctx, ws, resStatus, opts)
 			}
+		case helmChartsGVK.String():
+			{
+				var helmc entities.HelmChart
+				if err := fn.JsonConversion(rwu.Object, &helmc); err != nil {
+					return errors.NewE(err)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, ru.ClusterName, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnHelmChartDeleteMessage(rctx, helmc)
+				}
+				return d.OnHelmChartUpdateMessage(rctx, helmc, resStatus, opts)
+			}
 		case appsGVK.String():
 			{
 				var app entities.App
@@ -254,6 +277,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnRouterUpdateMessage(rctx, router, resStatus, opts)
 			}
+
 		case managedResourceGVK.String():
 			{
 				var mres crdsv1.ManagedResource
@@ -273,9 +297,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres)
+					return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ManagedServiceRef.Name, mres)
 				}
-				return d.OnManagedResourceUpdateMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres, outputSecret, resStatus, opts)
+				return d.OnManagedResourceUpdateMessage(dctx, mres.Spec.ManagedServiceRef.Name, mres, outputSecret, resStatus, opts)
 			}
 
 		case serviceBindingGVK.String():

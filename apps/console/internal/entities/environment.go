@@ -7,7 +7,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type Environment struct {
@@ -29,7 +29,7 @@ func (e *Environment) GetDisplayName() string {
 	return e.ResourceMetadata.DisplayName
 }
 
-func (e *Environment) GetStatus() operator.Status {
+func (e *Environment) GetStatus() reconciler.Status {
 	return e.Environment.Status
 }
 
