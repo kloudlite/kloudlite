@@ -16,6 +16,8 @@ func (d *domain) createAndApplyHelmChart(ctx ResourceContext, helmc *entities.He
 		return nil, errors.NewE(err)
 	}
 
+	helmc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, helmc.RecordVersion)
+
 	nhelmc, err := d.helmChartRepo.Create(ctx, helmc)
 	if err != nil {
 		if d.helmChartRepo.ErrAlreadyExists(err) {
@@ -96,7 +98,7 @@ func (d *domain) CreateHelmChart(ctx ResourceContext, helmc entities.HelmChart) 
 
 	helmc.AccountName = ctx.AccountName
 	helmc.EnvironmentName = ctx.EnvironmentName
-	helmc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, helmc.RecordVersion)
+	// helmc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, helmc.RecordVersion)
 
 	return d.createAndApplyHelmChart(ctx, &helmc)
 }

@@ -743,7 +743,8 @@ func (r *queryResolver) CoreListHelmCharts(ctx context.Context, envName string, 
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvertP[model.HelmChartPaginatedRecords](pHelmCharts)
+	l, err := fn.JsonConvertP[model.HelmChartPaginatedRecords](pHelmCharts)
+	return l, err
 }
 
 // CoreGetHelmChart is the resolver for the core_getHelmChart field.
