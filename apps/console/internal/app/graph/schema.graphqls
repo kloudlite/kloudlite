@@ -13,6 +13,7 @@ enum ConsoleResType {
 	environment
 	registry_image
 	vpn_device
+	helm_chart
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
@@ -49,6 +50,12 @@ input SearchRegistryImages {
 }
 
 input SearchApps {
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
+}
+
+input SearchHelmCharts {
 	text: MatchFilterIn
 	isReady: MatchFilterIn
 	markedForDeletion: MatchFilterIn
@@ -129,6 +136,9 @@ type Query {
 	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_searchRegistryImages(query: String!): [RegistryImage!]! @isLoggedInAndVerified @hasAccount
 
+	core_listHelmCharts(envName: String!, search: SearchHelmCharts, pq: CursorPaginationIn): HelmChartPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getHelmChart(envName: String!, name: String!): HelmChart @isLoggedInAndVerified @hasAccount
+
 	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -168,10 +178,15 @@ type Query {
 
 	core_getSecretVariableOutputKeys(name: String!): [String!]! @isLoggedInAndVerified @hasAccount
 	core_getSecretVariableOutputKeyValues( keyrefs: [SecretVariableKeyRefIn]): [SecretVariableKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+
+  core_listServiceBindings(envName: String!, pagination: CursorPaginationIn): ServiceBindingPaginatedRecords @isLoggedInAndVerified @hasAccount
+
+	core_listManagedServicePlugins: [ManagedServicePlugins!]
+	core_getManagedServicePlugin(category: String!, name: String!): ManagedServicePlugin
 }
 
 type Mutation {
-  	core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
+  core_setupDefaultEnvironment: Boolean! @isLoggedInAndVerified @hasAccount
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -183,6 +198,10 @@ type Mutation {
 	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_deleteRegistryImage(image: String!): Boolean!  @isLoggedInAndVerified @hasAccount
+
+	core_createHelmChart(envName: String!, helmchart: HelmChartIn!): HelmChart @isLoggedInAndVerified @hasAccount
+	core_updateHelmChart(envName: String!, helmchart: HelmChartIn!): HelmChart @isLoggedInAndVerified @hasAccount
+	core_deleteHelmChart(envName: String!, helmChartName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
@@ -223,6 +242,10 @@ type Mutation {
 	core_createSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
 	core_updateSecretVariable(secretVariable: SecretVariableIn!): SecretVariable @isLoggedInAndVerified @hasAccount
 	core_deleteSecretVariable(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+  core_createServiceIntercept(envName: String!, serviceName: String!, interceptTo: String!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
+
+  core_deleteServiceIntercept(envName: String!, serviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {
@@ -242,6 +265,10 @@ extend type App {
 	build: Build
 	serviceHost: String
   onlineStatus: OnlineStatus
+}
+
+extend type ServiceBinding {
+	serviceHost: String
 }
 
 extend type ImportedManagedResource {

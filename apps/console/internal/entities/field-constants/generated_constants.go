@@ -57,19 +57,22 @@ const (
 // constant vars generated for struct ClusterManagedService
 const (
 	ClusterManagedServiceIsArchived                                              = "isArchived"
-	ClusterManagedServiceOutput                                                  = "output"
-	ClusterManagedServiceOutputCredentialsRef                                    = "output.credentialsRef"
-	ClusterManagedServiceOutputCredentialsRefName                                = "output.credentialsRef.name"
 	ClusterManagedServiceSpec                                                    = "spec"
 	ClusterManagedServiceSpecMsvcSpec                                            = "spec.msvcSpec"
-	ClusterManagedServiceSpecMsvcSpecNodeSelector                                = "spec.msvcSpec.nodeSelector"
+	ClusterManagedServiceSpecMsvcSpecPlugin                                      = "spec.msvcSpec.plugin"
+	ClusterManagedServiceSpecMsvcSpecPluginApiVersion                            = "spec.msvcSpec.plugin.apiVersion"
+	ClusterManagedServiceSpecMsvcSpecPluginExport                                = "spec.msvcSpec.plugin.export"
+	ClusterManagedServiceSpecMsvcSpecPluginExportTemplate                        = "spec.msvcSpec.plugin.export.template"
+	ClusterManagedServiceSpecMsvcSpecPluginExportViaSecret                       = "spec.msvcSpec.plugin.export.viaSecret"
+	ClusterManagedServiceSpecMsvcSpecPluginKind                                  = "spec.msvcSpec.plugin.kind"
+	ClusterManagedServiceSpecMsvcSpecPluginSpec                                  = "spec.msvcSpec.plugin.spec"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplate                             = "spec.msvcSpec.serviceTemplate"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateApiVersion                   = "spec.msvcSpec.serviceTemplate.apiVersion"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateExport                       = "spec.msvcSpec.serviceTemplate.export"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateExportTemplate               = "spec.msvcSpec.serviceTemplate.export.template"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateExportViaSecret              = "spec.msvcSpec.serviceTemplate.export.viaSecret"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateKind                         = "spec.msvcSpec.serviceTemplate.kind"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateSpec                         = "spec.msvcSpec.serviceTemplate.spec"
-	ClusterManagedServiceSpecMsvcSpecSharedSecret                                = "spec.msvcSpec.sharedSecret"
-	ClusterManagedServiceSpecMsvcSpecTolerations                                 = "spec.msvcSpec.tolerations"
-	ClusterManagedServiceSpecSharedSecret                                        = "spec.sharedSecret"
 	ClusterManagedServiceSpecTargetNamespace                                     = "spec.targetNamespace"
 	ClusterManagedServiceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
 	ClusterManagedServiceSyncedOutputSecretRefApiVersion                         = "syncedOutputSecretRef.apiVersion"
@@ -128,6 +131,35 @@ const (
 	ExternalAppSpecRecordType                = "spec.recordType"
 )
 
+// constant vars generated for struct HelmChart
+const (
+	HelmChartSpec                                                                                           = "spec"
+	HelmChartSpecChartName                                                                                  = "spec.chartName"
+	HelmChartSpecChartRepoURL                                                                               = "spec.chartRepoURL"
+	HelmChartSpecChartVersion                                                                               = "spec.chartVersion"
+	HelmChartSpecJobVars                                                                                    = "spec.jobVars"
+	HelmChartSpecJobVarsAffinity                                                                            = "spec.jobVars.affinity"
+	HelmChartSpecJobVarsAffinityNodeAffinity                                                                = "spec.jobVars.affinity.nodeAffinity"
+	HelmChartSpecJobVarsAffinityNodeAffinityPreferredDuringSchedulingIgnoredDuringExecution                 = "spec.jobVars.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityNodeAffinityRequiredDuringSchedulingIgnoredDuringExecution                  = "spec.jobVars.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityNodeAffinityRequiredDuringSchedulingIgnoredDuringExecutionNodeSelectorTerms = "spec.jobVars.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms"
+	HelmChartSpecJobVarsAffinityPodAffinity                                                                 = "spec.jobVars.affinity.podAffinity"
+	HelmChartSpecJobVarsAffinityPodAffinityPreferredDuringSchedulingIgnoredDuringExecution                  = "spec.jobVars.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityPodAffinityRequiredDuringSchedulingIgnoredDuringExecution                   = "spec.jobVars.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityPodAntiAffinity                                                             = "spec.jobVars.affinity.podAntiAffinity"
+	HelmChartSpecJobVarsAffinityPodAntiAffinityPreferredDuringSchedulingIgnoredDuringExecution              = "spec.jobVars.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsAffinityPodAntiAffinityRequiredDuringSchedulingIgnoredDuringExecution               = "spec.jobVars.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution"
+	HelmChartSpecJobVarsBackOffLimit                                                                        = "spec.jobVars.backOffLimit"
+	HelmChartSpecJobVarsNodeSelector                                                                        = "spec.jobVars.nodeSelector"
+	HelmChartSpecJobVarsTolerations                                                                         = "spec.jobVars.tolerations"
+	HelmChartSpecPostInstall                                                                                = "spec.postInstall"
+	HelmChartSpecPostUninstall                                                                              = "spec.postUninstall"
+	HelmChartSpecPreInstall                                                                                 = "spec.preInstall"
+	HelmChartSpecPreUninstall                                                                               = "spec.preUninstall"
+	HelmChartSpecReleaseName                                                                                = "spec.releaseName"
+	HelmChartSpecValues                                                                                     = "spec.values"
+)
+
 // constant vars generated for struct ImagePullSecret
 const (
 	ImagePullSecretDockerConfigJson   = "dockerConfigJson"
@@ -151,6 +183,13 @@ const (
 	ImportedManagedResourceSecretRefNamespace          = "secretRef.namespace"
 )
 
+// constant vars generated for struct InterceptStatus
+const (
+	InterceptStatusIntercepted  = "intercepted"
+	InterceptStatusPortMappings = "portMappings"
+	InterceptStatusToAddr       = "toAddr"
+)
+
 // constant vars generated for struct KLoudliteEdgeCluster
 const (
 	KLoudliteEdgeClusterComments       = "comments"
@@ -166,20 +205,19 @@ const (
 	ManagedResourceIsImported                                              = "isImported"
 	ManagedResourceManagedServiceName                                      = "managedServiceName"
 	ManagedResourceMresRef                                                 = "mresRef"
-	ManagedResourceOutput                                                  = "output"
-	ManagedResourceOutputCredentialsRef                                    = "output.credentialsRef"
-	ManagedResourceOutputCredentialsRefName                                = "output.credentialsRef.name"
 	ManagedResourceSpec                                                    = "spec"
-	ManagedResourceSpecResourceNamePrefix                                  = "spec.resourceNamePrefix"
-	ManagedResourceSpecResourceTemplate                                    = "spec.resourceTemplate"
-	ManagedResourceSpecResourceTemplateApiVersion                          = "spec.resourceTemplate.apiVersion"
-	ManagedResourceSpecResourceTemplateKind                                = "spec.resourceTemplate.kind"
-	ManagedResourceSpecResourceTemplateMsvcRef                             = "spec.resourceTemplate.msvcRef"
-	ManagedResourceSpecResourceTemplateMsvcRefApiVersion                   = "spec.resourceTemplate.msvcRef.apiVersion"
-	ManagedResourceSpecResourceTemplateMsvcRefKind                         = "spec.resourceTemplate.msvcRef.kind"
-	ManagedResourceSpecResourceTemplateMsvcRefName                         = "spec.resourceTemplate.msvcRef.name"
-	ManagedResourceSpecResourceTemplateMsvcRefNamespace                    = "spec.resourceTemplate.msvcRef.namespace"
-	ManagedResourceSpecResourceTemplateSpec                                = "spec.resourceTemplate.spec"
+	ManagedResourceSpecManagedServiceRef                                   = "spec.managedServiceRef"
+	ManagedResourceSpecManagedServiceRefApiVersion                         = "spec.managedServiceRef.apiVersion"
+	ManagedResourceSpecManagedServiceRefKind                               = "spec.managedServiceRef.kind"
+	ManagedResourceSpecManagedServiceRefName                               = "spec.managedServiceRef.name"
+	ManagedResourceSpecManagedServiceRefNamespace                          = "spec.managedServiceRef.namespace"
+	ManagedResourceSpecPlugin                                              = "spec.plugin"
+	ManagedResourceSpecPluginApiVersion                                    = "spec.plugin.apiVersion"
+	ManagedResourceSpecPluginExport                                        = "spec.plugin.export"
+	ManagedResourceSpecPluginExportTemplate                                = "spec.plugin.export.template"
+	ManagedResourceSpecPluginExportViaSecret                               = "spec.plugin.export.viaSecret"
+	ManagedResourceSpecPluginKind                                          = "spec.plugin.kind"
+	ManagedResourceSpecPluginSpec                                          = "spec.plugin.spec"
 	ManagedResourceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
 	ManagedResourceSyncedOutputSecretRefApiVersion                         = "syncedOutputSecretRef.apiVersion"
 	ManagedResourceSyncedOutputSecretRefData                               = "syncedOutputSecretRef.data"
@@ -209,6 +247,56 @@ const (
 const (
 	ManagedResourceRefName      = "name"
 	ManagedResourceRefNamespace = "namespace"
+)
+
+// constant vars generated for struct ManagedServicePlugin
+const (
+	ManagedServicePluginMeta           = "meta"
+	ManagedServicePluginMetaLogo       = "meta.logo"
+	ManagedServicePluginPlugin         = "plugin"
+	ManagedServicePluginSpec           = "spec"
+	ManagedServicePluginSpecApiVersion = "spec.apiVersion"
+	ManagedServicePluginSpecServices   = "spec.services"
+)
+
+// constant vars generated for struct ManagedServicePluginInputField
+const (
+	ManagedServicePluginInputFieldDefaultValue = "defaultValue"
+	ManagedServicePluginInputFieldDescription  = "description"
+	ManagedServicePluginInputFieldDisplayUnit  = "displayUnit"
+	ManagedServicePluginInputFieldInput        = "input"
+	ManagedServicePluginInputFieldLabel        = "label"
+	ManagedServicePluginInputFieldMax          = "max"
+	ManagedServicePluginInputFieldMin          = "min"
+	ManagedServicePluginInputFieldMultiplier   = "multiplier"
+	ManagedServicePluginInputFieldRequired     = "required"
+	ManagedServicePluginInputFieldType         = "type"
+	ManagedServicePluginInputFieldUnit         = "unit"
+)
+
+// constant vars generated for struct ManagedServicePluginMetadata
+const (
+	ManagedServicePluginMetadataLogo = "logo"
+)
+
+// constant vars generated for struct ManagedServicePluginResources
+const (
+	ManagedServicePluginResourcesDescription = "description"
+	ManagedServicePluginResourcesInputs      = "inputs"
+)
+
+// constant vars generated for struct ManagedServicePluginServices
+const (
+	ManagedServicePluginServicesActive      = "active"
+	ManagedServicePluginServicesDescription = "description"
+	ManagedServicePluginServicesFields      = "fields"
+	ManagedServicePluginServicesResources   = "resources"
+)
+
+// constant vars generated for struct ManagedServicePlugins
+const (
+	ManagedServicePluginsCategory = "category"
+	ManagedServicePluginsItems    = "items"
 )
 
 // constant vars generated for struct RegistryImage
@@ -299,14 +387,18 @@ const (
 
 // constant vars generated for struct ServiceBinding
 const (
-	ServiceBindingSpec                    = "spec"
-	ServiceBindingSpecGlobalIP            = "spec.globalIP"
-	ServiceBindingSpecHostname            = "spec.hostname"
-	ServiceBindingSpecPorts               = "spec.ports"
-	ServiceBindingSpecServiceIP           = "spec.serviceIP"
-	ServiceBindingSpecServiceRef          = "spec.serviceRef"
-	ServiceBindingSpecServiceRefName      = "spec.serviceRef.name"
-	ServiceBindingSpecServiceRefNamespace = "spec.serviceRef.namespace"
+	ServiceBindingInterceptStatus             = "interceptStatus"
+	ServiceBindingInterceptStatusIntercepted  = "interceptStatus.intercepted"
+	ServiceBindingInterceptStatusPortMappings = "interceptStatus.portMappings"
+	ServiceBindingInterceptStatusToAddr       = "interceptStatus.toAddr"
+	ServiceBindingSpec                        = "spec"
+	ServiceBindingSpecGlobalIP                = "spec.globalIP"
+	ServiceBindingSpecHostname                = "spec.hostname"
+	ServiceBindingSpecPorts                   = "spec.ports"
+	ServiceBindingSpecServiceIP               = "spec.serviceIP"
+	ServiceBindingSpecServiceRef              = "spec.serviceRef"
+	ServiceBindingSpecServiceRefName          = "spec.serviceRef.name"
+	ServiceBindingSpecServiceRefNamespace     = "spec.serviceRef.namespace"
 )
 
 // constant vars generated for struct
@@ -318,9 +410,11 @@ const (
 	CreatedByUserEmail                 = "createdBy.userEmail"
 	CreatedByUserId                    = "createdBy.userId"
 	CreatedByUserName                  = "createdBy.userName"
+	CreatedByHelm                      = "createdByHelm"
 	CreationTime                       = "creationTime"
 	DisplayName                        = "displayName"
 	EnvironmentName                    = "environmentName"
+	EnvironmentNamespace               = "environmentNamespace"
 	Id                                 = "id"
 	Kind                               = "kind"
 	LastUpdatedBy                      = "lastUpdatedBy"
@@ -353,6 +447,8 @@ const (
 	StatusLastReconcileTime            = "status.lastReconcileTime"
 	StatusMessage                      = "status.message"
 	StatusMessageItems                 = "status.message.items"
+	StatusReleaseNotes                 = "status.releaseNotes"
+	StatusReleaseStatus                = "status.releaseStatus"
 	StatusResources                    = "status.resources"
 	SyncStatus                         = "syncStatus"
 	SyncStatusAction                   = "syncStatus.action"

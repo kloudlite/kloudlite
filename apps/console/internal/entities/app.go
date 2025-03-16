@@ -7,7 +7,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type App struct {
@@ -32,7 +32,7 @@ func (a *App) GetGeneration() int64 {
 	return a.ObjectMeta.Generation
 }
 
-func (a *App) GetStatus() operator.Status {
+func (a *App) GetStatus() reconciler.Status {
 	return a.App.Status
 }
 

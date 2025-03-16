@@ -262,7 +262,6 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 	}
 
 	if len(results) > 0 {
-
 		if pagination.First != nil {
 			pageInfo.HasNextPage = fn.New(len(results) > int(*pagination.First))
 			if pageInfo.HasNextPage != nil && *pageInfo.HasNextPage {
@@ -433,6 +432,7 @@ func (repo *dbRepo[T]) patchRecordByID(ctx context.Context, id ID, patch Documen
 	updateOpts := &options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
 	}
+
 	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
 		updateOpts.Upsert = &opt.Upsert
 	}

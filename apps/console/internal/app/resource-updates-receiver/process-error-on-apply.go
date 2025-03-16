@@ -91,6 +91,24 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 				return d.OnEnvironmentDeleteMessage(dctx, p)
 			}
+		case helmChartsGVK.String():
+			{
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeHelmChart, em.ClusterName, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				app, err := fn.JsonConvert[entities.HelmChart](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnAppApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+
+				return d.OnHelmChartDeleteMessage(rctx, app)
+			}
 		case appsGVK.String():
 			{
 				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeApp, em.ClusterName, obj)
@@ -186,9 +204,9 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 				}
 
 				if errObj.Action == t.ActionApply {
-					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.Spec.ResourceTemplate.MsvcRef.Name, obj.GetName(), opts)
+					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.Spec.ManagedServiceRef.Name, obj.GetName(), opts)
 				}
-				return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres)
+				return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ManagedServiceRef.Name, mres)
 			}
 		case clusterMsvcGVK.String():
 			{
