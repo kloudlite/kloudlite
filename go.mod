@@ -48,7 +48,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v1.1.2-0.20250102125333-5201bfc7b464
+	github.com/kloudlite/operator v1.1.1
 	github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85
 	github.com/miekg/dns v1.1.62
 	github.com/mittwald/go-helm-client v0.12.14
@@ -78,10 +78,8 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/chai2010/gettext-go v1.0.3 // indirect
 	github.com/charmbracelet/x/ansi v0.6.0 // indirect
-	github.com/containerd/cgroups/v3 v3.0.3 // indirect
 	github.com/containerd/containerd v1.7.24 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
-	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
