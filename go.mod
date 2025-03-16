@@ -48,7 +48,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v1.1.1
+	github.com/kloudlite/operator v1.1.2-0.20250316093242-493e9b587c10
 	github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85
 	github.com/miekg/dns v1.1.62
 	github.com/mittwald/go-helm-client v0.12.14

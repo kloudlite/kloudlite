@@ -332,6 +332,8 @@ github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
 github.com/kloudlite/operator v1.1.1 h1:CkbKGi8fT0ZtYnL0O6VCgzEpz5mmk+pRibXoLRazQ0M=
 github.com/kloudlite/operator v1.1.1/go.mod h1:VkreINDW43qeTsDv9gfGH5M9c5OG/jPGYOGxj8otsGY=
+github.com/kloudlite/operator v1.1.2-0.20250316093242-493e9b587c10 h1:JApPLyqigVe4NfpmKp3sM7QBcj4NS5A4hal3OSZAVLY=
+github.com/kloudlite/operator v1.1.2-0.20250316093242-493e9b587c10/go.mod h1:BhtpCE1yn9D5FJRpuI/IzgIGmRTn/WK+gScDAALCnqM=
 github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85 h1:bGSKSZkDDnbbk1lQYG4GQrg7dSAFCIb9fGHhYMEVBKg=
 github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85/go.mod h1:xnrBiZSs9nC5rgyZMf55OsLhvx7Lo7A4+eSq7ezEEm0=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
