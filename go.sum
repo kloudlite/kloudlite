@@ -279,6 +279,16 @@ github.com/kloudlite/plugin-helm-chart v0.0.0-20241220114210-b6d65e34990d h1:kdj
 github.com/kloudlite/plugin-helm-chart v0.0.0-20241220114210-b6d65e34990d/go.mod h1:TZUQ5mREV+UjGVJhPsgmHMS67Mlf2Guit4905Pi/5sc=
 github.com/kloudlite/plugin-mongodb v0.0.0-20241221132659-be42e75f149f h1:7yjk5Nh4dkw3rW0NdS7N3bAjfNFC/w9VF6LfXFqRVrQ=
 github.com/kloudlite/plugin-mongodb v0.0.0-20241221132659-be42e75f149f/go.mod h1:7ZimdiRyRmVSTS0U69a2sjcvRw/ZbRk6ICwftb6CWxY=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316133014-5e99560adb76 h1:D8IceJKpSOG9LKy2VzN1xHNm4dJ+l7arGPxkj8iZxIo=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316133014-5e99560adb76/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316133328-275e701f2943 h1:ILrHSigArzmo2QH2SIkJEzT1CZNufzQeu1CjM/ljPKo=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316133328-275e701f2943/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316134709-6214224a6327 h1:YayBAW0bjYe+z1ijRpTshMbNYlhjivueuT+HtlSJhlI=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316134709-6214224a6327/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316140417-088f796334a9 h1:O9PJPxmuzSckAkt6uZhschc0IbDeWoTmdwnAF+QZ24U=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316140417-088f796334a9/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316143614-628cc21496dc h1:pqY7GdSJehGrDK5LEazzuiGvKYGnjlVK527DrlqBc3k=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316143614-628cc21496dc/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
