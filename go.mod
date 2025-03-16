@@ -49,7 +49,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
 	github.com/kloudlite/operator v1.1.2-0.20250316093242-493e9b587c10
-	github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85
+	github.com/kloudlite/operator/toolkit v0.0.0-20250316093242-493e9b587c10
 	github.com/miekg/dns v1.1.62
 	github.com/mittwald/go-helm-client v0.12.14
 	github.com/nats-io/nats.go v1.38.0
@@ -80,6 +80,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.6.0 // indirect
 	github.com/containerd/containerd v1.7.24 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
+	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
