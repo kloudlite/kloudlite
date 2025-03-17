@@ -66,6 +66,9 @@ spec:
             - name: KLOUDLITE_DNS_SUFFIX
               value: ""
 
+            - name: KLOUDLITE_NAMESPACE
+              value: "{{.Release.Namespace}}"
+
           livenessProbe:
             httpGet:
               path: /healthz
