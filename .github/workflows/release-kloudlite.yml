@@ -2,6 +2,35 @@ name: release kloudlite
 
 on:
   workflow_dispatch:
+    inputs:
+      release_api:
+        description: "release APIs"
+        required: true
+        default: true
+      release_web:
+        description: "release Web"
+        required: true
+        default: true
+      release_kl:
+        description: "release kl cli"
+        required: true
+        default: true
+      release_operator:
+        description: "release operator"
+        required: true
+        default: true
+      release_autoscaler:
+        description: "release autoscaler"
+        required: true
+        default: true
+      release_infrastructure-as-code:
+        description: "release infrastructure-as-code"
+        required: true
+        default: true
+      release_kubelet-metrics-reexporter:
+        description: "release kubelet metrics re-exporter"
+        required: true
+        default: true
 
   push:
     tags:
@@ -33,18 +62,22 @@ permissions:
 
 jobs:
   web:
+    if: ${{ inputs.release_web == 'true' }}
     uses: ./.github/workflows/web.yml
     secrets: inherit
 
   api:
+    if: ${{ inputs.release_api == 'true' }}
     uses: ./.github/workflows/api.yml
     secrets: inherit
 
   operator:
+    if: ${{ inputs.release_operator == 'true' }}
     uses: ./.github/workflows/operator.yml
     secrets: inherit
 
   kl:
+    if: ${{ inputs.release_kl == 'true' }}
     needs: 
       - operator
       - api
@@ -52,6 +85,7 @@ jobs:
     secrets: inherit
 
   infrastructure-as-code:
+    if: ${{ inputs.release_infrastructure-as-code == 'true' }}
     uses: ./.github/workflows/infrastructure-as-code.yml
     secrets: inherit
     with:
@@ -59,10 +93,12 @@ jobs:
       image_name_prefix: ghcr.io/${{ github.repository }}/infrastructure-as-code
 
   autoscaler:
+    if: ${{ inputs.release_autoscaler == 'true' }}
     uses: ./.github/workflows/autoscaler.yml
     secrets: inherit
 
   kubelet-metrics-reexporter:
+    if: ${{ inputs.release_kubelet-metrics-reexporter == 'true' }}
     uses: ./.github/workflows/kubelet-metrics-reexporter.yml
     secrets: inherit
 
@@ -83,6 +119,7 @@ jobs:
   #         path: ./k3s
 
   github_release:
+    if: ${{ inputs.release_api == 'true' && inputs.release_web == 'true' && inputs.release_operator == 'true' && inputs.release_autoscaler == 'true' && inputs.release_infrastructure-as-code == 'true' && inputs.release_kubelet-metrics-reexporter == 'true' && inputs.release_kl == 'true' }}
     needs:
       - api
       - operator
