@@ -72,7 +72,7 @@ spec:
       - operator: Exists
     nodeSelector: {{ $chartOpts.nodeSelector | default .Values.nodeSelector | toJson }}
 
-  values:
+  helmValues:
     role: Agent
     containerPorts:
       - containerPort: 6000
