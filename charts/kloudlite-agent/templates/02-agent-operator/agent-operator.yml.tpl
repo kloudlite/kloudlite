@@ -45,6 +45,9 @@ spec:
 
             - name: KLOUDLITE_DNS_SUFFIX
               value: {{.Values.kloudliteDNSSuffix}}
+            
+            - name: KLOUDLITE_NAMESPACE
+              value: {{.Release.Namespace}}
 
             {{ include "environment-operator-env" . | nindent 12 }}
             {{ include "resource-watcher-env" . | nindent 12 }}
