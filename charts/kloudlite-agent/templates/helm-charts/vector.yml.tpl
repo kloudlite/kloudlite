@@ -56,16 +56,16 @@ subjects:
 
 ---
 
-apiVersion: crds.kloudlite.io/v1
+apiVersion: plugin-helm-chart.kloudlite.github.com/v1
 kind: HelmChart
 metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepoURL: https://helm.vector.dev
-  chartName: vector
-  chartVersion: 0.23.0
-  
+  chart:
+    url: "https://helm.vector.dev"
+    name: vector
+    version: 0.23.0
   jobVars:
     backOffLimit: 1
     tolerations:
