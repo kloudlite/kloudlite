@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
@@ -16,6 +17,7 @@ import (
 
 // CreateServiceIntercept implements Domain.
 func (d *domain) CreateServiceIntercept(ctx ConsoleContext, envName string, serviceName string, interceptTo string, portMappings []*crdsv1.SvcInterceptPortMappings) (*entities.ServiceBinding, error) {
+	slog.Info("[STARTED] createServiceIntercept()", "envName", envName, "serviceName", serviceName, "interceptTo", interceptTo)
 	filters := ctx.DBFilters()
 
 	env, err := d.environmentRepo.FindOne(ctx, ctx.DBFilters().Add(fc.MetadataName, envName))
@@ -27,10 +29,14 @@ func (d *domain) CreateServiceIntercept(ctx ConsoleContext, envName string, serv
 		return nil, fmt.Errorf("environment not found")
 	}
 
-	sb, err := d.serviceBindingRepo.FindOne(ctx, filters.Add(fc.ServiceBindingSpecServiceRefName, serviceName).Add(fc.ClusterName, env.ClusterName))
+	sbFilter := filters.Add(fc.ServiceBindingSpecServiceRefName, serviceName).Add(fc.ServiceBindingSpecServiceRefNamespace, env.Spec.TargetNamespace).Add(fc.ClusterName, env.ClusterName)
+
+	sb, err := d.serviceBindingRepo.FindOne(ctx, sbFilter)
 	if err != nil {
 		return nil, err
 	}
+
+	slog.Info("[STEP] createServiceIntercept()", "filter", filters, "env.targetNamespace", env.Spec.TargetNamespace)
 
 	if sb == nil {
 		return nil, fmt.Errorf("no service binding found")
@@ -71,11 +77,13 @@ func (d *domain) CreateServiceIntercept(ctx ConsoleContext, envName string, serv
 		return nil, err
 	}
 
+	slog.Info("[COMPLETED] createServiceIntercept()", "envName", envName, "serviceName", serviceName, "interceptTo", interceptTo, "intercept-status", *usb.InterceptStatus)
 	return usb, nil
 }
 
 // DeleteServiceIntercept implements Domain.
 func (d *domain) DeleteServiceIntercept(ctx ConsoleContext, envName string, serviceName string) error {
+	slog.Info("[STARTED] DeleteServiceIntercept()", "envName", envName, "serviceName", serviceName)
 	filters := ctx.DBFilters()
 
 	env, err := d.environmentRepo.FindOne(ctx, ctx.DBFilters().Add(fc.MetadataName, envName))
@@ -87,9 +95,13 @@ func (d *domain) DeleteServiceIntercept(ctx ConsoleContext, envName string, serv
 		return fmt.Errorf("environment not found")
 	}
 
-	sb, err := d.serviceBindingRepo.FindOne(ctx, filters.Add(fc.ServiceBindingSpecServiceRefName, serviceName).Add(fc.ClusterName, env.ClusterName))
+	sb, err := d.serviceBindingRepo.FindOne(ctx, filters.Add(fc.ServiceBindingSpecServiceRefName, serviceName).Add(fc.ServiceBindingSpecServiceRefNamespace, env.Spec.TargetNamespace).Add(fc.ClusterName, env.ClusterName))
 	if err != nil {
 		return err
+	}
+
+	if sb == nil {
+		return fmt.Errorf("service binding not found")
 	}
 
 	serviceIntercept := &crdsv1.ServiceIntercept{
@@ -115,6 +127,7 @@ func (d *domain) DeleteServiceIntercept(ctx ConsoleContext, envName string, serv
 		return err
 	}
 
+	slog.Info("[COMPLETED] DeleteServiceIntercept()", "envName", envName, "serviceName", serviceName)
 	return nil
 }
 
@@ -153,6 +166,7 @@ func (d *domain) OnServiceBindingDeleteMessage(ctx ConsoleContext, svcb *network
 
 // OnServiceBindingUpdateMessage implements Domain.
 func (d *domain) OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	slog.Info("[STARTED] OnServiceBindingUpdateMessage")
 	if svcb == nil {
 		return errors.Newf("no service binding found")
 	}
@@ -184,15 +198,30 @@ func (d *domain) OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *network
 		environmentName = env.Name
 	}
 
-	if _, err := d.serviceBindingRepo.Upsert(ctx, filter, &entities.ServiceBinding{
-		ServiceBinding:  *svcb,
-		AccountName:     ctx.AccountName,
-		ClusterName:     opts.ClusterName,
-		EnvironmentName: environmentName,
-	}); err != nil {
-		return errors.NewE(err)
+	sb, err := d.serviceBindingRepo.FindOne(ctx, filter)
+	if err != nil {
+		return err
 	}
 
-	// d.resourceEventPublisher.PublishResourceEvent(ctx, urouter.GetResourceType(), urouter.GetName(), PublishUpdate)
-	return nil
+	if sb == nil {
+		sb2, err := d.serviceBindingRepo.Create(ctx, &entities.ServiceBinding{
+			ServiceBinding:  *svcb,
+			AccountName:     ctx.AccountName,
+			ClusterName:     opts.ClusterName,
+			EnvironmentName: environmentName,
+			InterceptStatus: nil,
+		})
+		slog.Info("[COMPLETED] OnServiceBindingUpdateMessage", "op", "created new service binding", "service-binding.id", sb2.Id)
+		return err
+	}
+
+	_, err = d.serviceBindingRepo.PatchById(ctx, sb.Id, repos.Document{
+		fc.ServiceBindingSpec: svcb.Spec,
+		fc.AccountName:        ctx.AccountName,
+		fc.ClusterName:        opts.ClusterName,
+		fc.EnvironmentName:    environmentName,
+	})
+
+	slog.Info("[COMPLETED] OnServiceBindingUpdateMessage", "op", "patched service binding", "service-binding.id", sb.Id)
+	return err
 }
