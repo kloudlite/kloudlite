@@ -22,7 +22,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/kloudlite/operator/toolkit v0.0.0-20250316093242-493e9b587c10
 	github.com/kloudlite/plugin-helm-chart v0.0.0-20241220114210-b6d65e34990d
-	github.com/kloudlite/plugin-mongodb v0.0.0-20250316143614-628cc21496dc
+	github.com/kloudlite/plugin-mongodb v0.0.0-20250316175205-312ba86d8873
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/miekg/dns v1.1.62
 	github.com/nats-io/nats.go v1.38.0

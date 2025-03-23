@@ -289,6 +289,10 @@ github.com/kloudlite/plugin-mongodb v0.0.0-20250316140417-088f796334a9 h1:O9PJPx
 github.com/kloudlite/plugin-mongodb v0.0.0-20250316140417-088f796334a9/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
 github.com/kloudlite/plugin-mongodb v0.0.0-20250316143614-628cc21496dc h1:pqY7GdSJehGrDK5LEazzuiGvKYGnjlVK527DrlqBc3k=
 github.com/kloudlite/plugin-mongodb v0.0.0-20250316143614-628cc21496dc/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316173733-b67e5b812ebe h1:JVPgw0qQlAEpk9F5lZCzHM5fD8WPGtTTNeS1u/G/6yQ=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316173733-b67e5b812ebe/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316175205-312ba86d8873 h1:6GKV4bZoNzCC5JvyqxHAhjXXSpSjzAXQHklwXqz5YJQ=
+github.com/kloudlite/plugin-mongodb v0.0.0-20250316175205-312ba86d8873/go.mod h1:dqT/Qia369uD783N8N58RZPhRPZXywV85nLGDwcq698=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
