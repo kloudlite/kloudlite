@@ -507,6 +507,12 @@ spec:
                     type: string
                   maxBodySizeInMB:
                     type: integer
+                  nginxIngressAnnotations:
+                    additionalProperties:
+                      type: string
+                    description: NginxIngressAnnotations is additional list of annotations
+                      on ingress resource
+                    type: object
                   rateLimit:
                     properties:
                       connections:
@@ -1229,6 +1235,12 @@ spec:
                               type: string
                             maxBodySizeInMB:
                               type: integer
+                            nginxIngressAnnotations:
+                              additionalProperties:
+                                type: string
+                              description: NginxIngressAnnotations is additional list
+                                of annotations on ingress resource
+                              type: object
                             rateLimit:
                               properties:
                                 connections:
@@ -1831,8 +1843,6 @@ spec:
                             type: string
                           viaSecret:
                             type: string
-                        required:
-                        - viaSecret
                         type: object
                       kind:
                         type: string
@@ -1854,8 +1864,6 @@ spec:
                             type: string
                           viaSecret:
                             type: string
-                        required:
-                        - viaSecret
                         type: object
                       kind:
                         type: string
@@ -19735,8 +19743,6 @@ spec:
                         type: string
                       viaSecret:
                         type: string
-                    required:
-                    - viaSecret
                     type: object
                   kind:
                     type: string
@@ -19907,8 +19913,6 @@ spec:
                         type: string
                       viaSecret:
                         type: string
-                    required:
-                    - viaSecret
                     type: object
                   kind:
                     type: string
@@ -19930,8 +19934,6 @@ spec:
                         type: string
                       viaSecret:
                         type: string
-                    required:
-                    - viaSecret
                     type: object
                   kind:
                     type: string
@@ -20118,8 +20120,6 @@ spec:
                             type: string
                           viaSecret:
                             type: string
-                        required:
-                        - viaSecret
                         type: object
                       kind:
                         type: string
@@ -20141,8 +20141,6 @@ spec:
                             type: string
                           viaSecret:
                             type: string
-                        required:
-                        - viaSecret
                         type: object
                       kind:
                         type: string
@@ -20672,6 +20670,12 @@ spec:
                 type: string
               maxBodySizeInMB:
                 type: integer
+              nginxIngressAnnotations:
+                additionalProperties:
+                  type: string
+                description: NginxIngressAnnotations is additional list of annotations
+                  on ingress resource
+                type: object
               rateLimit:
                 properties:
                   connections:
@@ -20948,6 +20952,408 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: workmachines.crds.kloudlite.io
+spec:
+  group: crds.kloudlite.io
+  names:
+    kind: WorkMachine
+    listKind: WorkMachineList
+    plural: workmachines
+    singular: workmachine
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.targetNamespace
+      name: TargetNamespace
+      type: string
+    - jsonPath: .status.status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: WorkMachine is the Schema for the workmachines API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: WorkMachineSpec defines the desired state of WorkMachine
+            properties:
+              aws:
+                properties:
+                  ami:
+                    type: string
+                  externalVolumeSize:
+                    type: integer
+                  externalVolumeType:
+                    default: gp3
+                    type: string
+                  iamInstanceProfileRole:
+                    type: string
+                  instanceType:
+                    type: string
+                  rootVolumeSize:
+                    default: 50
+                    type: integer
+                  rootVolumeType:
+                    default: gp3
+                    type: string
+                required:
+                - ami
+                - externalVolumeSize
+                - externalVolumeType
+                - instanceType
+                - rootVolumeSize
+                - rootVolumeType
+                type: object
+              jobParams:
+                properties:
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  tolerations:
+                    items:
+                      description: |-
+                        The pod this Toleration is attached to tolerates any taint that matches
+                        the triple <key,value,effect> using the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: |-
+                            Effect indicates the taint effect to match. Empty means match all taint effects.
+                            When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: |-
+                            Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                            If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                          type: string
+                        operator:
+                          description: |-
+                            Operator represents a key's relationship to the value.
+                            Valid operators are Exists and Equal. Defaults to Equal.
+                            Exists is equivalent to wildcard for value, so that a pod can
+                            tolerate all taints of a particular category.
+                          type: string
+                        tolerationSeconds:
+                          description: |-
+                            TolerationSeconds represents the period of time the toleration (which must be
+                            of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                            it is not set, which means tolerate the taint forever (do not evict). Zero and
+                            negative values will be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: |-
+                            Value is the taint value the toleration matches to.
+                            If the operator is Exists, the value should be empty, otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              sshPublicKeys:
+                items:
+                  type: string
+                type: array
+              state:
+                enum:
+                - "ON"
+                - "OFF"
+                type: string
+              targetNamespace:
+                type: string
+            required:
+            - aws
+            - sshPublicKeys
+            - state
+            type: object
+          status:
+            properties:
+              machineSSHKey:
+                type: string
+              status:
+                properties:
+                  checkList:
+                    items:
+                      properties:
+                        debug:
+                          type: boolean
+                        description:
+                          type: string
+                        hide:
+                          type: boolean
+                        name:
+                          type: string
+                        title:
+                          type: string
+                      required:
+                      - name
+                      - title
+                      type: object
+                    type: array
+                  checks:
+                    additionalProperties:
+                      properties:
+                        debug:
+                          type: string
+                        error:
+                          type: string
+                        generation:
+                          format: int64
+                          type: integer
+                        info:
+                          type: string
+                        message:
+                          type: string
+                        startedAt:
+                          format: date-time
+                          type: string
+                        state:
+                          type: string
+                        status:
+                          type: boolean
+                      required:
+                      - status
+                      type: object
+                    type: object
+                  isReady:
+                    type: boolean
+                  lastReadyGeneration:
+                    format: int64
+                    type: integer
+                  lastReconcileTime:
+                    format: date-time
+                    type: string
+                  resources:
+                    items:
+                      properties:
+                        apiVersion:
+                          description: |-
+                            APIVersion defines the versioned schema of this representation of an object.
+                            Servers should convert recognized schemas to the latest internal value, and
+                            may reject unrecognized values.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                          type: string
+                        kind:
+                          description: |-
+                            Kind is a string value representing the REST resource this object represents.
+                            Servers may infer this from the endpoint the client submits requests to.
+                            Cannot be updated.
+                            In CamelCase.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                          type: string
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                      required:
+                      - name
+                      - namespace
+                      type: object
+                    type: array
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: workspaces.crds.kloudlite.io
+spec:
+  group: crds.kloudlite.io
+  names:
+    kind: Workspace
+    listKind: WorkspaceList
+    plural: workspaces
+    singular: workspace
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Workspace is the Schema for the workspaces API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: WorkspaceSpec defines the desired state of Workspace
+            properties:
+              enableCodeServer:
+                type: boolean
+              enableJupyterNotebook:
+                type: boolean
+              enableTTYD:
+                type: boolean
+              enableVSCodeServer:
+                type: boolean
+              imagePullPolicy:
+                default: IfNotPresent
+                type: string
+              serviceAccountName:
+                type: string
+              state:
+                default: "ON"
+                enum:
+                - "ON"
+                - "OFF"
+                type: string
+              workMachine:
+                description: Name of work machine
+                type: string
+            required:
+            - state
+            - workMachine
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    hide:
+                      type: boolean
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    info:
+                      type: string
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: |-
+                        APIVersion defines the versioned schema of this representation of an object.
+                        Servers should convert recognized schemas to the latest internal value, and
+                        may reject unrecognized values.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                      type: string
+                    kind:
+                      description: |-
+                        Kind is a string value representing the REST resource this object represents.
+                        Servers may infer this from the endpoint the client submits requests to.
+                        Cannot be updated.
+                        In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
             type: object
         type: object
     served: true
