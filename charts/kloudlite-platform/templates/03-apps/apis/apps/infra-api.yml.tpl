@@ -52,6 +52,9 @@ spec:
         - key: ACCOUNTS_GRPC_ADDR
           value: 'accounts-api:{{ include "apps.accountsApi.grpcPort" . }}'
 
+        - key: AUTH_GRPC_ADDR
+          value: 'auth-api:{{ include "apps.authApi.grpcPort" . }}'
+
         - key: MONGO_DB_URI
           type: secret
           refName: mres-infra-db-creds
