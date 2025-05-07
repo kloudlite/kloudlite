@@ -28,7 +28,7 @@ certManager:
   clusterIssuer:
     create: true
 
-    name: kloudlite-cluster-issuer
+    name: cluster-issuer
     # -- email that should be used for communicating with CA
     acmeEmail: support@kloudlite.io
 

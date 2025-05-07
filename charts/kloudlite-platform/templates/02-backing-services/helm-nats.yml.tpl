@@ -16,7 +16,7 @@ spec:
     nodeSelector: {{(.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toJson }}
 
   postInstall: |+
-    cat <<EOF | kubectl apply -f -
+    cat <<'EOF' | kubectl apply -f -
     apiVersion: batch/v1
     kind: Job
     metadata:
@@ -29,8 +29,9 @@ spec:
           nodeSelector: {{ (.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toJson }}
           containers:
           - name: nats-manager
-            image: natsio/nats-box:0.14.1
-            command: ["sh"]
+            {{- /* image: natsio/nats-box:0.14.1 */}}
+            image: ghcr.io/kloudlite/hub/nats:latest
+            command: ["bash"]
             args:
             - -c
             - |+
@@ -41,17 +42,20 @@ spec:
 
               echo "creatings NATS STREAMs"
               {{- range $k,$stream := .Values.nats.streams }}
-              nats --server {{include "nats.url" .}} stream add {{ $stream.name }} \
-                --replicas={{$.Values.nats.replicas}} \
-                --subjects={{ $stream.subjects | squote }} \
-                --max-msg-size={{ $stream.maxMsgBytes }} \
-                {{if $stream.maxMsgsPerSubject }} --max-msgs-per-subject={{$stream.maxMsgsPerSubject}} {{end}} \ 
-                --storage=file \
-                {{ if $stream.maxAge }} --max-age={{$stream.maxAge}} {{ end }} \ 
-                {{ if $stream.workQueue }} --retention="work" {{ end }} \
-                --compression=s2 \
-                --discard=old \
+              params=(
+                --server {{include "nats.url" . | squote}}
+                --replicas={{$.Values.nats.replicas}}
+                --subjects={{ $stream.subjects | squote }}
+                --max-msg-size={{ $stream.maxMsgBytes }}
+                {{ if $stream.maxMsgsPerSubject }}--max-msgs-per-subject={{$stream.maxMsgsPerSubject}}{{end}}
+                {{ if $stream.maxAge }}--max-age={{$stream.maxAge}}{{ end }}
+                {{ if $stream.workQueue }}--retention="work"{{ end }}
+                --storage=file
+                --compression=s2
+                --discard=old
                 --defaults
+              )
+              nats stream add "${params[@]}" "{{$stream.name}}"
               {{- end }}
           restartPolicy: Never
       backoffLimit: 0
