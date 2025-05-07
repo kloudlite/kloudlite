@@ -1,7 +1,5 @@
 {{- define "image-tag" -}} {{ .Values.kloudliteRelease | default .Chart.AppVersion }} {{- end -}}
 
-{{- define "kloudlite.cookie-domain" -}} {{printf ".%s" .Values.baseDomain }} {{- end -}}
-
 {{- define "image-pull-policy" -}}
 {{- if .Values.imagePullPolicy -}}
 {{- .Values.imagePullPolicy}}
