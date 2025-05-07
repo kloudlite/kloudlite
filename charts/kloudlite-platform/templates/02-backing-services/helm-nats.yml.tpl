@@ -12,8 +12,8 @@ spec:
     name: nats
     version: 1.1.5
   jobVars:
-    tolerations: {{(.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations) | toYaml | nindent 6 }}
-    nodeSelector: {{(.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toYaml | nindent 6 }}
+    tolerations: {{(.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations) | toJson }}
+    nodeSelector: {{(.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toJson }}
 
   postInstall: |+
     cat <<EOF | kubectl apply -f -
@@ -25,8 +25,8 @@ spec:
     spec:
       template:
         spec:
-          tolerations: {{ (.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations)  |toYaml| nindent 8 }}
-          nodeSelector: {{ (.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toYaml | nindent 8}}
+          tolerations: {{ (.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations)  | toJson }}
+          nodeSelector: {{ (.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toJson }}
           containers:
           - name: nats-manager
             image: natsio/nats-box:0.14.1
@@ -45,9 +45,9 @@ spec:
                 --replicas={{$.Values.nats.replicas}} \
                 --subjects={{ $stream.subjects | squote }} \
                 --max-msg-size={{ $stream.maxMsgBytes }} \
-                {{if $stream.maxMsgsPerSubject }} --max-msgs-per-subject={{$stream.maxMsgsPerSubject}} {{end}} \
+                {{if $stream.maxMsgsPerSubject }} --max-msgs-per-subject={{$stream.maxMsgsPerSubject}}\ {{end}}
                 --storage=file \
-                {{ if $stream.maxAge }} --max-age={{$stream.maxAge}} {{ end }} \
+                {{ if $stream.maxAge }} --max-age={{$stream.maxAge}} \  {{ end }}
                 {{ if $stream.workQueue }} --retention="work" {{ end }} \
                 --compression=s2 \
                 --discard=old \
@@ -90,8 +90,6 @@ spec:
         {{- end}}
 
         routeURLs:
-          {{- /* user: {{.Values.nats.configuration.user}} */}}
-          {{- /* password: {{.Values.nats.configuration.password}} */}}
           useFQDN: true
           k8sClusterDomain: {{.Values.clusterInternalDNS}}
 
@@ -111,22 +109,17 @@ spec:
       podTemplate:
         merge:
           spec:
-            tolerations: {{(.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations) | toYaml | nindent 14 }}
-            nodeSelector: {{(.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toYaml | nindent 14 }}
+            tolerations: {{(.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations) | toJson }}
+            nodeSelector: {{(.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toJson }}
 
     podTemplate:
       merge:
         spec:
-          tolerations: {{(.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations) | toYaml | nindent 12}}
-          nodeSelector: {{(.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toYaml | nindent 12}}
+          tolerations: {{(.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations) | toJson }}
+          nodeSelector: {{(.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toJson }}
 
       {{- if .Values.nats.runAsCluster}}
       topologySpreadConstraints:
-        {{- /* kloudlite.io/provider.az: */}}
-        {{- /*   maxSkew: 1 */}}
-        {{- /*   whenUnsatisfiable: DoNotSchedule */}}
-        {{- /*   nodeAffinityPolicy: Honor */}}
-        {{- /*   nodeTaintsPolicy: Honor */}}
         kloudlite.io/node.name:
           maxSkew: 1
           whenUnsatisfiable: DoNotSchedule

@@ -1,6 +1,9 @@
 {{- define "cert-manager.name" -}} cert-manager {{- end -}}
 {{- define "cert-manager.chart.version" -}} v1.13.2 {{- end -}}
 
+{{- /* {{- define "kloudlite.cookie-domain" -}} {{printf ".%s" .Values.baseDomain }} {{- end -}} */}}
+{{- define "kloudlite.cookie-domain" -}} localhost {{- end -}}
+
 {{- define "nginx-ingress.name" -}} nginx-ingress {{- end -}}
 {{- define "nginx-ingress.chart.version" -}} 4.9.0 {{- end -}}
 
