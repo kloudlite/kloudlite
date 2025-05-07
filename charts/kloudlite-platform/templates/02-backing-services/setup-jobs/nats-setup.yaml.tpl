@@ -26,7 +26,7 @@ spec:
              --replicas={{$.Values.nats.replicas}} \
              --subjects={{ $stream.subjects | squote }} \
              --max-msg-size={{ $stream.maxMsgBytes }} \
-             {{if $stream.maxMsgsPerSubject }} --max-msgs-per-subject={{$stream.maxMsgsPerSubject}} {{end}} \
+             {{ if $stream.maxMsgsPerSubject }} --max-msgs-per-subject={{$stream.maxMsgsPerSubject}} {{ end }} \
              --storage=file \
              {{ if $stream.maxAge }} --max-age={{$stream.maxAge}} {{ end }} \
              {{ if $stream.workQueue }} --retention="work" {{ end }} \
