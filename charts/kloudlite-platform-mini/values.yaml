@@ -127,8 +127,8 @@ nats:
   url: ""
   buckets:
     sessionKV: "auth-session"
-    resetTokenKV: "reset-token"
-    verifyTokenKV: "verify-token"
+    resetTokenKV: "auth-reset-token"
+    verifyTokenKV: "auth-verify-token"
     consoleCacheKV: "console-cache"
   streams:
     events: events

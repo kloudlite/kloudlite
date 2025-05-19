@@ -5,7 +5,7 @@ vars:
   HelmValuesFile: ./values-test.yml
   # HelmValuesFile: ./values.yaml
 
-  ReleaseName: kloudlite-platform-mini
+  ReleaseName: kloudlite-platform-operator
   # ReleaseNamespace: kloudlite-platform
   ReleaseNamespace: kloudlite
 

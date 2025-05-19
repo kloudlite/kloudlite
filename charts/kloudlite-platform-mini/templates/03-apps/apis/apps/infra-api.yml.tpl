@@ -55,7 +55,7 @@ spec:
         - key: AUTH_GRPC_ADDR
           value: 'auth-api:{{ include "apps.authApi.grpcPort" . }}'
 
-        - key: MONGO_URI
+        - key: MONGO_DB_URI
           type: secret
           refName: {{.Values.mongo.secretKeyRef.name}}
           refKey: {{.Values.mongo.secretKeyRef.key}}
