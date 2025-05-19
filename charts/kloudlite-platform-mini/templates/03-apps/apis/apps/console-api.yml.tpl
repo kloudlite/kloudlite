@@ -94,7 +94,7 @@ spec:
           value: message-office:{{ include "apps.messageOffice.privateGrpcPort" . }}
 
         - key: CONSOLE_CACHE_KV_BUCKET
-          value: {{.Values.nats.buckets.consoleCache}}
+          value: {{.Values.nats.buckets.consoleCacheKV}}
 
         - key: MSVC_TEMPLATE_FILE_PATH
           value: /console.d/templates/managed-svc-templates.yml

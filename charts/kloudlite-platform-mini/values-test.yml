@@ -1,0 +1,18 @@
+kloudliteRelease: "v1.1.6-nightly"
+baseDomain: "demo.kloudlite.io"
+clusterInternalDNS: "cluster.local"
+
+mongo:
+  secretKeyRef:
+    name: "mongodb-creds"
+    key: "MONGODB_URI"
+
+nats:
+  url: "nats://nats:4222"
+
+ingress:
+  ingressClass: "nginx"
+
+certManager:
+  clusterIssuer:
+    name: "cluster-issuer"
