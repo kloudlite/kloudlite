@@ -230,7 +230,6 @@ spec:
     - release:
         name: nats
         namespace: kloudlite
-
       chart:
         url: https://nats-io.github.io/k8s/helm/charts/
         name: nats
@@ -320,3 +319,30 @@ spec:
         name: mongodb
         version: v1.0.0
       helmValues: {}
+
+    - release:
+        name: kloudlite-platform
+        namespace: kloudlite
+      chart:
+        url: https://kloudlite.github.io/helm-charts
+        name: kloudlite-platform-mini
+        version: v1.0.0
+      helmValues:
+        kloudliteRelease: "{{.kloudlite_release}}"
+        baseDomain: "{{.web_host}}"
+        clusterInternalDNS: "cluster.local"
+
+        mongo:
+          secretKeyRef:
+            name: "mongodb-creds"
+            key: "MONGODB_URI"
+
+        nats:
+          url: "nats://nats:4222"
+
+        ingress:
+          ingressClass: {{.ingress_nginx.ingress_class}}
+
+        certManager:
+          clusterIssuer:
+            name: {{.cert_manager.cluster_issuer.name }}

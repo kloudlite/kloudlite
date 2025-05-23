@@ -79,3 +79,6 @@ nats:
       max_msg_bytes: "500kB"
       max_msgs_per_subject: 1
       work_queue: true
+
+web_host: ""
+kloudlite_release: "v1.1.6-nightly"
