@@ -8,9 +8,12 @@ image:
   tag: ""
 
 helmJobRunnerImage:
-  name: "ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner"
-  tag: ""
+  name: "ghcr.io/kloudlite/plugin-helm-chart/helm-job-runner"
+  tag: "v1.0.0"
 
+infrastructureAsCodeImage:
+  name: "ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job"
+  tag: ""
 
 certManager:
   clusterIssuer: "cluster-issuer"
