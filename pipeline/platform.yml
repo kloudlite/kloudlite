@@ -329,6 +329,7 @@ spec:
 
       preInstall: |+ #bash
         kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{.kloudlite_release}}/crds-all.yml --server-side
+        kubectl apply -f https://raw.githubusercontent.com/kloudlite/plugin-k3s-cluster/refs/heads/master/config/crd/bases/plugin-k3s-cluster.kloudlite.github.com_k3sclusters.yaml --server-side
 
       helmValues:
         clusterInternalDNS: "cluster.local"
