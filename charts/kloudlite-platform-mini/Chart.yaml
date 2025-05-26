@@ -1,5 +1,5 @@
 apiVersion: v2
-name: kloudlite-platform-simple
+name: kloudlite-platform-mini
 description: Helm Chart for installing and setting up kloudlite platform on your own hosted Kubernetes clusters.
 icon: https://avatars.githubusercontent.com/u/98086655
 type: application
