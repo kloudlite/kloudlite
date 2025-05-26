@@ -326,7 +326,7 @@ spec:
       chart:
         url: https://kloudlite.github.io/helm-charts
         name: kloudlite-platform-mini
-        version: v1.0.0
+        version: "{{.kloudlite_release}}"
       helmValues:
         kloudliteRelease: "{{.kloudlite_release}}"
         baseDomain: "{{.web_host}}"
