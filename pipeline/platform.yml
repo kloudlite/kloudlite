@@ -86,7 +86,6 @@ spec:
 
       preInstall: |+ #bash
         echo "installing cert-manager CRDs"
-        {{- /* kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{.cert_manager.version}}/cert-manager.crds.yaml */}}
         kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.2/cert-manager.crds.yaml
         echo "installed cert-manager CRDs"
 
@@ -101,7 +100,7 @@ spec:
             email: {{.cert_manager.cluster_issuer.acme.email}}
             privateKeySecretRef:
               name: {{.cert_manager.cluster_issuer.name}}
-            server: {{.cert_manager.cluster_issuer.acme.server}}
+            server: {{.cert_manager.cluster_issuer.acme.server | default "https://acme-v02.api.letsencrypt.org/directory" }}
             solvers:
               - dns01:
                   route53: {}
@@ -213,10 +212,10 @@ spec:
             name: {{.ingress_nginx.ingress_class}}
             controllerValue: "k8s.io/{{ .ingress_nginx.ingress_class}}"
 
-          {{- if .cert_manager.wildcard_cert.host }}
+          {{ if .cert_manager.wildcard_cert.host }}
           extraArgs:
             default-ssl-certificate: "{{.release.namespace}}/{{.cert_manager.wildcard_cert.secret_name}}"
-          {{- end }}
+          {{ end }}
 
           resources:
             requests:
@@ -295,7 +294,7 @@ spec:
                 enabled: true
                 size: {{.nats.storage}}
                 storageClassName: {{.csi.storage_classes.xfs}}
-                name: {{.release.name}}-jetstream-pvc
+                name: "{{.release.name}}-jetstream-pvc"
 
         natsBox:
           enabled: true
@@ -321,12 +320,43 @@ spec:
       helmValues: {}
 
     - release:
+        name: kloudlite-platform-operator
+        namespace: kloudlite
+      chart:
+        url: https://kloudlite.github.io/helm-charts
+        name: kloudlite-platform-operator
+        version: "{{.kloudlite_release}}"
+
+      preInstall: |+ #bash
+        kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{.kloudlite_release}}/crds-all.yml --server-side
+
+      helmValues:
+        clusterInternalDNS: "cluster.local"
+
+        image:
+          name: ghcr.io/kloudlite/kloudlite/operator/platform
+          tag: ""
+
+        helmJobRunnerImage:
+          name: "ghcr.io/kloudlite/plugin-helm-chart/helm-job-runner"
+          tag: "v1.0.0"
+
+
+        certManager:
+          clusterIssuer: "{{.cert_manager.cluster_issuer.name }}"
+
+        ingress:
+          ingressClass: {{.ingress_nginx.ingress_class}}
+
+
+    - release:
         name: kloudlite-platform
         namespace: kloudlite
       chart:
         url: https://kloudlite.github.io/helm-charts
         name: kloudlite-platform-mini
         version: "{{.kloudlite_release}}"
+
       helmValues:
         kloudliteRelease: "{{.kloudlite_release}}"
         baseDomain: "{{.web_host}}"

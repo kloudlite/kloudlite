@@ -51,10 +51,20 @@ spec:
               value: {{.Values.ingress.ingressClass}}
 
             - name: CERTIFICATE_NAMESPACE
-              value: {{.Release.Namespace}}
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.namespace"
 
             - name: HELM_JOB_RUNNER_IMAGE
               value: "{{.Values.helmJobRunnerImage.name}}:{{.Values.helmJobRunnerImage.tag | default .Chart.AppVersion}}"
+
+            - name: IAC_JOBS_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.namespace"
+
+            - name: IAC_JOB_IMAGE
+              value: "{{.Values.infrastructureAsCodeImage.name}}:{{.Values.infrastructureAsCodeImage.tag | default .Chart.AppVersion}}"
 
           livenessProbe:
             httpGet:
@@ -83,5 +93,5 @@ spec:
                 - ALL
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: {{.Release.Name}}-sa
+      serviceAccountName: {{ include "service-account.name" . }}
       terminationGracePeriodSeconds: 10

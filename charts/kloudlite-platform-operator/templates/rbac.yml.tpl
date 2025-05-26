@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{.Release.Name}}-sa
+  name: {{ include "service-account.name" . }}
   namespace: {{.Release.Namespace}}
 
 ---
@@ -12,7 +12,7 @@ metadata:
   name: {{.Release.Namespace}}-{{.Release.Name}}-rb
 subjects:
   - kind: ServiceAccount
-    name: {{.Release.Name}}-sa
+    name: {{include "service-account.name" .}}
     namespace: {{.Release.Namespace}}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
