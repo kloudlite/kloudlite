@@ -339,7 +339,7 @@ spec:
 
         helmJobRunnerImage:
           name: "ghcr.io/kloudlite/plugin-helm-chart/helm-job-runner"
-          tag: "v1.0.0"
+          tag: "v1.0.1"
 
 
         certManager:
@@ -359,7 +359,7 @@ spec:
 
       helmValues:
         kloudliteRelease: "{{.kloudlite_release}}"
-        baseDomain: "{{.web_host}}"
+        webHost: "{{.web_host}}"
         clusterInternalDNS: "cluster.local"
 
         mongo:
