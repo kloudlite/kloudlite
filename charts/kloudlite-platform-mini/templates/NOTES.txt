@@ -1,7 +1,7 @@
 Thank you for installing {{.Chart.Name}} ({{ .Values.kloudliteRelease | default .Chart.Version }}).
 
 Things you must consider:
-  - Ensure `A records` for `*.{{.Values.baseDomain}}` are correctly configured, and pointed to load balancer for nginx ingress controller
+  - Ensure `A records` for `*.{{.Values.webHost}}` are correctly configured, and pointed to load balancer for nginx ingress controller
   - Ensure `NS records` for `{{ include "kloudlite.dns-suffix" . }}` correctly points to service `{{ include "apps.consoleApi.name" . }}-dns` loadbalancer IP
 
          **         

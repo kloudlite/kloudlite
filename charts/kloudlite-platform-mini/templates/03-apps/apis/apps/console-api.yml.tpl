@@ -105,10 +105,10 @@ spec:
           refKey: {{ include "apps.webhooksApi.authenticationSecret.token-key" . }}
 
         - key: WEBHOOK_URL
-          value: "https://webhooks.{{.Values.baseDomain}}"
+          value: "https://webhooks.{{.Values.webHost}}"
 
         - key: IMAGE_HOOK_SCRIPT_HOSTED_URL
-          value: "https://scripts.{{.Values.baseDomain}}"
+          value: "https://scripts.{{.Values.webHost}}"
 
       volumes:
         - mountPath: /console.d/templates

@@ -58,3 +58,21 @@ spec:
         interval: 10
 
       readinessProbe: *probe
+  
+  router:
+    https:
+      enabled: true
+      forceRedirect: true
+    cors:
+      enabled: true
+      origins:
+        - https://studio.apollographql.com
+      allowCredentials: true
+    basicAuth:
+      enabled: true
+      username: admin
+    routes:
+      - host: gateway-api.{{.Values.webHost}}
+        path: /
+        port: {{ include "apps.gatewayApi.httpPort" . }}
+        service: {{$appName}}

@@ -7,12 +7,12 @@ metadata:
 spec:
   ingressClass: {{ .Values.ingress.ingressClass }}
   domains:
-    - websocket.{{.Values.baseDomain}}
+    - websocket.{{.Values.webHost}}
   cors:
     enabled: true
     origins:
       - https://kloudlite.io
-      - https://console.{{.Values.baseDomain }}
+      - https://console.{{.Values.webHost }}
   https:
     enabled: true
     forceRedirect: true

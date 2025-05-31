@@ -1,5 +1,5 @@
 kloudliteRelease: "v1.1.6-nightly"
-baseDomain: "demo.kloudlite.io"
+webHost: "demo.kloudlite.io"
 clusterInternalDNS: "cluster.local"
 
 mongo:

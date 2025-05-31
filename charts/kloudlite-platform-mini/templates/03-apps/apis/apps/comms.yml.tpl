@@ -54,23 +54,23 @@ spec:
           value: {{.Values.sendgrid.apiKey}}
 
         - key: ACCOUNTS_WEB_INVITE_URL
-          value: https://auth.{{ .Values.baseDomain }}/invite
+          value: https://auth.{{ .Values.webHost }}/invite
 
         - key: PROJECTS_WEB_INVITE_URL
-          value: https://auth.{{ .Values.baseDomain }}/invite
+          value: https://auth.{{ .Values.webHost }}/invite
 
         - key: KLOUDLITE_CONSOLE_WEB_URL
-          value: https://console.{{.Values.baseDomain}}
+          value: https://console.{{.Values.webHost}}
 
         - key: RESET_PASSWORD_WEB_URL
-          value: https://auth.{{.Values.baseDomain}}/reset-password
+          value: https://auth.{{.Values.webHost}}/reset-password
 
         - key: VERIFY_EMAIL_WEB_URL
-          value: https://auth.{{.Values.baseDomain }}/verify-email
+          value: https://auth.{{.Values.webHost }}/verify-email
         
-        {{/* TODO: url should definitely NOT be auth.Values.baseDomain */}}
+        {{/* TODO: url should definitely NOT be auth.Values.webHost */}}
         - key: EMAIL_LINKS_BASE_URL
-          value: https://auth.{{.Values.baseDomain}}/
+          value: https://auth.{{.Values.webHost}}/
 
         {{- /* notifications params */}}
         - key: ACCOUNT_COOKIE_NAME

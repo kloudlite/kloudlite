@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClass: {{ .Values.ingress.ingressClass }}
   domains:
-    - health.{{.Values.baseDomain}}
+    - health.{{.Values.webHost}}
   https:
     enabled: true
     forceRedirect: true
