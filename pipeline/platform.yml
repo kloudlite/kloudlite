@@ -83,7 +83,6 @@ spec:
         url: https://charts.jetstack.io
         name: cert-manager
         version: "v1.17.2"
-
       preInstall: |+ #bash
         echo "installing cert-manager CRDs"
         kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.2/cert-manager.crds.yaml
@@ -100,7 +99,7 @@ spec:
             email: {{.cert_manager.cluster_issuer.acme.email}}
             privateKeySecretRef:
               name: {{.cert_manager.cluster_issuer.name}}
-            server: {{.cert_manager.cluster_issuer.acme.server | default "https://acme-v02.api.letsencrypt.org/directory" }}
+            server: "https://acme-v02.api.letsencrypt.org/directory"
             solvers:
               - dns01:
                   route53: {}

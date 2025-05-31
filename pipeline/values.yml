@@ -18,7 +18,6 @@ cert_manager:
     name: "cluster-issuer"
     acme:
       email: "support@kloudlite.io"
-      server: ""
 
   wildcard_cert:
     host: "demo.kloudlite.io"
