@@ -1,21 +1,24 @@
-{{- if .Values.apps.klInstaller.install }}
 ---
 apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
-  name: kl-installer
+  name: auth
   namespace: {{.Release.Namespace}}
 spec:
   ingressClass: {{ .Values.ingress.ingressClass }}
   domains:
-    - kl.{{.Values.baseDomain}}
+    - auth.{{.Values.webHost}}
   https:
     enabled: true
     forceRedirect: true
   routes:
-    - app: kl-installer
-      path: /
-      port: 3000
+    - app: infra-api
+      path: /render/helm
+      port: {{  include "apps.infraApi.httpPort" . }}
       rewrite: false
+
+    - app: auth-web
+      path: /
+      port: {{ include "apps.authWeb.httpPort" . }}
+
 ---
-{{- end }}

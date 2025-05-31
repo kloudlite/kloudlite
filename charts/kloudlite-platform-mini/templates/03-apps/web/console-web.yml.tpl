@@ -21,6 +21,14 @@ spec:
 
   services:
     - port: {{ include "apps.consoleWeb.httpPort" . }}
+  
+  router:
+    routes:
+      - host: "console.{{.Values.webHost}}"
+        path: /
+        port: {{ include "apps.consoleWeb.httpPort" . }}
+        rewrite: false
+        service: {{$appName}}
 
   containers:
     - name: main
@@ -45,7 +53,7 @@ spec:
         - key: PORT
           value: {{ include "apps.consoleWeb.httpPort" . | quote }}
         - key: BASE_URL
-          value: {{.Values.baseDomain}}
+          value: {{.Values.webHost}}
         - key: COOKIE_DOMAIN
           value: "{{- include "kloudlite.cookie-domain" . }}"
         - key: GATEWAY_URL

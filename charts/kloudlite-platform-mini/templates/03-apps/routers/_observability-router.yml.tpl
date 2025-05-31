@@ -7,12 +7,12 @@ metadata:
 spec:
   ingressClass: {{ .Values.ingress.ingressClass }}
   domains:
-    - observe.{{.Values.baseDomain}}
+    - observe.{{.Values.webHost}}
   cors:
     enabled: true
     origins:
-      - https://.Values.baseDomain}}
-      - https://console.{{.Values.baseDomain}}
+      - https://.Values.webHost}}
+      - https://console.{{.Values.webHost}}
     allowCredentials: true
   https:
     enabled: true

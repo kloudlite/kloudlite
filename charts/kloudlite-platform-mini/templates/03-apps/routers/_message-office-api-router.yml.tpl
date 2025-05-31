@@ -2,17 +2,19 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
-  name: scripts
+  name: message-office
   namespace: {{.Release.Namespace}}
 spec:
   ingressClass: {{ .Values.ingress.ingressClass }}
+  backendProtocol: GRPC
+  maxBodySizeInMB: 50
   domains:
-    - scripts.{{.Values.baseDomain}}
+    - message-office.{{.Values.webHost}}
   https:
     enabled: true
     forceRedirect: true
   routes:
-    - app: webhooks-api
-      path: /image-hook.sh
-      port: {{ include "apps.webhooksApi.httpPort" . }}
+    - app: message-office
+      path: /
+      port: {{ include "apps.messageOffice.publicGrpcPort" . }}
 ---

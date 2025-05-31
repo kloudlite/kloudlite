@@ -9,7 +9,7 @@ metadata:
 spec:
   ingressClass: {{ .Values.ingress.ingressClass }}
   domains:
-    - gateway-api.{{.Values.baseDomain}}
+    - gateway-api.{{.Values.webHost}}
   https:
     enabled: true
     forceRedirect: true

@@ -47,5 +47,5 @@ p
 {{- end }}
 
 {{- define "kloudlite.dns-suffix" -}}
-{{.Values.kloudliteDNSSuffix | default (printf "dns.%s" .Values.baseDomain)}}
+{{.Values.kloudliteDNSSuffix | default (printf "dns.%s" .Values.webHost)}}
 {{- end -}}

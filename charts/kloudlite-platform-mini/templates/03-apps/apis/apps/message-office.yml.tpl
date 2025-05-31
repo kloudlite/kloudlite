@@ -97,4 +97,14 @@ spec:
         initialDelay: 5
         interval: 10
 
-
+  router:
+    backendProtocol: GRPC
+    maxBodySizeInMB: 1
+    https:
+      enabled: true
+      forceRedirect: true
+    routes:
+      - host: "message-office.{{.Values.webHost}}"
+        path: /
+        port: {{include "apps.messageOffice.publicGrpcPort" .}}
+        service: {{$appName}}

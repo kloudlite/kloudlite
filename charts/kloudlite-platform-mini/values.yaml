@@ -3,9 +3,9 @@
 kloudliteRelease: ""
 
 # -- base domain
-baseDomain: ""
+webHost: ""
 
-# -- kloudlite DNS suffix, when left empty, defaults to `dns.<baseDomain>`
+# -- kloudlite DNS suffix, when left empty, defaults to `dns.<webHost>`
 # -- @ignored
 kloudliteDNSSuffix: ""
 

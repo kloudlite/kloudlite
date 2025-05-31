@@ -98,7 +98,7 @@ spec:
           value: "{{ include "apps.messageOffice.name" . }}:{{ include "apps.messageOffice.privateGrpcPort" . }}"
 
         - key: MESSAGE_OFFICE_EXTERNAL_GRPC_ADDR
-          value: 'message-office.{{.Values.baseDomain }}:443'
+          value: 'message-office.{{.Values.webHost }}:443'
 
         - key: KLOUDLITE_RELEASE
           value: {{.Values.apps.infraApi.kloudliteRelease | default .Values.kloudliteRelease}}
@@ -115,7 +115,7 @@ spec:
           refKey: {{ include "apps.gatewayKubeReverseProxy.secret.key" . }}
 
         - key: KLOUDLITE_GLOBAL_VPN_DEVICE_HOST
-          value: wg-gateways.{{.Values.baseDomain}}
+          value: wg-gateways.{{.Values.webHost}}
 
         - key: AVAILABLE_KLOUDLITE_REGIONS_CONFIG
           value: "/kloudlite/gateways.yml"

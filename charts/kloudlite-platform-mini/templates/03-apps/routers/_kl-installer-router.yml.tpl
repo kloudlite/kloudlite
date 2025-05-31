@@ -1,19 +1,21 @@
+{{- if .Values.apps.klInstaller.install }}
 ---
 apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
-  name: console
+  name: kl-installer
   namespace: {{.Release.Namespace}}
 spec:
   ingressClass: {{ .Values.ingress.ingressClass }}
   domains:
-    - console.{{.Values.baseDomain}}
+    - kl.{{.Values.webHost}}
   https:
     enabled: true
     forceRedirect: true
   routes:
-    - app: console-web
+    - app: kl-installer
       path: /
-      port: {{ include "apps.consoleWeb.httpPort" . }}
+      port: 3000
       rewrite: false
 ---
+{{- end }}

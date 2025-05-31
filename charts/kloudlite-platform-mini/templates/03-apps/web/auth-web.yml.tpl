@@ -22,6 +22,16 @@ spec:
   services:
     - port: {{ include "apps.authWeb.httpPort" . }}
 
+  router:
+    https:
+      enabled: true
+      forceRedirect: true
+    routes:
+    - host: "auth.{{.Values.webHost}}"
+      path: /
+      port: {{ include "apps.authWeb.httpPort" . }}
+      service: {{$appName}}
+
   containers:
     - name: main
       image: '{{.Values.apps.authWeb.image.repository}}:{{.Values.apps.authWeb.image.tag | default (include "image-tag" .) }}'
@@ -44,11 +54,10 @@ spec:
       readinessProbe: *probe
       env:
         - key: BASE_URL
-          value: {{.Values.baseDomain}}
+          value: {{.Values.webHost}}
         - key: GATEWAY_URL
           value: 'http://{{ include "apps.gatewayApi.name" . }}:{{ include "apps.gatewayApi.httpPort" . }}'
         - key: COOKIE_DOMAIN
           value: "{{- include "kloudlite.cookie-domain" . }}"
         - key: PORT
           value: {{ include "apps.authWeb.httpPort" . | quote }}
-
