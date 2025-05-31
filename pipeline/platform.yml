@@ -102,7 +102,8 @@ spec:
             server: "https://acme-v02.api.letsencrypt.org/directory"
             solvers:
               - dns01:
-                  route53: {}
+                  route53:
+                    region: {{.aws.region}}
                 selector:
                   dnsNames:
                     - "{{.cert_manager.wildcard_cert.host}}"

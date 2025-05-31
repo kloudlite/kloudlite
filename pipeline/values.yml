@@ -1,3 +1,6 @@
+aws:
+  region: ""
+
 release:
   name: "kloudlite-stack"
   namespace: "kloudlite"
@@ -22,6 +25,7 @@ cert_manager:
   wildcard_cert:
     host: "demo.kloudlite.io"
     secret_name: "wildcard-cert"
+
 
   nodeSelector: {}
   tolerations: []
