@@ -21,14 +21,6 @@ spec:
 
   services:
     - port: {{ include "apps.consoleWeb.httpPort" . }}
-  
-  router:
-    routes:
-      - host: "console.{{.Values.webHost}}"
-        path: /
-        port: {{ include "apps.consoleWeb.httpPort" . }}
-        rewrite: false
-        service: {{$appName}}
 
   containers:
     - name: main
@@ -67,4 +59,15 @@ spec:
           refName: {{ include "apps.authApi.oAuth2-secret.name" .}}
           refKey: "GITHUB_APP_NAME"
           optional: true
+
+  router:
+    https:
+      enabled: true
+      forceRedirect: true
+    routes:
+      - host: "console.{{.Values.webHost}}"
+        path: /
+        port: {{ include "apps.consoleWeb.httpPort" . }}
+        rewrite: false
+        service: {{$appName}}
 ---
