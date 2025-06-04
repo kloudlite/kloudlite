@@ -76,7 +76,7 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 			}
 
 			if len(oldObj.GetLabels()) != len(newObj.GetLabels()) || !reflect.DeepEqual(oldObj.GetLabels(), newObj.GetLabels()) {
-				fireEvent(newObj, ReasonLabelsUpdated, fmt.Sprintf("labels updated from (%+v) to (%+v)", newObj.GetLabels(), oldObj.GetLabels()))
+				fireEvent(newObj, ReasonLabelsUpdated, fmt.Sprintf("labels updated from (%+v) to (%+v)", oldObj.GetLabels(), newObj.GetLabels()))
 				return true
 			}
 
@@ -85,7 +85,7 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 
 			annHasChanged := false
 			for k, v := range oldAnn {
-				if k != LastAppliedKey {
+				if k != LastAppliedKey && k != "deployment.kubernetes.io/revision" {
 					if v != newAnn[k] {
 						annHasChanged = true
 						break
@@ -94,18 +94,18 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 			}
 
 			if len(oldAnn) != len(newAnn) || annHasChanged {
-				fireEvent(newObj, ReasonAnnotationsUpdated, fmt.Sprintf("annotations updated from (%+v) to (%+v)", newObj.GetAnnotations(), oldObj.GetAnnotations()))
+				fireEvent(newObj, ReasonAnnotationsUpdated, fmt.Sprintf("annotations updated from (%+v) to (%+v)", oldObj.GetAnnotations(), newObj.GetAnnotations()))
 				return true
 			}
 
 			if len(oldObj.GetFinalizers()) != len(newObj.GetFinalizers()) || !reflect.DeepEqual(oldObj.GetFinalizers(), newObj.GetFinalizers()) {
-				fireEvent(newObj, ReasonFinalizersUpdated, fmt.Sprintf("finalizers updated from (%+v) to (%+v)", newObj.GetFinalizers(), oldObj.GetFinalizers()))
+				fireEvent(newObj, ReasonFinalizersUpdated, fmt.Sprintf("finalizers updated from (%+v) to (%+v)", oldObj.GetFinalizers(), newObj.GetFinalizers()))
 				return true
 			}
 
 			if len(oldObj.GetOwnerReferences()) != len(newObj.GetOwnerReferences()) ||
 				!reflect.DeepEqual(oldObj.GetOwnerReferences(), newObj.GetOwnerReferences()) {
-				fireEvent(newObj, ReasonOwnerReferencesUpdated, fmt.Sprintf("owner-references updated from (%+v) to (%+v)", newObj.GetOwnerReferences(), oldObj.GetOwnerReferences()))
+				fireEvent(newObj, ReasonOwnerReferencesUpdated, fmt.Sprintf("owner-references updated from (%+v) to (%+v)", oldObj.GetOwnerReferences(), newObj.GetOwnerReferences()))
 				return true
 			}
 
@@ -115,24 +115,25 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 			}
 
 			if oldRes.Status.IsReady == nil || newRes.Status.IsReady == nil {
-				// INFO:  it means this resource is not a kloudlite resource, in that case,
+				// INFO: it means this resource is not a kloudlite resource, in that case,
 				// it should just be always allowed, as it can be a pod or a job, that some kloudlite resource is watching over
+				// fireEvent(newObj, ReasonStatusIsReadyChanged, "resource isReady is nil")
 				return true
 			}
 
 			if *oldRes.Status.IsReady != *newRes.Status.IsReady {
-				fireEvent(newObj, ReasonStatusIsReadyChanged, fmt.Sprintf("resource isReady changed from (%v) to (%v)", newRes.Status.IsReady, oldRes.Status.IsReady))
+				fireEvent(newObj, ReasonStatusIsReadyChanged, fmt.Sprintf("resource isReady changed from (%v) to (%v)", *oldRes.Status.IsReady, *newRes.Status.IsReady))
 				return true
 			}
 
 			if len(oldRes.Status.Checks) != len(newRes.Status.Checks) {
-				fireEvent(newObj, ReasonStatusChecksUpdated, fmt.Sprintf("resource status.checks changed from (%+v) to (%+v)", newRes.Status.Checks, oldRes.Status.Checks))
+				fireEvent(newObj, ReasonStatusChecksUpdated, fmt.Sprintf("resource status.checks changed from (%+v) to (%+v)", oldRes.Status.Checks, newRes.Status.Checks))
 				return true
 			}
 
 			for k, v := range oldRes.Status.Checks {
 				if !AreChecksEqual(newRes.Status.Checks[k], v) {
-					fireEvent(newObj, ReasonStatusChecksUpdated, fmt.Sprintf("resource status.checks changed from (%+v) to (%+v)", newRes.Status.Checks, oldRes.Status.Checks))
+					fireEvent(newObj, ReasonStatusChecksUpdated, fmt.Sprintf("resource status.checks changed from (%+v) to (%+v)", oldRes.Status.Checks, newRes.Status.Checks))
 					return true
 				}
 			}

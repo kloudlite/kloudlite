@@ -6,11 +6,6 @@ import (
 
 type Env struct {
 	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES" default:"5"`
-
-	DefaultIngressClass  string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
-	DefaultClusterIssuer string `env:"DEFAULT_CLUSTER_ISSUER" required:"true"`
-
-	CertificateNamespace string `env:"CERTIFICATE_NAMESPACE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

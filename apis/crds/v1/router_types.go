@@ -1,19 +1,17 @@
 package v1
 
 import (
-	"strings"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/toolkit/reconciler"
 )
 
 type Route struct {
-	App string `json:"app"`
-	// Lambda string `json:"lambda,omitempty"`
-	Path string `json:"path"`
-	Port uint16 `json:"port"`
+	Host    string `json:"host"`
+	Service string `json:"service"`
+	Path    string `json:"path"`
+	Port    uint16 `json:"port"`
+
 	// +kubebuilder:default=false
 	Rewrite bool `json:"rewrite,omitempty"`
 }
@@ -50,14 +48,18 @@ type RouterSpec struct {
 	IngressClass    string  `json:"ingressClass,omitempty"`
 	BackendProtocol *string `json:"backendProtocol,omitempty"`
 	Https           *Https  `json:"https,omitempty"`
-	// +kubebuilder:validation:Optional
 
 	RateLimit       *RateLimit `json:"rateLimit,omitempty"`
 	MaxBodySizeInMB *int       `json:"maxBodySizeInMB,omitempty"`
-	Domains         []string   `json:"domains"`
-	Routes          []Route    `json:"routes,omitempty"`
-	BasicAuth       *BasicAuth `json:"basicAuth,omitempty"`
-	Cors            *Cors      `json:"cors,omitempty"`
+
+	BasicAuth *BasicAuth `json:"basicAuth,omitempty"`
+	Cors      *Cors      `json:"cors,omitempty"`
+
+	// NginxIngressAnnotations is additional list of annotations on ingress resource
+	// INFO: must be used when router does not have direct support for it
+	NginxIngressAnnotations map[string]string `json:"nginxIngressAnnotations,omitempty"`
+
+	Routes []Route `json:"routes,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -91,16 +93,11 @@ func (r *Router) GetStatus() *reconciler.Status {
 }
 
 func (r *Router) GetEnsuredLabels() map[string]string {
-	return map[string]string{
-		constants.RouterNameKey: r.Name,
-	}
+	return map[string]string{}
 }
 
 func (m *Router) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{
-		"kloudlite.io/router.domains":       strings.Join(m.Spec.Domains, ","),
-		"kloudlite.io/router.ingress-class": m.Spec.IngressClass,
-	}
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true

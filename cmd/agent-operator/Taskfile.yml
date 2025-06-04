@@ -13,7 +13,7 @@ tasks:
     dotenv:
       - .secrets/env
     cmds:
-      - go run . --dev
+      - go run . --dev --serverHost localhost:8080
 
   build:
     cmds:

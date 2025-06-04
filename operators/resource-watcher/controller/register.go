@@ -8,6 +8,7 @@ import (
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
+	"github.com/nxtcoder17/go.pkgs/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 
@@ -47,7 +48,6 @@ func RegisterInto(mgr operator.Operator) {
 	}
 
 	mgr.RegisterControllers(watchAndUpdateReconciler)
-	logger := mgr.Operator().Logger()
 
 	ping := func(cc *grpc.ClientConn) error {
 		ctx, cf := context.WithTimeout(context.TODO(), 500*time.Millisecond)
@@ -55,10 +55,10 @@ func RegisterInto(mgr operator.Operator) {
 		msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
 		_, err := msgDispatchCli.Ping(ctx, &messages.Empty{})
 		if err != nil {
-			logger.Info("ping failed, client is disconnected")
+			log.DefaultLogger().Warn("ping failed, client is disconnected")
 			return err
 		}
-		logger.Debug("ping is successfull, client is connected")
+		log.DefaultLogger().Debug("ping is successfull, client is connected")
 		return nil
 	}
 
@@ -116,7 +116,7 @@ func RegisterInto(mgr operator.Operator) {
 	}
 
 	go func() {
-		logger := logger.With("component", "grpc-client")
+		logger := log.DefaultLogger().With("component", "grpc-client").Slog()
 		for {
 			connectGrpc(logger)
 			<-time.After(2 * time.Second)

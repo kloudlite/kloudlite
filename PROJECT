@@ -4,7 +4,7 @@
 # More info: https://book.kubebuilder.io/reference/project-config.html
 domain: kloudlite.io
 layout:
-- go.kubebuilder.io/v3
+- go.kubebuilder.io/v4
 multigroup: true
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
@@ -515,8 +515,28 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: ServiceIntercept
+  version: ""
+- api:
+    crdVersion: v1
+    namespaced: true
   group: mongodb.msvc
   kind: Backup
   path: github.com/kloudlite/operator/apis/mongodb.msvc/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: Workspace
+  path: github.com/kloudlite/operator/api/crds/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: WorkMachine
+  path: github.com/kloudlite/operator/api/crds/v1
   version: v1
 version: "3"

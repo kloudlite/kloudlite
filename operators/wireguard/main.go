@@ -5,7 +5,7 @@ import (
 	"github.com/kloudlite/operator/operator"
 
 	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/device"
-	cc "github.com/kloudlite/operator/operators/wireguard/internal/controllers/global-vpn"
+	// cc "github.com/kloudlite/operator/operators/wireguard/internal/controllers/global-vpn"
 	"github.com/kloudlite/operator/operators/wireguard/internal/env"
 )
 
@@ -17,7 +17,7 @@ func main() {
 
 	mgr.RegisterControllers(
 		&device.Reconciler{Name: "Device", Env: ev},
-		&cc.Reconciler{Name: "GlobalVPN", Env: ev},
+		// &cc.Reconciler{Name: "GlobalVPN", Env: ev},
 	)
 
 	mgr.Start()

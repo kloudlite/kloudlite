@@ -110,4 +110,6 @@ resources:
 - crds_v1_serviceintercept.yaml
 - mongodb.msvc_v1_backup.yaml
 - crds_v1_managedserviceplugin.yaml
+- crds_v1_workspace.yaml
+- crds_v1_workmachine.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

@@ -294,7 +294,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger *slog.Logger, obj
 			return nil
 		}
 
-	case /*NodePoolGVK.String(),*/ PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), NamespaceGVK.String():
+	case /*NodePoolGVK.String(),*/ PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), NamespaceGVK.String(), WorkspaceGVK.String(), WorkMachineGVK.String():
 		{
 			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
 				Object: obj,
@@ -440,7 +440,7 @@ var (
 	// BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
 
 	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
-	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
+	HelmChartGVK             = newGVK("plugin-helm-chart.kloudlite.github.com/v1", "HelmChart")
 	ProjectManageServiceGVK  = newGVK("crds.kloudlite.io/v1", "ProjectManagedService")
 
 	// native resources
@@ -452,6 +452,9 @@ var (
 	SecretGVK    = newGVK("v1", "Secret")
 	ConfigmapGVK = newGVK("v1", "ConfigMap")
 	NamespaceGVK = newGVK("v1", "Namespace")
+
+	WorkMachineGVK = newGVK("crds.kloudlite.io/v1", "WorkMachine")
+	WorkspaceGVK   = newGVK("crds.kloudlite.io/v1", "Workspace")
 )
 
 // SetupWithManager sets up the controllers with the Manager.
@@ -494,6 +497,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		SecretGVK,
 		ConfigmapGVK,
 		NamespaceGVK,
+
+		WorkspaceGVK,
+		WorkMachineGVK,
 	}
 
 	for i := range watchList {

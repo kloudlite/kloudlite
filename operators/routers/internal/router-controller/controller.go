@@ -3,14 +3,12 @@ package router_controller
 import (
 	"context"
 	"fmt"
-	"time"
+	"strings"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	certmanagermetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -54,23 +52,11 @@ const (
 
 	EnsuringHttpsCertsIfEnabled string = "ensuring-https-certs-if-enabled"
 	SettingUpBasicAuthIfEnabled string = "setting-up-basic-auth-if-enabled"
-	CreatingIngressResources    string = "creating-ingress-resources"
+	CreateIngressResource       string = "create-ingress-resource"
 
 	CleaningUpResources string = "cleaning-up-resourcess"
 
 	certCreatedByRouter string = "kloudlite.io/cert-created-by-router"
-)
-
-var (
-	ApplyChecklist = []reconciler.CheckMeta{
-		{Name: DefaultsPatched, Title: "Defaults Patched"},
-		{Name: EnsuringHttpsCertsIfEnabled, Title: "Ensuring HTTPS Cert if enabled"},
-		{Name: SettingUpBasicAuthIfEnabled, Title: "Setting Up Basic Auth if enabled"},
-	}
-
-	DeleteChecklist = []reconciler.CheckMeta{
-		{Name: CleaningUpResources, Title: "Cleaning Up Resources"},
-	}
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -101,7 +87,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]reconciler.CheckMeta{
+		{Name: EnsuringHttpsCertsIfEnabled, Title: "Ensuring HTTPS Cert if enabled"},
+		{Name: SettingUpBasicAuthIfEnabled, Title: "Setting Up Basic Auth if enabled"},
+		{Name: CreateIngressResource, Title: "Creates kubernetes ingress resource"},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -113,13 +103,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.EnsuringHttpsCerts(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.EnsuringHttpsCerts(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.reconBasicAuth(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -133,32 +119,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) patchDefaults(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := reconciler.NewRunningCheck(DefaultsPatched, req)
-
-	hasUpdate := false
-
-	if obj.Spec.BasicAuth != nil && obj.Spec.BasicAuth.Enabled && obj.Spec.BasicAuth.SecretName == "" {
-		hasUpdate = true
-		obj.Spec.BasicAuth.SecretName = obj.Name + "-basic-auth"
-	}
-
-	if obj.Spec.IngressClass == "" {
-		hasUpdate = true
-		obj.Spec.IngressClass = r.Env.DefaultIngressClass
-	}
-
-	if hasUpdate {
-		if err := r.Update(ctx, obj); err != nil {
-			return check.Failed(err)
-		}
-		return req.Done().RequeueAfter(1 * time.Second)
-	}
-
-	return check.Completed()
-}
-
 func (r *Reconciler) finalize(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
 	check := reconciler.NewRunningCheck("finalizing", req)
 	if step := req.CleanupOwnedResources(check); !step.ShouldProceed() {
@@ -168,205 +128,231 @@ func (r *Reconciler) finalize(req *reconciler.Request[*crdsv1.Router]) stepResul
 	return req.Finalize()
 }
 
-func genTLSCertName(domain string) string {
-	return fmt.Sprintf("%s-tls", domain)
-}
-
-func (r *Reconciler) getRouterClusterIssuer(obj *crdsv1.Router) string {
+func (r *Reconciler) findClusterIssuer(req *reconciler.Request[*crdsv1.Router]) (*certmanagerv1.ClusterIssuer, error) {
+	ctx, obj := req.Context(), req.Object
 	https := obj.Spec.Https
 
 	if https != nil && https.ClusterIssuer != "" {
-		return https.ClusterIssuer
+		var issuer certmanagerv1.ClusterIssuer
+		if err := r.Get(ctx, fn.NN("", https.ClusterIssuer), &issuer, &client.GetOptions{}); err != nil {
+			return nil, err
+		}
+
+		return &issuer, nil
 	}
 
-	return r.Env.DefaultClusterIssuer
+	var issuerList certmanagerv1.ClusterIssuerList
+	if err := r.List(ctx, &issuerList, &client.ListOptions{Limit: 1}); err != nil {
+		return nil, nil
+	}
+
+	if len(issuerList.Items) != 1 {
+		return nil, fmt.Errorf("no cluster issuer found")
+	}
+
+	return &issuerList.Items[0], nil
+}
+
+func (r *Reconciler) findIngressClass(req *reconciler.Request[*crdsv1.Router]) (string, error) {
+	ctx, obj := req.Context(), req.Object
+
+	if obj.Spec.IngressClass != "" {
+		return obj.Spec.IngressClass, nil
+	}
+
+	var ingressClassList networkingv1.IngressClassList
+	if err := r.List(ctx, &ingressClassList, &client.ListOptions{Limit: 1}); err != nil {
+		return "", err
+	}
+
+	if len(ingressClassList.Items) != 1 {
+		return "", fmt.Errorf("no/multiple ingress classes found")
+	}
+
+	return ingressClassList.Items[0].Name, nil
 }
 
 func isHttpsEnabled(obj *crdsv1.Router) bool {
 	return obj.Spec.Https != nil && obj.Spec.Https.Enabled
 }
 
-func (r *Reconciler) EnsuringHttpsCerts(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := reconciler.NewRunningCheck(EnsuringHttpsCertsIfEnabled, req)
-
-	if !isHttpsEnabled(obj) {
-		return check.Completed()
-	}
-
-	_, nonWildcardDomains, err := r.parseAndExtractDomains(req)
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	for _, domain := range nonWildcardDomains {
-
-		tlsCertLabel := fmt.Sprintf("kloudlite.io/tls-cert.%s", fn.Md5([]byte(genTLSCertName(domain))))
-		if v, ok := obj.Labels[tlsCertLabel]; !ok || v != "true" {
-			fn.MapSet(&obj.Labels, tlsCertLabel, "true")
-			if err := r.Update(ctx, obj); err != nil {
-				return check.StillRunning(err)
-			}
-		}
-
-		cert, err := reconciler.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
-		if err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return check.StillRunning(err)
-			}
-			cert = nil
-		}
-
-		if cert == nil {
-			cert := &certmanagerv1.Certificate{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Certificate",
-					APIVersion: certmanagerv1.SchemeGroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      genTLSCertName(domain),
-					Namespace: r.Env.CertificateNamespace,
-					Labels: map[string]string{
-						certCreatedByRouter: obj.Name,
-					},
-				},
-				Spec: certmanagerv1.CertificateSpec{
-					DNSNames: []string{domain},
-					IssuerRef: certmanagermetav1.ObjectReference{
-						Name:  r.getRouterClusterIssuer(obj),
-						Kind:  "ClusterIssuer",
-						Group: certmanagerv1.SchemeGroupVersion.Group,
-					},
-					RenewBefore: &metav1.Duration{
-						Duration: 15 * 24 * time.Hour, // 15 days prior
-					},
-					SecretName: genTLSCertName(domain),
-					Usages: []certmanagerv1.KeyUsage{
-						certmanagerv1.UsageDigitalSignature,
-						certmanagerv1.UsageKeyEncipherment,
-					},
-				},
-			}
-			if err := r.Create(ctx, cert); err != nil {
-				return check.StillRunning(err)
-			}
-		}
-
-		if _, err := IsHttpsCertReady(cert); err != nil {
-			return check.StillRunning(err).NoRequeue()
-			// return check.StillRunning(err)
-			// return check.StillRunning(err).RequeueAfter(1 * time.Second)
-		}
-
-		certSecret, err := reconciler.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
-		if err != nil {
-			return check.StillRunning(err)
-		}
-
-		copyTLSSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: genTLSCertName(domain), Namespace: obj.Namespace}, Type: corev1.SecretTypeTLS}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, copyTLSSecret, func() error {
-			if copyTLSSecret.Annotations == nil {
-				copyTLSSecret.Annotations = make(map[string]string, 1)
-			}
-			copyTLSSecret.Annotations["kloudlite.io/secret.cloned-by"] = "router"
-
-			copyTLSSecret.Data = certSecret.Data
-			copyTLSSecret.StringData = certSecret.StringData
-			return nil
-		}); err != nil {
-			return check.StillRunning(err)
-		}
-	}
-
-	return check.Completed()
-}
-
 func (r *Reconciler) reconBasicAuth(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := reconciler.NewRunningCheck(SettingUpBasicAuthIfEnabled, req)
 
-	if obj.Spec.BasicAuth != nil && obj.Spec.BasicAuth.Enabled {
-		if len(obj.Spec.BasicAuth.Username) == 0 {
-			return check.Failed(fmt.Errorf(".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true")).Err(nil)
-		}
-
-		basicAuthScrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.BasicAuth.SecretName, Namespace: obj.Namespace}, Type: "Opaque"}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, basicAuthScrt, func() error {
-			basicAuthScrt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-			if _, ok := basicAuthScrt.Data["password"]; ok {
-				return nil
-			}
-
-			password := fn.CleanerNanoid(48)
-			ePass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-			if err != nil {
-				return err
-			}
-			basicAuthScrt.Data = map[string][]byte{
-				"auth":     []byte(fmt.Sprintf("%s:%s", obj.Spec.BasicAuth.Username, ePass)),
-				"username": []byte(obj.Spec.BasicAuth.Username),
-				"password": []byte(password),
-			}
-			return nil
-		}); err != nil {
-			return check.StillRunning(err)
-		}
-
-		req.AddToOwnedResources(reconciler.ParseResourceRef(basicAuthScrt))
+	if obj.Spec.BasicAuth == nil || !obj.Spec.BasicAuth.Enabled {
+		return check.Completed()
 	}
+
+	if len(obj.Spec.BasicAuth.Username) == 0 {
+		return check.Failed(fmt.Errorf(".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true")).Err(nil)
+	}
+
+	if obj.Spec.BasicAuth.SecretName == "" {
+		obj.Spec.BasicAuth.SecretName = obj.Name + "-basic-auth"
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+		return check.StillRunning(fmt.Errorf("waiting for router reconcilation"))
+	}
+
+	basicAuthScrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.BasicAuth.SecretName, Namespace: obj.Namespace}, Type: "Opaque"}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, basicAuthScrt, func() error {
+		basicAuthScrt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		if _, ok := basicAuthScrt.Data["password"]; ok {
+			return nil
+		}
+
+		password := fn.CleanerNanoid(48)
+		ePass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		basicAuthScrt.StringData = map[string]string{
+			"auth":     fmt.Sprintf("%s:%s", obj.Spec.BasicAuth.Username, ePass),
+			"username": obj.Spec.BasicAuth.Username,
+			"password": password,
+		}
+		return nil
+	}); err != nil {
+		return check.StillRunning(err)
+	}
+
+	req.AddToOwnedResources(reconciler.ParseResourceRef(basicAuthScrt))
 
 	return check.Completed()
 }
 
+func groupHostsByKind(issuer *certmanagerv1.ClusterIssuer, obj *crdsv1.Router) (wildcardHosts []string, nonWildcardHosts []string) {
+	var dnsNames []string
+
+	for _, solver := range issuer.Spec.ACME.Solvers {
+		if solver.DNS01 != nil {
+			if solver.Selector != nil {
+				dnsNames = append(dnsNames, solver.Selector.DNSNames...)
+			}
+		}
+	}
+
+	wcFilter := map[string]struct{}{}
+	for _, pattern := range dnsNames {
+		if strings.HasPrefix(pattern, "*.") {
+			wcFilter[pattern[len("*."):]] = struct{}{}
+			continue
+		}
+		wcFilter[pattern] = struct{}{}
+	}
+
+	for _, route := range obj.Spec.Routes {
+		if _, ok := wcFilter[route.Host]; ok {
+			wildcardHosts = append(wildcardHosts, route.Host)
+			continue
+		}
+
+		idx := strings.IndexByte(route.Host, '.')
+		if idx == -1 {
+			nonWildcardHosts = append(nonWildcardHosts, route.Host)
+			continue
+		}
+
+		if _, ok := wcFilter[route.Host[idx+1:]]; ok {
+			wildcardHosts = append(wildcardHosts, route.Host)
+			continue
+		}
+
+		nonWildcardHosts = append(nonWildcardHosts, route.Host)
+	}
+
+	return wildcardHosts, nonWildcardHosts
+}
+
 func (r *Reconciler) ensureIngresses(req *reconciler.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := reconciler.NewRunningCheck(CreatingIngressResources, req)
+	check := reconciler.NewRunningCheck(CreateIngressResource, req)
 
-	wcDomains, nonWcDomains, err := r.parseAndExtractDomains(req)
+	if obj.Spec.IngressClass == "" {
+		ingClass, err := r.findIngressClass(req)
+		if err != nil {
+			return check.Failed(err)
+		}
+
+		obj.Spec.IngressClass = ingClass
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+
+		return check.StillRunning(fmt.Errorf("updating .spec.ingressClass"))
+	}
+
+	if obj.Spec.Https != nil && obj.Spec.Https.ClusterIssuer == "" {
+		issuer, err := r.findClusterIssuer(req)
+		if err != nil {
+			return check.Failed(err)
+		}
+
+		obj.Spec.Https.ClusterIssuer = issuer.Name
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+
+		return check.StillRunning(fmt.Errorf("updating .spec.https.clusterIssuer"))
+	}
+
+	if len(obj.Spec.Routes) == 0 {
+		return check.Completed()
+	}
+
+	issuer, err := r.findClusterIssuer(req)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	wcHosts, nonWcHosts := groupHostsByKind(issuer, obj)
+
+	nginxIngressAnnotations := GenNginxIngressAnnotations(obj)
+
+	// b, err := templates.ParseBytes(r.templateIngress, templates.IngressTemplateArgs{
+	// 	Metadata: metav1.ObjectMeta{
+	// 		Name:        obj.Name,
+	// 		Namespace:   obj.Namespace,
+	// 		Labels:      obj.GetLabels(),
+	// 		Annotations: nginxIngressAnnotations,
+	// 	},
+	// 	IngressClassName:   obj.Spec.IngressClass,
+	// 	HttpsEnabled:       isHttpsEnabled(obj),
+	// 	WildcardDomains:    wcDomains,
+	// 	NonWildcardDomains: nonWcDomains,
+	// 	Routes:             obj.Spec.Routes,
+	// })
+
+	b, err := templates.ParseBytes(
+		r.templateIngress, map[string]any{
+			"name":      obj.Name,
+			"namespace": obj.Namespace,
+
+			"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"labels":      obj.GetLabels(),
+			"annotations": nginxIngressAnnotations,
+
+			"non-wildcard-domains": nonWcHosts,
+			"wildcard-domains":     wcHosts,
+			"ingress-class":        obj.Spec.IngressClass,
+
+			"routes": obj.Spec.Routes,
+
+			"is-https-enabled": isHttpsEnabled(obj),
+		},
+	)
 	if err != nil {
 		return check.Failed(err).Err(nil)
 	}
 
-	nginxIngressAnnotations := GenNginxIngressAnnotations(obj)
-
-	if len(obj.Spec.Routes) > 0 {
-		b, err := templates.ParseBytes(
-			r.templateIngress, map[string]any{
-				"name":      obj.Name,
-				"namespace": obj.Namespace,
-
-				"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"labels":      obj.GetLabels(),
-				"annotations": nginxIngressAnnotations,
-
-				"non-wildcard-domains": nonWcDomains,
-				"wildcard-domains":     wcDomains,
-				"router-domains":       obj.Spec.Domains,
-
-				"ingress-class": obj.Spec.IngressClass,
-				"cluster-issuer": func() string {
-					if obj.Spec.Https != nil && obj.Spec.Https.ClusterIssuer != "" {
-						return obj.Spec.Https.ClusterIssuer
-					}
-					return r.Env.DefaultClusterIssuer
-				}(),
-
-				"routes": obj.Spec.Routes,
-
-				"is-https-enabled": isHttpsEnabled(obj),
-			},
-		)
-		if err != nil {
-			return check.Failed(err).Err(nil)
-		}
-
-		rr, err := r.YAMLClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return check.StillRunning(err)
-		}
-
-		req.AddToOwnedResources(rr...)
+	rr, err := r.YAMLClient.ApplyYAML(ctx, b)
+	if err != nil {
+		return check.StillRunning(err)
 	}
+
+	req.AddToOwnedResources(rr...)
 
 	return check.Completed()
 }
@@ -376,11 +362,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Scheme = mgr.GetScheme()
 
 	if r.YAMLClient == nil {
-		return fmt.Errorf("r.YAMLClient must be set")
+		return fmt.Errorf(".YAMLClient must be set")
 	}
 
 	var err error
-	r.templateIngress, err = templates.ReadIngressTemplate()
+	r.templateIngress, err = templates.Read(templates.IngressTemplate)
 	if err != nil {
 		return err
 	}
@@ -405,6 +391,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 		return rr
 	}))
+
 	// builder.Owns(&certmanagerv1.Certificate{})
 
 	builder.WithEventFilter(reconciler.ReconcileFilter())

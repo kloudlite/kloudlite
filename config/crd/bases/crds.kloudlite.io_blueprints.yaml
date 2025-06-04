@@ -348,10 +348,6 @@ spec:
                                     type: string
                                   type: array
                               type: object
-                            domains:
-                              items:
-                                type: string
-                              type: array
                             https:
                               properties:
                                 clusterIssuer:
@@ -368,6 +364,13 @@ spec:
                               type: string
                             maxBodySizeInMB:
                               type: integer
+                            nginxIngressAnnotations:
+                              additionalProperties:
+                                type: string
+                              description: |-
+                                NginxIngressAnnotations is additional list of annotations on ingress resource
+                                INFO: must be used when router does not have direct support for it
+                              type: object
                             rateLimit:
                               properties:
                                 connections:
@@ -382,24 +385,24 @@ spec:
                             routes:
                               items:
                                 properties:
-                                  app:
+                                  host:
                                     type: string
                                   path:
-                                    description: Lambda string `json:"lambda,omitempty"`
                                     type: string
                                   port:
                                     type: integer
                                   rewrite:
                                     default: false
                                     type: boolean
+                                  service:
+                                    type: string
                                 required:
-                                - app
+                                - host
                                 - path
                                 - port
+                                - service
                                 type: object
                               type: array
-                          required:
-                          - domains
                           type: object
                         serviceAccount:
                           type: string
