@@ -22,6 +22,7 @@ import (
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	helmPlugin "github.com/kloudlite/plugin-helm-chart/api/v1"
 )
 
 func (d *domain) cleanupEnvironment(ctx ConsoleContext, envName string) error {
@@ -547,7 +548,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 
 	for i := range helmCharts {
 		if _, err := d.createAndApplyHelmChart(resCtx, &entities.HelmChart{
-			HelmChart: crdsv1.HelmChart{
+			HelmChart: helmPlugin.HelmChart{
 				TypeMeta:   helmCharts[i].TypeMeta,
 				ObjectMeta: objectMeta(helmCharts[i].ObjectMeta, destEnv.Spec.TargetNamespace),
 				Spec:       helmCharts[i].Spec,

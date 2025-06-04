@@ -129,6 +129,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials @
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig @shareable {
+  ami: String!
   instanceType: String!
   nodes: Map
 }
@@ -143,6 +144,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode @
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig @shareable {
+  ami: String!
   cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
   nodes: Map
@@ -267,6 +269,45 @@ type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef @
 type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
   name: String!
   namespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfig @shareable {
+  ami: String!
+  externalVolumeSize: Int!
+  externalVolumeType: String!
+  iamInstanceProfileRole: String
+  instanceType: String!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParams @shareable {
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__Toleration!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkMachineSpec @shareable {
+  aws: Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfig
+  jobParams: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParams
+  sshPublicKeys: [String!]!
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineState!
+  targetNamespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkMachineStatus @shareable {
+  machineSSHKey: String
+  status: Github__com___kloudlite___operator___toolkit___reconciler__Status
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec @shareable {
+  enableCodeServer: Boolean
+  enableJupyterNotebook: Boolean
+  enableTTYD: Boolean
+  enableVSCodeServer: Boolean
+  imagePullPolicy: String
+  serviceAccountName: String
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceState!
+  workMachine: String!
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -645,6 +686,14 @@ type K8s__io___api___core___v1__Taint @shareable {
   value: String
 }
 
+type K8s__io___api___core___v1__Toleration @shareable {
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
 type K8s__io___api___core___v1__TypedLocalObjectReference @shareable {
   apiGroup: String
   kind: String!
@@ -777,6 +826,7 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsI
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn {
+  ami: String!
   instanceType: String!
   nodes: Map
 }
@@ -791,6 +841,7 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeI
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn {
+  ami: String!
   cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
   nodes: Map
@@ -841,6 +892,75 @@ input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
 input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   name: String!
   namespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfigIn {
+  ami: String!
+  externalVolumeSize: Int!
+  instanceType: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParamsIn {
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkMachineSpecIn {
+  aws: Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfigIn
+  jobParams: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParamsIn
+  sshPublicKeys: [String!]!
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineState!
+  targetNamespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkMachineStatusIn {
+  machineSSHKey: String
+  status: Github__com___kloudlite___operator___toolkit___reconciler__StatusIn
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn {
+  enableCodeServer: Boolean
+  enableJupyterNotebook: Boolean
+  enableTTYD: Boolean
+  enableVSCodeServer: Boolean
+  imagePullPolicy: String
+  serviceAccountName: String
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceState!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__CheckIn {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___toolkit___reconciler__State
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__StatusIn {
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn!]
 }
 
 input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {
@@ -1144,6 +1264,14 @@ input K8s__io___api___core___v1__TaintIn {
   value: String
 }
 
+input K8s__io___api___core___v1__TolerationIn {
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
 input K8s__io___api___core___v1__TypedLocalObjectReferenceIn {
   apiGroup: String
   kind: String!
@@ -1270,6 +1398,17 @@ enum Github__com___kloudlite___operator___apis___common____types__CloudProvider 
   azure
   digitalocean
   gcp
+  unknown
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__WorkMachineState {
+  OFF
+  ON
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__WorkspaceState {
+  OFF
+  ON
 }
 
 enum Github__com___kloudlite___operator___pkg___operator__State {
@@ -1353,6 +1492,11 @@ enum K8s__io___api___core___v1__TaintEffect {
   NoExecute
   NoSchedule
   PreferNoSchedule
+}
+
+enum K8s__io___api___core___v1__TolerationOperator {
+  Equal
+  Exists
 }
 
 enum K8s__io___apimachinery___pkg___api___resource__Format {

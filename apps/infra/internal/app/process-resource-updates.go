@@ -45,6 +45,8 @@ var (
 	namespaceGVK        = fn.GVK("v1", "Namespace")
 	ingressGVK          = fn.GVK("networking.k8s.io/v1", "Ingress")
 	secretGVK           = fn.GVK("v1", "Secret")
+	workspaceGVK        = fn.GVK("crds.kloudlite.io/v1", "Workspace")
+	workmachineGVK      = fn.GVK("crds.kloudlite.io/v1", "WorkMachine")
 )
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger *slog.Logger) {
@@ -220,6 +222,32 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return d.OnVolumeAttachmentDeleteMessage(dctx, ru.ClusterName, volatt)
 				}
 				return d.OnVolumeAttachmentUpdateMessage(dctx, ru.ClusterName, volatt, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
+		case workspaceGVK.String():
+			{
+				var ws entities.Workspace
+				if err := fn.JsonConversion(su.Object, &ws); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnWorkspaceDeleteMessage(dctx, ru.ClusterName, ws)
+				}
+				return d.OnWorkspaceUpdateMessage(dctx, ru.ClusterName, ws, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
+		case workmachineGVK.String():
+			{
+				var wm entities.Workmachine
+				if err := fn.JsonConversion(su.Object, &wm); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnWorkmachineDeleteMessage(dctx, ru.ClusterName, wm)
+				}
+				return d.OnWorkmachineUpdateMessage(dctx, ru.ClusterName, wm, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case namespaceGVK.String():

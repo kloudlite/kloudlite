@@ -336,12 +336,12 @@ github.com/klauspost/compress v1.17.11 h1:In6xLpyWOi1+C7tXUUWv2ot1QvBjxevKAaI6IX
 github.com/klauspost/compress v1.17.11/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55 h1:YnZh3TL6AG4EfoInx1/L5zcPHd2QxgLKseJB1KtHjdQ=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
-github.com/kloudlite/operator v1.1.2-0.20250316093242-493e9b587c10 h1:JApPLyqigVe4NfpmKp3sM7QBcj4NS5A4hal3OSZAVLY=
-github.com/kloudlite/operator v1.1.2-0.20250316093242-493e9b587c10/go.mod h1:BhtpCE1yn9D5FJRpuI/IzgIGmRTn/WK+gScDAALCnqM=
-github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85 h1:bGSKSZkDDnbbk1lQYG4GQrg7dSAFCIb9fGHhYMEVBKg=
-github.com/kloudlite/operator/toolkit v0.0.0-20241218081328-3effe5238e85/go.mod h1:xnrBiZSs9nC5rgyZMf55OsLhvx7Lo7A4+eSq7ezEEm0=
+github.com/kloudlite/operator v1.1.2-0.20250417111723-79b058b419db h1:Li+Z2I6fQdQ7jTFkFIdADBt5PndVLWdExbZbTKugUFI=
+github.com/kloudlite/operator v1.1.2-0.20250417111723-79b058b419db/go.mod h1:hKBHOdG7FQpwyRMiuk5Dc6cacTxEkNIK5BY6B45mXso=
 github.com/kloudlite/operator/toolkit v0.0.0-20250316093242-493e9b587c10 h1:VjNyjNEzyTuvcJowzdWyTgoGj6gawxPd4q30qTihKYg=
 github.com/kloudlite/operator/toolkit v0.0.0-20250316093242-493e9b587c10/go.mod h1:iqOsr4qQ4fbM4pkiBhExA2lb6cvlc7g9O93qkx0TRAs=
+github.com/kloudlite/plugin-helm-chart v0.0.0-20250317052100-fef043b111a2 h1:4DoLvbPEjYVBMnNpVmeR9OoI6Q9kebd6HnDpkwFts+Y=
+github.com/kloudlite/plugin-helm-chart v0.0.0-20250317052100-fef043b111a2/go.mod h1:TZUQ5mREV+UjGVJhPsgmHMS67Mlf2Guit4905Pi/5sc=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=

@@ -358,6 +358,7 @@ type ServiceBinding interface {
 
 type ClusterManagedService interface {
 	ListClusterManagedServices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error)
+	ListHelmTypeClusterManagedServices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error)
 
 	GetClusterManagedService(ctx ConsoleContext, serviceName string) (*entities.ClusterManagedService, error)
 

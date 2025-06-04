@@ -49,6 +49,8 @@ const (
 	ResourceTypePVC                   ResourceType = "persistance_volume_claim"
 	ResourceTypePV                    ResourceType = "persistance_volume"
 	ResourceTypeVolumeAttachment      ResourceType = "volume_attachment"
+	ResourceTypeWorkspace             ResourceType = "workspace"
+	ResourceTypeWorkmachine           ResourceType = "workmachine"
 )
 
 type Domain interface {
@@ -164,4 +166,24 @@ type Domain interface {
 	GetVolumeAttachment(ctx InfraContext, clusterName string, volAttachmentName string) (*entities.VolumeAttachment, error)
 	OnVolumeAttachmentUpdateMessage(ctx InfraContext, clusterName string, volumeAttachment entities.VolumeAttachment, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnVolumeAttachmentDeleteMessage(ctx InfraContext, clusterName string, volumeAttachment entities.VolumeAttachment) error
+
+	// Workspace
+	ListWorkspaces(ctx InfraContext, workmachineName string, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error)
+	GetWorkspace(ctx InfraContext, workmachineName string, clusterName string, name string) (*entities.Workspace, error)
+	OnWorkspaceUpdateMessage(ctx InfraContext, clusterName string, workspace entities.Workspace, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnWorkspaceDeleteMessage(ctx InfraContext, clusterName string, workspace entities.Workspace) error
+
+	CreateWorkspace(ctx InfraContext, workmachineName string, clusterName string, workspace entities.Workspace) (*entities.Workspace, error)
+	UpdateWorkspace(ctx InfraContext, workmachineName string, clusterName string, workspace entities.Workspace) (*entities.Workspace, error)
+	DeleteWorkspace(ctx InfraContext, workmachineName string, clusterName string, name string) error
+	UpdateWorkspaceStatus(ctx InfraContext, workmachineName string, clusterName string, status bool, name string) (bool, error)
+
+	// Workmachine
+	GetWorkmachine(ctx InfraContext, clusterName string, name string) (*entities.Workmachine, error)
+	OnWorkmachineUpdateMessage(ctx InfraContext, clusterName string, workmachine entities.Workmachine, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnWorkmachineDeleteMessage(ctx InfraContext, clusterName string, workmachine entities.Workmachine) error
+
+	CreateWorkMachine(ctx InfraContext, clusterName string, workmachine entities.Workmachine) (*entities.Workmachine, error)
+	UpdateWorkMachine(ctx InfraContext, clusterName string, workmachine entities.Workmachine) (*entities.Workmachine, error)
+	UpdateWorkmachineStatus(ctx InfraContext, clusterName string, status bool, name string) (bool, error)
 }

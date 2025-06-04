@@ -26,6 +26,9 @@ func (d *domain) ListClusterManagedServices(ctx ConsoleContext, search map[strin
 
 	f := repos.Filter{
 		fields.AccountName: ctx.AccountName,
+		fc.ClusterManagedServiceSpecMsvcSpecPluginKind: map[string]any{
+			"$ne": "HelmChart",
+		},
 	}
 
 	pr, err := d.clusterManagedServiceRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, search), pagination)
@@ -34,6 +37,24 @@ func (d *domain) ListClusterManagedServices(ctx ConsoleContext, search map[strin
 	}
 
 	return pr, nil
+}
+
+func (d *domain) ListHelmTypeClusterManagedServices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.ListClusterManagedServices); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	f := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		fc.ClusterManagedServiceSpecMsvcSpecPluginKind: "HelmChart",
+	}
+	pr, err := d.clusterManagedServiceRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, search), pagination)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return pr, nil
+
 }
 
 func (d *domain) findClusterManagedService(ctx ConsoleContext, name string) (*entities.ClusterManagedService, error) {
@@ -379,7 +400,7 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx ConsoleContext, cluste
 						Kind:       "RootCredentials",
 						Spec:       nil,
 						Export: plugin.Export{
-							ViaSecret: xService.SyncedOutputSecretRef.Name,
+							ViaSecret: service.SyncedOutputSecretRef.Name,
 						},
 					},
 					// ResourceTemplate: crdsv1.MresResourceTemplate{

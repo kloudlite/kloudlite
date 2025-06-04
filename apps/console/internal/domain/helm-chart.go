@@ -148,8 +148,8 @@ func (d *domain) UpdateHelmChart(ctx ResourceContext, helmcIn entities.HelmChart
 	}
 
 	patchDoc := repos.Document{
-		fc.HelmChartSpecChartVersion: helmcIn.Spec.ChartVersion,
-		fc.HelmChartSpecValues:       helmcIn.Spec.Values,
+		fc.HelmChartSpecChartVersion: helmcIn.Spec.Chart.Version,
+		fc.HelmChartSpecHelmValues:   helmcIn.Spec.HelmValues,
 	}
 
 	patchForUpdate := common.PatchForUpdate(

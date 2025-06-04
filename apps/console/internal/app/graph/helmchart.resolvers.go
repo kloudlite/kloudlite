@@ -12,34 +12,44 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/functions"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	plugin "github.com/kloudlite/operator/toolkit/plugin"
+	helmPlugin "github.com/kloudlite/plugin-helm-chart/api/v1"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CreationTime is the resolver for the creationTime field.
 func (r *helmChartResolver) CreationTime(ctx context.Context, obj *entities.HelmChart) (string, error) {
 	if obj == nil {
-		return "", errNilHelmChart
+		return "", errNilApp
 	}
+	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
+}
 
-	return obj.CreationTime.Format(time.RFC3339), nil
+// Export is the resolver for the export field.
+func (r *helmChartResolver) Export(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorToolkitPluginExport, error) {
+	return &model.GithubComKloudliteOperatorToolkitPluginExport{
+		ViaSecret: &obj.Export.ViaSecret,
+		Template:  &obj.Export.Template,
+	}, nil
 }
 
 // Spec is the resolver for the spec field.
-func (r *helmChartResolver) Spec(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec, error) {
+func (r *helmChartResolver) Spec(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec, error) {
 	if obj == nil {
 		return nil, errNilHelmChart
 	}
 
-	return functions.JsonConvertP[model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec](obj.Spec)
+	return functions.JsonConvertP[model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec](obj.Spec)
 }
 
 // Status is the resolver for the status field.
-func (r *helmChartResolver) Status(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus, error) {
+func (r *helmChartResolver) Status(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus, error) {
 	if obj == nil {
 		return nil, errNilHelmChart
 	}
 
-	return functions.JsonConvertP[model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus](obj.Status)
+	return functions.JsonConvertP[model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus](obj.Status)
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -47,18 +57,63 @@ func (r *helmChartResolver) UpdateTime(ctx context.Context, obj *entities.HelmCh
 	if obj == nil {
 		return "", errNilHelmChart
 	}
+	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
+}
 
-	return obj.UpdateTime.Format(time.RFC3339), nil
+// Export is the resolver for the export field.
+func (r *helmChartInResolver) Export(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudliteOperatorToolkitPluginExportIn) error {
+	if obj == nil {
+		return errNilApp
+	}
+	if data != nil {
+		exp, err := functions.JsonConvert[plugin.Export](data)
+		if err != nil {
+			return err
+		}
+		obj.Export = exp
+	}
+	return nil
 }
 
 // Metadata is the resolver for the metadata field.
 func (r *helmChartInResolver) Metadata(ctx context.Context, obj *entities.HelmChart, data *v1.ObjectMeta) error {
-	return functions.JsonConversion(data, &obj.ObjectMeta)
+	if obj == nil {
+		return errNilApp
+	}
+	if data != nil {
+		obj.ObjectMeta = *data
+	}
+	return nil
 }
 
 // Spec is the resolver for the spec field.
-func (r *helmChartInResolver) Spec(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn) error {
-	return functions.JsonConversion(data, &obj.Spec)
+func (r *helmChartInResolver) Spec(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn) error {
+	if obj == nil {
+		return errNilApp
+	}
+	if data != nil {
+		spec, err := functions.JsonConvert[helmPlugin.HelmChartSpec](data)
+		if err != nil {
+			return err
+		}
+		obj.Spec = spec
+	}
+	return nil
+}
+
+// Status is the resolver for the status field.
+func (r *helmChartInResolver) Status(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn) error {
+	if obj == nil {
+		return errNilApp
+	}
+	if data != nil {
+		status, err := functions.JsonConvert[helmPlugin.HelmChartStatus](data)
+		if err != nil {
+			return err
+		}
+		obj.Status = status
+	}
+	return nil
 }
 
 // HelmChart returns generated.HelmChartResolver implementation.

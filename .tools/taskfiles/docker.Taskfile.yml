@@ -22,4 +22,4 @@ tasks:
             echo "image exists, but overridden"
           fi
 
-          docker buildx build -t {{.image}} --output=type=image,compression=zstd,force-compression=true,compression-level=12,push={{.push_image}} {{.args}}
+          DOCKER_BUILDKIT=1 docker buildx build -t {{.image}} --output=type=image,compression=zstd,force-compression=true,compression-level=12,push={{.push_image}} {{.args}}

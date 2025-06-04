@@ -165,8 +165,9 @@ type Query {
 	core_getManagedResouceOutputKeys(msvcName: String, envName:String , name: String!): [String!]! @isLoggedInAndVerified @hasAccount
 	core_getManagedResouceOutputKeyValues(msvcName: String, envName:String, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
 
-  infra_listClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-  infra_getClusterManagedService(name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+	infra_listClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+	infra_getClusterManagedService(name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+	infra_listHelmTypeClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
 
 	core_listManagedResources(search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getManagedResource(msvcName: String, envName: String, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount

@@ -125,6 +125,14 @@ models:
     model: github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment
   VolumeAttachmentIn: *volume-attachment-model
 
+  Workspace: &workspace-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.Workspace
+  WorkspaceIn: *workspace-model
+
+  Workmachine: &workmachine-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.Workmachine
+  WorkmachineIn: *workmachine-model
+
   Node: &node-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.Node
 

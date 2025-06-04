@@ -1,0 +1,82 @@
+---
+label: "Create workspace"
+query: |+
+  mutation Infra_createWorkspace($workspace: WorkspaceIn!, $clusterName: String!) {
+    infra_createWorkspace(workspace: $workspace, clusterName: $clusterName) {
+      accountName
+    }
+  }
+variables:
+  {
+    "workspace": {
+      "metadata": {
+        "name": "test-ws1"
+      },
+      "displayName": "test ws1"
+    },
+    "clusterName": "test-clus"
+  }
+
+---
+
+label: "update workspace"
+query: |+
+  mutation Infra_updateWorkspace($clusterName: String!, $workspace: WorkspaceIn!) {
+    infra_updateWorkspace(clusterName: $clusterName, workspace: $workspace) {
+      accountName
+    }
+  }
+variables:
+  {
+    "workspace": {
+      "metadata": {
+        "name": "test-ws1"
+      },
+      "displayName": "test wss1"
+    },
+    "clusterName": "test-clus"
+  }
+
+---
+
+label: "delete Workspace"
+query: |+
+  mutation Infra_deleteWorkspace($clusterName: String!, $name: String!) {
+    infra_deleteWorkspace(clusterName: $clusterName, name: $name)
+  }
+variables:
+  {
+    "clusterName": "test-clus",
+    "name": "test-ws1"
+  }
+
+---
+
+label: "get workspace"
+query: |+
+  query Infra_getWorkspace($clusterName: String!, $name: String!) {
+    infra_getWorkspace(clusterName: $clusterName, name: $name) {
+      accountName
+    }
+  }
+variables:
+  {
+    "clusterName": "test-clus",
+    "name": "test-ws1"
+  }
+
+---
+
+label: "list workspace"
+query: |+
+  query Infra_listWorkspaces($clusterName: String!) {
+    infra_listWorkspaces(clusterName: $clusterName) {
+      totalCount
+    }
+  }
+variables:
+  {
+    "clusterName": "test-clus",
+  }
+
+---

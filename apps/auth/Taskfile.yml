@@ -42,6 +42,6 @@ tasks:
 
       - task: docker:build-and-push
         vars:
-          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          args: "--platform linux/amd64 --build-arg BINARY={{.binary}} ."
           image: "{{.image}}"
 

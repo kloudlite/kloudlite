@@ -1,8 +1,6 @@
 package domain
 
 import (
-	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
-	recaptchapb "cloud.google.com/go/recaptchaenterprise/v2/apiv1/recaptchaenterprisepb"
 	"context"
 	"crypto/md5"
 	b64 "encoding/base64"
@@ -11,6 +9,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
+	recaptchapb "cloud.google.com/go/recaptchaenterprise/v2/apiv1/recaptchaenterprisepb"
 
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/apps/auth/internal/env"
@@ -177,6 +178,18 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 		return nil, errors.New("not valid credentials")
 	}
 	session := newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password")
+	return session, nil
+}
+
+func (d *domainI) MachineLogin(ctx context.Context, userId string, machineId string, cluster string) (*common.AuthSession, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"id": userId})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	session := newAuthSession(user.Id, user.Email, user.Name, user.Verified, "work_machine")
+	session.Extras = map[string]any{}
+	session.Extras[common.MACHINE_ID_KEY] = machineId
+	session.Extras[common.CLUSTER_KEY] = cluster
 	return session, nil
 }
 

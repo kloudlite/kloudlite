@@ -77,6 +77,10 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(ev.ConsoleGrpcAddr)
 	}),
 
+	fx.Provide(func(ev *env.Env) (app.AuthGrpcClient, error) {
+		return grpc.NewGrpcClient(ev.AuthGrpcAddr)
+	}),
+
 	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient) {
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {

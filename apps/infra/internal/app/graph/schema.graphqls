@@ -71,6 +71,14 @@ input SearchVolumeAttachments {
   text: MatchFilterIn
 }
 
+input SearchWorkspaces {
+  text: MatchFilterIn
+}
+
+input SearchWorkmachines {
+  text: MatchFilterIn
+}
+
 type CheckAwsAccessOutput {
     result: Boolean!
     installationUrl: String
@@ -129,6 +137,13 @@ type Query {
 
     infra_listVolumeAttachments(clusterName: String!, search: SearchVolumeAttachments, pq: CursorPaginationIn): VolumeAttachmentPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment @isLoggedInAndVerified @hasAccount
+
+    # Workspaces
+    infra_listWorkspaces(workmachineName: String!, clusterName: String!,search: SearchWorkspaces, pagination: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getWorkspace(workmachineName: String!,clusterName: String!,name: String!): Workspace @isLoggedInAndVerified @hasAccount
+
+    # Workmachine
+    infra_getWorkmachine(clusterName: String!, name: String!): Workmachine @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -169,6 +184,17 @@ type Mutation {
     # infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     infra_deletePV(clusterName: String!, pvName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    # Workspaces
+    infra_createWorkspace(workmachineName: String!, clusterName: String!, workspace: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccount
+    infra_updateWorkspace(workmachineName: String!, clusterName: String!, workspace: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccount
+    infra_deleteWorkspace(workmachineName: String!, clusterName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_updateWorkspaceStatus(workmachineName: String!, clusterName: String!, status: Boolean!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    # Workmachine
+    infra_createWorkMachine(clusterName: String!, workmachine: WorkmachineIn!): Workmachine @isLoggedInAndVerified @hasAccount
+    infra_updateWorkMachine(clusterName: String!, workmachine: WorkmachineIn!): Workmachine @isLoggedInAndVerified @hasAccount 
+    infra_updateWorkMachineStatus(clusterName: String!, status: Boolean!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type EncodedValue {

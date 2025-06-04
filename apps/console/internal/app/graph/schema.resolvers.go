@@ -7,9 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -422,6 +421,7 @@ func (r *mutationResolver) InfraCreateClusterManagedService(ctx context.Context,
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	service.ClusterName = "tenant-cluster"
 	return r.Domain.CreateClusterManagedService(ictx, service)
 }
 
@@ -1120,6 +1120,37 @@ func (r *queryResolver) InfraGetClusterManagedService(ctx context.Context, name 
 	}
 
 	return r.Domain.GetClusterManagedService(ictx, name)
+}
+
+// InfraListHelmTypeClusterManagedServices is the resolver for the infra_listHelmTypeClusterManagedServices field.
+func (r *queryResolver) InfraListHelmTypeClusterManagedServices(ctx context.Context, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error) {
+	ictx, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if pagination == nil {
+		pagination = &repos.DefaultCursorPagination
+	}
+
+	filter := map[string]repos.MatchFilter{}
+
+	if search != nil {
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pClusters, err := r.Domain.ListHelmTypeClusterManagedServices(ictx, filter, *pagination)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return fn.JsonConvertP[model.ClusterManagedServicePaginatedRecords](pClusters)
 }
 
 // CoreListManagedResources is the resolver for the core_listManagedResources field.

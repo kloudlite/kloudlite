@@ -37,7 +37,7 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 
 var (
 	appsGVK            = fn.GVK("crds.kloudlite.io/v1", "App")
-	helmChartsGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
+	helmChartsGVK      = fn.GVK("plugin-helm-chart.kloudlite.github.com/v1", "HelmChart")
 	externalAppsGVK    = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
 	environmentGVK     = fn.GVK("crds.kloudlite.io/v1", "Environment")
 	deviceGVK          = fn.GVK("wireguard.kloudlite.io/v1", "Device")

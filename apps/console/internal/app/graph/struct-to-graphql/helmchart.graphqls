@@ -5,14 +5,15 @@ type HelmChart @shareable {
   creationTime: Date!
   displayName: String!
   environmentName: String!
+  export: Github__com___kloudlite___operator___toolkit___plugin__Export
   id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec
-  status: Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus
+  spec: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec
+  status: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
@@ -31,8 +32,10 @@ type HelmChartPaginatedRecords @shareable {
 input HelmChartIn {
   apiVersion: String
   displayName: String!
+  export: Github__com___kloudlite___operator___toolkit___plugin__ExportIn
   kind: String
   metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn
+  spec: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn
+  status: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn
 }
 
