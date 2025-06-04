@@ -3,13 +3,12 @@ package operator
 import (
 	"flag"
 	"fmt"
-	"log"
-	"log/slog"
 	"os"
 	"time"
 
+	"github.com/nxtcoder17/go.pkgs/log"
+
 	"github.com/kloudlite/operator/toolkit/kubectl"
-	"github.com/kloudlite/operator/toolkit/logging"
 	reconciler "github.com/kloudlite/operator/toolkit/reconciler"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -54,15 +53,10 @@ type operator struct {
 	Scheme       *runtime.Scheme
 
 	k8sYamlClient kubectl.YAMLClient
-	logger        *slog.Logger
 }
 
 func (op *operator) KubeYAMLClient() kubectl.YAMLClient {
 	return op.k8sYamlClient
-}
-
-func (op *operator) Logger() *slog.Logger {
-	return op.logger
 }
 
 func New(name string) Operator {
@@ -72,7 +66,7 @@ func New(name string) Operator {
 	var enableLeaderElection bool
 	var probeAddr string
 	var isDev bool
-	var debugLog bool
+	var debug bool
 	var devServerHost string
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":12345", "The address the metric endpoint binds to.")
@@ -83,11 +77,15 @@ func New(name string) Operator {
 			"Enabling this will ensure there is only one active controllers manager.",
 	)
 
+	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	opts := zap.Options{
 		Development: true,
 		EncoderConfigOptions: []zap.EncoderConfigOption{
 			func(ec *zapcore.EncoderConfig) {
 				// ec.EncodeLevel = zapcore.CapitalColorLevelEncoder
+				ec.CallerKey = "CALLER"
+				ec.EncodeCaller = zapcore.ShortCallerEncoder
 				ec.TimeKey = ""
 			},
 		},
@@ -97,15 +95,15 @@ func New(name string) Operator {
 	rest.SetDefaultWarningHandler(rest.NoWarnings{})
 
 	flag.BoolVar(&isDev, "dev", false, "--dev")
-	flag.BoolVar(&debugLog, "debug-log", false, "--debug-log")
+
 	flag.StringVar(&devServerHost, "serverHost", "localhost:8080", "--serverHost <host:port>")
 	flag.Parse()
 
-	if debugLog {
-		os.Setenv("LOG_DEBUG", "true")
+	if isDev {
+		debug = true
 	}
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts), zap.Level(zapcore.DebugLevel)))
 
 	mgrConfig, mgrOptions := func() (*rest.Config, ctrl.Options) {
 		cOpts := ctrl.Options{
@@ -126,11 +124,23 @@ func New(name string) Operator {
 		return ctrl.GetConfigOrDie(), cOpts
 	}()
 
-	logger := logging.New(ctrl.Log)
+	logger := log.New(log.Options{
+		Writer:        os.Stderr,
+		ShowTimestamp: false,
+		ShowCaller:    true,
+		ShowDebugLogs: debug,
+		ShowLogLevel:  true,
+		JSONFormat:    false,
+	})
+
+	log.SetDefaultLogger(logger)
+
 	k8sYamlClient, err := kubectl.NewYAMLClient(mgrConfig, kubectl.YAMLClientOpts{Logger: logger})
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal("failed to create YAML client", "err", err)
 	}
+
+	logger.Debug("Starting .............")
 
 	return &operator{
 		startedAt:     time.Now(),
@@ -138,7 +148,6 @@ func New(name string) Operator {
 		mgrOptions:    mgrOptions,
 		IsDev:         isDev,
 		k8sYamlClient: k8sYamlClient,
-		logger:        logger,
 	}
 }
 
@@ -200,7 +209,7 @@ func (op *operator) Operator() *operator {
 func (op *operator) Start() {
 	mgr, err := ctrl.NewManager(op.mgrConfig, op.mgrOptions)
 	if err != nil {
-		log.Fatalln(err)
+		log.DefaultLogger().Fatal("failed to create new controller runtime manager", "err", err)
 	}
 
 	for i := range op.controllers {

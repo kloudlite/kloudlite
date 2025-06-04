@@ -60,7 +60,7 @@ const (
 
 	AppInterceptCreated string = "app-intercept-created"
 
-	AppRouterReady string = "app-router-ready"
+	createAppRouter string = "create-app-router"
 )
 
 var DeleteChecklist = []reconciler.CheckMeta{
@@ -101,7 +101,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		{Name: DeploymentReady, Title: "Deployment Ready", Hide: req.Object.IsInterceptEnabled()},
 		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled() || !req.Object.IsHPAEnabled()},
 		{Name: AppInterceptCreated, Title: "App Intercept Created", Hide: !req.Object.IsInterceptEnabled()},
-		{Name: AppRouterReady, Title: "App Router Ready", Hide: req.Object.Spec.Router == nil},
+		{Name: createAppRouter, Title: "Create App Router", Hide: req.Object.Spec.Router == nil},
 	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -138,7 +138,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.checkAppRouter(req); !step.ShouldProceed() {
+	if step := r.handleAppRouter(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -450,30 +450,21 @@ func (r *Reconciler) checkDeploymentReady(req *reconciler.Request[*crdsv1.App]) 
 	return check.Completed()
 }
 
-func (r *Reconciler) checkAppRouter(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
+func (r *Reconciler) handleAppRouter(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := reconciler.NewRunningCheck(AppRouterReady, req)
+	check := reconciler.NewRunningCheck(createAppRouter, req)
 
 	if obj.Spec.Router == nil {
 		return check.Completed()
 	}
 
 	if len(obj.Spec.Router.Routes) == 0 {
-		if len(obj.Spec.Services) != 0 {
-			return check.Failed(fmt.Errorf("app has multiple exposed services, cannot deduce router routes automatically from services, router routes must be explicity set via .spec.router.routes"))
-		}
+		return check.Failed(fmt.Errorf("must specify at least 1 route"))
+	}
 
-		obj.Spec.Router.Routes = append(obj.Spec.Router.Routes, crdsv1.Route{
-			App:  obj.Name,
-			Path: "/",
-			Port: obj.Spec.Services[0].Port,
-		})
-
-		if err := r.Update(ctx, obj); err != nil {
-			return check.Failed(err)
-		}
-
-		return check.StillRunning(fmt.Errorf("updating app router default routes"))
+	for i := range obj.Spec.Router.Routes {
+		// INFO: app router will only route to current app, for any such usecases Router kind must be used
+		obj.Spec.Router.Routes[i].Service = obj.Name
 	}
 
 	router := &crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-app-router", obj.Name), Namespace: obj.Namespace}}

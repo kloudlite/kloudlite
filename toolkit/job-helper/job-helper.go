@@ -23,6 +23,15 @@ const (
 	JobStatusSuccess JobStatus = "job-status-success"
 )
 
+type JobPhase string
+
+const (
+	JobPhasePending   JobPhase = "PENDING"
+	JobPhaseRunning   JobPhase = "RUNNING"
+	JobPhaseFailed    JobPhase = "FAILED"
+	JobPhaseSucceeded JobPhase = "SUCCEEDED"
+)
+
 func GetLatestPod(ctx context.Context, cli client.Client, jobNamespace string, jobName string) (*corev1.Pod, error) {
 	var podList corev1.PodList
 

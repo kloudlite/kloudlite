@@ -117,7 +117,12 @@ type MinMaxInt struct {
 // +kubebuilder:validation:Enum=aws;do;azure;gcp
 type CloudProvider string
 
+func (c CloudProvider) String() string {
+	return string(c)
+}
+
 const (
+	CloudProviderUnknown      CloudProvider = "unknown"
 	CloudProviderAWS          CloudProvider = "aws"
 	CloudProviderDigitalOcean CloudProvider = "digitalocean"
 	CloudProviderAzure        CloudProvider = "azure"

@@ -6,44 +6,7 @@ import (
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	certmanagermetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/toolkit/reconciler"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 )
-
-func (r *Reconciler) parseAndExtractDomains(req *reconciler.Request[*crdsv1.Router]) ([]string, []string, error) {
-	ctx, obj := req.Context(), req.Object
-
-	var wildcardPatterns []string
-
-	if obj.Spec.Https != nil && obj.Spec.Https.Enabled {
-		issuerName := r.getRouterClusterIssuer(obj)
-
-		if issuerName == "" {
-			return nil, nil, fmt.Errorf("no cluster issuer found, could not proceed, when https is enabled")
-		}
-
-		clusterIssuer, err := reconciler.Get(ctx, r.Client, fn.NN("", issuerName), &certmanagerv1.ClusterIssuer{})
-		if err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return nil, nil, err
-			}
-			clusterIssuer = nil
-		}
-
-		if clusterIssuer != nil {
-			for _, solver := range clusterIssuer.Spec.ACME.Solvers {
-				if solver.DNS01 != nil {
-					wildcardPatterns = solver.Selector.DNSNames
-				}
-			}
-		}
-	}
-
-	wildcardDomains, nonWildcardDomains := FilterDomains(wildcardPatterns, obj.Spec.Domains)
-	return wildcardDomains, nonWildcardDomains, nil
-}
 
 func FilterDomains(wildcardPatterns []string, domains []string) (wildcardDomains, nonWildcardDomains []string) {
 	wildcardBases := map[string]struct{}{}

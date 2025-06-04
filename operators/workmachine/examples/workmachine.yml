@@ -1,0 +1,18 @@
+apiVersion: crds.kloudlite.io/v1
+kind: WorkMachine
+metadata:
+  name: sample
+spec:
+  state: "ON"
+  sshPublicKeys: []
+  jobParams:
+    nodeSelector:
+      kubernetes.io/hostname: "master-1"
+  aws:
+    region: "ap-south-1"
+    availabilityZone: "ap-south-1a"
+    publicSubnetID: "subnet-0e4f0634ba1b5be2e"
+    ami: "ami-05c179eced2eb9b5b"
+    instanceType: "t3.medium"
+    rootVolumeSize: 50
+    externalVolumeSize: 100

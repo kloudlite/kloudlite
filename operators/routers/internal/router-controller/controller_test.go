@@ -29,10 +29,10 @@ func newRouter() crdsv1.Router {
 			},
 			// RateLimit:       crdsv1.RateLimit{},
 			// MaxBodySizeInMB: 0,
-			Domains: []string{"sample.example.com"},
+			Routes: []string{"sample.example.com"},
 			Routes: []crdsv1.Route{
 				{
-					App:     "example",
+					Service:     "example",
 					Path:    "/",
 					Port:    80,
 					Rewrite: false,
@@ -127,14 +127,14 @@ var _ = Describe("router controller [UPDATE] says", func() {
 
 	It("adding a new domain, reflects in each of the owned k8s ingresses", func() {
 		_, err := controllerutil.CreateOrUpdate(Suite.Context, Suite.K8sClient, &routerCr, func() error {
-			routerCr.Spec.Domains = append(routerCr.Spec.Domains, "dummy.example.com")
+			routerCr.Spec.Routes = append(routerCr.Spec.Routes, "dummy.example.com")
 			return nil
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		dMap := make(map[string]bool, len(routerCr.Spec.Domains))
-		for i := range routerCr.Spec.Domains {
-			dMap[routerCr.Spec.Domains[i]] = false
+		dMap := make(map[string]bool, len(routerCr.Spec.Routes))
+		for i := range routerCr.Spec.Routes {
+			dMap[routerCr.Spec.Routes[i]] = false
 		}
 
 		Promise(func(g Gomega) {
@@ -156,7 +156,7 @@ var _ = Describe("router controller [UPDATE] says", func() {
 	It("adding a new route, reflects in each of the owned k8s ingresses", func() {
 		_, err := controllerutil.CreateOrUpdate(Suite.Context, Suite.K8sClient, &routerCr, func() error {
 			routerCr.Spec.Routes = append(routerCr.Spec.Routes, crdsv1.Route{
-				App:  "ginkgo-test",
+				Service:  "ginkgo-test",
 				Path: "/.kl/test",
 				Port: 80,
 			})

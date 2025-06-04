@@ -58,6 +58,7 @@ func ParseFromSecret[T any](secret *corev1.Secret) (*T, error) {
 	if secret == nil {
 		return nil, nil
 	}
+
 	x := make(map[string]string, len(secret.Data))
 	for k, v := range secret.Data {
 		x[k] = string(v)

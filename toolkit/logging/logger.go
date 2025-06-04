@@ -22,7 +22,7 @@ func WithCallDepth(depth int) Opt {
 	}
 }
 
-func New(logger logr.Logger, opts ...Opt) *slog.Logger {
+func Slog(logger logr.Logger, opts ...Opt) *slog.Logger {
 	options := defaultOptions()
 	for i := range opts {
 		opts[i](options)
@@ -33,4 +33,8 @@ func New(logger logr.Logger, opts ...Opt) *slog.Logger {
 	}
 
 	return slog.New(logr.ToSlogHandler(logger))
+}
+
+func New(logger logr.Logger, opts ...Opt) *slog.Logger {
+	return Slog(logger, opts...)
 }

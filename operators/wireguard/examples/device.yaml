@@ -3,7 +3,7 @@ kind: Device
 metadata:
   name: device-sample
 spec:
-  serverName: server-sample
+  # serverName: server-sample
   offset: 1
   ports:
     - port: 3000

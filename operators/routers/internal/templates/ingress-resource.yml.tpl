@@ -6,11 +6,9 @@
 {{- $annotations := get . "annotations" | default dict }}
 
 {{- $nonWildcardDomains := get . "non-wildcard-domains" }}
-{{- $routerDomains := get . "router-domains" }} 
 {{- $wildcardDomains := get . "wildcard-domains"}}
 
 {{- $ingressClass := get . "ingress-class" }}
-{{- $clusterIssuer := get . "cluster-issuer" }}
 
 {{- $routes := get . "routes" }} 
 
@@ -42,24 +40,22 @@ spec:
   {{- end}}
 
   rules:
-    {{- range $domain := $routerDomains }}
-    - host: {{$domain}}
+    {{- range $_, $route := $routes }}
+    - host: {{$route.Host}}
       http:
         paths:
-          {{- range $route := $routes }}
-          - pathType: Prefix
+          {{- /* - pathType: Prefix */}}
+          - pathType: ImplementationSpecific
             backend:
               service:
-                name: {{$route.App}}
+                name: {{$route.Service}}
                 port:
                   number: {{$route.Port}}
 
             {{- if $route.Rewrite }}
             path: {{$route.Path}}?(.*)
             {{- else }}
-            {{ $x := len $route.Path }}
-            path: /({{if hasPrefix "/" $route.Path }}{{substr 1 $x $route.Path}}{{else}}{{$route.Path}}{{end}}.*)
+            path: /({{substr 1 (len $route.Path) $route.Path}}.*)
             {{- end}}
-          {{- end}}
     {{- end }}
 

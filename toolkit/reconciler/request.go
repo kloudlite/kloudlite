@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/nxtcoder17/go.pkgs/log"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,10 +20,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	fn "github.com/kloudlite/operator/toolkit/functions"
-	"github.com/kloudlite/operator/toolkit/logging"
 
 	stepResult "github.com/kloudlite/operator/toolkit/reconciler/step-result"
 )
@@ -89,14 +88,21 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		resource.GetStatus().Checks = map[string]Check{}
 	}
 
-	logger := log.FromContext(ctx, "NN", nn.String())
+	resource.EnsureGVK()
+
+	// for i := 1; i < 5; i++ {
+	// 	_, file, line, _ := runtime.Caller(i)
+	// 	// logger := logging.New(ctrl.Log, logging.WithCallDepth(1)).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String())
+	// 	logger := log.DefaultLogger().SkipFrames(1).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String())
+	// 	logger.Debug(fmt.Sprintf("CALLER [skip frame: %d]: %s:%d\n", i, file, line))
+	// }
 
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         logging.New(logger),
-		internalLogger: logging.New(logger, logging.WithCallDepth(3)),
+		Logger:         log.DefaultLogger().SkipFrames(1).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
+		internalLogger: log.DefaultLogger().SkipFrames(4).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
 		anchorName:     anchorName,
 		KV:             KV{},
 		timerMap:       map[string]time.Time{},
@@ -442,7 +448,7 @@ func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
 	r.resourceRefs = append(r.resourceRefs, refs...)
 }
 
-func (r *Request[T]) CleanupOwnedResources(check *checkWrapper[T]) stepResult.Result {
+func (r *Request[T]) CleanupOwnedResources(check *CheckWrapper[T]) stepResult.Result {
 	resources := r.Object.GetStatus().Resources
 	objects := make([]client.Object, 0, len(resources))
 	for i := range resources {
@@ -468,7 +474,7 @@ INFO: this should only be used for very specific cases, where there is no other 
 Like, when deleting ManagedService
   - all managed resources should be deleted, but since owner is already getting deleted, there is no point in their proper cleanup
 */
-func (r *Request[T]) ForceCleanupOwnedResources(check *checkWrapper[T]) stepResult.Result {
+func (r *Request[T]) ForceCleanupOwnedResources(check *CheckWrapper[T]) stepResult.Result {
 	ctx := r.Context()
 	resources := r.Object.GetStatus().Resources
 

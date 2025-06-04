@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"time"
 
 	"github.com/kloudlite/operator/toolkit/errors"
+	"github.com/nxtcoder17/go.pkgs/log"
 
 	rApi "github.com/kloudlite/operator/toolkit/reconciler"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +45,7 @@ type yamlClient struct {
 	k8sClient     *kubernetes.Clientset
 	dynamicClient dynamic.Interface
 	mapper        meta.RESTMapper
-	logger        *slog.Logger
+	logger        log.Logger
 }
 
 func (yc *yamlClient) Client() *kubernetes.Clientset {
@@ -125,7 +125,11 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 
 		// Check if the resource exists
 		cobj, err := resourceClient.Get(ctx, obj.GetName(), metav1.GetOptions{})
-		if err != nil && apiErrors.IsNotFound(err) {
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return nil, err
+			}
+
 			// If not exists, create it
 			obj.SetAnnotations(ann)
 			obj.SetLabels(labels)
@@ -135,40 +139,49 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			}
 
 			logger.Info("created resource")
+			cobj = &obj
+		}
+
+		if err != nil && apiErrors.IsNotFound(err) {
 			continue
 		}
 
-		if cobj != nil {
-			prevLastApplied, ok := cobj.GetAnnotations()[rApi.LastAppliedKey]
-			if ok {
-				if prevLastApplied == ann[rApi.LastAppliedKey] {
-					logger.Info("No changes for resource")
-					continue
-				}
+		if cobj == nil {
+			// INFO: it should not happen, but just for sanity check
+			return resources, nil
+		}
 
-				var prevAppliedObj unstructured.Unstructured
-				if err := json.Unmarshal([]byte(prevLastApplied), &prevAppliedObj); err != nil {
-					return nil, err
-				}
+		prevLastApplied, ok := cobj.GetAnnotations()[rApi.LastAppliedKey]
+		if ok {
+			logger.Debug("prev last applied", "value", prevLastApplied)
+			logger.Debug("new last applied", "value", ann[rApi.LastAppliedKey])
+			if prevLastApplied == ann[rApi.LastAppliedKey] {
+				logger.Info("No changes for resource")
+				continue
+			}
 
-				prevAnn := prevAppliedObj.GetAnnotations()
+			var prevAppliedObj unstructured.Unstructured
+			if err := json.Unmarshal([]byte(prevLastApplied), &prevAppliedObj); err != nil {
+				return nil, err
+			}
 
-				for k, v := range cobj.GetAnnotations() {
-					if !fn.MapHasKey(ann, k) && !fn.MapHasKey(prevAnn, k) {
-						ann[k] = v
-					}
-				}
+			prevAnn := prevAppliedObj.GetAnnotations()
 
-				prevLabels := prevAppliedObj.GetLabels()
-
-				for k, v := range cobj.GetLabels() {
-					if !fn.MapHasKey(labels, k) && !fn.MapHasKey(prevLabels, k) {
-						labels[k] = v
-					}
+			for k, v := range cobj.GetAnnotations() {
+				if !fn.MapHasKey(ann, k) && !fn.MapHasKey(prevAnn, k) {
+					ann[k] = v
 				}
 			}
-			obj.Object["metadata"] = cobj.Object["metadata"]
+
+			prevLabels := prevAppliedObj.GetLabels()
+
+			for k, v := range cobj.GetLabels() {
+				if !fn.MapHasKey(labels, k) && !fn.MapHasKey(prevLabels, k) {
+					labels[k] = v
+				}
+			}
 		}
+		obj.Object["metadata"] = cobj.Object["metadata"]
 
 		obj.SetAnnotations(ann)
 		obj.SetLabels(labels)
@@ -413,7 +426,7 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 }
 
 type YAMLClientOpts struct {
-	Logger *slog.Logger
+	Logger log.Logger
 }
 
 func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error) {
@@ -435,7 +448,7 @@ func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error)
 	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
 	if opts.Logger == nil {
-		opts.Logger = slog.Default()
+		opts.Logger = log.DefaultLogger()
 	}
 
 	return &yamlClient{
