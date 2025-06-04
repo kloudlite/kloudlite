@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 
 	"sigs.k8s.io/yaml"
@@ -56,9 +57,12 @@ type domain struct {
 	namespaceRepo        repos.DbRepo[*entities.Namespace]
 	pvRepo               repos.DbRepo[*entities.PersistentVolume]
 	volumeAttachmentRepo repos.DbRepo[*entities.VolumeAttachment]
+	workspaceRepo        repos.DbRepo[*entities.Workspace]
+	workmachineRepo      repos.DbRepo[*entities.Workmachine]
 
 	iamClient              iam.IAMClient
 	consoleClient          console.ConsoleClient
+	authClient             auth.AuthClient
 	accountsSvc            AccountsSvc
 	moSvc                  ports.MessageOfficeService
 	resDispatcher          ResourceDispatcher
@@ -195,10 +199,13 @@ var Module = fx.Module("domain",
 			pvRepo repos.DbRepo[*entities.PersistentVolume],
 			namespaceRepo repos.DbRepo[*entities.Namespace],
 			volumeAttachmentRepo repos.DbRepo[*entities.VolumeAttachment],
+			workspaceRepo repos.DbRepo[*entities.Workspace],
+			workmachineRepo repos.DbRepo[*entities.Workmachine],
 
 			k8sClient k8s.Client,
 
 			iamClient iam.IAMClient,
+			authClient auth.AuthClient,
 			consoleClient console.ConsoleClient,
 			accountsSvc AccountsSvc,
 			moSvc ports.MessageOfficeService,
@@ -260,6 +267,7 @@ var Module = fx.Module("domain",
 				k8sClient:              k8sClient,
 				iamClient:              iamClient,
 				consoleClient:          consoleClient,
+				authClient:             authClient,
 				accountsSvc:            accountsSvc,
 				moSvc:                  moSvc,
 				resourceEventPublisher: resourceEventPublisher,
@@ -268,6 +276,8 @@ var Module = fx.Module("domain",
 				volumeAttachmentRepo: volumeAttachmentRepo,
 				pvRepo:               pvRepo,
 				namespaceRepo:        namespaceRepo,
+				workspaceRepo:        workspaceRepo,
+				workmachineRepo:      workmachineRepo,
 
 				helmClient: helmClient,
 			}, nil

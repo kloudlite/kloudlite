@@ -2,7 +2,10 @@ package app
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/auth/internal/entities"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/repos"
 
 	"github.com/kloudlite/api/apps/auth/internal/domain"
@@ -12,7 +15,41 @@ import (
 
 type authGrpcServer struct {
 	auth.UnimplementedAuthServer
-	d domain.Domain
+	d           domain.Domain
+	sessionRepo kv.Repo[*common.AuthSession]
+}
+
+// GenerateMachineSession implements auth.AuthServer.
+func (a *authGrpcServer) GenerateMachineSession(ctx context.Context, in *auth.GenerateMachineSessionIn) (*auth.GenerateMachineSessionOut, error) {
+	session, err := a.d.MachineLogin(ctx, in.UserId, in.MachineId, in.Cluster)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	err = a.sessionRepo.Set(ctx, string(session.Id), session)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	if session == nil {
+		return nil, errors.Newf("session is nil")
+	}
+	return &auth.GenerateMachineSessionOut{
+		SessionId: string(session.Id),
+	}, nil
+}
+
+// ClearMachineSessionByMachine implements auth.AuthServer.
+func (a *authGrpcServer) ClearMachineSessionByMachine(context.Context, *auth.ClearMachineSessionByMachineIn) (*auth.ClearMachineSessionByMachineOut, error) {
+	panic("unimplemented")
+}
+
+// ClearMachineSessionByTeam implements auth.AuthServer.
+func (a *authGrpcServer) ClearMachineSessionByTeam(context.Context, *auth.ClearMachineSessionByTeamIn) (*auth.ClearMachineSessionByTeamOut, error) {
+	panic("unimplemented")
+}
+
+// ClearMachineSessionByUser implements auth.AuthServer.
+func (a *authGrpcServer) ClearMachineSessionByUser(context.Context, *auth.ClearMachineSessionByUserIn) (*auth.ClearMachineSessionByUserOut, error) {
+	panic("unimplemented")
 }
 
 func (a *authGrpcServer) GetUser(ctx context.Context, in *auth.GetUserIn) (*auth.GetUserOut, error) {
@@ -72,8 +109,9 @@ func (a *authGrpcServer) GetAccessToken(ctx context.Context, in *auth.GetAccessT
 	return a.FromAccToken(*token), nil
 }
 
-func fxRPCServer(d domain.Domain) auth.AuthServer {
+func fxRPCServer(d domain.Domain, sessionRepo kv.Repo[*common.AuthSession]) auth.AuthServer {
 	return &authGrpcServer{
-		d: d,
+		d:           d,
+		sessionRepo: sessionRepo,
 	}
 }

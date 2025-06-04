@@ -1,0 +1,90 @@
+---
+label: "Create Workmachine"
+query: |+
+  mutation Infra_createWorkMachine($clusterName: String!, $workmachine: WorkmachineIn!) {
+    infra_createWorkMachine(clusterName: $clusterName, workmachine: $workmachine) {
+      accountName
+    }
+  }
+variables:
+  {
+    "clusterName": "ttt",
+    "workmachine": {
+      "displayName": "tt",
+      "metadata": {
+        "name": "tt"
+      }
+    }
+  }
+
+---
+
+label: "update Workmachine"
+query: |+
+  mutation Infra_updateWorkMachine($clusterName: String!, $workmachine: WorkmachineIn!) {
+    infra_updateWorkMachine(clusterName: $clusterName, workmachine: $workmachine) {
+      accountName
+    }
+  }
+variables:
+  {
+    "clusterName": "ttt",
+    "workmachine": {
+      "displayName": "mm",
+      "metadata": {
+        "name": "tt"
+      }
+    }
+  }
+
+---
+
+label: "update Workmachine Status"
+query: |+
+  mutation Infra_updateWorkMachineStatus($clusterName: String!, $status: Boolean!, $name: String!) {
+    infra_updateWorkMachineStatus(clusterName: $clusterName, status: $status, name: $name)
+  }
+variables:
+  {
+    "clusterName": "test-clus",
+    "status": true,
+    "name": "test-wm1"
+  }
+
+---
+
+label: "get workmachine"
+query: |+
+  query Infra_getWorkmachine($clusterName: String!, $name: String!) {
+    infra_getWorkmachine(clusterName: $clusterName, name: $name) {
+      accountName
+    }
+  }
+variables:
+  {
+    "clusterName": "test-clus",
+    "name": "test-wm1"
+  }
+
+---
+
+label: "list App"
+query: |+
+  query Iot_listApps($projectName: String!, $deviceBlueprintName: String!) {
+    iot_listApps(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName) {
+      totalCount
+      edges {
+        node {
+          displayName
+          id
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deviceBlueprintName": "sample-device-blueprint",
+  }
+
+---

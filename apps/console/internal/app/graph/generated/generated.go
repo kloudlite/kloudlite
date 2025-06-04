@@ -399,15 +399,16 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__AppRouter struct {
-		BackendProtocol func(childComplexity int) int
-		BasicAuth       func(childComplexity int) int
-		Cors            func(childComplexity int) int
-		Domains         func(childComplexity int) int
-		HTTPS           func(childComplexity int) int
-		IngressClass    func(childComplexity int) int
-		MaxBodySizeInMb func(childComplexity int) int
-		RateLimit       func(childComplexity int) int
-		Routes          func(childComplexity int) int
+		BackendProtocol         func(childComplexity int) int
+		BasicAuth               func(childComplexity int) int
+		Cors                    func(childComplexity int) int
+		Domains                 func(childComplexity int) int
+		HTTPS                   func(childComplexity int) int
+		IngressClass            func(childComplexity int) int
+		MaxBodySizeInMb         func(childComplexity int) int
+		NginxIngressAnnotations func(childComplexity int) int
+		RateLimit               func(childComplexity int) int
+		Routes                  func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__AppSpec struct {
@@ -505,30 +506,6 @@ type ComplexityRoot struct {
 		ThresholdMemory func(childComplexity int) int
 	}
 
-	Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec struct {
-		ChartName     func(childComplexity int) int
-		ChartRepoURL  func(childComplexity int) int
-		ChartVersion  func(childComplexity int) int
-		JobVars       func(childComplexity int) int
-		PostInstall   func(childComplexity int) int
-		PostUninstall func(childComplexity int) int
-		PreInstall    func(childComplexity int) int
-		PreUninstall  func(childComplexity int) int
-		ReleaseName   func(childComplexity int) int
-		Values        func(childComplexity int) int
-	}
-
-	Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus struct {
-		CheckList           func(childComplexity int) int
-		Checks              func(childComplexity int) int
-		IsReady             func(childComplexity int) int
-		LastReadyGeneration func(childComplexity int) int
-		LastReconcileTime   func(childComplexity int) int
-		ReleaseNotes        func(childComplexity int) int
-		ReleaseStatus       func(childComplexity int) int
-		Resources           func(childComplexity int) int
-	}
-
 	Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe struct {
 		HTTPHeaders func(childComplexity int) int
 		Path        func(childComplexity int) int
@@ -546,13 +523,6 @@ type ComplexityRoot struct {
 		PortMappings func(childComplexity int) int
 		ToDevice     func(childComplexity int) int
 		ToIPAddr     func(childComplexity int) int
-	}
-
-	Github__com___kloudlite___operator___apis___crds___v1__JobVars struct {
-		Affinity     func(childComplexity int) int
-		BackOffLimit func(childComplexity int) int
-		NodeSelector func(childComplexity int) int
-		Tolerations  func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec struct {
@@ -597,15 +567,16 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__RouterSpec struct {
-		BackendProtocol func(childComplexity int) int
-		BasicAuth       func(childComplexity int) int
-		Cors            func(childComplexity int) int
-		Domains         func(childComplexity int) int
-		HTTPS           func(childComplexity int) int
-		IngressClass    func(childComplexity int) int
-		MaxBodySizeInMb func(childComplexity int) int
-		RateLimit       func(childComplexity int) int
-		Routes          func(childComplexity int) int
+		BackendProtocol         func(childComplexity int) int
+		BasicAuth               func(childComplexity int) int
+		Cors                    func(childComplexity int) int
+		Domains                 func(childComplexity int) int
+		HTTPS                   func(childComplexity int) int
+		IngressClass            func(childComplexity int) int
+		MaxBodySizeInMb         func(childComplexity int) int
+		NginxIngressAnnotations func(childComplexity int) int
+		RateLimit               func(childComplexity int) int
+		Routes                  func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ShellProbe struct {
@@ -709,11 +680,60 @@ type ComplexityRoot struct {
 		Resources           func(childComplexity int) int
 	}
 
+	Github__com___kloudlite___operator___toolkit___types__CPUResource struct {
+		Max func(childComplexity int) int
+		Min func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___toolkit___types__MemoryResource struct {
+		Max func(childComplexity int) int
+		Min func(childComplexity int) int
+	}
+
 	Github__com___kloudlite___operator___toolkit___types__ObjectReference struct {
 		APIVersion func(childComplexity int) int
 		Kind       func(childComplexity int) int
 		Name       func(childComplexity int) int
 		Namespace  func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___toolkit___types__Resource struct {
+		CPU    func(childComplexity int) int
+		Memory func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo struct {
+		Name    func(childComplexity int) int
+		URL     func(childComplexity int) int
+		Version func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec struct {
+		Chart         func(childComplexity int) int
+		HelmValues    func(childComplexity int) int
+		JobVars       func(childComplexity int) int
+		PostInstall   func(childComplexity int) int
+		PostUninstall func(childComplexity int) int
+		PreInstall    func(childComplexity int) int
+		PreUninstall  func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus struct {
+		CheckList           func(childComplexity int) int
+		Checks              func(childComplexity int) int
+		IsReady             func(childComplexity int) int
+		LastReadyGeneration func(childComplexity int) int
+		LastReconcileTime   func(childComplexity int) int
+		ReleaseNotes        func(childComplexity int) int
+		ReleaseStatus       func(childComplexity int) int
+		Resources           func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars struct {
+		Affinity     func(childComplexity int) int
+		NodeSelector func(childComplexity int) int
+		Resources    func(childComplexity int) int
+		Tolerations  func(childComplexity int) int
 	}
 
 	HelmChart struct {
@@ -723,6 +743,7 @@ type ComplexityRoot struct {
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		EnvironmentName   func(childComplexity int) int
+		Export            func(childComplexity int) int
 		Id                func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
@@ -1082,55 +1103,56 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CoreCheckNameAvailability            func(childComplexity int, envName *string, msvcName *string, resType entities.ResourceType, name string) int
-		CoreGetApp                           func(childComplexity int, envName string, name string) int
-		CoreGetConfig                        func(childComplexity int, envName string, name string) int
-		CoreGetConfigValues                  func(childComplexity int, envName string, queries []*domain.ConfigKeyRef) int
-		CoreGetDNSHostSuffix                 func(childComplexity int) int
-		CoreGetEnvironment                   func(childComplexity int, name string) int
-		CoreGetExternalApp                   func(childComplexity int, envName string, name string) int
-		CoreGetHelmChart                     func(childComplexity int, envName string, name string) int
-		CoreGetImagePullSecret               func(childComplexity int, name string) int
-		CoreGetManagedResouceOutputKeyValues func(childComplexity int, msvcName *string, envName *string, keyrefs []*domain.ManagedResourceKeyRef) int
-		CoreGetManagedResouceOutputKeys      func(childComplexity int, msvcName *string, envName *string, name string) int
-		CoreGetManagedResource               func(childComplexity int, msvcName *string, envName *string, name string) int
-		CoreGetManagedServicePlugin          func(childComplexity int, category string, name string) int
-		CoreGetRegistryImage                 func(childComplexity int, image string) int
-		CoreGetRegistryImageURL              func(childComplexity int) int
-		CoreGetRouter                        func(childComplexity int, envName string, name string) int
-		CoreGetSecret                        func(childComplexity int, envName string, name string) int
-		CoreGetSecretValues                  func(childComplexity int, envName string, queries []*domain.SecretKeyRef) int
-		CoreGetSecretVariable                func(childComplexity int, name string) int
-		CoreGetSecretVariableOutputKeyValues func(childComplexity int, keyrefs []*domain.SecretVariableKeyRef) int
-		CoreGetSecretVariableOutputKeys      func(childComplexity int, name string) int
-		CoreListApps                         func(childComplexity int, envName string, search *model.SearchApps, pq *repos.CursorPagination) int
-		CoreListConfigs                      func(childComplexity int, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) int
-		CoreListEnvironments                 func(childComplexity int, search *model.SearchEnvironments, pq *repos.CursorPagination) int
-		CoreListExternalApps                 func(childComplexity int, envName string, search *model.SearchExternalApps, pq *repos.CursorPagination) int
-		CoreListHelmCharts                   func(childComplexity int, envName string, search *model.SearchHelmCharts, pq *repos.CursorPagination) int
-		CoreListImagePullSecrets             func(childComplexity int, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
-		CoreListImportedManagedResources     func(childComplexity int, envName string, search *model.SearchImportedManagedResources, pq *repos.CursorPagination) int
-		CoreListManagedResources             func(childComplexity int, search *model.SearchManagedResources, pq *repos.CursorPagination) int
-		CoreListManagedServicePlugins        func(childComplexity int) int
-		CoreListRegistryImages               func(childComplexity int, pq *repos.CursorPagination) int
-		CoreListRouters                      func(childComplexity int, envName string, search *model.SearchRouters, pq *repos.CursorPagination) int
-		CoreListSecretVariables              func(childComplexity int, search *model.SearchSecretVariables, pq *repos.CursorPagination) int
-		CoreListSecrets                      func(childComplexity int, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
-		CoreListServiceBindings              func(childComplexity int, envName string, pagination *repos.CursorPagination) int
-		CoreRestartApp                       func(childComplexity int, envName string, appName string) int
-		CoreResyncApp                        func(childComplexity int, envName string, name string) int
-		CoreResyncConfig                     func(childComplexity int, envName string, name string) int
-		CoreResyncEnvironment                func(childComplexity int, name string) int
-		CoreResyncExternalApp                func(childComplexity int, envName string, name string) int
-		CoreResyncImagePullSecret            func(childComplexity int, name string) int
-		CoreResyncManagedResource            func(childComplexity int, msvcName string, name string) int
-		CoreResyncRouter                     func(childComplexity int, envName string, name string) int
-		CoreResyncSecret                     func(childComplexity int, envName string, name string) int
-		CoreSearchRegistryImages             func(childComplexity int, query string) int
-		InfraGetClusterManagedService        func(childComplexity int, name string) int
-		InfraListClusterManagedServices      func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
-		__resolve__service                   func(childComplexity int) int
-		__resolve_entities                   func(childComplexity int, representations []map[string]interface{}) int
+		CoreCheckNameAvailability               func(childComplexity int, envName *string, msvcName *string, resType entities.ResourceType, name string) int
+		CoreGetApp                              func(childComplexity int, envName string, name string) int
+		CoreGetConfig                           func(childComplexity int, envName string, name string) int
+		CoreGetConfigValues                     func(childComplexity int, envName string, queries []*domain.ConfigKeyRef) int
+		CoreGetDNSHostSuffix                    func(childComplexity int) int
+		CoreGetEnvironment                      func(childComplexity int, name string) int
+		CoreGetExternalApp                      func(childComplexity int, envName string, name string) int
+		CoreGetHelmChart                        func(childComplexity int, envName string, name string) int
+		CoreGetImagePullSecret                  func(childComplexity int, name string) int
+		CoreGetManagedResouceOutputKeyValues    func(childComplexity int, msvcName *string, envName *string, keyrefs []*domain.ManagedResourceKeyRef) int
+		CoreGetManagedResouceOutputKeys         func(childComplexity int, msvcName *string, envName *string, name string) int
+		CoreGetManagedResource                  func(childComplexity int, msvcName *string, envName *string, name string) int
+		CoreGetManagedServicePlugin             func(childComplexity int, category string, name string) int
+		CoreGetRegistryImage                    func(childComplexity int, image string) int
+		CoreGetRegistryImageURL                 func(childComplexity int) int
+		CoreGetRouter                           func(childComplexity int, envName string, name string) int
+		CoreGetSecret                           func(childComplexity int, envName string, name string) int
+		CoreGetSecretValues                     func(childComplexity int, envName string, queries []*domain.SecretKeyRef) int
+		CoreGetSecretVariable                   func(childComplexity int, name string) int
+		CoreGetSecretVariableOutputKeyValues    func(childComplexity int, keyrefs []*domain.SecretVariableKeyRef) int
+		CoreGetSecretVariableOutputKeys         func(childComplexity int, name string) int
+		CoreListApps                            func(childComplexity int, envName string, search *model.SearchApps, pq *repos.CursorPagination) int
+		CoreListConfigs                         func(childComplexity int, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) int
+		CoreListEnvironments                    func(childComplexity int, search *model.SearchEnvironments, pq *repos.CursorPagination) int
+		CoreListExternalApps                    func(childComplexity int, envName string, search *model.SearchExternalApps, pq *repos.CursorPagination) int
+		CoreListHelmCharts                      func(childComplexity int, envName string, search *model.SearchHelmCharts, pq *repos.CursorPagination) int
+		CoreListImagePullSecrets                func(childComplexity int, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
+		CoreListImportedManagedResources        func(childComplexity int, envName string, search *model.SearchImportedManagedResources, pq *repos.CursorPagination) int
+		CoreListManagedResources                func(childComplexity int, search *model.SearchManagedResources, pq *repos.CursorPagination) int
+		CoreListManagedServicePlugins           func(childComplexity int) int
+		CoreListRegistryImages                  func(childComplexity int, pq *repos.CursorPagination) int
+		CoreListRouters                         func(childComplexity int, envName string, search *model.SearchRouters, pq *repos.CursorPagination) int
+		CoreListSecretVariables                 func(childComplexity int, search *model.SearchSecretVariables, pq *repos.CursorPagination) int
+		CoreListSecrets                         func(childComplexity int, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
+		CoreListServiceBindings                 func(childComplexity int, envName string, pagination *repos.CursorPagination) int
+		CoreRestartApp                          func(childComplexity int, envName string, appName string) int
+		CoreResyncApp                           func(childComplexity int, envName string, name string) int
+		CoreResyncConfig                        func(childComplexity int, envName string, name string) int
+		CoreResyncEnvironment                   func(childComplexity int, name string) int
+		CoreResyncExternalApp                   func(childComplexity int, envName string, name string) int
+		CoreResyncImagePullSecret               func(childComplexity int, name string) int
+		CoreResyncManagedResource               func(childComplexity int, msvcName string, name string) int
+		CoreResyncRouter                        func(childComplexity int, envName string, name string) int
+		CoreResyncSecret                        func(childComplexity int, envName string, name string) int
+		CoreSearchRegistryImages                func(childComplexity int, query string) int
+		InfraGetClusterManagedService           func(childComplexity int, name string) int
+		InfraListClusterManagedServices         func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
+		InfraListHelmTypeClusterManagedServices func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
+		__resolve__service                      func(childComplexity int) int
+		__resolve_entities                      func(childComplexity int, representations []map[string]interface{}) int
 	}
 
 	RegistryImage struct {
@@ -1400,8 +1422,10 @@ type Github__com___kloudlite___operator___toolkit___reconciler__StatusResolver i
 type HelmChartResolver interface {
 	CreationTime(ctx context.Context, obj *entities.HelmChart) (string, error)
 
-	Spec(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec, error)
-	Status(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus, error)
+	Export(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudliteOperatorToolkitPluginExport, error)
+
+	Spec(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec, error)
+	Status(ctx context.Context, obj *entities.HelmChart) (*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus, error)
 
 	UpdateTime(ctx context.Context, obj *entities.HelmChart) (string, error)
 }
@@ -1534,6 +1558,7 @@ type QueryResolver interface {
 	CoreGetManagedResouceOutputKeyValues(ctx context.Context, msvcName *string, envName *string, keyrefs []*domain.ManagedResourceKeyRef) ([]*domain.ManagedResourceKeyValueRef, error)
 	InfraListClusterManagedServices(ctx context.Context, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error)
 	InfraGetClusterManagedService(ctx context.Context, name string) (*entities.ClusterManagedService, error)
+	InfraListHelmTypeClusterManagedServices(ctx context.Context, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error)
 	CoreListManagedResources(ctx context.Context, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error)
 	CoreGetManagedResource(ctx context.Context, msvcName *string, envName *string, name string) (*entities.ManagedResource, error)
 	CoreResyncManagedResource(ctx context.Context, msvcName string, name string) (bool, error)
@@ -1626,8 +1651,11 @@ type Github__com___kloudlite___operator___apis___crds___v1__SvcInterceptPortMapp
 	ServicePort(ctx context.Context, obj *v1.SvcInterceptPortMappings, data int) error
 }
 type HelmChartInResolver interface {
+	Export(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudliteOperatorToolkitPluginExportIn) error
+
 	Metadata(ctx context.Context, obj *entities.HelmChart, data *v12.ObjectMeta) error
-	Spec(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn) error
+	Spec(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn) error
+	Status(ctx context.Context, obj *entities.HelmChart, data *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn) error
 }
 type ImagePullSecretInResolver interface {
 	Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) error
@@ -3080,6 +3108,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.MaxBodySizeInMb(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.nginxIngressAnnotations":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.NginxIngressAnnotations == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.NginxIngressAnnotations(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.rateLimit":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.RateLimit == nil {
 			break
@@ -3465,132 +3500,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HPA.ThresholdMemory(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartName":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartName == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartName(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartRepoURL":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepoURL == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepoURL(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartVersion":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartVersion == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartVersion(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.jobVars":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.JobVars == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.JobVars(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.postInstall":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostInstall == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostInstall(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.postUninstall":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostUninstall == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PostUninstall(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.preInstall":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreInstall == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreInstall(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.preUninstall":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreUninstall == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.PreUninstall(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.releaseName":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ReleaseName == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ReleaseName(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.values":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.Values == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.Values(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.checkList":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.CheckList == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.CheckList(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.checks":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Checks == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Checks(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.isReady":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.IsReady == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.IsReady(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.lastReadyGeneration":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReadyGeneration == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReadyGeneration(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.lastReconcileTime":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReconcileTime == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.LastReconcileTime(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.releaseNotes":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseNotes == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseNotes(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.releaseStatus":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseStatus == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.ReleaseStatus(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.resources":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Resources == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus.Resources(childComplexity), true
-
 	case "Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe.httpHeaders":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe.HTTPHeaders == nil {
 			break
@@ -3660,34 +3569,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Intercept.ToIPAddr(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.affinity":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Affinity == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Affinity(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.backOffLimit":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.BackOffLimit == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.BackOffLimit(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.nodeSelector":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.NodeSelector == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.NodeSelector(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__JobVars.tolerations":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Tolerations == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__JobVars.Tolerations(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.managedServiceRef":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ManagedServiceRef == nil {
@@ -3898,6 +3779,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__RouterSpec.MaxBodySizeInMb(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec.nginxIngressAnnotations":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__RouterSpec.NginxIngressAnnotations == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__RouterSpec.NginxIngressAnnotations(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec.rateLimit":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__RouterSpec.RateLimit == nil {
@@ -4326,6 +4214,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___toolkit___reconciler__Status.Resources(childComplexity), true
 
+	case "Github__com___kloudlite___operator___toolkit___types__CPUResource.max":
+		if e.complexity.Github__com___kloudlite___operator___toolkit___types__CPUResource.Max == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___toolkit___types__CPUResource.Max(childComplexity), true
+
+	case "Github__com___kloudlite___operator___toolkit___types__CPUResource.min":
+		if e.complexity.Github__com___kloudlite___operator___toolkit___types__CPUResource.Min == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___toolkit___types__CPUResource.Min(childComplexity), true
+
+	case "Github__com___kloudlite___operator___toolkit___types__MemoryResource.max":
+		if e.complexity.Github__com___kloudlite___operator___toolkit___types__MemoryResource.Max == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___toolkit___types__MemoryResource.Max(childComplexity), true
+
+	case "Github__com___kloudlite___operator___toolkit___types__MemoryResource.min":
+		if e.complexity.Github__com___kloudlite___operator___toolkit___types__MemoryResource.Min == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___toolkit___types__MemoryResource.Min(childComplexity), true
+
 	case "Github__com___kloudlite___operator___toolkit___types__ObjectReference.apiVersion":
 		if e.complexity.Github__com___kloudlite___operator___toolkit___types__ObjectReference.APIVersion == nil {
 			break
@@ -4353,6 +4269,174 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___toolkit___types__ObjectReference.Namespace(childComplexity), true
+
+	case "Github__com___kloudlite___operator___toolkit___types__Resource.cpu":
+		if e.complexity.Github__com___kloudlite___operator___toolkit___types__Resource.CPU == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___toolkit___types__Resource.CPU(childComplexity), true
+
+	case "Github__com___kloudlite___operator___toolkit___types__Resource.memory":
+		if e.complexity.Github__com___kloudlite___operator___toolkit___types__Resource.Memory == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___toolkit___types__Resource.Memory(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.name":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.Name == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.Name(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.url":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.URL == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.URL(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.version":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.Version == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo.Version(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.chart":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.Chart == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.Chart(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.helmValues":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.HelmValues == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.HelmValues(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.jobVars":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.JobVars == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.JobVars(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.postInstall":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PostInstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PostInstall(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.postUninstall":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PostUninstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PostUninstall(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.preInstall":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PreInstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PreInstall(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.preUninstall":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PreUninstall == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec.PreUninstall(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.checkList":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.CheckList == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.CheckList(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.checks":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.Checks == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.Checks(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.isReady":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.IsReady == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.IsReady(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.lastReadyGeneration":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.LastReadyGeneration == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.LastReadyGeneration(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.lastReconcileTime":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.LastReconcileTime == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.LastReconcileTime(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.releaseNotes":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.ReleaseNotes == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.ReleaseNotes(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.releaseStatus":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.ReleaseStatus == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.ReleaseStatus(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.resources":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.Resources == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus.Resources(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.affinity":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.Affinity == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.Affinity(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.nodeSelector":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.NodeSelector == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.NodeSelector(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.resources":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.Resources == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.Resources(childComplexity), true
+
+	case "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.tolerations":
+		if e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.Tolerations == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars.Tolerations(childComplexity), true
 
 	case "HelmChart.apiVersion":
 		if e.complexity.HelmChart.APIVersion == nil {
@@ -4395,6 +4479,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HelmChart.EnvironmentName(childComplexity), true
+
+	case "HelmChart.export":
+		if e.complexity.HelmChart.Export == nil {
+			break
+		}
+
+		return e.complexity.HelmChart.Export(childComplexity), true
 
 	case "HelmChart.id":
 		if e.complexity.HelmChart.Id == nil {
@@ -6775,6 +6866,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraListClusterManagedServices(childComplexity, args["search"].(*model.SearchClusterManagedService), args["pagination"].(*repos.CursorPagination)), true
 
+	case "Query.infra_listHelmTypeClusterManagedServices":
+		if e.complexity.Query.InfraListHelmTypeClusterManagedServices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listHelmTypeClusterManagedServices_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListHelmTypeClusterManagedServices(childComplexity, args["search"].(*model.SearchClusterManagedService), args["pagination"].(*repos.CursorPagination)), true
+
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
 			break
@@ -7730,11 +7833,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ExternalAppSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HPAIn,
-		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HttpsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__InterceptIn,
-		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__PluginTemplateIn,
@@ -7756,7 +7857,14 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___reconciler__StatusIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___types__CPUResourceIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___types__MemoryResourceIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___types__ObjectReferenceIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___types__ResourceIn,
+		ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoIn,
+		ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn,
+		ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn,
+		ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsIn,
 		ec.unmarshalInputHelmChartIn,
 		ec.unmarshalInputImagePullSecretIn,
 		ec.unmarshalInputImportedManagedResourceIn,
@@ -8077,8 +8185,9 @@ type Query {
 	core_getManagedResouceOutputKeys(msvcName: String, envName:String , name: String!): [String!]! @isLoggedInAndVerified @hasAccount
 	core_getManagedResouceOutputKeyValues(msvcName: String, envName:String, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
 
-  infra_listClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-  infra_getClusterManagedService(name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+	infra_listClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+	infra_getClusterManagedService(name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+	infra_listHelmTypeClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
 
 	core_listManagedResources(search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getManagedResource(msvcName: String, envName: String, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
@@ -8389,6 +8498,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppRouter @shareable
   https: Github__com___kloudlite___operator___apis___crds___v1__Https
   ingressClass: String
   maxBodySizeInMB: Int
+  nginxIngressAnnotations: Map
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
   routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
 }
@@ -8488,30 +8598,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__HPA @shareable {
   thresholdMemory: Int
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @shareable {
-  chartName: String!
-  chartRepoURL: String!
-  chartVersion: String!
-  jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVars
-  postInstall: String
-  postUninstall: String
-  preInstall: String
-  preUninstall: String
-  releaseName: String
-  values: Map!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus @shareable {
-  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta!]
-  checks: Map
-  isReady: Boolean!
-  lastReadyGeneration: Int
-  lastReconcileTime: Date
-  releaseNotes: String!
-  releaseStatus: String!
-  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef!]
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe @shareable {
   httpHeaders: Map
   path: String!
@@ -8529,13 +8615,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
   toDevice: String
   toIPAddr: String
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__JobVars @shareable {
-  affinity: K8s__io___api___core___v1__Affinity
-  backOffLimit: Int
-  nodeSelector: Map
-  tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
@@ -8587,6 +8666,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec @shareabl
   https: Github__com___kloudlite___operator___apis___crds___v1__Https
   ingressClass: String
   maxBodySizeInMB: Int
+  nginxIngressAnnotations: Map
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
   routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
 }
@@ -8654,7 +8734,7 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
 
 type Github__com___kloudlite___operator___toolkit___plugin__Export @shareable {
   template: String
-  viaSecret: String!
+  viaSecret: String
 }
 
 type Github__com___kloudlite___operator___toolkit___reconciler__Check @shareable {
@@ -8692,11 +8772,60 @@ type Github__com___kloudlite___operator___toolkit___reconciler__Status @shareabl
   resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef!]
 }
 
+type Github__com___kloudlite___operator___toolkit___types__CPUResource @shareable {
+  max: String!
+  min: String!
+}
+
+type Github__com___kloudlite___operator___toolkit___types__MemoryResource @shareable {
+  max: String!
+  min: String!
+}
+
 type Github__com___kloudlite___operator___toolkit___types__ObjectReference @shareable {
   apiVersion: String!
   kind: String!
   name: String!
   namespace: String!
+}
+
+type Github__com___kloudlite___operator___toolkit___types__Resource @shareable {
+  cpu: Github__com___kloudlite___operator___toolkit___types__CPUResource
+  memory: Github__com___kloudlite___operator___toolkit___types__MemoryResource
+}
+
+type Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo @shareable {
+  name: String!
+  url: String!
+  version: String
+}
+
+type Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec @shareable {
+  chart: Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo!
+  helmValues: Map!
+  jobVars: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars
+  postInstall: String
+  postUninstall: String
+  preInstall: String
+  preUninstall: String
+}
+
+type Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus @shareable {
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  releaseNotes: String!
+  releaseStatus: String!
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef!]
+}
+
+type Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars @shareable {
+  affinity: K8s__io___api___core___v1__Affinity
+  nodeSelector: Map
+  resources: Github__com___kloudlite___operator___toolkit___types__Resource
+  tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
 type K8s__io___api___core___v1__Affinity @shareable {
@@ -8900,6 +9029,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppRouterIn {
   https: Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
   ingressClass: String
   maxBodySizeInMB: Int
+  nginxIngressAnnotations: Map
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
   routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
 }
@@ -8996,18 +9126,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
   thresholdMemory: Int
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
-  chartName: String!
-  chartRepoURL: String!
-  chartVersion: String!
-  jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn
-  postInstall: String
-  postUninstall: String
-  preInstall: String
-  preUninstall: String
-  values: Map!
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn {
   httpHeaders: Map
   path: String!
@@ -9025,13 +9143,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
   toDevice: String
   toIPAddr: String
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn {
-  affinity: K8s__io___api___core___v1__AffinityIn
-  backOffLimit: Int
-  nodeSelector: Map
-  tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
@@ -9083,6 +9194,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
   https: Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
   ingressClass: String
   maxBodySizeInMB: Int
+  nginxIngressAnnotations: Map
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
   routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
 }
@@ -9150,7 +9262,7 @@ input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
 
 input Github__com___kloudlite___operator___toolkit___plugin__ExportIn {
   template: String
-  viaSecret: String!
+  viaSecret: String
 }
 
 input Github__com___kloudlite___operator___toolkit___reconciler__CheckIn {
@@ -9188,11 +9300,60 @@ input Github__com___kloudlite___operator___toolkit___reconciler__StatusIn {
   resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn!]
 }
 
+input Github__com___kloudlite___operator___toolkit___types__CPUResourceIn {
+  max: String!
+  min: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___types__MemoryResourceIn {
+  max: String!
+  min: String!
+}
+
 input Github__com___kloudlite___operator___toolkit___types__ObjectReferenceIn {
   apiVersion: String!
   kind: String!
   name: String!
   namespace: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___types__ResourceIn {
+  cpu: Github__com___kloudlite___operator___toolkit___types__CPUResourceIn
+  memory: Github__com___kloudlite___operator___toolkit___types__MemoryResourceIn
+}
+
+input Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoIn {
+  name: String!
+  url: String!
+  version: String
+}
+
+input Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn {
+  chart: Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoIn!
+  helmValues: Map!
+  jobVars: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsIn
+  postInstall: String
+  postUninstall: String
+  preInstall: String
+  preUninstall: String
+}
+
+input Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn {
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  releaseNotes: String!
+  releaseStatus: String!
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn!]
+}
+
+input Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsIn {
+  affinity: K8s__io___api___core___v1__AffinityIn
+  nodeSelector: Map
+  resources: Github__com___kloudlite___operator___toolkit___types__ResourceIn
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
 input K8s__io___api___core___v1__AffinityIn {
@@ -9615,14 +9776,15 @@ input ExternalAppIn {
   creationTime: Date!
   displayName: String!
   environmentName: String!
+  export: Github__com___kloudlite___operator___toolkit___plugin__Export
   id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec
-  status: Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus
+  spec: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec
+  status: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
@@ -9641,9 +9803,11 @@ type HelmChartPaginatedRecords @shareable {
 input HelmChartIn {
   apiVersion: String
   displayName: String!
+  export: Github__com___kloudlite___operator___toolkit___plugin__ExportIn
   kind: String
   metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn
+  spec: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn
+  status: Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn
 }
 
 `, BuiltIn: false},
@@ -15718,6 +15882,65 @@ func (ec *executionContext) field_Query_infra_listClusterManagedServices_argsSea
 }
 
 func (ec *executionContext) field_Query_infra_listClusterManagedServices_argsPagination(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*repos.CursorPagination, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pagination"]
+	if !ok {
+		var zeroVal *repos.CursorPagination
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+	if tmp, ok := rawArgs["pagination"]; ok {
+		return ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+	}
+
+	var zeroVal *repos.CursorPagination
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listHelmTypeClusterManagedServices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_infra_listHelmTypeClusterManagedServices_argsSearch(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg0
+	arg1, err := ec.field_Query_infra_listHelmTypeClusterManagedServices_argsPagination(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["pagination"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Query_infra_listHelmTypeClusterManagedServices_argsSearch(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.SearchClusterManagedService, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["search"]
+	if !ok {
+		var zeroVal *model.SearchClusterManagedService
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+	if tmp, ok := rawArgs["search"]; ok {
+		return ec.unmarshalOSearchClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterManagedService(ctx, tmp)
+	}
+
+	var zeroVal *model.SearchClusterManagedService
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_infra_listHelmTypeClusterManagedServices_argsPagination(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*repos.CursorPagination, error) {
@@ -25228,6 +25451,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_nginxIngressAnnotations(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_nginxIngressAnnotations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NginxIngressAnnotations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_nginxIngressAnnotations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx, field)
 	if err != nil {
@@ -25759,6 +26023,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx, field)
 			case "maxBodySizeInMB":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx, field)
+			case "nginxIngressAnnotations":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_nginxIngressAnnotations(ctx, field)
 			case "rateLimit":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx, field)
 			case "routes":
@@ -27682,797 +27948,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChartName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChartRepoURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChartVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.JobVars, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1JobVars)
-	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVars2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVars(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "affinity":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx, field)
-			case "backOffLimit":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx, field)
-			case "nodeSelector":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx, field)
-			case "tolerations":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__JobVars", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PostInstall, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PostUninstall, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreInstall, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreUninstall, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ReleaseName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Values, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalNMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CheckList, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.GithubComKloudliteOperatorToolkitReconcilerCheckMeta)
-	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___toolkit___reconciler__CheckMeta2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitReconcilerCheckMetaᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "debug":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_debug(ctx, field)
-			case "description":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_description(ctx, field)
-			case "hide":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_hide(ctx, field)
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_name(ctx, field)
-			case "title":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_title(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Checks, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsReady, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastReadyGeneration, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastReconcileTime, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Date does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ReleaseNotes, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ReleaseStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Resources, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.GithubComKloudliteOperatorToolkitReconcilerResourceRef)
-	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___toolkit___reconciler__ResourceRef2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitReconcilerResourceRefᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "apiVersion":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_apiVersion(ctx, field)
-			case "kind":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_kind(ctx, field)
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_name(ctx, field)
-			case "namespace":
-				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_namespace(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_httpHeaders(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_httpHeaders(ctx, field)
 	if err != nil {
@@ -28895,190 +28370,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Affinity, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.K8sIoAPICoreV1Affinity)
-	fc.Result = res
-	return ec.marshalOK8s__io___api___core___v1__Affinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Affinity(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "nodeAffinity":
-				return ec.fieldContext_K8s__io___api___core___v1__Affinity_nodeAffinity(ctx, field)
-			case "podAffinity":
-				return ec.fieldContext_K8s__io___api___core___v1__Affinity_podAffinity(ctx, field)
-			case "podAntiAffinity":
-				return ec.fieldContext_K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__Affinity", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BackOffLimit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.NodeSelector, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Tolerations, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.K8sIoAPICoreV1Toleration)
-	fc.Result = res
-	return ec.marshalOK8s__io___api___core___v1__Toleration2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Tolerationᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__JobVars",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "effect":
-				return ec.fieldContext_K8s__io___api___core___v1__Toleration_effect(ctx, field)
-			case "key":
-				return ec.fieldContext_K8s__io___api___core___v1__Toleration_key(ctx, field)
-			case "operator":
-				return ec.fieldContext_K8s__io___api___core___v1__Toleration_operator(ctx, field)
-			case "tolerationSeconds":
-				return ec.fieldContext_K8s__io___api___core___v1__Toleration_tolerationSeconds(ctx, field)
-			case "value":
-				return ec.fieldContext_K8s__io___api___core___v1__Toleration_value(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__Toleration", field.Name)
 		},
 	}
 	return fc, nil
@@ -30422,6 +29713,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_nginxIngressAnnotations(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1RouterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_nginxIngressAnnotations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NginxIngressAnnotations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_nginxIngressAnnotations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
 		},
 	}
 	return fc, nil
@@ -32067,14 +31399,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___plug
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___toolkit___plugin__Export_viaSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -33079,6 +32408,182 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___to
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__CPUResource_max(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorToolkitTypesCPUResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__CPUResource_max(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___toolkit___types__CPUResource_max(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___toolkit___types__CPUResource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__CPUResource_min(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorToolkitTypesCPUResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__CPUResource_min(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Min, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___toolkit___types__CPUResource_min(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___toolkit___types__CPUResource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__MemoryResource_max(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorToolkitTypesMemoryResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__MemoryResource_max(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___toolkit___types__MemoryResource_max(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___toolkit___types__MemoryResource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__MemoryResource_min(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorToolkitTypesMemoryResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__MemoryResource_min(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Min, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___toolkit___types__MemoryResource_min(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___toolkit___types__MemoryResource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__ObjectReference_apiVersion(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorToolkitTypesObjectReference) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__ObjectReference_apiVersion(ctx, field)
 	if err != nil {
@@ -33250,6 +32755,1089 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___to
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__Resource_cpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorToolkitTypesResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__Resource_cpu(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CPU, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorToolkitTypesCPUResource)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___toolkit___types__CPUResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesCPUResource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___toolkit___types__Resource_cpu(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___toolkit___types__Resource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "max":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__CPUResource_max(ctx, field)
+			case "min":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__CPUResource_min(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___types__CPUResource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__Resource_memory(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorToolkitTypesResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__Resource_memory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Memory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorToolkitTypesMemoryResource)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___toolkit___types__MemoryResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesMemoryResource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___toolkit___types__Resource_memory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___toolkit___types__Resource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "max":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__MemoryResource_max(ctx, field)
+			case "min":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__MemoryResource_min(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___types__MemoryResource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1ChartInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_url(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1ChartInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_url(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_version(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1ChartInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_version(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_chart(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_chart(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Chart, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudlitePluginHelmChartAPIV1ChartInfo)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1ChartInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_chart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_name(ctx, field)
+			case "url":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_url(ctx, field)
+			case "version":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_version(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_helmValues(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_helmValues(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HelmValues, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_helmValues(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_jobVars(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_jobVars(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobVars, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVars)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmJobVars(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_jobVars(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "affinity":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_affinity(ctx, field)
+			case "nodeSelector":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_nodeSelector(ctx, field)
+			case "resources":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_resources(ctx, field)
+			case "tolerations":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_tolerations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postInstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postInstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PostInstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postInstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postUninstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postUninstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PostUninstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postUninstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preInstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preInstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreInstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preInstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preUninstall(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preUninstall(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreUninstall, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preUninstall(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checkList(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checkList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CheckList, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GithubComKloudliteOperatorToolkitReconcilerCheckMeta)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___toolkit___reconciler__CheckMeta2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitReconcilerCheckMetaᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checkList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "debug":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_debug(ctx, field)
+			case "description":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_description(ctx, field)
+			case "hide":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_hide(ctx, field)
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_name(ctx, field)
+			case "title":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta_title(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checks(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Checks, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_isReady(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_isReady(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsReady, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_isReady(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReadyGeneration(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReadyGeneration(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastReadyGeneration, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReadyGeneration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReconcileTime(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReconcileTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastReconcileTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReconcileTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseNotes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseNotes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReleaseNotes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseStatus(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReleaseStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_resources(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_resources(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Resources, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GithubComKloudliteOperatorToolkitReconcilerResourceRef)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___toolkit___reconciler__ResourceRef2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitReconcilerResourceRefᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_resources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_apiVersion(ctx, field)
+			case "kind":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_kind(ctx, field)
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_affinity(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_affinity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Affinity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1Affinity)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__Affinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Affinity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_affinity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nodeAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__Affinity_nodeAffinity(ctx, field)
+			case "podAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__Affinity_podAffinity(ctx, field)
+			case "podAntiAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__Affinity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_nodeSelector(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_nodeSelector(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeSelector, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_nodeSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_resources(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_resources(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Resources, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorToolkitTypesResource)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___toolkit___types__Resource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesResource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_resources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cpu":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__Resource_cpu(ctx, field)
+			case "memory":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___types__Resource_memory(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___types__Resource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_tolerations(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVars) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_tolerations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tolerations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1Toleration)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__Toleration2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Tolerationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_tolerations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "effect":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_effect(ctx, field)
+			case "key":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_key(ctx, field)
+			case "operator":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_operator(ctx, field)
+			case "tolerationSeconds":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_tolerationSeconds(ctx, field)
+			case "value":
+				return ec.fieldContext_K8s__io___api___core___v1__Toleration_value(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__Toleration", field.Name)
 		},
 	}
 	return fc, nil
@@ -33519,6 +34107,53 @@ func (ec *executionContext) fieldContext_HelmChart_environmentName(_ context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HelmChart_export(ctx context.Context, field graphql.CollectedField, obj *entities.HelmChart) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HelmChart_export(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HelmChart().Export(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorToolkitPluginExport)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___toolkit___plugin__Export2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitPluginExport(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HelmChart_export(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HelmChart",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "template":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___plugin__Export_template(ctx, field)
+			case "viaSecret":
+				return ec.fieldContext_Github__com___kloudlite___operator___toolkit___plugin__Export_viaSecret(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___toolkit___plugin__Export", field.Name)
 		},
 	}
 	return fc, nil
@@ -33826,9 +34461,9 @@ func (ec *executionContext) _HelmChart_spec(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec)
+	res := resTmp.(*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpec(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HelmChart_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -33839,28 +34474,22 @@ func (ec *executionContext) fieldContext_HelmChart_spec(_ context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "chartName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field)
-			case "chartRepoURL":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field)
-			case "chartVersion":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field)
+			case "chart":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_chart(ctx, field)
+			case "helmValues":
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_helmValues(ctx, field)
 			case "jobVars":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_jobVars(ctx, field)
 			case "postInstall":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postInstall(ctx, field)
 			case "postUninstall":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postUninstall(ctx, field)
 			case "preInstall":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preInstall(ctx, field)
 			case "preUninstall":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx, field)
-			case "releaseName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx, field)
-			case "values":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preUninstall(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -33889,9 +34518,9 @@ func (ec *executionContext) _HelmChart_status(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus)
+	res := resTmp.(*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartStatus(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HelmChart_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -33903,23 +34532,23 @@ func (ec *executionContext) fieldContext_HelmChart_status(_ context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "checkList":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checkList(ctx, field)
 			case "checks":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checks(ctx, field)
 			case "isReady":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_isReady(ctx, field)
 			case "lastReadyGeneration":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReadyGeneration(ctx, field)
 			case "lastReconcileTime":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReconcileTime(ctx, field)
 			case "releaseNotes":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseNotes(ctx, field)
 			case "releaseStatus":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseStatus(ctx, field)
 			case "resources":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_resources(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -34122,6 +34751,8 @@ func (ec *executionContext) fieldContext_HelmChartEdge_node(_ context.Context, f
 				return ec.fieldContext_HelmChart_displayName(ctx, field)
 			case "environmentName":
 				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "export":
+				return ec.fieldContext_HelmChart_export(ctx, field)
 			case "id":
 				return ec.fieldContext_HelmChart_id(ctx, field)
 			case "kind":
@@ -42851,6 +43482,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createHelmChart(ctx conte
 				return ec.fieldContext_HelmChart_displayName(ctx, field)
 			case "environmentName":
 				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "export":
+				return ec.fieldContext_HelmChart_export(ctx, field)
 			case "id":
 				return ec.fieldContext_HelmChart_id(ctx, field)
 			case "kind":
@@ -42966,6 +43599,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateHelmChart(ctx conte
 				return ec.fieldContext_HelmChart_displayName(ctx, field)
 			case "environmentName":
 				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "export":
+				return ec.fieldContext_HelmChart_export(ctx, field)
 			case "id":
 				return ec.fieldContext_HelmChart_id(ctx, field)
 			case "kind":
@@ -48075,6 +48710,8 @@ func (ec *executionContext) fieldContext_Query_core_getHelmChart(ctx context.Con
 				return ec.fieldContext_HelmChart_displayName(ctx, field)
 			case "environmentName":
 				return ec.fieldContext_HelmChart_environmentName(ctx, field)
+			case "export":
+				return ec.fieldContext_HelmChart_export(ctx, field)
 			case "id":
 				return ec.fieldContext_HelmChart_id(ctx, field)
 			case "kind":
@@ -50217,6 +50854,95 @@ func (ec *executionContext) fieldContext_Query_infra_getClusterManagedService(ct
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getClusterManagedService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_listHelmTypeClusterManagedServices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listHelmTypeClusterManagedServices(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListHelmTypeClusterManagedServices(rctx, fc.Args["search"].(*model.SearchClusterManagedService), fc.Args["pagination"].(*repos.CursorPagination))
+		}
+
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				var zeroVal *model.ClusterManagedServicePaginatedRecords
+				return zeroVal, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				var zeroVal *model.ClusterManagedServicePaginatedRecords
+				return zeroVal, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.ClusterManagedServicePaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/app/graph/model.ClusterManagedServicePaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ClusterManagedServicePaginatedRecords)
+	fc.Result = res
+	return ec.marshalOClusterManagedServicePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterManagedServicePaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_listHelmTypeClusterManagedServices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ClusterManagedServicePaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ClusterManagedServicePaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_ClusterManagedServicePaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ClusterManagedServicePaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_listHelmTypeClusterManagedServices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -53532,6 +54258,8 @@ func (ec *executionContext) fieldContext_Router_spec(_ context.Context, field gr
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_ingressClass(ctx, field)
 			case "maxBodySizeInMB":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_maxBodySizeInMB(ctx, field)
+			case "nginxIngressAnnotations":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_nginxIngressAnnotations(ctx, field)
 			case "rateLimit":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_rateLimit(ctx, field)
 			case "routes":
@@ -60219,7 +60947,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"backendProtocol", "basicAuth", "cors", "domains", "https", "ingressClass", "maxBodySizeInMB", "rateLimit", "routes"}
+	fieldsInOrder := [...]string{"backendProtocol", "basicAuth", "cors", "domains", "https", "ingressClass", "maxBodySizeInMB", "nginxIngressAnnotations", "rateLimit", "routes"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -60275,6 +61003,13 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.MaxBodySizeInMb = data
+		case "nginxIngressAnnotations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nginxIngressAnnotations"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NginxIngressAnnotations = data
 		case "rateLimit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateLimit"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimitIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimitIn(ctx, v)
@@ -60925,89 +61660,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn, error) {
-	var it model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"chartName", "chartRepoURL", "chartVersion", "jobVars", "postInstall", "postUninstall", "preInstall", "preUninstall", "values"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "chartName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ChartName = data
-		case "chartRepoURL":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartRepoURL"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ChartRepoURL = data
-		case "chartVersion":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartVersion"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ChartVersion = data
-		case "jobVars":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("jobVars"))
-			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVarsIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.JobVars = data
-		case "postInstall":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postInstall"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PostInstall = data
-		case "postUninstall":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postUninstall"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PostUninstall = data
-		case "preInstall":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preInstall"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PreInstall = data
-		case "preUninstall":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preUninstall"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PreUninstall = data
-		case "values":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-			data, err := ec.unmarshalNMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Values = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbeIn, error) {
 	var it model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbeIn
 	asMap := map[string]interface{}{}
@@ -61132,54 +61784,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.ToIPAddr = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1JobVarsIn, error) {
-	var it model.GithubComKloudliteOperatorApisCrdsV1JobVarsIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"affinity", "backOffLimit", "nodeSelector", "tolerations"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "affinity":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("affinity"))
-			data, err := ec.unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AffinityIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Affinity = data
-		case "backOffLimit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backOffLimit"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.BackOffLimit = data
-		case "nodeSelector":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
-			data, err := ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.NodeSelector = data
-		case "tolerations":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
-			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Tolerations = data
 		}
 	}
 
@@ -61474,7 +62078,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"backendProtocol", "basicAuth", "cors", "domains", "https", "ingressClass", "maxBodySizeInMB", "rateLimit", "routes"}
+	fieldsInOrder := [...]string{"backendProtocol", "basicAuth", "cors", "domains", "https", "ingressClass", "maxBodySizeInMB", "nginxIngressAnnotations", "rateLimit", "routes"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -61530,6 +62134,13 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.MaxBodySizeInMb = data
+		case "nginxIngressAnnotations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nginxIngressAnnotations"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NginxIngressAnnotations = data
 		case "rateLimit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateLimit"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimitIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimitIn(ctx, v)
@@ -61995,7 +62606,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___t
 			it.Template = data
 		case "viaSecret":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("viaSecret"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -62247,6 +62858,74 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___t
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___toolkit___types__CPUResourceIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorToolkitTypesCPUResourceIn, error) {
+	var it model.GithubComKloudliteOperatorToolkitTypesCPUResourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"max", "min"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "max":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Max = data
+		case "min":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Min = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___toolkit___types__MemoryResourceIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorToolkitTypesMemoryResourceIn, error) {
+	var it model.GithubComKloudliteOperatorToolkitTypesMemoryResourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"max", "min"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "max":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Max = data
+		case "min":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Min = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___toolkit___types__ObjectReferenceIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorToolkitTypesObjectReferenceIn, error) {
 	var it model.GithubComKloudliteOperatorToolkitTypesObjectReferenceIn
 	asMap := map[string]interface{}{}
@@ -62295,6 +62974,274 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___t
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___toolkit___types__ResourceIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorToolkitTypesResourceIn, error) {
+	var it model.GithubComKloudliteOperatorToolkitTypesResourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cpu", "memory"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cpu":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___toolkit___types__CPUResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesCPUResourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPU = data
+		case "memory":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memory"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___toolkit___types__MemoryResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesMemoryResourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Memory = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoIn(ctx context.Context, obj interface{}) (model.GithubComKloudlitePluginHelmChartAPIV1ChartInfoIn, error) {
+	var it model.GithubComKloudlitePluginHelmChartAPIV1ChartInfoIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "url", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "url":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.URL = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn, error) {
+	var it model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"chart", "helmValues", "jobVars", "postInstall", "postUninstall", "preInstall", "preUninstall"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "chart":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chart"))
+			data, err := ec.unmarshalNGithub__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1ChartInfoIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Chart = data
+		case "helmValues":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("helmValues"))
+			data, err := ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HelmValues = data
+		case "jobVars":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("jobVars"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmJobVarsIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.JobVars = data
+		case "postInstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postInstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostInstall = data
+		case "postUninstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postUninstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostUninstall = data
+		case "preInstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preInstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreInstall = data
+		case "preUninstall":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preUninstall"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreUninstall = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn(ctx context.Context, obj interface{}) (model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn, error) {
+	var it model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"checkList", "checks", "isReady", "lastReadyGeneration", "lastReconcileTime", "releaseNotes", "releaseStatus", "resources"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "checkList":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("checkList"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitReconcilerCheckMetaInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CheckList = data
+		case "checks":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("checks"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Checks = data
+		case "isReady":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsReady = data
+		case "lastReadyGeneration":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReadyGeneration"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastReadyGeneration = data
+		case "lastReconcileTime":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReconcileTime"))
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastReconcileTime = data
+		case "releaseNotes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("releaseNotes"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReleaseNotes = data
+		case "releaseStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("releaseStatus"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReleaseStatus = data
+		case "resources":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resources"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitReconcilerResourceRefInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Resources = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsIn(ctx context.Context, obj interface{}) (model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVarsIn, error) {
+	var it model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVarsIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"affinity", "nodeSelector", "resources", "tolerations"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "affinity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("affinity"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AffinityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Affinity = data
+		case "nodeSelector":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NodeSelector = data
+		case "resources":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resources"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___toolkit___types__ResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesResourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Resources = data
+		case "tolerations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Tolerations = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputHelmChartIn(ctx context.Context, obj interface{}) (entities.HelmChart, error) {
 	var it entities.HelmChart
 	asMap := map[string]interface{}{}
@@ -62302,7 +63249,7 @@ func (ec *executionContext) unmarshalInputHelmChartIn(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"apiVersion", "displayName", "export", "kind", "metadata", "spec", "status"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -62323,6 +63270,15 @@ func (ec *executionContext) unmarshalInputHelmChartIn(ctx context.Context, obj i
 				return it, err
 			}
 			it.DisplayName = data
+		case "export":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("export"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___toolkit___plugin__ExportIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitPluginExportIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.HelmChartIn().Export(ctx, &it, data); err != nil {
+				return it, err
+			}
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
@@ -62341,11 +63297,20 @@ func (ec *executionContext) unmarshalInputHelmChartIn(ctx context.Context, obj i
 			}
 		case "spec":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			if err = ec.resolvers.HelmChartIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.HelmChartIn().Status(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -67694,6 +68659,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx, field, obj)
 		case "maxBodySizeInMB":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx, field, obj)
+		case "nginxIngressAnnotations":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_nginxIngressAnnotations(ctx, field, obj)
 		case "rateLimit":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx, field, obj)
 		case "routes":
@@ -68348,131 +69315,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return out
 }
 
-var github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec"}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec")
-		case "chartName":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "chartRepoURL":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "chartVersion":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "jobVars":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx, field, obj)
-		case "postInstall":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx, field, obj)
-		case "postUninstall":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx, field, obj)
-		case "preInstall":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx, field, obj)
-		case "preUninstall":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx, field, obj)
-		case "releaseName":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx, field, obj)
-		case "values":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var github__com___kloudlite___operator___apis___crds___v1__HelmChartStatusImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus"}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__HelmChartStatusImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus")
-		case "checkList":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx, field, obj)
-		case "checks":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx, field, obj)
-		case "isReady":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "lastReadyGeneration":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx, field, obj)
-		case "lastReconcileTime":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx, field, obj)
-		case "releaseNotes":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "releaseStatus":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "resources":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe) graphql.Marshaler {
@@ -68581,48 +69423,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(ctx, field, obj)
 		case "toIPAddr":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Intercept_toIPAddr(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var github__com___kloudlite___operator___apis___crds___v1__JobVarsImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__JobVars"}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__JobVarsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__JobVars")
-		case "affinity":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx, field, obj)
-		case "backOffLimit":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx, field, obj)
-		case "nodeSelector":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx, field, obj)
-		case "tolerations":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -68948,6 +69748,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_ingressClass(ctx, field, obj)
 		case "maxBodySizeInMB":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_maxBodySizeInMB(ctx, field, obj)
+		case "nginxIngressAnnotations":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_nginxIngressAnnotations(ctx, field, obj)
 		case "rateLimit":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_rateLimit(ctx, field, obj)
 		case "routes":
@@ -69400,9 +70202,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___plug
 			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___plugin__Export_template(ctx, field, obj)
 		case "viaSecret":
 			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___plugin__Export_viaSecret(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -69756,6 +70555,94 @@ func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___reco
 	return out
 }
 
+var github__com___kloudlite___operator___toolkit___types__CPUResourceImplementors = []string{"Github__com___kloudlite___operator___toolkit___types__CPUResource"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__CPUResource(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorToolkitTypesCPUResource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___toolkit___types__CPUResourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___toolkit___types__CPUResource")
+		case "max":
+			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___types__CPUResource_max(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "min":
+			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___types__CPUResource_min(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___operator___toolkit___types__MemoryResourceImplementors = []string{"Github__com___kloudlite___operator___toolkit___types__MemoryResource"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__MemoryResource(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorToolkitTypesMemoryResource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___toolkit___types__MemoryResourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___toolkit___types__MemoryResource")
+		case "max":
+			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___types__MemoryResource_max(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "min":
+			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___types__MemoryResource_min(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var github__com___kloudlite___operator___toolkit___types__ObjectReferenceImplementors = []string{"Github__com___kloudlite___operator___toolkit___types__ObjectReference"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__ObjectReference(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorToolkitTypesObjectReference) graphql.Marshaler {
@@ -69787,6 +70674,245 @@ func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___type
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___operator___toolkit___types__ResourceImplementors = []string{"Github__com___kloudlite___operator___toolkit___types__Resource"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___toolkit___types__Resource(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorToolkitTypesResource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___toolkit___types__ResourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___toolkit___types__Resource")
+		case "cpu":
+			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___types__Resource_cpu(ctx, field, obj)
+		case "memory":
+			out.Values[i] = ec._Github__com___kloudlite___operator___toolkit___types__Resource_memory(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoImplementors = []string{"Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo"}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudlitePluginHelmChartAPIV1ChartInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo")
+		case "name":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo_version(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecImplementors = []string{"Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec"}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec")
+		case "chart":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_chart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "helmValues":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_helmValues(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "jobVars":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_jobVars(ctx, field, obj)
+		case "postInstall":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postInstall(ctx, field, obj)
+		case "postUninstall":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_postUninstall(ctx, field, obj)
+		case "preInstall":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preInstall(ctx, field, obj)
+		case "preUninstall":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec_preUninstall(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusImplementors = []string{"Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus"}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus")
+		case "checkList":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checkList(ctx, field, obj)
+		case "checks":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_checks(ctx, field, obj)
+		case "isReady":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_isReady(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastReadyGeneration":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReadyGeneration(ctx, field, obj)
+		case "lastReconcileTime":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_lastReconcileTime(ctx, field, obj)
+		case "releaseNotes":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseNotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "releaseStatus":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_releaseStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resources":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus_resources(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsImplementors = []string{"Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars"}
+
+func (ec *executionContext) _Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVars) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars")
+		case "affinity":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_affinity(ctx, field, obj)
+		case "nodeSelector":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_nodeSelector(ctx, field, obj)
+		case "resources":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_resources(ctx, field, obj)
+		case "tolerations":
+			out.Values[i] = ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars_tolerations(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -69879,6 +71005,39 @@ func (ec *executionContext) _HelmChart(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "export":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HelmChart_export(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "id":
 			out.Values[i] = ec._HelmChart_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -73789,6 +74948,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "infra_listHelmTypeClusterManagedServices":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listHelmTypeClusterManagedServices(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "core_listManagedResources":
 			field := field
 
@@ -77690,6 +78868,21 @@ func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___toolk
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNGithub__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1ChartInfo(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudlitePluginHelmChartAPIV1ChartInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___plugin____helm____chart___api___v1__ChartInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1ChartInfoIn(ctx context.Context, v interface{}) (*model.GithubComKloudlitePluginHelmChartAPIV1ChartInfoIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__ChartInfoIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNHelmChart2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐHelmChart(ctx context.Context, sel ast.SelectionSet, v *entities.HelmChart) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -78468,12 +79661,12 @@ func (ec *executionContext) marshalNManagedServicePlugins2ᚖgithubᚗcomᚋklou
 	return ec._ManagedServicePlugins(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]any, error) {
+func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
 	res, err := graphql.UnmarshalMap(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -80489,28 +81682,6 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartStatus(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbe2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPGetProbe(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -80553,21 +81724,6 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__InterceptIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVars2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVars(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1JobVars) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVarsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1JobVarsIn, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -81149,6 +82305,96 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___toolk
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___reconciler__StatusIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___toolkit___types__CPUResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesCPUResource(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorToolkitTypesCPUResource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___toolkit___types__CPUResource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___toolkit___types__CPUResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesCPUResourceIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorToolkitTypesCPUResourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___types__CPUResourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___toolkit___types__MemoryResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesMemoryResource(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorToolkitTypesMemoryResource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___toolkit___types__MemoryResource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___toolkit___types__MemoryResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesMemoryResourceIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorToolkitTypesMemoryResourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___types__MemoryResourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___toolkit___types__Resource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesResource(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorToolkitTypesResource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___toolkit___types__Resource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___toolkit___types__ResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorToolkitTypesResourceIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorToolkitTypesResourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___toolkit___types__ResourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartStatus(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn(ctx context.Context, v interface{}) (*model.GithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmChartStatusIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmJobVars(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVars) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVars(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudlitePluginHelmChartAPIV1HelmJobVarsIn(ctx context.Context, v interface{}) (*model.GithubComKloudlitePluginHelmChartAPIV1HelmJobVarsIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___plugin____helm____chart___api___v1__HelmJobVarsIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

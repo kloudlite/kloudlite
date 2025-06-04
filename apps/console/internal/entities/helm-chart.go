@@ -5,14 +5,14 @@ import (
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/toolkit/reconciler"
+	helmPlugin "github.com/kloudlite/plugin-helm-chart/api/v1"
 )
 
 type HelmChart struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	crdsv1.HelmChart `json:",inline"`
+	helmPlugin.HelmChart `json:",inline"`
 
 	AccountName     string `json:"accountName" graphql:"noinput"`
 	EnvironmentName string `json:"environmentName" graphql:"noinput"`

@@ -313,6 +313,7 @@ const (
 	NodePoolSpecAws                                 = "spec.aws"
 	NodePoolSpecAwsAvailabilityZone                 = "spec.aws.availabilityZone"
 	NodePoolSpecAwsEc2Pool                          = "spec.aws.ec2Pool"
+	NodePoolSpecAwsEc2PoolAmi                       = "spec.aws.ec2Pool.ami"
 	NodePoolSpecAwsEc2PoolInstanceType              = "spec.aws.ec2Pool.instanceType"
 	NodePoolSpecAwsEc2PoolNodes                     = "spec.aws.ec2Pool.nodes"
 	NodePoolSpecAwsIamInstanceProfileRole           = "spec.aws.iamInstanceProfileRole"
@@ -322,6 +323,7 @@ const (
 	NodePoolSpecAwsRootVolumeSize                   = "spec.aws.rootVolumeSize"
 	NodePoolSpecAwsRootVolumeType                   = "spec.aws.rootVolumeType"
 	NodePoolSpecAwsSpotPool                         = "spec.aws.spotPool"
+	NodePoolSpecAwsSpotPoolAmi                      = "spec.aws.spotPool.ami"
 	NodePoolSpecAwsSpotPoolCpuNode                  = "spec.aws.spotPool.cpuNode"
 	NodePoolSpecAwsSpotPoolCpuNodeMemoryPerVcpu     = "spec.aws.spotPool.cpuNode.memoryPerVcpu"
 	NodePoolSpecAwsSpotPoolCpuNodeMemoryPerVcpuMax  = "spec.aws.spotPool.cpuNode.memoryPerVcpu.max"
@@ -782,6 +784,45 @@ const (
 	WgParamsWgPublicKey        = "wg_public_key"
 )
 
+// constant vars generated for struct Workmachine
+const (
+	WorkmachineDispatchAddr                  = "dispatchAddr"
+	WorkmachineDispatchAddrAccountName       = "dispatchAddr.accountName"
+	WorkmachineDispatchAddrClusterName       = "dispatchAddr.clusterName"
+	WorkmachineSessionId                     = "sessionId"
+	WorkmachineSpec                          = "spec"
+	WorkmachineSpecAws                       = "spec.aws"
+	WorkmachineSpecAwsAmi                    = "spec.aws.ami"
+	WorkmachineSpecAwsExternalVolumeSize     = "spec.aws.externalVolumeSize"
+	WorkmachineSpecAwsExternalVolumeType     = "spec.aws.externalVolumeType"
+	WorkmachineSpecAwsIamInstanceProfileRole = "spec.aws.iamInstanceProfileRole"
+	WorkmachineSpecAwsInstanceType           = "spec.aws.instanceType"
+	WorkmachineSpecAwsRootVolumeSize         = "spec.aws.rootVolumeSize"
+	WorkmachineSpecAwsRootVolumeType         = "spec.aws.rootVolumeType"
+	WorkmachineSpecJobParams                 = "spec.jobParams"
+	WorkmachineSpecJobParamsNodeSelector     = "spec.jobParams.nodeSelector"
+	WorkmachineSpecJobParamsTolerations      = "spec.jobParams.tolerations"
+	WorkmachineSpecSshPublicKeys             = "spec.sshPublicKeys"
+	WorkmachineSpecState                     = "spec.state"
+	WorkmachineSpecTargetNamespace           = "spec.targetNamespace"
+)
+
+// constant vars generated for struct Workspace
+const (
+	WorkspaceDispatchAddr              = "dispatchAddr"
+	WorkspaceDispatchAddrAccountName   = "dispatchAddr.accountName"
+	WorkspaceDispatchAddrClusterName   = "dispatchAddr.clusterName"
+	WorkspaceSpec                      = "spec"
+	WorkspaceSpecEnableCodeServer      = "spec.enableCodeServer"
+	WorkspaceSpecEnableJupyterNotebook = "spec.enableJupyterNotebook"
+	WorkspaceSpecEnableTTYD            = "spec.enableTTYD"
+	WorkspaceSpecEnableVSCodeServer    = "spec.enableVSCodeServer"
+	WorkspaceSpecImagePullPolicy       = "spec.imagePullPolicy"
+	WorkspaceSpecServiceAccountName    = "spec.serviceAccountName"
+	WorkspaceSpecState                 = "spec.state"
+	WorkspaceSpecWorkMachine           = "spec.workMachine"
+)
+
 // constant vars generated for struct
 const (
 	AccountName                                             = "accountName"
@@ -838,6 +879,7 @@ const (
 	StatusLastPhaseTransitionTime                           = "status.lastPhaseTransitionTime"
 	StatusLastReadyGeneration                               = "status.lastReadyGeneration"
 	StatusLastReconcileTime                                 = "status.lastReconcileTime"
+	StatusMachineSSHKey                                     = "status.machineSSHKey"
 	StatusMessage                                           = "status.message"
 	StatusMessageItems                                      = "status.message.items"
 	StatusModifyVolumeStatus                                = "status.modifyVolumeStatus"
@@ -846,6 +888,13 @@ const (
 	StatusPhase                                             = "status.phase"
 	StatusReason                                            = "status.reason"
 	StatusResources                                         = "status.resources"
+	StatusStatus                                            = "status.status"
+	StatusStatusCheckList                                   = "status.status.checkList"
+	StatusStatusChecks                                      = "status.status.checks"
+	StatusStatusIsReady                                     = "status.status.isReady"
+	StatusStatusLastReadyGeneration                         = "status.status.lastReadyGeneration"
+	StatusStatusLastReconcileTime                           = "status.status.lastReconcileTime"
+	StatusStatusResources                                   = "status.status.resources"
 	SyncStatus                                              = "syncStatus"
 	SyncStatusAction                                        = "syncStatus.action"
 	SyncStatusError                                         = "syncStatus.error"
