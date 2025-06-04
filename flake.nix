@@ -15,6 +15,8 @@
         packages.nats-manager = pkgs.writeScriptBin "nats-manager" ''
           $PROJECT_ROOT/cmd/nats-manager/bin/nats-manager --url "nats://nats.kloudlite.svc.cluster.local:4222" --stream "resource-sync" "$@"
         '';
+        defaultPackage = self.packages.${system}.mocki;
+
         devShells.default = pkgs.mkShell {
           packages = [
             self.packages.${system}.mocki

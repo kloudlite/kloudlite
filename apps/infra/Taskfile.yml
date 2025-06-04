@@ -37,13 +37,15 @@ tasks:
           --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolume
           --struct github.com/kloudlite/api/apps/infra/internal/entities.Namespace
           --struct github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Workspace
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Workmachine
           --struct github.com/kloudlite/api/pkg/repos.MatchFilter
           --struct github.com/kloudlite/api/apps/infra/internal/domain.BYOKSetupInstruction
           --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,BYOKCluster,Node,NodePool,GlobalVPN,GlobalVPNDevice,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,Namespace,VolumeAttachment,PersistentVolume
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,BYOKCluster,Node,NodePool,GlobalVPN,GlobalVPNDevice,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,Namespace,VolumeAttachment,PersistentVolume,Workspace,Workmachine
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -83,7 +85,7 @@ tasks:
 
       - task: docker:build-and-push
         vars:
-          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          args: "--platform linux/amd64 --build-arg BINARY={{.binary}} ."
           image: "{{.image}}"
 
   test:

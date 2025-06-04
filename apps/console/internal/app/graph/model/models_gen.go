@@ -232,27 +232,29 @@ type GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppRouter struct {
-	BackendProtocol *string                                        `json:"backendProtocol,omitempty"`
-	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1BasicAuth `json:"basicAuth,omitempty"`
-	Cors            *GithubComKloudliteOperatorApisCrdsV1Cors      `json:"cors,omitempty"`
-	Domains         []string                                       `json:"domains"`
-	HTTPS           *GithubComKloudliteOperatorApisCrdsV1HTTPS     `json:"https,omitempty"`
-	IngressClass    *string                                        `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                                           `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimit `json:"rateLimit,omitempty"`
-	Routes          []*GithubComKloudliteOperatorApisCrdsV1Route   `json:"routes,omitempty"`
+	BackendProtocol         *string                                        `json:"backendProtocol,omitempty"`
+	BasicAuth               *GithubComKloudliteOperatorApisCrdsV1BasicAuth `json:"basicAuth,omitempty"`
+	Cors                    *GithubComKloudliteOperatorApisCrdsV1Cors      `json:"cors,omitempty"`
+	Domains                 []string                                       `json:"domains"`
+	HTTPS                   *GithubComKloudliteOperatorApisCrdsV1HTTPS     `json:"https,omitempty"`
+	IngressClass            *string                                        `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb         *int                                           `json:"maxBodySizeInMB,omitempty"`
+	NginxIngressAnnotations map[string]interface{}                         `json:"nginxIngressAnnotations,omitempty"`
+	RateLimit               *GithubComKloudliteOperatorApisCrdsV1RateLimit `json:"rateLimit,omitempty"`
+	Routes                  []*GithubComKloudliteOperatorApisCrdsV1Route   `json:"routes,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppRouterIn struct {
-	BackendProtocol *string                                          `json:"backendProtocol,omitempty"`
-	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1BasicAuthIn `json:"basicAuth,omitempty"`
-	Cors            *GithubComKloudliteOperatorApisCrdsV1CorsIn      `json:"cors,omitempty"`
-	Domains         []string                                         `json:"domains"`
-	HTTPS           *GithubComKloudliteOperatorApisCrdsV1HTTPSIn     `json:"https,omitempty"`
-	IngressClass    *string                                          `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                                             `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
-	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
+	BackendProtocol         *string                                          `json:"backendProtocol,omitempty"`
+	BasicAuth               *GithubComKloudliteOperatorApisCrdsV1BasicAuthIn `json:"basicAuth,omitempty"`
+	Cors                    *GithubComKloudliteOperatorApisCrdsV1CorsIn      `json:"cors,omitempty"`
+	Domains                 []string                                         `json:"domains"`
+	HTTPS                   *GithubComKloudliteOperatorApisCrdsV1HTTPSIn     `json:"https,omitempty"`
+	IngressClass            *string                                          `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb         *int                                             `json:"maxBodySizeInMB,omitempty"`
+	NginxIngressAnnotations map[string]interface{}                           `json:"nginxIngressAnnotations,omitempty"`
+	RateLimit               *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
+	Routes                  []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
@@ -442,42 +444,6 @@ type GithubComKloudliteOperatorApisCrdsV1HPAIn struct {
 	ThresholdMemory *int `json:"thresholdMemory,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
-	ChartName     string                                       `json:"chartName"`
-	ChartRepoURL  string                                       `json:"chartRepoURL"`
-	ChartVersion  string                                       `json:"chartVersion"`
-	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVars `json:"jobVars,omitempty"`
-	PostInstall   *string                                      `json:"postInstall,omitempty"`
-	PostUninstall *string                                      `json:"postUninstall,omitempty"`
-	PreInstall    *string                                      `json:"preInstall,omitempty"`
-	PreUninstall  *string                                      `json:"preUninstall,omitempty"`
-	ReleaseName   *string                                      `json:"releaseName,omitempty"`
-	Values        map[string]interface{}                       `json:"values"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
-	ChartName     string                                         `json:"chartName"`
-	ChartRepoURL  string                                         `json:"chartRepoURL"`
-	ChartVersion  string                                         `json:"chartVersion"`
-	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVarsIn `json:"jobVars,omitempty"`
-	PostInstall   *string                                        `json:"postInstall,omitempty"`
-	PostUninstall *string                                        `json:"postUninstall,omitempty"`
-	PreInstall    *string                                        `json:"preInstall,omitempty"`
-	PreUninstall  *string                                        `json:"preUninstall,omitempty"`
-	Values        map[string]interface{}                         `json:"values"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1HelmChartStatus struct {
-	CheckList           []*GithubComKloudliteOperatorToolkitReconcilerCheckMeta   `json:"checkList,omitempty"`
-	Checks              map[string]interface{}                                    `json:"checks,omitempty"`
-	IsReady             bool                                                      `json:"isReady"`
-	LastReadyGeneration *int                                                      `json:"lastReadyGeneration,omitempty"`
-	LastReconcileTime   *string                                                   `json:"lastReconcileTime,omitempty"`
-	ReleaseNotes        string                                                    `json:"releaseNotes"`
-	ReleaseStatus       string                                                    `json:"releaseStatus"`
-	Resources           []*GithubComKloudliteOperatorToolkitReconcilerResourceRef `json:"resources,omitempty"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe struct {
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
@@ -514,20 +480,6 @@ type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
 	PortMappings []*v1.AppInterceptPortMappings `json:"portMappings,omitempty"`
 	ToDevice     *string                        `json:"toDevice,omitempty"`
 	ToIPAddr     *string                        `json:"toIPAddr,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1JobVars struct {
-	Affinity     *K8sIoAPICoreV1Affinity     `json:"affinity,omitempty"`
-	BackOffLimit *int                        `json:"backOffLimit,omitempty"`
-	NodeSelector map[string]interface{}      `json:"nodeSelector,omitempty"`
-	Tolerations  []*K8sIoAPICoreV1Toleration `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1JobVarsIn struct {
-	Affinity     *K8sIoAPICoreV1AffinityIn     `json:"affinity,omitempty"`
-	BackOffLimit *int                          `json:"backOffLimit,omitempty"`
-	NodeSelector map[string]interface{}        `json:"nodeSelector,omitempty"`
-	Tolerations  []*K8sIoAPICoreV1TolerationIn `json:"tolerations,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
@@ -613,27 +565,29 @@ type GithubComKloudliteOperatorApisCrdsV1RouteIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1RouterSpec struct {
-	BackendProtocol *string                                        `json:"backendProtocol,omitempty"`
-	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1BasicAuth `json:"basicAuth,omitempty"`
-	Cors            *GithubComKloudliteOperatorApisCrdsV1Cors      `json:"cors,omitempty"`
-	Domains         []string                                       `json:"domains"`
-	HTTPS           *GithubComKloudliteOperatorApisCrdsV1HTTPS     `json:"https,omitempty"`
-	IngressClass    *string                                        `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                                           `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimit `json:"rateLimit,omitempty"`
-	Routes          []*GithubComKloudliteOperatorApisCrdsV1Route   `json:"routes,omitempty"`
+	BackendProtocol         *string                                        `json:"backendProtocol,omitempty"`
+	BasicAuth               *GithubComKloudliteOperatorApisCrdsV1BasicAuth `json:"basicAuth,omitempty"`
+	Cors                    *GithubComKloudliteOperatorApisCrdsV1Cors      `json:"cors,omitempty"`
+	Domains                 []string                                       `json:"domains"`
+	HTTPS                   *GithubComKloudliteOperatorApisCrdsV1HTTPS     `json:"https,omitempty"`
+	IngressClass            *string                                        `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb         *int                                           `json:"maxBodySizeInMB,omitempty"`
+	NginxIngressAnnotations map[string]interface{}                         `json:"nginxIngressAnnotations,omitempty"`
+	RateLimit               *GithubComKloudliteOperatorApisCrdsV1RateLimit `json:"rateLimit,omitempty"`
+	Routes                  []*GithubComKloudliteOperatorApisCrdsV1Route   `json:"routes,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1RouterSpecIn struct {
-	BackendProtocol *string                                          `json:"backendProtocol,omitempty"`
-	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1BasicAuthIn `json:"basicAuth,omitempty"`
-	Cors            *GithubComKloudliteOperatorApisCrdsV1CorsIn      `json:"cors,omitempty"`
-	Domains         []string                                         `json:"domains"`
-	HTTPS           *GithubComKloudliteOperatorApisCrdsV1HTTPSIn     `json:"https,omitempty"`
-	IngressClass    *string                                          `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                                             `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
-	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
+	BackendProtocol         *string                                          `json:"backendProtocol,omitempty"`
+	BasicAuth               *GithubComKloudliteOperatorApisCrdsV1BasicAuthIn `json:"basicAuth,omitempty"`
+	Cors                    *GithubComKloudliteOperatorApisCrdsV1CorsIn      `json:"cors,omitempty"`
+	Domains                 []string                                         `json:"domains"`
+	HTTPS                   *GithubComKloudliteOperatorApisCrdsV1HTTPSIn     `json:"https,omitempty"`
+	IngressClass            *string                                          `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb         *int                                             `json:"maxBodySizeInMB,omitempty"`
+	NginxIngressAnnotations map[string]interface{}                           `json:"nginxIngressAnnotations,omitempty"`
+	RateLimit               *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
+	Routes                  []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ShellProbe struct {
@@ -755,12 +709,12 @@ type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
 
 type GithubComKloudliteOperatorToolkitPluginExport struct {
 	Template  *string `json:"template,omitempty"`
-	ViaSecret string  `json:"viaSecret"`
+	ViaSecret *string `json:"viaSecret,omitempty"`
 }
 
 type GithubComKloudliteOperatorToolkitPluginExportIn struct {
 	Template  *string `json:"template,omitempty"`
-	ViaSecret string  `json:"viaSecret"`
+	ViaSecret *string `json:"viaSecret,omitempty"`
 }
 
 type GithubComKloudliteOperatorToolkitReconcilerCheck struct {
@@ -824,6 +778,26 @@ type GithubComKloudliteOperatorToolkitReconcilerStatusIn struct {
 	Resources           []*GithubComKloudliteOperatorToolkitReconcilerResourceRefIn `json:"resources,omitempty"`
 }
 
+type GithubComKloudliteOperatorToolkitTypesCPUResource struct {
+	Max string `json:"max"`
+	Min string `json:"min"`
+}
+
+type GithubComKloudliteOperatorToolkitTypesCPUResourceIn struct {
+	Max string `json:"max"`
+	Min string `json:"min"`
+}
+
+type GithubComKloudliteOperatorToolkitTypesMemoryResource struct {
+	Max string `json:"max"`
+	Min string `json:"min"`
+}
+
+type GithubComKloudliteOperatorToolkitTypesMemoryResourceIn struct {
+	Max string `json:"max"`
+	Min string `json:"min"`
+}
+
 type GithubComKloudliteOperatorToolkitTypesObjectReference struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
@@ -836,6 +810,84 @@ type GithubComKloudliteOperatorToolkitTypesObjectReferenceIn struct {
 	Kind       string `json:"kind"`
 	Name       string `json:"name"`
 	Namespace  string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorToolkitTypesResource struct {
+	CPU    *GithubComKloudliteOperatorToolkitTypesCPUResource    `json:"cpu,omitempty"`
+	Memory *GithubComKloudliteOperatorToolkitTypesMemoryResource `json:"memory,omitempty"`
+}
+
+type GithubComKloudliteOperatorToolkitTypesResourceIn struct {
+	CPU    *GithubComKloudliteOperatorToolkitTypesCPUResourceIn    `json:"cpu,omitempty"`
+	Memory *GithubComKloudliteOperatorToolkitTypesMemoryResourceIn `json:"memory,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1ChartInfo struct {
+	Name    string  `json:"name"`
+	URL     string  `json:"url"`
+	Version *string `json:"version,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1ChartInfoIn struct {
+	Name    string  `json:"name"`
+	URL     string  `json:"url"`
+	Version *string `json:"version,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1HelmChartSpec struct {
+	Chart         *GithubComKloudlitePluginHelmChartAPIV1ChartInfo   `json:"chart"`
+	HelmValues    map[string]interface{}                             `json:"helmValues"`
+	JobVars       *GithubComKloudlitePluginHelmChartAPIV1HelmJobVars `json:"jobVars,omitempty"`
+	PostInstall   *string                                            `json:"postInstall,omitempty"`
+	PostUninstall *string                                            `json:"postUninstall,omitempty"`
+	PreInstall    *string                                            `json:"preInstall,omitempty"`
+	PreUninstall  *string                                            `json:"preUninstall,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1HelmChartSpecIn struct {
+	Chart         *GithubComKloudlitePluginHelmChartAPIV1ChartInfoIn   `json:"chart"`
+	HelmValues    map[string]interface{}                               `json:"helmValues"`
+	JobVars       *GithubComKloudlitePluginHelmChartAPIV1HelmJobVarsIn `json:"jobVars,omitempty"`
+	PostInstall   *string                                              `json:"postInstall,omitempty"`
+	PostUninstall *string                                              `json:"postUninstall,omitempty"`
+	PreInstall    *string                                              `json:"preInstall,omitempty"`
+	PreUninstall  *string                                              `json:"preUninstall,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1HelmChartStatus struct {
+	CheckList           []*GithubComKloudliteOperatorToolkitReconcilerCheckMeta   `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                                    `json:"checks,omitempty"`
+	IsReady             bool                                                      `json:"isReady"`
+	LastReadyGeneration *int                                                      `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                                   `json:"lastReconcileTime,omitempty"`
+	ReleaseNotes        string                                                    `json:"releaseNotes"`
+	ReleaseStatus       string                                                    `json:"releaseStatus"`
+	Resources           []*GithubComKloudliteOperatorToolkitReconcilerResourceRef `json:"resources,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1HelmChartStatusIn struct {
+	CheckList           []*GithubComKloudliteOperatorToolkitReconcilerCheckMetaIn   `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                                      `json:"checks,omitempty"`
+	IsReady             bool                                                        `json:"isReady"`
+	LastReadyGeneration *int                                                        `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                                     `json:"lastReconcileTime,omitempty"`
+	ReleaseNotes        string                                                      `json:"releaseNotes"`
+	ReleaseStatus       string                                                      `json:"releaseStatus"`
+	Resources           []*GithubComKloudliteOperatorToolkitReconcilerResourceRefIn `json:"resources,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1HelmJobVars struct {
+	Affinity     *K8sIoAPICoreV1Affinity                         `json:"affinity,omitempty"`
+	NodeSelector map[string]interface{}                          `json:"nodeSelector,omitempty"`
+	Resources    *GithubComKloudliteOperatorToolkitTypesResource `json:"resources,omitempty"`
+	Tolerations  []*K8sIoAPICoreV1Toleration                     `json:"tolerations,omitempty"`
+}
+
+type GithubComKloudlitePluginHelmChartAPIV1HelmJobVarsIn struct {
+	Affinity     *K8sIoAPICoreV1AffinityIn                         `json:"affinity,omitempty"`
+	NodeSelector map[string]interface{}                            `json:"nodeSelector,omitempty"`
+	Resources    *GithubComKloudliteOperatorToolkitTypesResourceIn `json:"resources,omitempty"`
+	Tolerations  []*K8sIoAPICoreV1TolerationIn                     `json:"tolerations,omitempty"`
 }
 
 type HelmChartEdge struct {
