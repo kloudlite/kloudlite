@@ -1,0 +1,216 @@
+directive @isLoggedIn on FIELD_DEFINITION
+directive @isLoggedInAndVerified on FIELD_DEFINITION
+directive @hasAccount on FIELD_DEFINITION
+
+enum ResType {
+    cluster
+    cluster_managed_service
+    byok_cluster
+    global_vpn_device
+    # cloudprovider
+    providersecret
+    # edge
+    nodepool
+    # helm_release
+}
+
+type CheckNameAvailabilityOutput {
+    result: Boolean!
+    suggestedNames: [String!]!
+}
+
+input SearchCluster {
+    cloudProviderName: MatchFilterIn
+    isReady: MatchFilterIn
+    region: MatchFilterIn
+    text: MatchFilterIn
+    allClusters: MatchFilterIn
+}
+
+input SearchGlobalVPNs {
+    text: MatchFilterIn
+}
+
+input SearchGlobalVPNDevices {
+    text: MatchFilterIn
+    creationMethod: MatchFilterIn
+}
+
+input SearchNodepool {
+    text: MatchFilterIn
+}
+
+# input SearchHelmRelease {
+#     text: MatchFilterIn
+#     isReady: MatchFilterIn
+# }
+#
+input SearchProviderSecret {
+    cloudProviderName: MatchFilterIn
+    text: MatchFilterIn
+}
+
+input SearchDomainEntry {
+    clusterName: MatchFilterIn
+    text: MatchFilterIn
+}
+
+input SearchPersistentVolumeClaims {
+  text: MatchFilterIn
+}
+
+input SearchPersistentVolumes {
+  text: MatchFilterIn
+}
+
+input SearchNamespaces {
+  text: MatchFilterIn
+}
+
+input SearchVolumeAttachments {
+  text: MatchFilterIn
+}
+
+input SearchWorkspaces {
+  text: MatchFilterIn
+}
+
+input SearchWorkmachines {
+  text: MatchFilterIn
+}
+
+type CheckAwsAccessOutput {
+    result: Boolean!
+    installationUrl: String
+}
+
+type Query {
+    # unique name suggestions
+    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+
+    # clusters
+    infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
+
+    # byok
+    infra_listBYOKClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOKClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getBYOKCluster(name: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
+    infrat_getBYOKClusterSetupInstructions(name: String!, onlyHelmValues: Boolean): [BYOKSetupInstruction!] @isLoggedInAndVerified @hasAccount
+
+    # global VPN
+    infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getGlobalVPN(name: String!): GlobalVPN @isLoggedInAndVerified @hasAccount
+
+    # global VPN Devices
+    infra_listGlobalVPNDevices(gvpn: String!, search: SearchGlobalVPNDevices, pagination: CursorPaginationIn): GlobalVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getGlobalVPNDevice(gvpn: String!, deviceName: String!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
+
+    # get node pools
+    infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
+
+    infra_listProviderSecrets(search: SearchProviderSecret, pagination: CursorPaginationIn): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getProviderSecret(name: String!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
+
+    infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
+
+    # infra_getAwsCloudformationStackURL: String
+
+    infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
+
+    # infra_listHelmReleases(clusterName: String!, search: SearchHelmRelease, pagination: CursorPaginationIn): HelmReleasePaginatedRecords @isLoggedInAndVerified @hasAccount
+    # infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease @isLoggedInAndVerified @hasAccount
+    #
+    infra_listManagedServiceTemplates: [MsvcTemplate!]
+    infra_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry
+
+    # kubernetes native resources
+    infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @isLoggedInAndVerified @hasAccount
+
+    infra_listNamespaces(clusterName: String!, search: SearchNamespaces, pq: CursorPaginationIn): NamespacePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getNamespace(clusterName: String!, name: String!): Namespace @isLoggedInAndVerified @hasAccount
+
+    infra_listPVs(clusterName: String!, search: SearchPersistentVolumes, pq: CursorPaginationIn): PersistentVolumePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getPV(clusterName: String!, name: String!): PersistentVolume @isLoggedInAndVerified @hasAccount
+
+    infra_listVolumeAttachments(clusterName: String!, search: SearchVolumeAttachments, pq: CursorPaginationIn): VolumeAttachmentPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment @isLoggedInAndVerified @hasAccount
+
+    # Workspaces
+    infra_listWorkspaces(workmachineName: String!, clusterName: String!,search: SearchWorkspaces, pagination: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getWorkspace(workmachineName: String!,clusterName: String!,name: String!): Workspace @isLoggedInAndVerified @hasAccount
+
+    # Workmachine
+    infra_getWorkmachine(clusterName: String!, name: String!): Workmachine @isLoggedInAndVerified @hasAccount
+}
+
+type Mutation {
+    # clusters
+    infra_createCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
+    infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
+    infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN @isLoggedInAndVerified @hasAccount
+    infra_updateGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN @isLoggedInAndVerified @hasAccount
+    infra_deleteGlobalVPN(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
+    infra_updateGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
+    infra_deleteGlobalVPNDevice(gvpn: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+      
+    infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster @isLoggedInAndVerified @hasAccount
+    infra_updateBYOKCluster(clusterName: String!, displayName: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
+    infra_deleteBYOKCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    # infra_upgradeHelmKloudliteAgent(clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
+    infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
+    infra_deleteProviderSecret(secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @isLoggedInAndVerified @hasAccount
+    infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @isLoggedInAndVerified @hasAccount
+    infra_deleteDomainEntry(domainName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
+    infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
+    infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    # infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
+    # infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
+    # infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_deletePV(clusterName: String!, pvName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    # Workspaces
+    infra_createWorkspace(workmachineName: String!, clusterName: String!, workspace: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccount
+    infra_updateWorkspace(workmachineName: String!, clusterName: String!, workspace: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccount
+    infra_deleteWorkspace(workmachineName: String!, clusterName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_updateWorkspaceStatus(workmachineName: String!, clusterName: String!, status: Boolean!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    # Workmachine
+    infra_createWorkMachine(clusterName: String!, workmachine: WorkmachineIn!): Workmachine @isLoggedInAndVerified @hasAccount
+    infra_updateWorkMachine(clusterName: String!, workmachine: WorkmachineIn!): Workmachine @isLoggedInAndVerified @hasAccount 
+    infra_updateWorkMachineStatus(clusterName: String!, status: Boolean!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+}
+
+type EncodedValue {
+  value: String!
+  encoding: String!
+}
+
+extend type Cluster {
+  adminKubeconfig: EncodedValue
+  clusterDNSSuffix: String!
+}
+
+extend type BYOKCluster {
+  clusterDNSSuffix: String!
+}
+
+extend type GlobalVPNDevice {
+  wireguardConfig: EncodedValue
+}

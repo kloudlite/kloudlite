@@ -1,0 +1,29 @@
+version: 3
+
+tasks:
+  install:
+    dir: ../..
+    env:
+      CGO_ENABLED: 0
+    cmds: 
+      - mkdir -p bin
+      - go build -o ./bin/mocki ./cmd/mocki
+      - ln -sf $PWD/bin/mocki ~/.local/bin/mocki
+
+  build:
+    cmds:
+      - go build -ldflags="-s -w" -o bin/mocki . 
+
+  example:
+    cmds:
+      - mkdir -p internal/example-types/mocks
+      - go run ./main.go --package kloudlite.io/cmd/mocki/internal/example-types --interface Sample > internal/example-types/mocks/sample.go
+
+  test:
+    cmds:
+      - go test -v ./internal/parser
+
+  coverage:
+    cmds:
+      - go test -v -coverprofile=/tmp/coverprofile.out ./internal/parser
+      - go tool cover -html=/tmp/coverprofile.out

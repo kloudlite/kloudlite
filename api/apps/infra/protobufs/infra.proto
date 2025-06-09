@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./infra";
+
+service Infra {
+  rpc GetCluster(GetClusterIn) returns (GetClusterOut);
+  rpc GetByokCluster(GetClusterIn) returns (GetClusterOut);
+  rpc GetNodepool(GetNodepoolIn) returns (GetNodepoolOut);
+  rpc ClusterExists(ClusterExistsIn) returns (ClusterExistsOut);
+  rpc GetClusterKubeconfig(GetClusterIn) returns (GetClusterKubeconfigOut);
+  rpc MarkClusterOnlineAt(MarkClusterOnlineAtIn) returns (MarkClusterOnlineAtOut);
+
+  rpc EnsureGlobalVPNConnection(EnsureGlobalVPNConnectionIn) returns (EnsureGlobalVPNConnectionOut);
+
+  rpc GetClusterGatewayResource(GetClusterGatewayResourceIn) returns (GetClusterGatewayResourceOut);
+}
+
+message GetClusterIn {
+  string userId = 1;
+  string userName = 2;
+  string userEmail = 3;
+
+  string accountName = 4;
+  string clusterName = 5;
+}
+
+message GetClusterOut {
+  string messageQueueTopic = 1;
+  string dnsHost = 2;
+
+  string IACJobName = 3;
+  string IACJobNamespace = 4;
+  string OwnedBy = 5;
+}
+
+message GetNodepoolIn {
+  string userId = 1;
+  string userName = 2;
+  string userEmail = 3;
+
+  string accountName = 4;
+  string clusterName = 5;
+  string nodepoolName = 6;
+}
+
+message GetNodepoolOut {
+  string IACJobName = 1;
+  string IACJobNamespace = 2;
+}
+
+message ClusterExistsIn {
+  string userId = 1;
+  string userName = 2;
+  string userEmail = 3;
+
+  string accountName = 4;
+  string clusterName = 5;
+}
+
+message ClusterExistsOut {
+  bool exists = 1;
+}
+
+message GetClusterKubeconfigOut {
+  bytes kubeconfig = 1;
+}
+
+message MarkClusterOnlineAtIn {
+  string accountName = 1;
+  string clusterName = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message MarkClusterOnlineAtOut {}
+
+message EnsureGlobalVPNConnectionIn {
+  string userId = 1;
+  string userName = 2;
+  string userEmail = 3;
+
+  string accountName = 4;
+  string clusterName = 5;
+  string globalVPNName = 6;
+
+  string dispatchAddr_AccountName = 7;
+  string dispatchAddr_ClusterName = 8;
+}
+
+message EnsureGlobalVPNConnectionOut {}
+
+message GetClusterGatewayResourceIn {
+  string accountName = 1;
+  string clusterName = 2;
+}
+
+message GetClusterGatewayResourceOut {
+  bytes gateway = 1;
+}

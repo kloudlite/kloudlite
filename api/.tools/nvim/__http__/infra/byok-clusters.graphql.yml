@@ -1,0 +1,29 @@
+---
+label: Create BYOK Cluster
+query: |+ #graphql
+  mutation Infra_createBYOKCluster($cluster: BYOKClusterIn!) {
+    infra_createBYOKCluster(cluster: $cluster) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  cluster:
+    displayName: "{{.clusterName}}"
+    metadata:
+      name: "{{.clusterName}}"
+---
+
+---
+label: Setup Instructions
+query: |+
+  query Infra_getBYOKClusterSetupInstructions($name: String!) {
+    infrat_getBYOKClusterSetupInstructions(name: $name) {
+      title
+      command
+    }
+  }
+variables:
+  name: "gke-autopilot-1"
+---

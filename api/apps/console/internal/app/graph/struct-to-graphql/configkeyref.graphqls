@@ -1,0 +1,10 @@
+type ConfigKeyRef @shareable {
+  configName: String!
+  key: String!
+}
+
+input ConfigKeyRefIn {
+  configName: String!
+  key: String!
+}
+

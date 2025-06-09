@@ -1,0 +1,45 @@
+---
+global:
+  endTime:   '1707205625'
+  startTime: '1707119214'
+---
+
+label: Get Logs for App
+query:
+  method: GET
+  url: 'http://console-api.karthik-testing.svc.cluster.local:9100/observability/logs/app?resource_name={{.name}}&resource_namespace={{.namespace}}&start_time={{.startTime}}&end_time={{.endTime}}'
+
+---
+label: Get Logs for Job
+query:
+  method: GET
+  url: 'https://observability.dev.kloudlite.io/observability/logs/app?job_name={{.job_name}}&job_namespace={{.job_namespace}}&start_time={{.startTime}}&end_time={{.endTime}}'
+
+---
+
+label: Get Memory Metrics for App
+query:
+  method: GET
+  # url: 'http://console-api.kloudlite.svc.cluster.local:9100/observability/metrics/memory?cluster_name={{.clusterName}}&tracking_id=app-hg2hmvokiiuxih9jsq-ibqquumbl&step=5m'
+  url: 'http://localhost:3000/observability/metrics/memory?cluster_name={{.clusterName}}&tracking_id=pmsvc-5nw2qi3fj1tvyjvyg2ujirsy5ota&step=5m'
+
+---
+
+label: Get Cpu Metrics for App
+query:
+  method: GET
+  url: 'http://localhost:9999/observability/metrics/cpu?workspace_name={{.workspaceName}}&start_time={{.startTime}}&end_time={{.endTime}}'
+
+---
+
+label: Get Logs for cluster jobs
+query:
+  method: GET
+  url: 'http://console-api.kl-core.svc.cluster.local:9100/observability/logs/cluster-job?start_time={{.startTime}}&end_time={{.endTime}}'
+---
+
+label: Get Logs for pod with a tracking id
+query:
+  method: GET
+  url: 'http://localhost:12121/observability/logs?tracking_id={{.trackingId}}&cluster_name={{.clusterName}}'
+---

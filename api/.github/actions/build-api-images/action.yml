@@ -1,0 +1,525 @@
+name: 'build kloudlite api action'
+description: 'builds kloudlite APIs'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  image_tag:
+    description: 'image tag, when empty, will be generated from branch/tag'
+    default: ''
+
+  cachix_cache_name:
+    description: "cachix cache name"
+    default: "kloudlite"
+
+  cachix_auth_token:
+    description: "cachix auth token"
+
+  docker_enabled:
+    description: "dokcer enabled"
+    default: "false"
+
+  git_directory:
+    description: 'git directory'
+    default: "."
+
+  # APIs
+  accounts-api:
+    description: 'build accounts api'
+    default: false
+
+  auth-api:
+    description: 'build auth api'
+    default: false
+
+  comms-api:
+    description: 'build comms api'
+    default: false
+
+  console-api:
+    description: 'build console api'
+    default: false
+
+  container-registry-api:
+    description: 'build container-registry api'
+    default: false
+
+  gateway-api:
+    description: 'build gateway api'
+    default: false
+
+  iam-api:
+    description: 'build iam api'
+    default: false
+
+  infra-api:
+    description: 'build infra api'
+    default: false
+
+  iot-console-api:
+    description: 'build iot-console api'
+    default: false
+
+  message-office-api:
+    description: 'build message-office api'
+    default: false
+
+  observability-api:
+    description: 'build observability api'
+    default: false
+
+  tenant-agent:
+    description: 'build tenant-agent'
+    default: false
+
+  webhook-api:
+    description: 'build webhook api'
+    default: false
+
+  websocket-server-api:
+    description: 'build websocket-server api'
+    default: false
+
+  gateway-kube-proxy:
+    description: 'build gateway kube proxy'
+    default: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: setup ENV Variables
+      shell: bash
+      # id: env-vars
+      working-directory: ${{ inputs.git_directory }}
+      run: |+
+        # GOMODCACHE=${{github.workspace}}/actions/go-mod-cache
+        # GOCACHE=${{github.workspace}}/actions/go-cache
+        # echo "GOMODCACHE=$GOMODCACHE" >> $GITHUB_OUTPUT
+        # echo "GOCACHE=$GOCACHE" >> $GITHUB_OUTPUT
+        #
+        # echo "GOMODCACHE=$GOMODCACHE" >> $GITHUB_ENV
+        # echo "GOCACHE=$GOCACHE" >> $GITHUB_ENV
+        # echo "FILES_HASH=${{ hashFiles('**/*.go', '**/go.mod', '**/go.sum')}}" >> $GITHUB_OUTPUT
+        # echo "PUSH_IMAGE=false" >> $GITHUB_ENV
+        if [ "$(basename ${{ inputs.git_directory }})" != "." ]; then
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}/$(basename ${{inputs.git_directory}})" >> $GITHUB_ENV
+        else
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
+        fi
+
+    - name: ensures path to setup action exists
+      shell: bash
+      run: |+
+        ln -sf ${{ inputs.git_directory }}/.github/actions ./github-actions
+
+    - name: setup nix (with cachix)
+      uses: kloudlite/actions/setup-nix-cachix@v1
+      # uses: ./github-actions/setup-nix-cachix/
+      with:
+        flake_lock: ${{ inputs.git_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.git_directory }}#default"
+
+        cachix_cache_name: ${{ inputs.cachix_cache_name }}
+        cachix_auth_token: ${{ inputs.cachix_auth_token }}
+
+    - name: setup docker
+      if: ${{ inputs.docker_enabled == 'true' }}
+      uses: kloudlite/actions/setup-docker@v1
+      # uses: ./github-actions/setup-docker
+      with:
+        docker_username: ${{ github.actor }}
+        docker_password: ${{ inputs.github_token }}
+
+
+    - name: check if image needs to be pushed
+      if: github.event_name != 'pull_request'
+      shell: bash
+      run: |+
+        echo "PUSH_IMAGE=true" >> $GITHUB_ENV
+
+    - name: Create Image Tag
+      if: ${{ inputs.image_tag != '' }}
+      shell: bash
+      run: |+
+        echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+
+    - name: generate image tag
+      if: inputs.image_tag == ''
+      uses: kloudlite/actions/generate-image-tag@v1
+
+    - name: override image if image_tag is nightly
+      if: "${{ endsWith(env.IMAGE_TAG, '-nightly') }}"
+      shell: bash
+      run: |+
+        echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
+
+    # - name: accounts api go build cache
+    #   if: ${{ inputs.accounts-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-accounts-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-accounts-api-
+
+    - name: setup accounts api go cache
+      uses: kloudlite/actions/setup-cache-go@v1
+      if: inputs.accounts-api == 'true'
+      with:
+        cache_key: accounts-api
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: accounts api
+      if: inputs.accounts-api == 'true'
+      working-directory: ${{ inputs.git_directory }}/apps/accounts
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/accounts:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: auth api go build cache
+    #   if: ${{ inputs.auth-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-auth-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-auth-api-
+
+    - name: auth api go build cache
+      if: ${{ inputs.auth-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: auth-api
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: auth api
+      if: ${{ inputs.auth-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/auth
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/auth:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: comms api go build cache
+    #   if: ${{ inputs.comms-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-comms-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-comms-api-
+
+    - name: comms api go build cache
+      if: ${{ inputs.comms-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: comms-api
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: comms api
+      if: ${{ inputs.comms-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/comms
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/comms:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: console api go build cache
+    #   if: ${{ inputs.console-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-console-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-console-api-
+
+    - name: console api go build cache
+      if: ${{ inputs.console-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: console-api
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: console api
+      if: ${{ inputs.console-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/console
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/console:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: container-registry api go build cache
+    #   if: ${{ inputs.container-registry-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-container-registry-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-container-registry-api-
+    #
+    - name: container-registry api go build cache
+      if: ${{ inputs.container-registry-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "container-registry-api"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: container-registry api
+      if: ${{ inputs.container-registry-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/container-registry
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/container-registry:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: gateway api go build cache
+    #   if: ${{ inputs.gateway-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-gateway-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-gateway-api-
+
+    - name: gateway api
+      if: ${{ inputs.gateway-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/gateway
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/gateway:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: iam api go build cache
+    #   if: ${{ inputs.iam-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-iam-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-iam-api-
+
+    - name: iam api go build cache
+      if: ${{ inputs.iam-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "iam-api"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: iam api
+      if: ${{ inputs.iam-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/iam
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/iam:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: infra api go build cache
+    #   if: ${{ inputs.infra-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-infra-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-infra-api-
+
+    - name: infra api go build cache
+      if: ${{ inputs.infra-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "infra-api"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: infra api
+      if: ${{ inputs.infra-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/infra
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/infra:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: iot-console api go build cache
+    #   if: ${{ inputs.iot-console-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-iot-console-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-iot-console-api-
+
+    - name: iot-console api go build cache
+      if: ${{ inputs.iot-console-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "iot-console-api"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: iot-console api
+      if: ${{ inputs.iot-console-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/iot-console
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/iot-console:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: message-office api go build cache
+    #   if: ${{ inputs.message-office-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-message-office-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-message-office-api-
+
+    - name: message-office api go build cache
+      if: ${{ inputs.message-office-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "message-office-api"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: message-office api
+      if: ${{ inputs.message-office-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/message-office
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/message-office:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: observability api go build cache
+    #   if: ${{ inputs.observability-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-observability-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-observability-api-
+
+    - name: observability api go build cache
+      if: ${{ inputs.observability-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "observability-api"
+        working_directory: ${{ inputs.git_directory }}
+
+
+    - name: observability api
+      if: ${{ inputs.observability-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/observability
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/observability:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: tenant-agent go build cache
+    #   if: ${{ inputs.tenant-agent == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-tenant-agent-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-tenant-agent-
+
+    - name: tenant-agent go build cache
+      if: ${{ inputs.tenant-agent == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "tenant-agent"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: tenant-agent
+      if: ${{ inputs.tenant-agent == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/tenant-agent
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/tenant-agent:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: webhook api go build cache
+    #   if: ${{ inputs.webhook-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-webhook-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-webhook-api-
+
+    - name: webhook api go build cache
+      if: ${{ inputs.webhook-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "webhook-api"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: webhook api
+      if: ${{ inputs.webhook-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/webhook
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/webhook:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: websocket-server api go build cache
+    #   if: ${{ inputs.websocket-server-api == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-websocket-server-api-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-websocket-server-api-
+
+    - name: websocket-server api go build cache
+      if: ${{ inputs.websocket-server-api == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "websocket-server-api"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: websocket-server api
+      if: ${{ inputs.websocket-server-api == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/apps/websocket-server
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/websocket-server:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+
+    # - name: gateway kube proxy api build cache
+    #   if: ${{ inputs.gateway-kube-proxy == 'true' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-gateway-kube-proxy-${{ steps.env-vars.outputs.FILES_HASH }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-gateway-kube-proxy-
+
+    - name: gateway kube proxy api build cache
+      if: ${{ inputs.gateway-kube-proxy == 'true' }}
+      uses: kloudlite/actions/setup-cache-go@v1
+      with:
+        cache_key: "gateway-kube-proxy"
+        working_directory: ${{ inputs.git_directory }}
+
+    - name: gateway logs proxy
+      if: ${{ inputs.gateway-kube-proxy == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/cmd/gateway-kube-proxy
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/cmd/gateway-kube-proxy:${IMAGE_TAG} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}

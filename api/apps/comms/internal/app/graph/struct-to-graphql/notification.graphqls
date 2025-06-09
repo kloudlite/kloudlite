@@ -1,0 +1,24 @@
+type Notification @shareable {
+  accountName: String!
+  content: Github__com___kloudlite___api___apps___comms___types__NotifyContent!
+  creationTime: Date!
+  id: ID!
+  markedForDeletion: Boolean
+  notificationType: Github__com___kloudlite___api___apps___comms___types__NotificationType!
+  priority: Int!
+  read: Boolean!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type NotificationEdge @shareable {
+  cursor: String!
+  node: Notification!
+}
+
+type NotificationPaginatedRecords @shareable {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+

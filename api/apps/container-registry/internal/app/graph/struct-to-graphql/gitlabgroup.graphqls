@@ -1,0 +1,6 @@
+type GitlabGroup @shareable {
+  avatarUrl: String!
+  fullName: String!
+  id: String!
+}
+
