@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: exposed-services2
+spec:
+  selector:
+    app: code-api-service
+  ports:
+  - port: 22
+    targetPort: 22
+    name: ssh
+  - port: 3000
+    targetPort: 3000
+    name: code3000
+  - port: 8080
+    targetPort: 8080
+    name: code8080
+  - port: 4000
+    targetPort: 4000
+    name: code4000
+  - port: 54535
+    targetPort: 54535
+    name: ttyd
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: exposed-http2
+spec:
+  selector:
+    app: code-api-service
+  ports:
+  - port: 80
+    targetPort: 8888
+    name: http
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: exposed-http2
+  labels:
+    name: exposed-http2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: exposed-services2.tenantc.demo.kloudlite.io
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: exposed-http2
+            port: 
+              number: 80
+
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: exposed-http3
+  labels:
+    name: exposed-http3
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: code-server-exposed-services2.tenantc.demo.kloudlite.io
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: exposed-services2
+            port: 
+              number: 8080
+
+---
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: exposed-ttyd
+  labels:
+    name: exposed-ttyd
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: ttyd-exposed-services2.tenantc.demo.kloudlite.io
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: exposed-services2
+            port: 
+              number: 54535

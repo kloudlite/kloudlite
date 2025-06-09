@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kloudlite
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-deleter
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "update", "patch"] # "update" and "patch" are required for rollout
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"] # Only allow viewing, not deleting
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-deleter-binding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: kloudlite
+  namespace: default
+roleRef:
+  kind: Role
+  name: pod-deleter
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-web-service
+spec:
+  selector:
+    matchLabels:
+      app: code-web-service
+  template:
+    metadata:
+      labels:
+        app: code-web-service
+        kloudlite.io/gateway.enabled: "false"
+    spec:
+      serviceAccount: kloudlite
+      tolerations:
+        - key: "kloudlite.io/worknode"
+          operator: "Equal"
+          value: "node1"
+          effect: "NoExecute"
+      nodeSelector:
+        kloudlite.io/node.role: worker
+      initContainers:
+        - name: init-home-dir
+          image: ghcr.io/kloudlite/iac/workspace:latest
+          imagePullPolicy: Always
+          env:
+            - name: KL_WORKSPACE
+              value: "workspaces/ws-name"
+            - name: HOME
+              value: "/home/kl"
+            - name: KL_BOX_MODE
+              value: "true"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+          - "bash"
+          - "-c"
+          - |
+            set -e
+            set +x
+            if [ ! -d "/nix/store" ]; then
+              curl -L https://nixos.org/nix/install | sh
+              mkdir -p ~/.config/nix
+              echo 'experimental-features = nix-command flakes' > ~/.config/nix/nix.conf
+            fi
+
+            if [ ! -d "/home/kl/$(KL_WORKSPACE)" ]; then
+              mkdir -p /home/kl/$(KL_WORKSPACE)
+              PATH=$PATH:/home/kl/.nix-profile/bin:/home/kl/.local/bin /home/kl/.local/bin/kl init
+            fi
+
+            if [ ! -f "/home/kl/.local/bin/kl" ]; then
+              mkdir -p /home/kl/.local/bin
+              cd /home/kl/.local/bin
+              curl https://i.jpillora.com/kloudlite/kl@v1.1.87-nightly | bash
+            fi
+
+            if [ ! -d "/home/kl/.config/zsh/pure" ]; then
+              mkdir -p "/home/kl/.config/zsh"
+              git clone https://github.com/sindresorhus/pure.git "/home/kl/.config/zsh/pure"
+            fi
+
+            if [ ! -d "/home/kl/.config/zsh/zsh-syntax-highlighting" ]; then
+              mkdir -p "/home/kl/.config/zsh"
+              git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  "/home/kl/.config/zsh/zsh-syntax-highlighting"
+            fi
+
+            if [ ! -f "/home/kl/.zshrc" ]; then
+              mkdir -p "/home/kl/.config/zsh"
+              cp /tmp/.zshrc /home/kl/.zshrc
+              cp /tmp/.aliasrc /home/kl/.config/aliasrc
+            fi
+
+            if [ ! -d "/home/kl/.kl" ]; then
+              mkdir -p /home/kl/.kl
+              sh -c 'cat > /home/kl/.kl/kl-session.yaml <<EOF
+              session: sess-xtfmvde-xz1cj1osaobxeqkwsiyi
+              team: newteam
+              EOF'
+            fi
+            
+            if [ ! -f "/home/kl/.local/bin/kubectl" ]; then
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x /home/kl/.local/bin/kubectl
+            fi
+
+            if [ -f "/home/kl/$(KL_WORKSPACE)/kl.yaml" ] || [ -f "/home/kl/$(KL_WORKSPACE)/kl.yml" ]; then
+              cd /home/kl/$(KL_WORKSPACE)
+              PATH=$PATH:/home/kl/.nix-profile/bin:/home/kl/.local/bin /home/kl/.local/bin/kl shell -r >  /env/.env
+              PATH=$PATH:/home/kl/.nix-profile/bin:/home/kl/.local/bin /home/kl/.local/bin/kl get env >  /env/.connected_env
+            fi
+            
+          volumeMounts:
+            - mountPath: /home/kl
+              name: home-dir
+            - mountPath: /nix
+              name: nix-dir
+            - mountPath: /env
+              name: containerenv
+      
+      containers:
+      - name: ssh
+        image: ghcr.io/kloudlite/iac/workspace:latest
+        imagePullPolicy: Always
+        env:
+          - name: KL_WORKSPACE
+            value: "/home/kl/workspaces/ws-name"
+          - name: KL_DEVICE_NAME
+            value: "exposed-services.default.svc.cluster.local"
+          - name: DEPLOYMENT_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['app']
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+
+        ports:
+        - containerPort: 22
+            
+        volumeMounts:
+        - mountPath: /home/kl
+          name: home-dir
+        - mountPath: /nix
+          name: nix-dir
+        - mountPath: /env
+          name: containerenv
+
+      
+      volumes:
+      - name: containerenv
+        emptyDir: {}
+      
+      - name: home-dir
+        hostPath:
+          path: /var/user-home/
+      - name: nix-dir
+        hostPath:
+          path: /var/nix-dir/

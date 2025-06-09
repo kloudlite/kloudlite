@@ -1,0 +1,914 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'kloudlite platform installation'
+
+Parameters:
+  HostDomain:
+    Type: String
+    Description: The domain name for the hosted zone (e.g., example.com)
+    AllowedPattern: ^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$
+    ConstraintDescription: Must be a valid domain name
+
+  VPC:
+    Type: String
+    Description: "VPC ID to use"
+    Default: "vpc-095224a927e8f0448"
+
+  PublicSubnetID:
+    Type: String
+    Description: "subnet id to use"
+    Default: "subnet-079d3aece03774a8a"
+
+  InstanceType:
+    Type: String
+    Default: c6a.xlarge
+
+  VolumeSize:
+    Type: Number
+    Default: 60
+
+  KloudliteRelease:
+    Type: String
+    Default: v1.1.6-nightly
+
+Resources:
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref HostDomain
+      HostedZoneConfig:
+        Comment: !Sub 'Hosted zone for ${HostDomain}'
+
+  # Security Groups
+  NLBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public access to NLB for HTTP, and HTTPs
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 6443
+          ToPort: 6443
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: udp
+          FromPort: 31820
+          ToPort: 31820
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: udp
+          FromPort: 31821
+          ToPort: 31821
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: udp
+          FromPort: 31822
+          ToPort: 31822
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: udp
+          FromPort: 31823
+          ToPort: 31823
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: udp
+          FromPort: 31824
+          ToPort: 31824
+          CidrIp: 0.0.0.0/0
+
+  # Security Group (internal access only)
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Internal security group for kloudlite cluster
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        - IpProtocol: udp
+          FromPort: 31820
+          ToPort: 31820
+          SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        - IpProtocol: udp
+          FromPort: 31821
+          ToPort: 31821
+          SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        - IpProtocol: udp
+          FromPort: 31822
+          ToPort: 31822
+          SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        - IpProtocol: udp
+          FromPort: 31823
+          ToPort: 31823
+          SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        - IpProtocol: udp
+          FromPort: 31824
+          ToPort: 31824
+          SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        - IpProtocol: tcp
+          FromPort: 6443
+          ToPort: 6443
+          # CidrIp: 10.0.0.0/16    # VPC internal only
+          CidrIp: 0.0.0.0/0    # VPC internal only
+          # SourceSecurityGroupId: !Ref NLBSecurityGroup
+
+        # for etcd across nodes [source](https://docs.k3s.io/installation/requirements#networking)
+        - IpProtocol: tcp
+          FromPort: 2379
+          ToPort: 2379
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+        - IpProtocol: tcp
+          FromPort: 2380
+          ToPort: 2380
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+        # for wireguard native UDP access [source](https://docs.k3s.io/installation/requirements#networking)
+        - IpProtocol: udp
+          FromPort: 51820
+          ToPort: 51829
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+        # for kubelet metrics [source](https://docs.k3s.io/installation/requirements#networking)
+        - IpProtocol: tcp
+          FromPort: 10250
+          ToPort: 10250
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          # CidrIp: 10.0.0.0/16    # VPC internal only
+          CidrIp: 0.0.0.0/0    # for all
+
+  # Network Load Balancer (SSL Passthrough)
+  NetworkLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets:
+        - !Ref PublicSubnetID
+        # - !Ref PublicSubnet2
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref NLBSecurityGroup
+      Type: network
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-nlb'
+
+  NLBTargetGroupHTTP:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: TCP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBTargetGroupHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 443
+      Protocol: TCP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBTargetGroupK8s:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 6443
+      Protocol: TCP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      HealthCheckPort: 80
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBTargetGroupWireguard:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 31820
+      Protocol: UDP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      HealthCheckPort: 80
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBTargetGroupWireguard1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 31821
+      Protocol: UDP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      HealthCheckPort: 80
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBTargetGroupWireguard2:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 31822
+      Protocol: UDP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      HealthCheckPort: 80
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBTargetGroupWireguard3:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 31823
+      Protocol: UDP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      HealthCheckPort: 80
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBTargetGroupWireguard4:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 31824
+      Protocol: UDP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: TCP
+      HealthCheckPort: 80
+      Targets:
+        - Id: !Ref MasterNode1
+
+  NLBListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 80
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupHTTP
+
+  NLBListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 443
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupHTTPS
+
+  NLBListenerK8s:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 6443
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupHTTPS
+
+  NLBListenerWireguard:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 31820
+      Protocol: UDP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupWireguard
+
+  NLBListenerWireguard1:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 31821
+      Protocol: UDP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupWireguard1
+
+  NLBListenerWireguard2:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 31822
+      Protocol: UDP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupWireguard2
+
+  NLBListenerWireguard3:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 31823
+      Protocol: UDP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupWireguard3
+
+  NLBListenerWireguard4:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 31824
+      Protocol: UDP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroupWireguard4
+
+  ConsoleDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub '*.${HostDomain}'
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt NetworkLoadBalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt NetworkLoadBalancer.DNSName
+
+  # IAM Role for EC2 managment, backups and SSM access
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess  # Full EC2 access
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess   # backup
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore  # SSM core permissions
+      Policies:
+        - PolicyName: SSMParameterStoreAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                  - ssm:PutParameter
+                  - ssm:DeleteParameter
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/stack-${AWS::StackName}/*"
+
+        - PolicyName: IAMPassRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                # Resource: arn:aws:iam::${AWS:AccountId}:role/${AWS::StackName}-InstanceRole-*
+                Resource: "*"
+                Condition:
+                  StringEqualsIfExists:
+                    iam:PassedToService: ec2.amazonaws.com
+
+        - PolicyName: Route53ForHostedZone
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: route53:GetChange
+                Resource: arn:aws:route53:::change/*
+
+              - Effect: Allow
+                Action:
+                  - route53:ChangeResourceRecordSets
+                  - route53:ListResourceRecordSets
+                Resource: !Sub arn:aws:route53:::hostedzone/${HostedZone}
+                Condition:
+                  ForAllValues:StringEquals:
+                    route53:ChangeResourceRecordSetsRecordTypes:
+                      - TXT
+
+              - Effect: Allow
+                Action: route53:ListHostedZonesByName
+                Resource: '*'
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  # SSH key pair
+  SSHKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Sub '${AWS::StackName}-ssh-key'
+      KeyType: rsa         # Options: rsa, ed25519
+      KeyFormat: pem       # Options: pem, ppk
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ssh-key'
+
+  # shared secrets across cloudformation stack
+  K3sServerTokenSecret:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /stack-${AWS::StackName}/k3s-server-token
+      Type: String
+      Value: 'sample'
+      Description: 'Sample SSM Parameter'
+      Tier: 'Standard'
+
+  K3sAgentTokenSecret:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /stack-${AWS::StackName}/k3s-agent-token
+      Type: String
+      Value: 'sample'
+      Description: 'Sample SSM Parameter'
+      Tier: 'Standard'
+
+  # k3s Master Instance
+  MasterNode1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKeyPair
+      # ImageId: 'ami-00bb6a80f01f03502' #ubuntu image
+      ImageId: "ami-05c179eced2eb9b5b" # Amazon Linux 2023 AMI 2023.6.20250303.0 x86_64 HVM kernel-6.1
+      SubnetId: !Ref PublicSubnetID
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-master-1'
+
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda  # still use /dev/xvda or /dev/sda1
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            VolumeType: gp3
+            DeleteOnTermination: true
+
+      UserData:
+        Fn::Base64: !Sub | #bash
+          #! /usr/bin/env bash
+
+          KLOUDLITE_CONFIG_DIRECTORY=/etc/kloudlite
+
+          ## terraform params
+          K3S_SERVER_TOKEN="$(uuidgen)"
+          K3S_AGENT_TOKEN="$(uuidgen)"
+          K3S_VERSION=""
+          NODE_NAME="master-1"
+          # --tf params:END
+
+          export USERNAME="ec2-user"
+          export HOMEDIR="/home/$USERNAME"
+          export BINARY_DIR="$HOMEDIR/.local/bin"
+          export KUBECTL='sudo k3s kubectl'
+
+          mkdir $HOMEDIR/cloud-init
+          pushd $HOMEDIR/cloud-init
+
+          aws ssm put-parameter \
+            --name "${K3sServerTokenSecret.Name}" \
+            --value "$K3S_SERVER_TOKEN" \
+            --type "SecureString" \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "${K3sAgentTokenSecret.Name}" \
+            --value "$K3S_AGENT_TOKEN" \
+            --type "SecureString" \
+            --overwrite
+
+          TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          INTERNAL_NODE_IP=$(curl -sH "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
+
+          debug() {
+            echo "[#] $*" | tee -a "$KLOUDLITE_CONFIG_DIRECTORY/execution.log"
+          }
+
+          debug "ensure kloudlite config directory ($KLOUDLITE_CONFIG_DIRECTORY) exists"
+          mkdir -p "$KLOUDLITE_CONFIG_DIRECTORY"
+
+          debug "################# execution started at $(date) ######################"
+          [ $EUID -ne 0 ] && debug "this script must be run as root. current EUID is $EUID" && exit 1
+
+          create_k3s_config_file() {
+            cat >"$KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml" <<EOF
+          # cluster-init: true
+          token: "$K3S_SERVER_TOKEN"
+          agent-token: "$K3S_AGENT_TOKEN"
+
+          node-name: "$NODE_NAME"
+
+          tls-san-security: true
+
+          flannel-backend: "wireguard-native"
+          write-kubeconfig-mode: "0644"
+          node-label:
+            - "kloudlite.io/node.role=master"
+            - "kloudlite.io/node.master.type=primary"
+            - "kloudlite.io/node.ip=$INTERNAL_NODE_IP"
+
+          # etcd-snapshot-compress: true
+          # etcd-snapshot-schedule-cron: "1 2/2 * * *"
+
+          disable-helm-controller: true
+
+          disable: 
+            - "traefik"
+
+          kubelet-arg:
+            - "system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=5Gi"
+            - "kube-reserved=cpu=200m,memory=256Mi"
+            - "eviction-hard=nodefs.available<5%,nodefs.inodesFree<5%,imagefs.available<5%"
+          EOF
+
+            mkdir -p /etc/rancher/k3s
+            ln -sf $KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml /etc/rancher/k3s/config.yaml
+          }
+
+          install_k3s() {
+            debug "installing k3s"
+            export INSTALL_K3S_CHANNEL="stable"
+            export INSTALL_K3S_SKIP_SELINUX_RPM="true"
+
+            if [ -n "$K3S_VERSION" ]; then
+              export INSTALL_K3S_VERSION="$K3S_VERSION"
+            fi
+            curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" sh -
+            debug "k3s installed"
+          }
+
+          ensure_kubernetes_is_ready() {
+            export KUBECTL='sudo k3s kubectl'
+
+            echo "checking whether /etc/rancher/k3s/k3s.yaml file exists"
+            while true; do
+              if [ ! -f /etc/rancher/k3s/k3s.yaml ]; then
+                echo 'k3s yaml not found, re-checking in 1s'
+                sleep 1
+                continue
+              fi
+
+              echo "/etc/rancher/k3s/k3s.yaml file found"
+              break
+            done
+
+            echo "checking whether k3s server is accepting connections"
+            while true; do
+              lines=$($KUBECTL get nodes | wc -l)
+
+              if [ "$lines" -lt 2 ]; then
+                echo "k3s server is not accepting connections yet, retrying in 1s ..."
+                sleep 1
+                continue
+              fi
+              echo "successful, k3s server is now accepting connections"
+              break
+            done
+          }
+
+          install_helm_plugin() {
+            debug "installing kloudlite helm plugin"
+
+            curl -L0 https://raw.githubusercontent.com/kloudlite/plugin-helm-chart/refs/heads/master/config/crd/bases/plugin-helm-chart.kloudlite.github.com_helmcharts.yaml | k3s kubectl apply -f -
+            curl -L0 https://raw.githubusercontent.com/kloudlite/plugin-helm-chart/refs/heads/master/config/crd/bases/plugin-helm-chart.kloudlite.github.com_helmpipelines.yaml | k3s kubectl apply -f -
+
+            curl -L0 https://raw.githubusercontent.com/kloudlite/plugin-helm-chart/refs/heads/master/INSTALL/k8s/setup.yaml | k3s kubectl apply -f -
+
+            debug "installed kloudlite helm plugin"
+          }
+
+          install_kloudlite() {
+            arch=amd64
+            
+            if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "arm64" ]]; then
+              arch=arm64
+            fi
+
+            curl -L0 https://github.com/nxtcoder17/go-template/releases/download/v0.1.0/go-template-linux-$arch > $BINARY_DIR/go-template
+            chmod +x $BINARY_DIR/go-template
+
+            export PATH=$PATH:$BINARY_DIR
+
+            mkdir -p install-kloudlite
+            pushd install-kloudlite
+
+            cat > namespace.yml <<EOF
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: kloudlite
+          EOF
+
+            kubectl apply -f namespace.yml
+
+            cat > helm-pipeline-values.yaml <<EOF
+          aws:
+            region: "${AWS::Region}"
+
+          release:
+            name: "kloudlite-stack"
+            namespace: "kloudlite"
+
+          csi:
+            # aws storage type
+            storage_type: "gp3"
+
+            storage_classes:
+              xfs: sc-xfs
+              ext4: sc-ext4
+
+            nodeSelector: {}
+            tolerations:  []
+
+          cert_manager:
+            cluster_issuer:
+              name: "cluster-issuer"
+              acme:
+                email: "support@kloudlite.io"
+
+            wildcard_cert:
+              host: "demo.kloudlite.io"
+              secret_name: "wildcard-cert"
+
+            nodeSelector: {}
+            tolerations: []
+
+          ingress_nginx:
+            ingress_class: "nginx"
+
+          nats:
+            nodeSelector: {}
+            tolerations: []
+
+            storage: "5Gi"
+
+            buckets:
+              - name: "auth-session"
+                storage: "file"
+
+              - name: "auth-verify-token"
+                storage: "file"
+
+              - name: auth-reset-token
+                storage: file
+
+              - name: console-cache
+                storage: file
+
+            streams:
+              - name: events
+                subject: 'events.>'
+                max_msg_bytes: "500kB"
+                max_msgs_per_subject: 2
+                work_queue: false
+
+              - name: resource-sync
+                subject: 'resource-sync.>'
+                max_msg_bytes: "500kB"
+                max_msgs_per_subject: 2
+                work_queue: false
+
+              - name: send-to-agent
+                subject: 'send-to-agent.>'
+                max_msg_bytes: "500kB"
+                max_msgs_per_subject: 2
+                work_queue: true
+
+              - name: receive-from-agent
+                subject: 'receive-from-agent.>'
+                max_msg_bytes: "500kB"
+                max_msgs_per_subject: 1
+                work_queue: true
+
+              - name: infra-internal-events
+                subject: 'infra-internal-events.>'
+                max_msg_bytes: "500kB"
+                max_msgs_per_subject: 1
+                work_queue: true
+
+          web_host: "${HostDomain}"
+          kloudlite_release: "${KloudliteRelease}"
+
+          EOF
+
+            curl -L0 https://raw.githubusercontent.com/kloudlite/helm-charts/refs/heads/release-v1.1.6/pipeline/platform.yml > pipeline.yml
+            go-template --values ./helm-pipeline-values.yaml pipeline.yml | kubectl apply -f -
+            popd
+          }
+
+          install_k9s() {
+            debug "installing k9s"
+            USERHOME=/home/ec2-user
+            mkdir -p $USERHOME/.local/bin
+            chown ec2-user $USERHOME/.local
+
+            mkdir -p /tmp/x
+            pushd /tmp/x
+            curl -L0 https://github.com/derailed/k9s/releases/download/v0.40.8/k9s_Linux_amd64.tar.gz > k9s.tar.gz
+            tar xf k9s.tar.gz
+            mv k9s $USERHOME/.local/bin
+            popd
+
+            rm -rf /tmp/x
+            debug "installed k9s"
+          }
+
+          bash_aliases_and_kubeconfig() {
+            USERNAME="ec2-user"
+            HOMEDIR="/home/$USERNAME"
+            mkdir -p $HOMEDIR/.kube
+            chown -R $USERNAME:$USERNAME ~/.kube
+            ln -sf /etc/rancher/k3s/k3s.yaml $HOMEDIR/.kube/config
+
+            echo "alias k='k3s kubectl'" >> $HOMEDIR/.bashrc
+            echo "alias kubectl='k3s kubectl'" >> $HOMEDIR/.bashrc
+          }
+
+          create_cluster_params_secret() {
+            debug "creating cluster params secret"
+            cat > secret.yml <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: cluster-params
+            namespace: kube-system
+          stringData:
+            cluster-params.yml: |+
+              k3s_server_host: "$INTERNAL_NODE_IP"
+              k3s_server_token: "$K3S_SERVER_TOKEN"
+              k3s_version: "$K3S_AGENT_TOKEN"
+
+              aws_vpc_id: "${VPC}"
+
+              aws_nlb_dns_host: "${NetworkLoadBalancer.DNSName}"
+              aws_security_group_ids:
+                - "${SecurityGroup.Id}"
+              aws_iam_instance_profile_name: "${InstanceProfile}"
+          EOF
+
+            debug "created cluster params secret"
+            k3s kubectl apply -f ./secret.yml
+            debug "applied cluster params secret"
+          }
+
+          create_k3s_config_file
+          install_k3s
+          ensure_kubernetes_is_ready
+          install_helm_plugin
+          install_k9s
+          install_kloudlite
+          bash_aliases_and_kubeconfig
+          create_cluster_params_secret
+
+          debug "################# execution finished at $(date) ######################"
+
+  # WorkerNode1:
+  #   Type: AWS::EC2::Instance
+  #   DependsOn: MasterNode1
+  #   Properties:
+  #     InstanceType: !Ref InstanceType
+  #     KeyName: !Ref SSHKeyPair
+  #     # ImageId: 'ami-00bb6a80f01f03502' #ubuntu image
+  #     ImageId: "ami-05c179eced2eb9b5b" # Amazon Linux 2023 AMI 2023.6.20250303.0 x86_64 HVM kernel-6.1
+  #     SubnetId: !Ref PublicSubnetID
+  #     SecurityGroupIds:
+  #       - !Ref SecurityGroup
+  #     IamInstanceProfile: !Ref InstanceProfile
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub '${AWS::StackName}-worker-1'
+  #
+  #     UserData:
+  #       Fn::Base64: !Sub |
+  #         #! /usr/bin/env bash
+  #
+  #         KLOUDLITE_CONFIG_DIRECTORY=/etc/kloudlite
+  #
+  #         ## terraform params
+  #         K3S_SERVER_HOST=${MasterNode1.PrivateIp}
+  #         K3S_SERVER_TOKEN=$(aws ssm get-parameter \
+  #             --name "${K3sServerTokenSecret.Name}" \
+  #             --with-decryption \
+  #             --query "Parameter.Value" \
+  #             --output text)
+  #         K3S_AGENT_TOKEN=$(aws ssm get-parameter \
+  #             --name "${K3sAgentTokenSecret.Name}" \
+  #             --with-decryption \
+  #             --query "Parameter.Value" \
+  #             --output text)
+  #         K3S_VERSION=""
+  #         NODE_NAME="worker-1"
+  #         # INTERNAL_NODE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+  #         # --tf params:END
+  #
+  #         debug() {
+  #           echo "[#] $*" | tee -a "$KLOUDLITE_CONFIG_DIRECTORY/execution.log"
+  #         }
+  #
+  #         debug "ensure kloudlite config directory ($KLOUDLITE_CONFIG_DIRECTORY) exists"
+  #         mkdir -p "$KLOUDLITE_CONFIG_DIRECTORY"
+  #
+  #         debug "################# execution started at $(date) ######################"
+  #         [ $EUID -ne 0 ] && debug "this script must be run as root. current EUID is $EUID" && exit 1
+  #
+  #         create_k3s_config_file() {
+  #           cat >"$KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml" <<EOF
+  #         server: "https://$K3S_SERVER_HOST:6443"
+  #         token: "$K3S_AGENT_TOKEN"
+  #
+  #         node-name: "$NODE_NAME"
+  #
+  #         tls-san-security: true
+  #
+  #         flannel-backend: "wireguard-native"
+  #         write-kubeconfig-mode: "0644"
+  #         node-label:
+  #           - "kloudlite.io/node.role=worker"
+  #
+  #         kubelet-arg:
+  #           - "system-reserved=cpu=50m,memory=50Mi,ephemeral-storage=2Gi"
+  #           - "kube-reserved=cpu=100m,memory=256Mi"
+  #           - "eviction-hard=nodefs.available<5%,nodefs.inodesFree<5%,imagefs.available<5%"
+  #         EOF
+  #
+  #           mkdir -p /etc/rancher/k3s
+  #           ln -sf $KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml /etc/rancher/k3s/config.yaml
+  #         }
+  #
+  #         install_k3s() {
+  #           debug "installing k3s"
+  #           export INSTALL_K3S_CHANNEL="stable"
+  #           export INSTALL_K3S_SKIP_SELINUX_RPM="true"
+  #
+  #           if [ -n "$K3S_VERSION" ]; then
+  #             export INSTALL_K3S_VERSION="$K3S_VERSION"
+  #           fi
+  #           curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent" sh -
+  #         }
+  #
+  #         create_k3s_config_file
+  #         install_k3s
+  #
+  #         debug "################# execution finished at $(date) ######################"
+
+Outputs:
+  NLBDNSName:
+    Description: Public DNS name of the Network Load Balancer (HTTP and HTTPS)
+    Value: !GetAtt NetworkLoadBalancer.DNSName
+
+  MasterNode1:
+    Description: master node 1
+    Value: !Ref MasterNode1
+
+  MasterNode1PublicIp:
+    Description: Public IP of k3s master 1
+    Value: !GetAtt MasterNode1.PublicIp
+
+  HostedZoneId:
+    Description: The Hosted Zone ID
+    Value: !Ref HostedZone
+
+  NameServers:
+    Description: Name servers for the hosted zone
+    Value: !Join [", ", !GetAtt HostedZone.NameServers]

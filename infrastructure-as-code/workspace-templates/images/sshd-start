@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -e
+if [ -f "/env/.connected_env" ]; then
+  cat >/etc/resolv.conf <<EOF
+search env-$(cat /env/.connected_env).svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.43.0.10
+options ndots:5
+EOF
+fi
+echo "Starting SSH Daemon"
+if [ -f "/env/.env" ]; then
+  cat /env/.env >>/etc/environment
+fi
+# echo "HOST=box" >>/etc/environment
+echo "KL_DEVICE_NAME=$KL_DEVICE_NAME" >>/etc/environment
+echo "KL_BOX_MODE=true" >>/etc/environment
+echo "KL_WORKSPACE=$KL_WORKSPACE" >>/etc/environment
+echo KUBERNETES_PORT_443_TCP_PROTO=$KUBERNETES_PORT_443_TCP_PROTO >>/etc/environment
+echo KUBERNETES_PORT_443_TCP_ADDR=$KUBERNETES_PORT_443_TCP_ADDR >>/etc/environment
+echo KUBERNETES_SERVICE_HOST=$KUBERNETES_SERVICE_HOST >>/etc/environment
+echo KUBERNETES_PORT=$KUBERNETES_PORT >>/etc/environment
+echo KUBERNETES_PORT_443_TCP_PORT=$KUBERNETES_PORT_443_TCP_PORT >>/etc/environment
+echo KUBERNETES_PORT_443_TCP=$KUBERNETES_PORT_443_TCP >>/etc/environment
+echo KUBERNETES_SERVICE_PORT=$KUBERNETES_SERVICE_PORT >>/etc/environment
+echo KUBERNETES_SERVICE_PORT_HTTPS=$KUBERNETES_SERVICE_PORT_HTTPS >>/etc/environment
+echo NAMESPACE=$NAMESPACE >>/etc/environment
+echo DEPLOYMENT_NAME=$DEPLOYMENT_NAME >>/etc/environment
+env sshd -D &
+pid=$!
+trap "kill -9 $pid" TERM INT EXIT
+wait $pid

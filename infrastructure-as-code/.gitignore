@@ -1,0 +1,13 @@
+.secrets
+.terraform
+.terraform.out
+.idea
+*.tfstate*
+*.tfstate.backup
+.terraform.d
+.direnv
+.terraform.d
+.dump
+tags
+.buildx-cache
+*.tar

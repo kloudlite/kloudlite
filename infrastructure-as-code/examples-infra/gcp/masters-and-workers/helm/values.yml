@@ -1,0 +1,23 @@
+defaultSettings:
+  createDefaultDiskLabeledNodes: "true"
+  taintToleration: "node-role.kubernetes.io/master:NoSchedule" # "key=value:NoSchedule"
+  # systemManagedComponentsNodeSelector: 'kloudlite.io/storage.node:true'
+  defaultReplicaCount: "2"
+
+longhornManager:
+  tolerations:
+    - operator: Exists
+  nodeSelector: {}
+    # kloudlite.io/storage.node: "true"
+
+longhornDriver:
+  tolerations:
+    - operator: Exists
+  nodeSelector: {}
+    # kloudlite.io/storage.node: "true"
+
+longhornUI:
+  tolerations:
+    - operator: Exists
+  nodeSelector:
+    kloudlite.io/storage.node: "true"

@@ -1,0 +1,55 @@
+gcp_project_id: ${GCP_PROJECT_ID}
+gcp_region: ${GCP_REGION}
+gcp_credentials_json: ${GCP_CREDENTIALS_JSON}
+
+name_prefix: "cluster1"
+provision_mode: "STANDARD"
+nodes:
+  master-1:
+    availability_zone: "asia-south1-a"
+    k3s_role: primary-master
+    kloudlite_release: "v1.0.5-nightly"
+
+  master-2:
+    availability_zone: "asia-south1-b"
+    k3s_role: secondary-master
+    kloudlite_release: "v1.0.5-nightly"
+
+  master-3:
+    availability_zone: "asia-south1-c"
+    k3s_role: secondary-master
+    kloudlite_release: "v1.0.5-nightly"
+
+machine_type: "custom-2-4096"
+save_ssh_key_to_path: ".secrets/masters-ssh-key.pem"
+save_kubeconfig_to_path: ".secrets/masters.kubeconfig"
+
+public_dns_host: ${PUBLIC_DNS_HOST_MASTERS}
+
+k3s_download_url: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/k3s"
+kloudlite_runner_download_url: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/runner-amd64"
+machine_state: "on"
+network: "default"
+service_account:
+  enabled: false
+
+cloudflare:
+  enabled: true
+  api_token: ${CLOUDFLARE_API_TOKEN}
+  zone_id: ${CLOUDFLARE_ZONE_ID}
+  domain: ${PUBLIC_DNS_HOST_MASTERS}
+
+kloudlite_params:
+  release: v1.0.5-nightly
+  install_crds: true
+  # install_csi_driver: true
+  # install_operators: true
+  install_agent: false
+  # agent_vars:
+  #   cluster_token: "asdfafa"
+  #   cluster_name: "tetaa"
+  #   account_name: "asdfasfasf"
+  #   message_office_grpc_addr: "message-office:443"
+
+# tags:
+#   kloudlite/example-infra: true

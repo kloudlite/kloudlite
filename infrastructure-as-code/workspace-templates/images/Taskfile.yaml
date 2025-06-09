@@ -1,0 +1,36 @@
+version: '3'
+
+tasks:
+  build-ssh:
+    cmds:
+      # - docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/kloudlite/iac/workspace:latest -f Dockerfile-ssh .
+      # - docker buildx build -f ./Dockerfile-ssh --platform linux/amd64,linux/arm64 -t ghcr.io/kloudlite/iac/workspace:latest --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true .
+      - docker buildx build -f ./Dockerfile-ssh --platform linux/amd64 -t ghcr.io/kloudlite/iac/workspace:latest --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true .
+
+
+  build-tty:
+    cmds:
+      - docker build --platform linux/amd64 -t ghcr.io/kloudlite/iac/ttyd:latest -f Dockerfile-ttyd .
+      - docker push ghcr.io/kloudlite/iac/ttyd:latest
+
+  build-jupyter:
+    cmds:
+      - docker build --platform linux/amd64 -t ghcr.io/kloudlite/iac/jupyter:latest -f Dockerfile-jupyter .
+      - docker push ghcr.io/kloudlite/iac/jupyter:latest
+
+  build-vscode-server:
+    cmds:
+      - docker build -t ghcr.io/kloudlite/iac/vscode-server:latest -f Dockerfile-vscode-server .
+      - docker push ghcr.io/kloudlite/iac/vscode-server:latest
+
+  build-code-server:
+    cmds:
+      - docker build -t ghcr.io/kloudlite/iac/code-server:latest -f Dockerfile-code-server .
+      - docker push ghcr.io/kloudlite/iac/code-server:latest
+  build-all:
+    cmds:
+      - task: build-ssh
+      - task: build-tty
+      - task: build-jupyter
+      - task: build-vscode-server
+      - task: build-code-server
