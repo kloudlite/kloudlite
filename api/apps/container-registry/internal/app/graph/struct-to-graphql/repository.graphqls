@@ -1,0 +1,27 @@
+type Repository @shareable {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RepositoryEdge @shareable {
+  cursor: String!
+  node: Repository!
+}
+
+type RepositoryPaginatedRecords @shareable {
+  edges: [RepositoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input RepositoryIn {
+  name: String!
+}
+

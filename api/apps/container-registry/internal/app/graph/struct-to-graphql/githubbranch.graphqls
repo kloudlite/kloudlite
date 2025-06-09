@@ -1,0 +1,5 @@
+type GithubBranch @shareable {
+  name: String
+  protected: Boolean
+}
+

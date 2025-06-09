@@ -1,0 +1,313 @@
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__Expiration @shareable {
+  unit: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit!
+  value: Int!
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource @shareable {
+  branch: String!
+  provider: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider!
+  repository: String!
+  webhookId: Int
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubRepository @shareable {
+  archived: Boolean
+  cloneUrl: String
+  createdAt: Date
+  defaultBranch: String
+  description: String
+  disabled: Boolean
+  fullName: String
+  gitignoreTemplate: String
+  gitUrl: String
+  htmlUrl: String
+  id: Int
+  language: String
+  masterBranch: String
+  mirrorUrl: String
+  name: String
+  node_id: String
+  permissions: Map
+  private: Boolean
+  pushedAt: Date
+  size: Int
+  team_id: Int
+  updatedAt: Date
+  url: String
+  visibility: String
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccount @shareable {
+  avatarUrl: String
+  id: Int
+  login: String
+  nodeId: String
+  type: String
+}
+
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
+type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
+  syncScheduledAt: Date
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec @shareable {
+  accountName: String!
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
+  caches: [Github__com___kloudlite___operator___apis___distribution___v1__Cache!]
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Cache @shareable {
+  name: String!
+  path: String!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Registry @shareable {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__Repo!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Repo @shareable {
+  name: String!
+  tags: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Resource @shareable {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
+  status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
+  RawMessage: Any
+}
+
+type Metadata @shareable {
+  annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
+  generation: Int!
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+type PageInfo @shareable {
+  endCursor: String
+  hasNextPage: Boolean
+  hasPrevPage: Boolean
+  startCursor: String
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationIn {
+  unit: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit!
+  value: Int!
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn {
+  branch: String!
+  provider: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider!
+  repository: String!
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccountIn {
+  avatarUrl: String
+  id: Int
+  login: String
+  nodeId: String
+  type: String
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
+  caches: [Github__com___kloudlite___operator___apis___distribution___v1__CacheIn!]
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__CacheIn {
+  name: String!
+  path: String!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__RepoIn!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RepoIn {
+  name: String!
+  tags: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMetaIn!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
+}
+
+input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
+  RawMessage: Any
+}
+
+input MetadataIn {
+  annotations: Map
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus {
+  error
+  failed
+  idle
+  pending
+  queued
+  running
+  success
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit {
+  d
+  h
+  m
+  w
+  y
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider {
+  github
+  gitlab
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__RepoAccess {
+  read
+  read_write
+}
+
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncAction {
+  APPLY
+  DELETE
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncState {
+  APPLIED_AT_AGENT
+  DELETED_AT_AGENT
+  DELETING_AT_AGENT
+  ERRORED_AT_AGENT
+  IDLE
+  IN_QUEUE
+  UPDATED_AT_AGENT
+}
+
+enum Github__com___kloudlite___operator___pkg___operator__State {
+  errored____during____reconcilation
+  finished____reconcilation
+  under____reconcilation
+  yet____to____be____reconciled
+}
+

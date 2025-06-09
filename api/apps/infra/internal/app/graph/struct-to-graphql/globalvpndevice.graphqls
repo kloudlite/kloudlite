@@ -1,0 +1,37 @@
+type GlobalVPNDevice @shareable {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationMethod: String
+  creationTime: Date!
+  displayName: String!
+  globalVPNName: String!
+  id: ID!
+  ipAddr: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata! @goField(name: "objectMeta")
+  privateKey: String!
+  publicEndpoint: String
+  publicKey: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type GlobalVPNDeviceEdge @shareable {
+  cursor: String!
+  node: GlobalVPNDevice!
+}
+
+type GlobalVPNDevicePaginatedRecords @shareable {
+  edges: [GlobalVPNDeviceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input GlobalVPNDeviceIn {
+  creationMethod: String
+  displayName: String!
+  globalVPNName: String!
+  metadata: MetadataIn!
+}
+

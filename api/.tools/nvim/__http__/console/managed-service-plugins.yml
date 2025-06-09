@@ -1,0 +1,41 @@
+---
+label: List Managed Service Plugins
+query: |+ #graphql
+  mutation Core_listManagedServicePlugins {
+    core_listManagedServicePlugins {
+      category
+      items {
+        meta {
+          logo
+        }
+        plugin
+        spec {
+          apiVersion
+          services {
+            active
+            description
+            inputs {
+              defaultValue
+              displayUnit
+              type
+              label
+              max
+              min
+              multiplier
+              input
+              required
+              unit
+            }
+            kind
+            resources {
+              description
+              kind
+            }
+          }
+        }
+      }
+    }
+  }
+variables: {}
+---
+

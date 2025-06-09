@@ -1,0 +1,10 @@
+type GithubInstallation @shareable {
+  account: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccount
+  appId: Int
+  id: Int
+  nodeId: String
+  repositoriesUrl: String
+  targetId: Int
+  targetType: String
+}
+

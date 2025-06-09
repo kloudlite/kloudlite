@@ -1,0 +1,107 @@
+---
+label: "Create Deployment"
+query: |+
+  mutation Iot_createDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+    iot_createDeployment(projectName: $projectName, deployment: $deployment) {
+      CIDR
+      id
+      displayName
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deployment": {
+      "CIDR": "10.0.0.0/16",
+      "displayName": "sample deployment",
+      "name": "sample-deployment",
+      "exposedServices": [
+        {
+          "ip": "sample-ip",
+          "name": "10.21.32.4"
+        }
+      ]
+    }
+  }
+
+---
+
+label: "update deployment"
+query: |+
+  mutation Iot_updateDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+    iot_updateDeployment(projectName: $projectName, deployment: $deployment) {
+      displayName
+      CIDR
+      id
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deployment": {
+      "displayName": "sample depl one",
+      "CIDR": "10.0.0.1",
+      "name": "sample-deployment",
+      "exposedServices": [
+        {
+          "ip": "sample-ip-one",
+          "name": "10.12.13.4"
+        }
+      ]
+    }
+  }
+
+---
+
+label: "delete deployment"
+query: |+
+  mutation Iot_deleteDeployment($projectName: String!, $name: String!) {
+    iot_deleteDeployment(projectName: $projectName, name: $name)
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "name": "sample-deployment"
+  }
+
+---
+
+label: "get deployment"
+query: |+
+  query Iot_getDeployment($projectName: String!, $name: String!) {
+    iot_getDeployment(projectName: $projectName, name: $name) {
+      CIDR
+      id
+      displayName
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "name": "sample-deployment"
+  }
+
+---
+
+label: "list deployments"
+query: |+
+  query Iot_listDeployments($projectName: String!) {
+    iot_listDeployments(projectName: $projectName) {
+      totalCount
+      edges {
+        node {
+          displayName
+          CIDR
+          name
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+  }
+
+---
+
+

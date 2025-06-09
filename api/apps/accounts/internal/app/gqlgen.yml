@@ -1,0 +1,107 @@
+# Where are all the schema files located? globs are supported eg  src/**/*.graphqls
+schema:
+  - graph/*.graphqls
+  - graph/struct-to-graphql/*.graphqls
+
+
+# Where should the generated server code go?
+exec:
+  filename: graph/generated/generated.go
+  package: generated
+
+# Uncomment to enable federation
+federation:
+  filename: graph/generated/federation.go
+  package: generated
+  version: 2
+
+# Where should any generated models go?
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+# Where should the resolver implementations go?
+resolver:
+  layout: follow-schema
+  dir: graph
+  package: graph
+
+# Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
+# struct_tag: json
+
+# Optional: turn on to use []Thing instead of []*Thing
+# omit_slice_element_pointers: false
+
+# Optional: set to speed up generation time by not performing a final validation pass.
+# skip_validation: true
+
+# gqlgen will search for any type names in the schema in these go packages
+# if they match it will use them, otherwise it will generate them.
+autobind:
+  - "github.com/kloudlite/api/pkg/errors"
+
+# This section declares type mapping between the GraphQL and go type systems
+#
+# The first line in each type will be used as defaults for resolver arguments and
+# modelgen, the others will be allowed when binding to fields. Configure them to
+# your liking
+
+skip_mod_tidy: true
+skip_validation: true
+
+models:
+  ID:
+    model:
+      - github.com/kloudlite/api/pkg/repos.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  Json:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map
+  User:
+    fields:
+      accounts:
+        resolver: true
+      accountInvitations:
+        resolver: true
+  Account: &account-model
+    model: github.com/kloudlite/api/apps/accounts/internal/entities.Account
+    fields:
+      # accountMemberships:
+      memberships:
+        resolver: true
+      # outstandingAmount:
+      #   resolver: true
+  AccountIn: *account-model
+  AccountMembership:
+    model: github.com/kloudlite/api/apps/accounts/internal/entities.AccountMembership
+    fields:
+      user:
+        resolver: true
+
+  AvailableKloudliteRegion:
+    model: github.com/kloudlite/api/apps/accounts/internal/domain.AvailableKloudliteRegion
+
+  Invitation: &invitation-model
+    model: github.com/kloudlite/api/apps/accounts/internal/entities.Invitation
+  InvitationIn: *invitation-model
+
+  Metadata: &metadata-model
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+  MetadataIn: *metadata-model
+
+  Github__com___kloudlite___operator___pkg___operator__Status:
+    model: github.com/kloudlite/operator/pkg/operator.Status
+
+  AccountsCheckNameAvailabilityOutput:
+    model: github.com/kloudlite/api/apps/accounts/internal/domain.CheckNameAvailabilityOutput
+
+  Github__com___kloudlite___api___apps___iam___types__Role:
+    model: github.com/kloudlite/api/apps/iam/types.Role
+  
+  Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
+    model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
+

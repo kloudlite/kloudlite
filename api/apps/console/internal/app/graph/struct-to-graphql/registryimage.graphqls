@@ -1,0 +1,30 @@
+type RegistryImage @shareable {
+  accountName: String!
+  creationTime: Date!
+  id: ID!
+  imageName: String!
+  imageTag: String!
+  markedForDeletion: Boolean
+  meta: Map!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RegistryImageEdge @shareable {
+  cursor: String!
+  node: RegistryImage!
+}
+
+type RegistryImagePaginatedRecords @shareable {
+  edges: [RegistryImageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input RegistryImageIn {
+  accountName: String!
+  imageName: String!
+  imageTag: String!
+  meta: Map!
+}
+

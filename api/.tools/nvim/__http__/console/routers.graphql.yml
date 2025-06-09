@@ -1,0 +1,150 @@
+---
+global:
+  projectNamespace: sample
+  namespace: kl-core
+  name: s1
+---
+
+label: List Routers
+query: |+
+  query Core_listRouters($projectName: String!, $envName: String!) {
+    core_listRouters(projectName: $projectName, envName: $envName) {
+      edges {
+        cursor
+        node {
+          creationTime
+          accountName
+          apiVersion
+          kind
+          metadata {
+            name
+            namespace
+          }
+          spec {
+            ingressClass
+            domains
+          }
+          status {
+            isReady
+            checks
+          }
+          syncStatus {
+            state
+            recordVersion
+            error
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
+    }
+  }
+variables:
+  projectName: '{{.projectName}}'
+  envName: "{{.envName}}"
+---
+
+label: Create Router
+query: |+
+  mutation Core_createRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
+    core_createRouter(projectName: $projectName, envName: $envName, router: $router) {
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  router:
+    displayName: "this is a test router"
+    metadata:
+      name: '{{.name}}'
+    spec:
+      # ingressClass: "{{.ingressClass}}"
+      https:
+        enabled: true
+        # clusterIssuer: cluster-issuer
+      domains:
+        - "{{.name}}.{{.baseDomain}}"
+      routes:
+        - app: sample-app
+          path: /
+          port: 80
+---
+
+label: Get Router
+query: |+
+  query Core_getRouter($namespace: String!, $name: String!) {
+    core_getRouter(namespace: $namespace, name: $name) {
+      metadata {
+        name
+        deletionTimestamp
+        namespace
+      }
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.projectNamespace}}'
+
+---
+
+label: Update Router
+query: |+
+  mutation Core_updateRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
+    core_updateRouter(projectName: $projectName, envName: $envName, router: $router) {
+      spec {
+        domains
+      }
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  router:
+    displayName: "this is a test router"
+    metadata:
+      name: '{{.name}}'
+    spec:
+      ingressClass: "{{.ingressClass2}}"
+      https:
+        enabled: true
+        # clusterIssuer: cluster-issuer
+      domains:
+        - "example.{{.baseDomain}}"
+      routes:
+        - app: sample-app
+          path: /
+          port: 80
+---
+
+label: Delete Router
+query: |+
+  mutation Core_deleteRouter($projectName: String!, $envName: String!, $routerName: String!) {
+    core_deleteRouter(projectName: $projectName, envName: $envName, routerName: $routerName)
+  }
+variables:
+  projectName: '{{.projectName}}'
+  envName: '{{.envName}}'
+  routerName: "{{.name}}"
+---
+
+label: Resync Routers
+query: |+
+  query Query($namespace: String!, $name: String!) {
+    core_resyncRouter(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+
+---
