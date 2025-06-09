@@ -1,0 +1,130 @@
+---
+global:
+  accountName: kloudlite-dev
+  providerName: sample 
+  providerNamespace: s1
+  providerSecretName: provider-sample
+  clusterName: sample
+
+---
+
+label: List BYOC Clusters
+query: |+
+  query Infra_listBYOKClusters {
+    infra_listBYOKClusters {
+      totalCount
+    }
+  }
+
+---
+
+label: Create BYOC
+query: |+
+  mutation Infra_createBYOCCluster($cluster: BYOCClusterIn!) {
+    infra_createBYOCCluster(cluster: $cluster) {
+      apiVersion
+      # clusterToken
+      kind
+      metadata {
+        name
+        labels
+        annotations
+      }
+      spec {
+        region
+        publicIps
+        provider
+        storageClasses
+        ingressClasses
+        accountName
+      }
+      status {
+        isReady
+        checks
+      }
+      syncStatus {
+        syncScheduledAt
+        state
+        lastSyncedAt
+        generation
+        action
+      }
+    }
+  }
+
+variables:
+  cluster:
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      accountName: "{{.accountName}}"
+      provider: aws
+      region: ap-south-1
+---
+
+label: List BYOC Clusters
+query: |+
+  query Infra_listBYOCClusters {
+    infra_listBYOCClusters {
+      clusterToken
+      metadata {
+        name
+      }
+      spec { 
+        accountName
+      }
+    }
+  }
+---
+label: Get Cluster
+query: |+
+  query Query($name: String!) {
+    infra_getCluster(name: $name) {
+      kind
+      metadata {
+        name
+      }
+      spec {
+        provider
+      }
+    }
+  }
+variables:
+  name: "{{.clusterName}}"
+
+---
+label: Update Cluster
+query: |+
+  mutation Infra_updateCluster($cluster: Cluster!) {
+    infra_updateCluster(cluster: $cluster)
+  }
+variables:
+  cluster:
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      accountName: "{{.accountName}}"
+      providerName: "{{.providerName}}"
+      provider: aws
+      count: 2
+      region: ap-south-1
+      config: '{"instanceType":"c6a.large","vpc":""}'
+
+---
+label: Delete Cluster
+query: |+
+  mutation Infra_deleteBYOCCluster($name: String!) {
+    infra_deleteBYOCCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+---
+
+label: Resync BYOC
+query: |+
+  mutation Infra_resyncBYOCCluster($name: String!) {
+    infra_resyncBYOCCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+---

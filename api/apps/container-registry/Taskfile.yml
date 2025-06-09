@@ -1,0 +1,79 @@
+version: "3"
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: container-registry
+  binary: "./bin/{{.app}}"
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run  -tags dynamic github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubInstallation
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabProject
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabGroup
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubListRepository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubSearchRepository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitBranch
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.BuildRun
+          --struct github.com/kloudlite/api/pkg/types.Pagination
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Credential
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Repository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Digest
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Build
+          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,BuildRun,Repository,Digest,Build
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
+
+
+  gen:constants:
+    cmds:
+      - go generate ./internal/domain/entities/field-constants/gen.go
+  run:
+    dotenv:
+      - .secrets/env
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go run ./main.go --dev
+
+  build:
+    cmds:
+      - task: gen:constants
+      - task: go:build
+        vars: 
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"

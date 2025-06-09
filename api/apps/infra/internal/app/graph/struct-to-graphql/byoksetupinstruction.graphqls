@@ -1,0 +1,10 @@
+type BYOKSetupInstruction @shareable {
+  command: String!
+  title: String!
+}
+
+input BYOKSetupInstructionIn {
+  command: String!
+  title: String!
+}
+

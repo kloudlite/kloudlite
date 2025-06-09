@@ -1,0 +1,1514 @@
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams @shareable {
+  awsAccountId: String!
+  cfParamTrustedARN: String!
+  externalID: String!
+  roleARN: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys @shareable {
+  accessKey: String!
+  cfParamUserName: String!
+  secretKey: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials @shareable {
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys
+  cfParamInstanceProfileName: String
+  cfParamRoleName: String
+  cfParamStackName: String
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility @shareable {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+  publicEndpoint: String
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr @shareable {
+  accountName: String!
+  clusterName: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials @shareable {
+  serviceAccountJSON: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__InputField @shareable {
+  defaultValue: Any
+  displayUnit: String
+  inputType: String!
+  label: String!
+  max: Float
+  min: Float
+  multiplier: Float
+  name: String!
+  required: Boolean
+  unit: String
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate @shareable {
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___infra___internal___entities__InputField!]!
+  kind: String
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___infra___internal___entities__OutputField!]!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry @shareable {
+  active: Boolean!
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___infra___internal___entities__InputField!]!
+  kind: String
+  logoUrl: String!
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___infra___internal___entities__OutputField!]!
+  resources: [Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate!]!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__OutputField @shareable {
+  description: String!
+  label: String!
+  name: String!
+}
+
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
+type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
+  syncScheduledAt: Date
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig @shareable {
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials!
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
+  nodePools: Map
+  region: String!
+  spotNodePools: Map
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig @shareable {
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig @shareable {
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig
+  iamInstanceProfileRole: String
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  region: String!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
+  vpcId: String!
+  vpcSubnetId: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials @shareable {
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig @shareable {
+  ami: String!
+  instanceType: String!
+  nodes: Map
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode @shareable {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode @shareable {
+  instanceTypes: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig @shareable {
+  ami: String!
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
+  nodes: Map
+  spotFleetTaggingRoleName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID @shareable {
+  availabilityZone: String!
+  id: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams @shareable {
+  id: String!
+  publicSubnets: [Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID!]!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
+  jobName: String!
+  jobNamespace: String!
+  keyAWSVPCId: String
+  keyAWSVPCPublicSubnets: String
+  keyK3sAgentJoinToken: String!
+  keyK3sServerJoinToken: String!
+  keyKubeconfig: String!
+  secretName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @shareable {
+  accountId: String!
+  accountName: String!
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  clusterInternalDnsHost: String
+  clusterServiceCIDR: String
+  clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
+  kloudliteRelease: String!
+  messageQueueTopicName: String!
+  output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
+  publicDNSHost: String!
+  taintMasterNodes: Boolean!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig @shareable {
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  gcpProjectID: String!
+  masterNodes: Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig
+  region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig @shareable {
+  nodes: Map
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig @shareable {
+  availabilityZone: String!
+  bootVolumeSize: Int!
+  bootVolumeType: String!
+  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  gcpProjectID: String!
+  machineType: String!
+  nodes: Map
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+  region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount @shareable {
+  email: String
+  enabled: Boolean!
+  scopes: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams @shareable {
+  name: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps @shareable {
+  availabilityZone: String!
+  kloudliteRelease: String!
+  lastRecreatedAt: Date
+  role: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @shareable {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig
+  maxCount: Int!
+  minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__Taint!]
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeProps @shareable {
+  lastRecreatedAt: Date
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec @shareable {
+  nodepoolName: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat @shareable {
+  max: String!
+  min: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef @shareable {
+  key: String!
+  name: String!
+  namespace: String
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
+  name: String!
+  namespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfig @shareable {
+  ami: String!
+  externalVolumeSize: Int!
+  externalVolumeType: String!
+  iamInstanceProfileRole: String
+  instanceType: String!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParams @shareable {
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__Toleration!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkMachineSpec @shareable {
+  aws: Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfig
+  jobParams: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParams
+  sshPublicKeys: [String!]!
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineState!
+  targetNamespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkMachineStatus @shareable {
+  machineSSHKey: String
+  status: Github__com___kloudlite___operator___toolkit___reconciler__Status
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec @shareable {
+  enableCodeServer: Boolean
+  enableJupyterNotebook: Boolean
+  enableTTYD: Boolean
+  enableVSCodeServer: Boolean
+  imagePullPolicy: String
+  serviceAccountName: String
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceState!
+  workMachine: String!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
+  status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
+  RawMessage: Any
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__Check @shareable {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___toolkit___reconciler__State
+  status: Boolean!
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta @shareable {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+type Github__com___kloudlite___operator___toolkit___reconciler__Status @shareable {
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRef!]
+}
+
+type K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource @shareable {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__AzureDiskVolumeSource @shareable {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__AzureFilePersistentVolumeSource @shareable {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+type K8s__io___api___core___v1__CSIPersistentVolumeSource @shareable {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReference
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReference
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReference
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+type K8s__io___api___core___v1__CephFSPersistentVolumeSource @shareable {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+type K8s__io___api___core___v1__CinderPersistentVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__FCVolumeSource @shareable {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+type K8s__io___api___core___v1__FlexPersistentVolumeSource @shareable {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+}
+
+type K8s__io___api___core___v1__FlockerVolumeSource @shareable {
+  datasetName: String
+  datasetUUID: String
+}
+
+type K8s__io___api___core___v1__GCEPersistentDiskVolumeSource @shareable {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__GlusterfsPersistentVolumeSource @shareable {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__HostPathVolumeSource @shareable {
+  path: String!
+  type: String
+}
+
+type K8s__io___api___core___v1__ISCSIPersistentVolumeSource @shareable {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  targetPortal: String!
+}
+
+type K8s__io___api___core___v1__LocalVolumeSource @shareable {
+  fsType: String
+  path: String!
+}
+
+type K8s__io___api___core___v1__ModifyVolumeStatus @shareable {
+  status: K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus!
+  targetVolumeAttributesClassName: String
+}
+
+type K8s__io___api___core___v1__NFSVolumeSource @shareable {
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+type K8s__io___api___core___v1__NamespaceCondition @shareable {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+type K8s__io___api___core___v1__NamespaceSpec @shareable {
+  finalizers: [String!]
+}
+
+type K8s__io___api___core___v1__NamespaceStatus @shareable {
+  conditions: [K8s__io___api___core___v1__NamespaceCondition!]
+  phase: K8s__io___api___core___v1__NamespacePhase
+}
+
+type K8s__io___api___core___v1__NodeSelector @shareable {
+  nodeSelectorTerms: [K8s__io___api___core___v1__NodeSelectorTerm!]!
+}
+
+type K8s__io___api___core___v1__NodeSelectorRequirement @shareable {
+  key: String!
+  operator: K8s__io___api___core___v1__NodeSelectorOperator!
+  values: [String!]
+}
+
+type K8s__io___api___core___v1__NodeSelectorTerm @shareable {
+  matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+  matchFields: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+}
+
+type K8s__io___api___core___v1__ObjectReference @shareable {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimCondition @shareable {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimSpec @shareable {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReference
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReference
+  resources: K8s__io___api___core___v1__VolumeResourceRequirements
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  storageClassName: String
+  volumeAttributesClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
+  currentVolumeAttributesClassName: String
+  modifyVolumeStatus: K8s__io___api___core___v1__ModifyVolumeStatus
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+type K8s__io___api___core___v1__PersistentVolumeSpec @shareable {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSource
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSource
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSource
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSource
+  claimRef: K8s__io___api___core___v1__ObjectReference
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSource
+  fc: K8s__io___api___core___v1__FCVolumeSource
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSource
+  flocker: K8s__io___api___core___v1__FlockerVolumeSource
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSource
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSource
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSource
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSource
+  local: K8s__io___api___core___v1__LocalVolumeSource
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSource
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinity
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSource
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSource
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSource
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  volumeAttributesClassName: String
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
+}
+
+type K8s__io___api___core___v1__PersistentVolumeStatus @shareable {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+type K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource @shareable {
+  fsType: String
+  pdID: String!
+}
+
+type K8s__io___api___core___v1__PortworxVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__QuobyteVolumeSource @shareable {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+type K8s__io___api___core___v1__RBDPersistentVolumeSource @shareable {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource @shareable {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__SecretReference @shareable {
+  name: String
+  namespace: String
+}
+
+type K8s__io___api___core___v1__StorageOSPersistentVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReference
+  volumeName: String
+  volumeNamespace: String
+}
+
+type K8s__io___api___core___v1__Taint @shareable {
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
+}
+
+type K8s__io___api___core___v1__Toleration @shareable {
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
+type K8s__io___api___core___v1__TypedLocalObjectReference @shareable {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+type K8s__io___api___core___v1__TypedObjectReference @shareable {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+type K8s__io___api___core___v1__VolumeNodeAffinity @shareable {
+  required: K8s__io___api___core___v1__NodeSelector
+}
+
+type K8s__io___api___core___v1__VolumeResourceRequirements @shareable {
+  limits: Map
+  requests: Map
+}
+
+type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource @shareable {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSource @shareable {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpec
+  persistentVolumeName: String
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSpec @shareable {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSource!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentStatus @shareable {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeError
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeError
+}
+
+type K8s__io___api___storage___v1__VolumeError @shareable {
+  message: String
+  time: Date
+}
+
+type K8s__io___apimachinery___pkg___api___resource__Quantity @shareable {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector @shareable {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
+  matchLabels: Map
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement @shareable {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
+type Metadata @shareable {
+  annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
+  generation: Int!
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+type PageInfo @shareable {
+  endCursor: String
+  hasNextPage: Boolean
+  hasPrevPage: Boolean
+  startCursor: String
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn {
+  awsAccountId: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn {
+  accessKey: String!
+  secretKey: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn {
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentialsIn {
+  serviceAccountJSON: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn!
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
+  region: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
+  instanceType: String!
+  nvidiaGpuEnabled: Boolean!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn {
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn {
+  ami: String!
+  instanceType: String!
+  nodes: Map
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn {
+  instanceTypes: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn {
+  ami: String!
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
+  nodes: Map
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
+  cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfigIn
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfigIn {
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  region: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn {
+  availabilityZone: String!
+  machineType: String!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn
+  maxCount: Int!
+  minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__TaintIn!]
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePropsIn {
+  lastRecreatedAt: Date
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn {
+  nodepoolName: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn {
+  max: String!
+  min: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
+  name: String!
+  namespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfigIn {
+  ami: String!
+  externalVolumeSize: Int!
+  instanceType: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParamsIn {
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkMachineSpecIn {
+  aws: Github__com___kloudlite___operator___apis___crds___v1__AWSMachineConfigIn
+  jobParams: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineJobParamsIn
+  sshPublicKeys: [String!]!
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineState!
+  targetNamespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkMachineStatusIn {
+  machineSSHKey: String
+  status: Github__com___kloudlite___operator___toolkit___reconciler__StatusIn
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn {
+  enableCodeServer: Boolean
+  enableJupyterNotebook: Boolean
+  enableTTYD: Boolean
+  enableVSCodeServer: Boolean
+  imagePullPolicy: String
+  serviceAccountName: String
+  state: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceState!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__CheckIn {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___toolkit___reconciler__State
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___toolkit___reconciler__StatusIn {
+  checkList: [Github__com___kloudlite___operator___toolkit___reconciler__CheckMetaIn!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  resources: [Github__com___kloudlite___operator___toolkit___reconciler__ResourceRefIn!]
+}
+
+input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__AzureDiskVolumeSourceIn {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+input K8s__io___api___core___v1__CSIPersistentVolumeSourceIn {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+input K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
+}
+
+input K8s__io___api___core___v1__CinderPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__FCVolumeSourceIn {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+input K8s__io___api___core___v1__FlexPersistentVolumeSourceIn {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+}
+
+input K8s__io___api___core___v1__FlockerVolumeSourceIn {
+  datasetName: String
+  datasetUUID: String
+}
+
+input K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__HostPathVolumeSourceIn {
+  path: String!
+  type: String
+}
+
+input K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  targetPortal: String!
+}
+
+input K8s__io___api___core___v1__LocalVolumeSourceIn {
+  fsType: String
+  path: String!
+}
+
+input K8s__io___api___core___v1__ModifyVolumeStatusIn {
+  status: K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus!
+  targetVolumeAttributesClassName: String
+}
+
+input K8s__io___api___core___v1__NFSVolumeSourceIn {
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+input K8s__io___api___core___v1__NamespaceConditionIn {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+input K8s__io___api___core___v1__NamespaceSpecIn {
+  finalizers: [String!]
+}
+
+input K8s__io___api___core___v1__NamespaceStatusIn {
+  conditions: [K8s__io___api___core___v1__NamespaceConditionIn!]
+  phase: K8s__io___api___core___v1__NamespacePhase
+}
+
+input K8s__io___api___core___v1__NodeSelectorIn {
+  nodeSelectorTerms: [K8s__io___api___core___v1__NodeSelectorTermIn!]!
+}
+
+input K8s__io___api___core___v1__NodeSelectorRequirementIn {
+  key: String!
+  operator: K8s__io___api___core___v1__NodeSelectorOperator!
+  values: [String!]
+}
+
+input K8s__io___api___core___v1__NodeSelectorTermIn {
+  matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+  matchFields: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+}
+
+input K8s__io___api___core___v1__ObjectReferenceIn {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReferenceIn
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReferenceIn
+  resources: K8s__io___api___core___v1__VolumeResourceRequirementsIn
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  storageClassName: String
+  volumeAttributesClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
+  currentVolumeAttributesClassName: String
+  modifyVolumeStatus: K8s__io___api___core___v1__ModifyVolumeStatusIn
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+input K8s__io___api___core___v1__PersistentVolumeSpecIn {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSourceIn
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSourceIn
+  claimRef: K8s__io___api___core___v1__ObjectReferenceIn
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSourceIn
+  fc: K8s__io___api___core___v1__FCVolumeSourceIn
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSourceIn
+  flocker: K8s__io___api___core___v1__FlockerVolumeSourceIn
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSourceIn
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn
+  local: K8s__io___api___core___v1__LocalVolumeSourceIn
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSourceIn
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinityIn
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSourceIn
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSourceIn
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSourceIn
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  volumeAttributesClassName: String
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
+}
+
+input K8s__io___api___core___v1__PersistentVolumeStatusIn {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+input K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn {
+  fsType: String
+  pdID: String!
+}
+
+input K8s__io___api___core___v1__PortworxVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__QuobyteVolumeSourceIn {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+input K8s__io___api___core___v1__RBDPersistentVolumeSourceIn {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
+}
+
+input K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__SecretReferenceIn {
+  name: String
+  namespace: String
+}
+
+input K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReferenceIn
+  volumeName: String
+  volumeNamespace: String
+}
+
+input K8s__io___api___core___v1__TaintIn {
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
+}
+
+input K8s__io___api___core___v1__TolerationIn {
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
+input K8s__io___api___core___v1__TypedLocalObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+input K8s__io___api___core___v1__TypedObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+input K8s__io___api___core___v1__VolumeNodeAffinityIn {
+  required: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+input K8s__io___api___core___v1__VolumeResourceRequirementsIn {
+  limits: Map
+  requests: Map
+}
+
+input K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSourceIn {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  persistentVolumeName: String
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSpecIn {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSourceIn!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentStatusIn {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeErrorIn
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeErrorIn
+}
+
+input K8s__io___api___storage___v1__VolumeErrorIn {
+  message: String
+  time: Date
+}
+
+input K8s__io___apimachinery___pkg___api___resource__QuantityIn {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
+  matchLabels: Map
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
+input MetadataIn {
+  annotations: Map
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+enum Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode {
+  private
+  public
+}
+
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncAction {
+  APPLY
+  DELETE
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncState {
+  APPLIED_AT_AGENT
+  DELETED_AT_AGENT
+  DELETING_AT_AGENT
+  ERRORED_AT_AGENT
+  IDLE
+  IN_QUEUE
+  UPDATED_AT_AGENT
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType {
+  ec2
+  spot
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism {
+  assume_role
+  secret_keys
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode {
+  dev
+  HA
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType {
+  SPOT
+  STANDARD
+}
+
+enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {
+  aws
+  azure
+  digitalocean
+  gcp
+  unknown
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__WorkMachineState {
+  OFF
+  ON
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__WorkspaceState {
+  OFF
+  ON
+}
+
+enum Github__com___kloudlite___operator___pkg___operator__State {
+  errored____during____reconcilation
+  finished____reconcilation
+  under____reconcilation
+  yet____to____be____reconciled
+}
+
+enum Github__com___kloudlite___operator___toolkit___reconciler__State {
+  errored____during____reconcilation
+  finished____reconcilation
+  under____reconcilation
+  yet____to____be____reconciled
+}
+
+enum K8s__io___api___core___v1__ConditionStatus {
+  False
+  True
+  Unknown
+}
+
+enum K8s__io___api___core___v1__NamespaceConditionType {
+  NamespaceContentRemaining
+  NamespaceDeletionContentFailure
+  NamespaceDeletionDiscoveryFailure
+  NamespaceDeletionGroupVersionParsingFailure
+  NamespaceFinalizersRemaining
+}
+
+enum K8s__io___api___core___v1__NamespacePhase {
+  Active
+  Terminating
+}
+
+enum K8s__io___api___core___v1__NodeSelectorOperator {
+  DoesNotExist
+  Exists
+  Gt
+  In
+  Lt
+  NotIn
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimConditionType {
+  ControllerResizeError
+  FileSystemResizePending
+  ModifyingVolume
+  ModifyVolumeError
+  NodeResizeError
+  Resizing
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimModifyVolumeStatus {
+  Infeasible
+  InProgress
+  Pending
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
+  Bound
+  Lost
+  Pending
+}
+
+enum K8s__io___api___core___v1__PersistentVolumePhase {
+  Available
+  Bound
+  Failed
+  Pending
+  Released
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeReclaimPolicy {
+  Delete
+  Recycle
+  Retain
+}
+
+enum K8s__io___api___core___v1__TaintEffect {
+  NoExecute
+  NoSchedule
+  PreferNoSchedule
+}
+
+enum K8s__io___api___core___v1__TolerationOperator {
+  Equal
+  Exists
+}
+
+enum K8s__io___apimachinery___pkg___api___resource__Format {
+  BinarySI
+  DecimalExponent
+  DecimalSI
+}
+
+enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator {
+  DoesNotExist
+  Exists
+  In
+  NotIn
+}
+

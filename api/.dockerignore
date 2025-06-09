@@ -1,0 +1,13 @@
+**
+!go.*
+!apps
+!pkg
+!common
+!constants
+!*.go
+!flake.*
+!grpc-interfaces
+apps/**/.task
+apps/**/node_modules
+apps/**/.pnpm
+pkg/**/secrets

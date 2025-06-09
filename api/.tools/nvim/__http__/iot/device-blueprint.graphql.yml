@@ -1,0 +1,95 @@
+---
+label: "Create Device Blueprint"
+query: |+
+  mutation Iot_createDeviceBlueprint($projectName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+    iot_createDeviceBlueprint(projectName: $projectName, deviceBlueprint: $deviceBlueprint) {
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deviceBlueprint": {
+      "bluePrintType": "singleton_blueprint",
+      "displayName": "sample device blueprint",
+      "name": "sample-device-blueprint",
+      "version": "1"
+    }
+  }
+
+---
+
+label: "update Device Blueprint"
+query: |+
+  mutation Iot_updateDeviceBlueprint($projectName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+    iot_updateDeviceBlueprint(projectName: $projectName, deviceBlueprint: $deviceBlueprint) {
+      bluePrintType
+      displayName
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deviceBlueprint": {
+      "bluePrintType": "group_blueprint",
+      "displayName": "sample device blueprint update",
+      "name": "sample-device-blueprint",
+      "version": 1
+    }
+  }
+
+---
+
+label: "delete Device Blueprint"
+query: |+
+  mutation Iot_deleteDeviceBlueprint($projectName: String!, $name: String!) {
+    iot_deleteDeviceBlueprint(projectName: $projectName, name: $name)
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "name": "sample-device-blueprint"
+  }
+
+---
+
+label: "get Device Blueprint"
+query: |+
+  query Iot_getDeviceBlueprint($projectName: String!, $name: String!) {
+    iot_getDeviceBlueprint(projectName: $projectName, name: $name) {
+      id
+      name
+      displayName
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "name": "sample-device-blueprint"
+  }
+
+---
+
+label: "list Device Blueprint"
+query: |+
+  query Iot_listDeviceBlueprints($projectName: String!) {
+    iot_listDeviceBlueprints(projectName: $projectName) {
+      totalCount
+      edges {
+        node {
+          displayName
+          accountName
+          projectName
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+  }
+
+---

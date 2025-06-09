@@ -1,0 +1,25 @@
+version: 3
+
+tasks:
+  build-and-push:
+    summary: |+
+      task build-and-push image="sample:latest" args="-f ./Dockerfile ." [platforms="linux/amd64,linux/arm64"]
+    env:
+      CGO_ENABLED: 0
+      GOARCH: "{{.GOARCH | default .PlatformArch}}"
+    requires:
+      vars:
+        - "image"
+        - "args"
+    silent: true
+    vars:
+      push_image: "{{.push_image | default true}}"
+    cmds:
+      - cmd: |+
+          echo $(docker manifest inspect "{{.image}}" || echo "not-found") >/tmp/manifest-inspect-status 2>/dev/null
+          if [ "$(cat /tmp/manifest-inspect-status)" != "not-found" ]; then
+            [ "{{.override}}" != "true" ] && echo "image '{{.image}}' already exists, skipping, use 'override=true' to override" && exit 0
+            echo "image exists, but overridden"
+          fi
+
+          DOCKER_BUILDKIT=1 docker buildx build -t {{.image}} --output=type=image,compression=zstd,force-compression=true,compression-level=12,push={{.push_image}} {{.args}}

@@ -1,0 +1,100 @@
+---
+global:
+  # accountName: kloudlite-dev
+  accountName: not-sample
+  invitationId: "invite-************"
+  emailToInvite: "*************@kloudlite.io"
+---
+
+label: List Invitations
+query: |+
+  query Accounts_listInvitations($accountName: String!) {
+    accounts_listInvitations(accountName: $accountName) {
+      id
+      inviteToken
+      userEmail
+      userRole
+      accepted
+      rejected
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+---
+
+label: List Invitations For User
+query: |+
+  query Accounts_listInvitationsForUser($onlyPending: Boolean!) {
+    accounts_listInvitationsForUser(onlyPending: $onlyPending) {
+      id
+      inviteToken
+      userEmail
+      userRole
+      accepted
+      rejected
+    }
+  }
+variables:
+  onlyPending: true
+
+---
+
+label: Get Invitation
+query: |+
+  query Accounts_getInvitation($accountName: String!, $invitationId: String!) {
+    accounts_getInvitation(accountName: $accountName, invitationId: $invitationId) {
+      id
+      inviteToken
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitationId: "{{.invitationId}}"
+---
+
+label: Invite Member
+query: |+
+  mutation Accounts_inviteMember($accountName: String!, $invitation: InvitationIn!) {
+    accounts_inviteMember(accountName: $accountName, invitation: $invitation) {
+      id
+      userRole
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitation:
+    userEmail: "{{.emailToInvite}}"
+    userRole: "account_admin"
+
+---
+
+label: Resend Invite Email
+query: |+
+  mutation Accounts_resendInviteMail($accountName: String!, $invitationId: String!) {
+    accounts_resendInviteMail(accountName: $accountName, invitationId: $invitationId)
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitationId: "{{.invitationId}}"
+---
+
+label: Delete Invitation
+query: |+
+  mutation Accounts_deleteInvitation($accountName: String!, $invitationId: String!) {
+    accounts_deleteInvitation(accountName: $accountName, invitationId: $invitationId)
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitationId: "{{.invitationId}}"
+---
+
+label: Accept Invitation
+query: |+
+  mutation Accounts_acceptInvitation($accountName: String!, $inviteToken: String!) {
+    accounts_acceptInvitation(accountName: $accountName, inviteToken: $inviteToken)
+  }
+
+variables:
+  accountName: "{{.accountName}}"
+  inviteToken: "{{.invitationId}}"
+---

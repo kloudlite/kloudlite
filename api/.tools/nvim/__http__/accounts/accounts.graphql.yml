@@ -1,0 +1,130 @@
+---
+# global:
+#   accountName: kloudlite-dev
+---
+
+label: List Accounts
+query: |+ #graphql
+  query Accounts_listAccounts {
+    accounts_listAccounts {
+      isActive
+      id
+      displayName
+      creationTime
+      markedForDeletion
+      createdBy {
+        userEmail
+      }
+      metadata{
+        # labels
+        name
+      }
+    }
+  }
+
+---
+
+label: Get Account
+query: |+ #graphql
+  query Accounts_getAccount($accountName: String!) {
+    accounts_getAccount(accountName: $accountName) {
+      metadata {
+        name
+      }
+    }
+  }
+
+variables:
+  accountName: "{{.accountName}}"
+---
+
+label: Create Account
+query: |
+  mutation Accounts_createAccount($account: AccountIn!) {
+    accounts_createAccount(account: $account) {
+      id
+      isActive
+      kloudliteGatewayRegion
+    }
+  }
+variables:
+  account:
+    displayName: "test account - nxt"
+    metadata:
+      name: "{{.accountName}}"
+    kloudliteGatewayRegion: "k3d/mt1"
+
+---
+
+label: Update Account
+query: |
+  mutation Accounts_updateAccount($account: AccountIn!) {
+    accounts_updateAccount(account: $account) {
+      apiVersion
+      id
+      isActive
+      kind
+    }
+  }
+variables:
+  account:
+    contactEmail: "sample@gmail.com"
+    displayName: "sample"
+    metadata:
+      name: sample
+      namespace: sample
+      labels:
+        k1: v1
+    spec: {}
+
+---
+
+label: Deactivate Account
+query: |+
+  mutation Accounts_deactivateAccount($accountName: String!) {
+    accounts_deactivateAccount(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+
+---
+
+label: Activate Account
+query: |+
+  mutation Accounts_activateAccount($accountName: String!) {
+    accounts_activateAccount(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+---
+
+lable: Check Name Availability
+query: |+ #graphql
+  query Accounts_checkNameAvailability($name: String!) {
+    accounts_checkNameAvailability(name: $name) {
+      result
+      suggestedNames
+    }
+  }
+variables:
+  name: sample
+---
+
+label: Ensure Kloudlite Registry Pull Secrets
+query: |+ #graphql
+  query Query($accountName: String!) {
+    accounts_ensureKloudliteRegistryPullSecrets(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+
+---
+
+label: Delete Account
+query: |+
+  mutation Accounts_deleteAccount($accountName: String!) {
+    accounts_deleteAccount(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+---

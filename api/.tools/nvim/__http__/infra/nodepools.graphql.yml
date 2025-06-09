@@ -1,0 +1,280 @@
+---
+label: Create Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  pool:
+    displayName: sample
+    # stateful: false
+    metadata:
+      name: first
+    spec:
+      minCount: 1
+      maxCount: 2
+      # targetCount: 1
+      cloudProvider: "aws"
+      aws:
+        # availabilityZone: eu-north-1a
+        availabilityZone: ap-south-1a
+        poolType: "ec2"
+        ec2Pool:
+          instanceType: c6a.large
+          # instanceType: c5.large
+        nvidiaGpuEnabled: false
+
+---
+
+label: Create GCP Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.gcpClusterName}}"
+  pool:
+    displayName: sample
+    # stateful: false
+    metadata:
+      name: first
+    spec:
+      minCount: 1
+      maxCount: 2
+      # targetCount: 1
+      cloudProvider: "gcp"
+      gcp:
+        availabilityZone: asia-south1-a
+        poolType: "SPOT"
+        machineType: e2-custom-2-4096
+
+---
+
+label: Create Spot EC2 Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  pool:
+    displayName: sample
+    stateful: false
+    metadata:
+      name: spot-cpu
+    spec:
+      minCount: 1
+      maxCount: 2
+      cloudProvider: "aws"
+      aws:
+        availabilityZone: ap-south-1a
+        poolType: "spot"
+        spotPool:
+          cpuNode:
+            vcpu: 
+              min: "2"
+              max: "4"
+            memoryPerVcpu:
+              min: "2"
+              max: "4"
+        nvidiaGpuEnabled: false
+
+---
+
+label: Create Spot Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  pool:
+    displayName: sample
+    metadata:
+      name: gpu-np
+    spec:
+      minCount: 1
+      maxCount: 2
+      targetCount: 1
+      cloudProvider: "aws"
+      aws:
+        availabilityZone: ap-south-1a
+        poolType: "spot"
+        spotPool:
+          gpuNode:
+            instanceTypes: ["g4dn.xlarge"]
+        nvidiaGpuEnabled: true
+
+---
+
+label: Update Nodepool
+query: |+ #graphql
+  mutation Infra_updateNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_updateNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  # clusterName: "{{.clusterName}}"
+  clusterName: "{{.gcpClusterName}}"
+  pool:
+    displayName: "First GCP Nodepool"
+    metadata:
+      name: first
+    spec:
+      minCount: 1
+      maxCount: 1
+      cloudProvider: "gcp"
+
+---
+
+label: List Nodepools
+query: |+ #graphql
+  query Infra_listNodePools($clusterName: String!) {
+    infra_listNodePools(clusterName: $clusterName) {
+      totalCount
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      edges {
+        cursor
+        node {
+          id
+          kind
+          metadata {
+            name
+            generation
+          }
+          recordVersion
+          spec {
+            minCount
+            maxCount
+            gcp {
+              machineType
+            }
+            # targetCount
+          }
+          syncStatus {
+            syncScheduledAt
+            state
+            recordVersion
+            lastSyncedAt
+            error
+            action
+          }
+          status {
+            isReady
+          }
+        }
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+
+---
+label: Get Nodepool
+query: |+ #graphql
+  query Infra_getNodePool($clusterName: String!, $poolName: String!) {
+    infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
+      accountName
+      clusterName
+      id
+      metadata {
+        name
+        namespace
+      }
+      recordVersion
+      syncStatus {
+        syncScheduledAt
+        state
+        recordVersion
+        lastSyncedAt
+        error
+        action
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  poolName: spot-cpu
+---
+
+label: Delete NodePool
+query: |+ #graphql
+  mutation Infra_deleteNodePool($clusterName: String!, $poolName: String!) {
+    infra_deleteNodePool(clusterName: $clusterName, poolName: $poolName)
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  # clusterName: "{{.gcpClusterName}}"
+  poolName: first
+
+---

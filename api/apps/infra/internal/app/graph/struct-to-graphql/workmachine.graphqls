@@ -1,0 +1,40 @@
+type Workmachine @shareable {
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  dispatchAddr: Github__com___kloudlite___api___apps___infra___internal___entities__DispatchAddr
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineSpec
+  status: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type WorkmachineEdge @shareable {
+  cursor: String!
+  node: Workmachine!
+}
+
+type WorkmachinePaginatedRecords @shareable {
+  edges: [WorkmachineEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input WorkmachineIn {
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineSpecIn
+  status: Github__com___kloudlite___operator___apis___crds___v1__WorkMachineStatusIn
+}
+

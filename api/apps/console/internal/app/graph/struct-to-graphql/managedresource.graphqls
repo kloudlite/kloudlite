@@ -1,0 +1,45 @@
+type ManagedResource @shareable {
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  enabled: Boolean
+  environmentName: String!
+  id: ID!
+  isImported: Boolean!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  managedServiceName: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  mresRef: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
+  status: Github__com___kloudlite___operator___toolkit___reconciler__Status
+  syncedOutputSecretRef: K8s__io___api___core___v1__Secret
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ManagedResourceEdge @shareable {
+  cursor: String!
+  node: ManagedResource!
+}
+
+type ManagedResourcePaginatedRecords @shareable {
+  edges: [ManagedResourceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ManagedResourceIn {
+  apiVersion: String
+  displayName: String!
+  enabled: Boolean
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn!
+}
+

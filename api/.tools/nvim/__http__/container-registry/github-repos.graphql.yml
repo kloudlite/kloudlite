@@ -1,0 +1,46 @@
+---
+global:
+  organization: ""
+  installationId: ""
+---
+query: |+
+  query Cr_listGithubInstallations {
+    cr_listGithubInstallations {
+      id
+      # appId
+      # targetId
+      account {
+        id
+        login
+      }
+    }
+  }
+---
+label: Search Github Repositories
+query: |+
+  query Cr_searchGithubRepos($organization: String!, $search: String!) {
+    cr_searchGithubRepos(organization: $organization, search: $search) {
+      repositories {
+        fullName
+        name
+        masterBranch
+        permissions
+      }
+    }
+  }
+variables:
+  organization: '{{.organization}}'
+  search: ''
+---
+label: List Github Repositories by Installation
+query: |+
+  query Cr_listGithubRepos($installationId: Int!) {
+    cr_listGithubRepos(installationId: $installationId) {
+      repositories {
+        name
+      }
+    }
+  }
+variables:
+  installationId: '{{.installationId}}'
+---

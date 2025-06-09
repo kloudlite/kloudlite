@@ -1,0 +1,191 @@
+---
+global:
+  name: sample-config
+---
+
+label: List Configs
+query: |+ #graphql
+  query Core_listConfigs($envName: String!) {
+    core_listConfigs(envName: $envName) {
+      edges {
+        node {
+          data
+        }
+      }
+    }
+  }
+variables:
+  envName: "{{.envName}}"
+
+---
+---
+label: testing
+query: |+ #graphql
+  query Core_getConfigValues(
+    $envName: String!
+    $configQueries: [ConfigKeyRefIn!]
+    $secretQueries: [SecretKeyRefIn!]
+    $mresQueries: [SecretKeyRefIn!]
+  ) {
+    configs: core_getConfigValues(
+      envName: $envName
+      queries: $configQueries
+    ) {
+      configName
+      key
+      value
+    }
+    secrets: core_getSecretValues(
+      envName: $envName
+      queries: $secretQueries
+    ) {
+      key
+      secretName
+      value
+    }
+    mreses: core_getSecretValues(envName: $envName, queries: $mresQueries) {
+      key
+      secretName
+      value
+    }
+  }
+variables:
+  # envName: "{{ .envName }}"
+  # envName: "nxt17-env-1"
+  # configQueries: 
+  #   - configName: cfg-1
+  #     key: k1
+  # secretQueries: 
+  #   - secretName: secret-1
+  #     key: k1
+  # mresQueries: []
+  {
+  "configQueries": [
+    {
+      "configName": "cfg-1",
+      "key": "k1"
+    }
+  ],
+  "envName": "nxt17-env-1",
+  "mresQueries": null,
+  "secretQueries": [
+    {
+      "key": "k1",
+      "secretName": "secret-1"
+    }
+  ]
+}
+
+---
+
+label: Create Config
+query: |+ #graphql
+  mutation Core_createConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
+    core_createConfig(projectName: $projectName, envName: $envName, config: $config) {
+      metadata {
+        name
+        namespace
+      }
+      syncStatus {
+        state
+        action
+        recordVersion
+      }
+      recordVersion
+      data
+    }
+  }
+
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  config:
+    displayName: "Sample Config"
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    data:
+      key1: value1
+      key2: value2
+---
+
+label: Get Config
+query: |+ #graphql
+  query Core_getConfig($namespace: String!, $name: String!) {
+    core_getConfig(namespace: $namespace, name: $name) {
+      metadata {
+        name
+        namespace
+        generation
+      }
+      status {
+        isReady
+        checks
+        lastReconcileTime
+      }
+      syncStatus {
+        state
+        action
+        generation
+      }
+      data
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.namespace}}'
+
+---
+
+label: Update Config
+query: |+ #graphql
+  mutation Core_updateConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
+    core_updateConfig(projectName: $projectName, envName: $envName, config: $config) {
+        metadata {
+          name
+          namespace
+          generation
+        }
+        syncStatus{
+          state
+          action
+          lastSyncedAt
+        }
+        data
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  config:
+    displayName: "Sample Config Update"
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    data:
+      key1: valueX
+      # key2: value-for-key-2
+      key3: Fdsfafaskfjsdfjasfj
+---
+
+label: Delete Config
+query: |+ #graphql
+  mutation Core_deleteConfig($projectName: String!, $envName: String!, $configName: String!) {
+    core_deleteConfig(projectName: $projectName, envName: $envName, configName: $configName)
+  }
+variables:
+  projectName: '{{.projectName}}'
+  envName: "{{.envName}}"
+  configName: "{{.name}}"
+---
+
+label: Resync Config
+query: |+
+  query Query($namespace: String!, $name: String!) {
+    core_resyncConfig(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+
+---

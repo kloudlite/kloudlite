@@ -1,0 +1,99 @@
+---
+
+label: "list helm chart type Cluster msvc"
+query: |+
+  query Infra_listHelmTypeClusterManagedServices {
+    infra_listHelmTypeClusterManagedServices {
+      totalCount
+      edges {
+        node {
+          kind
+          accountName
+          spec {
+            msvcSpec {
+              plugin {
+                kind
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+variables:
+  {}
+
+---
+
+label: "list Cluster msvc"
+query: |+
+  query Infra_listClusterManagedServices {
+    infra_listClusterManagedServices {
+      totalCount
+      edges {
+        node {
+          accountName
+          kind
+          spec {
+            msvcSpec {
+              plugin {
+                kind
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+---
+label: "Clone Cluster Managed Service"
+query: |+
+  mutation Infra_cloneClusterManagedService($clusterName: String!, $sourceMsvcName: String!, $destinationMsvcName: String!, $displayName: String!) {
+    infra_cloneClusterManagedService(clusterName: $clusterName, sourceMsvcName: $sourceMsvcName, destinationMsvcName: $destinationMsvcName, displayName: $displayName) {
+      id
+      displayName
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  {
+    "clusterName": "test-cluster1",
+    "sourceMsvcName": "msvc-one",
+    "destinationMsvcName": "msvc-one-clone2",
+    "displayName": "msvc one clone2"
+  }
+
+---
+
+label: "list Cluster msvc"
+query: |+
+  query Infra_listClusterManagedServices {
+    infra_listClusterManagedServices {
+      totalCount
+      edges {
+        node {
+          accountName
+          kind
+          spec {
+            msvcSpec {
+              plugin {
+                kind
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+# variables:
+#   {
+#     "projectName": "sample-project",
+#     "deviceBlueprintName": "sample-device-blueprint",
+#   }
+
+
+---

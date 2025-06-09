@@ -1,0 +1,107 @@
+version: "3"
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: console
+  binary: "./bin/{{.app}}"
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
+        --struct github.com/kloudlite/api/apps/console/internal/entities.App
+        --struct github.com/kloudlite/api/apps/console/internal/entities.HelmChart
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ExternalApp
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ServiceBinding
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Config
+        --struct github.com/kloudlite/operator/apis/wireguard/v1.Port
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyValueRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyValueRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.SecretVariableKeyRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.SecretVariableKeyValueRef
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Router
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugins
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedServicePlugin
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
+        --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImage
+        --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImageURL
+        --struct github.com/kloudlite/api/apps/console/internal/entities.SecretVariable
+        --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+        --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ClusterManagedService,RegistryImage,SecretVariable,HelmChart,ServiceBinding
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
+
+  gen:constants:
+    cmds:
+      - go generate ./internal/entities/field-constants/gen.go
+
+  build:
+    vars:
+      platform_GOARCH:
+        sh: go env GOARCH
+      GOARCH: "{{ .GOARCH | default .platform_GOARCH }}"
+    cmds:
+      - task: gen:constants
+      - task: go:build
+        vars:
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+
+  run:
+    dotenv:
+      - .secrets/env
+    vars:
+      binary: '{{.binary | default "false"}}'
+    env:
+      CGO_ENABLED: 0
+    silent: true
+    cmds:
+      - |+
+        if [ "{{.binary}}" = "true" ]; then
+          task build
+          ./bin/console-$(go env GOARCH) --debug
+        else
+          go run ./main.go --dev
+        fi
+
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64 -t {{.image}} . --build-arg BINARY={{.binary}}"
+          image: "{{.image}}"
+
