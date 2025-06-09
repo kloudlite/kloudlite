@@ -1,0 +1,24 @@
+# permissions for end users to edit clusterservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterservice-editor-role
+rules:
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.msvc.kloudlite.io
+  resources:
+  - clusterservices/status
+  verbs:
+  - get

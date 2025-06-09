@@ -1,0 +1,16 @@
+apiVersion: mongodb.msvc.kloudlite.io/v1
+kind: StandaloneService
+metadata:
+  name: mongodb-standalone
+  namespace: default
+spec:
+  resources:
+    cpu:
+      min: 300m
+      max: 500m
+    memory: 
+      min: 500Mi
+      max: 500Mi
+    storage:
+      size: 5Gi
+      storageClass: sc-xfs

@@ -1,0 +1,24 @@
+# permissions for end users to edit drivers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: driver-editor-role
+rules:
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - drivers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - drivers/status
+  verbs:
+  - get

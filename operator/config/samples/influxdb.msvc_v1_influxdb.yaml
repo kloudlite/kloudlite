@@ -1,0 +1,6 @@
+apiVersion: influxdb.msvc.kloudlite.io/v1
+kind: InfluxDB
+metadata:
+  name: influxdb-sample
+spec:
+  # TODO(user): Add fields here

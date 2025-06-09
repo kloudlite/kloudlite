@@ -1,0 +1,16 @@
+version: 3
+
+tasks:
+  build:
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+
+  build-n-push:
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must be defined'
+    vars:
+      Image: "ghcr.io/kloudlite/operators/workspace-route-switcher:{{.Tag}}"
+    cmds:
+      - docker buildx build -f ./Dockerfile -t {{.Image}} .
+      - docker push {{.Image}}

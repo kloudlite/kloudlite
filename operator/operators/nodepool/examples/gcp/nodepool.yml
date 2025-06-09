@@ -1,0 +1,20 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: NodePool
+metadata:
+  name: stateless
+spec:
+  maxCount: 2
+  minCount: 2
+  cloudProvider: gcp
+  nodeLabels:
+    kloudlite.io/nodepool.role: "stateless"
+  gcp:
+    credentials:
+      name: "gcp-creds"
+      namespace: "default"
+    region: asia-south1
+    availabilityZone: asia-south1-a
+    poolType: SPOT
+    machineType: "e2-custom-2-4096"
+    bootVolumeType: "pd-ssd"
+    bootVolumeSize: 50

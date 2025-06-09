@@ -1,0 +1,6 @@
+apiVersion: serverless.kloudlite.io/v1
+kind: Lambda
+metadata:
+  name: lambda-sample
+spec:
+  # TODO(user): Add fields here

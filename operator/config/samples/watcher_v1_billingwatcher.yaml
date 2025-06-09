@@ -1,0 +1,6 @@
+apiVersion: watcher.kloudlite.io/v1
+kind: BillingWatcher
+metadata:
+  name: billingwatcher-sample
+spec:
+  # TODO(user): Add fields here

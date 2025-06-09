@@ -1,0 +1,20 @@
+# permissions for end users to view influxdbs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: influxdb-viewer-role
+rules:
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - influxdbs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - influxdbs/status
+  verbs:
+  - get

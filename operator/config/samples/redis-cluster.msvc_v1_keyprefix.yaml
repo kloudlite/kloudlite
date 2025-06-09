@@ -1,0 +1,6 @@
+apiVersion: redis-cluster.msvc.kloudlite.io/v1
+kind: KeyPrefix
+metadata:
+  name: keyprefix-sample
+spec:
+  # TODO(user): Add fields here

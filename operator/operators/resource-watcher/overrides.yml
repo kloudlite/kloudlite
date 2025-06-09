@@ -1,0 +1,3 @@
+envFrom:
+  - secretRef:
+      name: status-n-billing-env

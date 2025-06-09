@@ -1,0 +1,24 @@
+# permissions for end users to edit harborwebhooks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: harborwebhook-editor-role
+rules:
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harborwebhooks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - artifacts.kloudlite.io
+  resources:
+  - harborwebhooks/status
+  verbs:
+  - get

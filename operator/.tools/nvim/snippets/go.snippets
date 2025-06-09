@@ -1,0 +1,90 @@
+snippet im-rApi
+	rApi "github.com/kloudlite/operator/pkg/operator"
+
+snippet im-constants
+	"github.com/kloudlite/operator/pkg/constants"
+
+snippet update-status
+	if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+		return sr
+	}
+
+snippet im-fn
+	fn "github.com/kloudlite/operator/pkg/functions"
+
+snippet im-job_manager
+	job_manager "github.com/kloudlite/operator/pkg/job-helper"
+
+snippet im-templates
+	"github.com/kloudlite/operator/pkg/templates"
+
+snippet step-expr
+	if step := ${1}; !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+	${0}
+
+snippet max-reconciles
+  builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+
+snippet implement-resource-on-crd-type
+	func (p *${1:CrdKind}) EnsureGVK() {
+		if p != nil {
+			p.SetGroupVersionKind(GroupVersion.WithKind("${1}"))
+		}
+	}
+
+	func (p *${1}) GetStatus() *rApi.Status {
+		return &p.Status
+	}
+
+	func (p *${1}) GetEnsuredLabels() map[string]string {
+		return map[string]string{}
+	}
+
+	func (p *${1}) GetEnsuredAnnotations() map[string]string {
+		return map[string]string{}
+	}
+
+snippet embed-templates
+	package templates
+
+	import (
+		"embed"
+		"path/filepath"
+
+		"github.com/kloudlite/operator/pkg/templates"
+	)
+
+	//go:embed *
+	var templatesDir embed.FS
+
+	type templateFile string
+
+	const (
+		// TODO: (user) add your template files here
+		// ClusterJobTemplate        templateFile = "./cluster-job.yml.tpl"
+		${0://your entries}
+	)
+
+	func Read(t templateFile) ([]byte, error) {
+		return templatesDir.ReadFile(filepath.Join(string(t)))
+	}
+
+	var ParseBytes = templates.ParseBytes
+
+snippet kubebuilder-printcolumns-default
+	// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
+	// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\\\.io\\\\/checks",name=Checks,type=string
+	// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\\\.io\\\\/resource\\\\.ready",name=Ready,type=string
+	// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+
+snippet robj "creates template for recocilation step function"
+  ctx, obj := req.Context(), req.Object
+  check := rApi.NewRunningCheck(${1:checkName}, req)
+
+  ${2://function-body}
+  return check.Completed()
+
+snippet kubebuilder-scope-cluster
+  // +kubebuilder:resource:scope=Cluster

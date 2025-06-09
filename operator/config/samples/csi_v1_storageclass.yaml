@@ -1,0 +1,6 @@
+apiVersion: csi.kloudlite.io/v1
+kind: StorageClass
+metadata:
+  name: storageclass-sample
+spec:
+  # TODO(user): Add fields here

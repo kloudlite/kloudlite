@@ -1,0 +1,499 @@
+version: 3
+
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/operator"
+  dockerRegistry: registry.kloudlite.io
+  KlControllerGen: "./bin/kl-controller-gen"
+  KlTemplatizer: "go run cmd/template/main.go"
+
+tasks:
+  new-kind:
+    summary: |+
+      [example usage]
+      task new-kind Group=sample Kind=SampleKind
+
+    silent: true
+    preconditions:
+      - sh: '[ -n "{{.Group}}" ]'
+        msg: 'var Group must have a value'
+      - sh: '[ -n "{{.Kind}}" ]'
+        msg: 'var Kind must have a value'
+
+    cmds:
+      - operator-sdk create api --group {{.Group}} --version v1 --resource --controller=false --kind "{{.Kind}}"
+
+  new-webhook:
+    summary: |+
+      [example usage]
+      task new-webhook Group=sample Kind=SampleKind
+
+    silent: true
+    preconditions:
+      - sh: '[ -n "{{.Group}}" ]'
+        msg: 'var Group must have a value'
+      - sh: '[ -n "{{.Kind}}" ]'
+        msg: 'var Kind must have a value'
+
+    cmds:
+      # operator-sdk create webhook --group cache --version v1alpha1 --kind Memcached --defaulting --programmatic-validation
+      - operator-sdk create webhook --group {{.Group}} --version v1 --kind "{{.Kind}}" --defaulting --programmatic-validation --force
+
+  build:
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+      - sh: '[ -n "{{.CWD}}" ]'
+        msg: var CWD must have a value
+    dir: "{{.CWD}}"
+    cmds:
+      - go build -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+
+  setup:
+    dir: ./bin
+    cmds:
+      - curl -L0 https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.5/kustomize_v4.5.5_linux_amd64.tar.gz > kustomize.tar.gz
+      - tar xf kustomize.tar.gz && rm -rf kustomize.tar.gz
+
+  yaml:crds:
+    cmds:
+      # - make manifests
+      - |+
+        [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
+        F={{.Filter}}
+        if [ -z "$F" ]; then
+          F="*"
+        fi
+        for file in $(ls config/crd/bases/$F.yaml)
+        do
+          cat $file
+          # actually, don't need it as all crds have --- at the start
+          # echo "---"
+        done
+
+  yaml:primary-crds:
+    cmds:
+      - |+
+        [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
+        for file in $(ls config/crd/bases/crds.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        # for file in $(ls config/crd/bases/clusters.kloudlite.io_*.yaml); do
+        #   cat $file
+        # done
+
+        for file in $(ls config/crd/bases/networking.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        # for file in $(ls config/crd/bases/distribution.kloudlite.io_*.yaml); do
+        #   cat $file
+        # done
+
+        # for file in $(ls config/crd/bases/wireguard.kloudlite.io_*.yaml); do
+        #   cat $file
+        # done
+
+        for file in $(ls config/crd/bases/mongodb.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/mysql.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/redis.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/postgres.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+
+  yaml:operator:
+    summary: |+
+      template args
+        - Namespace
+        - EnvName
+        - ImageTag
+        - ImagePullPolicy
+        - SvcAccountName
+
+      optional args:
+        - NodeSelctor
+        - Tolerations
+      
+      need to be provided while applying this generated manifest
+
+      ###
+      .securityContext.capabilities.drop=["ALL"] |
+      .securityContext.seccompProfile.type = "RuntimeDefault" |
+
+    preconditions:
+      - sh: '[ -n "{{.Name}}" ]'
+        msg: 'env Name must be set'
+    #      - sh: '[ -n "{{.Dir}}" ]'
+    #        msg: 'env var Dir must be set'
+    #
+    vars:
+      Name:
+        sh: ls ./operators | fzf --prompt "generate yaml for operator> "
+      Image: '{{ printf "%s/kloudlite/operators/{{.EnvName}}/%s:{{.ImageTag}}" .dockerRegistry .Name }}'
+      Namespace: '{{ printf "{{.Namespace}}" }}'
+      SvcAccountName: '{{ printf "{{.SvcAccountName}}" }}'
+      ImagePullPolicy: '{{ printf "{{.ImagePullPolicy}}" }}'
+      OverrideFile: "./operators/{{.Name}}/overrides.yml"
+    silent: true
+    env:
+      Name: "{{.Name}}"
+      Namespace: "{{.Namespace}}"
+      SvcAccountName: "{{.SvcAccountName}}"
+      Image: "{{.Image}}"
+      ImagePullPolicy: "{{.ImagePullPolicy}}"
+    cmds:
+      - |+
+        setArgs=""
+        [ -f "{{.OverrideFile}}" ] && {
+           setArgs=$(cat "{{.OverrideFile}}" | yq -r 'to_entries|map("--set \(.key)=###\(.value)###") | join(" ")' | sed "s/###/'/g" )
+        }
+        
+        if [[ -z "{{.Dir}}" ]]; then
+          eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs
+        else
+          outputName="{{.Dir}}/{{.Name}}.yml.tpl"
+          eval {{.KlTemplatizer}} < ./operators/deployment.yml.tpl $setArgs > $outputName
+          echo "saving to file: $outputName"
+        fi
+  #       - |+
+  #         export PATH="$PWD/bin:$PATH"
+  #
+  #         kustomize build config/default | yq '
+  #           select(.kind == "Deployment") |
+  #           .metadata.name = "kl-{{.Name}}-operator" |
+  #           .metadata.namespace = "{{.Namespace}}" |
+  #           .metadata.labels."control-plane" = "{{.Name}}" |
+  #           .spec.selector.matchLabels."control-plane" = "{{.Name}}" |
+  #           .spec.template.metadata.labels."control-plane" = "{{.Name}}" |
+  #           .spec.template.spec.serviceAccountName = "{{.SvcAccountName}}" |
+  #           .spec.template.spec.containers = (
+  #             .spec.template.spec.containers | map_values(
+  #               if .name == "manager" then
+  #                 .image = "{{.Image}}" |
+  #                 .imagePullPolicy = "{{.ImagePullPolicy}}" |
+  #                 .resources.limits = {} |
+  #                 .resources.limits.memory = "200Mi" |
+  #                 .resources.requests.cpu = "64m" |
+  #                 .resources.requests.memory = "96Mi" |
+  #                 .securityContext.allowPrivilegeEscalation = false
+  #               elif .name == "kube-rbac-proxy" then
+  #                 .resources.limits = {} |
+  #                 .resources.requests.cpu = "5m" |
+  #                 .resources.requests.memory = "10Mi" |
+  #                 .securityContext.allowPrivilegeEscalation = false
+  #               else . end
+  #             )
+  #           )
+  #         ' -y
+  #
+
+  yaml:operators:
+    silent: true
+    preconditions:
+      - sh: '[ -n "{{.Dir}}" ]'
+        msg: 'Dir must be set'
+    cmds:
+      - |+
+        outputDir=$(mktemp -d)
+        #echo "outputDir: $outputDir"
+        for dir in $(ls -d ./operators/*/)
+        do
+          # [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
+          # [ "$dir" != "msvc-neo4j" ] && task yaml:operator Name="$(basename $dir)"
+          task yaml:operator Name="$(basename $dir)" Dir="{{.Dir}}"
+        done
+  
+  gobuild:operator:
+    preconditions:
+      - sh: '[ -n "{{.Name}}" ]'
+        msg: "var Name must have a value"
+      - sh: '[ -d "./operators/{{.Name}}" ]'
+        msg: 'directory operators/{{.Name}} must exist'
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+      - |+
+        pushd "./operators/{{.Name}}" 1> /dev/null
+        go build -o /tmp/{{.Name}} ./main.go
+        popd 1> /dev/null
+
+  local-build:operator:
+    preconditions:
+      - sh: '[ -d "./operators/{{.Name}}" ]'
+        msg: 'directory operators/{{.Name}} or cmd/{{.Name}} must exist'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    interactive: false
+    vars:
+      DirName:
+        sh: ls ./operators | fzf --prompt "build operator> "
+      Image: "{{.ImagePrefix}}/{{.DirName}}:{{.Tag}}"
+      BuildInfo:
+        # sh: echo "built by $USER on $GOOS at $(date -Is)"
+        sh: date -Is
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+      - |+
+        pushd "./operators/{{.DirName}}" > /dev/null 2>&1 
+        tdir=$(mktemp -d)
+        binpath="manager"
+        task build Out="$tdir/$binpath" CWD="$PWD"
+        # go build -ldflags="-s -w -X 'github.com/kloudlite/operator/pkg/common.BuiltAt={{.BuildInfo}}'" -o "$tdir/$binpath" .
+        podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
+        podman push {{.Image}}
+
+  local-build:cmd:
+    preconditions:
+      - sh: '[ -d "./cmd/{{.Name}}" ]'
+        msg: 'directory cmd/{{.Name}} must exist'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    interactive: false
+    vars:
+      DirName:
+        sh: ls ./cmd | fzf --prompt "build operator> "
+      Image: "{{.ImagePrefix}}/{{.DirName}}:{{.Tag}}"
+      BuildInfo:
+        # sh: echo "built by $USER on $GOOS at $(date -Is)"
+        sh: date -Is
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+      - |+
+        pushd "./cmd/{{.DirName}}" > /dev/null 2>&1 
+        tdir=$(mktemp -d)
+        binpath="manager"
+        task build Out="$tdir/$binpath" CWD="$PWD"
+        podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
+        # podman push {{.Image}}
+
+  build:operator:
+    preconditions:
+      - sh: '[ -n "{{.Name}}" ]'
+        msg: "var Name must have a value"
+      - sh: '[ -d "./operators/{{.Name}}" ]'
+        msg: 'directory operators/{{.Name}} must exist'
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+    silent: true
+    cmds:
+      - |+
+        #pushd "./operators/{{.Name}}" 1> /dev/null
+        docker buildx build -t {{.Image}} . --build-context project="../.." --build-arg name="{{.Name}}"
+        docker push {{.Image}}
+        # depot build -t {{.Image}} --build-arg name="{{.Name}}" -f operators/{{.Name}}/Dockerfile .
+        # depot push {{.Image}}
+        popd 1> /dev/null
+
+  pre:
+    run: once
+    cmds:
+      - go mod tidy
+      - make manifests
+      - make generate
+      - |+
+        [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
+      - kubectl apply -f config/crd/bases
+
+  new:operator:
+    preconditions:
+      - sh: test -n '{{.name}}'
+        msg: "var name must have a value"
+      - sh: test ! -d './operators/{{.name}}'
+        msg: 'directory ./operators/{{.name}} must not exist'
+    cmds:
+      - mkdir -p ./operators/{{.name}}
+
+  new:controller:
+    summary: |+
+      example:
+        task new:controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
+      {{.KLOP}} controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
+
+    silent: true
+    vars:
+      KLOP:
+        sh: echo "$PWD/cmd/{{.KlControllerGen}}"
+    cmds:
+      # - eval {{.KlControllerGen}} controller create {{.CLI_ARGS}}
+      - go run $PWD/cmd/main.go controller create {{.CLI_ARGS}}
+
+  new:msvc-controller:
+    summary: |+
+      example:
+        task new:msvc-controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
+      {{.KLOP}} msvc-controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
+    #
+
+    silent: true
+    cmds:
+      - eval {{.KlControllerGen}} msvc-controller create {{.CLI_ARGS}}
+
+  new:mres-controller:
+    summary: |+
+      example:
+        task new:msvc-controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
+      {{.KLOP}} msvc-controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
+    #
+
+    silent: true
+    cmds:
+      - eval {{.KlControllerGen}} mres-controller create {{.CLI_ARGS}}
+
+  install:cmd:
+    cmds:
+      - go build -o "{{.KlControllerGen}}" ./cmd/main.go
+
+  install:templatizer:
+    cmds:
+      - go build -o "{{.KlTemplatizer}}" ./cmd/template/main.go
+
+
+  build:webhook-worker:
+    preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: webhook-worker
+      Image: "{{.dockerRegistry}}/kloudlite/workers/{{.EnvName}}/registry-webhook-worker:{{.Tag}}"
+    dir: ./webhook-worker
+    cmds:
+      - docker buildx build -t {{.Image}} . --build-context project=".." --build-arg name="{{.Name}}"
+      - docker push {{.Image}}
+
+  build:http-lb:
+    dir: ./http-lb
+    preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Image: "{{.dockerRegistry}}/kloudlite/{{.EnvName}}/lb:{{.Tag}}"
+    cmds:
+      - docker buildx build -t {{.Image}} .
+      - docker push {{.Image}}
+
+  run:operator:
+    vars:
+      Dir:
+        sh: ls | fzf
+    dir: "./operators/{{.Dir}}"
+    silent: true
+    interactive: true
+    cmds:
+      - |+
+        set -a
+        source .secrets/env
+        set +a
+        CGO_ENABLED=0 go build -o /tmp/{{.Dir}}
+        # /tmp/{{.Dir}} --dev
+        # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
+        # dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Dir}} -- --dev
+        /tmp/{{.Dir}} --dev {{.CLI_ARGS}}
+
+  run:webhook-worker:
+    dir: "./webhook-worker"
+    silent: true
+    interactive: true
+    vars:
+      Name: webhook-worker
+    cmds:
+      - |+
+        set -a
+        source .secrets/env
+        set +a
+        CGO_ENABLED=0 go build -o /tmp/{{.Name}}
+        # /tmp/{{.Dir}} --dev
+        # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
+        dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Name}} -- --dev
+
+  run:env-route-switcher:
+    dir: ./apps/env-route-switcher
+    dotenv:
+      - ./.secrets/env
+    cmds:
+      - go run ./main.go --dev --addr=localhost:8081
+
+  build:workspace-route-switcher:
+    dir: ./apps/workspace-route-switcher
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      App: "workspace-route-switcher"
+      Image: "{{.ImagePrefix}}/{{.App}}:{{.Tag}}"
+    dotenv:
+      - ./.secrets/env
+    interactive: true
+    silent: true
+    cmds:
+      - |
+        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+        
+        startLineNo=$(echo "$lineNumbers" | head -n+1)
+        finalLineNo=$(echo "$lineNumbers" | tail -1)
+
+        tDir=$(mktemp -d)
+        echo "temp dir: $tDir"
+
+        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=builder')
+        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
+
+        #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        echo "[Debug]: $tDir/Dockerfile.base"
+
+        lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
+        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.App}} ./{{.App}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile
+
+        CGO_ENABLED=0 go build -v -o $tDir/{{.App}} .
+
+        docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
+        docker push {{.Image}}
+        rm -rf $tDir
+        #popd 1> /dev/null
+
+  msvc:grpc-interfaces:
+    dir: ./operators/
+
+  grpc-interfaces:
+    dir: ./grpc-interfaces
+    summary: |+
+      add these lines at top of every grpc file
+      ```proto
+        syntax = "proto3";
+        option go_package = "github.com/kloudlite/operator/grpc/<proto-file-name>";
+      ```
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
+

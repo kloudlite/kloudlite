@@ -1,0 +1,6 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedResource
+metadata:
+  name: managedresource-sample
+spec:
+  # TODO(user): Add fields here

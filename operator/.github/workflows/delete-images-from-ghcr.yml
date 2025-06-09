@@ -1,0 +1,36 @@
+name: Delete Container Images from github container registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag_to_delete: 
+        type: string
+        description: "image tag to delete"
+        required: true
+        default: "v0.0.0"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-builds:
+    strategy:
+      matrix:
+        app:
+          - platform
+          - agent
+          - wireguard
+          - helm-charts
+
+    name: Delete image from ghcr.io
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete image
+        uses: bots-house/ghcr-delete-image-action@v1.1.0
+        with:
+          owner: ${{ github.repository_owner }}
+          name:  ${{ github.event.repository.name }}/${{ matrix.app }}
+
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.event.inputs.image_tag_to_delete }}

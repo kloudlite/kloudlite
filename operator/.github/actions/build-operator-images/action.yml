@@ -1,0 +1,374 @@
+name: 'build kloudlite operator action'
+description: 'builds kloudlite Operators'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  image_tag:
+    description: 'image tag, if known'
+    required: false
+
+  cachix_enabled:
+    description: "cachix enabled"
+    default: "false"
+
+  cachix_cache_name:
+    description: "cachix cache name"
+    default: "kloudlite"
+
+  cachix_auth_token:
+    description: "cachix auth token"
+
+  docker_enabled:
+    description: "docker enabled"
+    default: "false"
+
+  git_directory:
+    description: 'git directory'
+    default: "."
+
+  go_mod_download:
+    description: 'go mod download'
+    default: false
+
+  platform-operator:
+    description: 'build platform operator'
+    default: false
+
+  agent-operator:
+    description: 'build agent operator'
+    default: false
+
+  networking-operator:
+    description: 'build networking/ip-binding-controller'
+    default: false
+
+  wireguard-operator:
+    description: 'build wireguard operator'
+    default: false
+
+  helm-charts-operator:
+    description: 'build helm-charts operator'
+    default: false
+
+  helm-charts-job-runner:
+    description: 'builds helm-charts-job-runner'
+    default: false
+
+  networking_ip-manager:
+    description: 'build networking/ip-manager'
+    default: false
+
+  networking_ip-binding-controller:
+    description: 'build networking/ip-binding-controller'
+    default: false
+
+  networking_dns:
+    description: 'build networking/cmd/dns'
+    default: false
+
+  networking_webhook:
+    description: 'build networking/cmd/webhook'
+    default: false
+
+  networking_logs_proxy:
+    description: 'build networking/cmd/logs-proxy'
+    default: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: setup ENV Variables
+      shell: bash
+      id: env-vars
+      working-directory: ${{ inputs.git_directory }}
+      run: |+
+        GOMODCACHE=${{github.workspace}}/actions/go-mod-cache
+        GOCACHE=${{github.workspace}}/actions/go-cache
+
+        echo "GOMODCACHE=$GOMODCACHE" >> $GITHUB_OUTPUT
+        echo "GOCACHE=$GOCACHE" >> $GITHUB_OUTPUT
+
+        echo "GOMODCACHE=$GOMODCACHE" >> $GITHUB_ENV
+        echo "GOCACHE=$GOCACHE" >> $GITHUB_ENV
+
+        echo "GOPKG_HASH=${{ hashFiles(format('{0}/go.mod', inputs.git_directory), format('{0}/go.sum', inputs.git_directory), format('{0}/*.go', inputs.git_directory) ) }}" >> $GITHUB_OUTPUT
+
+        echo "PUSH_IMAGE=false" >> $GITHUB_ENV
+
+        if [ "$(basename ${{ inputs.git_directory }})" != "." ]; then
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}/$(basename ${{inputs.git_directory}})" >> $GITHUB_ENV
+        else
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
+        fi
+
+    - name: check if image needs to be pushed
+      if: github.event_name != 'pull_request'
+
+      shell: bash
+      run: |+
+        echo "[github.event_name] => ${{ github.event_name }}"
+        echo "PUSH_IMAGE=true" >> $GITHUB_ENV
+
+    - name: ensures path to setup action exists
+      shell: bash
+      run: |+
+        mkdir -p $GOMODCACHE
+        ln -sf ${{ inputs.git_directory }}/.github/actions ./operator-github-actions
+
+    - name: setup nix (cachix)
+      if: ${{ inputs.cachix_enabled == 'true' }}
+      uses: ./operator-github-actions/setup-nix-cachix/
+      with:
+        flake_lock: ${{ inputs.git_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.git_directory }}#default"
+
+        cachix_cache_name: ${{ inputs.cachix_cache_name }}
+        cachix_auth_token: ${{ inputs.cachix_auth_token }}
+
+    - name: setup nix (github cache)
+      if: ${{ inputs.cachix_enabled == 'false' }}
+      uses: ./operator-github-actions/setup-nix-github/
+      with:
+        flake_lock: ${{ inputs.git_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.git_directory }}#default"
+
+    - name: setup docker
+      if: ${{ inputs.docker_enabled == 'true' }}
+      uses: ./operator-github-actions/setup-docker
+      with:
+        docker_username: ${{ github.actor }}
+        docker_password: ${{ inputs.github_token }}
+
+    - name: Create Image Tag
+      if: ${{ inputs.image_tag != '' }}
+      shell: bash
+      run: |+
+        echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+
+    - name: Create Image Tag from branch name
+      if: ${{ inputs.image_tag == '' && startsWith(github.ref, 'refs/heads/release-') }}
+      shell: bash
+      run: |
+        set +e
+        IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+        echo "$IMAGE_TAG" | grep -i '\-nightly$'
+        if [ $? -ne 0 ]; then
+          IMAGE_TAG="$IMAGE_TAG-nightly"
+        fi
+        set -e
+
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+    - name: Create Image Tag from tag
+      if: ${{ inputs.image_tag == '' && startsWith(github.ref, 'refs/tags/') }}
+      shell: bash
+      run: |
+        IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+    - name: override image if image_tag is nightly
+      if: "${{ endsWith(env.IMAGE_TAG, '-nightly') }}"
+      shell: bash
+      run: |+
+        echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
+
+    - name: go mod download
+      if: ${{ inputs.go_mod_download == 'true' }}
+      working-directory: ${{ inputs.git_directory }}
+      shell: bash
+      run: |+
+        echo "### STARTING go mod download ###"
+        go mod download -x
+        echo "### FINSIHED go mod download ###"
+
+        ls -al ${{ env.GOMODCACHE }}
+
+    - name: platform operator cache
+      if: ${{ inputs.platform-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-platform-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-platform-operator-
+
+    - name: platform operator
+      if: ${{ inputs.platform-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/cmd/platform-operator
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/platform:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: agent operator cache
+      if: ${{ inputs.agent-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-agent-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-agent-operator-
+
+    - name: agent operator
+      if: ${{ inputs.agent-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/cmd/agent-operator
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/agent:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking operator cache
+      if: ${{ inputs.networking-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking-operator-
+
+    - name: networking operator
+      if: ${{ inputs.networking-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: wireguard operator cache
+      if: ${{ inputs.wireguard-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-wireguard-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-wireguard-operator-
+
+    - name: wireguard operator
+      if: ${{ inputs.wireguard-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/wireguard
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/wireguard:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: helm-charts operator cache
+      if: ${{ inputs.helm-charts-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-helm-charts-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-helm-charts-operator-
+
+    - name: helm-charts operator
+      if: ${{ inputs.helm-charts-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/helm-charts
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/helm-charts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: helm charts job runner
+      if: ${{ inputs.helm-charts-job-runner == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/needs-images/helm-job-runner/
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/workers/helm-job-runner:${IMAGE_TAG:-latest} override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/ip-manager cache
+      if: ${{ inputs.networking_ip-manager == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_ip-manager-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_ip-manager-
+
+    - name: networking/ip-manager
+      if: ${{ inputs.networking_ip-manager == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-manager
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/ip-manager:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/ip-binding-controller cache
+      if: ${{ inputs.networking_ip-binding-controller == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_ip-binding-controller-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_ip-binding-controller-
+
+    - name: networking/ip-binding-controller
+      if: ${{ inputs.networking_ip-binding-controller == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-binding-controller
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/ip-binding-controller:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/dns cache
+      if: ${{ inputs.networking_dns == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_dns-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_dns-
+
+    - name: networking/dns
+      if: ${{ inputs.networking_dns == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/dns
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/dns:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/webhook cache
+      if: ${{ inputs.networking_webhook == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_webhook-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_webhook-
+
+    - name: networking/webhook
+      if: ${{ inputs.networking_webhook == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/webhook
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/cmd/logs-proxy cache
+      if: ${{ inputs.networking_logs_proxy == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_logs_proxy-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_logs_proxy-
+
+    - name: networking/cmd/logs-proxy
+      if: ${{ inputs.networking_logs_proxy == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/logs-proxy
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/logs-proxy:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"

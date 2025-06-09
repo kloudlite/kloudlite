@@ -1,0 +1,13 @@
+# More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
+# Ignore build and test binaries.
+**
+!apis
+!agent
+!controllers
+!pkg
+!main.go
+!go.mod
+!go.sum
+!env
+!operators
+!operator

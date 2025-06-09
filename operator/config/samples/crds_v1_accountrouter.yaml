@@ -1,0 +1,6 @@
+apiVersion: crds.kloudlite.io/v1
+kind: AccountRouter
+metadata:
+  name: accountrouter-sample
+spec:
+  # TODO(user): Add fields here

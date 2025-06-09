@@ -1,0 +1,12 @@
+apiVersion: wireguard.kloudlite.io/v1
+kind: Device
+metadata:
+  labels:
+    app.kubernetes.io/name: device
+    app.kubernetes.io/instance: device-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: device-sample
+spec:
+  # TODO(user): Add fields here

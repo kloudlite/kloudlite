@@ -1,0 +1,41 @@
+inputs:
+  flake_lock: 
+    description: "Path to flake.lock"
+    required: true
+
+  nix_develop_arguments:
+    description: 'nix develop arguments'
+    type: string
+    default: ""
+
+  cachix_cache_name:
+    description: "cachix cache name"
+    required: true
+
+  cachix_auth_token:
+    description: "cachix auth token"
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: cachix/install-nix-action@v25
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+
+    - name: nix cache with cachix
+      uses: cachix/cachix-action@v14
+      with:
+        name: '${{ inputs.cachix_cache_name }}'
+        # If you chose API tokens for write access OR if you have a private cache
+        authToken: '${{ inputs.cachix_auth_token }}'
+
+    - name: nix flake check
+      uses: DeterminateSystems/flake-checker-action@main
+      with:
+        flake-lock-path: "${{ inputs.flake_lock }}"
+
+    - name: Nix Develop Action
+      uses: nicknovitski/nix-develop@v1.1.0
+      with:
+        arguments: "${{ inputs.nix_develop_arguments }}"

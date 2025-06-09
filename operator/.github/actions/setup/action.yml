@@ -1,0 +1,95 @@
+name: 'nix setup'
+description: 'nix setup'
+
+inputs:
+  nix-develop-arguments:
+    description: 'nix develop arguments'
+    type: string
+    default: ""
+
+  flake-lock:
+    description: 'Path to flake.lock'
+    required: true
+
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  git_directory:
+    description: "git directory"
+    default: "./"
+
+  cache_key: 
+    description: "cache key"
+    default: ""
+
+  cache_restore_key: 
+    description: "cache restore key"
+    default: ""
+
+outputs:
+  image_tag: 
+    description: "docker image tag to use"
+    value: ${{ steps.output.outputs.image_tag }}
+
+  override_pushed_image: 
+    description: "whether override already pushed image"
+    value: ${{ steps.output.outputs.override_pushed_image }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup go cache
+      uses: actions/cache@v4
+      if: ${{ inputs.go_mod_cache == 'true' }}
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: ${{ inputs.cache_key }}
+        save-always: true
+        restore-keys: ${{ inputs.cache_restore_key }}
+
+    - name: Create Image Tag from branch name
+      id: gitref_branch
+      if: startsWith(github.ref, 'refs/heads/release')
+      shell: bash
+      working-directory: ${{inputs.git_directory}}
+      run: |
+        set +e
+        IMAGE_TAG=${GITHUB_REF#refs/heads/release-}
+        echo "$IMAGE_TAG" | grep -i '\-nightly$'
+        if [ $? -ne 0 ]; then
+          IMAGE_TAG="$IMAGE_TAG-nightly"
+        fi
+        set -e
+
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "override_pushed_image=true" >> $GITHUB_OUTPUT
+
+    - name: Create Image Tag from tag
+      if: startsWith(github.ref, 'refs/tags/')
+      id: gitref_tag
+      working-directory: ${{inputs.git_directory}}
+      shell: bash
+      run: |
+        IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "override_pushed_image=false" >> $GITHUB_OUTPUT
+
+    - name: Output Image Tag
+      id: output
+      shell: bash
+      working-directory: ${{inputs.git_directory}}
+      run: |+
+        if [ "${{ steps.gitref_branch.outputs.image_tag }}" != "" ]; then
+          echo "image_tag=${{ steps.gitref_branch.outputs.image_tag }}" >> $GITHUB_OUTPUT
+          echo "override_pushed_image=${{ steps.gitref_branch.outputs.override_pushed_image }}" >> $GITHUB_OUTPUT
+        else
+          echo "image_tag=${{ steps.gitref_tag.outputs.image_tag }}" >> $GITHUB_OUTPUT
+          echo "override_pushed_image=${{ steps.gitref_tag.outputs.override_pushed_image }}" >> $GITHUB_OUTPUT
+        fi
+        echo "IMAGE_TAG=${{ steps.output.outputs.image_tag }}" >> $GITHUB_ENV
+        echo "OVERRIDE_PUSHED_IMAGE=${{ steps.output.outputs.override_pushed_image }}" >> $GITHUB_ENV
+
