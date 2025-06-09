@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "access-token-secret"
+  namespace: "${release_namespace}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${release_name}
+  namespace: ${release_namespace}
+  annotations:
+    vector.dev/exclude: "true" # to exclude pods from being monitored by vector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "${release_name}"
+  template:
+    metadata:
+      labels:
+        app: "${release_name}"
+        vector.dev/exclude: "true" # to exclude pods from being monitored by vector
+    spec:
+      tolerations:
+        - operator: Exists
+      serviceAccountName: "${service_account_name}"
+
+      containers:
+        - name: main
+          image: ghcr.io/kloudlite/kloudlite/api/tenant-agent:${kloudlite_release}
+          imagePullPolicy: Always
+          env:
+            - name: GRPC_ADDR
+              value: ${message_office_grpc_addr}
+
+            - name: CLUSTER_TOKEN
+              value: ${cluster_token}
+
+            - name: ACCESS_TOKEN_SECRET_NAME
+              value: "access-token-secret"
+
+            - name: ACCESS_TOKEN_SECRET_NAMESPACE
+              value: ${release_namespace}
+
+            - name: CLUSTER_NAME
+              value: ${cluster_name}
+
+            - name: ACCOUNT_NAME
+              value: ${account_name}
+
+            - name: VECTOR_PROXY_GRPC_SERVER_ADDR
+              value: 0.0.0.0:6000
+
+            - name: RESOURCE_WATCHER_NAME
+              value: "dummy"
+
+            - name: RESOURCE_WATCHER_NAMESPACE
+              value: ""
+
+          resources:
+            limits:
+              cpu: 50m
+              memory: 80Mi
+            requests:
+              cpu: 30m
+              memory: 50Mi

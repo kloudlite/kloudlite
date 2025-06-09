@@ -1,0 +1,57 @@
+#! /usr/bin/env bash
+
+KLOUDLITE_CONFIG_DIRECTORY=/etc/kloudlite
+
+## terraform params
+K3S_SERVER_HOST="${k3s_server_host}"
+K3S_AGENT_TOKEN="${k3s_agent_token}"
+K3S_VERSION="${k3s_version}"
+NODE_NAME="${node_name}"
+NODE_LABELS=${jsonencode([ for k,v in node_labels: "${k}=${v}" ])}
+NODE_TAINTS=${jsonencode([ for taint in node_taints: "${taint.key}=${taint.value}:${taint.effect}" ])}
+# --tf params:END
+
+debug() {
+  echo "[#] $*" | tee -a "$KLOUDLITE_CONFIG_DIRECTORY/execution.log"
+}
+
+debug "ensure kloudlite config directory ($KLOUDLITE_CONFIG_DIRECTORY) exists"
+mkdir -p "$KLOUDLITE_CONFIG_DIRECTORY"
+
+debug "################# execution started at $(date) ######################"
+[ $EUID -ne 0 ] && debug "this script must be run as root. current EUID is $EUID" && exit 1
+
+create_k3s_config_file() {
+  cat >"$KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml" <<EOF
+server: "https://$K3S_SERVER_HOST:6443"
+token: "$K3S_AGENT_TOKEN"
+kubelet-arg:
+  - "system-reserved=cpu=50m,memory=50Mi,ephemeral-storage=2Gi"
+  - "kube-reserved=cpu=100m,memory=256Mi"
+  - "eviction-hard=nodefs.available<5%,nodefs.inodesFree<5%,imagefs.available<5%"
+
+node-name: "$NODE_NAME"
+node-label: $NODE_LABELS
+node-taint: $NODE_TAINTS
+
+snapshotter: stargz
+EOF
+
+  mkdir -p /etc/rancher/k3s
+  ln -sf $KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml /etc/rancher/k3s/config.yaml
+}
+
+install_k3s() {
+  debug "installing k3s"
+  export INSTALL_K3S_CHANNEL="stable"
+  export INSTALL_K3S_SKIP_SELINUX_RPM="true"
+  if [ -n "$K3S_VERSION" ]; then
+    export INSTALL_K3S_VERSION="$K3S_VERSION"
+  fi
+  curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent" sh -
+}
+
+create_k3s_config_file
+install_k3s
+
+debug "################# execution finished at $(date) ######################"

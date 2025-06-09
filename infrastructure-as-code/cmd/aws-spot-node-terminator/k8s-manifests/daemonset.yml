@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aws-spot-k3s-termination-handler
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: aws-spot-k3s-termination-handler-rb
+subjects:
+  - kind: ServiceAccount
+    name: aws-spot-k3s-termination-handler
+    namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: "ClusterRole"
+  name: cluster-admin
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: &name aws-spot-k3s-termination-handler
+  namespace: kube-system
+  labels:
+    installed-by: kloudlite
+spec:
+  selector:
+    matchLabels:
+      name: *name
+  template:
+    metadata:
+      labels:
+        name: *name
+    spec:
+      serviceAccountName: aws-spot-k3s-termination-handler
+      nodeSelector:
+        kloudlite.io/node-instance-type: "spot"
+      containers:
+      - name: main
+        image: ghcr.io/kloudlite/platform/aws-spot-k3s-termination-handler:v1.0.5-nightly
+        resources:
+          limits:
+            memory: 50Mi
+            cpu: 50m
+          requests:
+            memory: 20Mi
+            cpu: 20m
+      terminationGracePeriodSeconds: 10

@@ -1,0 +1,27 @@
+version: 3
+
+tasks:
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    vars:
+      push: '{{ .push | default "true" }}'
+    cmds:
+      - docker build -t {{.image}} . {{.dockerArgs}}
+      - |+
+        if [ "{{.push}}" == "true" ]; then
+          docker push {{.image}}
+        fi
+
+  local-build:
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: aws-spot-k3s-termination-handler
+      ImagePrefix: "ghcr.io/kloudlite/platform"
+      Image: "{{.ImagePrefix}}/{{.Name}}:{{.Tag}}"
+    cmds:
+      - docker build -t {{.Image}} .
+

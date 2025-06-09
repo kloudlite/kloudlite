@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Creates a stack containing an IAM role and user for Kloudlite access to manage tenant's AWS infrastructure.
+Parameters:
+  RoleName:
+    Type: String
+    Description: Name of the role to be created
+    Default: kloudlite-tenant-role
+  InstanceProfileName:
+    Type: String
+    Description: Name of the instance profile to be created
+    Default: kloudlite-instance-profile
+  UserName:
+    Type: String
+    Description: Name of the user to be created
+    Default: kloudlite-tenant-user
+Resources:
+  KloudliteAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+        - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+        - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - spotfleet.amazonaws.com
+                - s3.amazonaws.com
+            Action: sts:AssumeRole
+
+  KloudliteInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Ref InstanceProfileName
+      Path: /
+      Roles:
+        - !Ref KloudliteAccessRole
+
+  KloudliteUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref UserName
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+        - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+        - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+
+  KloudliteAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref KloudliteUser
+
+Outputs:
+  # RoleArn:
+  #   Description: ARN for IAM access role
+  #   Value: !GetAtt KloudliteAccessRole.Arn
+  # InstanceProfileArn:
+  #   Description: ARN for IAM instance profile
+  #   Value: !GetAtt KloudliteInstanceProfile.Arn
+  # UserArn:
+  #   Description: ARN for the IAM user
+  #   Value: !GetAtt KloudliteUser.Arn
+  AccessKeyId:
+    Description: Access Key for the IAM user
+    Value: !Ref KloudliteAccessKey
+  SecretAccessKey:
+    Description: Secret Access Key for the IAM user
+    Value: !GetAtt KloudliteAccessKey.SecretAccessKey
