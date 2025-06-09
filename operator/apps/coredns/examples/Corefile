@@ -1,0 +1,9 @@
+cluster.local {
+  log
+  errors
+  cache
+  hosts {
+      10.13.0.1 nginx.svc.cluster.local
+  }
+  any
+}

@@ -1,0 +1,40 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  binary: networking
+
+tasks:
+  run:
+    cmds:
+      - go build -o ./bin/networking .
+      - ./bin/networking --dev
+
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "./bin/{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+
+  container:build-and-push:
+    cmds:
+      - task: build
+        vars:
+          GOARCH: "amd64"
+
+      - task: build
+        vars:
+          GOARCH: "arm64"
+
+      - task: docker:build-and-push
+        vars:
+          args: |-
+            --platform linux/arm64,linux/amd64 --build-arg BINARY=./bin/{{.binary}} .
+          image: "{{.image}}"

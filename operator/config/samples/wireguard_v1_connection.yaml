@@ -1,0 +1,64 @@
+# cluster1
+apiVersion: wireguard.kloudlite.io/v1
+kind: Connection
+metadata:
+  labels:
+    app.kubernetes.io/name: connection
+    app.kubernetes.io/instance: connect-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: connection-sample
+spec:
+  id: 1
+  peers:
+    - publicKey: "public-key"
+      allowedIPs: ""
+  # TODO(user): Add fields here
+---
+# cluster2
+apiVersion: wireguard.kloudlite.io/v1
+kind: Connection
+metadata:
+  labels:
+    app.kubernetes.io/name: connection
+    app.kubernetes.io/instance: connect-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: connection-sample
+spec:
+  id: 2
+  private
+  public
+  peers:
+    - publicKey: "public-key"
+      allowedIPs: ""
+
+
+
+
+
+
+
+
+
+
+
+---
+
+// secret
+// 
+
+
+GlobalVPN
+ name:
+ gatewayPort:
+ peers:
+  - pub
+    allowedIPs
+    endpoint
+    ip:
+    dns:
+  - 
+  - 

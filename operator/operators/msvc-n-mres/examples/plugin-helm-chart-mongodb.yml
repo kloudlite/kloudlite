@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  # name: testing-plugin-helm-chart
+  name: testing-plugins
+---
+
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: bitnami-mongodb
+  # namespace: testing-plugin-helm-chart
+  namespace: testing-plugins
+spec:
+  plugin:
+    apiVersion: "plugin-helm-chart.kloudlite.github.com/v1"
+    kind: HelmChart
+    spec:
+      nodeSelector: {}
+      tolerations: []
+      resources:
+        cpu:
+          min: 400m
+          max: 400m
+
+        memory:
+          min: 500Mi
+          max: 500Mi
+
+        storage:
+          size: 10Gi
+          storageClass: ""
+
+      # chart:
+      #   url: "https://helm.github.io/examples"
+      #   name: "hello-world"
+      #   version: "0.1.0"
+
+      chart:
+        url: "https://charts.bitnami.com/bitnami"
+        name: mongodb
+        version: ""
+
+      helmValues:
+        architecture: standalone
+
+    export:
+      kv:
+        k1: v1
+        ROOT_PASSWORD: "{secret/bitnami-mongodb/mongodb-root-password}"
+
+output:
+  credentialsRef:
+    name: "bitnami-mongodb"

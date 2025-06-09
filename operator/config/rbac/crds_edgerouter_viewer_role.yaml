@@ -1,0 +1,20 @@
+# permissions for end users to view edgerouters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edgerouter-viewer-role
+rules:
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - edgerouters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - edgerouters/status
+  verbs:
+  - get

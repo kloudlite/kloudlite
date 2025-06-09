@@ -1,0 +1,8 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: AccountS3Bucket
+metadata:
+  name: kl-account-sample-bucket
+  namespace: kl-account-sample
+spec:
+  accountName: kl-account-sample
+  bucketRegion: ap-south-1

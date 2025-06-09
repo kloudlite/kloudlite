@@ -1,0 +1,53 @@
+version: 3
+
+includes:
+  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../../../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: dns
+  binary: ./bin/{{.app}}
+
+tasks:
+  run:
+    vars:
+      wg_dns_port: 5959
+      cluster_internal_port: 5960
+    cmds:
+      - go run main.go 
+          --wg-dns-addr ":{{.wg_dns_port}}" 
+          --local-dns-addr ":{{.cluster_internal_port}}" 
+          --local-gateway-dns sample.example.local 
+          --http-addr ":8081" 
+          --account-name "testing"
+          --debug
+
+  test:
+    vars:
+      port: 5959
+    cmds:
+      - dog {{.domain}} @localhost:{{.port}}
+
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+
+  container:build-and-push:
+    preconditions:
+      - sh: test -n "{{.image}}"
+        msg: "arg 'image' must be set"
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"
+

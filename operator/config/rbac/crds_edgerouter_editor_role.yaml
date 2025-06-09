@@ -1,0 +1,24 @@
+# permissions for end users to edit edgerouters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edgerouter-editor-role
+rules:
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - edgerouters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - edgerouters/status
+  verbs:
+  - get

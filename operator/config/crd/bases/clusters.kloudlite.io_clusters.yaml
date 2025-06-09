@@ -1,0 +1,483 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: clusters.clusters.kloudlite.io
+spec:
+  group: clusters.kloudlite.io
+  names:
+    kind: Cluster
+    listKind: ClusterList
+    plural: clusters
+    singular: cluster
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.accountName
+      name: AccountName
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/cluster\.job-ref
+      name: Job
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Cluster is the Schema for the clusters API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              ClusterSpec defines the desired state of Cluster
+              For now considered basis on AWS Specific
+            properties:
+              accountId:
+                type: string
+              accountName:
+                type: string
+              availabilityMode:
+                enum:
+                - dev
+                - HA
+                type: string
+              aws:
+                properties:
+                  credentials:
+                    description: |-
+                      When
+                      - AuthMechanism == "secret_keys", Secret is unmarshalled as `AwsAuthSecretKeys`
+                      - AuthMechanism == "assume_role", Secret is unmarshalled as `AwsAssumeRoleParams`
+                    properties:
+                      authMechanism:
+                        type: string
+                      secretRef:
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    required:
+                    - authMechanism
+                    - secretRef
+                    type: object
+                  k3sMasters:
+                    properties:
+                      iamInstanceProfileRole:
+                        type: string
+                      instanceType:
+                        type: string
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            availabilityZone:
+                              description: AvailabilityZone AwsAZ  `json:"availabilityZone"`
+                              type: string
+                            kloudliteRelease:
+                              type: string
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                            role:
+                              enum:
+                              - primary-master
+                              - secondary-master
+                              type: string
+                          required:
+                          - availabilityZone
+                          - kloudliteRelease
+                          - role
+                          type: object
+                        type: object
+                      nvidiaGpuEnabled:
+                        type: boolean
+                      rootVolumeSize:
+                        type: integer
+                      rootVolumeType:
+                        type: string
+                    required:
+                    - instanceType
+                    - nvidiaGpuEnabled
+                    - rootVolumeSize
+                    - rootVolumeType
+                    type: object
+                  nodePools:
+                    additionalProperties:
+                      properties:
+                        ami:
+                          type: string
+                        instanceType:
+                          type: string
+                        nodes:
+                          additionalProperties:
+                            properties:
+                              lastRecreatedAt:
+                                format: date-time
+                                type: string
+                            type: object
+                          type: object
+                      required:
+                      - ami
+                      - instanceType
+                      type: object
+                    type: object
+                  region:
+                    description: Region     AwsRegion           `json:"region"`
+                    type: string
+                  spotNodePools:
+                    additionalProperties:
+                      properties:
+                        ami:
+                          type: string
+                        cpuNode:
+                          properties:
+                            memoryPerVcpu:
+                              properties:
+                                max:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                                min:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                              required:
+                              - max
+                              - min
+                              type: object
+                            vcpu:
+                              properties:
+                                max:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                                min:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                              required:
+                              - max
+                              - min
+                              type: object
+                          required:
+                          - vcpu
+                          type: object
+                        gpuNode:
+                          properties:
+                            instanceTypes:
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - instanceTypes
+                          type: object
+                        nodes:
+                          additionalProperties:
+                            properties:
+                              lastRecreatedAt:
+                                format: date-time
+                                type: string
+                            type: object
+                          type: object
+                        spotFleetTaggingRoleName:
+                          type: string
+                      required:
+                      - ami
+                      - spotFleetTaggingRoleName
+                      type: object
+                    type: object
+                  vpc:
+                    properties:
+                      id:
+                        type: string
+                      publicSubnets:
+                        items:
+                          properties:
+                            availabilityZone:
+                              type: string
+                            id:
+                              type: string
+                          required:
+                          - availabilityZone
+                          - id
+                          type: object
+                        type: array
+                    required:
+                    - id
+                    - publicSubnets
+                    type: object
+                required:
+                - credentials
+                - region
+                type: object
+              backupToS3Enabled:
+                type: boolean
+              cloudProvider:
+                allOf:
+                - enum:
+                  - aws
+                  - do
+                  - azure
+                  - gcp
+                - enum:
+                  - aws
+                  - do
+                  - gcp
+                  - azure
+                type: string
+              cloudflareEnabled:
+                type: boolean
+              clusterInternalDnsHost:
+                type: string
+              clusterServiceCIDR:
+                type: string
+              clusterTokenRef:
+                properties:
+                  key:
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - key
+                - name
+                type: object
+              gcp:
+                properties:
+                  credentialsRef:
+                    description: This secret will be unmarshalled into type GCPCredentials
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  gcpProjectID:
+                    type: string
+                  masterNodes:
+                    properties:
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            availabilityZone:
+                              description: AvailabilityZone AwsAZ  `json:"availabilityZone"`
+                              type: string
+                            kloudliteRelease:
+                              type: string
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                            role:
+                              enum:
+                              - primary-master
+                              - secondary-master
+                              type: string
+                          required:
+                          - availabilityZone
+                          - kloudliteRelease
+                          - role
+                          type: object
+                        type: object
+                      rootVolumeSize:
+                        type: integer
+                      rootVolumeType:
+                        type: string
+                    required:
+                    - rootVolumeSize
+                    - rootVolumeType
+                    type: object
+                  region:
+                    type: string
+                  serviceAccount:
+                    properties:
+                      email:
+                        type: string
+                      enabled:
+                        type: boolean
+                      scopes:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - enabled
+                    type: object
+                  vpc:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - credentialsRef
+                - gcpProjectID
+                - region
+                - serviceAccount
+                type: object
+              kloudliteRelease:
+                type: string
+              messageQueueTopicName:
+                type: string
+              output:
+                properties:
+                  jobName:
+                    type: string
+                  jobNamespace:
+                    type: string
+                  keyAWSVPCId:
+                    type: string
+                  keyAWSVPCPublicSubnets:
+                    type: string
+                  keyK3sAgentJoinToken:
+                    type: string
+                  keyK3sServerJoinToken:
+                    type: string
+                  keyKubeconfig:
+                    type: string
+                  secretName:
+                    type: string
+                required:
+                - jobName
+                - jobNamespace
+                - keyK3sAgentJoinToken
+                - keyK3sServerJoinToken
+                - keyKubeconfig
+                - secretName
+                type: object
+              publicDNSHost:
+                type: string
+              taintMasterNodes:
+                type: boolean
+            required:
+            - accountId
+            - accountName
+            - availabilityMode
+            - backupToS3Enabled
+            - cloudProvider
+            - kloudliteRelease
+            - messageQueueTopicName
+            - publicDNSHost
+            - taintMasterNodes
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    hide:
+                      type: boolean
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    info:
+                      type: string
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: |-
+                        APIVersion defines the versioned schema of this representation of an object.
+                        Servers should convert recognized schemas to the latest internal value, and
+                        may reject unrecognized values.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                      type: string
+                    kind:
+                      description: |-
+                        Kind is a string value representing the REST resource this object represents.
+                        Servers may infer this from the endpoint the client submits requests to.
+                        Cannot be updated.
+                        In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

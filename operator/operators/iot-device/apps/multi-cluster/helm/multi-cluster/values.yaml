@@ -1,0 +1,31 @@
+image:
+  agent: ghcr.io/kloudlite/operator/components/multi-cluster-agent
+  gateway: ghcr.io/kloudlite/operator/components/multi-cluster-gateway
+  tag: v1.0.5-nightly
+  pullPolicy: Always
+
+coredns_svc_ip: 10.43.0.10
+resources:
+  gateway:
+    limits:
+      cpu: 50m
+      memory: 50Mi
+    requests:
+      cpu: 15m
+      memory: 15Mi
+  agent:
+    limits:
+      cpu: 20m
+      memory: 20Mi
+    requests:
+      cpu: 15m
+      memory: 15Mi
+nodeport: ""
+server_config:
+  # privateKey: ""
+  # ip: 10.13.0.1/32
+  # peers:
+  #   - ip: ""
+  #     publicKey: ""
+  #     endpoint: ""
+  #     allowedIPs: ""

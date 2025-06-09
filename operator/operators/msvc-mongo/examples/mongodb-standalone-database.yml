@@ -1,0 +1,11 @@
+apiVersion: mongodb.msvc.kloudlite.io/v1
+kind: StandaloneDatabase
+metadata:
+  name: sample-db
+  namespace: kloudlite
+spec:
+  msvcRef:
+    apiVersion: mongodb.msvc.kloudlite.io/v1
+    kind: StandaloneService
+    name: mongo-svc
+    namespace: kloudlite

@@ -1,0 +1,20 @@
+# permissions for end users to view standaloneservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: standaloneservice-viewer-role
+rules:
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - standaloneservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - mongodb.msvc.kloudlite.io
+  resources:
+  - standaloneservices/status
+  verbs:
+  - get

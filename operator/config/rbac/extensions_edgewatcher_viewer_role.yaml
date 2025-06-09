@@ -1,0 +1,20 @@
+# permissions for end users to view edgewatchers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edgewatcher-viewer-role
+rules:
+- apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - edgewatchers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions.kloudlite.io
+  resources:
+  - edgewatchers/status
+  verbs:
+  - get

@@ -1,0 +1,20 @@
+# permissions for end users to view buckets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bucket-viewer-role
+rules:
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - buckets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - influxdb.msvc.kloudlite.io
+  resources:
+  - buckets/status
+  verbs:
+  - get

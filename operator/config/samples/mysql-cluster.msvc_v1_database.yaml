@@ -1,0 +1,6 @@
+apiVersion: mysql-cluster.msvc.kloudlite.io/v1
+kind: Database
+metadata:
+  name: database-sample
+spec:
+  # TODO(user): Add fields here

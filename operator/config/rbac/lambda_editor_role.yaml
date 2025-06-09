@@ -1,0 +1,24 @@
+# permissions for end users to edit lambdas.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lambda-editor-role
+rules:
+- apiGroups:
+  - serverless.kloudlite.io
+  resources:
+  - lambdas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - serverless.kloudlite.io
+  resources:
+  - lambdas/status
+  verbs:
+  - get
