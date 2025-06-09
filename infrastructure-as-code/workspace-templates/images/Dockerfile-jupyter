@@ -1,0 +1,33 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y git sudo zsh xz-utils curl 
+
+# Update and install necessary dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv
+
+# Create a non-root user 'kl'
+RUN userdel ubuntu || echo "ubuntu user already deleted"
+RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl && chsh -s $(which zsh) kl
+RUN echo "kl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kl
+
+RUN mkdir /venv
+
+RUN chown -R kl:kl /venv
+# Create a virtual environment and install Jupyter Notebook as 'kl'
+USER kl
+
+RUN python3 -m venv /venv && \
+    /venv/bin/pip install --no-cache-dir jupyterlab
+
+# Expose the Jupyter port
+EXPOSE 8888
+
+COPY jupyter-start /jupyter-start
+RUN sudo chmod +x /jupyter-start
+
+# Command to start Jupyter Notebook
+
+ENTRYPOINT [ "zsh","/jupyter-start" ]

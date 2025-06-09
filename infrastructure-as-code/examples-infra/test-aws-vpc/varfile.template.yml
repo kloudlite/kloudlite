@@ -1,0 +1,17 @@
+aws_access_key: ${AWS_ACCESS_KEY}
+aws_secret_key: ${AWS_SECRET_KEY}
+aws_region: ${AWS_REGION}
+
+vpc_name: "test-vpc"
+vpc_cidr: "10.0.0.0/16"
+
+public_subnets:
+  - availability_zone: "eu-north-1a"
+    cidr: "10.0.0.0/21"
+  - availability_zone: "eu-north-1b"
+    cidr: "10.0.8.0/21"
+  - availability_zone: "eu-north-1c"
+    cidr: "10.0.16.0/21"
+
+tags:
+  kloudlite/example-infra: true
