@@ -1,0 +1,17 @@
+apiVersion: mongodb.msvc.kloudlite.io/v1
+kind: ClusterService
+metadata:
+  name: mongodb-cluster-test
+  namespace: default
+spec:
+  replicas: 2
+  resources:
+    cpu:
+      min: 300m
+      max: 500m
+    memory:
+      min: 500Mi
+      max: 500Mi
+    storage:
+      size: 1Gi
+      storageClass: sc-xfs

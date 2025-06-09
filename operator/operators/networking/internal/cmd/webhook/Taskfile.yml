@@ -1,0 +1,49 @@
+version: 3
+
+includes:
+  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../../../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: mutation-webhook
+  binary: "./bin/{{.app}}"
+
+tasks:
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
+  run:
+    env:
+      GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
+    cmds:
+      - go run ./main.go --debug --addr ":8443"
+
+  debug:
+    env:
+      GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
+    cmds:
+      - |+
+        go build -o ./__debug-{{.app}} .
+        trap "echo closing; rm -f ./__debug-{{.app}}" EXIT
+        ./__debug-{{.app}} --debug --addr ":8443"
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.image}}" ]]'
+        msg: "var image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          image: "{{.image}}"
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          override: "{{.override}}"

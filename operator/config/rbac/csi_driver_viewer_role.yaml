@@ -1,0 +1,20 @@
+# permissions for end users to view drivers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: driver-viewer-role
+rules:
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - drivers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - csi.kloudlite.io
+  resources:
+  - drivers/status
+  verbs:
+  - get

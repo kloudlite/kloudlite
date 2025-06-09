@@ -1,0 +1,6 @@
+apiVersion: elasticsearch.msvc.kloudlite.io/v1
+kind: ElasticSearch
+metadata:
+  name: elasticsearch-sample
+spec:
+  # TODO(user): Add fields here

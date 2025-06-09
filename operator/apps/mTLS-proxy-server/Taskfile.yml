@@ -1,0 +1,15 @@
+version: 3
+
+vars:
+  Image: registry.kloudlite.io/kloudlite/development/mtls-proxy:latest
+
+tasks:
+  build:
+    cmds:
+      - docker build -t {{.Image}} .
+
+  run:
+    cmds:
+      - docker run --rm -p 3001:443 -it {{.Image}}
+
+

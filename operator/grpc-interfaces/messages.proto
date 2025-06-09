@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+option go_package = "grpc/messages";
+
+service MessageDispatchService {
+  rpc ValidateAccessToken(ValidateAccessTokenIn) returns (ValidateAccessTokenOut) {}
+  rpc GetAccessToken(GetAccessTokenIn) returns (GetAccessTokenOut) {}
+
+  rpc SendActions (Empty) returns (stream Action) {}
+
+  rpc SendClusterGatewayResource(Empty) returns (GatewayResource) {}
+
+  rpc ReceiveError(ErrorData) returns (Empty) {}
+
+  rpc ReceiveConsoleResourceUpdate (ResourceUpdate) returns (Empty) {}
+  rpc ReceiveIotConsoleResourceUpdate (ResourceUpdate) returns (Empty) {}
+  rpc ReceiveInfraResourceUpdate (ResourceUpdate) returns (Empty) {}
+  rpc ReceiveContainerRegistryUpdate(ResourceUpdate) returns (Empty) {}
+
+  rpc Ping(Empty) returns (PingOutput) {}
+}
+
+message ValidateAccessTokenIn {
+  string protocolVersion = 1;
+  // string accessToken = 2;
+}
+
+message ValidateAccessTokenOut {
+  string protocolVersion = 1;
+
+  string accountName = 2;
+  string clusterName = 3;
+
+  bool valid = 4;
+}
+
+message GetAccessTokenIn {
+  string protocolVersion = 1;
+
+  string clusterToken = 2;
+}
+
+message GetAccessTokenOut {
+  string protocolVersion = 1;
+
+  string accountName = 2;
+  string clusterName = 3;
+  string accessToken = 4;
+}
+
+message Action {
+  string protocolVersion = 1;
+
+  bytes message = 2;
+}
+
+message ErrorData {
+  string protocolVersion = 1;
+
+  bytes message = 2;
+  string gvk = 3;
+  string namespace = 4;
+  string name = 5;
+}
+
+message ResourceUpdate {
+  string protocolVersion = 1;
+
+  bytes message = 2;
+  string gvk = 3;
+  string namespace = 4;
+  string name = 5;
+}
+
+message PingOutput {
+  bool ok = 1;
+}
+
+message Empty {}
+
+message GatewayResource {
+  bytes gateway = 1;
+}

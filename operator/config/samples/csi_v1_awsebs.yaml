@@ -1,0 +1,6 @@
+apiVersion: csi.kloudlite.io/v1
+kind: AwsEBS
+metadata:
+  name: awsebs-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,12 @@
+apiVersion: mysql.msvc.kloudlite.io/v1
+kind: Database
+metadata:
+  name: t-mysql-db
+  namespace: default
+spec:
+  msvcRef:
+    apiVersion: mysql.msvc.kloudlite.io/v1
+    kind: StandaloneService
+    name: mariadb
+    namespace: default
+

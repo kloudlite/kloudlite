@@ -1,0 +1,40 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: Cluster
+metadata:
+  name: example-gcp
+  namespace: default
+spec:
+  accountName: sample
+  accountId: kl-account-jjjj171717
+  clusterTokenRef:
+    name: "gcp-creds"
+    namespace: "default"
+    key: "clusterToken"
+  availabilityMode: dev
+  taintMasterNodes: true
+  publicDNSHost: "example-gcp.controller-example.dev.kloudlite.io"
+  clusterInternalDnsHost: "cluster.local"
+  cloudflareEnabled: true
+
+  messageQueueTopicName: "test"
+  kloudliteRelease: "v1.0.5-nightly"
+
+  cloudProvider: "gcp"
+  backupToS3Enabled: false
+  gcp:
+    region: "asia-south1"
+    gcpProjectID: "rich-wavelet-412321"
+
+    credentials:
+      name: "gcp-creds"
+      namespace: "default"
+      key: "creds.json"
+
+    masterNodes:
+      rootVolumeType: "pd-ssd"
+      rootVolumeSize: 50
+      nodes:
+        master-1:
+          role: "primary-master"
+          availabilityZone: "asia-south1-a"
+          kloudliteRelease: v1.0.5-nightly

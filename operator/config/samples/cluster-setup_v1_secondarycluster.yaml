@@ -1,0 +1,6 @@
+apiVersion: cluster-setup.kloudlite.io/v1
+kind: SecondaryCluster
+metadata:
+  name: secondarycluster-sample
+spec:
+  # TODO(user): Add fields here

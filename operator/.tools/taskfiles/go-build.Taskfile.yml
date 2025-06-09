@@ -1,0 +1,26 @@
+version: 3
+
+tasks:
+  build:
+    summary: |+
+      task build Out="sample" [Dir="."] [ldflags=""] [upx=<true|false>]
+    vars:
+      PlatformArch: 
+        sh: go env GOARCH
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
+      Dir: "."
+      ldflags: '{{.ldflags | default (printf "-s -w -X github.com/kloudlite/operator/common.BuiltAt=%s" .BuiltAt) }}'
+    env:
+      CGO_ENABLED: 0
+      GOARCH: "{{.GOARCH | default .PlatformArch}}"
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - echo "building for GOARCH=${GOARCH}"
+      - go build -v -ldflags="{{.ldflags}}" -o {{.Out}} {{.Dir}}
+      - |+
+        if [ "{{.upx}}" == "true" ]; then
+          upx {{.Out}}
+        fi

@@ -1,0 +1,26 @@
+version: v3
+vars:
+  ImageRegistry: "ghcr.io/kloudlite/operator/components/multi-cluster"
+
+tasks:
+  dev:
+    env:
+      CONFIG_PATH: "./config.yml"
+    cmds:
+      - nodemon -q -e 'go' --signal SIGTERM --exec "task build && ./bin/keep-alive || exit 0"
+
+  build:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags="-s -w" -o ./bin/keep-alive . 
+
+  container:build:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    cmds:
+      - rm -rf ./bin/*
+      - task: build
+      - podman build -t {{.ImageRegistry}}-keep-alive:{{.tag}} . --build-arg APP=keep-alive
+      - podman push {{.ImageRegistry}}-keep-alive:{{.tag}}

@@ -1,0 +1,6 @@
+apiVersion: artifacts.kloudlite.io/v1
+kind: HarborUserAccount
+metadata:
+  name: harboruseraccount-sample
+spec:
+  # TODO(user): Add fields here

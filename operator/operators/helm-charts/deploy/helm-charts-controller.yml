@@ -1,0 +1,92 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "helm-controller-sa"
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: helm-controller-rb
+subjects:
+  - kind: ServiceAccount
+    name: helm-controller-sa
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: "ClusterRole"
+  name: cluster-admin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: &helmcontroller "helm-charts"
+  name: *helmcontroller
+  namespace: "default"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: *helmcontroller
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: *helmcontroller
+    spec:
+      containers:
+        - args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            - --v=0
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+        - args:
+            - --health-probe-bind-address=:8081
+            - --metrics-bind-address=127.0.0.1:8080
+            - --leader-elect
+            # - --leader-election-id=helm
+          image: ghcr.io/kloudlite/kloudlite/operator/helm-charts:v1.0.4-nightly
+          imagePullPolicy: Always
+          env:
+            - name: HELM_JOB_RUNNER_IMAGE
+              value: "ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner:v1.0.4-nightly"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 120m
+              memory: 240Mi
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: helm-controller-sa
+      terminationGracePeriodSeconds: 10
+      tolerations:
+        - operator: Exists
+      nodeSelector: {}
+

@@ -1,0 +1,24 @@
+# permissions for end users to edit aclusers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: acluser-editor-role
+rules:
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - aclusers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redpanda.msvc.kloudlite.io
+  resources:
+  - aclusers/status
+  verbs:
+  - get

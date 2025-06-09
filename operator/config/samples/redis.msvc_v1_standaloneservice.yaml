@@ -1,0 +1,6 @@
+apiVersion: redis.msvc.kloudlite.io/v1
+kind: StandaloneService
+metadata:
+  name: standaloneservice-sample
+spec:
+  # TODO(user): Add fields here

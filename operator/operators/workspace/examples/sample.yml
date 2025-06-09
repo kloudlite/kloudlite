@@ -1,0 +1,23 @@
+apiVersion: crds.kloudlite.io/v1
+kind: Workspace
+metadata:
+  name: sample
+  namespace: wm-sample
+spec:
+  state: "ON"
+  serviceAccountName: "kloudlite"
+  enableCodeServer: false
+  enableVSCodeServer: false
+  enableTTYD: false
+  enableJupyterNotebook: false
+  imagePullPolicy: IfNotPresent
+  router:
+    ingressClass: "nginx"
+    domains:
+      - "sample.demo.kloudlite.io"
+    https:
+      enabled: true
+    routes:
+      - app: sample
+        path: "/"
+        port: 3000

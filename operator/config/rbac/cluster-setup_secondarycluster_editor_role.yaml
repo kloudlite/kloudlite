@@ -1,0 +1,24 @@
+# permissions for end users to edit secondaryclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secondarycluster-editor-role
+rules:
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - secondaryclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster-setup.kloudlite.io
+  resources:
+  - secondaryclusters/status
+  verbs:
+  - get

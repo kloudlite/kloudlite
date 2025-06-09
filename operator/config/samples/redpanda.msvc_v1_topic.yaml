@@ -1,0 +1,6 @@
+apiVersion: redpanda.msvc.kloudlite.io/v1
+kind: Topic
+metadata:
+  name: topic-sample
+spec:
+  # TODO(user): Add fields here

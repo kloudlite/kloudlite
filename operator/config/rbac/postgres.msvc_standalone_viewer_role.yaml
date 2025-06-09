@@ -1,0 +1,27 @@
+# permissions for end users to view standalones.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: standalone-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: app
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+  name: standalone-viewer-role
+rules:
+- apiGroups:
+  - postgres.msvc.kloudlite.io
+  resources:
+  - standalones
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - postgres.msvc.kloudlite.io
+  resources:
+  - standalones/status
+  verbs:
+  - get
