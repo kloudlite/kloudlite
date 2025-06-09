@@ -25,7 +25,7 @@ resource "aws_subnet" "public_subnets" {
     #    for idx, value in data.aws_availability_zones.az.names : idx => {
     for idx, value in module.availability_zones.names : idx => {
       name = value
-      # it will generate subnet CIDRs in order 10.0.0.0/21, 10.0.8.0/21, 10.0.16.0/21, 10.0.24.0/21
+      # it will generate subnet CIDRs in order 10.0.0.0/21, 10.0.8.0/21, 10.0.16.0/21, 10.0.24.0/21Z
       cidr = "10.0.${8*idx}.0/21"
     }
   }

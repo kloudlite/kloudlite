@@ -33,7 +33,7 @@ on:
       - terraform/**
       - ".github/workflows/*"
       - ".github/actions/**"
-      - Dockerfile
+      - Dockerfile-ssh
 
 permissions:
   contents: read

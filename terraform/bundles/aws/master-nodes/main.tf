@@ -1,46 +1,41 @@
-locals {
-  primary_master_node_name = one([
-    for node_name, node_cfg in var.k3s_masters.nodes : node_name
-    if node_cfg.role == "primary-master"
-  ])
-}
-
-resource "null_resource" "variable_validations" {
-  lifecycle {
-    precondition {
-      error_message = "k3s_masters.nodes can/must have only one node with role primary-master"
-      condition     = local.primary_master_node_name != null
-    }
-  }
-}
-
-module "constants" {
-  source = "../../../modules/common/constants"
-}
-
 module "ssh-rsa-key" {
-  source     = "../../../modules/common/ssh-rsa-key"
-  depends_on = [null_resource.variable_validations]
+  source = "../../../modules/common/ssh-rsa-key"
 }
 
-resource "null_resource" "save_ssh_key" {
-  count = length(var.save_ssh_key_to_path) > 0 ? 1 : 0
-
-  provisioner "local-exec" {
-    quiet   = true
-    command = "echo '${module.ssh-rsa-key.private_key}' > ${var.save_ssh_key_to_path} && chmod 600 ${var.save_ssh_key_to_path}"
-  }
-}
-
-resource "random_id" "id" {
-  byte_length = 4
-  depends_on  = [null_resource.variable_validations]
-}
-
-resource "aws_key_pair" "k3s_nodes_ssh_key" {
-  key_name   = "${var.tracker_id}-${random_id.id.hex}-ssh-key"
+resource "aws_key_pair" "ssh_key_pair" {
+  key_name   = "${var.trace_id}-ssh-key-pair"
   public_key = module.ssh-rsa-key.public_key
-  depends_on = [null_resource.variable_validations]
+}
+
+module "ec2-node" {
+  source   = "../../../modules/aws/ec2-node-v2"
+  for_each = [for node in var.nodes : node]
+  trace_id = var.trace_id
+
+  name = each.value.name
+
+  ami    = each.value.ami
+  vpc_id = var.vpc_id
+
+  instance_type  = each.value.instance_type
+  instance_state = var.instance_state
+
+  availability_zone    = each.value.availability_zone
+  iam_instance_profile = var.iam_instance_profile
+  root_volume_size     = each.value.root_volume_size
+  root_volume_type     = each.value.root_volume_type
+  ssh_key_name         = aws_key_pair.ssh_key_pair.key_name
+
+  user_data_base64 = base64encode(
+    templatefile("${path.module}/launch-script.sh", {
+      k3s_server_host = var.k3s_server_host
+      k3s_agent_token = var.k3s_agent_token
+      k3s_version     = var.k3s_version
+      node_name       = var.name,
+  }))
+
+  security_group_ids = each.value.security_group_ids
+  subnet_id          = each.value.vpc_subnet_id
 }
 
 module "aws-security-groups" {

@@ -1,0 +1,167 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Private k3s Cluster in VPC'
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair for SSH access
+
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    Description: Instance type for k3s nodes
+    
+  NumberOfNodes:
+    Type: Number
+    Default: 3
+    MinValue: 2
+    Description: "Number of k3s nodes (minimum 2: 1 master + 1 worker)"
+
+Resources:
+  # VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: k3s-vpc
+
+  # Private Subnet
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: k3s-private-subnet
+
+  # Route Table
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref RouteTable
+
+  # Security Group (internal access only)
+  K3sSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Internal k3s cluster access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+        - IpProtocol: tcp
+          FromPort: 6443
+          ToPort: 6443
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/16    # VPC internal only
+
+  # EC2 Instances for k3s cluster
+  K3sMasterInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Ref 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref K3sSecurityGroup
+      Tags:
+        - Key: Name
+          Value: k3s-master
+        - Key: Role
+          Value: master
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # Install k3s master
+          curl -sfL https://get.k3s.io | sh -s - server --disable-agent
+          
+          # Wait for k3s to be ready
+          sleep 30
+          
+          # Get the node token for workers
+          cat /var/lib/rancher/k3s/server/node-token > /tmp/k3s-token
+          
+          # Log cluster info
+          echo "Master started at $(date)" >> /var/log/k3s-startup.log
+
+  K3sWorkerLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: !Ref 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        NetworkInterfaces:
+          - AssociatePublicIpAddress: false
+            DeviceIndex: 0
+            SubnetId: !Ref PrivateSubnet
+            Groups:
+              - !Ref K3sSecurityGroup
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            # Wait for master to be ready
+            sleep 60
+            
+            # Get master IP
+            MASTER_IP=${K3sMasterInstance.PrivateIp}
+            
+            # Install k3s worker
+            curl -sfL https://get.k3s.io | K3S_URL=https://$${MASTER_IP}:6443 K3S_TOKEN=$(cat /tmp/k3s-token) sh -
+            
+            echo "Worker started at $(date)" >> /var/log/k3s-startup.log
+
+  K3sWorkerAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref PrivateSubnet
+      LaunchTemplate:
+        LaunchTemplateId: !Ref K3sWorkerLaunchTemplate
+        Version: !GetAtt K3sWorkerLaunchTemplate.LatestVersionNumber
+      MinSize: !Sub '${NumberOfNodes - 1}'
+      MaxSize: !Sub '${NumberOfNodes - 1}'
+      DesiredCapacity: !Sub '${NumberOfNodes - 1}'
+      Tags:
+        - Key: Name
+          Value: k3s-worker
+          PropagateAtLaunch: true
+        - Key: Role
+          Value: worker
+          PropagateAtLaunch: true
+
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value: !Ref VPC
+  MasterPrivateIp:
+    Description: Private IP of k3s master
+    Value: !GetAtt K3sMasterInstance.PrivateIp
+  SubnetId:
+    Description: Private Subnet ID
+    Value: !Ref PrivateSubnet

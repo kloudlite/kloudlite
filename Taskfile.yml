@@ -63,7 +63,7 @@ tasks:
         mv $dir/context.tar .
 
       # - docker buildx build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
-      - docker buildx build -f DockerfileNIX2 -o type=image,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
+      - docker buildx build -f DockerfileNIX2 --platform linux/amd64 -o type=image,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} . --push
       - rm ./context.tar
 
   container:build-and-push:
@@ -74,9 +74,4 @@ tasks:
       push: true
     cmds:
       - echo "building and pushing {{.Image}}"
-      # - docker buildx build -f Dockerfile --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
-      # - docker build -f ./DockerfileNIX -t {{.Image}} . {{.dockerArgs}}
-      # - |+
-      #   if [ "{{.push}}" == "true" ]; then
-      #     docker push {{.Image}}
-      #   fi
+      - docker buildx build -f Dockerfile --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .

@@ -9,7 +9,7 @@ on:
       - infrastructure-templates/**
       - terraform/**
       - ".github/workflows/**"
-      - Dockerfile
+      - Dockerfile-ssh
       - .ci/**
 
 permissions:

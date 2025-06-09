@@ -1,0 +1,19 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y git sudo zsh xz-utils curl 
+
+RUN curl -fsSL https://code-server.dev/install.sh | sh
+
+# RUN useradd -m -s /bin/bash -u 1001 kl
+
+# Create a non-root user 'kl'
+RUN userdel ubuntu || echo "ubuntu user already deleted"
+RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl && chsh -s $(which zsh) kl
+RUN echo "kl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kl
+
+USER kl
+
+COPY coder-start /coder-start
+RUN sudo chmod +x /coder-start
+
+CMD ["zsh", "/coder-start"]

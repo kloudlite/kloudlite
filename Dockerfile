@@ -1,27 +1,27 @@
 # vim: set ft=dockerfile:
-FROM nixos/nix:latest AS nix
+# FROM nixos/nix:latest AS nix
+FROM ghcr.io/kloudlite/hub/nix:latest AS nix
 WORKDIR /app
 COPY . ./
-
-RUN cat > /tmp/script.sh <<'EOF'
-  nix --extra-experimental-features "nix-command flakes" build .#container -o result
-  tar cf result.tar result
-
-  mkdir -p /tmp/nix-store-closure
-  cp -R $(nix-store -qR result/) /tmp/nix-store-closure
+RUN --mount=type=cache,target=/nix <<EOF
+  ls /nix && exit 1
+  nix build .#container -o ./result
+  exit 1
+  mkdir -p ./nix-store-closure
+  cp -R $(nix-store -qR result/) ./nix-store-closure
 
   export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
-
+  # for dir in $(ls -d ./infrastructure-templates/{{.cloudprovider}}/*); do
   for dir in $(ls -d ./infrastructure-templates/{gcp,aws}/*); do
     terraform -chdir=$dir init -backend=false -upgrade &
   done
 
+  wait
+
   echo "compressing"
   tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
-  # tar cf - $tdir | zstd -12 --compress > tf.zst
   tar cf - $tdir | zstd --compress > tf.zst
 EOF
-RUN nix --extra-experimental-features "nix-command flakes" develop --command bash /tmp/script.sh
 
 FROM busybox:latest
 
