@@ -98,6 +98,11 @@ module "k3s-templates" {
   source     = "../../../modules/kloudlite/k3s/k3s-templates"
 }
 
+module "k3s-scripts" {
+  depends_on = [null_resource.variable_validations]
+  source     = "../../../modules/kloudlite/k3s/scripts"
+}
+
 # module "aws-amis" {
 #   source = "../../../modules/aws/AMIs"
 # }
@@ -125,22 +130,16 @@ module "aws-ec2-nodepool" {
   }
   nodes = {
     for name, cfg in var.ec2_nodepool.nodes : name => {
-      user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
-        kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
-
-        vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          k3s_download_url              = var.k3s_download_url
-          kloudlite_runner_download_url = var.kloudlite_runner_download_url
-          kloudlite_config_directory    = module.k3s-templates.kloudlite_config_directory
-        })
-
-        tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
-        tf_k3s_token            = var.k3s_join_token
-        tf_node_taints = concat([],
+      user_data_base64 = base64encode(templatefile(module.k3s-scripts.k3s-agent-setup, {
+        node_name       = "${var.nodepool_name}-${name}"
+        k3s_server_host = var.k3s_server_public_dns_host
+        k3s_agent_token = var.k3s_join_token
+        k3s_version     = ""
+        node_taints = concat([],
           var.node_taints != null ? var.node_taints : [],
           var.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
         )
-        tf_node_labels = merge(
+        node_labels = merge(
           local.common_node_labels,
           {
             (module.constants.node_labels.provider_az)   = var.availability_zone
@@ -150,10 +149,37 @@ module "aws-ec2-nodepool" {
           },
           var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
         )
-        tf_node_name                 = "${var.nodepool_name}-${name}"
-        tf_use_cloudflare_nameserver = true
-        tf_extra_agent_args          = var.extra_agent_args
       }))
+
+      # user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
+      #   kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
+      #
+      #   vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
+      #     k3s_download_url              = var.k3s_download_url
+      #     kloudlite_runner_download_url = var.kloudlite_runner_download_url
+      #     kloudlite_config_directory    = module.k3s-templates.kloudlite_config_directory
+      #   })
+      #
+      #   tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
+      #   tf_k3s_token            = var.k3s_join_token
+      #   tf_node_taints = concat([],
+      #     var.node_taints != null ? var.node_taints : [],
+      #     var.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
+      #   )
+      #   tf_node_labels = merge(
+      #     local.common_node_labels,
+      #     {
+      #       (module.constants.node_labels.provider_az)   = var.availability_zone
+      #       (module.constants.node_labels.node_has_role) = "agent"
+      #       (module.constants.node_labels.nodepool_name) : var.nodepool_name
+      #       (module.constants.node_labels.provider_aws_instance_profile_name) : var.iam_instance_profile
+      #     },
+      #     var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
+      #   )
+      #   tf_node_name                 = "${var.nodepool_name}-${name}"
+      #   tf_use_cloudflare_nameserver = true
+      #   tf_extra_agent_args          = var.extra_agent_args
+      # }))
       last_recreated_at = cfg.last_recreated_at
     }
   }

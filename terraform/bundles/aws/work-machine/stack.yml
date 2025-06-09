@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: kloudlite platform installation
+
+Parameters:
+  AvailabilityZone:
+    Type: String
+    Default: ap-south-1a
+
+  SecurityGroupID:
+    Type: String
+    Default: sg-03fca3c8fd33e02cc
+
+  PublicSubnetID:
+    Type: String
+    Description: subnet id to use
+    Default: subnet-0e4f0634ba1b5be2e
+
+  InstanceType:
+    Type: String
+    Default: t3.medium
+
+  ImageID:
+    Type: String
+    Default: "ami-05c179eced2eb9b5b"
+
+  K3sServerHost:
+    Type: String
+    Description: "k3s server host"
+    Default: 10.0.1.60
+
+  K3sAgentToken:
+    Type: String
+    Description: "k3s agent token"
+    Default: d72d1ba1-5353-45d9-9a9a-831faf2fea65
+
+  InstanceProfile:
+    Type: String
+    Description: "IAM instance profile"
+    Default: t1-InstanceProfile-8tDGdN7QuX0Z
+
+  NodeName:
+    Type: String
+    Description: "node name"
+
+Resources:
+  # SSH key pair
+  SSHKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Sub ${AWS::StackName}-ssh-key
+      KeyType: rsa # Options: rsa, ed25519
+      KeyFormat: pem # Options: pem, ppk
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-ssh-key
+
+  WorkMachineVolume:
+    Type: AWS::EC2::Volume
+    Properties:
+      AvailabilityZone: !GetAtt WorkMachine.AvailabilityZone
+      Size: 100
+      VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-work-machine-volume
+
+  WorkMachineVolumeAttachment:
+    Type: AWS::EC2::VolumeAttachment
+    Properties:
+      InstanceId: !Ref WorkMachine
+      VolumeId: !Ref WorkMachineVolume
+      Device: /dev/xvdb
+
+  WorkMachine:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKeyPair
+      ImageId: !Ref ImageID
+      SubnetId: !Ref PublicSubnetID
+      AvailabilityZone: !Ref AvailabilityZone
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"  # Even for NVMe, use this notation
+          Ebs:
+            VolumeSize: 50
+            VolumeType: "gp3"
+      SecurityGroupIds:
+        - !Ref SecurityGroupID
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-work-machine
+
+      UserData: !Base64
+        Fn::Sub: |
+          #! /usr/bin/env bash
+
+          count=60
+          while [ "$count" -gt 0 ]; do
+            DEVICE_NAME=$(lsblk -OdJ | jq '.blockdevices[] | select(.ptuuid == null) | .name' -r)
+            if [ -n "$DEVICE_NAME" ]; then
+              if ! blkid /dev/$DEVICE_NAME; then
+                echo "No filesystem found. Formatting with XFS..."
+                mkfs.xfs -f "/dev/$DEVICE_NAME"
+              fi
+
+              # Mount the device if not already mounted
+              if ! mount | grep -q "/dev/$DEVICE_NAME"; then
+                mountpoint="/external-volume"
+                mkdir -p "$mountpoint"
+                sudo chown 1000:1000 -R $mountpoint
+                mount -t xfs "/dev/$DEVICE_NAME" "$mountpoint"
+                sleep 3
+                DEVICE_UUID=$(lsblk -OdJ | jq '.blockdevices[] | select(.name == "$DEVICE_NAME") | .uuid' -r)
+                # echo "UUID=$DEVICE_UUID $mountpoint xfs defaults,nofail 0 2" | sudo tee -a /etc/fstab
+                echo "/dev/$DEVICE_NAME $mountpoint xfs defaults,nofail 0 2" | sudo tee -a /etc/fstab
+              else
+                echo "/dev/$DEVICE_NAME is already mounted."
+              fi
+              break
+            fi
+            count=$(( count - 1 ))
+            sleep 1
+          done
+
+          KLOUDLITE_CONFIG_DIRECTORY=/etc/kloudlite
+
+          ## terraform params
+          K3S_SERVER_HOST='${K3sServerHost}'
+          K3S_AGENT_TOKEN='${K3sAgentToken}'
+          K3S_VERSION=""
+          NODE_NAME="${NodeName}"
+          ## --tf params:END
+
+          debug() {
+            echo "[#] $*" | tee -a "$KLOUDLITE_CONFIG_DIRECTORY/execution.log"
+          }
+
+          debug "ensure kloudlite config directory ($KLOUDLITE_CONFIG_DIRECTORY) exists"
+          mkdir -p "$KLOUDLITE_CONFIG_DIRECTORY"
+
+          debug "################# execution started at $(date) ######################"
+          [ $EUID -ne 0 ] && debug "this script must be run as root. current EUID is $EUID" && exit 1
+
+          create_k3s_config_file() {
+            cat >"$KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml" <<EOF
+          server: "https://$K3S_SERVER_HOST:6443"
+          token: "$K3S_AGENT_TOKEN"
+          node-name: "$NODE_NAME"
+          node-label:
+            - "kloudlite.io/node.role=worker"
+          node-taint:
+            - kloudlite.io/worknode=node1:NoExecute
+          kubelet-arg:
+            - "system-reserved=cpu=50m,memory=50Mi,ephemeral-storage=2Gi"
+            - "kube-reserved=cpu=100m,memory=256Mi"
+            - "eviction-hard=nodefs.available<5%,nodefs.inodesFree<5%,imagefs.available<5%"
+          EOF
+
+            mkdir -p /etc/rancher/k3s
+            ln -sf $KLOUDLITE_CONFIG_DIRECTORY/k3s.yaml /etc/rancher/k3s/config.yaml
+          }
+
+          install_k3s() {
+            debug "installing k3s"
+            export INSTALL_K3S_CHANNEL="stable"
+            export INSTALL_K3S_SKIP_SELINUX_RPM="true"
+
+            if [ -n "$K3S_VERSION" ]; then
+              export INSTALL_K3S_VERSION="$K3S_VERSION"
+            fi
+            curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent" sh -
+          }
+
+          create_k3s_config_file
+          install_k3s
+
+          debug "################# execution finished at $(date) ######################"
+
+Outputs:
+  WorkMachine:
+    Description: work machine
+    Value: !Ref WorkMachine

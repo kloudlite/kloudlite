@@ -59,6 +59,7 @@
             go-task
 
             terraform
+            tflint
             packer
             pulumi
             pulumiPackages.pulumi-language-go

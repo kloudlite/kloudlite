@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create IAM Role, User, and Access Keys with EC2, EBS, Networking, and Route53 permissions
+
+Resources:
+  # IAM Role Definition
+  kloudliteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: EC2AdminRole
+      Description: Role with EC2, EBS, Networking and Route53 permissions
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonRoute53FullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore # SSM core permissions
+      Policies:
+        - PolicyName: SSMParameterStoreAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                  - ssm:PutParameter
+                  - ssm:DeleteParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/stack-${AWS::StackName}/*
+
+        # IAM pass role, needed for running it inside terraform jobs with IAM Instance Profile
+        - PolicyName: AllowPassRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*  # Adjust as needed
+
+  # IAM User Definition
+  kloudliteUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: kloudlite-managed
+      # Policy to allow assuming the role
+      Policies:
+        - PolicyName: AssumeEC2AdminRolePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !GetAtt kloudliteRole.Arn
+
+  # Access Key for the IAM User
+  kloudliteAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref kloudliteUser
+
+Outputs:
+  RoleArn:
+    Description: ARN of the created IAM Role
+    Value: !GetAtt kloudliteRole.Arn
+
+  UserName:
+    Description: Name of the created IAM User
+    Value: !Ref kloudliteUser
+
+  AccessKeyId:
+    Description: Access Key ID for the IAM User
+    Value: !Ref kloudliteAccessKey
+
+  SecretAccessKey:
+    Description: Secret Access Key for the IAM User
+    Value: !GetAtt kloudliteAccessKey.SecretAccessKey

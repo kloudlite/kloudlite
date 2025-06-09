@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite-stack
+---
+
+apiVersion: plugin-helm-chart.kloudlite.github.com/v1
+kind: HelmChart
+metadata:
+  name: aws-stack
+  namespace: kloudlite-stack
+spec:
+  chart:
+    url: "https://kloudlite.github.io/helm-charts-extras"
+    name: aws-stack
+    version: v1.0.0
+
+  jobVars:
+    resources:
+      cpu:
+        max: 200m
+        min: 200m
+      memory:
+        max: 400Mi
+        min: 400Mi
+
+    tolerations:
+    - key: operator
+      value: exists
+
+  helmValues: {}

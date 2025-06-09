@@ -2,10 +2,10 @@
 
 KLOUDLITE_CONFIG_DIRECTORY=/etc/kloudlite
 
-K3S_SERVER_HOST="${k3s_server_host}"
+K3S_SERVER_HOST="${k3s_server_host:-0.0.0.0}"
 
-K3S_SERVER_TOKEN="${k3s_server_token}"
-K3S_AGENT_TOKEN="${k3s_agent_token}"
+K3S_SERVER_TOKEN="${k3s_server_token:-$(uuidgen)}"
+K3S_AGENT_TOKEN="${k3s_agent_token:-$(uuidgen)}"
 # --tf params:END
 
 debug() {
@@ -56,23 +56,25 @@ EOF
 
 install_k3s() {
   debug "installing k3s latest stable version"
-  curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=stable sh -
+  curl -Lo /usr/local/bin/k3s https://github.com/k3s-io/k3s/releases/download/v1.26.5+k3s1/k3s
+  chmod a+x /usr/local/bin/k3s
+  # curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=stable sh -
 }
 
-new_network_interface() {
-  sudo ip link add kubernetes type veth peer name kubernetes
-  sudo ip addr add 10.17.17.0/24 dev kubernetes
-  sudo ip link set kubernetes up
-
-  sudo apt update
-  sudo apt install -y ufw
-  sudo ufw enable
-  echo "1" >/proc/sys/net/ipv4/ip_forward
-
-  sudo ufw default reject incoming
-  sudo ufw allow 80/tcp
-  sudo ufw allow 22
-}
+# new_network_interface() {
+#   sudo ip link add kubernetes type veth peer name kubernetes
+#   sudo ip addr add 10.17.17.0/24 dev kubernetes
+#   sudo ip link set kubernetes up
+#
+#   sudo apt update
+#   sudo apt install -y ufw
+#   sudo ufw enable
+#   echo "1" >/proc/sys/net/ipv4/ip_forward
+#
+#   sudo ufw default reject incoming
+#   sudo ufw allow 80/tcp
+#   sudo ufw allow 22
+# }
 
 create_k3s_config_file
 install_k3s

@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: exposed-services
+spec:
+  selector:
+    app: code-web-service
+  ports:
+  - port: 22
+    targetPort: 22
+    name: ssh
+  - port: 3000
+    targetPort: 3000
+    name: code3000
+  - port: 8080
+    targetPort: 8080
+    name: code8080
+  - port: 4000
+    targetPort: 4000
+    name: code4000
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: exposed-http
+spec:
+  selector:
+    app: code-web-service
+  ports:
+  - port: 80
+    targetPort: 8888
+    name: http
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: exposed-http
+  labels:
+    name: exposed-http
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: exposed-services.tenantc.demo.kloudlite.io
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: exposed-http
+            port: 
+              number: 80

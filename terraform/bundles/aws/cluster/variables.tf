@@ -1,0 +1,57 @@
+variable "cluster_name" {
+  description = "cluster name will be used as trace id for created resources"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "aws region"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "aws vpc id"
+  type        = string
+}
+
+variable "master_node_iam_instance_profile" {
+  description = "IAM Instance Profile for master nodes"
+  type        = string
+}
+
+variable "cluster_state" {
+  type        = string
+  description = "state of cluster instances, must be either running or stopped"
+  default     = "running"
+
+  validation {
+    condition     = contains(["running", "stopped"], var.cluster_state)
+    error_message = "Instance state must be either 'running' or 'stopped'."
+  }
+}
+
+variable "master_nodes" {
+  description = "list of master nodes"
+  type = list(object({
+    name              = string
+    ami               = string
+    instance_type     = string
+    availability_zone = string
+
+    vpc_subnet_id = string
+
+    root_volume_size = string
+    root_volume_type = optional(string, "gp3")
+
+    k3s_version = optional(string, "")
+  }))
+}
+
+variable "kloudlite_release" {
+  description = "Kloudlite Release version, needed to install CRDs for this version"
+  type        = string
+}
+
+variable "base_domain" {
+  description = "base domain that will point to the to be created load balancer"
+  type        = string
+}

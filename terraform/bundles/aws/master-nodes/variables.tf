@@ -3,14 +3,35 @@ variable "aws_region" {
   type        = string
 }
 
-variable "tracker_id" {
-  description = "tracker id, for which this resource is being created"
+variable "trace_id" {
+  description = "trace id, for which this resource is being created"
   type        = string
 }
 
 variable "vpc_id" {
   description = "AWs VPC Id"
   type        = string
+}
+
+variable "instance_state" {
+  description = "Machines Instance State"
+  type        = string
+}
+
+variable "nodes" {
+  description = "list of master nodes"
+  type = list(object({
+    name              = string
+    ami               = string
+    instance_type     = string
+    availability_zone = string
+
+    security_group_ids = list(string)
+    vpc_subnet_id      = string
+
+    root_volume_size = string
+    root_volume_type = string
+  }))
 }
 
 variable "k3s_masters" {
