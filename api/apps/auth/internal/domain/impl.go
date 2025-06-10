@@ -161,7 +161,7 @@ func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*entities.U
 	return d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 }
 
-func (d *domainI) Login(ctx context.Context, email string, password string) (*common.AuthSession, error) {
+func (d *domainI) Login(ctx context.Context, email string, password string) (*entities.User, error) {
 	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -177,8 +177,8 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 	if user.Password != hex.EncodeToString(bytes[:]) {
 		return nil, errors.New("not valid credentials")
 	}
-	session := newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password")
-	return session, nil
+
+	return user, nil
 }
 
 func (d *domainI) MachineLogin(ctx context.Context, userId string, machineId string, cluster string) (*common.AuthSession, error) {
