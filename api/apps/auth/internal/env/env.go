@@ -10,6 +10,7 @@ type authEnv struct {
 	MongoDbName string `env:"MONGO_DB_NAME" required:"true"`
 	Port        uint16 `env:"PORT" required:"true"`
 	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
+	GrpcV2Port  uint16 `env:"GRPC_V2_PORT" required:"true"`
 	CorsOrigins string `env:"ORIGINS"`
 
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`

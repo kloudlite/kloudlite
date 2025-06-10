@@ -1,4 +1,4 @@
-package graphv2
+package grpcv2
 
 import (
 	"context"
@@ -25,7 +25,7 @@ func (a *authGrpcServer) Login(ctx context.Context, loginRequest *authV2.LoginRe
 	}, nil
 }
 
-func NewAuthGrpcServer(d domain.Domain, sessionRepo kv.Repo[*common.AuthSession]) authV2.AuthV2Server {
+func NewServer(d domain.Domain, sessionRepo kv.Repo[*common.AuthSession]) authV2.AuthV2Server {
 	return &authGrpcServer{
 		d:           d,
 		sessionRepo: sessionRepo,
