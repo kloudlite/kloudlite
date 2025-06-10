@@ -1,21 +1,17 @@
 package app
 
 import (
-	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
 	"context"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/gofiber/fiber/v2"
-	"github.com/kloudlite/api/apps/auth/internal/app/graph"
-	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
+	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
+
+	"github.com/kloudlite/api/apps/auth/internal/app/grpcv2"
 	"github.com/kloudlite/api/apps/auth/internal/domain"
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/apps/auth/internal/env"
-	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	authV2 "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth/v2"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
-	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
@@ -24,6 +20,9 @@ import (
 )
 
 type CommsClientConnection *grpc.ClientConn
+
+type AuthGrpcServer *grpc.Server
+type AuthGrpcServerV2 *grpc.Server
 
 var Module = fx.Module(
 	"app",
@@ -68,56 +67,17 @@ var Module = fx.Module(
 	fx.Provide(fxGoogle),
 
 	fx.Provide(fxRPCServer),
+	fx.Provide(grpcv2.NewServer),
+
 	fx.Invoke(
-		func(server *grpc.Server, authServer auth.AuthServer) {
-			auth.RegisterAuthServer(server, authServer)
+		func(server AuthGrpcServer, authServer auth.AuthServer) {
+			auth.RegisterAuthServer((*grpc.Server)(server), authServer)
 		},
 	),
 
 	fx.Invoke(
-		func(
-			server httpServer.Server,
-			d domain.Domain,
-			ev *env.Env,
-			repo kv.Repo[*common.AuthSession],
-		) {
-			gqlConfig := generated.Config{Resolvers: graph.NewResolver(d, ev)}
-			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj any, next graphql.Resolver) (res interface{}, err error) {
-				sess := httpServer.GetSession[*common.AuthSession](ctx)
-				if sess == nil {
-					return nil, fiber.ErrUnauthorized
-				}
-
-				return next(context.WithValue(ctx, "user-session", sess))
-			}
-
-			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj any, next graphql.Resolver) (res interface{}, err error) {
-				sess := httpServer.GetSession[*common.AuthSession](ctx)
-				if sess == nil {
-					return nil, fiber.ErrUnauthorized
-				}
-
-				if !sess.UserVerified {
-					return nil, &fiber.Error{
-						Code:    fiber.StatusForbidden,
-						Message: "user's email is not verified",
-					}
-				}
-
-				return next(context.WithValue(ctx, "user-session", sess))
-			}
-
-			schema := generated.NewExecutableSchema(gqlConfig)
-
-			server.SetupGraphqlServer(
-				schema,
-				httpServer.NewSessionMiddleware(
-					repo,
-					constants.CookieName,
-					ev.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
-			)
+		func(server AuthGrpcServerV2, authServer authV2.AuthV2Server) {
+			authV2.RegisterAuthV2Server((*grpc.Server)(server), authServer)
 		},
 	),
 

@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
+	"google.golang.org/grpc"
 
 	"go.uber.org/fx"
 
 	"github.com/kloudlite/api/apps/auth/internal/app"
 	"github.com/kloudlite/api/apps/auth/internal/env"
 	rpc "github.com/kloudlite/api/pkg/grpc"
-	httpServer "github.com/kloudlite/api/pkg/http-server"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -79,23 +80,69 @@ var Module fx.Option = fx.Module(
 		},
 	),
 
-	fx.Provide(func(e *env.Env, logger logging.Logger) httpServer.Server {
-		corsOrigins := "https://studio.apollographql.com"
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
-		lf.Append(fx.Hook{
-			OnStart: func(context.Context) error {
-				return server.Listen(fmt.Sprintf(":%d", ev.Port))
-			},
-			OnStop: func(context.Context) error {
-				return server.Close()
-			},
-		})
-	}),
-
-	rpc.NewGrpcServerFx[*fm](),
 	rpc.NewGrpcClientFx[*CommsGrpcEnv, app.CommsClientConnection](),
+
+	// rpc.NewGrpcServerFx[*fm](),
+
+	fx.Module(
+		"grpc-servers",
+
+		fx.Provide(func(logger logging.Logger) app.AuthGrpcServer {
+			return grpc.NewServer()
+		}),
+
+		fx.Invoke(
+			func(lf fx.Lifecycle, server app.AuthGrpcServer, env *env.Env, logger *slog.Logger) error {
+				listener, err := net.Listen("tcp", fmt.Sprintf(":%d", env.GrpcPort))
+				if err != nil {
+					return errors.NewEf(err, "could not listen on port %d", env.GrpcPort)
+				}
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							logger.Info(fmt.Sprintf("Starting Auth gRPC server on port %d", env.GrpcPort))
+							go ((*grpc.Server)(server)).Serve(listener)
+							return nil
+						},
+						OnStop: func(ctx context.Context) error {
+							logger.Info(fmt.Sprintf("Stopping Auth gRPC server on port %d", env.GrpcPort))
+							go ((*grpc.Server)(server)).Stop()
+							return nil
+						},
+					},
+				)
+				return nil
+			},
+		),
+
+		fx.Provide(func(logger logging.Logger) app.AuthGrpcServerV2 {
+			return grpc.NewServer()
+		}),
+
+		fx.Invoke(
+			func(lf fx.Lifecycle, server app.AuthGrpcServerV2, env *env.Env, logger *slog.Logger) error {
+				listener, err := net.Listen("tcp", fmt.Sprintf(":%d", env.GrpcV2Port))
+				if err != nil {
+					return errors.NewEf(err, "could not listen on port %d", env.GrpcV2Port)
+				}
+				lf.Append(
+					fx.Hook{
+						OnStart: func(ctx context.Context) error {
+							logger.Info(fmt.Sprintf("Starting Auth V2 gRPC server on port %d", env.GrpcV2Port))
+							go ((*grpc.Server)(server)).Serve(listener)
+							return nil
+						},
+						OnStop: func(ctx context.Context) error {
+							logger.Info(fmt.Sprintf("Stopping Auth V2 gRPC server on port %d", env.GrpcV2Port))
+							go ((*grpc.Server)(server)).Stop()
+							return nil
+						},
+					},
+				)
+				return nil
+			},
+		),
+	),
+
 	app.Module,
 )
