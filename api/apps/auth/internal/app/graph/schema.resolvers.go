@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
 	"github.com/kloudlite/api/common"
@@ -38,13 +39,14 @@ func (r *mutationResolver) AuthLogin(ctx context.Context, email string, password
 	}
 
 	httpServer.SetSession(ctx, sess)
-	return &model.Session{
-		ID:           sess.Id,
-		UserID:       sess.UserId,
-		UserEmail:    sess.UserEmail,
-		LoginMethod:  sess.LoginMethod,
-		UserVerified: sess.UserVerified,
-	}, nil
+	return nil, nil
+	// return &model.Session{
+	// 	ID:           sess.Id,
+	// 	UserID:       sess.UserId,
+	// 	UserEmail:    sess.UserEmail,
+	// 	LoginMethod:  sess.LoginMethod,
+	// 	UserVerified: sess.UserVerified,
+	// }, nil
 }
 
 // AuthSignup is the resolver for the auth_signup field.

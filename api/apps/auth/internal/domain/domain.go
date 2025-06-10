@@ -13,7 +13,7 @@ type Domain interface {
 	GetRemoteLogin(ctx context.Context, loginId repos.ID, secret string) (*entities.RemoteLogin, error)
 	CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error)
 
-	Login(ctx context.Context, email string, password string) (*common.AuthSession, error)
+	Login(ctx context.Context, email string, password string) (*entities.User, error)
 	MachineLogin(ctx context.Context, userId string, machineId string, cluster string) (*common.AuthSession, error)
 	SignUp(ctx context.Context, name string, email string, password string, captchaToken string) (*common.AuthSession, error)
 	EnsureUserByEmail(ctx context.Context, email string) (*entities.User, error)
