@@ -10,7 +10,7 @@ export default function Home() {
       </p>
       <p className="mt-2 text-lg">
         <Button variant="outline" className="mt-4">
-          <Link href="/login">
+          <Link href="/auth/login">
             Login
           </Link>
         </Button>

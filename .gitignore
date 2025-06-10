@@ -5,6 +5,8 @@ tags
 vendor
 go.work
 go.work.sum
+.mongodata
+.natsdata
 
 .idea
 *.log
