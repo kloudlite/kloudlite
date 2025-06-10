@@ -1,0 +1,18 @@
+services:
+  
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - .mongodata:/data/db
+  nats:
+    image: nats:latest
+    container_name: nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "--store_dir", "/data"]
+    volumes:
+      - .natsdata:/data
