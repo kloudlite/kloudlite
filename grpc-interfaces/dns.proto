@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/dns";
+
+service DNS {
+  rpc GetAccountDomains(GetAccountDomainsIn) returns (GetAccountDomainsOut);
+}
+
+message GetAccountDomainsIn {
+    string accountId =1;
+}
+
+message GetAccountDomainsOut {
+  repeated string domains = 1;
+}
