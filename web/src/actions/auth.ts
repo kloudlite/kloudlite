@@ -3,8 +3,9 @@
 import { AuthV2Client, LoginRequest, LoginResponse, SignupRequest, SignupResponse } from "@grpc/auth.v2";
 import util from "util"
 import * as grpc from "@grpc/grpc-js";
-import { promiseWrap } from "./grpc-wrapper";
+import { promiseWrap } from "./utils/grpc-wrapper";
 import { cookies } from "next/headers";
+import { actionWrapper } from "./utils/action-wrapper";
 
 const AUTHV2_SERVER_ADDRESS = process.env.AUTHV2_SERVER_ADDRESS || "localhost:50051";
 
@@ -18,20 +19,36 @@ const serverMethods = {
   signup: promiseWrap<SignupRequest, SignupResponse>(AuthClient.signup.bind(AuthClient))
 };
 
-export const login = async (email: string, password: string) => {
+export const isLoggedIn = async () => {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("userId");
+  if (!userId) {
+    return false;
+  }
+  return userId.value !== "";
+};
+
+export const logout = async () => {
+  const cookieStore = await cookies();
+  cookieStore.delete("userId");
+  return true;
+};
+
+export const resetPassword = actionWrapper(async (email: string) => {
+  
+});
+
+export const login = actionWrapper(async (email: string, password: string) => {
   try {
-    console.log("Attempting to login with email:", email);
     const res = await serverMethods.login({
       email, password
     });
     const cookieStore = await cookies()
-    cookieStore.set("userId", res.userId)
-    return [true, null];
+    cookieStore.set("userId", res.userId);
   } catch (error) {
-    return [false, util.inspect(error)];
+    throw new Error((error as grpc.ServiceError).details);
   }
-}
-
+});
 
 export const signup = async (name:string, email: string, password: string) => {
   try {

@@ -1,4 +1,3 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,20 +19,16 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
 import {
   ArrowRight,
   ChevronRight,
-  Search,
-  Terminal,
-  Users,
+  Users
 } from "lucide-react";
 import Link from "next/link";
+import { LogoutButton } from "./_components/logout-button";
 
 export default function Home() {
   return (
@@ -130,9 +125,7 @@ export default function Home() {
       </div>
       <div className="text-center">
         Not able to see your team?
-        <Button variant={"link"} className="underline text-sm">
-          Try a different email
-        </Button>
+        <LogoutButton />
       </div>
     </div>
   );
