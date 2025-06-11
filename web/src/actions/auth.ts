@@ -1,6 +1,7 @@
 "use server";
 
-import { AuthV2Client } from "@grpc/auth.v2";
+import { AuthV2Client, LoginRequest, LoginResponse } from "@grpc/auth.v2";
+import util from "util"
 import * as grpc from "@grpc/grpc-js";
 import { promiseWrap } from "./grpc-wrapper";
 
@@ -11,13 +12,17 @@ const AuthClient = new AuthV2Client(
   grpc.credentials.createInsecure()
 );
 
+const serverMethods = {
+  login: promiseWrap<LoginRequest, LoginResponse>(AuthClient.login.bind(AuthClient))
+};
 
 export const login = async (email: string, password: string) => {
-  const res = await promiseWrap(AuthClient.login)(
-    {
-      email,
-      password
-    }
-  )
-  console.log("Login response:", res);
+  try {
+    const res = await serverMethods.login({
+      email, password
+    });
+    return res.userId
+  } catch (error) {
+    console.error("Login failed:", error);
+  }
 }
