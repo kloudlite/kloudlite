@@ -48,7 +48,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v1.1.2-0.20250417111723-79b058b419db
+	github.com/kloudlite/operator v1.1.1
 	github.com/kloudlite/operator/toolkit v0.0.0-20250316093242-493e9b587c10
 	github.com/kloudlite/plugin-helm-chart v0.0.0-20250317052100-fef043b111a2
 	github.com/miekg/dns v1.1.62
@@ -58,7 +58,6 @@ require (
 	github.com/onsi/gomega v1.36.1
 	github.com/seancfoley/ipaddress-go v1.7.0
 	github.com/shamaton/msgpack/v2 v2.2.2
-	github.com/stretchr/testify v1.10.0
 	github.com/ztrue/tracerr v0.4.0
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 	golang.org/x/net v0.33.0
@@ -81,7 +80,6 @@ require (
 	github.com/charmbracelet/x/ansi v0.6.0 // indirect
 	github.com/containerd/containerd v1.7.24 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
-	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
@@ -138,14 +136,12 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rubenv/sql-migrate v1.7.1 // indirect
 	github.com/seancfoley/bintree v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
