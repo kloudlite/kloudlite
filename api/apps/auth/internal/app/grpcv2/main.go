@@ -15,6 +15,16 @@ type authGrpcServer struct {
 	sessionRepo kv.Repo[*common.AuthSession]
 }
 
+func (a *authGrpcServer) Signup(ctx context.Context, signupReq *authV2.SignupRequest) (*authV2.SignupResponse, error) {
+	u, err := a.d.SignUp(ctx, signupReq.Name, signupReq.Email, signupReq.Password)
+	if err != nil {
+		return nil, err
+	}
+	return &authV2.SignupResponse{
+		UserId: string(u.Id),
+	}, nil
+}
+
 func (a *authGrpcServer) Login(ctx context.Context, loginRequest *authV2.LoginRequest) (*authV2.LoginResponse, error) {
 	user, err := a.d.Login(ctx, loginRequest.Email, loginRequest.Password)
 	if err != nil {

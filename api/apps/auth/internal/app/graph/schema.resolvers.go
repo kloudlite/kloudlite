@@ -51,18 +51,19 @@ func (r *mutationResolver) AuthLogin(ctx context.Context, email string, password
 
 // AuthSignup is the resolver for the auth_signup field.
 func (r *mutationResolver) AuthSignup(ctx context.Context, name string, email string, password string, captchaToken string) (*model.Session, error) {
-	sess, err := r.d.SignUp(ctx, name, email, password, captchaToken)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	httpServer.SetSession(ctx, sess)
-	return &model.Session{
-		ID:           sess.Id,
-		UserID:       sess.UserId,
-		UserEmail:    sess.UserEmail,
-		LoginMethod:  sess.LoginMethod,
-		UserVerified: sess.UserVerified,
-	}, nil
+	// sess, err := r.d.SignUp(ctx, name, email, password, captchaToken)
+	// if err != nil {
+	// 	return nil, errors.NewE(err)
+	// }
+	// httpServer.SetSession(ctx, sess)
+	// return &model.Session{
+	// 	ID:           sess.Id,
+	// 	UserID:       sess.UserId,
+	// 	UserEmail:    sess.UserEmail,
+	// 	LoginMethod:  sess.LoginMethod,
+	// 	UserVerified: sess.UserVerified,
+	// }, nil
+	return nil, nil
 }
 
 // OAuthLogin is the resolver for the oAuth_login field.
