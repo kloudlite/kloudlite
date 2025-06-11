@@ -1,0 +1,9 @@
+*.tgz
+.cache_ggshield
+.idea
+_crds
+bin/
+.kube/
+.workdir
+.secrets
+tmp
