@@ -1,0 +1,123 @@
+version: 3
+
+vars:
+  BinDir: 
+    sh: echo "$PWD/bin"
+  
+  TMPL: "{{.BinDir}}/tmpl"
+  SCHELM:
+    sh: which "schelm" 2> /dev/null || echo "{{.BinDir}}/schelm"
+  CHART_DOC_GEN: 
+    sh: which "chart-doc-gen" 2> /dev/null || echo "{{.BinDir}}/chart-doc-gen"
+  HELM_DOCS: 
+    sh: which "helm-docs" 2> /dev/null || echo "{{.BinDir}}/helm-docs"
+
+tasks:
+  print:
+    cmds:
+      - echo "{{.SCHELM}}"
+      - echo "{{.HELM_DOCS}}"
+
+  lint:
+    cmds:
+      - |+
+        for chart in ./charts/*; do
+          helm lint $chart
+        done
+
+  install:tmpl:
+    vars:
+      Version: v1.0.0
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - mkdir -p {{.BinDir}}
+      - |+
+        pushd cmd/tmpl
+        go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" -buildvcs=false .
+        chmod +x {{.TMPL}}
+        popd
+
+  install:schelm:
+    silent: true
+    env:
+      GOBIN: "{{.BinDir}}"
+    cmds:
+      - |+
+        if ! [[ -f "{{.SCHELM}}" ]] then
+          go install github.com/databus23/schelm@master
+        fi
+        chmod +x {{.SCHELM}}
+
+  install:chart-doc-gen:
+    silent: true
+    env:
+      GOBIN: "{{.BinDir}}"
+    cmds:
+      - |+
+        if ! [[ -f {{.CHART_DOC_GEN}} ]] then
+          go install kubepack.dev/chart-doc-gen@v0.3.0
+        fi
+
+  install:helm-docs:
+    silent: true
+    env:
+      GOBIN: "{{.BinDir}}"
+    cmds:
+      - |+
+        if ! [[ -f {{.HELM_DOCS}} ]] then
+          go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.11.0
+        fi
+        chmod +x {{.HELM_DOCS}}
+
+  generate-docs:
+    cmds:
+      - |+
+        {{.HELM_DOCS}}
+
+  setup:
+    cmds:
+      - task: install:tmpl
+      - task: install:schelm
+      # - task: install:chart-doc-gen
+      - task: install:helm-docs
+
+  crds:
+    vars:
+      OutputDir: 
+        sh: realpath ./crds
+      OperatorDir:
+        sh: realpath ../operator
+      HelmOperatorDir: 
+        sh: realpath "../helm-operator"
+      RedpandaVersion: v22.1.6
+    cmds:
+      - |+
+        mkdir -p {{.OutputDir}}
+
+        # kloudlite operator CRDs
+        pushd {{.OperatorDir}} 2>&1 > /dev/null
+        task yaml:primary-crds > {{.OutputDir}}/crds-kloudlite.yml
+        popd 2>&1 > /dev/null
+
+        # cert manager CRDs
+        # curl -L0 https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.crds.yaml > {{.OutputDir}}/crds-cert-manager.yml
+
+  plugin:crds:
+    cmds:
+      - |+
+
+  test-release-script:
+    dir: .
+    env:
+      # RELEASE_TAG: test
+      RELEASE_TAG: test
+      PRE_RELEASE: true
+      OVERWRITE_RELEASE_ASSETS: true
+      HELM_MERGE_WITH_EXISTING_INDEXES: true
+      RELEASE_TITLE: "Test Release"
+      GITHUB_REPO_OWNER: "kloudlite"
+      GITHUB_REPO_NAME: "helm-charts"
+    cmds:
+      - bash scripts/release-script.sh
+
