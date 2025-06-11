@@ -4,6 +4,7 @@ option go_package = "kloudlite.io/rpc/auth/v2";
 
 service AuthV2 {
   rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Signup(SignupRequest) returns (SignupResponse);
 }
 
 message LoginRequest {
@@ -12,5 +13,15 @@ message LoginRequest {
 }
 
 message LoginResponse {
+  string userId = 1;
+}
+
+message SignupRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message SignupResponse {
   string userId = 1;
 }
