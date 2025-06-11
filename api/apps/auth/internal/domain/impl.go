@@ -215,19 +215,7 @@ func (d *domainI) verifyCaptcha(ctx context.Context, token string) (bool, error)
 	return true, nil
 }
 
-func (d *domainI) SignUp(ctx context.Context, name string, email string, password string, captchaToken string) (*common.AuthSession, error) {
-
-	if d.envVars.GoogleRecaptchaEnabled {
-		isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
-		if err != nil {
-			return nil, errors.Newf("failed to verify CAPTCHA: %v", err)
-		}
-
-		if !isValidCaptcha {
-			return nil, errors.New("CAPTCHA verification failed")
-		}
-	}
-
+func (d *domainI) SignUp(ctx context.Context, name string, email string, password string) (*entities.User, error) {
 	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		if matched != nil {
@@ -264,7 +252,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		}
 	}
 
-	return newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password"), nil
+	return user, nil
 }
 
 func (d *domainI) GetLoginDetails(ctx context.Context, provider string, state *string) (string, error) {
