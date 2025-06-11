@@ -5,6 +5,10 @@ option go_package = "kloudlite.io/rpc/auth/v2";
 service AuthV2 {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Signup(SignupRequest) returns (SignupResponse);
+  rpc RequestResetPassword(RequestResetPasswordRequest) returns (RequestResetPasswordResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (ResendEmailVerificationResponse);
 }
 
 message LoginRequest {
@@ -24,4 +28,40 @@ message SignupRequest {
 
 message SignupResponse {
   string userId = 1;
+}
+
+message ResetPasswordRequest {
+  string resetToken = 1;
+  string newPassword = 2;
+}
+
+message ResetPasswordResponse {
+  bool success = 1;
+}
+
+message RequestResetPasswordRequest {
+  string email = 1;
+}
+
+message RequestResetPasswordResponse {
+  bool success = 1;
+  string resetToken = 2; // e.g., "Reset link sent to email"
+}
+
+message VerifyEmailRequest {
+  string verificationToken = 1;
+}
+
+message VerifyEmailResponse {
+  bool success = 1;
+  string userId = 2; // e.g., "User ID after email verification"
+}
+
+message ResendEmailVerificationRequest {
+  string email = 1;
+}
+
+message ResendEmailVerificationResponse {
+  bool success = 1;
+  string message = 2; // e.g., "Verification email resent"
 }

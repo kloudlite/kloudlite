@@ -23,7 +23,7 @@ type Domain interface {
 	ClearUserMetadata(ctx context.Context, id repos.ID) (*entities.User, error)
 	VerifyEmail(ctx context.Context, token string) (*common.AuthSession, error)
 	ResetPassword(ctx context.Context, token string, password string) (bool, error)
-	RequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error)
+	RequestResetPassword(ctx context.Context, email string) (bool, error)
 	ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error)
 	ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error)
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)

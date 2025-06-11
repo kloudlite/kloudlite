@@ -345,19 +345,7 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	return true, nil
 }
 
-func (d *domainI) RequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error) {
-
-	if d.envVars.GoogleRecaptchaEnabled {
-		isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
-		if err != nil {
-			return false, errors.Newf("failed to verify CAPTCHA: %v", err)
-		}
-
-		if !isValidCaptcha {
-			return false, errors.New("CAPTCHA verification failed")
-		}
-	}
-
+func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool, error) {
 	resetToken := generateId("reset")
 	one, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
