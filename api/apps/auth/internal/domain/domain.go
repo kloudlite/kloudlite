@@ -25,7 +25,7 @@ type Domain interface {
 	ResetPassword(ctx context.Context, token string, password string) (bool, error)
 	RequestResetPassword(ctx context.Context, email string) (bool, error)
 	ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error)
-	ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error)
+	ResendVerificationEmail(ctx context.Context, email string) (bool, error)
 	ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error)
 	GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*entities.AccessToken, error)
 	GetLoginDetails(ctx context.Context, provider string, state *string) (string, error)

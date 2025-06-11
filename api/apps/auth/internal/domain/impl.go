@@ -387,8 +387,8 @@ func (d *domainI) ChangeEmail(ctx context.Context, id repos.ID, email string) (b
 	return true, nil
 }
 
-func (d *domainI) ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error) {
-	user, err := d.userRepo.FindById(ctx, userId)
+func (d *domainI) ResendVerificationEmail(ctx context.Context, email string) (bool, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		return false, errors.NewE(err)
 	}
