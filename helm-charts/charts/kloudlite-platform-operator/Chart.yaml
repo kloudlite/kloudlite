@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kloudlite-platform-operator
+description: Helm Chart for installing and setting up kloudlite platform operator
+type: application
+version: 0.1.0
+appVersion: "1.16.0"

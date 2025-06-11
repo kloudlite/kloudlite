@@ -1,0 +1,122 @@
+name: Unlist Release Charts
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      chart_version:
+        type: string
+        description: "release tag that has to be unlisted"
+        required: true
+
+      delete_github_release:
+        type: boolean
+        description: "should this release be deleted from github releases"
+        required: false
+        default: false
+
+      delete_github_release_tag:
+        type: boolean
+        description: "should this release tag be deleted from github releases"
+        required: false
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+  pages: write
+
+jobs:
+  unlist-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Installing yq (with pip)
+        run: |+
+          pip install yq
+
+      - name: Installing Github Cli
+        run: |+
+          curl -L0 https://github.com/cli/cli/releases/download/v2.29.0/gh_2.29.0_linux_amd64.tar.gz > /tmp/gh_2.29.0_linux_amd64.tar.gz && tar xf /tmp/gh_2.29.0_linux_amd64.tar.gz -C /tmp && mv /tmp/gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/gh
+
+      - name: unlist release tag
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        shell: bash
+        run: |+ 
+          set -o allexport
+          set -o pipefail
+          set -o errexit
+
+          RELEASE_TAG=${{ github.event.inputs.chart_version }}
+          DELETE_GITHUB_RELEASE=${{ github.event.inputs.delete_github_release }}
+          DELETE_GITHUB_RELEASE_TAG=${{ github.event.inputs.delete_github_release_tag }}
+
+          opts=("-R" "$GITHUB_REPOSITORY")
+          uploadOpts=${opts[@]}
+
+          tdir=$(mktemp -d)
+          curl -f -L0 https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml > $tdir/index.yaml
+
+          echo "### current: index.yaml"
+          cat $tdir/index.yaml
+
+          cat $tdir/index.yaml | yq '. | (
+            .entries = (
+              .entries | map_values([
+                            .[] | select(
+                              (. != null) and (.version != env.RELEASE_TAG)
+                            )
+                         ])
+            )
+          )' -y > $tdir/new-index.yaml
+
+          echo "### new: index.yaml"
+          cat $tdir/new-index.yaml
+
+          mkdir -p .static-pages
+          cp $tdir/new-index.yaml .static-pages/index.yaml
+          uploadOpts+=("--clobber")
+          gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
+
+          deleteOpts=${opts[@]}
+          if $DELETE_GITHUB_RELEASE; then
+            if $DELETE_GITHUB_RELEASE_TAG; then
+              deleteOpts+=("--cleanup-tag")
+            fi
+            deleteOpts+=("--yes")
+            gh release delete $RELEASE_TAG ${deleteOpts[@]}
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: github-pages
+          path: .static-pages
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: unlist-release
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2

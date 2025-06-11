@@ -1,0 +1,65 @@
+{{- $chartRepo := "kloudlite" -}} 
+{{- $chartName := .Name -}}
+{{- $releaseName := .Name -}}
+{{- $releaseNamespace := "kloudlite" -}}
+
+{{ template "chart.header" . }}
+[{{$chartName}}](https://github.com/kloudlite.io/helm-charts/charts/{{$chartName}}) {{.Description}}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+## Get Repo Info
+
+```console
+helm repo add {{$chartRepo}} https://kloudlite.github.io/helm-charts
+helm repo update {{$chartRepo}}
+```
+
+## Installation
+
+> [!NOTE]
+> only helm3 is supported
+
+### Installing Kloudlite CRDs
+```console
+kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{ template "chart.version" . }}/crds-all.yml --server-side
+```
+
+### Installing chart
+```console
+helm install {{$releaseName}} {{$chartRepo}}/{{$chartName}} --namespace {{$releaseNamespace}} --create-namespace --version {{template "chart.version" .}} --set baseDomain="<base_domain>"
+```
+
+> [!TIP]
+> To list all available chart versions, run `helm search repo {{$chartRepo}}/{{$chartName}}`
+
+The command deploys kloudlite-platform on your Kubernetes cluster in the default configuration.
+
+_See [configuration](#configuration) below._
+
+## Upgrading Chart
+
+```console
+helm upgrade {{$releaseName}} {{$chartRepo}}/{{$chartName}} --namespace {{$releaseNamespace}} --version {{template "chart.version" .}} --set baseDomain="<base_domain>"
+```
+
+## Configuration
+
+To see all configurable options with detailed comments, visit the chart's [values.yaml](https://github.com/kloudlite/helm-charts/charts/kloudlite-platform/values.yaml), or run these commands:
+
+```console
+helm show values {{$chartRepo}}/{{$chartName}}
+```
+
+{{ template "chart.valuesSection" . }}
+
+## Uninstalling Chart
+
+```console
+helm uninstall {{$releaseName}} -n {{$releaseNamespace}}
+```
+
+This removes all the Kubernetes components associated with the chart and deletes the release.
+
