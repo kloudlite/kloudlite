@@ -23,15 +23,19 @@ import { HoverCardContent } from "@/components/ui/hover-card";
 import { HoverCard, HoverCardTrigger } from "@radix-ui/react-hover-card";
 import { Lock, LogIn, ScanFace } from "lucide-react";
 import Link from "next/link";
+import {  useCallback } from "react";
 import { useForm } from "react-hook-form";
 
 export default function LoginForm({ withSSO = false }: { withSSO?: boolean }) {
   const form = useForm();
+  const loginCall = useCallback(async (data)=>{
+    await login(data.email, data.password);
+  }, []);
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(async (data) => {
-          await login(data.email, data.password);
+          
         })}
       >
         <Card className="w-[400px] mx-auto mt-20">
