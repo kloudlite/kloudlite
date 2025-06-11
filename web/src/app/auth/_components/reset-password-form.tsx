@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/form";
 import { HoverCardContent } from "@/components/ui/hover-card";
 import { HoverCard, HoverCardTrigger } from "@radix-ui/react-hover-card";
-import { Lock, LogIn, ScanFace } from "lucide-react";
+import { Lock, LogIn, LogInIcon, RotateCcw, ScanFace, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -29,7 +29,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import util from "util";
 
-export default function LoginForm(
+export default function ResetPasswordForm(
   { withSSO = false, emailCommEnabled = true }: {
     withSSO?: boolean;
     emailCommEnabled?: boolean;
@@ -58,10 +58,10 @@ export default function LoginForm(
         <Card className="w-[400px] mx-auto mt-20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ScanFace />
-              Sign in
+              <RotateCcw />
+              Forgot Password?
             </CardTitle>
-            <CardDescription>to access account</CardDescription>
+            <CardDescription>It happens don't worry</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <FormField
@@ -77,7 +77,7 @@ export default function LoginForm(
                       <input
                         disabled={loggingIn}
                         type="email"
-                        placeholder="Email"
+                        placeholder="Registered Email"
                         className="border p-2 rounded-md w-full"
                         {...form.register("email", {
                           required: "Email is required",
@@ -95,61 +95,15 @@ export default function LoginForm(
                 );
               }}
             />
-            <FormField
-              control={form.control}
-              name="password"
-              render={() => {
-                return (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <input
-                        type="password"
-                        disabled={loggingIn}
-                        placeholder="Password"
-                        className="border p-2 rounded-md w-full"
-                        {...form.register("password", {
-                          required: "Password is required",
-                          minLength: {
-                            value: 6,
-                            message: "Password must be at least 6 characters",
-                          },
-                        })}
-                      />
-                    </FormControl>
-                    <FormDescription />
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
           </CardContent>
           <CardFooter className="flex flex-col gap-4 items-center">
-            <div className="w-full flex justify-between text-sm items-center">
-              {emailCommEnabled && (
-                <Link href="/auth/reset-password">
-                  <Button
-                    variant={"link"}
-                    className="underline text-sm cursor-pointer"
-                  >
-                    Forgot Password?
-                  </Button>
-                </Link>
-              )}
-              {!emailCommEnabled && (
-                <HoverCard>
-                  <HoverCardTrigger className="cursor-pointer">
-                    Forgot Password?
-                  </HoverCardTrigger>
-                  <HoverCardContent className="text-sm">
-                    Contact administrator to reset your password.
-                  </HoverCardContent>
-                </HoverCard>
-              )}
-
+            <div className="w-full flex justify-between text-xs items-center">
+              <Button size={"icon"} className="rounded-full">
+                <LogInIcon />
+              </Button>
               <Button type="submit">
-                <LogIn />
-                Login
+                <Send />
+                Send Reset Instructions
               </Button>
             </div>
             {withSSO && (
@@ -172,16 +126,6 @@ export default function LoginForm(
             )}
           </CardFooter>
         </Card>
-        {!withSSO && (
-          <div className="p-4 text-sm flex gap-2 justify-center">
-            <span>
-              Don't have an account?
-            </span>
-            <Link href="/auth/signup" className="text-blue-500">
-              Signup
-            </Link>
-          </div>
-        )}
       </form>
     </Form>
   );

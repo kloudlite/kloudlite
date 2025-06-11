@@ -40,6 +40,45 @@ export interface SignupResponse {
   userId: string;
 }
 
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+}
+
+export interface RequestResetPasswordRequest {
+  email: string;
+}
+
+export interface RequestResetPasswordResponse {
+  success: boolean;
+  /** e.g., "Reset link sent to email" */
+  resetToken: string;
+}
+
+export interface VerifyEmailRequest {
+  verificationToken: string;
+}
+
+export interface VerifyEmailResponse {
+  success: boolean;
+  /** e.g., "User ID after email verification" */
+  userId: string;
+}
+
+export interface ResendEmailVerificationRequest {
+  email: string;
+}
+
+export interface ResendEmailVerificationResponse {
+  success: boolean;
+  /** e.g., "Verification email resent" */
+  message: string;
+}
+
 function createBaseLoginRequest(): LoginRequest {
   return { email: "", password: "" };
 }
@@ -324,6 +363,546 @@ export const SignupResponse: MessageFns<SignupResponse> = {
   },
 };
 
+function createBaseResetPasswordRequest(): ResetPasswordRequest {
+  return { resetToken: "", newPassword: "" };
+}
+
+export const ResetPasswordRequest: MessageFns<ResetPasswordRequest> = {
+  encode(message: ResetPasswordRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.resetToken !== "") {
+      writer.uint32(10).string(message.resetToken);
+    }
+    if (message.newPassword !== "") {
+      writer.uint32(18).string(message.newPassword);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ResetPasswordRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResetPasswordRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.resetToken = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.newPassword = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResetPasswordRequest {
+    return {
+      resetToken: isSet(object.resetToken) ? globalThis.String(object.resetToken) : "",
+      newPassword: isSet(object.newPassword) ? globalThis.String(object.newPassword) : "",
+    };
+  },
+
+  toJSON(message: ResetPasswordRequest): unknown {
+    const obj: any = {};
+    if (message.resetToken !== "") {
+      obj.resetToken = message.resetToken;
+    }
+    if (message.newPassword !== "") {
+      obj.newPassword = message.newPassword;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ResetPasswordRequest>, I>>(base?: I): ResetPasswordRequest {
+    return ResetPasswordRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ResetPasswordRequest>, I>>(object: I): ResetPasswordRequest {
+    const message = createBaseResetPasswordRequest();
+    message.resetToken = object.resetToken ?? "";
+    message.newPassword = object.newPassword ?? "";
+    return message;
+  },
+};
+
+function createBaseResetPasswordResponse(): ResetPasswordResponse {
+  return { success: false };
+}
+
+export const ResetPasswordResponse: MessageFns<ResetPasswordResponse> = {
+  encode(message: ResetPasswordResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ResetPasswordResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResetPasswordResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResetPasswordResponse {
+    return { success: isSet(object.success) ? globalThis.Boolean(object.success) : false };
+  },
+
+  toJSON(message: ResetPasswordResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ResetPasswordResponse>, I>>(base?: I): ResetPasswordResponse {
+    return ResetPasswordResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ResetPasswordResponse>, I>>(object: I): ResetPasswordResponse {
+    const message = createBaseResetPasswordResponse();
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseRequestResetPasswordRequest(): RequestResetPasswordRequest {
+  return { email: "" };
+}
+
+export const RequestResetPasswordRequest: MessageFns<RequestResetPasswordRequest> = {
+  encode(message: RequestResetPasswordRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.email !== "") {
+      writer.uint32(10).string(message.email);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RequestResetPasswordRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRequestResetPasswordRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.email = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RequestResetPasswordRequest {
+    return { email: isSet(object.email) ? globalThis.String(object.email) : "" };
+  },
+
+  toJSON(message: RequestResetPasswordRequest): unknown {
+    const obj: any = {};
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RequestResetPasswordRequest>, I>>(base?: I): RequestResetPasswordRequest {
+    return RequestResetPasswordRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RequestResetPasswordRequest>, I>>(object: I): RequestResetPasswordRequest {
+    const message = createBaseRequestResetPasswordRequest();
+    message.email = object.email ?? "";
+    return message;
+  },
+};
+
+function createBaseRequestResetPasswordResponse(): RequestResetPasswordResponse {
+  return { success: false, resetToken: "" };
+}
+
+export const RequestResetPasswordResponse: MessageFns<RequestResetPasswordResponse> = {
+  encode(message: RequestResetPasswordResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.resetToken !== "") {
+      writer.uint32(18).string(message.resetToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RequestResetPasswordResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRequestResetPasswordResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.resetToken = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RequestResetPasswordResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      resetToken: isSet(object.resetToken) ? globalThis.String(object.resetToken) : "",
+    };
+  },
+
+  toJSON(message: RequestResetPasswordResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.resetToken !== "") {
+      obj.resetToken = message.resetToken;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RequestResetPasswordResponse>, I>>(base?: I): RequestResetPasswordResponse {
+    return RequestResetPasswordResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RequestResetPasswordResponse>, I>>(object: I): RequestResetPasswordResponse {
+    const message = createBaseRequestResetPasswordResponse();
+    message.success = object.success ?? false;
+    message.resetToken = object.resetToken ?? "";
+    return message;
+  },
+};
+
+function createBaseVerifyEmailRequest(): VerifyEmailRequest {
+  return { verificationToken: "" };
+}
+
+export const VerifyEmailRequest: MessageFns<VerifyEmailRequest> = {
+  encode(message: VerifyEmailRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.verificationToken !== "") {
+      writer.uint32(10).string(message.verificationToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): VerifyEmailRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVerifyEmailRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.verificationToken = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VerifyEmailRequest {
+    return { verificationToken: isSet(object.verificationToken) ? globalThis.String(object.verificationToken) : "" };
+  },
+
+  toJSON(message: VerifyEmailRequest): unknown {
+    const obj: any = {};
+    if (message.verificationToken !== "") {
+      obj.verificationToken = message.verificationToken;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<VerifyEmailRequest>, I>>(base?: I): VerifyEmailRequest {
+    return VerifyEmailRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<VerifyEmailRequest>, I>>(object: I): VerifyEmailRequest {
+    const message = createBaseVerifyEmailRequest();
+    message.verificationToken = object.verificationToken ?? "";
+    return message;
+  },
+};
+
+function createBaseVerifyEmailResponse(): VerifyEmailResponse {
+  return { success: false, userId: "" };
+}
+
+export const VerifyEmailResponse: MessageFns<VerifyEmailResponse> = {
+  encode(message: VerifyEmailResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.userId !== "") {
+      writer.uint32(18).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): VerifyEmailResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVerifyEmailResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VerifyEmailResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+    };
+  },
+
+  toJSON(message: VerifyEmailResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<VerifyEmailResponse>, I>>(base?: I): VerifyEmailResponse {
+    return VerifyEmailResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<VerifyEmailResponse>, I>>(object: I): VerifyEmailResponse {
+    const message = createBaseVerifyEmailResponse();
+    message.success = object.success ?? false;
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseResendEmailVerificationRequest(): ResendEmailVerificationRequest {
+  return { email: "" };
+}
+
+export const ResendEmailVerificationRequest: MessageFns<ResendEmailVerificationRequest> = {
+  encode(message: ResendEmailVerificationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.email !== "") {
+      writer.uint32(10).string(message.email);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ResendEmailVerificationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResendEmailVerificationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.email = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResendEmailVerificationRequest {
+    return { email: isSet(object.email) ? globalThis.String(object.email) : "" };
+  },
+
+  toJSON(message: ResendEmailVerificationRequest): unknown {
+    const obj: any = {};
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ResendEmailVerificationRequest>, I>>(base?: I): ResendEmailVerificationRequest {
+    return ResendEmailVerificationRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ResendEmailVerificationRequest>, I>>(
+    object: I,
+  ): ResendEmailVerificationRequest {
+    const message = createBaseResendEmailVerificationRequest();
+    message.email = object.email ?? "";
+    return message;
+  },
+};
+
+function createBaseResendEmailVerificationResponse(): ResendEmailVerificationResponse {
+  return { success: false, message: "" };
+}
+
+export const ResendEmailVerificationResponse: MessageFns<ResendEmailVerificationResponse> = {
+  encode(message: ResendEmailVerificationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ResendEmailVerificationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResendEmailVerificationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResendEmailVerificationResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: ResendEmailVerificationResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ResendEmailVerificationResponse>, I>>(base?: I): ResendEmailVerificationResponse {
+    return ResendEmailVerificationResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ResendEmailVerificationResponse>, I>>(
+    object: I,
+  ): ResendEmailVerificationResponse {
+    const message = createBaseResendEmailVerificationResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
 export type AuthV2Service = typeof AuthV2Service;
 export const AuthV2Service = {
   login: {
@@ -344,11 +923,57 @@ export const AuthV2Service = {
     responseSerialize: (value: SignupResponse): Buffer => Buffer.from(SignupResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): SignupResponse => SignupResponse.decode(value),
   },
+  requestResetPassword: {
+    path: "/AuthV2/RequestResetPassword",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RequestResetPasswordRequest): Buffer =>
+      Buffer.from(RequestResetPasswordRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): RequestResetPasswordRequest => RequestResetPasswordRequest.decode(value),
+    responseSerialize: (value: RequestResetPasswordResponse): Buffer =>
+      Buffer.from(RequestResetPasswordResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RequestResetPasswordResponse => RequestResetPasswordResponse.decode(value),
+  },
+  resetPassword: {
+    path: "/AuthV2/ResetPassword",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ResetPasswordRequest): Buffer => Buffer.from(ResetPasswordRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ResetPasswordRequest => ResetPasswordRequest.decode(value),
+    responseSerialize: (value: ResetPasswordResponse): Buffer =>
+      Buffer.from(ResetPasswordResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ResetPasswordResponse => ResetPasswordResponse.decode(value),
+  },
+  verifyEmail: {
+    path: "/AuthV2/VerifyEmail",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: VerifyEmailRequest): Buffer => Buffer.from(VerifyEmailRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): VerifyEmailRequest => VerifyEmailRequest.decode(value),
+    responseSerialize: (value: VerifyEmailResponse): Buffer => Buffer.from(VerifyEmailResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): VerifyEmailResponse => VerifyEmailResponse.decode(value),
+  },
+  resendEmailVerification: {
+    path: "/AuthV2/ResendEmailVerification",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ResendEmailVerificationRequest): Buffer =>
+      Buffer.from(ResendEmailVerificationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ResendEmailVerificationRequest => ResendEmailVerificationRequest.decode(value),
+    responseSerialize: (value: ResendEmailVerificationResponse): Buffer =>
+      Buffer.from(ResendEmailVerificationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ResendEmailVerificationResponse =>
+      ResendEmailVerificationResponse.decode(value),
+  },
 } as const;
 
 export interface AuthV2Server extends UntypedServiceImplementation {
   login: handleUnaryCall<LoginRequest, LoginResponse>;
   signup: handleUnaryCall<SignupRequest, SignupResponse>;
+  requestResetPassword: handleUnaryCall<RequestResetPasswordRequest, RequestResetPasswordResponse>;
+  resetPassword: handleUnaryCall<ResetPasswordRequest, ResetPasswordResponse>;
+  verifyEmail: handleUnaryCall<VerifyEmailRequest, VerifyEmailResponse>;
+  resendEmailVerification: handleUnaryCall<ResendEmailVerificationRequest, ResendEmailVerificationResponse>;
 }
 
 export interface AuthV2Client extends Client {
@@ -381,6 +1006,66 @@ export interface AuthV2Client extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: SignupResponse) => void,
+  ): ClientUnaryCall;
+  requestResetPassword(
+    request: RequestResetPasswordRequest,
+    callback: (error: ServiceError | null, response: RequestResetPasswordResponse) => void,
+  ): ClientUnaryCall;
+  requestResetPassword(
+    request: RequestResetPasswordRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: RequestResetPasswordResponse) => void,
+  ): ClientUnaryCall;
+  requestResetPassword(
+    request: RequestResetPasswordRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: RequestResetPasswordResponse) => void,
+  ): ClientUnaryCall;
+  resetPassword(
+    request: ResetPasswordRequest,
+    callback: (error: ServiceError | null, response: ResetPasswordResponse) => void,
+  ): ClientUnaryCall;
+  resetPassword(
+    request: ResetPasswordRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ResetPasswordResponse) => void,
+  ): ClientUnaryCall;
+  resetPassword(
+    request: ResetPasswordRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ResetPasswordResponse) => void,
+  ): ClientUnaryCall;
+  verifyEmail(
+    request: VerifyEmailRequest,
+    callback: (error: ServiceError | null, response: VerifyEmailResponse) => void,
+  ): ClientUnaryCall;
+  verifyEmail(
+    request: VerifyEmailRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: VerifyEmailResponse) => void,
+  ): ClientUnaryCall;
+  verifyEmail(
+    request: VerifyEmailRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: VerifyEmailResponse) => void,
+  ): ClientUnaryCall;
+  resendEmailVerification(
+    request: ResendEmailVerificationRequest,
+    callback: (error: ServiceError | null, response: ResendEmailVerificationResponse) => void,
+  ): ClientUnaryCall;
+  resendEmailVerification(
+    request: ResendEmailVerificationRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ResendEmailVerificationResponse) => void,
+  ): ClientUnaryCall;
+  resendEmailVerification(
+    request: ResendEmailVerificationRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ResendEmailVerificationResponse) => void,
   ): ClientUnaryCall;
 }
 
