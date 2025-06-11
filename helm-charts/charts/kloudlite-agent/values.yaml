@@ -1,0 +1,161 @@
+# -- container image pull policy
+imagePullPolicy: Always
+
+# -- (string REQUIRED) kloudlite issued cluster token
+clusterToken: ''
+
+# -- (string, if available) kloudlite account name
+accountName: ''
+
+# -- (string, if available) kloudlite cluster name
+clusterName: ''
+
+# -- (string) cluster identity secret name, which keeps cluster token and access token
+# @ignored
+clusterIdentitySecretName: kl-cluster-identity
+
+# -- kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443
+messageOfficeGRPCAddr: ""
+
+# -- k8s service account name, which all the pods installed by this chart uses, will always be of format <.Release.Name>-<.Values.svcAccountName>
+# @ignored
+svcAccountName: sa
+
+# -- cluster internal DNS, like 'cluster.local'
+# @ignored
+clusterInternalDNS: "cluster.local"
+
+# -- kloudlite release version, defaults to `Helm AppVersion`
+kloudliteRelease: ""
+
+kloudliteDNSSuffix: ""
+
+agent:
+  # -- workload name for kloudlite agent
+  # @ignored
+  name: kl-agent
+  # -- kloudlite agent image name and tag
+  # @ignored
+  image: 
+    # -- (string) kloudlite agent image repository
+    repository: ghcr.io/kloudlite/kloudlite/api/tenant-agent
+
+    # -- (string) image tag for kloudlite agent, by default uses `.Values.kloudliteRelease`
+    tag: ""
+
+    # -- (string) image pull policy for kloudlite agent, default is `Values.imagePullPolicy`
+    pullPolicy: ""
+
+  nodeSelector: {}
+  tolerations: []
+
+  # -- (object) kloudlite agent container resources
+  # @ignored
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 50m
+      memory: 100Mi
+
+agentOperator:
+  # -- workload name for kloudlite agent operator
+  # @ignored
+  name: kl-agent-operator
+  # -- kloudlite resource watcher image name and tag
+  # @ignored
+  image: 
+    repository: ghcr.io/kloudlite/kloudlite/operator/agent
+    # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
+    tag: ""
+    # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
+    pullPolicy: ""
+
+  tolerations: []
+  nodeSelector: {}
+  nodeAffinity: {}
+
+  # @ignored
+  configuration:
+    # -- (object) kloudlite helm-charts controller configuration
+    helmCharts:
+      jobImage:
+        repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
+        tag: ""
+        pullPolicy: ""
+
+    gateway:
+      imageWebhookServer:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook
+        tag: ""
+
+      imageIPManager:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager
+        tag: ""
+
+      imageIPBindingController:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller
+        tag: ""
+
+      imageDNS:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns
+        tag: ""
+
+      imageLogsProxy:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy
+        tag: ""
+
+  # -- (object) kloudlite agent operator resources
+  # @ignored
+  resources:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+
+helmCharts:
+  # @ignored
+  ingressNginx:
+    enabled: false
+    name: "ingress-nginx"
+    tolerations: []
+    nodeSelector: {}
+    configuration:
+      controllerKind: Deployment
+      ingressClassName: kl-ingress
+
+  # @ignored
+  certManager:
+    enabled: false
+    name: "cert-manager"
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    # @ignored
+    configuration:
+      defaultClusterIssuer: letsencrypt-prod
+      clusterIssuers:
+        - name: letsencrypt-prod
+          default: true
+          acme:
+            email: "support@kloudlite.io"
+            server: https://acme-v02.api.letsencrypt.org/directory
+
+  vector:
+    enabled: true
+    # @ignored
+    name: "vector"
+    # @ignored
+    debugOnStdout: false
+    nodeSelector: {}
+
+    # @ignored
+    configuration:
+      kubeletMetricsReExporter:
+        image:
+          repository: "ghcr.io/kloudlite/kloudlite/kubelet-metrics-reexporter"
+          tag: ""
+          pullPolicy: ""
