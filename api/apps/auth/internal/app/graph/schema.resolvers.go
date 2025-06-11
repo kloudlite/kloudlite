@@ -153,7 +153,7 @@ func (r *mutationResolver) AuthResetPassword(ctx context.Context, token string, 
 
 // AuthRequestResetPassword is the resolver for the auth_requestResetPassword field.
 func (r *mutationResolver) AuthRequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error) {
-	return r.d.RequestResetPassword(ctx, email, captchaToken)
+	return r.d.RequestResetPassword(ctx, email)
 }
 
 // AuthChangeEmail is the resolver for the auth_changeEmail field.
