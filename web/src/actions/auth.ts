@@ -24,12 +24,10 @@ export const login = async (email: string, password: string) => {
     const res = await serverMethods.login({
       email, password
     });
-    console.log("Login response:", res);
     const cookieStore = await cookies()
     cookieStore.set("userId", res.userId)
     return [true, null];
   } catch (error) {
-    console.error("Login error:", error);
     return [false, util.inspect(error)];
   }
 }
@@ -44,7 +42,6 @@ export const signup = async (name:string, email: string, password: string) => {
     cookieStore.set("userId", res.userId)
     return [true, null];
   } catch (error) {
-    console.error("Signup error:", error);
     return [false, util.inspect(error)];
   }
 }
