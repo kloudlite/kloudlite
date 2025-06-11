@@ -18,18 +18,61 @@ type authGrpcServer struct {
 }
 
 // RequestResetPassword implements v2.AuthV2Server.
-func (a *authGrpcServer) RequestResetPassword(context.Context, *authV2.RequestResetPasswordRequest) (*authV2.RequestResetPasswordResponse, error) {
-	panic("unimplemented")
+func (a *authGrpcServer) RequestResetPassword(ctx context.Context, req *authV2.RequestResetPasswordRequest) (*authV2.RequestResetPasswordResponse, error) {
+	if req.Email == "" {
+		return nil, status.Error(codes.InvalidArgument, "email is required")
+	}
+
+	ok, err := a.d.RequestResetPassword(ctx, req.Email)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not request password reset: %v", err)
+	}
+	if !ok {
+		return nil, status.Error(codes.NotFound, "no account found for provided email")
+	}
+
+	return &authV2.RequestResetPasswordResponse{
+		Success: true,
+	}, nil
 }
 
 // ResendEmailVerification implements v2.AuthV2Server.
-func (a *authGrpcServer) ResendEmailVerification(context.Context, *authV2.ResendEmailVerificationRequest) (*authV2.ResendEmailVerificationResponse, error) {
-	panic("unimplemented")
+func (a *authGrpcServer) ResendEmailVerification(ctx context.Context, req *authV2.ResendEmailVerificationRequest) (*authV2.ResendEmailVerificationResponse, error) {
+	if req.Email == "" {
+		return nil, status.Error(codes.InvalidArgument, "email is required")
+	}
+
+	ok, err := a.d.ResendVerificationEmail(ctx, req.Email)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not resend verification email: %v", err)
+	}
+	if !ok {
+		return nil, status.Error(codes.NotFound, "no account found for provided email")
+	}
+
+	return &authV2.ResendEmailVerificationResponse{
+		Success: true,
+	}, nil
 }
 
 // VerifyEmail implements v2.AuthV2Server.
-func (a *authGrpcServer) VerifyEmail(context.Context, *authV2.VerifyEmailRequest) (*authV2.VerifyEmailResponse, error) {
-	panic("unimplemented")
+func (a *authGrpcServer) VerifyEmail(ctx context.Context, req *authV2.VerifyEmailRequest) (*authV2.VerifyEmailResponse, error) {
+	if req.VerificationToken == "" {
+		return nil, status.Error(codes.InvalidArgument, "verification token is required")
+	}
+
+	session, err := a.d.VerifyEmail(ctx, req.VerificationToken)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not verify email: %v", err)
+	}
+
+	if err := a.sessionRepo.Set(ctx, string(session.Id), session); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to store session: %v", err)
+	}
+
+	return &authV2.VerifyEmailResponse{
+		Success: true,
+	}, nil
 }
 
 func (a *authGrpcServer) ResetPassword(ctx context.Context, resetReq *authV2.ResetPasswordRequest) (*authV2.ResetPasswordResponse, error) {
