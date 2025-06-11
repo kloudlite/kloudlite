@@ -4,8 +4,8 @@ tasks:
   build:
     cmds:
       - mkdir -p ../web/grpc
-      - protoc --go_out=../api/grpc-interfaces --go-grpc_out=../api/grpc-interfaces --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
-      - protoc --plugin=protoc-gen-ts_proto=$(which protoc-gen-ts_proto) --ts_proto_out=../web/grpc --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true ./*.v2.proto
+      - protoc --go_out=../grpc-interfaces --go-grpc_out=../grpc-interfaces --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
+      - protoc --plugin=protoc-gen-ts_proto=$(which protoc-gen-ts_proto) --ts_proto_out=../../web/grpc --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true ./*.v2.proto
   
   mocks:
     cmds:
