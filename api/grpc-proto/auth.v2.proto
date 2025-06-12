@@ -4,11 +4,33 @@ option go_package = "kloudlite.io/rpc/auth/v2";
 
 service AuthV2 {
   rpc Login(LoginRequest) returns (LoginResponse);
+  rpc LoginWithSSO(LoginWithSSORequest) returns (LoginWithSSOResponse);
+  rpc GetUserDetails(GetUserDetailsRequest) returns (GetUserDetailsResponse);
   rpc Signup(SignupRequest) returns (SignupResponse);
   rpc RequestResetPassword(RequestResetPasswordRequest) returns (RequestResetPasswordResponse);
   rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
   rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
   rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (ResendEmailVerificationResponse);
+}
+
+message LoginWithSSORequest {
+  string email = 1;
+  string name = 2;
+}
+
+message LoginWithSSOResponse {
+  string userId = 1;
+}
+
+message GetUserDetailsRequest {
+  string userId = 1;
+}
+
+message GetUserDetailsResponse {
+  string userId = 1;
+  string name = 2;
+  string email = 3;
+  bool emailVerified = 4;
 }
 
 message LoginRequest {
