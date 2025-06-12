@@ -10,8 +10,8 @@ export default function Home() {
       </p>
       <p className="mt-2 text-lg">
         <Button variant="outline" className="mt-4">
-          <Link href="/auth/login">
-            Login
+          <Link href="/dev-only/external-login">
+            SSO Login
           </Link>
         </Button>
       </p>

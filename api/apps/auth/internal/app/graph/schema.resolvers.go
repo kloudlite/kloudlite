@@ -167,12 +167,12 @@ func (r *mutationResolver) AuthChangeEmail(ctx context.Context, email string) (b
 
 // AuthResendVerificationEmail is the resolver for the auth_resendVerificationEmail field.
 func (r *mutationResolver) AuthResendVerificationEmail(ctx context.Context) (bool, error) {
-	sess, err := GetUserSession(ctx)
-	if err != nil {
-		return false, errors.NewEf(err, "while getting user session")
-	}
+	// sess, err := GetUserSession(ctx)
+	// if err != nil {
+	// 	return false, errors.NewEf(err, "while getting user session")
+	// }
 
-	return r.d.ResendVerificationEmail(ctx, sess.UserId)
+	return false, nil
 }
 
 // AuthChangePassword is the resolver for the auth_changePassword field.

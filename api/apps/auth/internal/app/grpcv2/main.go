@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/api/common"
 	authV2 "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth/v2"
 	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/repos"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -17,7 +18,35 @@ type authGrpcServer struct {
 	sessionRepo kv.Repo[*common.AuthSession]
 }
 
-// RequestResetPassword implements v2.AuthV2Server.
+func (a *authGrpcServer) LoginWithSSO(ctx context.Context, req *authV2.LoginWithSSORequest) (*authV2.LoginWithSSOResponse, error) {
+	user, err := a.d.LoginWithSSO(ctx, req.Email, req.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not login with SSO: %v", err)
+	}
+	if user == nil {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	return &authV2.LoginWithSSOResponse{
+		UserId: string(user.Id),
+	}, nil
+}
+
+func (a *authGrpcServer) GetUserDetails(ctx context.Context, req *authV2.GetUserDetailsRequest) (*authV2.GetUserDetailsResponse, error) {
+	user, err := a.d.GetUserById(ctx, repos.ID(req.UserId))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not get user details: %v", err)
+	}
+	if user == nil {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	return &authV2.GetUserDetailsResponse{
+		UserId:        string(user.Id),
+		Name:          user.Name,
+		Email:         user.Email,
+		EmailVerified: user.Verified,
+	}, nil
+}
+
 func (a *authGrpcServer) RequestResetPassword(ctx context.Context, req *authV2.RequestResetPasswordRequest) (*authV2.RequestResetPasswordResponse, error) {
 	if req.Email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
