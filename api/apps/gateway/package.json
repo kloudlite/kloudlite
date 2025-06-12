@@ -14,7 +14,7 @@
   "dependencies": {
     "@apollo/gateway": "^2.9.0",
     "@apollo/server": "^4.11.0",
-    "cookie": "^0.6.0",
+    "cookie": "^0.7.0",
     "express": "^4.19.2",
     "graphql": "16.9.0",
     "js-yaml": "^4.1.0"
