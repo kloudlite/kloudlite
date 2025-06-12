@@ -29,7 +29,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import util from "util";
 
-export default function ResetPasswordForm(
+export default function RequestResetPasswordForm(
   { withSSO = false, emailCommEnabled = true }: {
     withSSO?: boolean;
     emailCommEnabled?: boolean;

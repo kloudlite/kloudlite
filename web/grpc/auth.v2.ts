@@ -21,6 +21,26 @@ import {
 
 export const protobufPackage = "";
 
+export interface LoginWithSSORequest {
+  email: string;
+  name: string;
+}
+
+export interface LoginWithSSOResponse {
+  userId: string;
+}
+
+export interface GetUserDetailsRequest {
+  userId: string;
+}
+
+export interface GetUserDetailsResponse {
+  userId: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -78,6 +98,306 @@ export interface ResendEmailVerificationResponse {
   /** e.g., "Verification email resent" */
   message: string;
 }
+
+function createBaseLoginWithSSORequest(): LoginWithSSORequest {
+  return { email: "", name: "" };
+}
+
+export const LoginWithSSORequest: MessageFns<LoginWithSSORequest> = {
+  encode(message: LoginWithSSORequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.email !== "") {
+      writer.uint32(10).string(message.email);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LoginWithSSORequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLoginWithSSORequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.email = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LoginWithSSORequest {
+    return {
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+    };
+  },
+
+  toJSON(message: LoginWithSSORequest): unknown {
+    const obj: any = {};
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LoginWithSSORequest>, I>>(base?: I): LoginWithSSORequest {
+    return LoginWithSSORequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LoginWithSSORequest>, I>>(object: I): LoginWithSSORequest {
+    const message = createBaseLoginWithSSORequest();
+    message.email = object.email ?? "";
+    message.name = object.name ?? "";
+    return message;
+  },
+};
+
+function createBaseLoginWithSSOResponse(): LoginWithSSOResponse {
+  return { userId: "" };
+}
+
+export const LoginWithSSOResponse: MessageFns<LoginWithSSOResponse> = {
+  encode(message: LoginWithSSOResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LoginWithSSOResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLoginWithSSOResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LoginWithSSOResponse {
+    return { userId: isSet(object.userId) ? globalThis.String(object.userId) : "" };
+  },
+
+  toJSON(message: LoginWithSSOResponse): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LoginWithSSOResponse>, I>>(base?: I): LoginWithSSOResponse {
+    return LoginWithSSOResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LoginWithSSOResponse>, I>>(object: I): LoginWithSSOResponse {
+    const message = createBaseLoginWithSSOResponse();
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetUserDetailsRequest(): GetUserDetailsRequest {
+  return { userId: "" };
+}
+
+export const GetUserDetailsRequest: MessageFns<GetUserDetailsRequest> = {
+  encode(message: GetUserDetailsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserDetailsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserDetailsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserDetailsRequest {
+    return { userId: isSet(object.userId) ? globalThis.String(object.userId) : "" };
+  },
+
+  toJSON(message: GetUserDetailsRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserDetailsRequest>, I>>(base?: I): GetUserDetailsRequest {
+    return GetUserDetailsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserDetailsRequest>, I>>(object: I): GetUserDetailsRequest {
+    const message = createBaseGetUserDetailsRequest();
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetUserDetailsResponse(): GetUserDetailsResponse {
+  return { userId: "", name: "", email: "", emailVerified: false };
+}
+
+export const GetUserDetailsResponse: MessageFns<GetUserDetailsResponse> = {
+  encode(message: GetUserDetailsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.email !== "") {
+      writer.uint32(26).string(message.email);
+    }
+    if (message.emailVerified !== false) {
+      writer.uint32(32).bool(message.emailVerified);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserDetailsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserDetailsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.email = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.emailVerified = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserDetailsResponse {
+    return {
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+      emailVerified: isSet(object.emailVerified) ? globalThis.Boolean(object.emailVerified) : false,
+    };
+  },
+
+  toJSON(message: GetUserDetailsResponse): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    if (message.emailVerified !== false) {
+      obj.emailVerified = message.emailVerified;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserDetailsResponse>, I>>(base?: I): GetUserDetailsResponse {
+    return GetUserDetailsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserDetailsResponse>, I>>(object: I): GetUserDetailsResponse {
+    const message = createBaseGetUserDetailsResponse();
+    message.userId = object.userId ?? "";
+    message.name = object.name ?? "";
+    message.email = object.email ?? "";
+    message.emailVerified = object.emailVerified ?? false;
+    return message;
+  },
+};
 
 function createBaseLoginRequest(): LoginRequest {
   return { email: "", password: "" };
@@ -914,6 +1234,27 @@ export const AuthV2Service = {
     responseSerialize: (value: LoginResponse): Buffer => Buffer.from(LoginResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): LoginResponse => LoginResponse.decode(value),
   },
+  loginWithSso: {
+    path: "/AuthV2/LoginWithSSO",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: LoginWithSSORequest): Buffer => Buffer.from(LoginWithSSORequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): LoginWithSSORequest => LoginWithSSORequest.decode(value),
+    responseSerialize: (value: LoginWithSSOResponse): Buffer =>
+      Buffer.from(LoginWithSSOResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): LoginWithSSOResponse => LoginWithSSOResponse.decode(value),
+  },
+  getUserDetails: {
+    path: "/AuthV2/GetUserDetails",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetUserDetailsRequest): Buffer =>
+      Buffer.from(GetUserDetailsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUserDetailsRequest => GetUserDetailsRequest.decode(value),
+    responseSerialize: (value: GetUserDetailsResponse): Buffer =>
+      Buffer.from(GetUserDetailsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetUserDetailsResponse => GetUserDetailsResponse.decode(value),
+  },
   signup: {
     path: "/AuthV2/Signup",
     requestStream: false,
@@ -969,6 +1310,8 @@ export const AuthV2Service = {
 
 export interface AuthV2Server extends UntypedServiceImplementation {
   login: handleUnaryCall<LoginRequest, LoginResponse>;
+  loginWithSso: handleUnaryCall<LoginWithSSORequest, LoginWithSSOResponse>;
+  getUserDetails: handleUnaryCall<GetUserDetailsRequest, GetUserDetailsResponse>;
   signup: handleUnaryCall<SignupRequest, SignupResponse>;
   requestResetPassword: handleUnaryCall<RequestResetPasswordRequest, RequestResetPasswordResponse>;
   resetPassword: handleUnaryCall<ResetPasswordRequest, ResetPasswordResponse>;
@@ -991,6 +1334,36 @@ export interface AuthV2Client extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: LoginResponse) => void,
+  ): ClientUnaryCall;
+  loginWithSso(
+    request: LoginWithSSORequest,
+    callback: (error: ServiceError | null, response: LoginWithSSOResponse) => void,
+  ): ClientUnaryCall;
+  loginWithSso(
+    request: LoginWithSSORequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: LoginWithSSOResponse) => void,
+  ): ClientUnaryCall;
+  loginWithSso(
+    request: LoginWithSSORequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: LoginWithSSOResponse) => void,
+  ): ClientUnaryCall;
+  getUserDetails(
+    request: GetUserDetailsRequest,
+    callback: (error: ServiceError | null, response: GetUserDetailsResponse) => void,
+  ): ClientUnaryCall;
+  getUserDetails(
+    request: GetUserDetailsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetUserDetailsResponse) => void,
+  ): ClientUnaryCall;
+  getUserDetails(
+    request: GetUserDetailsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetUserDetailsResponse) => void,
   ): ClientUnaryCall;
   signup(
     request: SignupRequest,

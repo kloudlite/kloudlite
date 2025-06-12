@@ -162,7 +162,7 @@ export default function LoginForm(
 
                 <div className="flex gap-2">
                   <Button variant={"secondary"} asChild disabled={loggingIn}>
-                    <Link href="/teams">
+                    <Link href="/dev-only/external-login">
                       <Lock />
                       Login With SSO
                     </Link>
