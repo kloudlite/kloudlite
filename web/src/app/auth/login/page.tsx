@@ -1,7 +1,15 @@
+import { notFound } from "next/navigation";
 import LoginForm from "../_components/login-form";
+import { SessionProvider, getProviders } from "next-auth/react";
 
-export default function Home() {
-  const withSSO = process.env.SSO_AUTH=== "true";
+export default async function Home() {
+  const loginWithEmailEnabled = process.env.ALLOW_LOGIN_WITH_EMAIL === "true";
+  if(!loginWithEmailEnabled){
+    return notFound()
+  }
+  const withSSO = process.env.ALLOW_LOGIN_WITH_SSO=== "true";
   const emailCommEnabled = process.env.EMAIL_COMM_ENABLED === "true";
-  return <LoginForm withSSO={withSSO} emailCommEnabled={emailCommEnabled} />;
+  const allowSignupWithEmail = process.env.ALLOW_SIGNUP_WITH_EMAIL === "true";
+  const res =  await getProviders();
+  return <LoginForm withSSO={withSSO} emailCommEnabled={emailCommEnabled} allowSignupWithEmail={allowSignupWithEmail} providers={res} />
 }

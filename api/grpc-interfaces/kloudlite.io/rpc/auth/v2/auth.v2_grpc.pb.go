@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	AuthV2_Login_FullMethodName                   = "/AuthV2/Login"
 	AuthV2_LoginWithSSO_FullMethodName            = "/AuthV2/LoginWithSSO"
+	AuthV2_LoginWithOAuth_FullMethodName          = "/AuthV2/LoginWithOAuth"
 	AuthV2_GetUserDetails_FullMethodName          = "/AuthV2/GetUserDetails"
 	AuthV2_Signup_FullMethodName                  = "/AuthV2/Signup"
 	AuthV2_RequestResetPassword_FullMethodName    = "/AuthV2/RequestResetPassword"
@@ -35,6 +36,7 @@ const (
 type AuthV2Client interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	LoginWithSSO(ctx context.Context, in *LoginWithSSORequest, opts ...grpc.CallOption) (*LoginWithSSOResponse, error)
+	LoginWithOAuth(ctx context.Context, in *LoginWithOAuthRequest, opts ...grpc.CallOption) (*LoginWithOAuthResponse, error)
 	GetUserDetails(ctx context.Context, in *GetUserDetailsRequest, opts ...grpc.CallOption) (*GetUserDetailsResponse, error)
 	Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*SignupResponse, error)
 	RequestResetPassword(ctx context.Context, in *RequestResetPasswordRequest, opts ...grpc.CallOption) (*RequestResetPasswordResponse, error)
@@ -63,6 +65,15 @@ func (c *authV2Client) Login(ctx context.Context, in *LoginRequest, opts ...grpc
 func (c *authV2Client) LoginWithSSO(ctx context.Context, in *LoginWithSSORequest, opts ...grpc.CallOption) (*LoginWithSSOResponse, error) {
 	out := new(LoginWithSSOResponse)
 	err := c.cc.Invoke(ctx, AuthV2_LoginWithSSO_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authV2Client) LoginWithOAuth(ctx context.Context, in *LoginWithOAuthRequest, opts ...grpc.CallOption) (*LoginWithOAuthResponse, error) {
+	out := new(LoginWithOAuthResponse)
+	err := c.cc.Invoke(ctx, AuthV2_LoginWithOAuth_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +140,7 @@ func (c *authV2Client) ResendEmailVerification(ctx context.Context, in *ResendEm
 type AuthV2Server interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	LoginWithSSO(context.Context, *LoginWithSSORequest) (*LoginWithSSOResponse, error)
+	LoginWithOAuth(context.Context, *LoginWithOAuthRequest) (*LoginWithOAuthResponse, error)
 	GetUserDetails(context.Context, *GetUserDetailsRequest) (*GetUserDetailsResponse, error)
 	Signup(context.Context, *SignupRequest) (*SignupResponse, error)
 	RequestResetPassword(context.Context, *RequestResetPasswordRequest) (*RequestResetPasswordResponse, error)
@@ -147,6 +159,9 @@ func (UnimplementedAuthV2Server) Login(context.Context, *LoginRequest) (*LoginRe
 }
 func (UnimplementedAuthV2Server) LoginWithSSO(context.Context, *LoginWithSSORequest) (*LoginWithSSOResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoginWithSSO not implemented")
+}
+func (UnimplementedAuthV2Server) LoginWithOAuth(context.Context, *LoginWithOAuthRequest) (*LoginWithOAuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LoginWithOAuth not implemented")
 }
 func (UnimplementedAuthV2Server) GetUserDetails(context.Context, *GetUserDetailsRequest) (*GetUserDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserDetails not implemented")
@@ -211,6 +226,24 @@ func _AuthV2_LoginWithSSO_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthV2Server).LoginWithSSO(ctx, req.(*LoginWithSSORequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthV2_LoginWithOAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginWithOAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthV2Server).LoginWithOAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthV2_LoginWithOAuth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthV2Server).LoginWithOAuth(ctx, req.(*LoginWithOAuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -337,6 +370,10 @@ var AuthV2_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LoginWithSSO",
 			Handler:    _AuthV2_LoginWithSSO_Handler,
+		},
+		{
+			MethodName: "LoginWithOAuth",
+			Handler:    _AuthV2_LoginWithOAuth_Handler,
 		},
 		{
 			MethodName: "GetUserDetails",

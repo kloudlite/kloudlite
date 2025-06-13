@@ -18,6 +18,19 @@ type authGrpcServer struct {
 	sessionRepo kv.Repo[*common.AuthSession]
 }
 
+func (a *authGrpcServer) LoginWithOAuth(ctx context.Context, req *authV2.LoginWithOAuthRequest) (*authV2.LoginWithOAuthResponse, error) {
+	user, err := a.d.LoginWithOAuth(ctx, req.Email, req.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not login with OAuth: %v", err)
+	}
+	if user == nil {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	return &authV2.LoginWithOAuthResponse{
+		UserId: string(user.Id),
+	}, nil
+}
+
 func (a *authGrpcServer) LoginWithSSO(ctx context.Context, req *authV2.LoginWithSSORequest) (*authV2.LoginWithSSOResponse, error) {
 	user, err := a.d.LoginWithSSO(ctx, req.Email, req.Name)
 	if err != nil {

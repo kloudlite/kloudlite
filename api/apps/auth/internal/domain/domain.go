@@ -15,6 +15,7 @@ type Domain interface {
 
 	Login(ctx context.Context, email string, password string) (*entities.User, error)
 	LoginWithSSO(ctx context.Context, email string, name string) (*entities.User, error)
+	LoginWithOAuth(ctx context.Context, email string, name string) (*entities.User, error)
 	MachineLogin(ctx context.Context, userId string, machineId string, cluster string) (*common.AuthSession, error)
 	SignUp(ctx context.Context, name string, email string, password string) (*entities.User, error)
 	EnsureUserByEmail(ctx context.Context, email string) (*entities.User, error)
