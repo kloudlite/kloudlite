@@ -128,3 +128,19 @@ export const loginWithSSO = actionWrapper(async (token: string) => {
     throw new Error((error as grpc.ServiceError).details);
   }
 })
+
+
+export const loginWithOAuth = actionWrapper(async (name:string, email:string, provider: string) => {
+  try {
+    const res = await serverMethods.loginWithSSO({
+      email: email, name: name
+    });
+    const cookieStore = await cookies()
+    cookieStore.set("userId", res.userId);
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new Error("Invalid SSO token");
+    }
+    throw new Error((error as grpc.ServiceError).details);
+  }
+})
