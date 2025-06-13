@@ -21,18 +21,28 @@ import {
 } from "@/components/ui/form";
 import { HoverCardContent } from "@/components/ui/hover-card";
 import { HoverCard, HoverCardTrigger } from "@radix-ui/react-hover-card";
-import { Lock, LogIn, ScanFace } from "lucide-react";
+import { Github, Lock, LogIn, ScanFace } from "lucide-react";
+import { BuiltInProviderType } from "next-auth/providers/index";
+import { ClientSafeProvider, LiteralUnion } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import util from "util";
+import { GithubButton, GoogleButton, MicrosoftButton } from "./oauth-buttons";
+
 
 export default function LoginForm(
-  { withSSO = false, emailCommEnabled = true }: {
+  {
+    withSSO = false,
+    emailCommEnabled = true,
+    allowSignupWithEmail = false,
+    providers,
+  }: {
     withSSO?: boolean;
     emailCommEnabled?: boolean;
+    allowSignupWithEmail?: boolean;
+    providers?: Record<LiteralUnion<BuiltInProviderType,string>, ClientSafeProvider>|null;
   },
 ) {
   const form = useForm();
@@ -55,7 +65,7 @@ export default function LoginForm(
           loginCall(data.email, data.password);
         })}
       >
-        <Card className="w-[400px] mx-auto mt-20">
+        <Card className="w-[400px] mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ScanFace />
@@ -152,27 +162,40 @@ export default function LoginForm(
                 Login
               </Button>
             </div>
-            {withSSO && (
+            {(providers?.github || providers?.["azure-ad"] ||providers?.google || withSSO ) && (
               <>
                 <div className="flex items-center gap-2 text-sm">
                   <hr className="w-[100px]" />
-                  OR
+                  OR login with
                   <hr className="w-[100px]" />
                 </div>
 
-                <div className="flex gap-2">
-                  <Button variant={"secondary"} asChild disabled={loggingIn}>
-                    <Link href="/dev-only/external-login">
-                      <Lock />
-                      Login With SSO
-                    </Link>
-                  </Button>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {providers?.github && (
+                    <GithubButton />
+                  )}
+                  {providers?.["azure-ad"] && (
+                    <MicrosoftButton />
+                  )}
+                  {providers?.google && (
+                    <GoogleButton /> 
+                  )}
+                  {
+                    withSSO && (
+                      <Button variant={"secondary"} asChild disabled={loggingIn}>
+                        <Link href="/dev-only/external-login">
+                          <Lock />
+                          SSO
+                        </Link>
+                      </Button>
+                    )
+                  }
                 </div>
               </>
             )}
           </CardFooter>
         </Card>
-        {!withSSO && (
+        {allowSignupWithEmail && (
           <div className="p-4 text-sm flex gap-2 justify-center">
             <span>
               Don't have an account?

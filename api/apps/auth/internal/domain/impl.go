@@ -181,6 +181,26 @@ func (d *domainI) LoginWithSSO(ctx context.Context, email string, name string) (
 	return user, nil
 }
 
+func (d *domainI) LoginWithOAuth(ctx context.Context, email string, name string) (*entities.User, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if user == nil {
+		user, err = d.userRepo.Create(ctx, &entities.User{
+			Email:    email,
+			Name:     name,
+			Verified: true,
+		})
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+	}
+
+	return user, nil
+}
+
 func (d *domainI) Login(ctx context.Context, email string, password string) (*entities.User, error) {
 	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {

@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { GoogleButton } from "./auth/_components/oauth-buttons";
+
 
 export default function Home() {
   return (
@@ -14,6 +16,7 @@ export default function Home() {
             SSO Login
           </Link>
         </Button>
+        <GoogleButton />
       </p>
     </div>
   );
