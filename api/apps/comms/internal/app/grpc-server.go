@@ -51,7 +51,7 @@ func (r *commsSvc) SendAccountMemberInviteEmail(ctx context.Context, input *comm
 		}(),
 		"InvitedBy":   input.InvitedBy,
 		"AccountName": input.AccountName,
-		"Link":        fmt.Sprintf("%v?token=%v", r.ev.AccountsWebInviteUrl, input.InvitationToken),
+		"Link":        fmt.Sprintf("%v?token=%v", r.ev.BaseUrl, input.InvitationToken),
 	}
 
 	if err := r.eTemplattes.AccountInviteEmail.PlainText.Execute(plainText, args); err != nil {
@@ -69,36 +69,6 @@ func (r *commsSvc) SendAccountMemberInviteEmail(ctx context.Context, input *comm
 	return &comms.Void{}, nil
 }
 
-func (r *commsSvc) SendProjectMemberInviteEmail(ctx context.Context, input *comms.ProjectMemberInviteEmailInput) (*comms.Void, error) {
-	plainText := new(bytes.Buffer)
-	args := map[string]any{
-		"Name": func() string {
-			if input.Name != "" {
-				return input.Name
-			}
-			return "there"
-		}(),
-		"InvitedBy":   input.InvitedBy,
-		"AccountName": input.ProjectName,
-		"Link":        fmt.Sprintf("%v?token=%v", r.ev.ProjectsWebInviteUrl, input.InvitationToken),
-	}
-
-	if err := r.eTemplattes.ProjectInviteEmail.PlainText.Execute(plainText, args); err != nil {
-		return nil, errors.NewEf(err, "failed to execute plain-text template")
-	}
-
-	html := new(bytes.Buffer)
-	if err := r.eTemplattes.ProjectInviteEmail.Html.Execute(html, args); err != nil {
-		return nil, errors.NewEf(err, "failed to execute html template")
-	}
-
-	if err := r.sendSupportEmail(ctx, r.eTemplattes.ProjectInviteEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return &comms.Void{}, nil
-}
-
 func (r *commsSvc) SendPasswordResetEmail(ctx context.Context, input *comms.PasswordResetEmailInput) (*comms.Void, error) {
 	plainText := new(bytes.Buffer)
 	args := map[string]any{
@@ -108,7 +78,7 @@ func (r *commsSvc) SendPasswordResetEmail(ctx context.Context, input *comms.Pass
 			}
 			return "there"
 		}(),
-		"Link": fmt.Sprintf("%v?token=%v", r.ev.ResetPasswordWebUrl, input.ResetToken),
+		"Link": fmt.Sprintf("%v?token=%v", r.ev.BaseUrl, input.ResetToken),
 	}
 
 	if err := r.eTemplattes.ResetPasswordEmail.PlainText.Execute(plainText, args); err != nil {
@@ -189,7 +159,7 @@ func (r *commsSvc) SendVerificationEmail(ctx context.Context, input *comms.Verif
 			}
 			return "there"
 		}(),
-		"Link": fmt.Sprintf("%v?token=%v", r.ev.VerifyEmailWebUrl, input.VerificationToken),
+		"Link": fmt.Sprintf("%v?token=%v", r.ev.BaseUrl, input.VerificationToken),
 	}
 
 	if err := r.eTemplattes.UserVerificationEmail.PlainText.Execute(plainText, args); err != nil {

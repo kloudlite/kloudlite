@@ -3,21 +3,12 @@ package app
 import (
 	"context"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/gofiber/fiber/v2"
-	"github.com/kloudlite/api/constants"
-	httpServer "github.com/kloudlite/api/pkg/http-server"
-	"github.com/kloudlite/api/pkg/kv"
-
-	"github.com/kloudlite/api/apps/comms/internal/app/graph"
-	"github.com/kloudlite/api/apps/comms/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/comms/internal/domain"
 
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/internal/env"
 	"github.com/kloudlite/api/apps/comms/types"
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
@@ -27,7 +18,6 @@ import (
 	"github.com/kloudlite/api/pkg/grpc"
 
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"go.uber.org/fx"
 )
 
@@ -62,11 +52,11 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Provide(
-		func(conn IAMGrpcClient) iam.IAMClient {
-			return iam.NewIAMClient(conn)
-		},
-	),
+	// fx.Provide(
+	// 	func(conn IAMGrpcClient) iam.IAMClient {
+	// 		return iam.NewIAMClient(conn)
+	// 	},
+	// ),
 
 	fx.Provide(func(et domain.EmailTemplatesDir) (*domain.EmailTemplates, error) {
 		return domain.GetEmailTemplates(et)
@@ -81,47 +71,6 @@ var Module = fx.Module("app",
 	fx.Provide(func(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
 		return NewResourceEventPublisher(cli, logger)
 	}),
-
-	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
-			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d, Env: ev}}
-
-			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
-				sess := httpServer.GetSession[*common.AuthSession](ctx)
-				if sess == nil {
-					return nil, fiber.ErrUnauthorized
-				}
-
-				if !sess.UserVerified {
-					return nil, &fiber.Error{
-						Code:    fiber.StatusForbidden,
-						Message: "user's email is not verified",
-					}
-				}
-
-				return next(context.WithValue(ctx, "user-session", sess))
-			}
-
-			gqlConfig.Directives.HasAccount = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
-				sess := httpServer.GetSession[*common.AuthSession](ctx)
-				if sess == nil {
-					return nil, fiber.ErrUnauthorized
-				}
-				m := httpServer.GetHttpCookies(ctx)
-				klAccount := m[ev.AccountCookieName]
-				if klAccount == "" {
-					return nil, errors.Newf("no cookie named %q present in request", ev.AccountCookieName)
-				}
-
-				nctx := context.WithValue(ctx, "user-session", sess)
-				nctx = context.WithValue(nctx, "account-name", klAccount)
-				return next(nctx)
-			}
-
-			schema := generated.NewExecutableSchema(gqlConfig)
-			server.SetupGraphqlServer(schema, httpServer.NewReadSessionMiddleware(sessionRepo, constants.CookieName, constants.CacheSessionPrefix))
-		},
-	),
 
 	fx.Invoke(func(lf fx.Lifecycle, consumer NotificationConsumer, d domain.Domain, logr logging.Logger) {
 		lf.Append(fx.Hook{
