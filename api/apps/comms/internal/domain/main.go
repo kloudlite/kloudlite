@@ -5,6 +5,7 @@ import (
 	"github.com/kloudlite/api/apps/comms/internal/env"
 	"github.com/kloudlite/api/apps/comms/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+
 	// "github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/mail"
@@ -20,8 +21,6 @@ type Impl struct {
 	iamClient iam.IAMClient
 	envs      *env.Env
 	logger    logging.Logger
-	// cacheClient kv.BinaryDataRepo
-	// authClient  auth.AuthClient
 
 	eTemplates *EmailTemplates
 
@@ -38,20 +37,15 @@ var Module = fx.Module("domain", fx.Provide(func(e *env.Env,
 	notificationConfigRepo repos.DbRepo[*entities.NotificationConf],
 
 	logger logging.Logger,
-	iamClient iam.IAMClient,
-	// cacheClient kv.BinaryDataRepo,
-	// authClient auth.AuthClient,
+
 	resourceEventPublisher ResourceEventPublisher,
 
 	eTemplates *EmailTemplates,
 	mailer mail.Mailer,
 ) (Domain, error) {
 	return &Impl{
-		iamClient: iamClient,
-		envs:      e,
-		logger:    logger,
-		// cacheClient: cacheClient,
-		// authClient:             authClient,
+		envs:                   e,
+		logger:                 logger,
 		resourceEventPublisher: resourceEventPublisher,
 
 		notificationRepo:       notificationRepo,
