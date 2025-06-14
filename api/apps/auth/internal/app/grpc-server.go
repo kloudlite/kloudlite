@@ -98,17 +98,6 @@ func (a *authGrpcServer) EnsureUserByEmail(ctx context.Context, request *auth.Ge
 	}, nil
 }
 
-func (a *authGrpcServer) GetAccessToken(ctx context.Context, in *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
-	token, err := a.d.GetAccessToken(ctx, in.Provider, in.UserId, in.TokenId)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	if token == nil {
-		return nil, errors.Newf("token is nil")
-	}
-	return a.FromAccToken(*token), nil
-}
-
 func fxRPCServer(d domain.Domain, sessionRepo kv.Repo[*common.AuthSession]) auth.AuthServer {
 	return &authGrpcServer{
 		d:           d,

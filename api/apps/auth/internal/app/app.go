@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 
-	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
-
 	"github.com/kloudlite/api/apps/auth/internal/app/grpcv2"
 	"github.com/kloudlite/api/apps/auth/internal/domain"
 	"github.com/kloudlite/api/apps/auth/internal/entities"
@@ -48,23 +46,6 @@ var Module = fx.Module(
 			return comms.NewCommsClient((*grpc.ClientConn)(conn))
 		},
 	),
-
-	fx.Provide(
-		func(ev *env.Env) (*recaptchaenterprise.Client, error) {
-			if ev.GoogleRecaptchaEnabled {
-				client, err := recaptchaenterprise.NewClient(context.TODO())
-				if err != nil {
-					return nil, err
-				}
-				return client, nil
-			}
-			return nil, nil
-		},
-	),
-
-	fx.Provide(fxGithub),
-	fx.Provide(fxGitlab),
-	fx.Provide(fxGoogle),
 
 	fx.Provide(fxRPCServer),
 	fx.Provide(grpcv2.NewServer),
