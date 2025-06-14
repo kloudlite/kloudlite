@@ -22,7 +22,6 @@ const (
 	Comms_SendVerificationEmail_FullMethodName        = "/Comms/SendVerificationEmail"
 	Comms_SendPasswordResetEmail_FullMethodName       = "/Comms/SendPasswordResetEmail"
 	Comms_SendAccountMemberInviteEmail_FullMethodName = "/Comms/SendAccountMemberInviteEmail"
-	Comms_SendProjectMemberInviteEmail_FullMethodName = "/Comms/SendProjectMemberInviteEmail"
 	Comms_SendWelcomeEmail_FullMethodName             = "/Comms/SendWelcomeEmail"
 	Comms_SendWaitingEmail_FullMethodName             = "/Comms/SendWaitingEmail"
 	Comms_SendContactUsEmail_FullMethodName           = "/Comms/SendContactUsEmail"
@@ -35,7 +34,6 @@ type CommsClient interface {
 	SendVerificationEmail(ctx context.Context, in *VerificationEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendPasswordResetEmail(ctx context.Context, in *PasswordResetEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendAccountMemberInviteEmail(ctx context.Context, in *AccountMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error)
-	SendProjectMemberInviteEmail(ctx context.Context, in *ProjectMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendWelcomeEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendWaitingEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendContactUsEmail(ctx context.Context, in *SendContactUsEmailInput, opts ...grpc.CallOption) (*Void, error)
@@ -76,15 +74,6 @@ func (c *commsClient) SendAccountMemberInviteEmail(ctx context.Context, in *Acco
 	return out, nil
 }
 
-func (c *commsClient) SendProjectMemberInviteEmail(ctx context.Context, in *ProjectMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
-	err := c.cc.Invoke(ctx, Comms_SendProjectMemberInviteEmail_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *commsClient) SendWelcomeEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error) {
 	out := new(Void)
 	err := c.cc.Invoke(ctx, Comms_SendWelcomeEmail_FullMethodName, in, out, opts...)
@@ -119,7 +108,6 @@ type CommsServer interface {
 	SendVerificationEmail(context.Context, *VerificationEmailInput) (*Void, error)
 	SendPasswordResetEmail(context.Context, *PasswordResetEmailInput) (*Void, error)
 	SendAccountMemberInviteEmail(context.Context, *AccountMemberInviteEmailInput) (*Void, error)
-	SendProjectMemberInviteEmail(context.Context, *ProjectMemberInviteEmailInput) (*Void, error)
 	SendWelcomeEmail(context.Context, *WelcomeEmailInput) (*Void, error)
 	SendWaitingEmail(context.Context, *WelcomeEmailInput) (*Void, error)
 	SendContactUsEmail(context.Context, *SendContactUsEmailInput) (*Void, error)
@@ -138,9 +126,6 @@ func (UnimplementedCommsServer) SendPasswordResetEmail(context.Context, *Passwor
 }
 func (UnimplementedCommsServer) SendAccountMemberInviteEmail(context.Context, *AccountMemberInviteEmailInput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendAccountMemberInviteEmail not implemented")
-}
-func (UnimplementedCommsServer) SendProjectMemberInviteEmail(context.Context, *ProjectMemberInviteEmailInput) (*Void, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendProjectMemberInviteEmail not implemented")
 }
 func (UnimplementedCommsServer) SendWelcomeEmail(context.Context, *WelcomeEmailInput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendWelcomeEmail not implemented")
@@ -218,24 +203,6 @@ func _Comms_SendAccountMemberInviteEmail_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Comms_SendProjectMemberInviteEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProjectMemberInviteEmailInput)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CommsServer).SendProjectMemberInviteEmail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Comms_SendProjectMemberInviteEmail_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommsServer).SendProjectMemberInviteEmail(ctx, req.(*ProjectMemberInviteEmailInput))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Comms_SendWelcomeEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(WelcomeEmailInput)
 	if err := dec(in); err != nil {
@@ -308,10 +275,6 @@ var Comms_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendAccountMemberInviteEmail",
 			Handler:    _Comms_SendAccountMemberInviteEmail_Handler,
-		},
-		{
-			MethodName: "SendProjectMemberInviteEmail",
-			Handler:    _Comms_SendProjectMemberInviteEmail_Handler,
 		},
 		{
 			MethodName: "SendWelcomeEmail",
