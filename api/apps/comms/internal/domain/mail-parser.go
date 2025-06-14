@@ -61,11 +61,6 @@ func GetEmailTemplates(et EmailTemplatesDir) (*EmailTemplates, error) {
 		return nil, err
 	}
 
-	projectInvite, err := parseMailTemplate(et, "project-invite", "[Kloudlite] Project Invite")
-	if err != nil {
-		return nil, err
-	}
-
 	restPassword, err := parseMailTemplate(et, "reset-password", "[Kloudlite] Reset Password")
 	if err != nil {
 		return nil, err
@@ -81,25 +76,21 @@ func GetEmailTemplates(et EmailTemplatesDir) (*EmailTemplates, error) {
 		return nil, err
 	}
 
-	waiting, err := parseMailTemplate(et, "waiting", "[Kloudlite] Welcome to Kloudlite")
-	if err != nil {
-		return nil, err
-	}
-
 	contactUs, err := parseMailTemplate(et, "contact-us", "[Kloudlite] Contact Us")
 	if err != nil {
 		return nil, err
 	}
 
 	alert, err := parseMailTemplate(et, "alert", "[Kloudlite] Console Notification")
+	if err != nil {
+		return nil, err
+	}
 
 	return &EmailTemplates{
 		AccountInviteEmail:    accountInvite,
-		ProjectInviteEmail:    projectInvite,
 		ResetPasswordEmail:    restPassword,
 		UserVerificationEmail: userVerification,
 		WelcomeEmail:          welcome,
-		WaitingEmail:          waiting,
 		ContactUsEmail:        contactUs,
 		AlertEmail:            alert,
 	}, nil
