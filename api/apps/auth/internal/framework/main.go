@@ -33,14 +33,6 @@ type fm struct {
 	*env.Env
 }
 
-func (e *fm) GetHttpPort() uint16 {
-	return e.Port
-}
-
-func (e *fm) GetHttpCors() string {
-	return e.CorsOrigins
-}
-
 func (e *fm) GetMongoConfig() (url string, dbName string) {
 	return e.MongoUri, e.MongoDbName
 }

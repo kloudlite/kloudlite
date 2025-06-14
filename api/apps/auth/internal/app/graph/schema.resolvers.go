@@ -11,7 +11,6 @@ import (
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -68,22 +67,8 @@ func (r *mutationResolver) AuthSignup(ctx context.Context, name string, email st
 
 // OAuthLogin is the resolver for the oAuth_login field.
 func (r *mutationResolver) OAuthLogin(ctx context.Context, provider string, code string, state *string) (*model.Session, error) {
-	st := ""
-	if state != nil {
-		st = *state
-	}
-	sess, err := r.d.OauthLogin(ctx, provider, st, code)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not create session")
-	}
-	httpServer.SetSession(ctx, sess)
-	return &model.Session{
-		ID:           sess.Id,
-		UserID:       sess.UserId,
-		UserEmail:    sess.UserEmail,
-		LoginMethod:  sess.LoginMethod,
-		UserVerified: sess.UserVerified,
-	}, nil
+
+	return nil, nil
 }
 
 // OAuthAddLogin is the resolver for the oAuth_addLogin field.
@@ -92,7 +77,7 @@ func (r *mutationResolver) OAuthAddLogin(ctx context.Context, provider string, s
 	if session == nil {
 		return false, errors.New("user is not logged in")
 	}
-	return r.d.OauthAddLogin(ctx, session.UserId, provider, state, code)
+	return false, nil
 }
 
 // AuthLogout is the resolver for the auth_logout field.
@@ -241,12 +226,7 @@ func (r *queryResolver) AuthFindByEmail(ctx context.Context, email string) (*mod
 
 // OAuthRequestLogin is the resolver for the oAuth_requestLogin field.
 func (r *queryResolver) OAuthRequestLogin(ctx context.Context, provider string, state *string) (string, error) {
-	pstate := fn.DefaultIfNil(state, "")
-	url, err := r.d.OauthRequestLogin(ctx, provider, pstate)
-	if err != nil {
-		return "", errors.NewE(err)
-	}
-	return url, nil
+	return "url", nil
 }
 
 // AuthGetRemoteLogin is the resolver for the auth_getRemoteLogin field.
@@ -263,23 +243,8 @@ func (r *queryResolver) AuthGetRemoteLogin(ctx context.Context, loginID string, 
 
 // AuthListOAuthProviders is the resolver for the auth_listOAuthProviders field.
 func (r *queryResolver) AuthListOAuthProviders(ctx context.Context) ([]*model.OAuthProviderStatus, error) {
-	if !r.ev.OAuth2Enabled {
-		return []*model.OAuthProviderStatus{}, nil
-	}
-	return []*model.OAuthProviderStatus{
-		{
-			Provider: "github",
-			Enabled:  r.ev.OAuth2GithubEnabled,
-		},
-		{
-			Provider: "gitlab",
-			Enabled:  r.ev.OAuth2GitlabEnabled,
-		},
-		{
-			Provider: "google",
-			Enabled:  r.ev.OAuth2GoogleEnabled,
-		},
-	}, nil
+
+	return []*model.OAuthProviderStatus{}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
