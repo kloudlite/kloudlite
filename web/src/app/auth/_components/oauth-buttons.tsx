@@ -23,6 +23,7 @@ const GoogleButtonX = () => {
     <Button
       type="button"
       variant={"secondary"}
+      className="cursor-pointer"
       disabled={status === "loading"}
       onClick={async () => {
         if(status === "authenticated") {
@@ -48,6 +49,7 @@ const MicrosoftButtonX = () => {
     <Button
       type="button"
       variant={"secondary"}
+      className="cursor-pointer"
       disabled={status === "loading"}
       onClick={async () => {
         if(status === "authenticated") {
@@ -73,6 +75,7 @@ const GithubButtonX = () => {
     <Button
       type="button"
       variant={"secondary"}
+      className="cursor-pointer"
       disabled={status === "loading"}
       onClick={async () => {
         if(status === "authenticated") {
