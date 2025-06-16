@@ -12,11 +12,10 @@ export default function Home() {
       </p>
       <p className="mt-2 text-lg">
         <Button variant="outline" className="mt-4">
-          <Link href="/dev-only/external-login">
-            SSO Login
+          <Link href="/auth/login">
+            Get Started
           </Link>
         </Button>
-        <GoogleButton />
       </p>
     </div>
   );
