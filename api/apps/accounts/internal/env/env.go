@@ -10,14 +10,10 @@ import (
 )
 
 type Env struct {
-	HttpPort uint16 `env:"HTTP_PORT" required:"true"`
-	HttpCors string `env:"CORS_ORIGINS" required:"false"`
 	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
 
 	DBName string `env:"MONGO_DB_NAME" required:"true"`
 	DBUrl  string `env:"MONGO_URI" required:"true"`
-
-	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
 	IamGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
 	CommsGrpcAddr string `env:"COMMS_GRPC_ADDR" required:"true"`

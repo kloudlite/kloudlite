@@ -141,15 +141,4 @@ var Module = fx.Module("framework",
 		corsOrigins := "https://studio.apollographql.com"
 		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
 	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
-		lf.Append(fx.Hook{
-			OnStart: func(context.Context) error {
-				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
-			},
-			OnStop: func(context.Context) error {
-				return server.Close()
-			},
-		})
-	}),
 )
