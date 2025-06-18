@@ -1,24 +1,14 @@
 package app
 
 import (
-	"context"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/gofiber/fiber/v2"
-	"github.com/kloudlite/api/apps/accounts/internal/app/graph"
-	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
-	"github.com/kloudlite/api/apps/accounts/internal/env"
-	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/grpc"
-	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
@@ -70,33 +60,4 @@ var Module = fx.Module("app",
 	}),
 
 	domain.Module,
-
-	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, env *env.Env, sessionRepo kv.Repo[*common.AuthSession]) {
-			gqlConfig := generated.Config{Resolvers: graph.NewResolver(d)}
-
-			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
-				sess := httpServer.GetSession[*common.AuthSession](ctx)
-				if sess == nil {
-					return nil, fiber.ErrUnauthorized
-				}
-
-				if !sess.UserVerified {
-					return nil, fiber.ErrForbidden
-				}
-
-				return next(context.WithValue(ctx, "kloudlite-user-session", *sess))
-			}
-
-			schema := generated.NewExecutableSchema(gqlConfig)
-			server.SetupGraphqlServer(schema,
-				httpServer.NewSessionMiddleware(
-					sessionRepo,
-					constants.CookieName,
-					env.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
-			)
-		},
-	),
 )
