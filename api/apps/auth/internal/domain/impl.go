@@ -54,7 +54,7 @@ type domainI struct {
 	logger          logging.Logger
 	remoteLoginRepo repos.DbRepo[*entities.RemoteLogin]
 
-	envVars *env.Env
+	envVars *env.AuthEnv
 }
 
 func (d *domainI) SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID, authHeader string) error {
@@ -222,7 +222,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 			Name:         name,
 			Email:        email,
 			Password:     hex.EncodeToString(sum[:]),
-			Verified:     !d.envVars.UserEmailVerifactionEnabled,
+			Verified:     !d.envVars.UserEmailVerificationEnabled,
 			Approved:     false,
 			Metadata:     nil,
 			Joined:       time.Now(),
@@ -233,7 +233,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		return nil, errors.NewE(err)
 	}
 
-	if d.envVars.UserEmailVerifactionEnabled {
+	if d.envVars.UserEmailVerificationEnabled {
 		err = d.generateAndSendVerificationToken(ctx, user)
 		if err != nil {
 			return nil, errors.NewE(err)
@@ -541,9 +541,8 @@ func fxDomain(
 	verifyTokenRepo kv.Repo[*entities.VerifyToken],
 	resetTokenRepo kv.Repo[*entities.ResetPasswordToken],
 	inviteCodeRepo repos.DbRepo[*entities.InviteCode],
-	logger logging.Logger,
 	commsClient comms.CommsClient,
-	ev *env.Env,
+	ev *env.AuthEnv,
 ) Domain {
 	return &domainI{
 		remoteLoginRepo: remoteLoginRepo,

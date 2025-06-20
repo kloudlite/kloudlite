@@ -1,17 +1,20 @@
 package domain
 
 import (
+	"embed"
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/internal/env"
 	"github.com/kloudlite/api/apps/comms/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"log/slog"
 
-	// "github.com/kloudlite/api/pkg/kv"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/mail"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 )
+
+//go:embed email-templates
+var TemplatesDir embed.FS
 
 type Impl struct {
 	notificationRepo       repos.DbRepo[*types.Notification]
@@ -19,8 +22,8 @@ type Impl struct {
 	notificationConfigRepo repos.DbRepo[*entities.NotificationConf]
 
 	iamClient iam.IAMClient
-	envs      *env.Env
-	logger    logging.Logger
+	envs      *env.CommsEnv
+	logger    *slog.Logger
 
 	eTemplates *EmailTemplates
 
@@ -31,18 +34,23 @@ type Impl struct {
 	// CommsServer CommsServer
 }
 
-var Module = fx.Module("domain", fx.Provide(func(e *env.Env,
+var Module = fx.Module("domain", fx.Provide(func(e *env.CommsEnv,
 	notificationRepo repos.DbRepo[*types.Notification],
 	subscriptionRepo repos.DbRepo[*entities.Subscription],
 	notificationConfigRepo repos.DbRepo[*entities.NotificationConf],
 
-	logger logging.Logger,
+	logger *slog.Logger,
 
 	resourceEventPublisher ResourceEventPublisher,
 
-	eTemplates *EmailTemplates,
 	mailer mail.Mailer,
 ) (Domain, error) {
+	eTemplates, err := GetEmailTemplates(EmailTemplatesDir{
+		FS: TemplatesDir,
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &Impl{
 		envs:                   e,
 		logger:                 logger,
