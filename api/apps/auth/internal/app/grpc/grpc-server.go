@@ -2,8 +2,6 @@ package grpc
 
 import (
 	"context"
-	googleGrpc "google.golang.org/grpc"
-
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
 
@@ -98,10 +96,8 @@ func (a *authInternalGrpcServer) EnsureUserByEmail(ctx context.Context, request 
 	}, nil
 }
 
-func NewInternalServer(grpcServer *googleGrpc.Server, d domain.Domain) auth_rpc.AuthInternalServer {
-	serverImpl := &authInternalGrpcServer{
+func NewInternalServer(d domain.Domain) auth_rpc.AuthInternalServer {
+	return &authInternalGrpcServer{
 		d: d,
 	}
-	auth_rpc.RegisterAuthInternalServer(grpcServer, serverImpl)
-	return serverImpl
 }

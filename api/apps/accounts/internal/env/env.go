@@ -10,8 +10,8 @@ import (
 )
 
 type AccountsEnv struct {
-	KubernetesApiProxy              string `env:"KUBERNETES_API_PROXY"`
-	AvailableKloudliteRegionsConfig string `env:"AVAILABLE_KLOUDLITE_REGIONS_CONFIG" required:"false"`
+	KubernetesApiProxy              string `env:"ACCOUNTS.KUBERNETES_API_PROXY" required:"true"`
+	AvailableKloudliteRegionsConfig string `env:"ACCOUNTS.AVAILABLE_KLOUDLITE_REGIONS_CONFIG" required:"false"`
 	AvailableKloudliteRegions       []AvailableKloudliteRegion
 }
 

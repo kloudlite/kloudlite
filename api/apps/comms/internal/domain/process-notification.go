@@ -10,7 +10,6 @@ import (
 
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/types"
-	"github.com/kloudlite/api/pkg/mail"
 )
 
 type notificationProcessor interface {
@@ -44,10 +43,6 @@ func (c *npClient) Send() error {
 		logger.Error(err.Error(), "failed to send slack notification")
 	}
 
-	if err := c.handleEmail(); err != nil {
-		logger.Error(err.Error(), "failed to send email notification")
-	}
-
 	if err := c.handleWebhook(); err != nil {
 		logger.Error(err.Error(), "failed to send webhook notification")
 	}
@@ -62,60 +57,6 @@ func (c *npClient) Send() error {
 func (c *npClient) handleConsoleUpdate() error {
 	// TODO: (@abdheshnayak) - needs to be implemented
 	c.domain.logger.Warn("console update notification is not implemented")
-
-	return nil
-}
-
-func (c *npClient) handleEmail() error {
-	if c.nc.Email == nil || !c.nc.Email.Enabled {
-		return nil
-	}
-
-	// TODO: (@abdheshnayak) - check for subscription
-
-	// subs, err := c.domain.subscriptionRepo.FindOne(c.ctx, repos.Filter{
-	// 	fields.AccountName:         c.n.AccountName,
-	// 	fc.SubscriptionMailAddress: c.nc.Email.MailAddress,
-	// })
-
-	// if err != nil {
-	// 	return err
-	// }
-	// if subs == nil {
-	// 	return fmt.Errorf("subscription not found")
-	// }
-	//
-	// if !subs.Enabled {
-	// 	return fmt.Errorf("subscription is not enabled")
-	// }
-
-	args := map[string]any{
-		"Type":  c.n.Type,
-		"Title": c.n.Content.Title,
-		"Body":  c.n.Content.Body,
-		"Link":  c.n.Content.Link,
-	}
-
-	plainText := new(bytes.Buffer)
-	html := new(bytes.Buffer)
-	if err := c.domain.eTemplates.AlertEmail.PlainText.Execute(plainText, args); err != nil {
-		return err
-	}
-	if err := c.domain.eTemplates.AlertEmail.Html.Execute(html, args); err != nil {
-		return err
-	}
-
-	if err := c.domain.mailer.SendEmail(c.ctx, mail.Email{
-		FromEmailAddress: c.domain.envs.SupportEmail,
-		FromName:         "Kloudlite Support",
-		Subject:          c.n.Content.Subject,
-		ToEmailAddress:   c.nc.Email.MailAddress,
-		ToName:           c.n.AccountName,
-		PlainText:        plainText.String(),
-		HtmlText:         html.String(),
-	}); err != nil {
-		return err
-	}
 
 	return nil
 }

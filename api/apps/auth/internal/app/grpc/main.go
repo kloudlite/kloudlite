@@ -2,8 +2,6 @@ package grpc
 
 import (
 	"context"
-	googleGrpc "google.golang.org/grpc"
-
 	"github.com/kloudlite/api/apps/auth/internal/domain"
 	rpc_auth "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/pkg/repos"
@@ -145,10 +143,8 @@ func (a *authGrpcServer) Login(ctx context.Context, loginRequest *rpc_auth.Login
 	}, nil
 }
 
-func NewServer(server *googleGrpc.Server, d domain.Domain) rpc_auth.AuthServer {
-	serverImpl := &authGrpcServer{
+func NewServer(d domain.Domain) rpc_auth.AuthServer {
+	return &authGrpcServer{
 		d: d,
 	}
-	rpc_auth.RegisterAuthServer(server, serverImpl)
-	return serverImpl
 }

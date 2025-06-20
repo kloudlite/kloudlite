@@ -89,7 +89,7 @@ type domain struct {
 	logger *slog.Logger
 }
 
-func NewDomain(
+var Module = fx.Module("domain", fx.Provide(func(
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
 	authClient authrpc.AuthInternalClient,
@@ -101,14 +101,11 @@ func NewDomain(
 	logger *slog.Logger,
 ) Domain {
 	return &domain{
-		authClient:    authClient,
-		iamClient:     iamCli,
-		consoleClient: consoleClient,
-		commsClient:   commsClient,
-		// containerRegistryClient: containerRegistryClient,
-
-		k8sClient: k8sClient,
-
+		authClient:     authClient,
+		iamClient:      iamCli,
+		consoleClient:  consoleClient,
+		commsClient:    commsClient,
+		k8sClient:      k8sClient,
 		accountRepo:    accountRepo,
 		invitationRepo: invitationRepo,
 
@@ -116,6 +113,4 @@ func NewDomain(
 
 		logger: logger,
 	}
-}
-
-var Module = fx.Module("domain", fx.Provide(NewDomain))
+}))
