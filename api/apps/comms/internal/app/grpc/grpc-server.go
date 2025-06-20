@@ -1,9 +1,10 @@
-package app
+package grpc
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	googleGrpc "google.golang.org/grpc"
 
 	"github.com/kloudlite/api/apps/comms/internal/domain"
 	"github.com/kloudlite/api/apps/comms/internal/env"
@@ -19,7 +20,7 @@ type commsSvc struct {
 
 	supportEmail string
 
-	ev *env.Env
+	ev *env.CommsEnv
 
 	eTemplattes *domain.EmailTemplates
 }
@@ -206,11 +207,13 @@ func (r *commsSvc) SendContactUsEmail(ctx context.Context, input *comms.SendCont
 	return &comms.Void{}, nil
 }
 
-func newCommsSvc(mailer mail.Mailer, ev *env.Env, et *domain.EmailTemplates) comms.CommsServer {
-	return &commsSvc{
+func NewServer(server *googleGrpc.Server, mailer mail.Mailer, ev *env.CommsEnv, et *domain.EmailTemplates) comms.CommsServer {
+	serverImpl := &commsSvc{
 		mailer:       mailer,
 		supportEmail: ev.SupportEmail,
 		ev:           ev,
 		eTemplattes:  et,
 	}
+	comms.RegisterCommsServer(server, serverImpl)
+	return serverImpl
 }

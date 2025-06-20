@@ -2,16 +2,14 @@ package app
 
 import (
 	"context"
+	googleGrpc "google.golang.org/grpc"
 
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
-	"github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/api/pkg/repos"
 )
-
-type AccountsGrpcServer grpc.Server
 
 type accountsGrpcServer struct {
 	accounts.UnimplementedAccountsServer
@@ -41,7 +39,7 @@ func (s *accountsGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAcc
 	}, nil
 }
 
-func registerAccountsGRPCServer(server AccountsGrpcServer, d domain.Domain) accounts.AccountsServer {
+func registerAccountsGRPCServer(server *googleGrpc.Server, d domain.Domain) accounts.AccountsServer {
 	accountsSvc := &accountsGrpcServer{d: d}
 	accounts.RegisterAccountsServer(server, accountsSvc)
 	return accountsSvc

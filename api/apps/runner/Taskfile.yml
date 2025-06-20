@@ -1,0 +1,15 @@
+version: '3'
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: management
+  binary: "./bin/{{.app}}"
+
+tasks:
+  run:
+    dotenv: [".secrets/oauth.env", ".secrets/env"]
+    cmds:
+      - go run main.go --dev

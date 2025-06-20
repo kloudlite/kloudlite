@@ -35,19 +35,6 @@ var Module = fx.Module("framework",
 		return &fm{env: ev}
 	}),
 
-	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.JetstreamClient, error) {
-		name := "accounts:jetstream-client"
-		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
-			Name:   name,
-			Logger: logger,
-		})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-
-		return nats.NewJetstreamClient(nc)
-	}),
-
 	fx.Provide(
 		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*common.AuthSession], error) {
 			cxt := context.TODO()

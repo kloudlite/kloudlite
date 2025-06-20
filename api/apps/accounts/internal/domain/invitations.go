@@ -65,7 +65,7 @@ func (d *domain) InviteMembers(ctx UserContext, accountName string, invitations 
 		if err != nil {
 			return nil, errors.NewEf(err, "failed to generate invite token")
 		}
-
+		
 		user, err := d.authClient.GetUser(ctx, &auth.GetUserIn{
 			UserId: string(ctx.UserId),
 		})
