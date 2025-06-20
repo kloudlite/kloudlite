@@ -1,7 +1,8 @@
-package grpcv2
+package grpc
 
 import (
 	"context"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/pkg/repos"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -10,18 +11,15 @@ import (
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	"github.com/kloudlite/api/common"
-	accountsv2 "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts/v2"
-	"github.com/kloudlite/api/pkg/kv"
 	"google.golang.org/grpc/metadata"
 )
 
 type accountsGrpcServer struct {
-	accountsv2.UnimplementedAccountsV2Server
-	d           domain.Domain
-	sessionRepo kv.Repo[*common.AuthSession]
+	accounts.UnimplementedAccountsServer
+	d domain.Domain
 }
 
-func (a *accountsGrpcServer) CheckAccountNameAvailability(ctx context.Context, request *accountsv2.CheckAccountNameAvailabilityRequest) (*accountsv2.CheckAccountNameAvailabilityResponse, error) {
+func (a *accountsGrpcServer) CheckAccountNameAvailability(ctx context.Context, request *accounts.CheckAccountNameAvailabilityRequest) (*accounts.CheckAccountNameAvailabilityResponse, error) {
 	availability, err := a.d.CheckNameAvailability(ctx, request.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to check account name availability: %v", err)
@@ -29,7 +27,7 @@ func (a *accountsGrpcServer) CheckAccountNameAvailability(ctx context.Context, r
 	if availability == nil {
 		return nil, status.Errorf(codes.Internal, "check account name availability returned nil")
 	}
-	return &accountsv2.CheckAccountNameAvailabilityResponse{
+	return &accounts.CheckAccountNameAvailabilityResponse{
 		Result:         availability.Result,
 		SuggestedNames: availability.SuggestedNames,
 	}, nil
@@ -53,7 +51,7 @@ func getUserContext(ctx context.Context) (*domain.UserContext, error) {
 	}, nil
 }
 
-func (a *accountsGrpcServer) CreateAccount(ctx context.Context, req *accountsv2.CreateAccountRequest) (*accountsv2.CreateAccountResponse, error) {
+func (a *accountsGrpcServer) CreateAccount(ctx context.Context, req *accounts.CreateAccountRequest) (*accounts.CreateAccountResponse, error) {
 	userContext, err := getUserContext(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get user context: %v", err)
@@ -80,38 +78,37 @@ func (a *accountsGrpcServer) CreateAccount(ctx context.Context, req *accountsv2.
 	if account == nil {
 		return nil, status.Errorf(codes.Internal, "account creation returned nil")
 	}
-	return &accountsv2.CreateAccountResponse{
+	return &accounts.CreateAccountResponse{
 		AccountId: string(account.Id),
 	}, nil
 }
 
-func (a *accountsGrpcServer) DeleteAccount(context.Context, *accountsv2.DeleteAccountRequest) (*accountsv2.DeleteAccountResponse, error) {
+func (a *accountsGrpcServer) DeleteAccount(context.Context, *accounts.DeleteAccountRequest) (*accounts.DeleteAccountResponse, error) {
 	panic("unimplemented")
 }
 
 // DisableAccount implements v2.AccountsV2Server.
-func (a *accountsGrpcServer) DisableAccount(context.Context, *accountsv2.DisableAccountRequest) (*accountsv2.DisableAccountResponse, error) {
+func (a *accountsGrpcServer) DisableAccount(context.Context, *accounts.DisableAccountRequest) (*accounts.DisableAccountResponse, error) {
 	panic("unimplemented")
 }
 
 // EnableAccount implements v2.AccountsV2Server.
-func (a *accountsGrpcServer) EnableAccount(context.Context, *accountsv2.EnableAccountRequest) (*accountsv2.EnableAccountResponse, error) {
+func (a *accountsGrpcServer) EnableAccount(context.Context, *accounts.EnableAccountRequest) (*accounts.EnableAccountResponse, error) {
 	panic("unimplemented")
 }
 
 // GetAccountDetails implements v2.AccountsV2Server.
-func (a *accountsGrpcServer) GetAccountDetails(context.Context, *accountsv2.GetAccountDetailsRequest) (*accountsv2.GetAccountDetailsResponse, error) {
+func (a *accountsGrpcServer) GetAccountDetails(context.Context, *accounts.GetAccountDetailsRequest) (*accounts.GetAccountDetailsResponse, error) {
 	panic("unimplemented")
 }
 
 // ListAccounts implements v2.AccountsV2Server.
-func (a *accountsGrpcServer) ListAccounts(context.Context, *accountsv2.ListAccountsRequest) (*accountsv2.ListAccountsResponse, error) {
+func (a *accountsGrpcServer) ListAccounts(context.Context, *accounts.ListAccountsRequest) (*accounts.ListAccountsResponse, error) {
 	panic("unimplemented")
 }
 
-func NewServer(d domain.Domain, sessionRepo kv.Repo[*common.AuthSession]) accountsv2.AccountsV2Server {
+func NewServer(d domain.Domain) accounts.AccountsServer {
 	return &accountsGrpcServer{
-		d:           d,
-		sessionRepo: sessionRepo,
+		d: d,
 	}
 }

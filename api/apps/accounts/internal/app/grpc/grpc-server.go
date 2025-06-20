@@ -1,23 +1,19 @@
-package app
+package grpc
 
 import (
 	"context"
-	googleGrpc "google.golang.org/grpc"
-
-	"github.com/kloudlite/api/pkg/errors"
-
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
-type accountsGrpcServer struct {
-	accounts.UnimplementedAccountsServer
+type accountsInternalGrpcServer struct {
+	accounts.UnimplementedAccountsInternalServer
 	d domain.Domain
 }
 
-// GetAccount implements accounts.AccountsServer.
-func (s *accountsGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAccountIn) (*accounts.GetAccountOut, error) {
+func (s *accountsInternalGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAccountIn) (*accounts.GetAccountOut, error) {
 	acc, err := s.d.GetAccount(domain.UserContext{
 		Context: ctx,
 		UserId:  repos.ID(in.UserId),
@@ -39,8 +35,7 @@ func (s *accountsGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAcc
 	}, nil
 }
 
-func registerAccountsGRPCServer(server *googleGrpc.Server, d domain.Domain) accounts.AccountsServer {
-	accountsSvc := &accountsGrpcServer{d: d}
-	accounts.RegisterAccountsServer(server, accountsSvc)
-	return accountsSvc
+func NewAccountsInternalServer(d domain.Domain) accounts.AccountsInternalServer {
+	serverImpl := &accountsInternalGrpcServer{d: d}
+	return serverImpl
 }

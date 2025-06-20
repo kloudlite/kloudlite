@@ -59,6 +59,13 @@ func main() {
 				}
 				return auth.NewAuthClient(conn), nil
 			}),
+			fx.Provide(func(env *env.Env) (auth.AuthInternalClient, error) {
+				conn, err := grpc.NewClient(env.CommsServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				if err != nil {
+					return nil, errors.NewE(err)
+				}
+				return auth.NewAuthInternalClient(conn), nil
+			}),
 			fx.Provide(func(env *env.Env) (console.ConsoleClient, error) {
 				conn, err := grpc.NewClient(env.ConsoleServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				if err != nil {

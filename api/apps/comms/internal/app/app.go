@@ -4,7 +4,9 @@ import (
 	"context"
 	"github.com/kloudlite/api/apps/comms/internal/app/grpc"
 	"github.com/kloudlite/api/apps/comms/internal/domain"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/pkg/mail"
+	googleGrpc "google.golang.org/grpc"
 
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/internal/env"
@@ -39,6 +41,9 @@ var Module = fx.Module("app",
 	fx.Module(
 		"grpc-servers",
 		fx.Provide(grpc.NewServer),
+		fx.Invoke(func(server *googleGrpc.Server, serverImpl comms.CommsServer) {
+			comms.RegisterCommsServer(server, serverImpl)
+		}),
 	),
 
 	fx.Module(

@@ -6,10 +6,12 @@ import (
 	"github.com/kloudlite/api/apps/auth/internal/domain"
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/apps/auth/internal/env"
+	auth_rpc "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
+	googleGrpc "google.golang.org/grpc"
 )
 
 var Module = fx.Module(
@@ -43,6 +45,10 @@ var Module = fx.Module(
 		"grpc-servers",
 		fx.Provide(grpc.NewInternalServer),
 		fx.Provide(grpc.NewServer),
+		fx.Invoke(func(server *googleGrpc.Server, internalAuthServerImpl auth_rpc.AuthInternalServer, authServer auth_rpc.AuthServer) {
+			auth_rpc.RegisterAuthInternalServer(server, internalAuthServerImpl)
+			auth_rpc.RegisterAuthServer(server, authServer)
+		}),
 	),
 
 	domain.Module,
