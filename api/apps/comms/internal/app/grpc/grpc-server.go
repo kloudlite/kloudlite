@@ -3,16 +3,18 @@ package grpc
 import (
 	"bytes"
 	"context"
+	"embed"
 	"fmt"
-	googleGrpc "google.golang.org/grpc"
 
-	"github.com/kloudlite/api/apps/comms/internal/domain"
 	"github.com/kloudlite/api/apps/comms/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/pkg/mail"
 )
+
+//go:embed email-templates
+var TemplatesDir embed.FS
 
 type commsSvc struct {
 	comms.UnimplementedCommsServer
@@ -22,7 +24,7 @@ type commsSvc struct {
 
 	ev *env.CommsEnv
 
-	eTemplattes *domain.EmailTemplates
+	eTemplattes *EmailTemplates
 }
 
 func (r *commsSvc) sendSupportEmail(ctx context.Context, subject string, toEmail string, toName string, plainText string, htmlContent string) error {
@@ -207,13 +209,17 @@ func (r *commsSvc) SendContactUsEmail(ctx context.Context, input *comms.SendCont
 	return &comms.Void{}, nil
 }
 
-func NewServer(server *googleGrpc.Server, mailer mail.Mailer, ev *env.CommsEnv, et *domain.EmailTemplates) comms.CommsServer {
-	serverImpl := &commsSvc{
+func NewServer(mailer mail.Mailer, ev *env.CommsEnv) (comms.CommsServer, error) {
+	eTemplates, err := GetEmailTemplates(EmailTemplatesDir{
+		FS: TemplatesDir,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &commsSvc{
 		mailer:       mailer,
 		supportEmail: ev.SupportEmail,
 		ev:           ev,
-		eTemplattes:  et,
-	}
-	comms.RegisterCommsServer(server, serverImpl)
-	return serverImpl
+		eTemplattes:  eTemplates,
+	}, nil
 }

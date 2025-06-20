@@ -8,8 +8,8 @@ import (
 )
 
 func NewCommsModule() fx.Option {
-	authApp := fx.Module(
-		"auth:app",
+	commsApp := fx.Module(
+		"comms:app",
 		fx.Provide(func() (*env.CommsEnv, error) {
 			if e, err := env.LoadEnv(); err != nil {
 				return nil, errors.NewE(err)
@@ -19,5 +19,5 @@ func NewCommsModule() fx.Option {
 		}),
 		app.Module,
 	)
-	return authApp
+	return commsApp
 }

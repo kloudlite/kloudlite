@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"embed"
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/internal/env"
 	"github.com/kloudlite/api/apps/comms/types"
@@ -13,9 +12,6 @@ import (
 	"go.uber.org/fx"
 )
 
-//go:embed email-templates
-var TemplatesDir embed.FS
-
 type Impl struct {
 	notificationRepo       repos.DbRepo[*types.Notification]
 	subscriptionRepo       repos.DbRepo[*entities.Subscription]
@@ -25,13 +21,7 @@ type Impl struct {
 	envs      *env.CommsEnv
 	logger    *slog.Logger
 
-	eTemplates *EmailTemplates
-
 	resourceEventPublisher ResourceEventPublisher
-
-	mailer mail.Mailer
-
-	// CommsServer CommsServer
 }
 
 var Module = fx.Module("domain", fx.Provide(func(e *env.CommsEnv,
@@ -45,12 +35,7 @@ var Module = fx.Module("domain", fx.Provide(func(e *env.CommsEnv,
 
 	mailer mail.Mailer,
 ) (Domain, error) {
-	eTemplates, err := GetEmailTemplates(EmailTemplatesDir{
-		FS: TemplatesDir,
-	})
-	if err != nil {
-		return nil, err
-	}
+
 	return &Impl{
 		envs:                   e,
 		logger:                 logger,
@@ -59,7 +44,5 @@ var Module = fx.Module("domain", fx.Provide(func(e *env.CommsEnv,
 		notificationRepo:       notificationRepo,
 		subscriptionRepo:       subscriptionRepo,
 		notificationConfigRepo: notificationConfigRepo,
-		mailer:                 mailer,
-		eTemplates:             eTemplates,
 	}, nil
 }))
