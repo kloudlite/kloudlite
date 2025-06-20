@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "kloudlite.io/rpc/accounts";
 
-service Accounts {
+service AccountsInternal {
   rpc GetAccount(GetAccountIn) returns (GetAccountOut);
 }
 
