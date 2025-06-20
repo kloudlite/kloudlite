@@ -3,81 +3,99 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/auth";
 
 service Auth {
-  rpc GetAccessToken(GetAccessTokenRequest) returns (AccessTokenOut);
-  rpc EnsureUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailOut);
-  rpc GetUser(GetUserIn) returns (GetUserOut);
-  rpc GenerateMachineSession(GenerateMachineSessionIn) returns (GenerateMachineSessionOut);
-  rpc ClearMachineSessionByMachine(ClearMachineSessionByMachineIn) returns (ClearMachineSessionByMachineOut);
-  rpc ClearMachineSessionByUser(ClearMachineSessionByUserIn) returns (ClearMachineSessionByUserOut);
-  rpc ClearMachineSessionByTeam(ClearMachineSessionByTeamIn) returns (ClearMachineSessionByTeamOut);
+  // For Web
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc LoginWithSSO(LoginWithSSORequest) returns (LoginWithSSOResponse);
+  rpc LoginWithOAuth(LoginWithOAuthRequest) returns (LoginWithOAuthResponse);
+  rpc GetUserDetails(GetUserDetailsRequest) returns (GetUserDetailsResponse);
+  rpc Signup(SignupRequest) returns (SignupResponse);
+  rpc RequestResetPassword(RequestResetPasswordRequest) returns (RequestResetPasswordResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (ResendEmailVerificationResponse);
 }
 
-message GetUserByEmailRequest {
+message LoginWithOAuthRequest {
+  string email = 1;
+  string name = 2;
+  string provider = 3;
+}
+
+message LoginWithOAuthResponse {
+  string userId = 1;
+}
+
+message LoginWithSSORequest {
+  string email = 1;
+  string name = 2;
+}
+
+message LoginWithSSOResponse {
+  string userId = 1;
+}
+
+message GetUserDetailsRequest {
+  string userId = 1;
+}
+
+message GetUserDetailsResponse {
+  string userId = 1;
+  string name = 2;
+  string email = 3;
+  bool emailVerified = 4;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string userId = 1;
+}
+
+message SignupRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message SignupResponse {
+  string userId = 1;
+}
+
+message ResetPasswordRequest {
+  string resetToken = 1;
+  string newPassword = 2;
+}
+
+message ResetPasswordResponse {
+  bool success = 1;
+}
+
+message RequestResetPasswordRequest {
   string email = 1;
 }
 
-message GetUserByEmailOut {
-  string UserId = 1;
+message RequestResetPasswordResponse {
+  bool success = 1;
+  string resetToken = 2; // e.g., "Reset link sent to email"
 }
 
-message GetAccessTokenRequest {
-  string userId = 1;
-  string provider = 2;
-  string tokenId = 3;
+message VerifyEmailRequest {
+  string verificationToken = 1;
 }
 
-message AccessTokenOut {
-  string id = 5;
-  string userId  = 1;
-  string email  = 2;
-  string provider  = 3;
-  OauthToken oauthToken = 4;
+message VerifyEmailResponse {
+  bool success = 1;
+  string userId = 2; // e.g., "User ID after email verification"
 }
 
-message OauthToken {
-  string access_token=1;
-  string token_type=2;
-  string refresh_token=3;
-  int64 expiry=4;
-  string raw=5;
+message ResendEmailVerificationRequest {
+  string email = 1;
 }
 
-message GetUserIn {
-  string userId = 1;
-}
-
-message GetUserOut {
-  string id = 1;
-  string email = 2;
-  string name = 3;
-}
-
-
-message GenerateMachineSessionIn {
-  string userId = 1;
-  string machine_id = 2;
-  string cluster = 3;
-}
-
-message GenerateMachineSessionOut {
-  string sessionId = 1;
-}
-
-message ClearMachineSessionByMachineIn {
-  string machineId = 1;
-}
-message ClearMachineSessionByMachineOut {
-  bool done = 1;
-}
-message ClearMachineSessionByUserIn {
-  string userId = 1;
-}
-message ClearMachineSessionByUserOut {
-  bool done = 1;
-}
-message ClearMachineSessionByTeamIn {
-  string teamId = 1;
-}
-message ClearMachineSessionByTeamOut {
-  bool done = 1;
+message ResendEmailVerificationResponse {
+  bool success = 1;
+  string message = 2; // e.g., "Verification email resent"
 }

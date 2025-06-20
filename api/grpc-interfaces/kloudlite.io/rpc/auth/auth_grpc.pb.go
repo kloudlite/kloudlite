@@ -19,26 +19,31 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Auth_GetAccessToken_FullMethodName               = "/Auth/GetAccessToken"
-	Auth_EnsureUserByEmail_FullMethodName            = "/Auth/EnsureUserByEmail"
-	Auth_GetUser_FullMethodName                      = "/Auth/GetUser"
-	Auth_GenerateMachineSession_FullMethodName       = "/Auth/GenerateMachineSession"
-	Auth_ClearMachineSessionByMachine_FullMethodName = "/Auth/ClearMachineSessionByMachine"
-	Auth_ClearMachineSessionByUser_FullMethodName    = "/Auth/ClearMachineSessionByUser"
-	Auth_ClearMachineSessionByTeam_FullMethodName    = "/Auth/ClearMachineSessionByTeam"
+	Auth_Login_FullMethodName                   = "/Auth/Login"
+	Auth_LoginWithSSO_FullMethodName            = "/Auth/LoginWithSSO"
+	Auth_LoginWithOAuth_FullMethodName          = "/Auth/LoginWithOAuth"
+	Auth_GetUserDetails_FullMethodName          = "/Auth/GetUserDetails"
+	Auth_Signup_FullMethodName                  = "/Auth/Signup"
+	Auth_RequestResetPassword_FullMethodName    = "/Auth/RequestResetPassword"
+	Auth_ResetPassword_FullMethodName           = "/Auth/ResetPassword"
+	Auth_VerifyEmail_FullMethodName             = "/Auth/VerifyEmail"
+	Auth_ResendEmailVerification_FullMethodName = "/Auth/ResendEmailVerification"
 )
 
 // AuthClient is the client API for Auth service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthClient interface {
-	GetAccessToken(ctx context.Context, in *GetAccessTokenRequest, opts ...grpc.CallOption) (*AccessTokenOut, error)
-	EnsureUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*GetUserByEmailOut, error)
-	GetUser(ctx context.Context, in *GetUserIn, opts ...grpc.CallOption) (*GetUserOut, error)
-	GenerateMachineSession(ctx context.Context, in *GenerateMachineSessionIn, opts ...grpc.CallOption) (*GenerateMachineSessionOut, error)
-	ClearMachineSessionByMachine(ctx context.Context, in *ClearMachineSessionByMachineIn, opts ...grpc.CallOption) (*ClearMachineSessionByMachineOut, error)
-	ClearMachineSessionByUser(ctx context.Context, in *ClearMachineSessionByUserIn, opts ...grpc.CallOption) (*ClearMachineSessionByUserOut, error)
-	ClearMachineSessionByTeam(ctx context.Context, in *ClearMachineSessionByTeamIn, opts ...grpc.CallOption) (*ClearMachineSessionByTeamOut, error)
+	// For Web
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	LoginWithSSO(ctx context.Context, in *LoginWithSSORequest, opts ...grpc.CallOption) (*LoginWithSSOResponse, error)
+	LoginWithOAuth(ctx context.Context, in *LoginWithOAuthRequest, opts ...grpc.CallOption) (*LoginWithOAuthResponse, error)
+	GetUserDetails(ctx context.Context, in *GetUserDetailsRequest, opts ...grpc.CallOption) (*GetUserDetailsResponse, error)
+	Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*SignupResponse, error)
+	RequestResetPassword(ctx context.Context, in *RequestResetPasswordRequest, opts ...grpc.CallOption) (*RequestResetPasswordResponse, error)
+	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error)
+	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error)
+	ResendEmailVerification(ctx context.Context, in *ResendEmailVerificationRequest, opts ...grpc.CallOption) (*ResendEmailVerificationResponse, error)
 }
 
 type authClient struct {
@@ -49,63 +54,81 @@ func NewAuthClient(cc grpc.ClientConnInterface) AuthClient {
 	return &authClient{cc}
 }
 
-func (c *authClient) GetAccessToken(ctx context.Context, in *GetAccessTokenRequest, opts ...grpc.CallOption) (*AccessTokenOut, error) {
-	out := new(AccessTokenOut)
-	err := c.cc.Invoke(ctx, Auth_GetAccessToken_FullMethodName, in, out, opts...)
+func (c *authClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, Auth_Login_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authClient) EnsureUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*GetUserByEmailOut, error) {
-	out := new(GetUserByEmailOut)
-	err := c.cc.Invoke(ctx, Auth_EnsureUserByEmail_FullMethodName, in, out, opts...)
+func (c *authClient) LoginWithSSO(ctx context.Context, in *LoginWithSSORequest, opts ...grpc.CallOption) (*LoginWithSSOResponse, error) {
+	out := new(LoginWithSSOResponse)
+	err := c.cc.Invoke(ctx, Auth_LoginWithSSO_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authClient) GetUser(ctx context.Context, in *GetUserIn, opts ...grpc.CallOption) (*GetUserOut, error) {
-	out := new(GetUserOut)
-	err := c.cc.Invoke(ctx, Auth_GetUser_FullMethodName, in, out, opts...)
+func (c *authClient) LoginWithOAuth(ctx context.Context, in *LoginWithOAuthRequest, opts ...grpc.CallOption) (*LoginWithOAuthResponse, error) {
+	out := new(LoginWithOAuthResponse)
+	err := c.cc.Invoke(ctx, Auth_LoginWithOAuth_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authClient) GenerateMachineSession(ctx context.Context, in *GenerateMachineSessionIn, opts ...grpc.CallOption) (*GenerateMachineSessionOut, error) {
-	out := new(GenerateMachineSessionOut)
-	err := c.cc.Invoke(ctx, Auth_GenerateMachineSession_FullMethodName, in, out, opts...)
+func (c *authClient) GetUserDetails(ctx context.Context, in *GetUserDetailsRequest, opts ...grpc.CallOption) (*GetUserDetailsResponse, error) {
+	out := new(GetUserDetailsResponse)
+	err := c.cc.Invoke(ctx, Auth_GetUserDetails_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authClient) ClearMachineSessionByMachine(ctx context.Context, in *ClearMachineSessionByMachineIn, opts ...grpc.CallOption) (*ClearMachineSessionByMachineOut, error) {
-	out := new(ClearMachineSessionByMachineOut)
-	err := c.cc.Invoke(ctx, Auth_ClearMachineSessionByMachine_FullMethodName, in, out, opts...)
+func (c *authClient) Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*SignupResponse, error) {
+	out := new(SignupResponse)
+	err := c.cc.Invoke(ctx, Auth_Signup_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authClient) ClearMachineSessionByUser(ctx context.Context, in *ClearMachineSessionByUserIn, opts ...grpc.CallOption) (*ClearMachineSessionByUserOut, error) {
-	out := new(ClearMachineSessionByUserOut)
-	err := c.cc.Invoke(ctx, Auth_ClearMachineSessionByUser_FullMethodName, in, out, opts...)
+func (c *authClient) RequestResetPassword(ctx context.Context, in *RequestResetPasswordRequest, opts ...grpc.CallOption) (*RequestResetPasswordResponse, error) {
+	out := new(RequestResetPasswordResponse)
+	err := c.cc.Invoke(ctx, Auth_RequestResetPassword_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authClient) ClearMachineSessionByTeam(ctx context.Context, in *ClearMachineSessionByTeamIn, opts ...grpc.CallOption) (*ClearMachineSessionByTeamOut, error) {
-	out := new(ClearMachineSessionByTeamOut)
-	err := c.cc.Invoke(ctx, Auth_ClearMachineSessionByTeam_FullMethodName, in, out, opts...)
+func (c *authClient) ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error) {
+	out := new(ResetPasswordResponse)
+	err := c.cc.Invoke(ctx, Auth_ResetPassword_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error) {
+	out := new(VerifyEmailResponse)
+	err := c.cc.Invoke(ctx, Auth_VerifyEmail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) ResendEmailVerification(ctx context.Context, in *ResendEmailVerificationRequest, opts ...grpc.CallOption) (*ResendEmailVerificationResponse, error) {
+	out := new(ResendEmailVerificationResponse)
+	err := c.cc.Invoke(ctx, Auth_ResendEmailVerification_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -116,13 +139,16 @@ func (c *authClient) ClearMachineSessionByTeam(ctx context.Context, in *ClearMac
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
 type AuthServer interface {
-	GetAccessToken(context.Context, *GetAccessTokenRequest) (*AccessTokenOut, error)
-	EnsureUserByEmail(context.Context, *GetUserByEmailRequest) (*GetUserByEmailOut, error)
-	GetUser(context.Context, *GetUserIn) (*GetUserOut, error)
-	GenerateMachineSession(context.Context, *GenerateMachineSessionIn) (*GenerateMachineSessionOut, error)
-	ClearMachineSessionByMachine(context.Context, *ClearMachineSessionByMachineIn) (*ClearMachineSessionByMachineOut, error)
-	ClearMachineSessionByUser(context.Context, *ClearMachineSessionByUserIn) (*ClearMachineSessionByUserOut, error)
-	ClearMachineSessionByTeam(context.Context, *ClearMachineSessionByTeamIn) (*ClearMachineSessionByTeamOut, error)
+	// For Web
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	LoginWithSSO(context.Context, *LoginWithSSORequest) (*LoginWithSSOResponse, error)
+	LoginWithOAuth(context.Context, *LoginWithOAuthRequest) (*LoginWithOAuthResponse, error)
+	GetUserDetails(context.Context, *GetUserDetailsRequest) (*GetUserDetailsResponse, error)
+	Signup(context.Context, *SignupRequest) (*SignupResponse, error)
+	RequestResetPassword(context.Context, *RequestResetPasswordRequest) (*RequestResetPasswordResponse, error)
+	ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error)
+	VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error)
+	ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*ResendEmailVerificationResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -130,26 +156,32 @@ type AuthServer interface {
 type UnimplementedAuthServer struct {
 }
 
-func (UnimplementedAuthServer) GetAccessToken(context.Context, *GetAccessTokenRequest) (*AccessTokenOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
+func (UnimplementedAuthServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthServer) EnsureUserByEmail(context.Context, *GetUserByEmailRequest) (*GetUserByEmailOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method EnsureUserByEmail not implemented")
+func (UnimplementedAuthServer) LoginWithSSO(context.Context, *LoginWithSSORequest) (*LoginWithSSOResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LoginWithSSO not implemented")
 }
-func (UnimplementedAuthServer) GetUser(context.Context, *GetUserIn) (*GetUserOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+func (UnimplementedAuthServer) LoginWithOAuth(context.Context, *LoginWithOAuthRequest) (*LoginWithOAuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LoginWithOAuth not implemented")
 }
-func (UnimplementedAuthServer) GenerateMachineSession(context.Context, *GenerateMachineSessionIn) (*GenerateMachineSessionOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GenerateMachineSession not implemented")
+func (UnimplementedAuthServer) GetUserDetails(context.Context, *GetUserDetailsRequest) (*GetUserDetailsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserDetails not implemented")
 }
-func (UnimplementedAuthServer) ClearMachineSessionByMachine(context.Context, *ClearMachineSessionByMachineIn) (*ClearMachineSessionByMachineOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClearMachineSessionByMachine not implemented")
+func (UnimplementedAuthServer) Signup(context.Context, *SignupRequest) (*SignupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Signup not implemented")
 }
-func (UnimplementedAuthServer) ClearMachineSessionByUser(context.Context, *ClearMachineSessionByUserIn) (*ClearMachineSessionByUserOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClearMachineSessionByUser not implemented")
+func (UnimplementedAuthServer) RequestResetPassword(context.Context, *RequestResetPasswordRequest) (*RequestResetPasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestResetPassword not implemented")
 }
-func (UnimplementedAuthServer) ClearMachineSessionByTeam(context.Context, *ClearMachineSessionByTeamIn) (*ClearMachineSessionByTeamOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClearMachineSessionByTeam not implemented")
+func (UnimplementedAuthServer) ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetPassword not implemented")
+}
+func (UnimplementedAuthServer) VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyEmail not implemented")
+}
+func (UnimplementedAuthServer) ResendEmailVerification(context.Context, *ResendEmailVerificationRequest) (*ResendEmailVerificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResendEmailVerification not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -164,128 +196,164 @@ func RegisterAuthServer(s grpc.ServiceRegistrar, srv AuthServer) {
 	s.RegisterService(&Auth_ServiceDesc, srv)
 }
 
-func _Auth_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAccessTokenRequest)
+func _Auth_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).GetAccessToken(ctx, in)
+		return srv.(AuthServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_GetAccessToken_FullMethodName,
+		FullMethod: Auth_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).GetAccessToken(ctx, req.(*GetAccessTokenRequest))
+		return srv.(AuthServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_EnsureUserByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserByEmailRequest)
+func _Auth_LoginWithSSO_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginWithSSORequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).EnsureUserByEmail(ctx, in)
+		return srv.(AuthServer).LoginWithSSO(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_EnsureUserByEmail_FullMethodName,
+		FullMethod: Auth_LoginWithSSO_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).EnsureUserByEmail(ctx, req.(*GetUserByEmailRequest))
+		return srv.(AuthServer).LoginWithSSO(ctx, req.(*LoginWithSSORequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserIn)
+func _Auth_LoginWithOAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginWithOAuthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).GetUser(ctx, in)
+		return srv.(AuthServer).LoginWithOAuth(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_GetUser_FullMethodName,
+		FullMethod: Auth_LoginWithOAuth_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).GetUser(ctx, req.(*GetUserIn))
+		return srv.(AuthServer).LoginWithOAuth(ctx, req.(*LoginWithOAuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_GenerateMachineSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateMachineSessionIn)
+func _Auth_GetUserDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserDetailsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).GenerateMachineSession(ctx, in)
+		return srv.(AuthServer).GetUserDetails(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_GenerateMachineSession_FullMethodName,
+		FullMethod: Auth_GetUserDetails_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).GenerateMachineSession(ctx, req.(*GenerateMachineSessionIn))
+		return srv.(AuthServer).GetUserDetails(ctx, req.(*GetUserDetailsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_ClearMachineSessionByMachine_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClearMachineSessionByMachineIn)
+func _Auth_Signup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignupRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).ClearMachineSessionByMachine(ctx, in)
+		return srv.(AuthServer).Signup(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_ClearMachineSessionByMachine_FullMethodName,
+		FullMethod: Auth_Signup_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).ClearMachineSessionByMachine(ctx, req.(*ClearMachineSessionByMachineIn))
+		return srv.(AuthServer).Signup(ctx, req.(*SignupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_ClearMachineSessionByUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClearMachineSessionByUserIn)
+func _Auth_RequestResetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestResetPasswordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).ClearMachineSessionByUser(ctx, in)
+		return srv.(AuthServer).RequestResetPassword(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_ClearMachineSessionByUser_FullMethodName,
+		FullMethod: Auth_RequestResetPassword_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).ClearMachineSessionByUser(ctx, req.(*ClearMachineSessionByUserIn))
+		return srv.(AuthServer).RequestResetPassword(ctx, req.(*RequestResetPasswordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_ClearMachineSessionByTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClearMachineSessionByTeamIn)
+func _Auth_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetPasswordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).ClearMachineSessionByTeam(ctx, in)
+		return srv.(AuthServer).ResetPassword(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_ClearMachineSessionByTeam_FullMethodName,
+		FullMethod: Auth_ResetPassword_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).ClearMachineSessionByTeam(ctx, req.(*ClearMachineSessionByTeamIn))
+		return srv.(AuthServer).ResetPassword(ctx, req.(*ResetPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).VerifyEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_VerifyEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_ResendEmailVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResendEmailVerificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).ResendEmailVerification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_ResendEmailVerification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).ResendEmailVerification(ctx, req.(*ResendEmailVerificationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -298,32 +366,40 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetAccessToken",
-			Handler:    _Auth_GetAccessToken_Handler,
+			MethodName: "Login",
+			Handler:    _Auth_Login_Handler,
 		},
 		{
-			MethodName: "EnsureUserByEmail",
-			Handler:    _Auth_EnsureUserByEmail_Handler,
+			MethodName: "LoginWithSSO",
+			Handler:    _Auth_LoginWithSSO_Handler,
 		},
 		{
-			MethodName: "GetUser",
-			Handler:    _Auth_GetUser_Handler,
+			MethodName: "LoginWithOAuth",
+			Handler:    _Auth_LoginWithOAuth_Handler,
 		},
 		{
-			MethodName: "GenerateMachineSession",
-			Handler:    _Auth_GenerateMachineSession_Handler,
+			MethodName: "GetUserDetails",
+			Handler:    _Auth_GetUserDetails_Handler,
 		},
 		{
-			MethodName: "ClearMachineSessionByMachine",
-			Handler:    _Auth_ClearMachineSessionByMachine_Handler,
+			MethodName: "Signup",
+			Handler:    _Auth_Signup_Handler,
 		},
 		{
-			MethodName: "ClearMachineSessionByUser",
-			Handler:    _Auth_ClearMachineSessionByUser_Handler,
+			MethodName: "RequestResetPassword",
+			Handler:    _Auth_RequestResetPassword_Handler,
 		},
 		{
-			MethodName: "ClearMachineSessionByTeam",
-			Handler:    _Auth_ClearMachineSessionByTeam_Handler,
+			MethodName: "ResetPassword",
+			Handler:    _Auth_ResetPassword_Handler,
+		},
+		{
+			MethodName: "VerifyEmail",
+			Handler:    _Auth_VerifyEmail_Handler,
+		},
+		{
+			MethodName: "ResendEmailVerification",
+			Handler:    _Auth_ResendEmailVerification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

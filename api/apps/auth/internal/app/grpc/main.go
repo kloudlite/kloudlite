@@ -1,24 +1,23 @@
-package grpcv2
+package grpc
 
 import (
 	"context"
+	googleGrpc "google.golang.org/grpc"
 
 	"github.com/kloudlite/api/apps/auth/internal/domain"
-	"github.com/kloudlite/api/common"
-	authV2 "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth/v2"
-	"github.com/kloudlite/api/pkg/kv"
+	rpc_auth "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/pkg/repos"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type authGrpcServer struct {
-	authV2.UnimplementedAuthV2Server
-	d           domain.Domain
-	sessionRepo kv.Repo[*common.AuthSession]
+	rpc_auth.UnimplementedAuthServer
+	d domain.Domain
+	//sessionRepo kv.Repo[*common.AuthSession]
 }
 
-func (a *authGrpcServer) LoginWithOAuth(ctx context.Context, req *authV2.LoginWithOAuthRequest) (*authV2.LoginWithOAuthResponse, error) {
+func (a *authGrpcServer) LoginWithOAuth(ctx context.Context, req *rpc_auth.LoginWithOAuthRequest) (*rpc_auth.LoginWithOAuthResponse, error) {
 	user, err := a.d.LoginWithOAuth(ctx, req.Email, req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not login with OAuth: %v", err)
@@ -26,12 +25,12 @@ func (a *authGrpcServer) LoginWithOAuth(ctx context.Context, req *authV2.LoginWi
 	if user == nil {
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
-	return &authV2.LoginWithOAuthResponse{
+	return &rpc_auth.LoginWithOAuthResponse{
 		UserId: string(user.Id),
 	}, nil
 }
 
-func (a *authGrpcServer) LoginWithSSO(ctx context.Context, req *authV2.LoginWithSSORequest) (*authV2.LoginWithSSOResponse, error) {
+func (a *authGrpcServer) LoginWithSSO(ctx context.Context, req *rpc_auth.LoginWithSSORequest) (*rpc_auth.LoginWithSSOResponse, error) {
 	user, err := a.d.LoginWithSSO(ctx, req.Email, req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not login with SSO: %v", err)
@@ -39,12 +38,12 @@ func (a *authGrpcServer) LoginWithSSO(ctx context.Context, req *authV2.LoginWith
 	if user == nil {
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
-	return &authV2.LoginWithSSOResponse{
+	return &rpc_auth.LoginWithSSOResponse{
 		UserId: string(user.Id),
 	}, nil
 }
 
-func (a *authGrpcServer) GetUserDetails(ctx context.Context, req *authV2.GetUserDetailsRequest) (*authV2.GetUserDetailsResponse, error) {
+func (a *authGrpcServer) GetUserDetails(ctx context.Context, req *rpc_auth.GetUserDetailsRequest) (*rpc_auth.GetUserDetailsResponse, error) {
 	user, err := a.d.GetUserById(ctx, repos.ID(req.UserId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not get user details: %v", err)
@@ -52,7 +51,7 @@ func (a *authGrpcServer) GetUserDetails(ctx context.Context, req *authV2.GetUser
 	if user == nil {
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
-	return &authV2.GetUserDetailsResponse{
+	return &rpc_auth.GetUserDetailsResponse{
 		UserId:        string(user.Id),
 		Name:          user.Name,
 		Email:         user.Email,
@@ -60,7 +59,7 @@ func (a *authGrpcServer) GetUserDetails(ctx context.Context, req *authV2.GetUser
 	}, nil
 }
 
-func (a *authGrpcServer) RequestResetPassword(ctx context.Context, req *authV2.RequestResetPasswordRequest) (*authV2.RequestResetPasswordResponse, error) {
+func (a *authGrpcServer) RequestResetPassword(ctx context.Context, req *rpc_auth.RequestResetPasswordRequest) (*rpc_auth.RequestResetPasswordResponse, error) {
 	if req.Email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
 	}
@@ -73,13 +72,13 @@ func (a *authGrpcServer) RequestResetPassword(ctx context.Context, req *authV2.R
 		return nil, status.Error(codes.NotFound, "no account found for provided email")
 	}
 
-	return &authV2.RequestResetPasswordResponse{
+	return &rpc_auth.RequestResetPasswordResponse{
 		Success: true,
 	}, nil
 }
 
 // ResendEmailVerification implements v2.AuthV2Server.
-func (a *authGrpcServer) ResendEmailVerification(ctx context.Context, req *authV2.ResendEmailVerificationRequest) (*authV2.ResendEmailVerificationResponse, error) {
+func (a *authGrpcServer) ResendEmailVerification(ctx context.Context, req *rpc_auth.ResendEmailVerificationRequest) (*rpc_auth.ResendEmailVerificationResponse, error) {
 	if req.Email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
 	}
@@ -92,32 +91,22 @@ func (a *authGrpcServer) ResendEmailVerification(ctx context.Context, req *authV
 		return nil, status.Error(codes.NotFound, "no account found for provided email")
 	}
 
-	return &authV2.ResendEmailVerificationResponse{
+	return &rpc_auth.ResendEmailVerificationResponse{
 		Success: true,
 	}, nil
 }
 
 // VerifyEmail implements v2.AuthV2Server.
-func (a *authGrpcServer) VerifyEmail(ctx context.Context, req *authV2.VerifyEmailRequest) (*authV2.VerifyEmailResponse, error) {
+func (a *authGrpcServer) VerifyEmail(ctx context.Context, req *rpc_auth.VerifyEmailRequest) (*rpc_auth.VerifyEmailResponse, error) {
 	if req.VerificationToken == "" {
 		return nil, status.Error(codes.InvalidArgument, "verification token is required")
 	}
-
-	session, err := a.d.VerifyEmail(ctx, req.VerificationToken)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not verify email: %v", err)
-	}
-
-	if err := a.sessionRepo.Set(ctx, string(session.Id), session); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to store session: %v", err)
-	}
-
-	return &authV2.VerifyEmailResponse{
+	return &rpc_auth.VerifyEmailResponse{
 		Success: true,
 	}, nil
 }
 
-func (a *authGrpcServer) ResetPassword(ctx context.Context, resetReq *authV2.ResetPasswordRequest) (*authV2.ResetPasswordResponse, error) {
+func (a *authGrpcServer) ResetPassword(ctx context.Context, resetReq *rpc_auth.ResetPasswordRequest) (*rpc_auth.ResetPasswordResponse, error) {
 	done, err := a.d.ResetPassword(ctx, resetReq.ResetToken, resetReq.NewPassword)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to reset password")
@@ -125,12 +114,12 @@ func (a *authGrpcServer) ResetPassword(ctx context.Context, resetReq *authV2.Res
 	if !done {
 		return nil, status.Error(codes.NotFound, "email not found")
 	}
-	return &authV2.ResetPasswordResponse{
+	return &rpc_auth.ResetPasswordResponse{
 		Success: true,
 	}, nil
 }
 
-func (a *authGrpcServer) Signup(ctx context.Context, signupReq *authV2.SignupRequest) (*authV2.SignupResponse, error) {
+func (a *authGrpcServer) Signup(ctx context.Context, signupReq *rpc_auth.SignupRequest) (*rpc_auth.SignupResponse, error) {
 	u, err := a.d.SignUp(ctx, signupReq.Name, signupReq.Email, signupReq.Password)
 	if signupReq.Email == "" || signupReq.Password == "" {
 		return nil, status.Error(codes.InvalidArgument, "email and password are required")
@@ -138,12 +127,12 @@ func (a *authGrpcServer) Signup(ctx context.Context, signupReq *authV2.SignupReq
 	if err != nil {
 		return nil, status.Error(codes.AlreadyExists, "user already exists")
 	}
-	return &authV2.SignupResponse{
+	return &rpc_auth.SignupResponse{
 		UserId: string(u.Id),
 	}, nil
 }
 
-func (a *authGrpcServer) Login(ctx context.Context, loginRequest *authV2.LoginRequest) (*authV2.LoginResponse, error) {
+func (a *authGrpcServer) Login(ctx context.Context, loginRequest *rpc_auth.LoginRequest) (*rpc_auth.LoginResponse, error) {
 	user, err := a.d.Login(ctx, loginRequest.Email, loginRequest.Password)
 	if loginRequest.Email == "" || loginRequest.Password == "" {
 		return nil, status.Error(codes.InvalidArgument, "email and password are required")
@@ -151,14 +140,15 @@ func (a *authGrpcServer) Login(ctx context.Context, loginRequest *authV2.LoginRe
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid email or password")
 	}
-	return &authV2.LoginResponse{
+	return &rpc_auth.LoginResponse{
 		UserId: string(user.Id),
 	}, nil
 }
 
-func NewServer(d domain.Domain, sessionRepo kv.Repo[*common.AuthSession]) authV2.AuthV2Server {
-	return &authGrpcServer{
-		d:           d,
-		sessionRepo: sessionRepo,
+func NewServer(server *googleGrpc.Server, d domain.Domain) rpc_auth.AuthServer {
+	serverImpl := &authGrpcServer{
+		d: d,
 	}
+	rpc_auth.RegisterAuthServer(server, serverImpl)
+	return serverImpl
 }
