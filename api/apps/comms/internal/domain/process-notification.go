@@ -37,23 +37,23 @@ func (c *npClient) Send() error {
 	logger := c.domain.logger
 
 	if err := c.handleTelegram(); err != nil {
-		logger.Errorf(err, "failed to send telegram notification")
+		logger.Error(err.Error(), "failed to send telegram notification")
 	}
 
 	if err := c.handleSlack(); err != nil {
-		logger.Errorf(err, "failed to send slack notification")
+		logger.Error(err.Error(), "failed to send slack notification")
 	}
 
 	if err := c.handleEmail(); err != nil {
-		logger.Errorf(err, "failed to send email notification")
+		logger.Error(err.Error(), "failed to send email notification")
 	}
 
 	if err := c.handleWebhook(); err != nil {
-		logger.Errorf(err, "failed to send webhook notification")
+		logger.Error(err.Error(), "failed to send webhook notification")
 	}
 
 	if err := c.handleConsoleUpdate(); err != nil {
-		logger.Errorf(err, "failed to send console update notification")
+		logger.Error(err.Error(), "failed to send console update notification")
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (c *npClient) Send() error {
 
 func (c *npClient) handleConsoleUpdate() error {
 	// TODO: (@abdheshnayak) - needs to be implemented
-	c.domain.logger.Warnf("console update notification is not implemented")
+	c.domain.logger.Warn("console update notification is not implemented")
 
 	return nil
 }
