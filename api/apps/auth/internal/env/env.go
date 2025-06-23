@@ -6,9 +6,9 @@ import (
 )
 
 type authEnv struct {
-	UserEmailVerificationEnabled bool   `env:"AUTH.USER_EMAIL_VERIFICATION_ENABLED" default:"true"`
-	VerifyTokenKVBucket          string `env:"AUTH.VERIFY_TOKEN_KV_BUCKET" required:"true"`
-	ResetPasswordTokenKVBucket   string `env:"AUTH.RESET_PASSWORD_TOKEN_KV_BUCKET" required:"true"`
+	UserEmailVerificationEnabled bool   `env:"AUTH__USER_EMAIL_VERIFICATION_ENABLED" default:"true"`
+	VerifyTokenKVBucket          string `env:"AUTH__VERIFY_TOKEN_KV_BUCKET" required:"true"`
+	ResetPasswordTokenKVBucket   string `env:"AUTH__RESET_PASSWORD_TOKEN_KV_BUCKET" required:"true"`
 }
 
 type AuthEnv struct {

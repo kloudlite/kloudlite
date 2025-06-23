@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/apps/auth/internal/domain"
 	rpc_auth "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/pkg/repos"
@@ -144,6 +145,7 @@ func (a *authGrpcServer) Login(ctx context.Context, loginRequest *rpc_auth.Login
 }
 
 func NewServer(d domain.Domain) rpc_auth.AuthServer {
+	fmt.Println("Creating new Auth GRPC Server")
 	return &authGrpcServer{
 		d: d,
 	}

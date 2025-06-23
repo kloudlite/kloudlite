@@ -20,12 +20,9 @@ type EmailTemplate struct {
 
 type EmailTemplates struct {
 	AccountInviteEmail    *EmailTemplate
-	ProjectInviteEmail    *EmailTemplate
 	ResetPasswordEmail    *EmailTemplate
 	UserVerificationEmail *EmailTemplate
 	WelcomeEmail          *EmailTemplate
-	WaitingEmail          *EmailTemplate
-	AlertEmail            *EmailTemplate
 	ContactUsEmail        *EmailTemplate
 }
 
@@ -81,17 +78,11 @@ func GetEmailTemplates(et EmailTemplatesDir) (*EmailTemplates, error) {
 		return nil, err
 	}
 
-	alert, err := parseMailTemplate(et, "alert", "[Kloudlite] Console Notification")
-	if err != nil {
-		return nil, err
-	}
-
 	return &EmailTemplates{
 		AccountInviteEmail:    accountInvite,
 		ResetPasswordEmail:    restPassword,
 		UserVerificationEmail: userVerification,
 		WelcomeEmail:          welcome,
 		ContactUsEmail:        contactUs,
-		AlertEmail:            alert,
 	}, nil
 }

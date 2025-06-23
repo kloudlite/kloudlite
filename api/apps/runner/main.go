@@ -157,7 +157,7 @@ func main() {
 			fx.Provide(func(env *env.Env) (*mongo.Database, error) {
 				ctx, cf := context.WithTimeout(context.TODO(), 10*time.Second)
 				defer cf()
-				return repos.NewMongoDatabase(ctx, "mongodb://localhost:27017", "kloudlite")
+				return repos.NewMongoDatabase(ctx, env.MongoUri, env.MongoDbName)
 			}),
 			fx.Invoke(func(db *mongo.Database, lifecycle fx.Lifecycle) {
 				lifecycle.Append(fx.Hook{
