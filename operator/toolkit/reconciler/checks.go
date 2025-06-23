@@ -9,7 +9,7 @@ import (
 
 	"github.com/fatih/color"
 
-	fn "github.com/kloudlite/operator/toolkit/functions"
+	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

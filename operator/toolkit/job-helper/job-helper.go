@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	fn "github.com/kloudlite/operator/toolkit/functions"
+	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"

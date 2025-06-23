@@ -7,13 +7,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// +kubebuilder:object:generate=true
-//type ResourceRef struct {
-//	metav1.TypeMeta `json:",inline" graphql:"children-required"`
-//	Namespace       string `json:"namespace"`
-//	Name            string `json:"name"`
-//}
-
 type Reconciler interface {
 	reconcile.Reconciler
 	SetupWithManager(mgr ctrl.Manager) error
@@ -36,9 +29,4 @@ type Resource interface {
 	GetStatus() *Status
 	GetEnsuredLabels() map[string]string
 	GetEnsuredAnnotations() map[string]string
-}
-
-type CustomResource interface {
-	EnsureGVK()
-	GetStatus() *Status
 }

@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	fn "github.com/kloudlite/operator/toolkit/functions"
+	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 )
 
 type KV struct {

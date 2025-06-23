@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/kloudlite/operator/toolkit/errors"
+	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
 
 	"github.com/gobuffalo/flect"
 )

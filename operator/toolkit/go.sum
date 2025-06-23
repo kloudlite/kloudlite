@@ -107,8 +107,6 @@ github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9G
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
-github.com/nxtcoder17/fastlog v0.0.0-20250621190314-4eb49a156cc4 h1:iKKoxkDngSbXLk+HrpD8jLqRjrIKTVcgIFdgejD9RDs=
-github.com/nxtcoder17/fastlog v0.0.0-20250621190314-4eb49a156cc4/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd h1:bP80t6mgiwIVEpdfZwg/w22GzDcHBgDRVZItH5QWxis=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd/go.mod h1:raSGHj5CMHNHZf4fCV9CWpFk0hsb2CSKFZSPd4zW8JM=
 github.com/onsi/ginkgo/v2 v2.19.0 h1:9Cnnf7UHo57Hy3k6/m5k3dRfGTMXGvxhHFvkDTCTpvA=
