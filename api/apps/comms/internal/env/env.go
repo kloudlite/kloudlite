@@ -6,10 +6,10 @@ import (
 )
 
 type CommsEnv struct {
-	BaseUrl                string `env:"COMMS.BASE_URL" required:"true"`
-	SupportEmail           string `env:"COMMS.SUPPORT_EMAIL" required:"true"`
-	SendgridApiKey         string `env:"COMMS.SENDGRID_API_KEY" required:"true"`
-	NotificationNatsStream string `env:"COMMS.NOTIFICATION_NATS_STREAM" required:"true"`
+	BaseUrl                string `env:"COMMS__BASE_URL" required:"true"`
+	SupportEmail           string `env:"COMMS__SUPPORT_EMAIL" required:"true"`
+	SendgridApiKey         string `env:"COMMS__SENDGRID_API_KEY" required:"true"`
+	NotificationNatsStream string `env:"COMMS__NOTIFICATION_NATS_STREAM" required:"true"`
 }
 
 func LoadEnv() (*CommsEnv, error) {

@@ -2,22 +2,23 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
 
 	"github.com/kloudlite/api/apps/auth/internal/domain"
-	auth_rpc "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	authrpc "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/pkg/errors"
 )
 
 type authInternalGrpcServer struct {
-	auth_rpc.UnimplementedAuthInternalServer
+	authrpc.UnimplementedAuthInternalServer
 	d domain.Domain
 	//sessionRepo kv.Repo[*common.AuthSession]
 }
 
 // GenerateMachineSession implements auth.AuthServer.
-func (a *authInternalGrpcServer) GenerateMachineSession(ctx context.Context, in *auth_rpc.GenerateMachineSessionIn) (*auth_rpc.GenerateMachineSessionOut, error) {
+func (a *authInternalGrpcServer) GenerateMachineSession(ctx context.Context, in *authrpc.GenerateMachineSessionIn) (*authrpc.GenerateMachineSessionOut, error) {
 	//session, err := a.d.MachineLogin(ctx, in.UserId, in.MachineId, in.Cluster)
 	//if err != nil {
 	//	return nil, errors.NewE(err)
@@ -36,21 +37,21 @@ func (a *authInternalGrpcServer) GenerateMachineSession(ctx context.Context, in 
 }
 
 // ClearMachineSessionByMachine implements auth.AuthServer.
-func (a *authInternalGrpcServer) ClearMachineSessionByMachine(context.Context, *auth_rpc.ClearMachineSessionByMachineIn) (*auth_rpc.ClearMachineSessionByMachineOut, error) {
+func (a *authInternalGrpcServer) ClearMachineSessionByMachine(context.Context, *authrpc.ClearMachineSessionByMachineIn) (*authrpc.ClearMachineSessionByMachineOut, error) {
 	panic("unimplemented")
 }
 
 // ClearMachineSessionByTeam implements auth.AuthServer.
-func (a *authInternalGrpcServer) ClearMachineSessionByTeam(context.Context, *auth_rpc.ClearMachineSessionByTeamIn) (*auth_rpc.ClearMachineSessionByTeamOut, error) {
+func (a *authInternalGrpcServer) ClearMachineSessionByTeam(context.Context, *authrpc.ClearMachineSessionByTeamIn) (*authrpc.ClearMachineSessionByTeamOut, error) {
 	panic("unimplemented")
 }
 
 // ClearMachineSessionByUser implements auth.AuthServer.
-func (a *authInternalGrpcServer) ClearMachineSessionByUser(context.Context, *auth_rpc.ClearMachineSessionByUserIn) (*auth_rpc.ClearMachineSessionByUserOut, error) {
+func (a *authInternalGrpcServer) ClearMachineSessionByUser(context.Context, *authrpc.ClearMachineSessionByUserIn) (*authrpc.ClearMachineSessionByUserOut, error) {
 	panic("unimplemented")
 }
 
-func (a *authInternalGrpcServer) GetUser(ctx context.Context, in *auth_rpc.GetUserIn) (*auth_rpc.GetUserOut, error) {
+func (a *authInternalGrpcServer) GetUser(ctx context.Context, in *authrpc.GetUserIn) (*authrpc.GetUserOut, error) {
 	user, err := a.d.GetUserById(ctx, repos.ID(in.UserId))
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -58,20 +59,20 @@ func (a *authInternalGrpcServer) GetUser(ctx context.Context, in *auth_rpc.GetUs
 	if user == nil {
 		return nil, errors.Newf("could not find user with (id=%q)", in.UserId)
 	}
-	return &auth_rpc.GetUserOut{
+	return &authrpc.GetUserOut{
 		Id:    string(user.Id),
 		Email: user.Email,
 		Name:  user.Name,
 	}, nil
 }
 
-func (a *authInternalGrpcServer) FromAccToken(token entities.AccessToken) *auth_rpc.AccessTokenOut {
-	return &auth_rpc.AccessTokenOut{
+func (a *authInternalGrpcServer) FromAccToken(token entities.AccessToken) *authrpc.AccessTokenOut {
+	return &authrpc.AccessTokenOut{
 		Id:       string(token.Id),
 		UserId:   string(token.UserId),
 		Email:    token.Email,
 		Provider: token.Provider,
-		OauthToken: &auth_rpc.OauthToken{
+		OauthToken: &authrpc.OauthToken{
 			AccessToken:  token.Token.AccessToken,
 			TokenType:    token.Token.TokenType,
 			RefreshToken: token.Token.RefreshToken,
@@ -80,7 +81,7 @@ func (a *authInternalGrpcServer) FromAccToken(token entities.AccessToken) *auth_
 	}
 }
 
-func (a *authInternalGrpcServer) EnsureUserByEmail(ctx context.Context, request *auth_rpc.GetUserByEmailRequest) (*auth_rpc.GetUserByEmailOut, error) {
+func (a *authInternalGrpcServer) EnsureUserByEmail(ctx context.Context, request *authrpc.GetUserByEmailRequest) (*authrpc.GetUserByEmailOut, error) {
 	user, err := a.d.GetUserByEmail(ctx, request.Email)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -91,12 +92,13 @@ func (a *authInternalGrpcServer) EnsureUserByEmail(ctx context.Context, request 
 			return nil, errors.NewE(err)
 		}
 	}
-	return &auth_rpc.GetUserByEmailOut{
+	return &authrpc.GetUserByEmailOut{
 		UserId: string(user.Id),
 	}, nil
 }
 
-func NewInternalServer(d domain.Domain) auth_rpc.AuthInternalServer {
+func NewInternalServer(d domain.Domain) authrpc.AuthInternalServer {
+	fmt.Println("Creating new Auth Internal GRPC Server")
 	return &authInternalGrpcServer{
 		d: d,
 	}
