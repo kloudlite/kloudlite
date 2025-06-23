@@ -127,32 +127,6 @@ func (r *commsSvc) SendWelcomeEmail(ctx context.Context, input *comms.WelcomeEma
 	return &comms.Void{}, nil
 }
 
-func (r *commsSvc) SendWaitingEmail(ctx context.Context, input *comms.WelcomeEmailInput) (*comms.Void, error) {
-	plainText := new(bytes.Buffer)
-	args := map[string]any{
-		"Name": func() string {
-			if input.Name != "" {
-				return input.Name
-			}
-			return "there"
-		}(),
-	}
-
-	if err := r.eTemplattes.WaitingEmail.PlainText.Execute(plainText, args); err != nil {
-		return nil, errors.NewEf(err, "failed to execute plain text template")
-	}
-
-	html := new(bytes.Buffer)
-	if err := r.eTemplattes.WaitingEmail.Html.Execute(html, args); err != nil {
-		return nil, errors.NewEf(err, "failed to execute html template")
-	}
-
-	if err := r.sendSupportEmail(ctx, r.eTemplattes.WaitingEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return &comms.Void{}, nil
-}
-
 func (r *commsSvc) SendVerificationEmail(ctx context.Context, input *comms.VerificationEmailInput) (*comms.Void, error) {
 	plainText := new(bytes.Buffer)
 	args := map[string]any{

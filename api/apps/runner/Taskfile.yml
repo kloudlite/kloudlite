@@ -8,8 +8,14 @@ vars:
   app: management
   binary: "./bin/{{.app}}"
 
+env:
+  KUBECONFIG: "../../.dev-k3s-config/k3s.yaml"
+
 tasks:
   run:
     dotenv: [".secrets/oauth.env", ".secrets/env"]
     cmds:
-      - go run main.go --dev
+      - GOOS=linux GOARCH=arm go build -o .bin/runner main.go
+      - kubectl get nodes
+      - echo $KUBECONFIG
+      - kubectl rollout restart deployment/app

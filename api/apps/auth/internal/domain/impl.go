@@ -417,15 +417,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
-		//if _, err := d.commsClient.SendWelcomeEmail(
-		//	ctx, &comms.WelcomeEmailInput{
-		//		Email: user.Email,
-		//		Name:  user.Name,
-		//	},
-		//); err != nil {
-		//	d.logger.Errorf(err)
-		//}
-		if _, err := d.commsClient.SendWaitingEmail(
+		if _, err := d.commsClient.SendWelcomeEmail(
 			ctx, &comms.WelcomeEmailInput{
 				Email: user.Email,
 				Name:  user.Name,

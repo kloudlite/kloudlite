@@ -23,7 +23,6 @@ const (
 	Comms_SendPasswordResetEmail_FullMethodName       = "/Comms/SendPasswordResetEmail"
 	Comms_SendAccountMemberInviteEmail_FullMethodName = "/Comms/SendAccountMemberInviteEmail"
 	Comms_SendWelcomeEmail_FullMethodName             = "/Comms/SendWelcomeEmail"
-	Comms_SendWaitingEmail_FullMethodName             = "/Comms/SendWaitingEmail"
 	Comms_SendContactUsEmail_FullMethodName           = "/Comms/SendContactUsEmail"
 )
 
@@ -35,7 +34,6 @@ type CommsClient interface {
 	SendPasswordResetEmail(ctx context.Context, in *PasswordResetEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendAccountMemberInviteEmail(ctx context.Context, in *AccountMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendWelcomeEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error)
-	SendWaitingEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendContactUsEmail(ctx context.Context, in *SendContactUsEmailInput, opts ...grpc.CallOption) (*Void, error)
 }
 
@@ -83,15 +81,6 @@ func (c *commsClient) SendWelcomeEmail(ctx context.Context, in *WelcomeEmailInpu
 	return out, nil
 }
 
-func (c *commsClient) SendWaitingEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
-	err := c.cc.Invoke(ctx, Comms_SendWaitingEmail_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *commsClient) SendContactUsEmail(ctx context.Context, in *SendContactUsEmailInput, opts ...grpc.CallOption) (*Void, error) {
 	out := new(Void)
 	err := c.cc.Invoke(ctx, Comms_SendContactUsEmail_FullMethodName, in, out, opts...)
@@ -109,7 +98,6 @@ type CommsServer interface {
 	SendPasswordResetEmail(context.Context, *PasswordResetEmailInput) (*Void, error)
 	SendAccountMemberInviteEmail(context.Context, *AccountMemberInviteEmailInput) (*Void, error)
 	SendWelcomeEmail(context.Context, *WelcomeEmailInput) (*Void, error)
-	SendWaitingEmail(context.Context, *WelcomeEmailInput) (*Void, error)
 	SendContactUsEmail(context.Context, *SendContactUsEmailInput) (*Void, error)
 	mustEmbedUnimplementedCommsServer()
 }
@@ -129,9 +117,6 @@ func (UnimplementedCommsServer) SendAccountMemberInviteEmail(context.Context, *A
 }
 func (UnimplementedCommsServer) SendWelcomeEmail(context.Context, *WelcomeEmailInput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendWelcomeEmail not implemented")
-}
-func (UnimplementedCommsServer) SendWaitingEmail(context.Context, *WelcomeEmailInput) (*Void, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendWaitingEmail not implemented")
 }
 func (UnimplementedCommsServer) SendContactUsEmail(context.Context, *SendContactUsEmailInput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendContactUsEmail not implemented")
@@ -221,24 +206,6 @@ func _Comms_SendWelcomeEmail_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Comms_SendWaitingEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WelcomeEmailInput)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CommsServer).SendWaitingEmail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Comms_SendWaitingEmail_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommsServer).SendWaitingEmail(ctx, req.(*WelcomeEmailInput))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Comms_SendContactUsEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SendContactUsEmailInput)
 	if err := dec(in); err != nil {
@@ -279,10 +246,6 @@ var Comms_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendWelcomeEmail",
 			Handler:    _Comms_SendWelcomeEmail_Handler,
-		},
-		{
-			MethodName: "SendWaitingEmail",
-			Handler:    _Comms_SendWaitingEmail_Handler,
 		},
 		{
 			MethodName: "SendContactUsEmail",

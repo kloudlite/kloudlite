@@ -7,7 +7,6 @@ service Comms {
   rpc SendPasswordResetEmail(PasswordResetEmailInput) returns (Void);
   rpc SendAccountMemberInviteEmail(AccountMemberInviteEmailInput) returns (Void);
   rpc SendWelcomeEmail(WelcomeEmailInput) returns (Void);
-  rpc SendWaitingEmail(WelcomeEmailInput) returns (Void);
   rpc SendContactUsEmail(SendContactUsEmailInput) returns (Void);
 }
 
