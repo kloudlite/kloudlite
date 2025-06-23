@@ -15,7 +15,7 @@ const (
 
 // Finalizers
 const (
-	CommonFinalizer        string = "kloudlite.io/finalizer"
+	Finalizer              string = "kloudlite.io/finalizer"
 	ForegroundFinalizer    string = "foregroundDeletion"
 	BillingFinalizer       string = "finalizers.kloudlite.io/billing-watcher"
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
