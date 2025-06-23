@@ -1,0 +1,56 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      serviceAccountName: clus-admin
+      containers:
+        - name: app
+          workingDir: /var/lib/code/apps/runner
+          image: golang:1.23
+          command:
+            - ./.bin/runner
+          envFrom:
+            - secretRef:
+                name: mono-api-env
+          volumeMounts:
+            - name: code-volume
+              mountPath: /var/lib/code
+            - name: go-pkg-volume
+              mountPath: /go/pkg
+      volumes:
+        - name: code-volume
+          hostPath:
+            path: /var/lib/code
+            type: DirectoryOrCreate
+        - name: go-pkg-volume
+          hostPath:
+            path: /var/lib/go/pkg
+            type: DirectoryOrCreate
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+spec:
+  selector:
+    app: app
+  ports:
+    - protocol: TCP
+      name: tcp-8080
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
