@@ -1,10 +1,5 @@
-aws:
-  enabled: false
-  region: ""
-  storage_type: "gp3"
-
 release:
-  name: "kloudlite-stack"
+  name: "kloudlite-platform"
   namespace: "kloudlite"
 
 csi:
@@ -21,11 +16,11 @@ csi:
 cert_manager:
   cluster_issuer:
     name: "cluster-issuer"
-    acme:
-      email: "support@kloudlite.io"
+    ca:
+      secret_name: "mkcert-issuer-key-pair"
 
   wildcard_cert:
-    host: "demo.kloudlite.io"
+    host: "kloudlite.local"
     secret_name: "wildcard-cert"
 
 
@@ -85,5 +80,5 @@ nats:
       max_msgs_per_subject: 1
       work_queue: true
 
-web_host: ""
+web_host: "kloudlite.local"
 kloudlite_release: "v1.1.6-nightly"

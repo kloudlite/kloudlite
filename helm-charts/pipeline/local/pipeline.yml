@@ -1,67 +1,69 @@
 apiVersion: plugin-helm-chart.kloudlite.github.com/v1
 kind: HelmPipeline
 metadata:
-  name: kloudlite-platform
-  namespace: kloudlite
+  name: {{.release.name}}
+  namespace: {{.release.namespace}}
 spec:
   jobVars:
     tolerations:
       - operator: Exists
 
   pipeline:
-    # aws ebs csi driver
-    {{- if .aws.enabled }}
+      # postInstall: |+ #bash
+      #   echo "making sure sc-ext4 is the default storage class"
+      #
+      #   kubectl get sc/local-path -o=jsonpath={.metadata.name}
+      #   exit_code=$?
+      #
+      #   if [ $exit_code -eq 0 ]; then
+      #     kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+      #   fi
+      #
+      #   kubectl get sc/{{.csi.storage_classes.ext4}} -o=jsonpath={.metadata.name}
+      #   exit_code=$?
+      #   if [ $exit_code -eq 0 ]; then
+      #     kubectl patch storageclass {{.csi.storage_classes.ext4}} -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+      #   fi
+    
     - release:
-        name: aws-ebs-csi
+        name: cert-manager
         namespace: kloudlite
       chart:
-        url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-        name: aws-ebs-csi-driver
-        version: 2.22.0
-
-      helmValues:
-        controller:
-          nodeSelector: {{.csi.nodeSelector | toJson}}
-          tolerations: {{.csi.tolerations | toJson}}
-
-        node:
-          nodeSelector: {{.csi.nodeSelector | toJson}}
-          tolerations: {{.csi.tolerations | toJson}}
-
-        storageClasses: 
-          - name: {{.csi.storage_classes.xfs}}
-            volumeBindingMode: "WaitForFirstConsumer"
-            reclaimPolicy: "Retain"
-            parameters:
-              ncrypted: "false"
-              type: {{.csi.storage_type}}
-              fsType: "xfs"
-
-          - name: {{.csi.storage_classes.ext4}}
-            volumeBindingMode: "WaitForFirstConsumer"
-            reclaimPolicy: "Retain"
-            parameters:
-              encrypted: "false"
-              type: {{.csi.storage_type}}
-              fsType: "ext4"
-
+        url: https://charts.jetstack.io
+        name: cert-manager
+        version: "v1.17.2"
       preInstall: |+ #bash
-        # volume snapshot classes
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+        echo "installing cert-manager CRDs"
+        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.2/cert-manager.crds.yaml
+        echo "installed cert-manager CRDs"
 
-        # volume snapshot contents
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+        cat <<EOF | kubectl apply -f -
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+          name: {{.csi.storage_classes.ext4}}
+        parameters:
+          fsType: ext4
+          numberOfReplicas: "1"
+        provisioner: rancher.io/local-path
+        reclaimPolicy: Delete
+        volumeBindingMode: WaitForFirstConsumer
+        allowVolumeExpansion: true
 
-        # volume snapshots
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+        ---
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+          name: {{.csi.storage_classes.xfs}}
+        parameters:
+          fsType: xfs
+          numberOfReplicas: "1"
+        provisioner: rancher.io/local-path
+        reclaimPolicy: Delete
+        volumeBindingMode: WaitForFirstConsumer
+        allowVolumeExpansion: true
+        EOF
 
-        # installing volume snapshot controller RBACs
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
-
-        # installing volume snapshot controller deployment
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
-
-      postInstall: |+ #bash
         echo "making sure sc-ext4 is the default storage class"
 
         kubectl get sc/local-path -o=jsonpath={.metadata.name}
@@ -76,19 +78,6 @@ spec:
         if [ $exit_code -eq 0 ]; then
           kubectl patch storageclass {{.csi.storage_classes.ext4}} -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
         fi
-    {{- end }}
-    
-    - release:
-        name: cert-manager
-        namespace: kloudlite
-      chart:
-        url: https://charts.jetstack.io
-        name: cert-manager
-        version: "v1.17.2"
-      preInstall: |+ #bash
-        echo "installing cert-manager CRDs"
-        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.2/cert-manager.crds.yaml
-        echo "installed cert-manager CRDs"
 
       postInstall: |+ #bash
         cat <<EOF | kubectl apply -f -
@@ -97,25 +86,8 @@ spec:
         metadata:
           name: {{.cert_manager.cluster_issuer.name}}
         spec:
-          acme:
-            email: {{.cert_manager.cluster_issuer.acme.email}}
-            privateKeySecretRef:
-              name: {{.cert_manager.cluster_issuer.name}}
-            server: "https://acme-v02.api.letsencrypt.org/directory"
-            solvers:
-              - dns01:
-                  route53:
-                    region: {{.aws.region}}
-                selector:
-                  dnsNames:
-                    - "{{.cert_manager.wildcard_cert.host}}"
-                    - "*.{{.cert_manager.wildcard_cert.host}}"
-
-              {{- if .ingress_nginx.ingress_class }}
-              - http01:
-                  ingress:
-                    class: {{.ingress_nginx.ingress_class | squote}}
-              {{- end }}
+          ca:
+            secretName: {{.cert_manager.cluster_issuer.ca.secret_name}}
         EOF
 
         {{- if .cert_manager.wildcard_cert.host }}
@@ -351,6 +323,21 @@ spec:
         ingress:
           ingressClass: {{.ingress_nginx.ingress_class}}
 
+    - release:
+        name: kloudlite-wireguard
+        namespace: kloudlite
+      chart:
+        url: https://kloudlite.github.io/wireguard
+        name: kloudlite-wireguard
+        version: "v1.0.0"
+
+      helmValues: {}
+
+      preInstall: |+ #bash
+        kubectl apply -f https://github.com/kloudlite/wireguard/releases/download/v1.0.0/crds.yml
+
+      postInstall: |+ #bash
+        kubectl apply -f https://raw.githubusercontent.com/kloudlite/wireguard/refs/tags/v1.0.0/examples/server.yml
 
     - release:
         name: kloudlite-platform
