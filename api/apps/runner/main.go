@@ -4,6 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
+	"net"
+	"os"
+	"time"
+
 	accountsapp "github.com/kloudlite/api/apps/accounts/fx-app"
 	authapp "github.com/kloudlite/api/apps/auth/fx-app"
 	commsapp "github.com/kloudlite/api/apps/comms/fx-app"
@@ -23,10 +28,6 @@ import (
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log/slog"
-	"net"
-	"os"
-	"time"
 )
 
 func main() {
@@ -113,7 +114,7 @@ func main() {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
-							listener, err := net.Listen("tcp", fmt.Sprintf(":%d", env.GrpcPort))
+							listener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", env.GrpcPort))
 							if err != nil {
 								return errors.NewEf(err, "could not listen on port %d", env.GrpcPort)
 							}

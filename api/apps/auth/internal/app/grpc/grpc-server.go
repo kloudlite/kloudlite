@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"fmt"
+
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
 
@@ -98,7 +98,6 @@ func (a *authInternalGrpcServer) EnsureUserByEmail(ctx context.Context, request 
 }
 
 func NewInternalServer(d domain.Domain) authrpc.AuthInternalServer {
-	fmt.Println("Creating new Auth Internal GRPC Server")
 	return &authInternalGrpcServer{
 		d: d,
 	}

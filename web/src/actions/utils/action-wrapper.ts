@@ -6,7 +6,6 @@ export function actionWrapper<T, Args extends unknown[]>(
       const result = await action(...args);
       return [result, null] as [T, null];
     } catch (error) {
-      console.error("Action failed:", error);
       return [null, error as Error] as [null, Error];
     }
   };
