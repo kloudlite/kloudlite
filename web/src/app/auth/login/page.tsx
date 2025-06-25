@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import LoginForm from "../_components/login-form";
-import { SessionProvider, getProviders } from "next-auth/react";
+import { getProviders } from "next-auth/react";
 
 export default async function Home() {
   const loginWithEmailEnabled = process.env.ALLOW_LOGIN_WITH_EMAIL === "true";

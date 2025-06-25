@@ -5,6 +5,7 @@ services:
     command: ["server", "--token=aksdh83j2gh3"]
     ports:
       - "6443:6443"
+      - "8080:8080"
     volumes:
       - .:/var/lib/code
       - ./dev-env:/var/lib/rancher/k3s/server/manifests/kloudlite-services
