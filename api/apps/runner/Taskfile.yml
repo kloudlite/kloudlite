@@ -16,6 +16,6 @@ tasks:
     dotenv: [".secrets/oauth.env", ".secrets/env"]
     cmds:
       - GOOS=linux GOARCH=arm go build -o .bin/runner main.go
-      - kubectl get nodes
-      - echo $KUBECONFIG
       - kubectl rollout restart deployment/app
+      - kubectl rollout status deployment/app --watch=true
+      - POD=$(kubectl get pods -l app=app -o jsonpath="{.items[-1].metadata.name}") && kubectl logs -f $POD
