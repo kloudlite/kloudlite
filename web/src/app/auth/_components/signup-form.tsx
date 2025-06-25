@@ -1,6 +1,6 @@
 "use client";
 
-import { login, signup } from "@/actions/auth";
+import { signup } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,9 +21,10 @@ import {
 } from "@/components/ui/form";
 import { HoverCardContent } from "@/components/ui/hover-card";
 import { HoverCard, HoverCardTrigger } from "@radix-ui/react-hover-card";
-import { Lock, LockIcon, LogIn, ScanFace } from "lucide-react";
+import { LockIcon, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function SignupForm() {
   const form = useForm();
@@ -31,7 +32,10 @@ export default function SignupForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(async (data) => {
-          await signup(data.name, data.email, data.password);
+          const [_, error] = await signup(data.name, data.email, data.password);
+          if (error) {
+            toast.error(`Signup failed: ${error.message}`);
+          }
         })}
       >
         <Card className="w-[400px] mx-auto mt-20">
