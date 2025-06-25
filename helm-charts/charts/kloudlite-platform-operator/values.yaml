@@ -1,0 +1,22 @@
+nodeSelector: {}
+tolerations: []
+affinity: {}
+clusterInternalDNS: "cluster.local"
+
+image:
+  name: ghcr.io/kloudlite/kloudlite/operator/platform
+  tag: ""
+
+helmJobRunnerImage:
+  name: "ghcr.io/kloudlite/plugin-helm-chart/helm-job-runner"
+  tag: "v1.0.0"
+
+infrastructureAsCodeImage:
+  name: "ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job"
+  tag: ""
+
+certManager:
+  clusterIssuer: "cluster-issuer"
+
+ingress:
+  ingressClass: "nginx"

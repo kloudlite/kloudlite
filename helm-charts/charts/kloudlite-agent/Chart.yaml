@@ -1,0 +1,10 @@
+apiVersion: v2
+name: kloudlite-agent
+description: Kloudlite Agent to make your kubernetes cluster communicate securely with kloudlite control plane
+icon: https://avatars.githubusercontent.com/u/98086655
+
+type: application
+
+version: "v1.1.5"
+appVersion: "v1.1.5"
+

@@ -1,0 +1,89 @@
+aws:
+  enabled: false
+  region: ""
+  storage_type: "gp3"
+
+release:
+  name: "kloudlite-stack"
+  namespace: "kloudlite"
+
+csi:
+  # aws storage type
+  storage_type: "gp3"
+
+  storage_classes:
+    xfs: sc-xfs
+    ext4: sc-ext4
+
+  nodeSelector: {}
+  tolerations:  []
+
+cert_manager:
+  cluster_issuer:
+    name: "cluster-issuer"
+    acme:
+      email: "support@kloudlite.io"
+
+  wildcard_cert:
+    host: "demo.kloudlite.io"
+    secret_name: "wildcard-cert"
+
+
+  nodeSelector: {}
+  tolerations: []
+
+ingress_nginx:
+  ingress_class: "nginx"
+
+nats:
+  nodeSelector: {}
+  tolerations: []
+
+  storage: "5Gi"
+
+  buckets:
+    - name: "auth-session"
+      storage: "file"
+
+    - name: "auth-verify-token"
+      storage: "file"
+
+    - name: auth-reset-token
+      storage: file
+
+    - name: console-cache
+      storage: file
+
+  streams:
+    - name: events
+      subject: 'events.>'
+      max_msg_bytes: "500kB"
+      max_msgs_per_subject: 2
+      work_queue: false
+
+    - name: resource-sync
+      subject: 'resource-sync.>'
+      max_msg_bytes: "500kB"
+      max_msgs_per_subject: 2
+      work_queue: false
+
+    - name: send-to-agent
+      subject: 'send-to-agent.>'
+      max_msg_bytes: "500kB"
+      max_msgs_per_subject: 2
+      work_queue: true
+
+    - name: receive-from-agent
+      subject: 'receive-from-agent.>'
+      max_msg_bytes: "500kB"
+      max_msgs_per_subject: 1
+      work_queue: true
+
+    - name: infra-internal-events
+      subject: 'infra-internal-events.>'
+      max_msg_bytes: "500kB"
+      max_msgs_per_subject: 1
+      work_queue: true
+
+web_host: ""
+kloudlite_release: "v1.1.6-nightly"
