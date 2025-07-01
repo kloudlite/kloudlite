@@ -17,7 +17,7 @@ type CheckDefinition struct {
 type Status struct {
 	// +kubebuilder:validation:Optional
 	IsReady bool `json:"isReady"`
-	//Resources []ResourceRef `json:"resources,omitempty"`
+	// Resources []ResourceRef `json:"resources,omitempty"`
 
 	CheckList           []CheckDefinition      `json:"checkList,omitempty"`
 	Checks              map[string]CheckResult `json:"checks,omitempty"`

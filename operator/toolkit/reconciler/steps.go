@@ -53,6 +53,14 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		checkList = append(checkList, CheckDefinition{Name: "create/" + steps[i].Name, Title: "[Create] " + steps[i].Title})
 	}
 
+	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureCheckList(checkList); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -68,5 +76,9 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		}
 	}
 
+	req.Object.GetStatus().IsReady = true
+	if err := req.statusUpdate(); err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }

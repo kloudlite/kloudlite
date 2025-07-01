@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/nxtcoder17/go.pkgs/log"
+	"github.com/nxtcoder17/fastlog"
+
+	// "github.com/nxtcoder17/go.pkgs/log"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -74,12 +77,22 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 
 	resource.EnsureGVK()
 
+	logger := fastlog.New(fastlog.Options{
+		Writer:        os.Stderr,
+		Format:        fastlog.LogfmtFormat,
+		LogLevel:      slog.LevelInfo,
+		ShowDebugLogs: false,
+		ShowCaller:    true,
+		ShowTimestamp: false,
+		EnableColors:  true,
+	})
+
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         log.DefaultLogger().SkipFrames(1).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
-		internalLogger: log.DefaultLogger().SkipFrames(4).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
+		Logger:         logger.Clone(fastlog.Options{SkipCallerFrames: 1}).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
+		internalLogger: logger.Clone().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
 		KV:             KV{},
 	}, nil
 }

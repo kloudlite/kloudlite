@@ -34,3 +34,7 @@ const (
 const (
 	KloudliteDNSHostnameKey string = "kloudlite.io/dns.hostname"
 )
+
+const (
+	ObservabilityAnnotationKey string = "kloudlite.io/observability"
+)

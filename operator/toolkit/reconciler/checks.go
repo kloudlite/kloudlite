@@ -145,10 +145,9 @@ func (c *Check[T]) Requeue(duration ...time.Duration) StepResult {
 	return c.result()
 }
 
-// Aborts current check
-// It can be used to wait checking till next event
-func (c *Check[T]) Abort() StepResult {
-	return c.result()
+// Abort aborts current check
+func (c *Check[T]) Abort(msg string) StepResult {
+	return c.Errored(fmt.Errorf(msg))
 }
 
 func (c *Check[T]) Passed() StepResult {
