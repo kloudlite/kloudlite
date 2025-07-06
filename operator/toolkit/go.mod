@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/gobuffalo/flect v1.0.2
 	github.com/matoous/go-nanoid/v2 v2.0.0
-	github.com/nxtcoder17/fastlog v0.0.0-20250701185832-92c79412c38a
+	github.com/nxtcoder17/fastlog v0.0.0-20250702035423-1739653a5c24
 	github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.27.0

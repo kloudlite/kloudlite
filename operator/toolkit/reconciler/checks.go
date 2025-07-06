@@ -41,8 +41,8 @@ type CheckResult struct {
 }
 
 func AreChecksEqual(c1 CheckResult, c2 CheckResult) bool {
-	c1.StartedAt = fn.New(fn.DefaultIfNil[metav1.Time](c1.StartedAt))
-	c2.StartedAt = fn.New(fn.DefaultIfNil[metav1.Time](c1.StartedAt))
+	c1.StartedAt = fn.New(fn.DefaultIfNil(c1.StartedAt))
+	c2.StartedAt = fn.New(fn.DefaultIfNil(c1.StartedAt))
 
 	return c1.Generation == c2.Generation &&
 		c1.State == c2.State &&
@@ -62,22 +62,21 @@ func (c *Check[T]) result() StepResult {
 
 func (c *Check[T]) preCheck() {
 	blue := color.New(color.FgBlue).SprintFunc()
-	c.request.internalLogger.Info(fmt.Sprintf(blue("check start"), "check.name", c.name, "check.state", c.State))
+	c.request.internalLogger.Info(blue("check start"), "check.name", c.name, "check.state", c.State)
 }
 
 func (c *Check[T]) postCheck() {
 	fg := color.New(color.FgHiGreen, color.Bold).SprintFunc()
-	args := []string{
+	args := []any{
 		"check.name", c.name,
-		"check.state", c.State.String(),
+		"check.state", c.State,
 		"check.time_taken", fmt.Sprintf("%.2fs", time.Since(c.StartedAt.Time).Seconds()),
 	}
 	if c.State == FailedState || c.State == ErroredState {
 		fg = color.New(color.FgRed).SprintFunc()
 		args = append(args, "check.message", c.Message)
 	}
-	// FIXME: must be args...
-	c.request.internalLogger.Info(fg("check end"), args)
+	c.request.internalLogger.Info(fg("check end"), args...)
 }
 
 // Query

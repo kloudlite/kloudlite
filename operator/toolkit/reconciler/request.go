@@ -79,7 +79,7 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 
 	logger := fastlog.New(fastlog.Options{
 		Writer:        os.Stderr,
-		Format:        fastlog.LogfmtFormat,
+		Format:        fastlog.ConsoleFormat,
 		LogLevel:      slog.LevelInfo,
 		ShowDebugLogs: false,
 		ShowCaller:    true,
@@ -91,8 +91,8 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         logger.Clone(fastlog.Options{SkipCallerFrames: 1}).With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
-		internalLogger: logger.Clone().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()).Slog(),
+		Logger:         logger.Clone(fastlog.Options{SkipCallerFrames: 1}).Slog().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
+		internalLogger: logger.Clone().Slog().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
 		KV:             KV{},
 	}, nil
 }
@@ -113,18 +113,15 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
 		if x == nil {
 			x = make(map[string]string, len(labels))
 		}
-		for k, v := range labels {
-			x[k] = v
-		}
+		maps.Copy(x, labels)
 		r.Object.SetLabels(x)
 
 		y := r.Object.GetAnnotations()
 		if y == nil {
 			y = make(map[string]string, len(annotations))
 		}
-		for k, v := range annotations {
-			y[k] = v
-		}
+
+		maps.Copy(y, annotations)
 		r.Object.SetAnnotations(y)
 		if err := r.client.Update(r.ctx, r.Object); err != nil {
 			return newStepResult().Err(err)
@@ -156,22 +153,6 @@ func (r *Request[T]) EnsureCheckList(expected []CheckDefinition) StepResult {
 
 	return newStepResult().Continue(true)
 }
-
-//func (r *Request[T]) EnsureChecks(names ...string) step_result.Result {
-//	return step_result.New().Continue(true)
-//	// obj, ctx := r.Object, r.Context()
-//	//
-//	// checks := fn.MapMerge(obj.GetStatus().Checks)
-//	// updated := ensureChecks(checks, names...)
-//	//
-//	// if updated {
-//	// 	obj.GetStatus().Checks = checks
-//	// 	if err := r.client.Status().Update(ctx, obj); err != nil {
-//	// 		return r.Done().Err(err)
-//	// 	}
-//	// }
-//	// return step_result.New().Continue(true)
-//}
 
 func (r *Request[T]) ClearStatusIfAnnotated() StepResult {
 	obj := r.Object
@@ -257,29 +238,6 @@ func (r *Request[T]) statusUpdate() error {
 	return r.client.Status().Update(r.ctx, r.Object)
 }
 
-//func (r *Request[T]) Done(result ...ctrl.Result) step_result.Result {
-//	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
-//	if err := r.client.Status().Update(context.TODO(), r.Object); err != nil {
-//		return step_result.New().Err(err)
-//	}
-//	if len(result) > 0 {
-//		return step_result.New().RequeueAfter(result[0].RequeueAfter)
-//	}
-//	return step_result.New()
-//}
-//
-//func (r *Request[T]) Next() step_result.Result {
-//	return step_result.New().Continue(true)
-//}
-//
-//func (r *Request[T]) Finalize() step_result.Result {
-//	controllerutil.RemoveFinalizer(r.Object, Finalizer)
-//	controllerutil.RemoveFinalizer(r.Object, ForegroundFinalizer)
-//	controllerutil.RemoveFinalizer(r.Object, "finalizers.kloudlite.io")
-//	controllerutil.RemoveFinalizer(r.Object, "finalizers.kloudlite.io/watch") // Keep till all clusters are updated to v1.0.4
-//	return step_result.New().Err(r.client.Update(r.ctx, r.Object))
-//}
-
 func (r *Request[T]) PreReconcile() {
 	blue := color.New(color.FgBlue).SprintFunc()
 	r.startedAt = time.Now()
@@ -364,118 +322,3 @@ func (r *Request[T]) PostReconcile() {
 	green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 	r.internalLogger.Info(fmt.Sprintf(green("[reconcile:end] (took: %.2fs) complete"), tDiff))
 }
-
-//func (r *Request[T]) LogPreCheck(checkName string) {
-//	blue := color.New(color.FgBlue).SprintFunc()
-//	r.timerMap[checkName] = time.Now()
-//	if check, ok := r.Object.GetStatus().Checks[checkName]; ok {
-//		r.internalLogger.Info(fmt.Sprintf(blue("[check:start]"), "check.name", checkName, "check.state", check.State))
-//	}
-//}
-//
-//func (r *Request[T]) LogPostCheck(checkName string) {
-//	check, ok := r.Object.GetStatus().Checks[checkName]
-//	if ok {
-//		fg := color.New(color.FgHiGreen, color.Bold).SprintFunc()
-//		args := []string{
-//			"check.name", checkName,
-//			"check.state", check.State.String(),
-//			"check.time_taken", fmt.Sprintf("%.2fs", time.Since(r.timerMap[checkName]).Seconds()),
-//		}
-//		if check.State == FailedState || check.State == ErroredState {
-//			fg = color.New(color.FgRed).SprintFunc()
-//			args = append(args, "check.message", check.Message)
-//		}
-//		// FIXME: must be args...
-//		r.internalLogger.Info(fg("check end"), args)
-//	}
-//}
-
-//func (r *Request[T]) GetOwnedResources() []ResourceRef {
-//	return r.resourceRefs
-//}
-
-//func (r *Request[T]) GetOwnedK8sResources() []client.Object {
-//	kresources := make([]client.Object, len(r.resourceRefs))
-//
-//	for i := range r.resourceRefs {
-//		kresources[i] = &unstructured.Unstructured{
-//			Object: map[string]any{
-//				"apiVersion": r.resourceRefs[i].APIVersion,
-//				"kind":       r.resourceRefs[i].Kind,
-//				"metadata": map[string]any{
-//					"name":      r.resourceRefs[i].Name,
-//					"namespace": r.resourceRefs[i].Namespace,
-//				},
-//			},
-//		}
-//	}
-//
-//	return kresources
-//}
-
-//func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
-//	r.resourceRefs = append(r.resourceRefs, refs...)
-//}
-
-//func (r *Request[T]) CleanupOwnedResources(check *Check[T]) step_result.Result {
-//	resources := r.Object.GetStatus().Resources
-//	objects := make([]client.Object, 0, len(resources))
-//	for i := range resources {
-//		objects = append(objects, &unstructured.Unstructured{Object: map[string]any{
-//			"apiVersion": resources[i].APIVersion,
-//			"kind":       resources[i].Kind,
-//			"metadata": map[string]any{
-//				"name":      resources[i].Name,
-//				"namespace": resources[i].Namespace,
-//			},
-//		}})
-//	}
-//
-//	if err := fn.DeleteAndWait(r.Context(), r.Logger, r.client, objects...); err != nil {
-//		return check.Errored(err).RequeueAfter(2 * time.Second)
-//	}
-//
-//	return check.Passed()
-//}
-
-/*
-INFO: this should only be used for very specific cases, where there is no other way to cleanup owned resources
-Like, when deleting ManagedService
-  - all managed resources should be deleted, but since owner is already getting deleted, there is no point in their proper cleanup
-*/
-//func (r *Request[T]) ForceCleanupOwnedResources(check *Check[T]) step_result.Result {
-//	ctx := r.Context()
-//	resources := r.Object.GetStatus().Resources
-//
-//	objects := make([]client.Object, 0, len(resources))
-//
-//	for i := range resources {
-//		res := &unstructured.Unstructured{Object: map[string]any{
-//			"apiVersion": resources[i].APIVersion,
-//			"kind":       resources[i].Kind,
-//			"metadata": map[string]any{
-//				"name":      resources[i].Name,
-//				"namespace": resources[i].Namespace,
-//			},
-//		}}
-//		objects = append(objects, res)
-//	}
-//
-//	if err := fn.ForceDelete(ctx, r.Logger, r.client, objects...); err != nil {
-//		return check.Errored(err)
-//	}
-//
-//	return check.Passed()
-//}
-//
-//func ParseResourceRef(obj client.Object) ResourceRef {
-//	return ResourceRef{
-//		TypeMeta: metav1.TypeMeta{
-//			Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
-//			APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-//		},
-//		Namespace: obj.GetNamespace(),
-//		Name:      obj.GetName(),
-//	}
-//}

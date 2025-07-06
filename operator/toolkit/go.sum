@@ -111,6 +111,12 @@ github.com/nxtcoder17/fastlog v0.0.0-20250628072834-ab1dc06bb37d h1:koRDQfPIagfn
 github.com/nxtcoder17/fastlog v0.0.0-20250628072834-ab1dc06bb37d/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
 github.com/nxtcoder17/fastlog v0.0.0-20250701185832-92c79412c38a h1:kS6mwvhYA1GuvTnQFd69fQnttTX607kaQvXodbyqNk8=
 github.com/nxtcoder17/fastlog v0.0.0-20250701185832-92c79412c38a/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
+github.com/nxtcoder17/fastlog v0.0.0-20250701194024-7ea59ec699ae h1:VjnlIgsbQD6fzs1AFnXx9Hw8lFeqmYiXTFm9kNyA4Gw=
+github.com/nxtcoder17/fastlog v0.0.0-20250701194024-7ea59ec699ae/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
+github.com/nxtcoder17/fastlog v0.0.0-20250701195932-37bf116aed2c h1:+kGNZZ1nUU6BOhVcXG8Rtkbqdf5aYOFke4yJuNz8JrM=
+github.com/nxtcoder17/fastlog v0.0.0-20250701195932-37bf116aed2c/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
+github.com/nxtcoder17/fastlog v0.0.0-20250702035423-1739653a5c24 h1:oLLpFv1p7jRRrrsZzyf77pECLAMKrTxzHRSoHNRoELw=
+github.com/nxtcoder17/fastlog v0.0.0-20250702035423-1739653a5c24/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd h1:bP80t6mgiwIVEpdfZwg/w22GzDcHBgDRVZItH5QWxis=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd/go.mod h1:raSGHj5CMHNHZf4fCV9CWpFk0hsb2CSKFZSPd4zW8JM=
 github.com/onsi/ginkgo/v2 v2.19.0 h1:9Cnnf7UHo57Hy3k6/m5k3dRfGTMXGvxhHFvkDTCTpvA=
