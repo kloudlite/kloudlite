@@ -1,0 +1,9 @@
+apiVersion: kloudlite.io/v1
+kind: App
+metadata:
+  labels:
+    app.kubernetes.io/name: operator-v2
+    app.kubernetes.io/managed-by: kustomize
+  name: app-sample
+spec:
+  # TODO(user): Add fields here
