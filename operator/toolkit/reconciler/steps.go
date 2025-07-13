@@ -11,6 +11,9 @@ type Step[T Resource] struct {
 	Title    string
 	OnCreate func(check *Check[T], obj T) StepResult
 	OnDelete func(check *Check[T], obj T) StepResult
+
+	// Enabled, if not set will be considered true
+	Enabled *bool
 }
 
 func isBeingDeleted(obj client.Object) bool {
@@ -21,7 +24,9 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 	checkList := make([]CheckDefinition, 0, len(steps))
 	if isBeingDeleted(req.Object) {
 		for i := range steps {
-			checkList = append(checkList, CheckDefinition{Name: "delete/" + steps[i].Name, Title: "Delete " + steps[i].Title})
+			if steps[i].Enabled == nil || *steps[i].Enabled {
+				checkList = append(checkList, CheckDefinition{Name: "delete/" + steps[i].Name, Title: "Delete " + steps[i].Title})
+			}
 		}
 
 		if step := req.EnsureCheckList(checkList); !step.ShouldProceed() {
@@ -50,7 +55,9 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 	}
 
 	for i := range steps {
-		checkList = append(checkList, CheckDefinition{Name: "create/" + steps[i].Name, Title: "[Create] " + steps[i].Title})
+		if steps[i].Enabled == nil || *steps[i].Enabled {
+			checkList = append(checkList, CheckDefinition{Name: "create/" + steps[i].Name, Title: "[Create] " + steps[i].Title})
+		}
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
