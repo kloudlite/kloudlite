@@ -1,200 +1,1028 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
-@theme inline {
+/* ================================================================
+   Tailwind CSS v4 Design System Theme Configuration
+   ================================================================
+   
+   This theme configuration provides a comprehensive design token
+   system for building consistent, scalable UI components.
+   
+   Organization:
+   1. Color Palettes - Foundation colors for the entire system
+   2. Typography - Font families, sizes, and line heights
+   3. Spacing - Consistent spacing scale based on 4px units
+   4. Border Radius - Corner radius tokens for components
+   5. Shadows - Elevation and depth system
+   6. Z-Index - Layering scale for overlapping elements
+   7. Animation - Motion tokens for interactions
+   8. Semantic Mappings - Component-specific token mappings
+   ================================================================ */
+
+@theme {
+  /* ================================================================
+     COLOR SYSTEM
+     ================================================================
+     
+     Our color system consists of:
+     - Foundation palettes: Full spectrum of each color
+     - Semantic colors: Purpose-driven color assignments
+     - Interactive states: Hover, active, and focus variations
+     ================================================================ */
+  
+  /* ----------------------------------------------------------------
+     Neutral Colors (Gray)
+     ----------------------------------------------------------------
+     Used for text, borders, backgrounds, and UI elements.
+     50-200: Light backgrounds and borders
+     300-500: Secondary text and icons
+     600-800: Primary text and dark backgrounds
+     900-950: High contrast text and dark mode backgrounds
+     ---------------------------------------------------------------- */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  /* ----------------------------------------------------------------
+     Brand Colors
+     ---------------------------------------------------------------- */
+  
+  /* Primary (Blue) - Main brand color for primary actions */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* Accent (Indigo) - Secondary brand color for accents */
+  --color-accent-50: #eef2ff;
+  --color-accent-100: #e0e7ff;
+  --color-accent-200: #c7d2fe;
+  --color-accent-300: #a5b4fc;
+  --color-accent-400: #818cf8;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-700: #4338ca;
+  --color-accent-800: #3730a3;
+  --color-accent-900: #312e81;
+  --color-accent-950: #1e1b4b;
+
+  /* ----------------------------------------------------------------
+     Supplementary Colors
+     ----------------------------------------------------------------
+     Additional colors for variety in data visualization,
+     tags, badges, and decorative elements.
+     ---------------------------------------------------------------- */
+  
+  /* Purple - Creative and premium features */
+  --color-purple-50: #faf5ff;
+  --color-purple-100: #f3e8ff;
+  --color-purple-200: #e9d5ff;
+  --color-purple-300: #d8b4fe;
+  --color-purple-400: #c084fc;
+  --color-purple-500: #a855f7;
+  --color-purple-600: #9333ea;
+  --color-purple-700: #7c3aed;
+  --color-purple-800: #6b21a8;
+  --color-purple-900: #581c87;
+  --color-purple-950: #3b0764;
+
+  /* Teal - Fresh and modern accents */
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-teal-950: #042f2e;
+
+  /* Orange - Energy and attention */
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+  --color-orange-950: #431407;
+
+  /* Pink - Playful highlights */
+  --color-pink-50: #fdf2f8;
+  --color-pink-100: #fce7f3;
+  --color-pink-200: #fbcfe8;
+  --color-pink-300: #f9a8d4;
+  --color-pink-400: #f472b6;
+  --color-pink-500: #ec4899;
+  --color-pink-600: #db2777;
+  --color-pink-700: #be185d;
+  --color-pink-800: #9d174d;
+  --color-pink-900: #831843;
+  --color-pink-950: #500724;
+  
+  /* Cyan - Cool and informative */
+  --color-cyan-50: #ecfeff;
+  --color-cyan-100: #cffafe;
+  --color-cyan-200: #a5f3fc;
+  --color-cyan-300: #67e8f9;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-cyan-700: #0e7490;
+  --color-cyan-800: #155e75;
+  --color-cyan-900: #164e63;
+  --color-cyan-950: #083344;
+  
+  /* Lime - Positive and fresh */
+  --color-lime-50: #f7fee7;
+  --color-lime-100: #ecfccb;
+  --color-lime-200: #d9f99d;
+  --color-lime-300: #bef264;
+  --color-lime-400: #a3e635;
+  --color-lime-500: #84cc16;
+  --color-lime-600: #65a30d;
+  --color-lime-700: #4d7c0f;
+  --color-lime-800: #3f6212;
+  --color-lime-900: #365314;
+  --color-lime-950: #1a2e05;
+
+  /* ----------------------------------------------------------------
+     Semantic Colors
+     ----------------------------------------------------------------
+     Purpose-driven colors for consistent messaging across
+     the interface. Each includes a full palette for flexibility.
+     ---------------------------------------------------------------- */
+  
+  /* Success (Green) - Positive actions, confirmations, success states */
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  --color-green-800: #166534;
+  --color-green-900: #14532d;
+  --color-green-950: #052e16;
+  
+  /* Destructive (Red) - Errors, deletions, critical actions */
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+  --color-red-950: #450a0a;
+  
+  /* Info (Blue) - Informational messages, links */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
+  
+  /* Warning (Amber) - Warnings, cautions, attention needed */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
+
+  /* ================================================================
+     SPACING SYSTEM
+     ================================================================
+     
+     Based on a 4px unit system for consistent rhythm.
+     Use these tokens for margin, padding, gap, and positioning.
+     
+     Scale: 0, 1px, 2px (0.5), 4px (1), 8px (2), 12px (3), etc.
+     ================================================================ */
+  
+  --spacing-0: 0px;              /* No space */
+  --spacing-px: 1px;             /* Hairline */
+  --spacing-0_5: 0.125rem;       /* 2px - Micro */
+  --spacing-1: 0.25rem;          /* 4px - Smallest */
+  --spacing-1_5: 0.375rem;       /* 6px */
+  --spacing-2: 0.5rem;           /* 8px - Small */
+  --spacing-2_5: 0.625rem;       /* 10px */
+  --spacing-3: 0.75rem;          /* 12px - Compact */
+  --spacing-3_5: 0.875rem;       /* 14px */
+  --spacing-4: 1rem;             /* 16px - Default */
+  --spacing-5: 1.25rem;          /* 20px */
+  --spacing-6: 1.5rem;           /* 24px - Medium */
+  --spacing-7: 1.75rem;          /* 28px */
+  --spacing-8: 2rem;             /* 32px - Large */
+  --spacing-9: 2.25rem;          /* 36px */
+  --spacing-10: 2.5rem;          /* 40px */
+  --spacing-11: 2.75rem;         /* 44px */
+  --spacing-12: 3rem;            /* 48px - Extra large */
+  --spacing-14: 3.5rem;          /* 56px */
+  --spacing-16: 4rem;            /* 64px - Huge */
+  --spacing-20: 5rem;            /* 80px */
+  --spacing-24: 6rem;            /* 96px */
+  --spacing-28: 7rem;            /* 112px */
+  --spacing-32: 8rem;            /* 128px */
+  --spacing-36: 9rem;            /* 144px */
+  --spacing-40: 10rem;           /* 160px */
+  --spacing-44: 11rem;           /* 176px */
+  --spacing-48: 12rem;           /* 192px */
+  --spacing-52: 13rem;           /* 208px */
+  --spacing-56: 14rem;           /* 224px */
+  --spacing-60: 15rem;           /* 240px */
+  --spacing-64: 16rem;           /* 256px */
+  --spacing-72: 18rem;           /* 288px */
+  --spacing-80: 20rem;           /* 320px */
+  --spacing-96: 24rem;           /* 384px */
+
+  /* ================================================================
+     TYPOGRAPHY SYSTEM
+     ================================================================
+     
+     Font families, sizes, weights, and related properties for
+     consistent typography across the design system.
+     ================================================================ */
+  
+  /* Font Families */
+  --font-family-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* Font Sizes with Line Heights
+     Each size includes its optimal line height for readability */
+  --font-size-xs: 0.75rem;           /* 12px */
+  --font-size-xs--line-height: 1rem;  /* 16px */
+  
+  --font-size-sm: 0.875rem;          /* 14px */
+  --font-size-sm--line-height: 1.25rem; /* 20px */
+  
+  --font-size-base: 1rem;            /* 16px - Default */
+  --font-size-base--line-height: 1.5rem; /* 24px */
+  
+  --font-size-lg: 1.125rem;          /* 18px */
+  --font-size-lg--line-height: 1.75rem; /* 28px */
+  
+  --font-size-xl: 1.25rem;           /* 20px */
+  --font-size-xl--line-height: 1.75rem; /* 28px */
+  
+  --font-size-2xl: 1.5rem;           /* 24px */
+  --font-size-2xl--line-height: 2rem; /* 32px */
+  
+  --font-size-3xl: 1.875rem;         /* 30px */
+  --font-size-3xl--line-height: 2.25rem; /* 36px */
+  
+  --font-size-4xl: 2.25rem;          /* 36px */
+  --font-size-4xl--line-height: 2.5rem; /* 40px */
+  
+  --font-size-5xl: 3rem;             /* 48px */
+  --font-size-5xl--line-height: 1;   /* No leading */
+  
+  --font-size-6xl: 3.75rem;          /* 60px */
+  --font-size-6xl--line-height: 1;   /* No leading */
+
+  /* Font Weights */
+  --font-weight-normal: 400;     /* Regular text */
+  --font-weight-medium: 500;     /* Emphasis */
+  --font-weight-semibold: 600;   /* Headers */
+  --font-weight-bold: 700;       /* Strong emphasis */
+
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.025em;  /* Tighter tracking */
+  --letter-spacing-normal: 0em;      /* Default tracking */
+  --letter-spacing-wide: 0.025em;    /* Looser tracking */
+
+  /* Line Heights (Unitless) */
+  --line-height-none: 1;         /* Single spaced */
+  --line-height-tight: 1.25;     /* Tight leading */
+  --line-height-snug: 1.375;     /* Slightly tight */
+  --line-height-normal: 1.5;     /* Default leading */
+  --line-height-relaxed: 1.625;  /* Slightly loose */
+  --line-height-loose: 2;        /* Double spaced */
+
+  /* ================================================================
+     BORDER RADIUS SYSTEM
+     ================================================================
+     
+     Corner radius tokens for consistent rounded corners.
+     Based on an 8px default radius for modern, friendly UI.
+     ================================================================ */
+  
+  --radius: 0.5rem;              /* 8px - Default radius */
+  --radius-none: 0px;            /* Square corners */
+  --radius-sm: 0.25rem;          /* 4px - Small radius */
+  --radius-md: calc(var(--radius) - 2px); /* 6px - Medium */
+  --radius-lg: var(--radius);    /* 8px - Large (default) */
+  --radius-xl: calc(var(--radius) + 4px); /* 12px - Extra large */
+  --radius-full: 9999px;         /* Fully rounded */
+  
+  /* ================================================================
+     SHADOW SYSTEM
+     ================================================================
+     
+     Elevation tokens for depth and hierarchy.
+     Includes both neutral and colored shadow variants.
+     ================================================================ */
+  
+  /* Neutral Shadows - For elevation and depth */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --shadow-none: 0 0 #0000;
+  
+  /* Colored Shadows - For interactive elements */
+  --shadow-primary: 0 4px 14px 0 rgb(59 130 246 / 0.5);
+  --shadow-destructive: 0 4px 14px 0 rgb(239 68 68 / 0.5);
+  --shadow-success: 0 4px 14px 0 rgb(34 197 94 / 0.5);
+  --shadow-warning: 0 4px 14px 0 rgb(245 158 11 / 0.5);
+  
+  /* ================================================================
+     Z-INDEX SYSTEM
+     ================================================================
+     
+     Layering scale for predictable stacking order.
+     Each level represents a specific UI layer type.
+     ================================================================ */
+  
+  --z-index-0: 0;                /* Base level */
+  --z-index-10: 10;              /* Slightly elevated */
+  --z-index-20: 20;              /* Elevated */
+  --z-index-30: 30;              /* More elevated */
+  --z-index-40: 40;              /* High elevation */
+  --z-index-50: 50;              /* Very high elevation */
+  
+  /* Named layers for specific UI patterns */
+  --z-index-dropdown: 100;       /* Dropdown menus */
+  --z-index-sticky: 200;         /* Sticky headers/footers */
+  --z-index-fixed: 300;          /* Fixed sidebars */
+  --z-index-modal-backdrop: 400; /* Modal backgrounds */
+  --z-index-modal: 500;          /* Modal content */
+  --z-index-popover: 600;        /* Popovers and floating UI */
+  --z-index-tooltip: 700;        /* Tooltips */
+  --z-index-notification: 800;   /* Toast notifications */
+  --z-index-max: 999;            /* Maximum elevation */
+  
+  /* ================================================================
+     ANIMATION & INTERACTION TOKENS
+     ================================================================
+     
+     Motion and interaction values for consistent animations
+     and micro-interactions throughout the UI.
+     ================================================================ */
+  
+  /* Opacity Values - For hover states and transparency */
+  --opacity-hover: 0.9;          /* Slight transparency on hover */
+  --opacity-active: 0.8;         /* More transparency when pressed */
+  --opacity-subtle-hover: 0.1;   /* Very subtle background hover */
+  --opacity-subtle-active: 0.2;  /* Subtle background when pressed */
+  --opacity-muted: 0.5;          /* Half opacity for muted elements */
+  --opacity-disabled: 0.5;       /* Disabled state opacity */
+  --opacity-backdrop: 0.8;       /* Modal backdrop opacity */
+  
+  /* Transform Scale - For interactive feedback */
+  --scale-pressed: 0.98;         /* Subtle press effect */
+  --scale-active-sm: 0.9;        /* Small element press */
+  --scale-active: 0.95;          /* Standard press effect */
+  --scale-hover-sm: 1.05;        /* Small hover growth */
+  --scale-hover: 1.1;            /* Standard hover growth */
+  
+  /* Rotation Values - For icon animations */
+  --rotate-hover: 12deg;         /* Subtle rotation on hover */
+  --rotate-open: 180deg;         /* Dropdown chevron open */
+  --rotate-quarter: 90deg;       /* 90-degree rotation */
+  
+  /* Animation Zoom - For entrance/exit animations */
+  --zoom-out: 0.95;              /* Scale down for exit */
+  --zoom-in: 1;                  /* Full scale */
+  
+  /* Micro Adjustments */
+  --translate-hover: -1px;       /* Subtle upward movement */
+  --radius-subtle: 2px;          /* Very small radius */
+  
+  /* ================================================================
+     SEMANTIC COLOR MAPPINGS
+     ================================================================
+     
+     These map semantic color names to the actual color values
+     defined in :root and .dark. This allows components to use
+     semantic names while the actual values change for themes.
+     ================================================================ */
+  
+  /* Core UI Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-open-sans);
-  --font-mono: var(--font-jetbrains-mono);
-  --font-family-sans: var(--font-open-sans);
-  --font-family-mono: var(--font-jetbrains-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* Brand Colors */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  
+  /* State Colors - Destructive/Error */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-background: var(--destructive-background);
+  --color-destructive-border: var(--destructive-border);
+  --color-destructive-text: var(--destructive-text);
+  --color-destructive-text-muted: var(--destructive-text-muted);
+  
+  /* State Colors - Success */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-background: var(--success-background);
+  --color-success-border: var(--success-border);
+  --color-success-text: var(--success-text);
+  --color-success-text-muted: var(--success-text-muted);
+  
+  /* State Colors - Warning */
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-background: var(--warning-background);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
+  --color-warning-text-muted: var(--warning-text-muted);
+  
+  /* State Colors - Info */
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-background: var(--info-background);
+  --color-info-border: var(--info-border);
+  --color-info-text: var(--info-text);
+  --color-info-text-muted: var(--info-text-muted);
+  
+  /* Additional Brand Colors */
+  --color-purple: var(--purple);
+  --color-purple-foreground: var(--purple-foreground);
+  --color-teal: var(--teal);
+  --color-teal-foreground: var(--teal-foreground);
+  --color-orange: var(--orange);
+  --color-orange-foreground: var(--orange-foreground);
+  
+  /* Component-Specific Colors - Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Data Visualization - Chart Colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Interactive State Colors - Hover & Active */
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-active: var(--destructive-active);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-active: var(--secondary-active);
+  --color-success-hover: var(--success-hover);
+  --color-success-active: var(--success-active);
+  --color-warning-hover: var(--warning-hover);
+  --color-warning-active: var(--warning-active);
+  --color-info-hover: var(--info-hover);
+  --color-info-active: var(--info-active);
+  
+  /* Subtle Background Colors - For hover states */
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-subtle-hover: var(--primary-subtle-hover);
+  --color-primary-subtle-active: var(--primary-subtle-active);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-subtle-hover: var(--destructive-subtle-hover);
+  --color-destructive-subtle-active: var(--destructive-subtle-active);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-subtle-hover: var(--success-subtle-hover);
+  --color-success-subtle-active: var(--success-subtle-active);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-subtle-hover: var(--warning-subtle-hover);
+  --color-warning-subtle-active: var(--warning-subtle-active);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-subtle-hover: var(--info-subtle-hover);
+  --color-info-subtle-active: var(--info-subtle-active);
 }
+
+/* ================================================================
+   LIGHT MODE THEME
+   ================================================================
+   
+   Default theme values for light mode. These semantic tokens
+   reference the foundation tokens defined in @theme above.
+   ================================================================ */
 
 :root {
-  --radius: 0.625rem;
-  /* Fallback colors for browsers/tools that don't support oklch */
+  /* Base radius from theme */
+  --radius: 0.5rem;
+  
+  /* ----------------------------------------------------------------
+     Core UI Colors
+     ---------------------------------------------------------------- */
   --background: #ffffff;
-  --foreground: #0a0a0a;
+  --foreground: var(--color-gray-900);
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: var(--color-gray-900);
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #171717;
-  --primary-foreground: #fafafa;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #ef4444;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #a3a3a3;
-  --chart-1: #fb923c;
-  --chart-2: #38bdf8;
-  --chart-3: #818cf8;
-  --chart-4: #a3e635;
-  --chart-5: #facc15;
-  --sidebar: #fafafa;
-  --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #171717;
-  --sidebar-primary-foreground: #fafafa;
-  --sidebar-accent: #f5f5f5;
-  --sidebar-accent-foreground: #171717;
-  --sidebar-border: #e5e5e5;
-  --sidebar-ring: #a3a3a3;
+  --popover-foreground: var(--color-gray-900);
+  --border: var(--color-gray-200);
+  --input: var(--color-gray-200);
+  --ring: var(--color-primary-600);
+  
+  /* ----------------------------------------------------------------
+     Brand Colors
+     ---------------------------------------------------------------- */
+  --primary: var(--color-primary-500);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-gray-100);
+  --secondary-foreground: var(--color-gray-900);
+  --muted: var(--color-gray-100);
+  --muted-foreground: var(--color-gray-500);
+  --accent: var(--color-accent-600);
+  --accent-foreground: #ffffff;
+  
+  /* Additional Brand Colors */
+  --purple: var(--color-purple-600);
+  --purple-foreground: #ffffff;
+  --teal: var(--color-teal-600);
+  --teal-foreground: #ffffff;
+  --orange: var(--color-orange-600);
+  --orange-foreground: #ffffff;
+  
+  /* ----------------------------------------------------------------
+     State Colors
+     ---------------------------------------------------------------- */
+  
+  /* Destructive/Error */
+  --destructive: var(--color-red-600);
+  --destructive-foreground: #ffffff;
+  --destructive-background: var(--color-red-100);
+  --destructive-border: var(--color-red-300);
+  --destructive-text: var(--color-red-900);
+  --destructive-text-muted: var(--color-red-800);
+  
+  /* Success */
+  --success: var(--color-green-600);
+  --success-foreground: #ffffff;
+  --success-background: var(--color-green-100);
+  --success-border: var(--color-green-300);
+  --success-text: var(--color-green-900);
+  --success-text-muted: var(--color-green-800);
+  
+  /* Warning */
+  --warning: var(--color-orange-500);
+  --warning-foreground: #ffffff;
+  --warning-background: var(--color-orange-50);
+  --warning-border: var(--color-orange-200);
+  --warning-text: var(--color-orange-800);
+  --warning-text-muted: var(--color-orange-700);
+  
+  /* Info */
+  --info: var(--color-blue-600);
+  --info-foreground: #ffffff;
+  --info-background: var(--color-blue-100);
+  --info-border: var(--color-blue-300);
+  --info-text: var(--color-blue-900);
+  --info-text-muted: var(--color-blue-800);
+  
+  /* ----------------------------------------------------------------
+     Interactive State Colors - Hover & Active
+     ---------------------------------------------------------------- */
+  --primary-hover: var(--color-primary-600);
+  --primary-active: var(--color-primary-700);
+  --destructive-hover: var(--color-red-700);
+  --destructive-active: var(--color-red-800);
+  --secondary-hover: var(--color-gray-200);
+  --secondary-active: var(--color-gray-300);
+  --success-hover: var(--color-green-700);
+  --success-active: var(--color-green-800);
+  --warning-hover: var(--color-orange-600);
+  --warning-active: var(--color-orange-700);
+  --info-hover: var(--color-blue-700);
+  --info-active: var(--color-blue-800);
+  
+  /* ----------------------------------------------------------------
+     Subtle Background Variants
+     ---------------------------------------------------------------- */
+  --primary-subtle: var(--color-primary-50);
+  --primary-subtle-hover: var(--color-primary-100);
+  --primary-subtle-active: var(--color-primary-200);
+  --destructive-subtle: var(--color-red-50);
+  --destructive-subtle-hover: var(--color-red-100);
+  --destructive-subtle-active: var(--color-red-200);
+  --success-subtle: var(--color-green-50);
+  --success-subtle-hover: var(--color-green-100);
+  --success-subtle-active: var(--color-green-200);
+  --warning-subtle: var(--color-orange-50);
+  --warning-subtle-hover: var(--color-orange-100);
+  --warning-subtle-active: var(--color-orange-200);
+  --info-subtle: var(--color-blue-50);
+  --info-subtle-hover: var(--color-blue-100);
+  --info-subtle-active: var(--color-blue-200);
+  
+  /* ----------------------------------------------------------------
+     Component-Specific Colors
+     ---------------------------------------------------------------- */
+  
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--color-gray-900);
+  --sidebar-primary: var(--color-primary-500);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--color-gray-100);
+  --sidebar-accent-foreground: var(--color-gray-900);
+  --sidebar-border: var(--color-gray-200);
+  --sidebar-ring: var(--color-primary-600);
+  
+  /* Chart Colors (HSL format for Recharts compatibility) */
+  --chart-1: 221 83% 53%; /* blue-600 */
+  --chart-2: 160 84% 39%; /* emerald-500 */
+  --chart-3: 38 92% 50%;  /* amber-500 */
+  --chart-4: 0 84% 60%;   /* red-500 */
+  --chart-5: 262 51% 65%; /* violet-500 */
 }
 
-/* Override with oklch colors for modern browsers */
-@supports (color: oklch(0 0 0)) {
-  :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-  }
-}
+/* ================================================================
+   DARK MODE THEME
+   ================================================================
+   
+   Dark mode theme values. Uses lighter color variants for text
+   and darker variants for backgrounds to ensure proper contrast.
+   ================================================================ */
 
 .dark {
-  /* Fallback colors for browsers/tools that don't support oklch */
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --card: #171717;
-  --card-foreground: #fafafa;
-  --popover: #171717;
-  --popover-foreground: #fafafa;
-  --primary: #e5e5e5;
-  --primary-foreground: #171717;
-  --secondary: #262626;
-  --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
-  --accent-foreground: #fafafa;
-  --destructive: #dc2626;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #737373;
-  --chart-1: #6366f1;
-  --chart-2: #06b6d4;
-  --chart-3: #facc15;
-  --chart-4: #a855f7;
-  --chart-5: #f97316;
-  --sidebar: #171717;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #6366f1;
-  --sidebar-primary-foreground: #fafafa;
-  --sidebar-accent: #262626;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #737373;
+  /* ----------------------------------------------------------------
+     Core UI Colors
+     ---------------------------------------------------------------- */
+  --background: #0f172a;    /* slate-900 - Main dark background */
+  --foreground: var(--color-gray-50);
+  --card: #1e293b;          /* slate-800 - Elevated surfaces */
+  --card-foreground: var(--color-gray-50);
+  --popover: #1e293b;       /* slate-800 - Floating elements */
+  --popover-foreground: var(--color-gray-50);
+  --border: var(--color-gray-600);
+  --input: var(--color-gray-600);
+  --ring: var(--color-primary-400);
+  
+  /* ----------------------------------------------------------------
+     Brand Colors
+     ---------------------------------------------------------------- */
+  --primary: var(--color-primary-400);
+  --primary-foreground: var(--color-gray-950);
+  --secondary: var(--color-gray-700);
+  --secondary-foreground: var(--color-gray-50);
+  --muted: var(--color-gray-700);
+  --muted-foreground: var(--color-gray-300);
+  --accent: var(--color-accent-400);
+  --accent-foreground: var(--color-gray-950);
+  
+  /* Additional Brand Colors */
+  --purple: var(--color-purple-500);
+  --purple-foreground: var(--color-gray-950);
+  --teal: var(--color-teal-500);
+  --teal-foreground: var(--color-gray-950);
+  --orange: var(--color-orange-500);
+  --orange-foreground: var(--color-gray-950);
+  
+  /* ----------------------------------------------------------------
+     State Colors
+     ---------------------------------------------------------------- */
+  
+  /* Destructive/Error */
+  --destructive: var(--color-red-500);
+  --destructive-foreground: #ffffff;
+  --destructive-background: var(--color-red-900);
+  --destructive-border: var(--color-red-800);
+  --destructive-text: var(--color-red-100);
+  --destructive-text-muted: var(--color-red-200);
+  
+  /* Success */
+  --success: var(--color-green-500);
+  --success-foreground: #ffffff;
+  --success-background: var(--color-green-900);
+  --success-border: var(--color-green-800);
+  --success-text: var(--color-green-100);
+  --success-text-muted: var(--color-green-200);
+  
+  /* Warning */
+  --warning: var(--color-orange-500);
+  --warning-foreground: #ffffff;
+  --warning-background: var(--color-orange-900);
+  --warning-border: var(--color-orange-800);
+  --warning-text: var(--color-orange-100);
+  --warning-text-muted: var(--color-orange-200);
+  
+  /* Info */
+  --info: var(--color-blue-500);
+  --info-foreground: #ffffff;
+  --info-background: var(--color-blue-900);
+  --info-border: var(--color-blue-800);
+  --info-text: var(--color-blue-100);
+  --info-text-muted: var(--color-blue-200);
+  
+  /* ----------------------------------------------------------------
+     Interactive State Colors - Hover & Active
+     ---------------------------------------------------------------- */
+  --primary-hover: var(--color-primary-500);
+  --primary-active: var(--color-primary-600);
+  --destructive-hover: var(--color-red-600);
+  --destructive-active: var(--color-red-700);
+  --secondary-hover: var(--color-gray-600);
+  --secondary-active: var(--color-gray-500);
+  --success-hover: var(--color-green-600);
+  --success-active: var(--color-green-700);
+  --warning-hover: var(--color-orange-600);
+  --warning-active: var(--color-orange-700);
+  --info-hover: var(--color-blue-600);
+  --info-active: var(--color-blue-700);
+  
+  /* ----------------------------------------------------------------
+     Subtle Background Variants
+     ---------------------------------------------------------------- */
+  --primary-subtle: var(--color-primary-900);
+  --primary-subtle-hover: var(--color-primary-800);
+  --primary-subtle-active: var(--color-primary-700);
+  --destructive-subtle: var(--color-red-900);
+  --destructive-subtle-hover: var(--color-red-800);
+  --destructive-subtle-active: var(--color-red-700);
+  --success-subtle: var(--color-green-900);
+  --success-subtle-hover: var(--color-green-800);
+  --success-subtle-active: var(--color-green-700);
+  --warning-subtle: var(--color-orange-900);
+  --warning-subtle-hover: var(--color-orange-800);
+  --warning-subtle-active: var(--color-orange-700);
+  --info-subtle: var(--color-blue-900);
+  --info-subtle-hover: var(--color-blue-800);
+  --info-subtle-active: var(--color-blue-700);
+  
+  /* ----------------------------------------------------------------
+     Component-Specific Colors
+     ---------------------------------------------------------------- */
+  
+  /* Sidebar */
+  --sidebar: #1e293b;      /* slate-800 */
+  --sidebar-foreground: var(--color-gray-50);
+  --sidebar-primary: var(--color-primary-400);
+  --sidebar-primary-foreground: #0f172a;
+  --sidebar-accent: var(--color-gray-700);
+  --sidebar-accent-foreground: var(--color-gray-50);
+  --sidebar-border: var(--color-gray-600);
+  --sidebar-ring: var(--color-primary-400);
+  
+  /* Chart Colors (HSL format for Recharts compatibility) */
+  --chart-1: 217 91% 68%; /* blue-400 */
+  --chart-2: 158 64% 52%; /* emerald-400 */
+  --chart-3: 43 96% 56%;  /* amber-400 */
+  --chart-4: 0 93% 71%;   /* red-400 */
+  --chart-5: 258 55% 74%; /* violet-400 */
 }
 
-/* Override with oklch colors for modern browsers */
-@supports (color: oklch(0 0 0)) {
-  .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
-  }
-}
+/* ================================================================
+   BASE STYLES
+   ================================================================
+   
+   Global resets and base element styles that apply to all
+   elements in the application.
+   ================================================================ */
 
 @layer base {
+  /* Global box model and focus styles */
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  /* Full height layout setup */
+  html {
+    @apply h-full;
   }
+
+  body {
+    @apply bg-background text-foreground h-full;
+  }
+
+  /* Next.js specific full height */
+  #__next,
+  body > div:first-child {
+    @apply h-full;
+  }
+}
+
+/* ================================================================
+   COMPONENT UTILITIES
+   ================================================================
+   
+   Reusable component classes for common patterns.
+   ================================================================ */
+
+@layer components {
+  /* Focus ring styles for keyboard navigation */
+  .ring-focus {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+  
+  /* Destructive variant focus ring */
+  .ring-focus-destructive {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}
+
+/* ================================================================
+   ANIMATION UTILITIES
+   ================================================================
+   
+   Custom animation classes for micro-interactions and transitions.
+   ================================================================ */
+
+@layer utilities {
+  /* Ripple effect for clicks */
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+  
+  /* Single pulse for feedback */
+  @keyframes pulse-once {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+  
+  .animate-ripple {
+    animation: ripple 0.6s ease-out;
+  }
+  
+  .animate-pulse-once {
+    animation: pulse-once 0.3s ease-out;
+  }
+}
+
+/* ================================================================
+   TOAST NOTIFICATION ANIMATIONS
+   ================================================================
+   
+   Entrance and exit animations for toast notifications.
+   ================================================================ */
+
+/* Entrance animations */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Exit animations */
+@keyframes slide-out-down {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-out-up {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Animation classes */
+.animate-slide-up {
+  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-down {
+  animation: slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-out-up {
+  animation: slide-out-up 0.2s ease-in forwards;
+}
+
+.animate-out-down {
+  animation: slide-out-down 0.2s ease-in forwards;
+}
+
+/* Toast container smooth transitions */
+[data-toast-container] > * {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ================================================================
+   ACCORDION ANIMATIONS
+   ================================================================
+   
+   Smooth expand/collapse animations for accordion content.
+   Uses height transitions with ease-out timing for natural feel.
+   ================================================================ */
+
+/* Accordion collapse animation */
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+/* Accordion expand animation */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+/* Animation utility classes */
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
 }
