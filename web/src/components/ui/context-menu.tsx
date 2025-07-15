@@ -53,7 +53,7 @@ const ContextMenuTrigger = React.forwardRef<
       {children}
       {showRipple && (
         <span
-          className="pointer-events-none absolute z-10 animate-ripple rounded-full bg-primary/20"
+          className="pointer-events-none absolute z-10 animate-ripple rounded-none bg-primary/20"
           style={{
             left: ripplePosition.x - 20,
             top: ripplePosition.y - 20,
@@ -113,7 +113,7 @@ function ContextMenuSubTrigger({
       data-slot="context-menu-sub-trigger"
       data-inset={inset}
       className={cn(
-        "group flex cursor-default items-center rounded-[2px] px-2 py-1.5 text-sm outline-hidden select-none",
+        "group flex cursor-default items-center rounded-none px-2 py-1.5 text-sm outline-hidden select-none",
         // Enhanced hover and focus states
         "hover:bg-primary-subtle-hover",
         "focus:bg-primary focus:text-primary-foreground",
@@ -141,7 +141,7 @@ function ContextMenuSubContent({
     <ContextMenuPrimitive.SubContent
       data-slot="context-menu-sub-content"
       className={cn(
-        "bg-popover text-popover-foreground z-50 min-w-[8rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-lg",
+        "bg-popover text-popover-foreground z-50 min-w-[8rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden rounded-none border p-1 shadow-lg",
         // Enhanced animations
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -167,7 +167,7 @@ function ContextMenuContent({
       <ContextMenuPrimitive.Content
         data-slot="context-menu-content"
         className={cn(
-          "bg-popover text-popover-foreground z-50 min-w-[8rem] min-h-[2rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-md",
+          "bg-popover text-popover-foreground z-50 min-w-[8rem] min-h-[2rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden rounded-none border p-1 shadow-md",
           // Enhanced animations with position awareness
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -201,7 +201,7 @@ function ContextMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "group relative flex w-full cursor-default items-center gap-2 rounded-[2px] py-1.5 pr-2 pl-2 text-sm outline-hidden select-none",
+        "group relative flex w-full cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-2 text-sm outline-hidden select-none",
         // Enhanced hover and focus states
         "hover:bg-primary-subtle-hover focus:bg-primary focus:text-primary-foreground",
         // Smooth transitions
@@ -235,7 +235,7 @@ function ContextMenuCheckboxItem({
     <ContextMenuPrimitive.CheckboxItem
       data-slot="context-menu-checkbox-item"
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-[2px] py-1.5 pr-2 pl-8 text-sm outline-hidden select-none",
+        "relative flex cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-8 text-sm outline-hidden select-none",
         // Enhanced hover and focus states
         "hover:bg-primary-subtle-hover",
         "focus:bg-primary focus:text-primary-foreground",
@@ -267,7 +267,7 @@ function ContextMenuRadioItem({
     <ContextMenuPrimitive.RadioItem
       data-slot="context-menu-radio-item"
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-[2px] py-1.5 pr-2 pl-8 text-sm outline-hidden select-none",
+        "relative flex cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-8 text-sm outline-hidden select-none",
         // Enhanced hover and focus states
         "hover:bg-primary-subtle-hover",
         "focus:bg-primary focus:text-primary-foreground",
@@ -281,7 +281,7 @@ function ContextMenuRadioItem({
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
         <ContextMenuPrimitive.ItemIndicator>
-          <div className="size-2 rounded-full bg-current transition-all duration-200 data-[state=checked]:scale-100 data-[state=unchecked]:scale-0" />
+          <div className="size-2 rounded-none bg-current transition-all duration-200 data-[state=checked]:scale-100 data-[state=unchecked]:scale-0" />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}

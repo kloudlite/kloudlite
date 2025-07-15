@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Open_Sans } from 'next/font/google'
+import { IBM_Plex_Mono } from 'next/font/google'
 import { cn } from '@/lib/utils'
 import { ToastProvider } from '@/components/ui/toast-provider'
 import { getTheme } from '@/lib/theme-cookie'
@@ -7,7 +7,11 @@ import { ThemeScript } from './theme-script'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 
-const openSans = Open_Sans({ subsets: ['latin'] })
+const ibmPlexMono = IBM_Plex_Mono({ 
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  variable: '--font-mono'
+})
 
 export const metadata: Metadata = {
   title: 'Design System - Tailwind UI Components',
@@ -26,7 +30,7 @@ export default async function RootLayout({
       <head>
         <ThemeScript theme={theme} />
       </head>
-      <body className={cn(openSans.className)} suppressHydrationWarning>
+      <body className={cn(ibmPlexMono.className)} suppressHydrationWarning>
         <ToastProvider>
           {children}
           <Toaster />

@@ -344,13 +344,13 @@
      Based on an 8px default radius for modern, friendly UI.
      ================================================================ */
   
-  --radius: 0.5rem;              /* 8px - Default radius */
+  --radius: 0rem;              /* 8px - Default radius */
   --radius-none: 0px;            /* Square corners */
-  --radius-sm: 0.25rem;          /* 4px - Small radius */
-  --radius-md: calc(var(--radius) - 2px); /* 6px - Medium */
-  --radius-lg: var(--radius);    /* 8px - Large (default) */
-  --radius-xl: calc(var(--radius) + 4px); /* 12px - Extra large */
-  --radius-full: 9999px;         /* Fully rounded */
+  --radius-sm: 0rem;          /* 4px - Small radius */
+  --radius-md: 0rem; /* 6px - Medium */
+  --radius-lg: 0rem;    /* 8px - Large (default) */
+  --radius-xl: 0rem; /* 12px - Extra large */
+  --radius-full: 9999px;         /*Fully rounded*/
   
   /* ================================================================
      SHADOW SYSTEM
@@ -437,7 +437,7 @@
   
   /* Micro Adjustments */
   --translate-hover: -1px;       /* Subtle upward movement */
-  --radius-subtle: 2px;          /* Very small radius */
+  --radius-subtle: 0px;          /* Very small radius */
   
   /* ================================================================
      SEMANTIC COLOR MAPPINGS
@@ -568,7 +568,7 @@
 
 :root {
   /* Base radius from theme */
-  --radius: 0.5rem;
+  --radius: 0rem;
   
   /* ----------------------------------------------------------------
      Core UI Colors
@@ -1025,4 +1025,32 @@
 
 .animate-accordion-down {
   animation: accordion-down 0.2s ease-out;
+}
+
+/* ================================================================
+   LINK STYLES
+   ================================================================
+   
+   Global link styles with focus states for accessibility and
+   consistent interaction patterns across the application.
+   ================================================================ */
+
+/* Base link styles with focus state */
+a {
+  @apply outline-none transition-all duration-200;
+}
+
+a:focus-visible {
+  @apply ring-2 ring-primary ring-offset-2 ring-offset-background rounded-sm;
+}
+
+/* Link variants with focus states */
+a.link-primary {
+  @apply text-primary hover:text-primary-hover active:text-primary-active;
+  @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:rounded-sm;
+}
+
+a.link-muted {
+  @apply text-muted-foreground hover:text-foreground;
+  @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:rounded-sm;
 }
