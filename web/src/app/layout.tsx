@@ -14,8 +14,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Design System - Tailwind UI Components',
-  description: 'Professional design system built from 410 analyzed Tailwind UI elements',
+  title: 'Kloudlite - Cloud-Native Development Made Simple',
+  description: 'Fast, reliable, and consistent development environments. Eliminate local setup complexity and enable seamless collaboration through service intercepts.',
 }
 
 export default async function RootLayout({
