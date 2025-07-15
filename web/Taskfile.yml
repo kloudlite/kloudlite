@@ -1,0 +1,46 @@
+version: '3'
+
+tasks:
+  dev:
+    desc: Start development server
+    cmds:
+      - pnpm dev
+
+  clean:
+    desc: Clean node_modules, .next, and reinstall dependencies
+    cmds:
+      - rm -rf node_modules
+      - rm -rf .next
+      - pnpm install
+
+  restart:
+    desc: Clean and restart development server
+    deps: [clean]
+    cmds:
+      - pnpm dev
+
+  build:
+    desc: Build the application for production
+    cmds:
+      - pnpm build
+
+  start:
+    desc: Start production server
+    cmds:
+      - pnpm start
+
+  lint:
+    desc: Run ESLint
+    cmds:
+      - pnpm lint
+
+  type-check:
+    desc: Run TypeScript type checking
+    cmds:
+      - pnpm exec tsc --noEmit
+
+  preview:
+    desc: Build and start production server
+    deps: [build]
+    cmds:
+      - pnpm start

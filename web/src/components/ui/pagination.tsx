@@ -27,7 +27,7 @@ function PaginationContent({
   return (
     <ul
       data-slot="pagination-content"
-      className={cn("flex flex-row items-center gap-1", className)}
+      className={cn("flex flex-row items-center gap-1.5", className)}
       {...props}
     />
   )
@@ -58,6 +58,9 @@ function PaginationLink({
           variant: isActive ? "outline" : "ghost",
           size,
         }),
+        "transition-all duration-200 ease-in-out",
+        isActive && "bg-primary text-primary-foreground border-primary hover:bg-primary-hover",
+        !isActive && "hover:bg-muted active:bg-muted/80",
         className
       )}
       {...props}
@@ -73,10 +76,14 @@ function PaginationPrevious({
     <PaginationLink
       aria-label="Go to previous page"
       size="default"
-      className={cn("gap-1 px-2.5 sm:pl-2.5", className)}
+      className={cn(
+        "gap-2 px-3 sm:pl-3",
+        "hover:[&_svg]:translate-x-[-2px] [&_svg]:transition-transform [&_svg]:duration-200",
+        className
+      )}
       {...props}
     >
-      <ChevronLeftIcon />
+      <ChevronLeftIcon className="size-4" />
       <span className="hidden sm:block">Previous</span>
     </PaginationLink>
   )
@@ -90,11 +97,15 @@ function PaginationNext({
     <PaginationLink
       aria-label="Go to next page"
       size="default"
-      className={cn("gap-1 px-2.5 sm:pr-2.5", className)}
+      className={cn(
+        "gap-2 px-3 sm:pr-3",
+        "hover:[&_svg]:translate-x-[2px] [&_svg]:transition-transform [&_svg]:duration-200",
+        className
+      )}
       {...props}
     >
       <span className="hidden sm:block">Next</span>
-      <ChevronRightIcon />
+      <ChevronRightIcon className="size-4" />
     </PaginationLink>
   )
 }
@@ -107,10 +118,16 @@ function PaginationEllipsis({
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn("flex size-9 items-center justify-center", className)}
+      className={cn(
+        "flex size-9 items-center justify-center",
+        "transition-all duration-200 ease-in-out",
+        "hover:bg-muted rounded-md",
+        "hover:scale-105 active:scale-95",
+        className
+      )}
       {...props}
     >
-      <MoreHorizontalIcon className="size-4" />
+      <MoreHorizontalIcon className="size-4 text-muted-foreground transition-colors duration-200" />
       <span className="sr-only">More pages</span>
     </span>
   )
