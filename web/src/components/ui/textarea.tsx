@@ -98,7 +98,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           onChange={handleChange}
           data-slot="textarea"
           className={cn(
-            "border-input placeholder:text-muted-foreground dark:bg-input/30 flex w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            "border-input placeholder:text-muted-foreground dark:bg-input/30 flex w-full rounded-none border bg-transparent px-3 py-2 text-base shadow-xs transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             "aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive",
             autoResize && "resize-none overflow-hidden",

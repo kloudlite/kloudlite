@@ -21,7 +21,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
+        "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-none",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         className
       )}
@@ -74,7 +74,7 @@ function CommandInput({
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-10 w-full rounded-none bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
           "text-foreground placeholder:text-muted-foreground",
           "transition-all duration-200",
           "focus:placeholder:opacity-70",
@@ -163,7 +163,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none",
+        "relative flex cursor-default items-center gap-2 rounded-none px-2 py-1.5 text-sm outline-hidden select-none",
         "transition-all duration-200 ease-in-out",
         // Default state
         "text-foreground",

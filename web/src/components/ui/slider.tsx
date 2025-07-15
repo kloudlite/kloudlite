@@ -39,7 +39,7 @@ function Slider({
       <SliderPrimitive.Track
         data-slot="slider-track"
         className={cn(
-          "bg-muted relative grow overflow-hidden rounded-full",
+          "bg-muted relative grow overflow-hidden rounded-none",
           "data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full",
           "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5",
           "transition-colors duration-200",
@@ -60,7 +60,7 @@ function Slider({
           key={index}
           className={cn(
             "border-primary bg-background",
-            "block size-4 shrink-0 rounded-full border shadow-sm",
+            "block size-4 shrink-0 rounded-none border shadow-sm",
             "transition-all duration-200",
             "hover:scale-110",
             "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-hidden",

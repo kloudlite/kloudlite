@@ -34,7 +34,7 @@ function Progress({
     <ProgressPrimitive.Root
       data-slot="progress"
       className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full bg-secondary/20",
+        "relative h-2 w-full overflow-hidden rounded-none bg-secondary/20",
         "group hover:bg-secondary/30 transition-colors duration-300",
         className
       )}
