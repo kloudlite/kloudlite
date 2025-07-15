@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { Link } from '@/components/ui/link'
 import { Button } from '@/components/ui/button'
@@ -19,15 +19,17 @@ import {
 import { PasswordInput } from './password-input'
 import { LoginCredentials } from '@/lib/auth/types'
 import { loginAction } from '@/actions/auth/login'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 import { SocialLogin } from './social-login'
 import { AuthDivider } from './auth-divider'
 import { SSOLogin } from './sso-login'
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const form = useForm<LoginCredentials>({
     defaultValues: {
@@ -36,6 +38,14 @@ export function LoginForm() {
       rememberMe: false,
     },
   })
+
+  useEffect(() => {
+    if (searchParams.get('reset') === 'success') {
+      setSuccess('Your password has been reset successfully. Please sign in with your new password.')
+    } else if (searchParams.get('verified') === 'success') {
+      setSuccess('Your email has been verified successfully. You can now sign in.')
+    }
+  }, [searchParams])
 
   const onSubmit = async (data: LoginCredentials) => {
     setIsLoading(true)
@@ -63,6 +73,13 @@ export function LoginForm() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert variant="success">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
 

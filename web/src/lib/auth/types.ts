@@ -16,6 +16,7 @@ export interface AuthResponse {
   success: boolean
   user?: User
   error?: string
+  message?: string
 }
 
 export interface LoginCredentials {
