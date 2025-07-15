@@ -32,6 +32,7 @@ const buttonVariants = cva(
         sm: "h-8 gap-1.5 px-3 text-xs has-[>svg]:px-2.5",
         lg: "h-12 px-8 text-base gap-3 has-[>svg]:px-5",
         xl: "h-12 px-10 text-lg gap-3 has-[>svg]:px-6",
+        auth: "h-11 px-5 text-base gap-2.5 has-[>svg]:px-4",
         icon: "size-9 hover:[&_svg]:rotate-12",
         "icon-sm": "size-8 hover:[&_svg]:rotate-12",
         "icon-lg": "size-11 hover:[&_svg]:rotate-12",

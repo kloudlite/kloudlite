@@ -10,7 +10,7 @@ const linkVariants = cva(
     variants: {
       variant: {
         default:
-          "text-primary hover:text-primary-hover active:text-primary-active underline-offset-4 hover:underline focus-visible:ring-primary",
+          "text-primary hover:text-primary-hover active:text-primary-active underline-offset-4 hover:underline focus-visible:ring-primary font-medium",
         muted:
           "text-muted-foreground hover:text-foreground focus-visible:ring-ring",
         destructive:
