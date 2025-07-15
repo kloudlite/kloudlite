@@ -26,7 +26,7 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        "group border-input text-primary dark:bg-input/30 aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50",
+        "group border-input text-primary dark:bg-input/30 aspect-square size-4 shrink-0 rounded-none border shadow-xs transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50",
         "hover:border-primary/50 hover:shadow-sm",
         "active:scale-[0.95]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -38,7 +38,7 @@ function RadioGroupItem({
     >
       <RadioGroupPrimitive.Indicator asChild>
         <div className="flex h-full w-full items-center justify-center">
-          <div className="size-2 bg-primary rounded-full" />
+          <div className="size-2 bg-primary rounded-none" />
         </div>
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
