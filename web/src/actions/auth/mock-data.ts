@@ -62,3 +62,34 @@ export function validateMockSession(sessionId: string): User | null {
   const { password, ...userWithoutPassword } = user
   return userWithoutPassword
 }
+
+// Helper to get user by email
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase())
+  if (!user) return null
+  
+  const { password, ...userWithoutPassword } = user
+  return userWithoutPassword
+}
+
+// Helper to create new user
+export async function createUser(data: {
+  name: string
+  email: string
+  password: string
+}): Promise<User> {
+  const newUser: User & { password: string } = {
+    id: generateMockToken(),
+    email: data.email,
+    password: data.password, // In real app, this would be hashed
+    name: data.name,
+    verified: false, // New users need to verify their email
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+  
+  mockUsers.push(newUser)
+  
+  const { password, ...userWithoutPassword } = newUser
+  return userWithoutPassword
+}

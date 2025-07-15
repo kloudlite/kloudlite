@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { Link } from '@/components/ui/link'
-import { Button } from '@/components/ui/button'
+import { SignupCredentials } from '@/lib/auth/types'
+import { signupAction } from '@/actions/auth/signup'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -16,43 +17,35 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { PasswordInput } from './password-input'
-import { LoginCredentials } from '@/lib/auth/types'
-import { loginAction } from '@/actions/auth/login'
+import { PasswordInput } from '@/components/auth/password-input'
 import { AlertCircle } from 'lucide-react'
 import { SocialLogin } from './social-login'
 import { AuthDivider } from './auth-divider'
 import { SSOLogin } from './sso-login'
 
-export function LoginForm() {
-  const router = useRouter()
+export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const form = useForm<LoginCredentials>({
+  const form = useForm<SignupCredentials>({
     defaultValues: {
+      name: '',
       email: '',
       password: '',
-      rememberMe: false,
-    },
+      acceptTerms: false
+    }
   })
 
-  const onSubmit = async (data: LoginCredentials) => {
+  const password = form.watch('password')
+
+  const onSubmit = async (data: SignupCredentials) => {
     setIsLoading(true)
     setError(null)
 
-    try {
-      const result = await loginAction(data)
-      
-      if (result.success) {
-        router.push('/dashboard')
-        router.refresh()
-      } else {
-        setError(result.error || 'An error occurred during login')
-      }
-    } catch (err) {
-      setError('An unexpected error occurred')
-    } finally {
+    const result = await signupAction(data)
+
+    if (!result.success) {
+      setError(result.error || 'An error occurred during signup')
       setIsLoading(false)
     }
   }
@@ -66,7 +59,7 @@ export function LoginForm() {
         </Alert>
       )}
 
-      <SocialLogin mode="signin" />
+      <SocialLogin mode="signup" />
       
       <SSOLogin />
       
@@ -77,13 +70,40 @@ export function LoginForm() {
 
           <FormField
           control={form.control}
+          name="name"
+          rules={{
+            required: 'Name is required',
+            minLength: {
+              value: 2,
+              message: 'Name must be at least 2 characters'
+            }
+          }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="John Doe"
+                  autoComplete="name"
+                  disabled={isLoading}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+          <FormField
+          control={form.control}
           name="email"
           rules={{
             required: 'Email is required',
             pattern: {
               value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Invalid email address',
-            },
+              message: 'Invalid email address'
+            }
           }}
           render={({ field }) => (
             <FormItem>
@@ -109,23 +129,20 @@ export function LoginForm() {
             required: 'Password is required',
             minLength: {
               value: 6,
-              message: 'Password must be at least 6 characters',
-            },
+              message: 'Password must be at least 6 characters'
+            }
           }}
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Password</FormLabel>
-                <Link href="/auth/forgot-password" size="sm">
-                  Forgot password?
-                </Link>
-              </div>
+              <FormLabel>Password</FormLabel>
               <FormControl>
                 <PasswordInput
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
+                  placeholder="Create a password"
+                  autoComplete="new-password"
+                  showStrength
                   disabled={isLoading}
                   {...field}
+                  value={password || ''}
                 />
               </FormControl>
               <FormMessage />
@@ -135,7 +152,10 @@ export function LoginForm() {
 
           <FormField
           control={form.control}
-          name="rememberMe"
+          name="acceptTerms"
+          rules={{
+            required: 'You must accept the terms and conditions'
+          }}
           render={({ field }) => (
             <FormItem className="flex flex-row items-center space-x-3 space-y-0">
               <FormControl>
@@ -145,21 +165,27 @@ export function LoginForm() {
                   disabled={isLoading}
                 />
               </FormControl>
-              <FormLabel className="font-normal cursor-pointer select-none">
-                Remember me for 30 days
-              </FormLabel>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="font-normal cursor-pointer select-none">
+                  I accept the{' '}
+                  <Link href="/terms" size="sm">
+                    terms and conditions
+                  </Link>
+                </FormLabel>
+                <FormMessage />
+              </div>
             </FormItem>
           )}
           />
 
           <Button type="submit" className="w-full" size="auth" disabled={isLoading}>
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading ? 'Creating account...' : 'Create account'}
         </Button>
 
           <div className="text-center text-sm space-y-1">
-            <span className="text-muted-foreground">Don't have an account?</span>{' '}
-            <Link href="/auth/signup">
-              Sign up
+            <span className="text-muted-foreground">Already have an account?</span>{' '}
+            <Link href="/auth/login">
+              Sign in
             </Link>
           </div>
         </form>
