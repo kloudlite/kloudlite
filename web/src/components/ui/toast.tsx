@@ -7,7 +7,7 @@ import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md border p-4 pr-6 shadow-lg transition-all",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-none border p-4 pr-6 shadow-lg transition-all",
   {
     variants: {
       variant: {
@@ -52,7 +52,7 @@ const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute right-1 top-1 rounded-md p-1 text-current opacity-70 transition-opacity hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring group-hover:opacity-100"
+            className="absolute right-1 top-1 rounded-none p-1 text-current opacity-70 transition-opacity hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring group-hover:opacity-100"
           >
             <X className="h-4 w-4" />
           </button>

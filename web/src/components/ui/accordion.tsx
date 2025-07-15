@@ -36,7 +36,7 @@ function AccordionTrigger({
         data-slot="accordion-trigger"
         className={cn(
           // Base styles with proper padding
-          "flex flex-1 items-center justify-between gap-4 rounded-md px-4 py-4 text-left text-sm font-medium outline-none disabled:pointer-events-none disabled:opacity-50",
+          "flex flex-1 items-center justify-between gap-4 rounded-none px-4 py-4 text-left text-sm font-medium outline-none disabled:pointer-events-none disabled:opacity-50",
           // Subtle hover states
           "hover:bg-muted/50 transition-all duration-200 ease-out",
           // Subtle active state with minimal scale effect
