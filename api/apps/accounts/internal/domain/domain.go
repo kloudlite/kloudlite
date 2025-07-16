@@ -4,15 +4,15 @@ import (
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	"github.com/kloudlite/api/apps/accounts/internal/env"
 	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	authrpc "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/k8s"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 	"golang.org/x/net/context"
+	"log/slog"
 )
 
 type CheckNameAvailabilityOutput struct {
@@ -72,7 +72,7 @@ type Domain interface {
 }
 
 type domain struct {
-	authClient    auth.AuthClient
+	authClient    authrpc.AuthInternalClient
 	iamClient     iam.IAMClient
 	consoleClient console.ConsoleClient
 	// containerRegistryClient container_registry.ContainerRegistryClient
@@ -84,37 +84,28 @@ type domain struct {
 
 	k8sClient k8s.Client
 
-	Env *env.Env
+	Env *env.AccountsEnv
 
-	logger logging.Logger
+	logger *slog.Logger
 }
 
-func NewDomain(
+var Module = fx.Module("domain", fx.Provide(func(
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
-	// containerRegistryClient container_registry.ContainerRegistryClient,
-	authClient auth.AuthClient,
+	authClient authrpc.AuthInternalClient,
 	commsClient comms.CommsClient,
-
 	k8sClient k8s.Client,
-
 	accountRepo repos.DbRepo[*entities.Account],
 	invitationRepo repos.DbRepo[*entities.Invitation],
-	// accountInviteTokenRepo cache.Repo[*entities.Invitation],
-
-	ev *env.Env,
-
-	logger logging.Logger,
+	ev *env.AccountsEnv,
+	logger *slog.Logger,
 ) Domain {
 	return &domain{
-		authClient:    authClient,
-		iamClient:     iamCli,
-		consoleClient: consoleClient,
-		commsClient:   commsClient,
-		// containerRegistryClient: containerRegistryClient,
-
-		k8sClient: k8sClient,
-
+		authClient:     authClient,
+		iamClient:      iamCli,
+		consoleClient:  consoleClient,
+		commsClient:    commsClient,
+		k8sClient:      k8sClient,
 		accountRepo:    accountRepo,
 		invitationRepo: invitationRepo,
 
@@ -122,6 +113,4 @@ func NewDomain(
 
 		logger: logger,
 	}
-}
-
-var Module = fx.Module("domain", fx.Provide(NewDomain))
+}))

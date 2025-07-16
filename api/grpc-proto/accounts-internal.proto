@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/accounts";
+
+service AccountsInternal {
+  rpc GetAccount(GetAccountIn) returns (GetAccountOut);
+}
+
+message GetAccountIn {
+  string userId = 1;
+  string accountName = 2;
+}
+
+message GetAccountOut {
+  bool isActive = 1;
+  string targetNamespace = 2;
+  string accountId = 3;
+  string kloudliteGatewayRegion = 4;
+}

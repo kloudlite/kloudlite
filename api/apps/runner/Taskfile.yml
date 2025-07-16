@@ -1,0 +1,21 @@
+version: '3'
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: management
+  binary: "./bin/{{.app}}"
+
+env:
+  KUBECONFIG: "../../.dev-k3s-config/k3s.yaml"
+
+tasks:
+  run:
+    dotenv: [".secrets/oauth.env", ".secrets/env"]
+    cmds:
+      - GOOS=linux GOARCH=arm go build -o .bin/runner main.go
+      - kubectl rollout restart deployment/app
+      - kubectl rollout status deployment/app --watch=true
+      - POD=$(kubectl get pods -l app=app -o jsonpath="{.items[-1].metadata.name}") && kubectl logs -f $POD

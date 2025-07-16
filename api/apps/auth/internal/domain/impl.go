@@ -10,9 +10,6 @@ import (
 	"strings"
 	"time"
 
-	recaptchaenterprise "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
-	recaptchapb "cloud.google.com/go/recaptchaenterprise/v2/apiv1/recaptchaenterprisepb"
-
 	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/apps/auth/internal/env"
 
@@ -55,13 +52,9 @@ type domainI struct {
 	resetTokenRepo  kv.Repo[*entities.ResetPasswordToken]
 	inviteCodeRepo  repos.DbRepo[*entities.InviteCode]
 	logger          logging.Logger
-	github          Github
-	gitlab          Gitlab
-	google          Google
 	remoteLoginRepo repos.DbRepo[*entities.RemoteLogin]
-	recaptchaClient *recaptchaenterprise.Client
 
-	envVars *env.Env
+	envVars *env.AuthEnv
 }
 
 func (d *domainI) SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID, authHeader string) error {
@@ -114,45 +107,6 @@ func (d *domainI) EnsureUserByEmail(ctx context.Context, email string) (*entitie
 	return u, errors.NewE(err)
 }
 
-func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider string, state string, code string) (bool, error) {
-	user, err := d.userRepo.FindById(ctx, userId)
-	if err != nil {
-		return false, errors.NewEf(err, "could not find user")
-	}
-	switch provider {
-	case constants.ProviderGithub:
-		{
-			u, t, err := d.github.Callback(ctx, code, state)
-			if err != nil {
-				return false, errors.NewEf(err, "could not login to github")
-			}
-			_, err = d.addOAuthLogin(ctx, provider, t, user, u.AvatarURL)
-			if err != nil {
-				return false, errors.NewE(err)
-			}
-			return true, errors.NewE(err)
-		}
-
-	case constants.ProviderGitlab:
-		{
-			u, t, err := d.gitlab.Callback(ctx, code, state)
-			if err != nil {
-				return false, errors.NewEf(err, "could not login to gitlab")
-			}
-			_, err = d.afterOAuthLogin(ctx, provider, t, user, &u.AvatarURL)
-			if err != nil {
-				return false, errors.NewE(err)
-			}
-			return true, errors.NewE(err)
-		}
-
-	default:
-		{
-			return false, errors.Newf("unknown provider=%s, aborting request", provider)
-		}
-	}
-}
-
 func (d *domainI) GetUserById(ctx context.Context, id repos.ID) (*entities.User, error) {
 	return d.userRepo.FindById(ctx, id)
 }
@@ -161,7 +115,63 @@ func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*entities.U
 	return d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 }
 
-func (d *domainI) Login(ctx context.Context, email string, password string) (*common.AuthSession, error) {
+func (d *domainI) LoginWithSSO(ctx context.Context, email string, name string) (*entities.User, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if user == nil {
+		user, err = d.userRepo.Create(ctx, &entities.User{
+			Email:    email,
+			Name:     name,
+			Verified: true,
+		})
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+		if _, err := d.commsClient.SendWelcomeEmail(
+			ctx, &comms.WelcomeEmailInput{
+				Email: user.Email,
+				Name:  user.Name,
+			},
+		); err != nil {
+			d.logger.Errorf(err)
+		}
+	}
+
+	return user, nil
+}
+
+func (d *domainI) LoginWithOAuth(ctx context.Context, email string, name string) (*entities.User, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if user == nil {
+		user, err = d.userRepo.Create(ctx, &entities.User{
+			Email:    email,
+			Name:     name,
+			Verified: true,
+		})
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+		if _, err := d.commsClient.SendWelcomeEmail(
+			ctx, &comms.WelcomeEmailInput{
+				Email: user.Email,
+				Name:  user.Name,
+			},
+		); err != nil {
+			d.logger.Errorf(err)
+		}
+	}
+
+	return user, nil
+}
+
+func (d *domainI) Login(ctx context.Context, email string, password string) (*entities.User, error) {
 	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -177,8 +187,8 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 	if user.Password != hex.EncodeToString(bytes[:]) {
 		return nil, errors.New("not valid credentials")
 	}
-	session := newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password")
-	return session, nil
+
+	return user, nil
 }
 
 func (d *domainI) MachineLogin(ctx context.Context, userId string, machineId string, cluster string) (*common.AuthSession, error) {
@@ -193,41 +203,7 @@ func (d *domainI) MachineLogin(ctx context.Context, userId string, machineId str
 	return session, nil
 }
 
-func (d *domainI) verifyCaptcha(ctx context.Context, token string) (bool, error) {
-	req := &recaptchapb.CreateAssessmentRequest{
-		Parent: fmt.Sprintf("projects/%s", d.envVars.GoogleCloudProjectId), // Project path in the format 'projects/{project-id}'
-		Assessment: &recaptchapb.Assessment{
-			Event: &recaptchapb.Event{
-				Token:   token,
-				SiteKey: d.envVars.RecaptchaSiteKey,
-			},
-		},
-	}
-
-	resp, err := d.recaptchaClient.CreateAssessment(ctx, req)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if !resp.TokenProperties.Valid {
-		return false, errors.Newf("CAPTCHA token is invalid: %s", resp.TokenProperties.InvalidReason)
-	}
-	return true, nil
-}
-
-func (d *domainI) SignUp(ctx context.Context, name string, email string, password string, captchaToken string) (*common.AuthSession, error) {
-
-	if d.envVars.GoogleRecaptchaEnabled {
-		isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
-		if err != nil {
-			return nil, errors.Newf("failed to verify CAPTCHA: %v", err)
-		}
-
-		if !isValidCaptcha {
-			return nil, errors.New("CAPTCHA verification failed")
-		}
-	}
-
+func (d *domainI) SignUp(ctx context.Context, name string, email string, password string) (*entities.User, error) {
 	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		if matched != nil {
@@ -246,7 +222,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 			Name:         name,
 			Email:        email,
 			Password:     hex.EncodeToString(sum[:]),
-			Verified:     !d.envVars.UserEmailVerifactionEnabled,
+			Verified:     !d.envVars.UserEmailVerificationEnabled,
 			Approved:     false,
 			Metadata:     nil,
 			Joined:       time.Now(),
@@ -257,14 +233,14 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		return nil, errors.NewE(err)
 	}
 
-	if d.envVars.UserEmailVerifactionEnabled {
+	if d.envVars.UserEmailVerificationEnabled {
 		err = d.generateAndSendVerificationToken(ctx, user)
 		if err != nil {
 			return nil, errors.NewE(err)
 		}
 	}
 
-	return newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password"), nil
+	return user, nil
 }
 
 func (d *domainI) GetLoginDetails(ctx context.Context, provider string, state *string) (string, error) {
@@ -357,19 +333,7 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	return true, nil
 }
 
-func (d *domainI) RequestResetPassword(ctx context.Context, email string, captchaToken string) (bool, error) {
-
-	if d.envVars.GoogleRecaptchaEnabled {
-		isValidCaptcha, err := d.verifyCaptcha(ctx, captchaToken)
-		if err != nil {
-			return false, errors.Newf("failed to verify CAPTCHA: %v", err)
-		}
-
-		if !isValidCaptcha {
-			return false, errors.New("CAPTCHA verification failed")
-		}
-	}
-
+func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool, error) {
 	resetToken := generateId("reset")
 	one, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
@@ -411,8 +375,8 @@ func (d *domainI) ChangeEmail(ctx context.Context, id repos.ID, email string) (b
 	return true, nil
 }
 
-func (d *domainI) ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error) {
-	user, err := d.userRepo.FindById(ctx, userId)
+func (d *domainI) ResendVerificationEmail(ctx context.Context, email string) (bool, error) {
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		return false, errors.NewE(err)
 	}
@@ -444,22 +408,6 @@ func (d *domainI) ChangePassword(ctx context.Context, id repos.ID, currentPasswo
 	return false, errors.New("invalid credentials")
 }
 
-func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state string) (string, error) {
-	if provider == constants.ProviderGithub {
-		return d.github.Authorize(ctx, state)
-	}
-
-	if provider == constants.ProviderGitlab {
-		return d.gitlab.Authorize(ctx, state)
-	}
-
-	if provider == constants.ProviderGoogle {
-		return d.google.Authorize(ctx, state)
-	}
-
-	return "", errors.Newf("Unsupported provider (%v)", provider)
-}
-
 func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, u *entities.User, avatarUrl *string) (*entities.User, error) {
 	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
 	if err != nil {
@@ -469,15 +417,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
-		//if _, err := d.commsClient.SendWelcomeEmail(
-		//	ctx, &comms.WelcomeEmailInput{
-		//		Email: user.Email,
-		//		Name:  user.Name,
-		//	},
-		//); err != nil {
-		//	d.logger.Errorf(err)
-		//}
-		if _, err := d.commsClient.SendWaitingEmail(
+		if _, err := d.commsClient.SendWelcomeEmail(
 			ctx, &comms.WelcomeEmailInput{
 				Email: user.Email,
 				Name:  user.Name,
@@ -532,145 +472,12 @@ func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *o
 	return session, nil
 }
 
-func (d *domainI) OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error) {
-	switch provider {
-	case constants.ProviderGithub:
-		{
-			u, t, err := d.github.Callback(ctx, code, state)
-			if err != nil {
-				return nil, errors.NewEf(err, "could not login to github")
-			}
-
-			email, err := func() (string, error) {
-				if u.Email != nil {
-					return *u.Email, nil
-				}
-				d.logger.Infof("user has no public email, trying to get his protected email")
-				pEmail, err := d.github.GetPrimaryEmail(ctx, t)
-				if err != nil {
-					return "", errors.NewE(err)
-				}
-				return pEmail, nil
-			}()
-			if err != nil {
-				return nil, errors.NewE(err)
-			}
-
-			name := func() string {
-				if u.Name != nil {
-					return *u.Name
-				}
-				return u.GetLogin()
-			}()
-
-			user := &entities.User{
-				Name:   name,
-				Avatar: u.AvatarURL,
-				Email:  email,
-			}
-			return d.afterOAuthLogin(ctx, provider, t, user, u.AvatarURL)
-		}
-
-	case constants.ProviderGitlab:
-		{
-			u, t, err := d.gitlab.Callback(ctx, code, state)
-			if err != nil {
-				return nil, errors.NewEf(err, "could not login to gitlab")
-			}
-
-			user := &entities.User{
-				Name:   u.Name,
-				Avatar: &u.AvatarURL,
-				Email:  u.Email,
-			}
-
-			return d.afterOAuthLogin(ctx, provider, t, user, &u.AvatarURL)
-		}
-
-	case constants.ProviderGoogle:
-		{
-			u, t, err := d.google.Callback(ctx, code, state)
-			if err != nil {
-				return nil, errors.NewEf(err, "could not login to google")
-			}
-
-			user := &entities.User{
-				Name:   u.Name,
-				Avatar: u.AvatarURL,
-				Email:  u.Email,
-			}
-
-			return d.afterOAuthLogin(ctx, provider, t, user, u.AvatarURL)
-		}
-	default:
-		{
-			return nil, errors.Newf("unknown provider=%s, aborting request", provider)
-		}
-	}
-}
-
 func (gl *domainI) Hash(t *oauth2.Token) (string, error) {
 	b, err := json.Marshal(t)
 	if err != nil {
 		return "", errors.NewE(err)
 	}
 	return b64.StdEncoding.EncodeToString(b), nil
-}
-
-func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*entities.AccessToken, error) {
-	if tokenId == "" && (provider == "" || userId == "") {
-		return nil, errors.Newf("bad params: [tokenId, (provider, userId)]")
-	}
-	q := repos.Filter{"id": tokenId}
-	if tokenId == "" {
-		q = repos.Filter{"user_id": userId, "provider": provider}
-	}
-	accToken, err := d.accessTokenRepo.FindOne(ctx, q)
-	if err != nil {
-		return nil, errors.NewEf(err, "finding access token")
-	}
-	if accToken == nil {
-		return nil, errors.Newf("no token found  for (tokenId=%s, provider=%s, userId=%s)", tokenId, provider, userId)
-	}
-
-	hash, err := d.Hash(accToken.Token)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if provider == "github" {
-		token, err := d.github.GetOAuthToken(ctx, accToken.Token)
-		if err != nil {
-			return nil, errors.NewEf(err, "could not get oauth token")
-		}
-		hash2, err := d.Hash(token)
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-		if hash != hash2 {
-			accToken.Token = token
-		}
-	}
-
-	if provider == "gitlab" {
-		token, err := d.gitlab.GetOAuthToken(ctx, accToken.Token)
-		if err != nil {
-			return nil, errors.NewEf(err, "could not get oauth token")
-		}
-		hash2, err := d.Hash(token)
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-		if hash != hash2 {
-			accToken.Token = token
-		}
-	}
-
-	_, err = d.accessTokenRepo.UpdateById(ctx, accToken.Id, accToken)
-	if err != nil {
-		return nil, errors.NewEf(err, "could not update access token")
-	}
-	return accToken, nil
 }
 
 func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user *entities.User) error {
@@ -726,13 +533,8 @@ func fxDomain(
 	verifyTokenRepo kv.Repo[*entities.VerifyToken],
 	resetTokenRepo kv.Repo[*entities.ResetPasswordToken],
 	inviteCodeRepo repos.DbRepo[*entities.InviteCode],
-	github Github,
-	gitlab Gitlab,
-	google Google,
-	logger logging.Logger,
 	commsClient comms.CommsClient,
-	recaptchaClient *recaptchaenterprise.Client,
-	ev *env.Env,
+	ev *env.AuthEnv,
 ) Domain {
 	return &domainI{
 		remoteLoginRepo: remoteLoginRepo,
@@ -742,11 +544,6 @@ func fxDomain(
 		verifyTokenRepo: verifyTokenRepo,
 		resetTokenRepo:  resetTokenRepo,
 		inviteCodeRepo:  inviteCodeRepo,
-		github:          github,
-		gitlab:          gitlab,
-		google:          google,
-		logger:          logger,
-		recaptchaClient: recaptchaClient,
 		envVars:         ev,
 	}
 }

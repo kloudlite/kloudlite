@@ -149,9 +149,11 @@ const (
 )
 
 const (
-	ClusterNameKey string = "kloudlite.io/cluster.name"
-	EdgeNameKey    string = "kloudlite.io/edge.name"
-	AccountNameKey string = "kloudlite.io/account.name"
+	ClusterNameKey        string = "kloudlite.io/cluster.name"
+	EdgeNameKey           string = "kloudlite.io/edge.name"
+	AccountNameKey        string = "kloudlite.io/account.name"
+	AccountDisplayNameKey string = "kloudlite.io/account.display-name"
+	AccountRegionKey      string = "kloudlite.io/account.region"
 
 	EnvNameKey string = "kloudlite.io/env.name"
 

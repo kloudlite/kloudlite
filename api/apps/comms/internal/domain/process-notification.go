@@ -10,7 +10,6 @@ import (
 
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/types"
-	"github.com/kloudlite/api/pkg/mail"
 )
 
 type notificationProcessor interface {
@@ -37,23 +36,19 @@ func (c *npClient) Send() error {
 	logger := c.domain.logger
 
 	if err := c.handleTelegram(); err != nil {
-		logger.Errorf(err, "failed to send telegram notification")
+		logger.Error(err.Error(), "failed to send telegram notification")
 	}
 
 	if err := c.handleSlack(); err != nil {
-		logger.Errorf(err, "failed to send slack notification")
-	}
-
-	if err := c.handleEmail(); err != nil {
-		logger.Errorf(err, "failed to send email notification")
+		logger.Error(err.Error(), "failed to send slack notification")
 	}
 
 	if err := c.handleWebhook(); err != nil {
-		logger.Errorf(err, "failed to send webhook notification")
+		logger.Error(err.Error(), "failed to send webhook notification")
 	}
 
 	if err := c.handleConsoleUpdate(); err != nil {
-		logger.Errorf(err, "failed to send console update notification")
+		logger.Error(err.Error(), "failed to send console update notification")
 	}
 
 	return nil
@@ -61,61 +56,7 @@ func (c *npClient) Send() error {
 
 func (c *npClient) handleConsoleUpdate() error {
 	// TODO: (@abdheshnayak) - needs to be implemented
-	c.domain.logger.Warnf("console update notification is not implemented")
-
-	return nil
-}
-
-func (c *npClient) handleEmail() error {
-	if c.nc.Email == nil || !c.nc.Email.Enabled {
-		return nil
-	}
-
-	// TODO: (@abdheshnayak) - check for subscription
-
-	// subs, err := c.domain.subscriptionRepo.FindOne(c.ctx, repos.Filter{
-	// 	fields.AccountName:         c.n.AccountName,
-	// 	fc.SubscriptionMailAddress: c.nc.Email.MailAddress,
-	// })
-
-	// if err != nil {
-	// 	return err
-	// }
-	// if subs == nil {
-	// 	return fmt.Errorf("subscription not found")
-	// }
-	//
-	// if !subs.Enabled {
-	// 	return fmt.Errorf("subscription is not enabled")
-	// }
-
-	args := map[string]any{
-		"Type":  c.n.Type,
-		"Title": c.n.Content.Title,
-		"Body":  c.n.Content.Body,
-		"Link":  c.n.Content.Link,
-	}
-
-	plainText := new(bytes.Buffer)
-	html := new(bytes.Buffer)
-	if err := c.domain.eTemplates.AlertEmail.PlainText.Execute(plainText, args); err != nil {
-		return err
-	}
-	if err := c.domain.eTemplates.AlertEmail.Html.Execute(html, args); err != nil {
-		return err
-	}
-
-	if err := c.domain.mailer.SendEmail(c.ctx, mail.Email{
-		FromEmailAddress: c.domain.envs.SupportEmail,
-		FromName:         "Kloudlite Support",
-		Subject:          c.n.Content.Subject,
-		ToEmailAddress:   c.nc.Email.MailAddress,
-		ToName:           c.n.AccountName,
-		PlainText:        plainText.String(),
-		HtmlText:         html.String(),
-	}); err != nil {
-		return err
-	}
+	c.domain.logger.Warn("console update notification is not implemented")
 
 	return nil
 }
