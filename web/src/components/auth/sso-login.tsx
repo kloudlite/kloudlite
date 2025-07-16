@@ -1,108 +1,109 @@
 'use client'
 
 import { useState } from 'react'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Building2 } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { useForm } from 'react-hook-form'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Building2, LogIn } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-interface SSOFormData {
-  email: string
+interface SSOLoginProps {
+  callbackUrl?: string
+  className?: string
 }
 
-export function SSOLogin() {
-  const [open, setOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  
-  const form = useForm<SSOFormData>({
-    defaultValues: {
-      email: '',
-    },
-  })
+// Mock SSO provider mapping - in production this would come from backend
+const SSO_PROVIDERS: Record<string, { provider: string; name: string }> = {
+  'microsoft.com': { provider: 'azure-ad', name: 'Microsoft' },
+  'outlook.com': { provider: 'azure-ad', name: 'Microsoft' },
+  'google.com': { provider: 'google', name: 'Google' },
+  'gmail.com': { provider: 'google', name: 'Google' },
+  'github.com': { provider: 'github', name: 'GitHub' },
+}
 
-  const onSubmit = async (data: SSOFormData) => {
+export function SSOLogin({ callbackUrl = '/teams', className }: SSOLoginProps) {
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSSOLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    
+    if (!email) {
+      setError('Please enter your email address')
+      return
+    }
+
+    const domain = email.split('@')[1]
+    if (!domain) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    const ssoProvider = SSO_PROVIDERS[domain.toLowerCase()]
+    
+    if (!ssoProvider) {
+      setError(`SSO is not configured for ${domain}. Please contact your administrator.`)
+      return
+    }
+
     setIsLoading(true)
-    // TODO: Implement actual SSO flow
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setIsLoading(false)
-    setOpen(false)
-    form.reset()
+    try {
+      await signIn(ssoProvider.provider, { callbackUrl })
+      // Don't reset loading - let it persist during redirect
+    } catch (error) {
+      console.error('SSO login error:', error)
+      setError('Failed to initiate SSO login. Please try again.')
+      setIsLoading(false)
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <div className={cn("space-y-4", className)}>
+      <form onSubmit={handleSSOLogin} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="sso-email">Work Email</Label>
+          <Input
+            id="sso-email"
+            type="email"
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
+            className="h-11"
+          />
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <Button
-          type="button"
-          variant="outline"
-          size="default"
+          type="submit"
+          disabled={isLoading}
           className="w-full h-11"
         >
-          <Building2 className="h-5 w-5 mr-2" />
-          Continue with SSO
+          {isLoading ? (
+            'Redirecting to SSO provider...'
+          ) : (
+            <>
+              <Building2 className="h-4 w-4 mr-2" />
+              Continue with SSO
+            </>
+          )}
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Sign in with SSO</DialogTitle>
-          <DialogDescription>
-            Enter your work email address and we'll redirect you to your organization's SSO provider.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              rules={{
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
-                },
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Work Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@company.com"
-                      disabled={isLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button 
-              type="submit" 
-              className="w-full" 
-              size="auth"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Redirecting...' : 'Continue with SSO'}
-            </Button>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      </form>
+
+      <div className="text-center">
+        <p className="text-xs text-muted-foreground">
+          Supported providers: Microsoft, Google, GitHub
+        </p>
+      </div>
+    </div>
   )
 }

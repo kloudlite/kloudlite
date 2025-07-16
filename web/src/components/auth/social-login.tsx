@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Github } from 'lucide-react'
+import { signIn } from 'next-auth/react'
 
 interface SocialLoginProps {
   mode: 'signin' | 'signup'
@@ -13,9 +14,17 @@ export function SocialLogin({ mode }: SocialLoginProps) {
 
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(provider)
-    // TODO: Implement actual OAuth flow
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsLoading(null)
+    try {
+      await signIn(provider, { 
+        callbackUrl: '/teams',
+        redirect: true 
+      })
+      // Don't reset loading state - let it persist during redirect
+    } catch (error) {
+      console.error(`${provider} login error:`, error)
+      // Only reset loading state on error
+      setIsLoading(null)
+    }
   }
 
   const actionText = mode === 'signin' ? 'Sign in' : 'Sign up'
@@ -62,10 +71,10 @@ export function SocialLogin({ mode }: SocialLoginProps) {
         variant="outline"
         size="default"
         className="w-full h-11"
-        onClick={() => handleSocialLogin('microsoft')}
+        onClick={() => handleSocialLogin('azure-ad')}
         disabled={isLoading !== null}
       >
-        {isLoading === 'microsoft' ? (
+        {isLoading === 'azure-ad' ? (
           'Loading...'
         ) : (
           <>

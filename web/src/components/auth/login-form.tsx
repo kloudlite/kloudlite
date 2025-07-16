@@ -16,10 +16,18 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { PasswordInput } from './password-input'
 import { LoginCredentials } from '@/lib/auth/types'
 import { loginAction } from '@/actions/auth/login'
-import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Building2 } from 'lucide-react'
 import { SocialLogin } from './social-login'
 import { AuthDivider } from './auth-divider'
 import { SSOLogin } from './sso-login'
@@ -30,6 +38,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [ssoDialogOpen, setSsoDialogOpen] = useState(false)
 
   const form = useForm<LoginCredentials>({
     defaultValues: {
@@ -85,7 +94,26 @@ export function LoginForm() {
 
       <SocialLogin mode="signin" />
       
-      <SSOLogin />
+      <Dialog open={ssoDialogOpen} onOpenChange={setSsoDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full h-11">
+            <Building2 className="h-5 w-5 mr-2" />
+            Sign in with SSO
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Single Sign-On</DialogTitle>
+            <DialogDescription>
+              Enter your work email to sign in with your company's SSO provider
+            </DialogDescription>
+          </DialogHeader>
+          <SSOLogin 
+            callbackUrl="/teams"
+            className="mt-4"
+          />
+        </DialogContent>
+      </Dialog>
       
       <AuthDivider />
 
