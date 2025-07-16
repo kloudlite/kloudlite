@@ -55,8 +55,8 @@ export function LoginForm() {
       const result = await loginAction(data)
       
       if (result.success) {
-        router.push('/dashboard')
-        router.refresh()
+        // Force a hard navigation to ensure cookies are properly set
+        window.location.href = '/dashboard'
       } else {
         setError(result.error || 'An error occurred during login')
       }

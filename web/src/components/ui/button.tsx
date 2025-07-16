@@ -13,6 +13,8 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground active:bg-primary-active active:text-primary-foreground focus-visible:ring-primary",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive-hover active:bg-destructive-active focus-visible:ring-destructive",
+        "destructive-outline":
+          "border border-destructive bg-background text-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive active:bg-destructive/20 active:border-destructive focus-visible:ring-destructive",
         outline:
           "border border-input bg-background hover:border-primary hover:text-primary active:border-primary-active focus-visible:ring-ring",
         secondary:
@@ -45,16 +47,19 @@ const buttonVariants = cva(
   }
 )
 
+interface ButtonProps
+  extends React.ComponentProps<"button">,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
 function Button({
   className,
   variant,
   size,
   asChild = false,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
+}: ButtonProps) {
   const Comp = asChild ? Slot : "button"
 
   return (

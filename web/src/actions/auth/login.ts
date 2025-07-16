@@ -5,6 +5,8 @@ import { mockUsers, createMockSession } from './mock-data'
 import { setSessionCookie } from './session'
 
 export async function loginAction(credentials: LoginCredentials): Promise<AuthResponse> {
+  console.log('Login attempt for:', credentials.email)
+  
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500))
   
@@ -12,6 +14,7 @@ export async function loginAction(credentials: LoginCredentials): Promise<AuthRe
   const user = mockUsers.find(u => u.email === credentials.email)
   
   if (!user) {
+    console.log('User not found:', credentials.email)
     return {
       success: false,
       error: 'Invalid email or password',
@@ -36,9 +39,11 @@ export async function loginAction(credentials: LoginCredentials): Promise<AuthRe
   
   // Create session
   const sessionId = createMockSession(user.id, credentials.rememberMe)
+  console.log('Created session:', sessionId)
   
   // Set cookie
   await setSessionCookie(sessionId, credentials.rememberMe)
+  console.log('Session cookie set')
   
   // Return user without password
   const { password, ...userWithoutPassword } = user
