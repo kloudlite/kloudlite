@@ -103,7 +103,7 @@ func (d *domain) ensureKloudliteRegistryCredentials(ctx UserContext, account *en
 	}
 
 	if secret != nil {
-		d.logger.Infof("kloudlite registry image pull secret already exists")
+		d.logger.Info("kloudlite registry image pull secret already exists")
 		return nil
 	}
 

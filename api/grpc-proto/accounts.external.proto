@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/accounts";
+
+service Accounts {
+  rpc GetAccountDetails(GetAccountDetailsRequest) returns (GetAccountDetailsResponse);
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+  rpc CheckAccountNameAvailability(CheckAccountNameAvailabilityRequest) returns (CheckAccountNameAvailabilityResponse);
+  rpc DisableAccount(DisableAccountRequest) returns (DisableAccountResponse);
+  rpc EnableAccount(EnableAccountRequest) returns (EnableAccountResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+}
+
+message CheckAccountNameAvailabilityRequest {
+  string name = 1;
+}
+
+message CheckAccountNameAvailabilityResponse {
+  bool result = 1;
+  repeated string suggested_names = 2;
+}
+
+message GetAccountDetailsRequest {
+  string accountId = 1;
+}
+
+message GetAccountDetailsResponse {
+  string accountId = 1;
+  string name = 2;
+  string ownerId = 3;
+  string status = 4; // e.g., "active", "disabled", "deleted"
+}
+
+message CreateAccountRequest {
+  string name = 1;
+  string displayName = 2;
+  string region = 3;
+}
+
+message CreateAccountResponse {
+  string accountId = 1;
+}
+
+message DisableAccountRequest {
+  string accountId = 1;
+}
+
+message DisableAccountResponse {
+  string accountId = 1;
+  string status = 2; // e.g., "disabled"
+}
+
+message EnableAccountRequest {
+  string accountId = 1;
+}
+
+message EnableAccountResponse {
+  string accountId = 1;
+  string status = 2; // e.g., "active"
+}
+
+message DeleteAccountRequest {
+  string accountId = 1;
+}
+
+message DeleteAccountResponse {
+  string accountId = 1;
+  string status = 2; // e.g., "deleted"
+}
+
+message ListAccountsRequest {
+  string ownerId = 1; // User ID to list accounts for
+}
+
+message ListAccountsResponse {
+  repeated AccountDetails accounts = 1;
+}
+
+message AccountDetails {
+  string accountId = 1;
+  string name = 2;
+  string ownerId = 3; // User ID of the account owner
+  string status = 4; // e.g., "active", "disabled", "deleted"
+}

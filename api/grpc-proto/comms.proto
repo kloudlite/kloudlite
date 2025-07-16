@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/comms";
+
+service Comms {
+  rpc SendVerificationEmail(VerificationEmailInput) returns (Void);
+  rpc SendPasswordResetEmail(PasswordResetEmailInput) returns (Void);
+  rpc SendAccountMemberInviteEmail(AccountMemberInviteEmailInput) returns (Void);
+  rpc SendWelcomeEmail(WelcomeEmailInput) returns (Void);
+  rpc SendContactUsEmail(SendContactUsEmailInput) returns (Void);
+}
+
+message VerificationEmailInput{
+  string email = 1;
+  string name = 2;
+  string verificationToken = 3;
+}
+
+message WelcomeEmailInput {
+  string email = 1;
+  string name = 2;
+}
+
+message PasswordResetEmailInput{
+  string email = 1;
+  string name = 2;
+  string resetToken = 3;
+}
+
+message AccountMemberInviteEmailInput{
+  string accountName = 1;
+  string invitationToken = 2;
+  string invitedBy = 3;
+  string email = 4;
+  string name = 5;
+}
+
+message SendContactUsEmailInput{
+  string email = 1;
+  string name = 2;
+  string companyName = 3;
+  string country = 4;
+  string mobileNumber = 5;
+  string message = 6;
+}
+
+message Void{
+}

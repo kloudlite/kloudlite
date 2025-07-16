@@ -1,11 +1,23 @@
 version: 3
 
-includes:
-  grpc: 
-    taskfile: ./grpc-interfaces/Taskfile.yml
-    dir: ./grpc-interfaces
+# includes:
+#   grpc: 
+#     taskfile: ./grpc-interfaces/Taskfile.yml
+#     dir: ./grpc-interfaces
 
 tasks:
+  run:auth:
+    desc: Run the auth service
+    dir: ./apps/auth
+    cmds:
+      - task run
+
+  run:comms:
+    desc: Run the auth service
+    dir: ./apps/comms
+    cmds:
+      - task run
+    
   go:upgrade:github.com/kloudlite/operator:
     cmds:
       - go list -m -json github.com/kloudlite/operator@{{.commit}} | jq '.|"\(.Path) \(.Version)"'

@@ -1,0 +1,13 @@
+services:
+  cluster:
+    image: rancher/k3s:latest
+    privileged: true
+    command: ["server", "--token=aksdh83j2gh3"]
+    ports:
+      - "6443:6443"
+      - "8080:8080"
+    volumes:
+      - .:/var/lib/code
+      - ./dev-env:/var/lib/rancher/k3s/server/manifests/kloudlite-services
+      - ./.dev-k3s-config:/etc/rancher/k3s
+      - $GOPATH/pkg:/var/lib/go/pkg

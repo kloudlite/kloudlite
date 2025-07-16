@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats
+  labels:
+    app: nats
+spec:
+  selector:
+    matchLabels:
+      app: nats
+  template:
+    metadata:
+      labels:
+        app: nats
+    spec:
+      containers:
+        - name: nats
+          image: nats:latest
+          ports:
+            - containerPort: 4222
+              name: client
+            - containerPort: 8222
+              name: monitoring
+          args: [ "-js", "--store_dir", "/data" ]
+          volumeMounts:
+            - name: nats-data
+              mountPath: /data
+      volumes:
+        - name: nats-data
+          persistentVolumeClaim:
+            claimName: nats-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nats-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats
+spec:
+  selector:
+    app: nats
+  ports:
+    - name: client
+      port: 4222
+      targetPort: 4222
+    - name: monitoring
+      port: 8222
+      targetPort: 8222
+  type: ClusterIP
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nats-init-kv-buckets
+spec:
+  template:
+    spec:
+      containers:
+        - name: nats-cli
+          image: natsio/nats-box:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Wait for NATS to be ready
+              until nc -z nats 4222; do sleep 1; done
+              # Create KV buckets
+              nats kv add auth-session --server nats://nats:4222
+              nats kv add reset-token --server nats://nats:4222
+              nats kv add verify-token --server nats://nats:4222
+              # Create kloudlite-events stream if not exists
+              if ! nats --server nats://nats:4222 stream info kloudlite-events &>/dev/null; then
+                echo "Creating kloudlite-events stream..."
+                nats --server nats://nats:4222 \
+                  stream add kloudlite-events \
+                  --subjects "kloudlite.events.>" \
+                  --retention limits \
+                  --storage file \
+                  --max-msgs=-1 \
+                  --max-bytes=-1 \
+                  --max-age=0s \
+                  --compression=s2 \
+                  --discard=old \
+                  --defaults || {
+                    echo "Failed to create kloudlite-events stream"
+                    exit 1
+                  }
+                echo "Stream created successfully"
+              else
+                echo "Stream kloudlite-events already exists"
+              fi
+      restartPolicy: OnFailure
