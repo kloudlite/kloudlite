@@ -90,17 +90,17 @@ func (c *Check[T]) Logger() *slog.Logger {
 
 // Mutations on check
 func (c *Check[T]) Errored(err error) StepResult {
+	if apiErrors.IsConflict(err) {
+		return newStepResult().RequeueAfter(100 * time.Millisecond)
+	}
+
 	defer c.postCheck()
 
 	_, file, line, _ := runtime.Caller(1)
 	c.request.Logger.Debug("check.errored", "err", err, "caller", fmt.Sprintf("%s:%d", file, line))
 
 	c.State = ErroredState
-	if err != nil {
-		if !apiErrors.IsConflict(err) {
-			c.CheckResult.Message = err.Error()
-		}
-	}
+	c.CheckResult.Message = err.Error()
 
 	c.CompletedAt = &metav1.Time{Time: time.Now()}
 	c.request.Object.GetStatus().Checks[c.name] = c.CheckResult
@@ -114,6 +114,10 @@ func (c *Check[T]) Errored(err error) StepResult {
 }
 
 func (c *Check[T]) Failed(err error) StepResult {
+	if apiErrors.IsConflict(err) {
+		return c.Errored(err)
+	}
+
 	defer c.postCheck()
 
 	_, file, line, _ := runtime.Caller(1)

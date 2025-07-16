@@ -451,7 +451,7 @@ func (r *Reconciler) checkDeploymentReady(req *reconciler.Request[*crdsv1.App]) 
 }
 
 func (r *Reconciler) handleAppRouter(req *reconciler.Request[*crdsv1.App]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
+	ctx, obj := req.context(), req.object
 	check := reconciler.NewRunningCheck(createAppRouter, req)
 
 	if obj.Spec.Router == nil {

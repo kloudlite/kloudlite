@@ -1,16 +1,21 @@
 package reconciler
 
 const (
-	AnnotationShouldReconcileKey string = "kloudlite.io/operator.should-reconcile"
-	AnnotationClearStatusKey     string = "kloudlite.io/operator.clear-status"
-	AnnotationResetCheckKey      string = "kloudlite.io/operator.reset-check"
-	AnnotationRestartKey         string = "kloudlite.io/do-restart"
+	ProjectDomain       = "kloudlite.io"
+	OperatorLabelPrefix = "operator.kloudlite.io"
+)
+
+const (
+	AnnotationShouldReconcileKey string = OperatorLabelPrefix + "/should-reconcile"
+	AnnotationClearStatusKey     string = OperatorLabelPrefix + "/clear-status"
+	AnnotationResetCheckKey      string = OperatorLabelPrefix + "/reset-check"
+	AnnotationRestartKey         string = OperatorLabelPrefix + "/do-restart"
 	// AnnotationDoHelmUpgrade      string = "kloudlite.io/do-helm-upgrade"
 )
 
 const (
-	AnnotationResourceReady  string = "kloudlite.io/operator.resource.ready"
-	AnnotationResourceChecks string = "kloudlite.io/operator.checks"
+	AnnotationResourceReady  string = OperatorLabelPrefix + "/resource.ready"
+	AnnotationResourceChecks string = OperatorLabelPrefix + "/checks"
 )
 
 // Finalizers
@@ -27,7 +32,7 @@ const (
 const (
 	AnnotationDescriptionKey string = "kloudlite.io/description"
 
-	LastAppliedKey string = "kloudlite.io/last-applied"
+	LastAppliedKey string = OperatorLabelPrefix + "/last-applied"
 	GVKKey         string = "kloudlite.io/group-version-kind"
 )
 

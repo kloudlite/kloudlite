@@ -59,13 +59,7 @@ spec:
                 properties:
                   apiVersion:
                     type: string
-                  export:
-                    properties:
-                      template:
-                        type: string
-                      viaSecret:
-                        type: string
-                    type: object
+                  export: {}
                   kind:
                     type: string
                   spec:
@@ -80,13 +74,7 @@ spec:
                 properties:
                   apiVersion:
                     type: string
-                  export:
-                    properties:
-                      template:
-                        type: string
-                      viaSecret:
-                        type: string
-                    type: object
+                  export: {}
                   kind:
                     type: string
                   spec:
@@ -98,87 +86,7 @@ spec:
                 - kind
                 type: object
             type: object
-          status:
-            properties:
-              checkList:
-                items:
-                  properties:
-                    debug:
-                      type: boolean
-                    description:
-                      type: string
-                    hide:
-                      type: boolean
-                    name:
-                      type: string
-                    title:
-                      type: string
-                  required:
-                  - name
-                  - title
-                  type: object
-                type: array
-              checks:
-                additionalProperties:
-                  properties:
-                    debug:
-                      type: string
-                    error:
-                      type: string
-                    generation:
-                      format: int64
-                      type: integer
-                    info:
-                      type: string
-                    message:
-                      type: string
-                    startedAt:
-                      format: date-time
-                      type: string
-                    state:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: |-
-                        APIVersion defines the versioned schema of this representation of an object.
-                        Servers should convert recognized schemas to the latest internal value, and
-                        may reject unrecognized values.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-                      type: string
-                    kind:
-                      description: |-
-                        Kind is a string value representing the REST resource this object represents.
-                        Servers may infer this from the endpoint the client submits requests to.
-                        Cannot be updated.
-                        In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
+          status: {}
         required:
         - spec
         type: object

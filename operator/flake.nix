@@ -7,14 +7,17 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-      in
-      {
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+  }:
+    flake-utils.lib.eachDefaultSystem (
+      system: let
+        pkgs = import nixpkgs {inherit system;};
+      in {
         devShells.default = pkgs.mkShell {
-          hardeningDisable = [ "all" ];
+          hardeningDisable = ["all"];
           buildInputs = with pkgs; [
             # cli tools
             curl
@@ -28,7 +31,7 @@
 
             # programming tools
             go
-            operator-sdk
+            kubebuilder
             mongosh
 
             # kubernetes specific tools
@@ -49,9 +52,10 @@
             upx
           ];
 
-          #shellHook = ''
-          #  echo "You are using nix flakes"
-          #'';
+          shellHook = ''
+            KUBEBUILDER_ASSETS="$PWD/bin/k8s/1.31.0-linux-amd64"
+            export PATH="$PWD/bin:$PATH"
+          '';
         };
       }
     );
