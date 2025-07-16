@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Link } from '@/components/ui/link'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, ArrowUpDown, X } from 'lucide-react'
+import { ThemeToggleClient } from '@/components/theme-toggle-client'
 import { InvitationActions } from '@/components/teams/invitation-actions'
 import { TeamsTable } from '@/components/teams/teams-table'
 import { formatDistanceToNow } from 'date-fns'
@@ -65,7 +66,7 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-semibold">Team Management</h1>
-              <span className="text-sm text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
+              <span className="hidden sm:inline-block text-sm text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
                 {teams.length} teams
               </span>
             </div>
@@ -115,6 +116,7 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
                   New Team
                 </Link>
               </Button>
+              <ThemeToggleClient />
             </div>
           </div>
         </div>
