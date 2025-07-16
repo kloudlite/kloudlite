@@ -116,8 +116,13 @@ export function HeroSection() {
         </div>
 
 
+        {/* Section Divider */}
+        <div className="mt-32 mb-32 flex justify-center">
+          <div className="w-full max-w-2xl h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        </div>
+
         {/* Key Features Grid */}
-        <div className="mt-32">
+        <div className="">
           <div className="text-center mb-12 space-y-2">
             <h2 className="text-3xl font-bold">
               Every feature, one purpose:
@@ -189,7 +194,7 @@ export function HeroSection() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <Users className="h-8 w-8 text-primary mb-4 group-hover:scale-105 transition-transform duration-300" />
               <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">Instant Collaboration</h3>
-              <p className="text-sm text-muted-foreground">Share a live environment URL - teammates can code together in real-time, no setup needed</p>
+              <p className="text-sm text-muted-foreground">Switch to your teammate's environment instantly - share services, debug together, no setup required</p>
             </div>
 
             {/* Feature 9 */}
