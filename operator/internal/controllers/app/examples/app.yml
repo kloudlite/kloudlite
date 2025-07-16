@@ -1,0 +1,20 @@
+apiVersion: kloudlite.io/v1
+kind: App
+metadata:
+  name: sample
+  namespace: sample
+spec:
+  podSpec:
+    containers:
+      - name: main
+        image: nginx:mainline-alpine
+
+  services:
+    - port: 80
+
+  router:
+    routes:
+      - host: "nginx.kloudlite.local"
+        service: sample
+        path: /
+        port: 3000

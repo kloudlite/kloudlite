@@ -1,0 +1,185 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: routers.kloudlite.io
+spec:
+  group: kloudlite.io
+  names:
+    kind: Router
+    listKind: RouterList
+    plural: routers
+    singular: router
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.operator\.kloudlite\.io\/checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.operator\.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Router is the Schema for the routers API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: RouterSpec defines the desired state of Router.
+            properties:
+              backendProtocol:
+                type: string
+              basicAuth:
+                properties:
+                  enabled:
+                    type: boolean
+                  secretName:
+                    type: string
+                  username:
+                    type: string
+                required:
+                - enabled
+                type: object
+              cors:
+                properties:
+                  allowCredentials:
+                    type: boolean
+                  enabled:
+                    type: boolean
+                  origins:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              https:
+                properties:
+                  clusterIssuer:
+                    type: string
+                  enabled:
+                    type: boolean
+                  forceRedirect:
+                    type: boolean
+                required:
+                - enabled
+                type: object
+              ingressClass:
+                type: string
+              maxBodySizeInMB:
+                type: integer
+              nginxIngressAnnotations:
+                additionalProperties:
+                  type: string
+                description: |-
+                  NginxIngressAnnotations is additional list of annotations on ingress resource
+                  INFO: must be used when router does not have direct support in spec
+                type: object
+              rateLimit:
+                properties:
+                  connections:
+                    type: integer
+                  enabled:
+                    type: boolean
+                  rpm:
+                    type: integer
+                  rps:
+                    type: integer
+                type: object
+              routes:
+                items:
+                  properties:
+                    host:
+                      type: string
+                    path:
+                      type: string
+                    port:
+                      type: integer
+                    rewrite:
+                      default: false
+                      type: boolean
+                    service:
+                      type: string
+                  required:
+                  - host
+                  - path
+                  - port
+                  - service
+                  type: object
+                type: array
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    hide:
+                      type: boolean
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    completedAt:
+                      format: date-time
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

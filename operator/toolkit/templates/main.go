@@ -13,7 +13,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"sigs.k8s.io/yaml"
 
-	"github.com/kloudlite/operator/toolkit/errors"
+	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
 )
 
 //go:embed templates

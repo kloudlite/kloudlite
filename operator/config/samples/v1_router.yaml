@@ -1,0 +1,15 @@
+apiVersion: kloudlite.io/v1
+kind: Router
+metadata:
+  labels:
+    app.kubernetes.io/name: app
+    app.kubernetes.io/managed-by: kustomize
+  name: router-sample
+spec:
+  routes:
+    - host: sample.example.com
+      serviceName: sample-service
+      path: /
+      port: 80
+  https:
+    enabled: false

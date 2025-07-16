@@ -62,7 +62,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - accounts
   - apps
   - crds
   - envs
@@ -79,7 +78,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - accounts/finalizers
   - apps/finalizers
   - crds/finalizers
   - envs/finalizers
@@ -90,7 +88,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - accounts/status
   - apps/status
   - crds/status
   - envs/status
@@ -287,6 +284,35 @@ rules:
   resources:
   - configmaps/status
   - secrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - kloudlite.io
+  resources:
+  - apps
+  - routers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kloudlite.io
+  resources:
+  - apps/finalizers
+  - routers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kloudlite.io
+  resources:
+  - apps/status
+  - routers/status
   verbs:
   - get
   - patch
