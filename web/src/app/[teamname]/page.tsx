@@ -4,15 +4,18 @@ import { Link } from '@/components/ui/link'
 import { Activity, Users, FolderOpen, Settings, BarChart3, Shield } from 'lucide-react'
 
 interface TeamDashboardPageProps {
-  params: { teamname: string }
+  params: Promise<{ teamname: string }>
 }
 
 export default async function TeamDashboardPage({ params }: TeamDashboardPageProps) {
+  // Await params before accessing properties
+  const { teamname } = await params
+  
   // Get team data
   const teams = await getTeams()
   const team = teams.find(t => 
-    t.slug === params.teamname || 
-    t.name.toLowerCase().replace(/\s+/g, '-') === params.teamname
+    t.slug === teamname || 
+    t.name.toLowerCase().replace(/\s+/g, '-') === teamname
   )
   
   if (!team) {
@@ -20,12 +23,12 @@ export default async function TeamDashboardPage({ params }: TeamDashboardPagePro
   }
 
   const quickLinks = [
-    { href: `/${params.teamname}/projects`, label: 'Projects', icon: FolderOpen, description: 'Manage your projects' },
-    { href: `/${params.teamname}/environments`, label: 'Environments', icon: Activity, description: 'View environments' },
-    { href: `/${params.teamname}/members`, label: 'Members', icon: Users, description: 'Team members' },
-    { href: `/${params.teamname}/analytics`, label: 'Analytics', icon: BarChart3, description: 'Usage & metrics' },
-    { href: `/${params.teamname}/security`, label: 'Security', icon: Shield, description: 'Security settings' },
-    { href: `/${params.teamname}/settings`, label: 'Settings', icon: Settings, description: 'Team settings' },
+    { href: `/${teamname}/projects`, label: 'Projects', icon: FolderOpen, description: 'Manage your projects' },
+    { href: `/${teamname}/environments`, label: 'Environments', icon: Activity, description: 'View environments' },
+    { href: `/${teamname}/members`, label: 'Members', icon: Users, description: 'Team members' },
+    { href: `/${teamname}/analytics`, label: 'Analytics', icon: BarChart3, description: 'Usage & metrics' },
+    { href: `/${teamname}/security`, label: 'Security', icon: Shield, description: 'Security settings' },
+    { href: `/${teamname}/settings`, label: 'Settings', icon: Settings, description: 'Team settings' },
   ]
 
   return (
