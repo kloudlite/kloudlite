@@ -4,7 +4,7 @@ import GitHub from 'next-auth/providers/github'
 import AzureAD from 'next-auth/providers/azure-ad'
 
 const handler = NextAuth({
-  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-development',
+  secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [

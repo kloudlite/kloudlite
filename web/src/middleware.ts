@@ -16,6 +16,7 @@ export function middleware(request: NextRequest) {
     '/privacy',
     '/terms',
     '/sso-demo',
+    '/docs',
   ]
 
   // Auth routes that logged-in users shouldn't access
@@ -50,7 +51,7 @@ export function middleware(request: NextRequest) {
                        request.cookies.get('__Secure-next-auth.session-token.0') // Secure chunked cookie
   const isLoggedIn = !!(authToken || nextAuthToken)
 
-  const isPublicRoute = publicRoutes.includes(pathname)
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/docs')
   const isAuthRoute = authRoutes.includes(pathname)
 
   // If user is logged in and trying to access auth routes, redirect to teams
