@@ -147,7 +147,6 @@ function DropdownMenuContent({
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",
           "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-          "max-h-[300px] overflow-y-auto",
           className
         )}
         {...props}
@@ -171,10 +170,17 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "group focus:bg-primary focus:text-primary-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "group relative flex w-full cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-2 text-sm outline-hidden select-none",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        // Icon styling
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        // Default state
+        "[&_svg]:text-muted-foreground",
+        // Hover/Focus state
+        "focus:bg-primary focus:text-primary-foreground focus:[&_svg]:text-primary-foreground",
         // Destructive variant
-        "data-[variant=destructive]:text-destructive",
-        "data-[variant=destructive]:focus:bg-destructive data-[variant=destructive]:focus:text-destructive-foreground",
+        "data-[variant=destructive]:text-destructive data-[variant=destructive]:[&_svg]:text-destructive",
+        "data-[variant=destructive]:focus:bg-destructive data-[variant=destructive]:focus:text-destructive-foreground data-[variant=destructive]:focus:[&_svg]:text-destructive-foreground",
         // Inset
         "data-[inset]:pl-8",
         className
