@@ -1,0 +1,167 @@
+/* Documentation Typography */
+.docs-content h1 {
+  @apply text-4xl font-bold mt-0 mb-8 text-foreground;
+}
+
+.docs-content h2 {
+  @apply text-3xl font-semibold mt-12 mb-6 text-foreground;
+}
+
+.docs-content h3 {
+  @apply text-2xl font-semibold mt-8 mb-4 text-foreground;
+}
+
+.docs-content h4 {
+  @apply text-xl font-semibold mt-6 mb-3 text-foreground;
+}
+
+.docs-content h5 {
+  @apply text-lg font-semibold mt-4 mb-2 text-foreground;
+}
+
+.docs-content h6 {
+  @apply text-base font-semibold mt-4 mb-2 text-foreground;
+}
+
+.docs-content p {
+  @apply text-base leading-7 mb-6 text-foreground;
+}
+
+.docs-content ul {
+  @apply my-6 list-disc pl-6;
+}
+
+.docs-content ol {
+  @apply my-6 list-decimal pl-6;
+}
+
+.docs-content li {
+  @apply text-base leading-7 my-2;
+}
+
+.docs-content pre {
+  @apply bg-muted border border-border/50 rounded-lg my-8 p-6 overflow-x-auto;
+}
+
+.docs-content code {
+  @apply bg-muted text-foreground px-1.5 py-0.5 rounded font-mono text-sm;
+}
+
+.docs-content pre code {
+  @apply bg-transparent p-0;
+}
+
+.docs-content blockquote {
+  @apply border-l-4 border-primary/30 pl-6 italic my-8 text-muted-foreground;
+}
+
+.docs-content hr {
+  @apply my-12 border-border;
+}
+
+.docs-content a {
+  @apply text-primary no-underline font-medium hover:underline;
+}
+
+.docs-content strong {
+  @apply font-semibold text-foreground;
+}
+
+.docs-content img {
+  @apply rounded-lg my-8;
+}
+
+.docs-content table {
+  @apply my-8 w-full;
+}
+
+.docs-content thead {
+  @apply border-b-2 border-border;
+}
+
+.docs-content th {
+  @apply text-left font-semibold px-4 py-3;
+}
+
+.docs-content td {
+  @apply px-4 py-3 border-b border-border/50;
+}
+
+.docs-content tbody {
+  @apply divide-y divide-border/50;
+}
+
+/* Make headings have proper scroll margin for anchor links */
+.docs-content h1,
+.docs-content h2,
+.docs-content h3,
+.docs-content h4,
+.docs-content h5,
+.docs-content h6 {
+  @apply scroll-mt-20;
+}
+
+/* Nested lists */
+.docs-content ul ul,
+.docs-content ol ol,
+.docs-content ul ol,
+.docs-content ol ul {
+  @apply my-2 ml-4;
+}
+
+/* Definition lists */
+.docs-content dl {
+  @apply my-6;
+}
+
+.docs-content dt {
+  @apply font-semibold mb-2;
+}
+
+.docs-content dd {
+  @apply mb-4 ml-6;
+}
+
+/* Inline code in headings */
+.docs-content h1 code,
+.docs-content h2 code,
+.docs-content h3 code,
+.docs-content h4 code,
+.docs-content h5 code,
+.docs-content h6 code {
+  @apply text-inherit;
+}
+
+/* Better spacing for first and last elements */
+.docs-content > *:first-child {
+  @apply mt-0;
+}
+
+.docs-content > *:last-child {
+  @apply mb-0;
+}
+
+/* Numbered sections with proper alignment */
+.docs-content .numbered-section {
+  @apply flex gap-4 items-start;
+}
+
+.docs-content .numbered-section .number-circle {
+  @apply flex-shrink-0 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-base font-semibold;
+}
+
+.docs-content .numbered-section .content {
+  @apply flex-1 pt-1;
+}
+
+.docs-content .numbered-section .content h3 {
+  @apply text-xl font-semibold mt-0 mb-3;
+}
+
+.docs-content .numbered-section .content p {
+  @apply mb-4;
+}
+
+.docs-content .numbered-section .content pre {
+  @apply mt-4;
+}

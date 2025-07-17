@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/docs.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -1053,4 +1054,169 @@ a.link-primary {
 a.link-muted {
   @apply text-muted-foreground hover:text-foreground;
   @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:rounded-sm;
+}
+
+/* ================================================================
+   SYNTAX HIGHLIGHTING STYLES
+   ================================================================
+   
+   Styles for code blocks with syntax highlighting using highlight.js.
+   Matches the design system color palette.
+   ================================================================ */
+
+/* Base code block styles */
+.hljs {
+  @apply bg-muted text-foreground p-4 rounded-sm overflow-x-auto;
+  font-family: var(--font-family-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Light mode syntax highlighting */
+:root {
+  .hljs-comment,
+  .hljs-quote {
+    @apply text-muted-foreground;
+  }
+  
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-subst {
+    @apply text-primary;
+  }
+  
+  .hljs-string,
+  .hljs-title,
+  .hljs-section,
+  .hljs-attribute,
+  .hljs-literal,
+  .hljs-template-tag,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-addition {
+    @apply text-green-600;
+  }
+  
+  .hljs-number,
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-variable,
+  .hljs-built_in,
+  .hljs-builtin-name {
+    @apply text-orange-600;
+  }
+  
+  .hljs-params,
+  .hljs-meta,
+  .hljs-deletion {
+    @apply text-blue-600;
+  }
+  
+  .hljs-regexp,
+  .hljs-link {
+    @apply text-purple-600;
+  }
+  
+  .hljs-strong {
+    @apply font-bold;
+  }
+  
+  .hljs-emphasis {
+    @apply italic;
+  }
+}
+
+/* Dark mode syntax highlighting */
+.dark {
+  .hljs-comment,
+  .hljs-quote {
+    @apply text-muted-foreground;
+  }
+  
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-subst {
+    @apply text-primary;
+  }
+  
+  .hljs-string,
+  .hljs-title,
+  .hljs-section,
+  .hljs-attribute,
+  .hljs-literal,
+  .hljs-template-tag,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-addition {
+    @apply text-green-400;
+  }
+  
+  .hljs-number,
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-variable,
+  .hljs-built_in,
+  .hljs-builtin-name {
+    @apply text-orange-400;
+  }
+  
+  .hljs-params,
+  .hljs-meta,
+  .hljs-deletion {
+    @apply text-blue-400;
+  }
+  
+  .hljs-regexp,
+  .hljs-link {
+    @apply text-purple-400;
+  }
+  
+  .hljs-strong {
+    @apply font-bold;
+  }
+  
+  .hljs-emphasis {
+    @apply italic;
+  }
+}
+
+/* Prose styles for documentation */
+.prose {
+  @apply text-foreground;
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+  }
+  
+  a {
+    @apply text-primary hover:text-primary-hover no-underline;
+  }
+  
+  blockquote {
+    @apply border-l-primary text-muted-foreground;
+  }
+  
+  code {
+    @apply bg-muted text-foreground rounded-sm px-1 py-0.5 text-sm font-mono;
+  }
+  
+  pre {
+    @apply bg-muted;
+  }
+  
+  pre code {
+    @apply bg-transparent p-0;
+  }
+  
+  table {
+    @apply border-collapse border-border;
+  }
+  
+  th, td {
+    @apply border border-border;
+  }
+  
+  th {
+    @apply bg-muted;
+  }
 }

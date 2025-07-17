@@ -1,0 +1,130 @@
+import { DocsPage } from '@/components/docs/docs-page'
+
+<DocsPage
+  title="Documentation Spacing Test"
+  description="Testing proper spacing and typography in documentation"
+  lastUpdated="January 16, 2025"
+  difficulty="beginner"
+  estimatedTime={5}
+  tags={['test', 'spacing', 'typography']}
+>
+
+## Introduction
+
+This page demonstrates proper spacing and typography in our documentation system. Notice how elements have appropriate breathing room.
+
+### Key Features
+
+Our documentation system includes:
+
+- MDX support for rich content
+- Search UI (ready for content)
+- Mobile-friendly design
+- Professional typography
+
+## Sample Content
+
+Here's how different elements will look:
+
+### Code Block Example
+
+```javascript
+function example() {
+  console.log("Hello, world!");
+  return "This is a code block";
+}
+```
+
+### Inline Code
+
+You can use `inline code` within paragraphs to highlight technical terms or code snippets.
+
+> This is a blockquote that shows how quoted content will appear in the documentation. It should have proper spacing and a visual indicator.
+
+### Lists
+
+Here's an unordered list:
+
+- First item with some content
+- Second item with more details
+- Third item to complete the list
+
+And here's an ordered list:
+
+1. Step one in the process
+2. Step two with explanation
+3. Step three to finish
+
+### Tables
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Sidebar Navigation | ✅ Complete | Professional sidebar with navigation |
+| Table of Contents | ✅ Complete | Sticky TOC with active states |
+| MDX Support | ✅ Complete | Full MDX rendering support |
+| Search UI | 🚧 In Progress | Search functionality coming soon |
+
+### Links and Emphasis
+
+You can create [links to other pages](/docs) and use **bold text** for emphasis or *italic text* for subtle emphasis.
+
+## Advanced Examples
+
+### Nested Lists
+
+1. First level item
+   - Nested bullet point
+   - Another nested item
+     - Even deeper nesting
+     - With multiple items
+   
+2. Second level item
+   - With its own nested items
+   - And proper spacing
+
+### Complex Code Examples
+
+```typescript
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  roles: Role[];
+}
+
+class UserService {
+  async getUser(id: string): Promise<User> {
+    // Implementation details
+    const user = await db.users.findById(id);
+    return user;
+  }
+}
+```
+
+### Mixed Content
+
+Here's a paragraph followed by a list, then more content:
+
+The Kloudlite platform offers several key benefits:
+
+- **Fast Development**: Instant cloud environments
+- **Reliable Infrastructure**: Built on Kubernetes
+- **Seamless Collaboration**: Team-friendly features
+
+After setting up your environment, you can immediately start developing with all the tools you need pre-configured and ready to use.
+
+---
+
+## Conclusion
+
+This page demonstrates that our documentation system properly handles:
+
+1. **Spacing**: Appropriate margins and padding between elements
+2. **Typography**: Clear hierarchy with different heading levels
+3. **Code Blocks**: Syntax highlighting and proper formatting
+4. **Lists and Tables**: Well-structured data presentation
+5. **Blockquotes**: Visually distinct quoted content
+
+All elements work together to create a professional, readable documentation experience.
+
+</DocsPage>
