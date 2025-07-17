@@ -5,6 +5,7 @@ export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired'
 export interface Team {
   id: string
   name: string
+  slug?: string // URL-friendly version of the team name
   description?: string
   visibility: TeamVisibility
   region: string

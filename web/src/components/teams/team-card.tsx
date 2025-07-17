@@ -81,8 +81,8 @@ export function TeamCard({ team, userRole }: TeamCardProps) {
         {/* Actions */}
         <div className="pt-2">
           <Button asChild variant="outline" className="w-full rounded-none h-11 font-medium group-hover:border-primary group-hover:text-primary transition-colors">
-            <Link href={`/teams/${team.id}`}>
-              View Team Details
+            <Link href={`/${team.slug || team.name.toLowerCase().replace(/\s+/g, '-')}`}>
+              Open Dashboard
             </Link>
           </Button>
         </div>

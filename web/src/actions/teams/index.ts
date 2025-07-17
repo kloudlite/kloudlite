@@ -18,8 +18,10 @@ const mockTeams: (Team & { userRole: TeamRole })[] = [
   {
     id: '1',
     name: 'Engineering Team',
+    slug: 'engineering-team',
     description: 'Core platform development team',
     visibility: 'private',
+    region: 'us-west-2',
     memberCount: 12,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
@@ -30,8 +32,10 @@ const mockTeams: (Team & { userRole: TeamRole })[] = [
   {
     id: '2',
     name: 'Design Team',
+    slug: 'design-team',
     description: 'Product and UX design',
     visibility: 'public',
+    region: 'us-east-1',
     memberCount: 8,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-10'),
@@ -42,8 +46,10 @@ const mockTeams: (Team & { userRole: TeamRole })[] = [
   {
     id: '3',
     name: 'Marketing Team',
+    slug: 'marketing-team',
     description: 'Growth and marketing initiatives',
     visibility: 'public',
+    region: 'eu-west-1',
     memberCount: 15,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-01-20'),
@@ -54,8 +60,10 @@ const mockTeams: (Team & { userRole: TeamRole })[] = [
   {
     id: '4',
     name: 'DevOps Team',
+    slug: 'devops-team',
     description: 'Infrastructure and deployment automation',
     visibility: 'private',
+    region: 'us-west-2',
     memberCount: 6,
     createdAt: new Date('2024-01-05'),
     updatedAt: new Date('2024-01-05'),
@@ -66,8 +74,10 @@ const mockTeams: (Team & { userRole: TeamRole })[] = [
   {
     id: '5',
     name: 'QA Team',
+    slug: 'qa-team',
     description: 'Quality assurance and testing',
     visibility: 'private',
+    region: 'us-east-1',
     memberCount: 10,
     createdAt: new Date('2024-01-12'),
     updatedAt: new Date('2024-01-12'),
@@ -78,8 +88,10 @@ const mockTeams: (Team & { userRole: TeamRole })[] = [
   {
     id: '6',
     name: 'Data Science Team',
+    slug: 'data-science-team',
     description: 'Analytics and machine learning projects',
     visibility: 'public',
+    region: 'us-west-1',
     memberCount: 7,
     createdAt: new Date('2024-01-08'),
     updatedAt: new Date('2024-01-08'),
@@ -90,8 +102,10 @@ const mockTeams: (Team & { userRole: TeamRole })[] = [
   {
     id: '7',
     name: 'Security Team',
+    slug: 'security-team',
     description: 'Security audits and compliance',
     visibility: 'private',
+    region: 'us-east-2',
     memberCount: 5,
     createdAt: new Date('2024-01-18'),
     updatedAt: new Date('2024-01-18'),
@@ -266,9 +280,10 @@ export async function createTeam(input: CreateTeamInput) {
     // 3. Send invitations if any
     
     const newTeamId = 'team-' + Date.now()
+    const teamSlug = input.name.toLowerCase().replace(/\s+/g, '-')
     
     // Simulate success
-    return { success: true, teamId: newTeamId }
+    return { success: true, teamId: newTeamId, teamSlug }
   } catch (error) {
     console.error('Failed to create team:', error)
     return { success: false, error: 'Failed to create team' }

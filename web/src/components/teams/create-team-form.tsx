@@ -93,7 +93,7 @@ export function CreateTeamForm() {
       
       if (result.success) {
         toast.success('Team created successfully')
-        router.push(`/teams/${result.teamId}`)
+        router.push(`/${result.teamSlug}`)
       } else {
         toast.error(result.error || 'Failed to create team')
       }
