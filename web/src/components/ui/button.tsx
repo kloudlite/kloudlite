@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none text-sm font-medium transition-all duration-200 ease-in-out disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99] active:transition-transform active:duration-75",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none text-sm font-medium transition-all duration-200 ease-in-out disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   {
     variants: {
       variant: {
@@ -51,6 +51,7 @@ interface ButtonProps
   extends React.ComponentProps<"button">,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  disableActiveTransition?: boolean
 }
 
 function Button({
@@ -58,6 +59,7 @@ function Button({
   variant,
   size,
   asChild = false,
+  disableActiveTransition = false,
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot : "button"
@@ -65,7 +67,12 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size }),
+        !disableActiveTransition && "active:scale-[0.99] active:transition-transform active:duration-75",
+        disableActiveTransition && "!transform-none !scale-100 active:!transform-none active:!scale-100 hover:!transform-none hover:!scale-100 focus:!transform-none focus:!scale-100 data-[state=open]:!transform-none data-[state=open]:!scale-100 data-[state=closed]:!transform-none data-[state=closed]:!scale-100",
+        className
+      )}
       {...props}
     />
   )

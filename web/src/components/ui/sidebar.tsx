@@ -115,9 +115,7 @@ export function Sidebar({
                   </div>
                 </TransitionChild>
               )}
-              <div className="flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-4">
-                {children}
-              </div>
+              {children}
             </DialogPanel>
           </div>
         </Dialog>
@@ -139,9 +137,7 @@ export function Sidebar({
         )}
         {...props}
       >
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-4">
-          {children}
-        </div>
+        {children}
       </div>
     </SidebarContext.Provider>
   )
@@ -192,7 +188,7 @@ const sidebarLinkVariants = cva(
     variants: {
       variant: {
         default: "text-muted-foreground hover:bg-muted hover:text-foreground",
-        active: "bg-muted text-primary",
+        active: "bg-primary/10 dark:bg-primary/20 text-primary relative before:absolute before:-left-2 before:top-0 before:h-full before:w-1 before:bg-primary",
         ghost: "text-muted-foreground hover:text-foreground",
       },
     },
@@ -222,7 +218,7 @@ export const SidebarLink = React.forwardRef<HTMLAnchorElement, SidebarLinkProps>
             aria-hidden="true"
             className={cn(
               "size-6 shrink-0",
-              active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+              active ? "text-blue-600" : "text-muted-foreground group-hover:text-foreground"
             )}
           />
         )}
@@ -297,3 +293,14 @@ export const SidebarTrigger = React.forwardRef<HTMLButtonElement, SidebarTrigger
 )
 
 SidebarTrigger.displayName = "SidebarTrigger"
+
+export interface SidebarSeparatorProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function SidebarSeparator({ className, ...props }: SidebarSeparatorProps) {
+  return (
+    <div 
+      className={cn("h-px bg-border", className)} 
+      {...props} 
+    />
+  )
+}

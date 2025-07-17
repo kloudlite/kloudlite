@@ -72,7 +72,7 @@ export function TeamCard({ team, userRole }: TeamCardProps) {
           </div>
           <span className={`
             px-2 py-0.5 text-xs font-medium rounded-none
-            ${team.visibility === 'private' ? 'bg-muted' : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'}
+            ${team.visibility === 'private' ? 'bg-muted' : 'bg-success/10 text-success'}
           `}>
             {team.visibility}
           </span>

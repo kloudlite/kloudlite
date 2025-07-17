@@ -584,6 +584,16 @@
   --input: var(--color-gray-200);
   --ring: var(--color-primary-600);
   
+  /* Dashboard-specific colors */
+  --dashboard-bg: #fafbfc;           /* Subtle off-white background */
+  --dashboard-sidebar: #ffffff;       /* Clean white sidebar */
+  --dashboard-header: #f8fafc;        /* Slightly darker header */
+  --dashboard-section: #f3f4f6;       /* Section backgrounds */
+  --dashboard-hover: rgba(59, 130, 246, 0.04); /* Subtle blue hover */
+  --dashboard-active: rgba(59, 130, 246, 0.08); /* Active state bg */
+  --dashboard-border: rgba(229, 231, 235, 0.8); /* Softer borders */
+  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+  
   /* ----------------------------------------------------------------
      Brand Colors
      ---------------------------------------------------------------- */
@@ -718,6 +728,16 @@
   --border: var(--color-gray-600);
   --input: var(--color-gray-600);
   --ring: var(--color-primary-400);
+  
+  /* Dashboard-specific colors */
+  --dashboard-bg: #0a0f1c;            /* Deep dark background */
+  --dashboard-sidebar: #0f1724;       /* Slightly lighter sidebar */
+  --dashboard-header: #131d2e;        /* Header section */
+  --dashboard-section: #1a2332;       /* Section backgrounds */
+  --dashboard-hover: rgba(96, 165, 250, 0.05); /* Subtle blue hover */
+  --dashboard-active: rgba(96, 165, 250, 0.1);  /* Active state bg */
+  --dashboard-border: rgba(55, 65, 81, 0.5);    /* Softer borders */
+  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
   
   /* ----------------------------------------------------------------
      Brand Colors

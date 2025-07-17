@@ -93,9 +93,9 @@ function DropdownMenuSubTrigger({
       data-inset={inset}
       className={cn(
         "group flex cursor-default items-center rounded-none px-2 py-1.5 text-sm outline-hidden select-none",
-        // Focus state with primary background
-        "focus:bg-primary focus:text-primary-foreground",
-        "data-[state=open]:bg-primary data-[state=open]:text-primary-foreground",
+        // Focus state with muted background
+        "focus:bg-muted focus:text-foreground",
+        "data-[state=open]:bg-muted data-[state=open]:text-foreground",
         // Icon styling
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "data-[inset]:pl-8",
@@ -170,14 +170,14 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "group relative flex w-full cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-2 text-sm outline-hidden select-none",
+        "group relative flex w-full cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-2 text-sm outline-hidden select-none text-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         // Icon styling
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         // Default state
         "[&_svg]:text-muted-foreground",
         // Hover/Focus state
-        "focus:bg-primary focus:text-primary-foreground focus:[&_svg]:text-primary-foreground",
+        "focus:bg-muted focus:text-foreground focus:[&_svg]:text-foreground",
         // Destructive variant
         "data-[variant=destructive]:text-destructive data-[variant=destructive]:[&_svg]:text-destructive",
         "data-[variant=destructive]:focus:bg-destructive data-[variant=destructive]:focus:text-destructive-foreground data-[variant=destructive]:focus:[&_svg]:text-destructive-foreground",
@@ -201,8 +201,8 @@ function DropdownMenuCheckboxItem({
       data-slot="dropdown-menu-checkbox-item"
       className={cn(
         "relative flex cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-8 text-sm outline-hidden select-none",
-        // Focus state with primary background
-        "focus:bg-primary focus:text-primary-foreground",
+        // Focus state with muted background
+        "focus:bg-muted focus:text-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
@@ -230,8 +230,8 @@ function DropdownMenuRadioItem({
       data-slot="dropdown-menu-radio-item"
       className={cn(
         "relative flex cursor-default items-center gap-2 rounded-none py-1.5 pr-2 pl-8 text-sm outline-hidden select-none",
-        // Focus state with primary background
-        "focus:bg-primary focus:text-primary-foreground",
+        // Focus state with muted background
+        "focus:bg-muted focus:text-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className

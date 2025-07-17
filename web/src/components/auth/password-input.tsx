@@ -31,9 +31,9 @@ function getPasswordStrength(password: string): {
   
   // Determine strength label and color
   if (score <= 2) return { score: 1, label: 'Weak', color: 'bg-destructive' }
-  if (score <= 4) return { score: 2, label: 'Fair', color: 'bg-yellow-500' }
-  if (score <= 5) return { score: 3, label: 'Good', color: 'bg-blue-500' }
-  return { score: 4, label: 'Strong', color: 'bg-green-500' }
+  if (score <= 4) return { score: 2, label: 'Fair', color: 'bg-warning' }
+  if (score <= 5) return { score: 3, label: 'Good', color: 'bg-primary' }
+  return { score: 4, label: 'Strong', color: 'bg-success' }
 }
 
 export function PasswordInput({ showStrength, ...props }: PasswordInputProps) {

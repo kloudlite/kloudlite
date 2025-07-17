@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggleClient } from '@/components/theme-toggle-client'
 import { DocsSidebar } from '@/components/docs/docs-sidebar'
@@ -26,6 +26,18 @@ export function DocsLayout({ children }: DocsLayoutProps) {
 
       {/* Sidebar */}
       <DocsSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      {/* Mobile close button - positioned outside sidebar */}
+      {sidebarOpen && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setSidebarOpen(false)}
+          className="fixed top-4 left-[288px] z-50 lg:hidden bg-background border border-border"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      )}
 
       {/* Main Content Area - Full Height */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">

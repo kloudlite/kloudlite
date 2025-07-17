@@ -64,10 +64,10 @@ function Callout({
   ...props 
 }: React.HTMLAttributes<HTMLDivElement> & { type?: 'info' | 'warning' | 'error' | 'success' }) {
   const styles = {
-    info: 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-    warning: 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
-    error: 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300',
-    success: 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300'
+    info: 'border-primary/20 bg-primary/10 text-primary',
+    warning: 'border-warning/20 bg-warning/10 text-warning',
+    error: 'border-destructive/20 bg-destructive/10 text-destructive',
+    success: 'border-success/20 bg-success/10 text-success'
   }
 
   return (

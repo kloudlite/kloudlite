@@ -6,6 +6,7 @@ import { Link } from '@/components/ui/link'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, ArrowUpDown, X } from 'lucide-react'
 import { UserProfileDropdown } from '@/components/teams/user-profile-dropdown'
+import { ThemeToggleClient } from '@/components/theme-toggle-client'
 import { InvitationActions } from '@/components/teams/invitation-actions'
 import { TeamsTable } from '@/components/teams/teams-table'
 import { formatDistanceToNow } from 'date-fns'
@@ -184,6 +185,7 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
               <p className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} Kloudlite. All rights reserved.
               </p>
+              <ThemeToggleClient />
             </div>
             <nav className="flex flex-wrap gap-6">
               <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">

@@ -22,9 +22,9 @@ interface DocsPageProps {
 
 function DifficultyBadge({ level }: { level: 'beginner' | 'intermediate' | 'advanced' }) {
   const colors = {
-    beginner: 'bg-green-100 text-green-800 border-green-200',
-    intermediate: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    advanced: 'bg-red-100 text-red-800 border-red-200'
+    beginner: 'bg-success/10 text-success border-success/20',
+    intermediate: 'bg-warning/10 text-warning border-warning/20',
+    advanced: 'bg-destructive/10 text-destructive border-destructive/20'
   }
   
   return (
@@ -152,7 +152,7 @@ export function DocsPage({
                 <div className="border-t border-border px-4 py-3 bg-muted/30">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-medium">v1.0.0</span>
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                    <div className="w-1.5 h-1.5 bg-success rounded-full" />
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">

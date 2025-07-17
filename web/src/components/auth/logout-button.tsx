@@ -2,21 +2,30 @@
 
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { logoutUser } from '@/actions/auth/auth-server-actions'
+import { logoutAction } from '@/actions/auth/logout'
 
 interface LogoutButtonProps {
   children?: React.ReactNode
   className?: string
+  asChild?: boolean
 }
 
-export function LogoutButton({ children, className }: LogoutButtonProps) {
+export function LogoutButton({ children, className, asChild = false }: LogoutButtonProps) {
   const handleLogout = async () => {
     try {
-      await logoutUser()
+      await logoutAction()
       await signOut({ callbackUrl: '/auth/login' })
     } catch (error) {
       console.error('Logout error:', error)
     }
+  }
+
+  if (asChild) {
+    return (
+      <div onClick={handleLogout}>
+        {children}
+      </div>
+    )
   }
 
   return (

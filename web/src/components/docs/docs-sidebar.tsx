@@ -94,7 +94,7 @@ export function DocsSidebar({ isOpen = true, onClose }: DocsSidebarProps) {
 
   return (
     <aside className={cn(
-      "fixed inset-y-0 left-0 z-50 w-72 bg-muted/30 border-r border-border transform transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-0 flex flex-col h-screen",
+      "fixed inset-y-0 left-0 z-50 w-72 bg-background border-r border-border transform transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-0 flex flex-col h-screen",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       {/* Sidebar Header */}
@@ -108,16 +108,6 @@ export function DocsSidebar({ isOpen = true, onClose }: DocsSidebarProps) {
               v1.0.0
             </span>
           </div>
-          {onClose && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="lg:hidden rounded-none"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          )}
         </div>
         
         {/* Search */}
@@ -162,6 +152,12 @@ export function DocsSidebar({ isOpen = true, onClose }: DocsSidebarProps) {
                         <Link
                           key={item.href}
                           href={item.href}
+                          onClick={() => {
+                            // Close sidebar on mobile when a link is clicked
+                            if (onClose && window.innerWidth < 1024) {
+                              onClose()
+                            }
+                          }}
                           className={cn(
                             "block px-6 py-2 text-sm transition-colors",
                             isActive 

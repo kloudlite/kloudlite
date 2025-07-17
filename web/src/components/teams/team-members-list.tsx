@@ -30,9 +30,9 @@ const roleIcons = {
 }
 
 const roleColors = {
-  owner: 'text-amber-600 bg-amber-50 border-amber-200',
-  admin: 'text-blue-600 bg-blue-50 border-blue-200',
-  member: 'text-gray-600 bg-gray-50 border-gray-200',
+  owner: 'text-warning bg-warning/10 border-warning/20',
+  admin: 'text-primary bg-primary/10 border-primary/20',
+  member: 'text-muted-foreground bg-muted border-border',
 }
 
 export function TeamMembersList({ members, currentUserRole, teamId }: TeamMembersListProps) {
