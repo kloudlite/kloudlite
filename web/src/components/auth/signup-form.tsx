@@ -17,8 +17,16 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { PasswordInput } from '@/components/auth/password-input'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Building2 } from 'lucide-react'
 import { SocialLogin } from './social-login'
 import { AuthDivider } from './auth-divider'
 import { SSOLogin } from './sso-login'
@@ -26,6 +34,7 @@ import { SSOLogin } from './sso-login'
 export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ssoDialogOpen, setSsoDialogOpen] = useState(false)
 
   const form = useForm<SignupCredentials>({
     defaultValues: {
@@ -61,7 +70,26 @@ export function SignupForm() {
 
       <SocialLogin mode="signup" />
       
-      <SSOLogin />
+      <Dialog open={ssoDialogOpen} onOpenChange={setSsoDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full h-11">
+            <Building2 className="h-5 w-5 mr-2" />
+            Sign up with SSO
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Single Sign-On</DialogTitle>
+            <DialogDescription>
+              Enter your work email to sign up with your company's SSO provider
+            </DialogDescription>
+          </DialogHeader>
+          <SSOLogin 
+            callbackUrl="/teams"
+            className="mt-4"
+          />
+        </DialogContent>
+      </Dialog>
       
       <AuthDivider />
 
