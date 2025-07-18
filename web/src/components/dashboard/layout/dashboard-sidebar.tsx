@@ -37,14 +37,16 @@ export async function DashboardSidebar({ teamSlug, teamName }: DashboardSidebarP
 
         {/* Footer - Always visible */}
         <footer className="flex-shrink-0 bg-gradient-to-t from-gray-50/80 to-gray-100/40 dark:from-gray-900/50 dark:to-gray-900/30 border-t border-border">
-          {/* Profile Section */}
-          <div className="px-4 py-4 border-b border-border">
-            {user && <UserProfileDropdown variant="sidebar" userRole="owner" user={user} />}
-          </div>
-          
-          {/* Bottom Action Bar */}
-          <div className="px-4 py-3">
+          {/* Bottom Action Bar with Profile */}
+          <div className="px-4 py-3 flex items-center justify-between">
             <SidebarActions />
+            {user && (
+              <UserProfileDropdown 
+                variant="default" 
+                userRole="owner" 
+                user={user} 
+              />
+            )}
           </div>
         </footer>
       </div>

@@ -29,26 +29,7 @@ import { createTeam } from '@/actions/teams'
 import { toast } from '@/components/ui/use-toast'
 import { Loader2, Plus, X, MapPin } from 'lucide-react'
 import type { CreateTeamInput, TeamRole } from '@/lib/teams/types'
-
-// AWS Regions
-const AWS_REGIONS = [
-  { value: 'us-east-1', label: 'US East (N. Virginia)', flag: '🇺🇸' },
-  { value: 'us-east-2', label: 'US East (Ohio)', flag: '🇺🇸' },
-  { value: 'us-west-1', label: 'US West (N. California)', flag: '🇺🇸' },
-  { value: 'us-west-2', label: 'US West (Oregon)', flag: '🇺🇸' },
-  { value: 'ca-central-1', label: 'Canada (Central)', flag: '🇨🇦' },
-  { value: 'eu-central-1', label: 'Europe (Frankfurt)', flag: '🇩🇪' },
-  { value: 'eu-west-1', label: 'Europe (Ireland)', flag: '🇮🇪' },
-  { value: 'eu-west-2', label: 'Europe (London)', flag: '🇬🇧' },
-  { value: 'eu-west-3', label: 'Europe (Paris)', flag: '🇫🇷' },
-  { value: 'eu-north-1', label: 'Europe (Stockholm)', flag: '🇸🇪' },
-  { value: 'ap-south-1', label: 'Asia Pacific (Mumbai)', flag: '🇮🇳' },
-  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)', flag: '🇸🇬' },
-  { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney)', flag: '🇦🇺' },
-  { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo)', flag: '🇯🇵' },
-  { value: 'ap-northeast-2', label: 'Asia Pacific (Seoul)', flag: '🇰🇷' },
-  { value: 'sa-east-1', label: 'South America (São Paulo)', flag: '🇧🇷' },
-]
+import { AWS_REGIONS } from '@/lib/config/regions'
 
 const formSchema = z.object({
   name: z.string().min(3, 'Team name must be at least 3 characters').max(50),

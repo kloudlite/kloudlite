@@ -1,46 +1,53 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/components/ui/link'
 import { Input } from '@/components/ui/input'
-import { Plus, Search, ArrowUpDown, X } from 'lucide-react'
+import { Plus, Search, X, Crown, Shield, UserCheck, Settings, MoreVertical } from 'lucide-react'
 import { UserProfileDropdown } from '@/components/teams/user-profile-dropdown'
-import { ThemeToggleClient } from '@/components/theme-toggle-client'
 import { InvitationActions } from '@/components/teams/invitation-actions'
-import { TeamsTable } from '@/components/teams/teams-table'
 import { formatDistanceToNow } from 'date-fns'
 import type { Team, TeamInvitation, TeamRole } from '@/lib/teams/types'
+import { PageContainer, PageHeader, PageContent, PageSection } from '@/components/layout/page-container'
+import { GridLayout, Card } from '@/components/layout/grid-layout'
+import { DataTable, type ColumnDef } from '@/components/ui/data-table'
+import { useTableState } from '@/hooks/use-table-state'
 
 interface TeamsPageContentProps {
   teams: (Team & { userRole: TeamRole })[]
   pendingInvitations: TeamInvitation[]
 }
 
+const roleIcons = {
+  owner: Crown,
+  admin: Shield,
+  member: UserCheck,
+}
+
 export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContentProps) {
-  const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
 
-  // Filter teams based on search query
-  const filteredTeams = useMemo(() => {
-    if (!searchQuery.trim()) return teams
-
-    const query = searchQuery.toLowerCase()
-    return teams.filter(team => 
-      team.name.toLowerCase().includes(query) ||
-      team.description?.toLowerCase().includes(query)
-    )
-  }, [teams, searchQuery])
+  // Use our reusable table state hook
+  const {
+    processedData: filteredTeams,
+    searchQuery,
+    handleSearch,
+    clearSearch,
+    sortField,
+    sortDirection,
+    handleSort,
+  } = useTableState({
+    data: teams,
+    searchFields: ['name', 'description', 'userRole', 'region'],
+    initialSort: { field: 'name', direction: 'asc' }
+  })
 
   const handleSearchToggle = () => {
     setIsSearching(!isSearching)
     if (isSearching) {
-      setSearchQuery('')
+      clearSearch()
     }
-  }
-
-  const handleClearSearch = () => {
-    setSearchQuery('')
   }
 
   // Add keyboard shortcut for search
@@ -59,97 +66,202 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isSearching])
 
-  return (
-    <div className="min-h-screen bg-muted/30 flex flex-col">
-      {/* Professional Header */}
-      <div className="bg-background border-b">
-        <div className="container mx-auto px-6 py-4 max-w-7xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-semibold">Team Management</h1>
-              <span className="hidden sm:inline-block text-sm text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
-                {teams.length} teams
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              {isSearching ? (
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      type="search"
-                      placeholder="Search teams..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          handleSearchToggle()
-                        }
-                      }}
-                      className="pl-8 pr-8 h-8 w-[250px] text-sm"
-                      autoFocus
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={handleClearSearch}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={handleSearchToggle}>
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={handleSearchToggle} className="group">
-                  <Search className="h-4 w-4 mr-2" />
-                  Search Teams
-                  <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-70 group-hover:opacity-100">
-                    /
-                  </kbd>
-                </Button>
-              )}
-              <UserProfileDropdown />
+  // Define table columns
+  const columns: ColumnDef<Team & { userRole: TeamRole }>[] = [
+    {
+      key: 'name',
+      header: 'Team Name',
+      sortable: true,
+      render: (_, team) => (
+        <div>
+          <Link 
+            href={`/${team.slug || team.name.toLowerCase().replace(/\s+/g, '-')}`} 
+            className="font-medium hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+            aria-label={`Go to ${team.name} team dashboard`}
+          >
+            {team.name}
+          </Link>
+          <div className="text-sm text-muted-foreground mt-0.5">
+            <p className="max-w-md truncate">{team.description}</p>
+            {/* Show role and member count on mobile */}
+            <div className="flex items-center gap-4 mt-1 sm:hidden">
+              <div className="flex items-center gap-1.5">
+                {roleIcons[team.userRole] && 
+                  roleIcons[team.userRole]({ className: "h-3.5 w-3.5" })
+                }
+                <span className="capitalize">{team.userRole}</span>
+              </div>
+              <span>{team.memberCount} members</span>
             </div>
           </div>
         </div>
-      </div>
+      )
+    },
+    {
+      key: 'userRole',
+      header: 'Role',
+      sortable: true,
+      className: 'hidden sm:table-cell',
+      render: (_, team) => (
+        <div className="flex items-center gap-1.5">
+          {roleIcons[team.userRole] && 
+            roleIcons[team.userRole]({ className: "h-3.5 w-3.5 text-muted-foreground" })
+          }
+          <span className="text-sm capitalize">{team.userRole}</span>
+        </div>
+      )
+    },
+    {
+      key: 'memberCount',
+      header: 'Members',
+      sortable: true,
+      className: 'hidden md:table-cell',
+      render: (value) => <span className="text-sm">{value}</span>
+    },
+    {
+      key: 'lastActivity',
+      header: 'Last Accessed',
+      sortable: true,
+      className: 'hidden lg:table-cell',
+      render: (value) => (
+        <span className="text-sm text-muted-foreground">
+          {value ? formatDistanceToNow(value as Date, { addSuffix: true }) : 'Never'}
+        </span>
+      )
+    },
+    {
+      key: 'joinedAt',
+      header: 'Member Since',
+      sortable: true,
+      className: 'hidden lg:table-cell',
+      render: (_, team) => (
+        <span className="text-sm text-muted-foreground">
+          {team.userRole === 'owner' 
+            ? formatDistanceToNow(team.createdAt, { addSuffix: true })
+            : formatDistanceToNow(team.joinedAt || team.createdAt, { addSuffix: true })
+          }
+        </span>
+      )
+    },
+    {
+      key: 'id',
+      header: '',
+      className: 'w-16',
+      render: (_, team) => (
+        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link 
+              href={`/${team.slug || team.name.toLowerCase().replace(/\s+/g, '-')}/settings`}
+              aria-label={`${team.name} settings`}
+            >
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon-sm"
+            aria-label={`More actions for ${team.name}`}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </div>
+      )
+    }
+  ]
 
-      {/* Main Content */}
-      <div className="flex-1">
-        <div className="container mx-auto px-6 py-6 max-w-7xl space-y-6">
-          {/* Pending Invitations Section - Hidden when searching */}
-          {!searchQuery && pendingInvitations.length > 0 && (
-            <div>
-              <h2 className="font-semibold mb-4">Pending Invitations</h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {pendingInvitations.map((invitation) => (
-                  <div key={invitation.id} className="bg-background border rounded-sm p-4 flex flex-col h-full">
-                    <div className="flex items-start justify-between mb-3 flex-1">
-                      <div className="flex-1 min-h-[4rem]">
-                        <h4 className="font-medium">{invitation.team.name}</h4>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {invitation.team.description}
-                        </p>
-                      </div>
-                      <span className="text-xs px-2 py-1 bg-muted rounded-sm font-medium ml-3">
-                        {invitation.role}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mb-4">
-                      Invited by {invitation.inviter.name} • {formatDistanceToNow(invitation.createdAt, { addSuffix: true })}
-                    </div>
-                    <InvitationActions invitationId={invitation.id} />
-                  </div>
-                ))}
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Teams"
+        description="Manage your team memberships and invitations"
+        actions={
+          <>
+            {isSearching ? (
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search teams, roles, regions..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        handleSearchToggle()
+                      }
+                    }}
+                    className="pl-8 pr-8 h-8 w-[280px] text-sm"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={clearSearch}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleSearchToggle}>
+                  Cancel
+                </Button>
               </div>
-            </div>
-          )}
+            ) : (
+              <Button variant="ghost" size="sm" onClick={handleSearchToggle} className="group">
+                <Search className="h-4 w-4 mr-2" />
+                Search Teams
+                <kbd 
+                  className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-70 group-hover:opacity-100"
+                  aria-label="Press forward slash to search"
+                >
+                  /
+                </kbd>
+              </Button>
+            )}
+            <UserProfileDropdown 
+              user={{
+                name: "John Doe",
+                email: "john.doe@example.com"
+              }}
+            />
+          </>
+        }
+      />
 
-          {/* All Teams Section */}
-          <div className="bg-background border rounded-sm">
+      <PageContent>
+        {/* Pending Invitations Section */}
+        {!searchQuery && pendingInvitations.length > 0 && (
+          <PageSection
+            title="Pending Invitations"
+            description="Review and respond to team invitations"
+          >
+            <GridLayout columns={3}>
+              {pendingInvitations.map((invitation) => (
+                <Card key={invitation.id} padding="large" className="flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-4 flex-1">
+                    <div className="flex-1 min-h-[4rem]">
+                      <h3 className="font-semibold text-base mb-2">{invitation.team.name}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                        {invitation.team.description || 'No description available'}
+                      </p>
+                    </div>
+                    <span className="text-xs px-2.5 py-1 bg-muted rounded-sm font-medium ml-3 uppercase tracking-wide">
+                      {invitation.role}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                    Invited by <span className="font-medium">{invitation.inviter.name}</span> • {formatDistanceToNow(invitation.createdAt, { addSuffix: true })}
+                  </div>
+                  <InvitationActions invitationId={invitation.id} />
+                </Card>
+              ))}
+            </GridLayout>
+          </PageSection>
+        )}
+
+        {/* All Teams Section */}
+        <PageSection>
+          <Card padding="default" className="overflow-hidden">
             {/* Table Header */}
             <div className="border-b px-6 py-4">
               <div className="flex items-center justify-between">
@@ -157,10 +269,6 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
                   {searchQuery ? `Search Results (${filteredTeams.length})` : 'All Teams'}
                 </h2>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
-                    <ArrowUpDown className="h-4 w-4 mr-2" />
-                    Sort
-                  </Button>
                   <Button asChild size="sm">
                     <Link href="/teams/new">
                       <Plus className="h-4 w-4 mr-2" />
@@ -171,11 +279,32 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
               </div>
             </div>
 
-            {/* Teams Table with Load More */}
-            <TeamsTable teams={filteredTeams} initialDisplayCount={5} />
-          </div>
-        </div>
-      </div>
+            {/* Teams Table */}
+            <DataTable
+              data={filteredTeams}
+              columns={columns}
+              initialDisplayCount={5}
+              onSort={handleSort}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              emptyState={{
+                title: 'No teams found',
+                description: searchQuery 
+                  ? 'Try adjusting your search to find teams'
+                  : 'Get started by creating your first team',
+                action: !searchQuery ? (
+                  <Button size="sm" asChild>
+                    <Link href="/teams/new">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Team
+                    </Link>
+                  </Button>
+                ) : undefined
+              }}
+            />
+          </Card>
+        </PageSection>
+      </PageContent>
 
       {/* Footer */}
       <footer className="border-t border-border mt-auto">
@@ -185,7 +314,6 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
               <p className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} Kloudlite. All rights reserved.
               </p>
-              <ThemeToggleClient />
             </div>
             <nav className="flex flex-wrap gap-6">
               <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">
@@ -204,6 +332,6 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
           </div>
         </div>
       </footer>
-    </div>
+    </PageContainer>
   )
 }

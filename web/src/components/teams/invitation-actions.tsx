@@ -5,17 +5,19 @@ import { Button } from '@/components/ui/button'
 import { acceptInvitation, declineInvitation } from '@/actions/teams'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/components/ui/use-toast'
+import { Loader2 } from 'lucide-react'
 
 interface InvitationActionsProps {
   invitationId: string
 }
 
 export function InvitationActions({ invitationId }: InvitationActionsProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isAccepting, setIsAccepting] = useState(false)
+  const [isDeclining, setIsDeclining] = useState(false)
   const router = useRouter()
 
   const handleAccept = async () => {
-    setIsLoading(true)
+    setIsAccepting(true)
     try {
       const result = await acceptInvitation(invitationId)
       if (result.success) {
@@ -27,12 +29,12 @@ export function InvitationActions({ invitationId }: InvitationActionsProps) {
     } catch (error) {
       toast.error('An unexpected error occurred')
     } finally {
-      setIsLoading(false)
+      setIsAccepting(false)
     }
   }
 
   const handleDecline = async () => {
-    setIsLoading(true)
+    setIsDeclining(true)
     try {
       const result = await declineInvitation(invitationId)
       if (result.success) {
@@ -44,7 +46,7 @@ export function InvitationActions({ invitationId }: InvitationActionsProps) {
     } catch (error) {
       toast.error('An unexpected error occurred')
     } finally {
-      setIsLoading(false)
+      setIsDeclining(false)
     }
   }
 
@@ -54,17 +56,19 @@ export function InvitationActions({ invitationId }: InvitationActionsProps) {
         size="sm" 
         variant="destructive-outline"
         onClick={handleDecline}
-        disabled={isLoading}
+        disabled={isAccepting || isDeclining}
         className="flex-1"
       >
+        {isDeclining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Decline
       </Button>
       <Button 
         size="sm"
         onClick={handleAccept}
-        disabled={isLoading}
+        disabled={isAccepting || isDeclining}
         className="flex-1"
       >
+        {isAccepting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Accept
       </Button>
     </div>
