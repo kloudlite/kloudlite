@@ -16,9 +16,9 @@ export async function DashboardSidebar({ teamSlug, teamName }: DashboardSidebarP
   const user = session?.user
   
   return (
-    <div className="flex h-full flex-col bg-sidebar">
+    <div className="flex h-full flex-col bg-dashboard-sidebar">
         {/* Header - Team Section */}
-        <header className="flex-shrink-0 bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-900/30 border-b border-gray-200 dark:border-gray-700">
+        <header className="flex-shrink-0 bg-gradient-to-b from-gray-50/80 to-gray-100/40 dark:from-gray-900/50 dark:to-gray-900/30 border-b border-border shadow-dashboard-card-shadow">
           <div className="px-4 py-4 pb-2">
             <TeamSwitcher teamSlug={teamSlug} teamName={teamName} />
           </div>
@@ -31,14 +31,14 @@ export async function DashboardSidebar({ teamSlug, teamName }: DashboardSidebarP
         <NavSection teamSlug={teamSlug} />
 
         {/* Work Machine Section - Moved to bottom */}
-        <section className="flex-shrink-0 bg-white dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+        <section className="flex-shrink-0 bg-dashboard-section dark:bg-gray-800/50 border-t border-border">
           <SimpleWorkMachine className="px-4 py-5" />
         </section>
 
         {/* Footer - Always visible */}
-        <footer className="flex-shrink-0 bg-gradient-to-t from-gray-50 to-gray-100/50 dark:from-gray-900/50 dark:to-gray-900/30 border-t border-gray-200 dark:border-gray-700">
+        <footer className="flex-shrink-0 bg-gradient-to-t from-gray-50/80 to-gray-100/40 dark:from-gray-900/50 dark:to-gray-900/30 border-t border-border">
           {/* Profile Section */}
-          <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800/50">
+          <div className="px-4 py-4 border-b border-border">
             {user && <UserProfileDropdown variant="sidebar" userRole="owner" user={user} />}
           </div>
           

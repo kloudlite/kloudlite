@@ -21,9 +21,12 @@ export function SimpleNavLink({ item, teamSlug }: SimpleNavLinkProps) {
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors",
-        "hover:bg-muted hover:text-foreground",
-        isActive && "bg-primary/10 text-primary relative before:absolute before:-left-6 before:top-0 before:h-full before:w-1 before:bg-primary"
+        "flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors rounded-md group",
+        "hover:bg-dashboard-hover hover:text-primary",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        isActive 
+          ? "bg-primary/12 text-primary relative before:absolute before:-left-6 before:top-0 before:h-full before:w-1 before:bg-primary before:rounded-r" 
+          : "text-muted-foreground"
       )}
     >
       <Icon className="size-4 flex-shrink-0" />

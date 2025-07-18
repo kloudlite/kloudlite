@@ -580,19 +580,21 @@
   --card-foreground: var(--color-gray-900);
   --popover: #ffffff;
   --popover-foreground: var(--color-gray-900);
-  --border: var(--color-gray-200);
-  --input: var(--color-gray-200);
+  --border: var(--color-gray-300);
+  --input: var(--color-gray-300);
   --ring: var(--color-primary-600);
   
   /* Dashboard-specific colors */
-  --dashboard-bg: #fafbfc;           /* Subtle off-white background */
-  --dashboard-sidebar: #ffffff;       /* Clean white sidebar */
-  --dashboard-header: #f8fafc;        /* Slightly darker header */
-  --dashboard-section: #f3f4f6;       /* Section backgrounds */
-  --dashboard-hover: rgba(59, 130, 246, 0.04); /* Subtle blue hover */
-  --dashboard-active: rgba(59, 130, 246, 0.08); /* Active state bg */
-  --dashboard-border: rgba(229, 231, 235, 0.8); /* Softer borders */
-  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --dashboard-bg: #f8fafc;           /* Clean slate background */
+  --dashboard-sidebar: #ffffff;       /* Pure white sidebar for contrast */
+  --dashboard-header: #f1f5f9;        /* Subtle header distinction */
+  --dashboard-section: #f8fafc;       /* Elevated section backgrounds */
+  --dashboard-hover: rgba(59, 130, 246, 0.06); /* More visible blue hover */
+  --dashboard-active: rgba(59, 130, 246, 0.12); /* Stronger active state */
+  --dashboard-border: rgba(203, 213, 225, 0.6); /* Stronger slate borders */
+  --dashboard-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --dashboard-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.05);
+  --dashboard-sidebar-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
   
   /* ----------------------------------------------------------------
      Brand Colors
@@ -601,8 +603,8 @@
   --primary-foreground: #ffffff;
   --secondary: var(--color-gray-100);
   --secondary-foreground: var(--color-gray-900);
-  --muted: var(--color-gray-100);
-  --muted-foreground: var(--color-gray-500);
+  --muted: var(--color-gray-50);
+  --muted-foreground: var(--color-gray-600);
   --accent: var(--color-accent-600);
   --accent-foreground: #ffffff;
   
@@ -909,6 +911,43 @@
    ================================================================ */
 
 @layer utilities {
+  /* Dashboard-specific utility classes */
+  .bg-dashboard-bg {
+    background-color: var(--dashboard-bg);
+  }
+  
+  .bg-dashboard-sidebar {
+    background-color: var(--dashboard-sidebar);
+  }
+  
+  .bg-dashboard-header {
+    background-color: var(--dashboard-header);
+  }
+  
+  .bg-dashboard-section {
+    background-color: var(--dashboard-section);
+  }
+  
+  .shadow-dashboard-sidebar {
+    box-shadow: var(--dashboard-sidebar-shadow);
+  }
+  
+  .shadow-dashboard-card-shadow {
+    box-shadow: var(--dashboard-card-shadow);
+  }
+  
+  .shadow-dashboard {
+    box-shadow: var(--dashboard-shadow);
+  }
+  
+  .bg-dashboard-hover {
+    background-color: var(--dashboard-hover);
+  }
+  
+  .bg-dashboard-active {
+    background-color: var(--dashboard-active);
+  }
+
   /* Ripple effect for clicks */
   @keyframes ripple {
     to {

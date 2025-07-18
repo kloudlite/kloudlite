@@ -21,7 +21,7 @@ export async function DashboardLayout({ children, teamSlug, teamName }: Dashboar
       />
       
       {/* Sidebar - CSS transforms based on checkbox state */}
-      <div className="fixed inset-y-0 left-0 z-50 w-80 transform -translate-x-full transition-transform duration-300 ease-in-out peer-checked:translate-x-0 lg:translate-x-0 border-r border-border">
+      <div className="fixed inset-y-0 left-0 z-50 w-80 transform -translate-x-full transition-transform duration-300 ease-in-out peer-checked:translate-x-0 lg:translate-x-0 border-r border-border bg-dashboard-sidebar shadow-dashboard-sidebar">
         <DashboardSidebar 
           teamSlug={teamSlug} 
           teamName={teamName}
@@ -40,7 +40,7 @@ export async function DashboardLayout({ children, teamSlug, teamName }: Dashboar
       {/* Main Content Area - add padding for fixed sidebar on desktop */}
       <div className="flex h-full flex-col lg:pl-80">
         {/* Header with mobile menu button */}
-        <header className="h-16 border-b bg-background/80 backdrop-blur-xl flex items-center px-4 lg:hidden">
+        <header className="h-16 border-b bg-dashboard-header/95 backdrop-blur-xl flex items-center px-4 lg:hidden shadow-dashboard-card-shadow">
           <label
             htmlFor="sidebar-toggle"
             className="p-2 hover:bg-muted rounded-md transition-colors cursor-pointer"
@@ -52,7 +52,7 @@ export async function DashboardLayout({ children, teamSlug, teamName }: Dashboar
         </header>
         
         {/* Content */}
-        <main className="flex-1 overflow-y-auto bg-muted/20 flex items-center justify-center">
+        <main className="flex-1 overflow-y-auto bg-dashboard-bg flex items-center justify-center">
           <div className="text-center">
             <div className="text-6xl font-light text-muted-foreground/50 mb-4">🚧</div>
             <h2 className="text-xl font-medium text-muted-foreground mb-2">Content Area</h2>

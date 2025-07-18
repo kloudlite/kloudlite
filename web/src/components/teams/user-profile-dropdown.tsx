@@ -56,7 +56,7 @@ export function UserProfileDropdown({ variant = 'default', userRole = 'member', 
         {variant === 'sidebar' ? (
           <Button 
             variant="ghost" 
-            className="flex items-center gap-3 w-full px-4 py-4 rounded-md border border-gray-100 dark:border-gray-800 text-sm font-medium transition-colors bg-gray-200/50 dark:bg-gray-700/50 hover:bg-muted/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 h-auto justify-start"
+            className="flex items-center gap-3 w-full px-4 py-4 rounded-lg border text-sm font-medium transition-colors bg-card hover:bg-dashboard-hover hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-auto justify-start shadow-dashboard-card-shadow"
             disableActiveTransition={true}
           >
             <Avatar className="h-8 w-8">

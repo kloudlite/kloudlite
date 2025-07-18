@@ -64,7 +64,7 @@ export function TeamSwitcher({ teamSlug, teamName, className, stats }: TeamSwitc
         <Button 
           variant="ghost" 
           className={cn(
-            "w-full h-auto py-4 px-4 justify-between bg-gray-200/50 dark:bg-gray-700/50 hover:bg-muted/70 rounded-md border border-gray-100 dark:border-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+            "w-full h-auto py-4 px-4 justify-between bg-card hover:bg-dashboard-hover rounded-lg border shadow-dashboard-card-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
             loadingTeams && "cursor-not-allowed opacity-50",
             className
           )}
