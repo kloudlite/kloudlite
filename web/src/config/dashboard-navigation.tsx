@@ -4,8 +4,9 @@ import {
   Settings, 
   Shield,
   Layers,
-  FolderOpen,
-  Share2,
+  CodeXml,
+  Network,
+  PieChart,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -19,8 +20,8 @@ export interface NavItem {
 export const mainNavItems: NavItem[] = [
   { 
     label: 'Overview', 
-    href: '', 
-    icon: LayoutDashboard,
+    href: '/overview', 
+    icon: PieChart,
   },
   { 
     label: 'Environments', 
@@ -31,13 +32,13 @@ export const mainNavItems: NavItem[] = [
   { 
     label: 'Workspaces', 
     href: '/workspaces', 
-    icon: FolderOpen,
+    icon: CodeXml,
     badge: '12',
   },
   { 
     label: 'Shared Services', 
     href: '/shared-services', 
-    icon: Share2,
+    icon: Network,
     badge: '7',
   },
 ]

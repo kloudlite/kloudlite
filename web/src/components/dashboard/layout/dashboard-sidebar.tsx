@@ -18,7 +18,7 @@ export async function DashboardSidebar({ teamSlug, teamName }: DashboardSidebarP
   return (
     <div className="flex h-full flex-col bg-dashboard-sidebar">
         {/* Header - Team Section */}
-        <header className="flex-shrink-0 bg-gradient-to-b from-gray-50/80 to-gray-100/40 dark:from-gray-900/50 dark:to-gray-900/30 border-b border-border shadow-dashboard-card-shadow">
+        <header className="flex-shrink-0 bg-gradient-to-b from-muted/80 to-muted/40 border-b border-border shadow-dashboard-card-shadow">
           <div className="px-4 py-4 pb-2">
             <TeamSwitcher teamSlug={teamSlug} teamName={teamName} />
           </div>
@@ -31,12 +31,12 @@ export async function DashboardSidebar({ teamSlug, teamName }: DashboardSidebarP
         <NavSection teamSlug={teamSlug} />
 
         {/* Work Machine Section - Moved to bottom */}
-        <section className="flex-shrink-0 bg-dashboard-section dark:bg-gray-800/50 border-t border-border">
+        <section className="flex-shrink-0 bg-dashboard-section border-t border-border">
           <SimpleWorkMachine className="px-4 py-5" />
         </section>
 
         {/* Footer - Always visible */}
-        <footer className="flex-shrink-0 bg-gradient-to-t from-gray-50/80 to-gray-100/40 dark:from-gray-900/50 dark:to-gray-900/30 border-t border-border">
+        <footer className="flex-shrink-0 bg-gradient-to-t from-muted/80 to-muted/40 border-t border-border">
           {/* Bottom Action Bar with Profile */}
           <div className="px-4 py-3 flex items-center justify-between">
             <SidebarActions />

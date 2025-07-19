@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Monitor, Play, Square, Settings, Cpu, HardDrive, Zap, Loader2, AlertTriangle } from 'lucide-react'
+import { Monitor, Play, Square, Settings, Loader2, AlertTriangle, Cpu, HardDrive, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Dialog,
@@ -12,10 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
 import { StatCard } from './stat-card'
 
 type MachineState = 'stopped' | 'starting' | 'running' | 'stopping'
+
+interface WorkMachineStats {
+  cpu: string
+  memory: string
+  uptime: string
+}
 
 const statusVariants = cva("text-xs", {
   variants: {
@@ -38,12 +44,6 @@ const controlButtonVariants = cva("size-8 p-0", {
   }
 })
 
-interface WorkMachineStats {
-  cpu: string
-  memory: string
-  uptime: string
-}
-
 interface SimpleWorkMachineProps {
   className?: string
 }
@@ -51,7 +51,8 @@ interface SimpleWorkMachineProps {
 export function SimpleWorkMachine({ className }: SimpleWorkMachineProps) {
   const [machineState, setMachineState] = useState<MachineState>('running')
   const [showShutdownDialog, setShowShutdownDialog] = useState(false)
-  
+
+  // Work machine metrics
   const stats: WorkMachineStats = {
     cpu: '45%',
     memory: '2.1GB',
@@ -103,21 +104,25 @@ export function SimpleWorkMachine({ className }: SimpleWorkMachineProps) {
   }
 
   const isTransitioning = machineState === 'starting' || machineState === 'stopping'
-  const showStats = machineState === 'running' || machineState === 'stopping'
+  const showStats = machineState === 'running'
 
   return (
     <div className={className}>
-      {/* Header */}
+      {/* Simplified Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className={cn(
             "p-2 rounded-lg bg-background transition-colors",
+            machineState === 'running' ? "bg-success/10" : "bg-muted",
             isTransitioning && "animate-pulse"
           )}>
-            <Monitor className="size-4 text-foreground" />
+            <Monitor className={cn(
+              "size-4",
+              machineState === 'running' ? "text-success" : "text-muted-foreground"
+            )} />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Work Machine</h3>
+            <h3 className="text-sm font-medium text-foreground">Work Machine</h3>
             <p className={statusVariants({ state: machineState })}>
               {getStatusText()}
             </p>
@@ -163,8 +168,8 @@ export function SimpleWorkMachine({ className }: SimpleWorkMachineProps) {
           )}
         </div>
       </div>
-      
-      {/* Stats with collapse animation */}
+
+      {/* Work Machine Metrics */}
       <div className={cn(
         "grid grid-cols-3 gap-2 overflow-hidden transition-all duration-300 ease-out",
         showStats 

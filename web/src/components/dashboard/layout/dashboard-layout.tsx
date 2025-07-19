@@ -1,5 +1,6 @@
 import { DashboardSidebar } from './dashboard-sidebar'
 import { Menu, X } from 'lucide-react'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -9,7 +10,7 @@ interface DashboardLayoutProps {
 
 export async function DashboardLayout({ children, teamSlug, teamName }: DashboardLayoutProps) {
   return (
-    <div className="h-screen bg-background">
+    <div className="h-screen bg-background overflow-hidden">
       {/* Hidden checkbox for CSS-only toggle */}
       <input type="checkbox" id="sidebar-toggle" className="peer hidden" />
       
@@ -21,7 +22,7 @@ export async function DashboardLayout({ children, teamSlug, teamName }: Dashboar
       />
       
       {/* Sidebar - CSS transforms based on checkbox state */}
-      <div className="fixed inset-y-0 left-0 z-50 w-80 transform -translate-x-full transition-transform duration-300 ease-in-out peer-checked:translate-x-0 lg:translate-x-0 border-r border-border bg-dashboard-sidebar shadow-dashboard-sidebar">
+      <div className="fixed inset-y-0 left-0 z-50 w-80 transform -translate-x-full transition-transform duration-300 ease-in-out peer-checked:translate-x-0 lg:translate-x-0 border-r border-border bg-dashboard-sidebar shadow-dashboard-sidebar overflow-hidden">
         <DashboardSidebar 
           teamSlug={teamSlug} 
           teamName={teamName}
@@ -52,12 +53,12 @@ export async function DashboardLayout({ children, teamSlug, teamName }: Dashboar
         </header>
         
         {/* Content */}
-        <main className="flex-1 overflow-y-auto bg-dashboard-bg flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl font-light text-muted-foreground/50 mb-4">🚧</div>
-            <h2 className="text-xl font-medium text-muted-foreground mb-2">Content Area</h2>
-            <p className="text-sm text-muted-foreground">Page content will appear here</p>
-          </div>
+        <main className="flex-1 bg-dashboard-bg overflow-hidden">
+          <ScrollArea className="h-full" scrollbarVariant="minimal" fadeScrollbar>
+            <div className="container mx-auto px-6 py-8 max-w-7xl">
+              {children}
+            </div>
+          </ScrollArea>
         </main>
       </div>
     </div>
