@@ -30,6 +30,8 @@ interface DataTableProps<T> {
     action?: React.ReactNode
   }
   className?: string
+  focusedRowIndex?: number
+  onKeyDown?: (e: React.KeyboardEvent) => void
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -40,7 +42,9 @@ export function DataTable<T extends Record<string, any>>({
   sortField,
   sortDirection = 'asc',
   emptyState,
-  className
+  className,
+  focusedRowIndex = -1,
+  onKeyDown
 }: DataTableProps<T>) {
   const [displayCount, setDisplayCount] = useState(initialDisplayCount)
   const hasMore = displayCount < data.length
@@ -121,27 +125,34 @@ export function DataTable<T extends Record<string, any>>({
             {displayedData.length === 0 ? (
               <EmptyState />
             ) : (
-              displayedData.map((item, index) => (
-                <tr 
-                  key={index} 
-                  className="hover:bg-muted/50 transition-colors group focus-within:bg-muted/50"
-                  role="row"
-                >
-                  {columns.map((column, colIndex) => {
-                    const value = item[column.key]
-                    const cellContent = column.render ? column.render(value, item) : String(value || '')
-                    
-                    return (
-                      <td 
-                        key={String(column.key) + colIndex}
-                        className={cn('px-6 py-4', column.className)}
-                      >
-                        {cellContent}
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))
+              displayedData.map((item, index) => {
+                const isFocused = focusedRowIndex === index
+                return (
+                  <tr 
+                    key={index} 
+                    className={cn(
+                      'hover:bg-muted/50 transition-colors group focus-within:bg-muted/50',
+                      isFocused && 'bg-muted/70 ring-1 ring-ring'
+                    )}
+                    role="row"
+                    tabIndex={isFocused ? 0 : -1}
+                  >
+                    {columns.map((column, colIndex) => {
+                      const value = item[column.key]
+                      const cellContent = column.render ? column.render(value, item) : String(value || '')
+                      
+                      return (
+                        <td 
+                          key={String(column.key) + colIndex}
+                          className={cn('px-6 py-4', column.className)}
+                        >
+                          {cellContent}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

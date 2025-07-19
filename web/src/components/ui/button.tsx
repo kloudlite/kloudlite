@@ -21,6 +21,10 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-active focus-visible:ring-ring",
         ghost:
           "hover:bg-muted hover:text-primary active:bg-muted/80 focus-visible:ring-ring",
+        "ghost-destructive":
+          "text-destructive hover:bg-destructive/10 hover:text-destructive active:bg-destructive/20 focus-visible:ring-destructive",
+        "ghost-success":
+          "text-success hover:bg-success/10 hover:text-success active:bg-success/20 focus-visible:ring-success",
         link: "text-primary underline-offset-4 hover:underline hover:text-primary-hover active:text-primary-active focus-visible:ring-ring",
         success:
           "bg-success text-success-foreground hover:bg-success-hover active:bg-success-active focus-visible:ring-success",
@@ -38,6 +42,9 @@ const buttonVariants = cva(
         icon: "size-9 hover:[&_svg]:rotate-12",
         "icon-sm": "size-8 hover:[&_svg]:rotate-12",
         "icon-lg": "size-11 hover:[&_svg]:rotate-12",
+        "icon-static": "size-9",
+        "icon-sm-static": "size-8",
+        "icon-lg-static": "size-11",
       },
     },
     defaultVariants: {

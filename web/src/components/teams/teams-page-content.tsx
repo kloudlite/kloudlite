@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/components/ui/link'
 import { Input } from '@/components/ui/input'
@@ -27,6 +27,9 @@ const roleIcons = {
 
 export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContentProps) {
   const [isSearching, setIsSearching] = useState(false)
+  const [focusedRowIndex, setFocusedRowIndex] = useState(-1)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const tableRef = useRef<HTMLDivElement>(null)
 
   // Use our reusable table state hook
   const {
@@ -47,10 +50,42 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
     setIsSearching(!isSearching)
     if (isSearching) {
       clearSearch()
+      setFocusedRowIndex(-1)
     }
   }
 
-  // Add keyboard shortcut for search
+  const handleKeyNavigation = (e: React.KeyboardEvent) => {
+    if (!isSearching) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (focusedRowIndex === -1) {
+        // Move from search input to first table row
+        setFocusedRowIndex(0)
+        searchInputRef.current?.blur()
+      } else if (focusedRowIndex < filteredTeams.length - 1) {
+        setFocusedRowIndex(prev => prev + 1)
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (focusedRowIndex > 0) {
+        setFocusedRowIndex(prev => prev - 1)
+      } else if (focusedRowIndex === 0) {
+        // Move back to search input
+        setFocusedRowIndex(-1)
+        searchInputRef.current?.focus()
+      }
+    } else if (e.key === 'Enter' && focusedRowIndex >= 0) {
+      e.preventDefault()
+      // Navigate to the focused team
+      const team = filteredTeams[focusedRowIndex]
+      if (team) {
+        window.location.href = `/${team.slug || team.name.toLowerCase().replace(/\s+/g, '-')}`
+      }
+    }
+  }
+
+  // Add keyboard shortcut for search and global navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if user is not typing in an input or textarea
@@ -59,12 +94,48 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
           !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
         e.preventDefault()
         setIsSearching(true)
+        return
+      }
+
+      // Handle global navigation when searching
+      if (isSearching) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          if (focusedRowIndex === -1) {
+            setFocusedRowIndex(0)
+            searchInputRef.current?.blur()
+          } else if (focusedRowIndex < filteredTeams.length - 1) {
+            setFocusedRowIndex(prev => prev + 1)
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          if (focusedRowIndex > 0) {
+            setFocusedRowIndex(prev => prev - 1)
+          } else if (focusedRowIndex === 0) {
+            setFocusedRowIndex(-1)
+            searchInputRef.current?.focus()
+          }
+        } else if (e.key === 'Enter' && focusedRowIndex >= 0) {
+          e.preventDefault()
+          const team = filteredTeams[focusedRowIndex]
+          if (team) {
+            window.location.href = `/${team.slug || team.name.toLowerCase().replace(/\s+/g, '-')}`
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          handleSearchToggle()
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isSearching])
+  }, [isSearching, focusedRowIndex, filteredTeams, handleSearchToggle])
+
+  // Reset focus when search results change
+  useEffect(() => {
+    setFocusedRowIndex(-1)
+  }, [searchQuery])
 
   // Define table columns
   const columns: ColumnDef<Team & { userRole: TeamRole }>[] = [
@@ -87,7 +158,10 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
             <div className="flex items-center gap-4 mt-1 sm:hidden">
               <div className="flex items-center gap-1.5">
                 {roleIcons[team.userRole] && 
-                  roleIcons[team.userRole]({ className: "h-3.5 w-3.5" })
+                  (() => {
+                    const IconComponent = roleIcons[team.userRole];
+                    return <IconComponent className="h-3.5 w-3.5" />;
+                  })()
                 }
                 <span className="capitalize">{team.userRole}</span>
               </div>
@@ -105,7 +179,10 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
       render: (_, team) => (
         <div className="flex items-center gap-1.5">
           {roleIcons[team.userRole] && 
-            roleIcons[team.userRole]({ className: "h-3.5 w-3.5 text-muted-foreground" })
+            (() => {
+              const IconComponent = roleIcons[team.userRole];
+              return <IconComponent className="h-3.5 w-3.5 text-muted-foreground" />;
+            })()
           }
           <span className="text-sm capitalize">{team.userRole}</span>
         </div>
@@ -181,13 +258,16 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
-                    type="search"
+                    ref={searchInputRef}
+                    type="text"
                     placeholder="Search teams, roles, regions..."
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        handleSearchToggle()
+                      // Let the global handler manage all keyboard navigation
+                      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape') {
+                        // Don't handle here, let global handler take care of it
+                        return
                       }
                     }}
                     className="pl-8 pr-8 h-8 w-[280px] text-sm"
@@ -231,79 +311,81 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
       <PageContent>
         {/* Pending Invitations Section */}
         {!searchQuery && pendingInvitations.length > 0 && (
-          <PageSection
-            title="Pending Invitations"
-            description="Review and respond to team invitations"
-          >
-            <GridLayout columns={3}>
+          <div className="mb-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Pending Invitations</h2>
+              <p className="text-sm text-muted-foreground">Review and respond to team invitations</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {pendingInvitations.map((invitation) => (
-                <Card key={invitation.id} padding="large" className="flex flex-col h-full">
-                  <div className="flex items-start justify-between mb-4 flex-1">
-                    <div className="flex-1 min-h-[4rem]">
-                      <h3 className="font-semibold text-base mb-2">{invitation.team.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                        {invitation.team.description || 'No description available'}
-                      </p>
+                <div key={invitation.id} className="bg-background border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base truncate">{invitation.team.name}</h3>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {invitation.role === 'owner' && <Crown className="h-3 w-3 text-amber-500" />}
+                        {invitation.role === 'admin' && <Shield className="h-3 w-3 text-blue-500" />}
+                        {invitation.role === 'member' && <UserCheck className="h-3 w-3 text-green-500" />}
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          {invitation.role}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-xs px-2.5 py-1 bg-muted rounded-sm font-medium ml-3 uppercase tracking-wide">
-                      {invitation.role}
-                    </span>
+                    <InvitationActions invitationId={invitation.id} />
                   </div>
-                  <div className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                    Invited by <span className="font-medium">{invitation.inviter.name}</span> • {formatDistanceToNow(invitation.createdAt, { addSuffix: true })}
+                  <div className="text-xs text-muted-foreground">
+                    by <span className="font-medium">{invitation.inviter.name}</span> • {formatDistanceToNow(invitation.createdAt, { addSuffix: true })}
                   </div>
-                  <InvitationActions invitationId={invitation.id} />
-                </Card>
+                </div>
               ))}
-            </GridLayout>
-          </PageSection>
+            </div>
+          </div>
         )}
 
         {/* All Teams Section */}
-        <PageSection>
-          <Card padding="default" className="overflow-hidden">
-            {/* Table Header */}
-            <div className="border-b px-6 py-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold">
-                  {searchQuery ? `Search Results (${filteredTeams.length})` : 'All Teams'}
-                </h2>
-                <div className="flex items-center gap-2">
-                  <Button asChild size="sm">
-                    <Link href="/teams/new">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Team
-                    </Link>
-                  </Button>
-                </div>
+        <div className="bg-background border rounded-lg overflow-hidden">
+          {/* Table Header */}
+          <div className="border-b px-6 py-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">
+                {searchQuery ? `Search Results (${filteredTeams.length})` : 'All Teams'}
+              </h2>
+              <div className="flex items-center gap-2">
+                <Button asChild size="sm">
+                  <Link href="/teams/new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Team
+                  </Link>
+                </Button>
               </div>
             </div>
+          </div>
 
-            {/* Teams Table */}
-            <DataTable
-              data={filteredTeams}
-              columns={columns}
-              initialDisplayCount={5}
-              onSort={handleSort}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              emptyState={{
-                title: 'No teams found',
-                description: searchQuery 
-                  ? 'Try adjusting your search to find teams'
-                  : 'Get started by creating your first team',
-                action: !searchQuery ? (
-                  <Button size="sm" asChild>
-                    <Link href="/teams/new">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Team
-                    </Link>
-                  </Button>
-                ) : undefined
-              }}
-            />
-          </Card>
-        </PageSection>
+          {/* Teams Table */}
+          <DataTable
+            data={filteredTeams}
+            columns={columns}
+            initialDisplayCount={5}
+            onSort={handleSort}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            focusedRowIndex={focusedRowIndex}
+            emptyState={{
+              title: 'No teams found',
+              description: searchQuery 
+                ? 'Try adjusting your search to find teams'
+                : 'Get started by creating your first team',
+              action: !searchQuery ? (
+                <Button size="sm" asChild>
+                  <Link href="/teams/new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Team
+                  </Link>
+                </Button>
+              ) : undefined
+            }}
+          />
+        </div>
       </PageContent>
 
       {/* Footer */}

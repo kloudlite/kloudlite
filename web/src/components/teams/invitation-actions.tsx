@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button'
 import { acceptInvitation, declineInvitation } from '@/actions/teams'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/components/ui/use-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Check, X } from 'lucide-react'
 
 interface InvitationActionsProps {
   invitationId: string
+  showLoadingSpinner?: boolean
 }
 
-export function InvitationActions({ invitationId }: InvitationActionsProps) {
+export function InvitationActions({ invitationId, showLoadingSpinner = false }: InvitationActionsProps) {
   const [isAccepting, setIsAccepting] = useState(false)
   const [isDeclining, setIsDeclining] = useState(false)
   const router = useRouter()
@@ -51,25 +52,32 @@ export function InvitationActions({ invitationId }: InvitationActionsProps) {
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-1 justify-end">
       <Button 
-        size="sm" 
-        variant="destructive-outline"
+        size="icon-sm-static" 
+        variant="ghost-destructive"
         onClick={handleDecline}
         disabled={isAccepting || isDeclining}
-        className="flex-1"
+        title="Decline invitation"
       >
-        {isDeclining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Decline
+        {showLoadingSpinner && isDeclining ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <X className="h-4 w-4" />
+        )}
       </Button>
       <Button 
-        size="sm"
+        size="icon-sm-static"
+        variant="ghost-success"
         onClick={handleAccept}
         disabled={isAccepting || isDeclining}
-        className="flex-1"
+        title="Accept invitation"
       >
-        {isAccepting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Accept
+        {showLoadingSpinner && isAccepting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Check className="h-4 w-4" />
+        )}
       </Button>
     </div>
   )
