@@ -171,4 +171,89 @@ export const mockActivities: Activity[] = [
       duration: '4h 23m',
     },
   },
+  {
+    id: '11',
+    type: 'environment.scaled',
+    title: 'Environment scaled',
+    description: 'production environment scaled up to handle increased traffic',
+    user: {
+      name: 'Sarah Chen',
+      email: 'sarah@team.com',
+      avatar: 'SC',
+    },
+    timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000), // 18 hours ago
+    status: 'success',
+    metadata: {
+      environment: 'production',
+      replicas: '3 → 8',
+    },
+  },
+  {
+    id: '12',
+    type: 'workspace.cloned',
+    title: 'Workspace cloned',
+    description: 'api-gateway workspace cloned for hotfix development',
+    user: {
+      name: 'Ryan Miller',
+      email: 'ryan@team.com',
+      avatar: 'RM',
+    },
+    timestamp: new Date(Date.now() - 20 * 60 * 60 * 1000), // 20 hours ago
+    status: 'success',
+    metadata: {
+      sourceWorkspace: 'api-gateway',
+      targetWorkspace: 'api-gateway-hotfix',
+    },
+  },
+  {
+    id: '13',
+    type: 'service.external.created',
+    title: 'External service added',
+    description: 'Elasticsearch logging service connected to platform',
+    user: {
+      name: 'Lisa Wilson',
+      email: 'lisa@team.com',
+      avatar: 'LW',
+    },
+    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+    status: 'success',
+    metadata: {
+      serviceName: 'elasticsearch-logs',
+      endpoint: 'logs.example.com',
+    },
+  },
+  {
+    id: '14',
+    type: 'environment.backed_up',
+    title: 'Environment backed up',
+    description: 'staging environment backup completed successfully',
+    user: {
+      name: 'System Admin',
+      email: 'admin@team.com',
+      avatar: 'SA',
+    },
+    timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000), // 26 hours ago
+    status: 'success',
+    metadata: {
+      environment: 'staging',
+      backupSize: '2.4GB',
+    },
+  },
+  {
+    id: '15',
+    type: 'workspace.restored',
+    title: 'Workspace restored',
+    description: 'mobile-app workspace restored from backup after corruption',
+    user: {
+      name: 'David Brown',
+      email: 'david@team.com',
+      avatar: 'DB',
+    },
+    timestamp: new Date(Date.now() - 30 * 60 * 60 * 1000), // 30 hours ago
+    status: 'warning',
+    metadata: {
+      workspace: 'mobile-app',
+      backupDate: '2 days ago',
+    },
+  },
 ];

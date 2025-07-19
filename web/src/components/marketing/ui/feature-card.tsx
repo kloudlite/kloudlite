@@ -3,7 +3,7 @@ import { LucideIcon } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 const featureCardVariants = cva(
-  "group relative p-6 border transition-all duration-300",
+  "group relative p-4 sm:p-6 border transition-all duration-300 rounded-lg",
   {
     variants: {
       variant: {
@@ -38,13 +38,13 @@ export function FeatureCard({
     <div className={cn(featureCardVariants({ variant }), className)}>
       <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <Icon className={cn(
-        "h-8 w-8 text-primary mb-4 transition-all duration-300",
+        "h-6 w-6 sm:h-8 sm:w-8 text-primary mb-3 sm:mb-4 transition-all duration-300",
         iconClassName
       )} />
-      <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+      <h3 className="font-semibold mb-2 text-sm sm:text-base group-hover:text-primary transition-colors">
         {title}
       </h3>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
         {description}
       </p>
     </div>

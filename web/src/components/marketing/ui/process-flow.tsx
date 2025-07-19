@@ -1,3 +1,4 @@
+import React from 'react'
 import { cn } from '@/lib/utils'
 
 interface ProcessStep {
@@ -13,12 +14,12 @@ interface ProcessFlowProps {
 
 export function ProcessFlow({ steps, className }: ProcessFlowProps) {
   return (
-    <div className={cn("flex items-center justify-center gap-2", className)}>
-      <div className="flex items-center gap-2">
+    <div className={cn("flex items-center justify-center gap-2 sm:gap-3", className)}>
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
         {steps.map((step, index) => (
           <React.Fragment key={index}>
             <div className={cn(
-              "px-4 py-2 font-mono text-lg border",
+              "px-3 py-2 sm:px-4 font-mono text-sm sm:text-base lg:text-lg border rounded",
               step.active 
                 ? "bg-success/10 border-success/20 text-success"
                 : "bg-muted/50 border-border text-muted-foreground"
@@ -30,7 +31,7 @@ export function ProcessFlow({ steps, className }: ProcessFlowProps) {
               )}
             </div>
             {index < steps.length - 1 && (
-              <span className="text-muted-foreground">→</span>
+              <span className="text-muted-foreground text-sm sm:text-base">→</span>
             )}
           </React.Fragment>
         ))}
@@ -38,5 +39,3 @@ export function ProcessFlow({ steps, className }: ProcessFlowProps) {
     </div>
   )
 }
-
-import React from 'react'

@@ -248,13 +248,81 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
 
   return (
     <PageContainer>
-      <PageHeader
-        title="Teams"
-        description="Manage your team memberships and invitations"
-        actions={
-          <>
-            {isSearching ? (
+      <div className="relative">
+        {/* Mobile: Hide header completely in search mode */}
+        <div className={isSearching ? "hidden sm:block" : ""}>
+          <PageHeader
+            title="Teams"
+            description="Manage your team memberships and invitations"
+            actions={
+              // Show actions only when not searching or on desktop
+              !isSearching ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={handleSearchToggle} className="group">
+                    <Search className="h-4 w-4 mr-2" />
+                    Search Teams
+                    <kbd 
+                      className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-70 group-hover:opacity-100"
+                      aria-label="Press forward slash to search"
+                    >
+                      /
+                    </kbd>
+                  </Button>
+                  <UserProfileDropdown 
+                    user={{
+                      name: "John Doe",
+                      email: "john.doe@example.com"
+                    }}
+                  />
+                </>
+              ) : undefined
+            }
+          />
+        </div>
+        
+        {/* Mobile: Search-only header when searching */}
+        {isSearching && (
+          <div className="sm:hidden bg-background border-b">
+            <div className="px-4 py-3">
               <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search teams, roles, regions..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape') {
+                        return
+                      }
+                    }}
+                    className="pl-8 pr-8 h-9 text-sm"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={clearSearch}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleSearchToggle}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Desktop: Regular header with search actions */}
+        {isSearching && (
+          <div className="hidden sm:block bg-background border-b">
+            <div className="max-w-6xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-end gap-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
@@ -264,9 +332,7 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                     onKeyDown={(e) => {
-                      // Let the global handler manage all keyboard navigation
                       if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape') {
-                        // Don't handle here, let global handler take care of it
                         return
                       }
                     }}
@@ -285,28 +351,17 @@ export function TeamsPageContent({ teams, pendingInvitations }: TeamsPageContent
                 <Button variant="ghost" size="sm" onClick={handleSearchToggle}>
                   Cancel
                 </Button>
+                <UserProfileDropdown 
+                  user={{
+                    name: "John Doe",
+                    email: "john.doe@example.com"
+                  }}
+                />
               </div>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={handleSearchToggle} className="group">
-                <Search className="h-4 w-4 mr-2" />
-                Search Teams
-                <kbd 
-                  className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-70 group-hover:opacity-100"
-                  aria-label="Press forward slash to search"
-                >
-                  /
-                </kbd>
-              </Button>
-            )}
-            <UserProfileDropdown 
-              user={{
-                name: "John Doe",
-                email: "john.doe@example.com"
-              }}
-            />
-          </>
-        }
-      />
+            </div>
+          </div>
+        )}
+      </div>
 
       <PageContent>
         {/* Pending Invitations Section */}

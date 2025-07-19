@@ -7,15 +7,20 @@ import {
   MapPin,
   Server,
   TrendingUp,
+  Plus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MetricsTooltip } from './MetricsTooltip';
 import { IndividualNodePool } from '@/types/dashboard';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface CleanNodePoolGridProps {
   pools: IndividualNodePool[];
+  initialCount?: number;
+  loadMoreIncrement?: number;
 }
 
 function getStatusIcon(status: IndividualNodePool['status']) {
@@ -57,7 +62,14 @@ function getStatusLabel(status: IndividualNodePool['status']) {
   }
 }
 
-export function CleanNodePoolGrid({ pools }: CleanNodePoolGridProps) {
+export function CleanNodePoolGrid({ pools, initialCount = 5, loadMoreIncrement = 5 }: CleanNodePoolGridProps) {
+  const [visibleCount, setVisibleCount] = useState(initialCount);
+  const displayedPools = pools.slice(0, visibleCount);
+  const hasMore = visibleCount < pools.length;
+  
+  const handleLoadMore = () => {
+    setVisibleCount(prev => Math.min(prev + loadMoreIncrement, pools.length));
+  };
   return (
     <div className="space-y-6">
       <div className="border-b border-border pb-4">
@@ -81,7 +93,7 @@ export function CleanNodePoolGrid({ pools }: CleanNodePoolGridProps) {
               </tr>
             </thead>
             <tbody>
-              {pools.map((pool, index) => {
+              {displayedPools.map((pool, index) => {
                 const StatusIcon = getStatusIcon(pool.status);
                 const statusColor = getStatusColor(pool.status);
                 
@@ -154,6 +166,20 @@ export function CleanNodePoolGrid({ pools }: CleanNodePoolGridProps) {
               })}
             </tbody>
           </table>
+          
+          {hasMore && (
+            <div className="p-4 border-t border-border bg-muted/30">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLoadMore}
+                className="w-full flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                Load More Pools ({pools.length - visibleCount} remaining)
+              </Button>
+            </div>
+          )}
         </div>
       </TooltipProvider>
     </div>

@@ -1,15 +1,24 @@
 import { Activity } from '@/types/dashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ActivityItem } from './ActivityItem';
-import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 interface ActivityFeedProps {
   activities: Activity[];
-  maxItems?: number;
+  initialItems?: number;
+  loadMoreIncrement?: number;
 }
 
-export function ActivityFeed({ activities, maxItems = 10 }: ActivityFeedProps) {
-  const displayedActivities = activities.slice(0, maxItems);
+export function ActivityFeed({ activities, initialItems = 5, loadMoreIncrement = 5 }: ActivityFeedProps) {
+  const [visibleCount, setVisibleCount] = useState(initialItems);
+  const displayedActivities = activities.slice(0, visibleCount);
+  const hasMore = visibleCount < activities.length;
+  
+  const handleLoadMore = () => {
+    setVisibleCount(prev => Math.min(prev + loadMoreIncrement, activities.length));
+  };
   
   if (activities.length === 0) {
     return (
@@ -55,11 +64,22 @@ export function ActivityFeed({ activities, maxItems = 10 }: ActivityFeedProps) {
             </div>
           ))}
           
-          {activities.length > maxItems && (
+          {hasMore && (
             <div className="pt-4 mt-4 border-t">
-              <p className="text-sm text-muted-foreground text-center">
-                Showing {maxItems} of {activities.length} activities
-              </p>
+              <div className="flex flex-col items-center gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleLoadMore}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                  Load More ({activities.length - visibleCount} remaining)
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Showing {visibleCount} of {activities.length} activities
+                </p>
+              </div>
             </div>
           )}
         </div>

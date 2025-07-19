@@ -22,21 +22,21 @@ export function CTACard({
 }: CTACardProps) {
   return (
     <div className={cn(
-      "group relative p-6 border border-primary bg-primary/5",
+      "group relative p-4 sm:p-6 border border-primary bg-primary/5 rounded-lg",
       "flex flex-col justify-center transition-all duration-300",
       "hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1",
       className
     )}>
-      <h3 className="font-semibold mb-2 text-lg">{title}</h3>
+      <h3 className="font-semibold mb-2 text-base sm:text-lg">{title}</h3>
       {subtitle && (
-        <p className="text-sm text-muted-foreground mb-1">{subtitle}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-1">{subtitle}</p>
       )}
       {description && (
-        <p className="text-sm text-muted-foreground mb-4">{description}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">{description}</p>
       )}
       <Button 
         size="sm" 
-        className="group-hover:scale-105 transition-transform duration-300" 
+        className="group-hover:scale-105 transition-transform duration-300 text-xs sm:text-sm" 
         asChild
       >
         <Link href={buttonHref}>

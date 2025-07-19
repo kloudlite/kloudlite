@@ -181,8 +181,15 @@ export interface IndividualNodePool {
   status: 'healthy' | 'degraded' | 'failed';
   nodeCount: number;
   vmSize: string;
+  instanceType: string;
   cpuPerNode: number;
   memoryPerNodeGB: number;
+  cpuCores: number;
+  memoryGB: number;
+  usedCpuCores: number;
+  usedMemoryGB: number;
+  cpuUtilization: number;
+  memoryUtilization: number;
   autoscaleEnabled: boolean;
   minNodes: number;
   maxNodes: number;

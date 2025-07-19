@@ -27,6 +27,8 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ stats }: AdminDashboardProps) {
   const [expandedMachine, setExpandedMachine] = useState<string | null>(null);
+  const initialMachinesCount = 3;
+  const initialNodePoolsCount = 3;
 
   const toggleMachine = (machineId: string) => {
     if (expandedMachine === machineId) {
@@ -80,7 +82,9 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
           <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-foreground">Work Machines</h3>
+                <Button variant="link" className="p-0 h-auto font-bold text-xl text-foreground hover:text-primary">
+                  Work Machines
+                </Button>
                 <p className="text-base text-muted-foreground">Development infrastructure</p>
               </div>
               <div className="h-8 w-8 bg-muted rounded-lg flex items-center justify-center">
@@ -89,7 +93,7 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
             </div>
           </div>
           <div className="p-6 space-y-4">
-            {stats.individualWorkMachines.map((machine) => {
+            {stats.individualWorkMachines.slice(0, initialMachinesCount).map((machine) => {
               const isExpanded = expandedMachine === machine.id;
               const totalEnvironments = machine.runningEnvironments + 2; // Mock total
               const totalWorkspaces = machine.runningWorkspaces + 1; // Mock total
@@ -170,6 +174,7 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
                 </div>
               );
             })}
+            
           </div>
         </div>
 
@@ -178,7 +183,9 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
           <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-foreground">Node Pools</h3>
+                <Button variant="link" className="p-0 h-auto font-bold text-xl text-foreground hover:text-primary">
+                  Node Pools
+                </Button>
                 <p className="text-base text-muted-foreground">Kubernetes clusters</p>
               </div>
               <div className="h-8 w-8 bg-muted rounded-lg flex items-center justify-center">
@@ -187,7 +194,7 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
             </div>
           </div>
           <div className="p-6 space-y-4">
-            {stats.individualNodePools.map((pool) => (
+            {stats.individualNodePools.slice(0, initialNodePoolsCount).map((pool) => (
               <div key={pool.id} className="flex items-center justify-between py-3 transition-colors duration-200 hover:bg-muted/20 rounded-lg px-2 -mx-2">
                 <div className="flex items-center gap-3">
                   <StatusDot status={pool.status} />
@@ -217,6 +224,7 @@ export function AdminDashboard({ stats }: AdminDashboardProps) {
                 </div>
               </div>
             ))}
+            
           </div>
         </div>
       </div>

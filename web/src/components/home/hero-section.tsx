@@ -2,6 +2,8 @@
 
 import { Button } from '@/components/ui/button'
 import { Link } from '@/components/ui/link'
+import { cn } from '@/lib/utils'
+import { LAYOUT } from '@/lib/constants/layout'
 import { ArrowRight, Settings, Network, Package, Zap, ArrowUpDown, Code2, Bot, Users, Briefcase, Shield, Cloud } from 'lucide-react'
 import { 
   Typewriter, 
@@ -97,27 +99,31 @@ const features = [
 export function HeroSection() {
 
   return (
-    <section className="relative px-6 py-24 lg:py-32">
+    <section className={cn("relative", LAYOUT.PADDING.PAGE, "py-16 sm:py-24 lg:py-32")}>
       <div className="max-w-6xl mx-auto">
         <div className="max-w-3xl mx-auto text-center">
           {/* Main headline */}
-          <h1 className="text-5xl lg:text-6xl font-bold tracking-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
             Kloudlite
-            <span className="text-primary"> Development Environments</span>
+            <span className="text-primary block sm:inline"> Development</span>
+            <span className="text-primary block sm:inline"> Environments</span>
           </h1>
           
           {/* Subheadline */}
-          <p className="mt-6 text-xl leading-relaxed">
-            <span className="text-2xl font-bold text-foreground">10x faster development</span>
-            <br />
-            <span className="text-muted-foreground">
+          <div className="mt-6 sm:mt-8 space-y-2 sm:space-y-0">
+            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+              10x faster development
+            </p>
+            <p className="text-base sm:text-lg text-muted-foreground">
               For <Typewriter words={projectTypes} /> developers
-            </span>
-          </p>
+            </p>
+          </div>
 
           {/* Key message */}
-          <div className="mt-8">
-            <p className="text-sm uppercase tracking-wider text-muted-foreground mb-4">Focus on what matters</p>
+          <div className="mt-8 sm:mt-10">
+            <p className="text-xs sm:text-sm uppercase tracking-wider text-muted-foreground mb-4 sm:mb-6">
+              Focus on what matters
+            </p>
             <ProcessFlow 
               steps={[
                 { label: 'Code', active: true },
@@ -129,14 +135,14 @@ export function HeroSection() {
           </div>
 
           {/* CTA buttons */}
-          <div className="mt-12 flex flex-wrap gap-4 justify-center">
-            <Button size="lg" asChild>
+          <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Button size="lg" className="w-full sm:w-auto" asChild>
               <Link href="/auth/signup">
                 Get started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
               <Link href="/docs">
                 Documentation
               </Link>
@@ -153,10 +159,10 @@ export function HeroSection() {
           <SectionHeading 
             title="Every feature, one purpose:"
             subtitle="Accelerate your development loop"
-            className="mb-12"
+            className="mb-8 sm:mb-12"
           />
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {features.map((feature, index) => (
               <FeatureCard
                 key={index}

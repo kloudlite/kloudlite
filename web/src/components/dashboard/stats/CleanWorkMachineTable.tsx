@@ -6,15 +6,20 @@ import {
   Settings,
   MapPin,
   Users,
+  Plus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MetricsTooltip } from './MetricsTooltip';
 import { IndividualWorkMachine } from '@/types/dashboard';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface CleanWorkMachineTableProps {
   machines: IndividualWorkMachine[];
+  initialCount?: number;
+  loadMoreIncrement?: number;
 }
 
 function getMachineSize(cpuCores: number, memoryGB: number): string {
@@ -58,7 +63,14 @@ function getStatusLabel(status: IndividualWorkMachine['status']) {
   }
 }
 
-export function CleanWorkMachineTable({ machines }: CleanWorkMachineTableProps) {
+export function CleanWorkMachineTable({ machines, initialCount = 5, loadMoreIncrement = 5 }: CleanWorkMachineTableProps) {
+  const [visibleCount, setVisibleCount] = useState(initialCount);
+  const displayedMachines = machines.slice(0, visibleCount);
+  const hasMore = visibleCount < machines.length;
+  
+  const handleLoadMore = () => {
+    setVisibleCount(prev => Math.min(prev + loadMoreIncrement, machines.length));
+  };
   return (
     <div className="space-y-6">
       <div className="border-b border-border pb-4">
@@ -81,7 +93,7 @@ export function CleanWorkMachineTable({ machines }: CleanWorkMachineTableProps) 
               </tr>
             </thead>
             <tbody>
-              {machines.map((machine, index) => {
+              {displayedMachines.map((machine, index) => {
                 const StatusIcon = getStatusIcon(machine.status);
                 const statusColor = getStatusColor(machine.status);
                 const machineSize = getMachineSize(machine.cpuCores, machine.memoryGB);
@@ -150,6 +162,20 @@ export function CleanWorkMachineTable({ machines }: CleanWorkMachineTableProps) 
               })}
             </tbody>
           </table>
+          
+          {hasMore && (
+            <div className="p-4 border-t border-border bg-muted/30">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLoadMore}
+                className="w-full flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                Load More Machines ({machines.length - visibleCount} remaining)
+              </Button>
+            </div>
+          )}
         </div>
       </TooltipProvider>
     </div>

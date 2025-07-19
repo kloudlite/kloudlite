@@ -97,8 +97,6 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async redirect({ url, baseUrl }) {
-      console.log('Redirect callback:', { url, baseUrl })
-      
       // For Azure AD callbacks, use an intermediate page to ensure proper redirect
       if (url.includes('api/auth/callback/azure-ad')) {
         return `${baseUrl}/auth/callback?callbackUrl=${encodeURIComponent('/teams')}`

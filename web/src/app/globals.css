@@ -580,7 +580,7 @@
   --card-foreground: var(--color-gray-900);
   --popover: #ffffff;
   --popover-foreground: var(--color-gray-900);
-  --border: var(--color-gray-300);
+  --border: var(--color-gray-200);
   --input: var(--color-gray-300);
   --ring: var(--color-primary-600);
   
@@ -727,7 +727,7 @@
   --card-foreground: var(--color-gray-50);
   --popover: #1e293b;       /* slate-800 - Floating elements */
   --popover-foreground: var(--color-gray-50);
-  --border: var(--color-gray-600);
+  --border: var(--color-gray-700);
   --input: var(--color-gray-600);
   --ring: var(--color-primary-400);
   

@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { LAYOUT } from '@/lib/constants/layout'
 
 interface PageHeaderProps {
-  title: string
+  title?: string
   description?: string
   actions?: React.ReactNode
   className?: string
@@ -13,16 +13,18 @@ export function PageHeader({ title, description, actions, className }: PageHeade
     <div className={cn('bg-background border-b', className)}>
       <div className={cn(LAYOUT.CONTAINER, LAYOUT.PADDING.HEADER)}>
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{title}</h1>
-            {description && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {description}
-              </p>
-            )}
-          </div>
+          {(title || description) && (
+            <div>
+              {title && <h1 className="text-2xl font-bold">{title}</h1>}
+              {description && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {description}
+                </p>
+              )}
+            </div>
+          )}
           {actions && (
-            <div className="flex items-center gap-3">
+            <div className={cn("flex items-center gap-3", !title && !description && "w-full justify-end")}>
               {actions}
             </div>
           )}
