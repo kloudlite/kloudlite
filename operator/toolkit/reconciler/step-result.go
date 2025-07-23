@@ -3,6 +3,7 @@ package reconciler
 import (
 	"time"
 
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -49,6 +50,11 @@ func (sr *stepResult) RequeueAfter(d time.Duration) StepResult {
 }
 
 func (sr *stepResult) Err(err error) StepResult {
+	if apiErrors.IsConflict(err) {
+		sr.requeue = ctrl.Result{RequeueAfter: 100 * time.Millisecond}
+		return sr
+	}
+
 	sr.err = err
 	return sr
 }

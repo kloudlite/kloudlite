@@ -4,6 +4,7 @@
 {{- $ingressClass := .IngressClassName }}
 {{- $routes := .Routes }} 
 {{- $isHttpsEnabled := .HttpsEnabled }} 
+
 ingressClassName: {{$ingressClass}}
 {{- if $isHttpsEnabled }}
 tls:
@@ -19,18 +20,16 @@ rules:
   - host: {{$route.Host}}
     http:
       paths:
-        {{- /* - pathType: Prefix */}}
         - pathType: ImplementationSpecific
-          backend:
-            service:
-              name: {{$route.Service}}
-              port:
-                number: {{$route.Port}}
-
           {{- if $route.Rewrite }}
           path: {{$route.Path}}?(.*)
           {{- else }}
           path: /({{substr 1 (len $route.Path) $route.Path}}.*)
           {{- end}}
+          backend:
+            service:
+              name: {{$route.Service}}
+              port:
+                number: {{$route.Port}}
   {{- end }}
 

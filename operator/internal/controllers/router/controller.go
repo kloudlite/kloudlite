@@ -13,29 +13,30 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	yaml "sigs.k8s.io/yaml/goyaml.v2"
+	"sigs.k8s.io/yaml"
 
+	"github.com/codingconcepts/env"
 	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 	"github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
 	v1 "github.com/kloudlite/operator/api/v1"
 	"github.com/kloudlite/operator/internal/controllers/router/templates"
 )
 
-type Env struct {
+type envVars struct {
 	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES" default:"5"`
 }
 
 type Reconciler struct {
 	client.Client
 	Scheme          *runtime.Scheme
-	Name            string
-	Env             Env
+	env             envVars
 	templateIngress []byte
 }
 
 func (r *Reconciler) GetName() string {
-	return r.Name
+	return "router-controller"
 }
 
 // +kubebuilder:rbac:groups=kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
@@ -81,7 +82,7 @@ func (r *Reconciler) findClusterIssuer(ctx context.Context, obj *v1.Router) (*ce
 
 	var issuerList certmanagerv1.ClusterIssuerList
 	if err := r.List(ctx, &issuerList, &client.ListOptions{Limit: 1}); err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	if len(issuerList.Items) != 1 {
@@ -287,9 +288,11 @@ func (r *Reconciler) setupIngress(check *reconciler.Check[*v1.Router], obj *v1.R
 		ing.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		ing.SetLabels(fn.MapMerge(ing.Labels, obj.GetLabels()))
 		ing.SetAnnotations(fn.MapMerge(ing.Annotations, nginxIngressAnnotations))
+
 		if err := yaml.Unmarshal(b, &ing.Spec); err != nil {
 			return fmt.Errorf("failed to unmarshal ingress spec: %w", err)
 		}
+
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -320,6 +323,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 
+	if err := env.Set(&r.env); err != nil {
+		return fmt.Errorf("failed to set env: %w", err)
+	}
+
 	var err error
 	r.templateIngress, err = templates.Read(templates.IngressTemplate)
 	if err != nil {
@@ -329,6 +336,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.Router{})
 	builder.Owns(&networkingv1.Ingress{})
 
-	builder.WithEventFilter(reconciler.ReconcileFilter())
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.env.MaxConcurrentReconciles})
+	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor(r.GetName())))
 	return builder.Complete(r)
 }

@@ -375,6 +375,8 @@ github.com/nxtcoder17/go-helm-client v0.0.0-20230915000026-8789cfa27bf3 h1:36Ftx
 github.com/nxtcoder17/go-helm-client v0.0.0-20230915000026-8789cfa27bf3/go.mod h1:jxy7CytMOdPqv7eDdKuxaQxsdeHoSZP9tQFZt9O6nlA=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd h1:bP80t6mgiwIVEpdfZwg/w22GzDcHBgDRVZItH5QWxis=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd/go.mod h1:raSGHj5CMHNHZf4fCV9CWpFk0hsb2CSKFZSPd4zW8JM=
+github.com/nxtcoder17/ivy v0.0.0-20250513091006-aa00f694b606 h1:pnNPoUfVnKBoT8yRMpGuRx+s8lECKi41/Lj5HUezIpA=
+github.com/nxtcoder17/ivy v0.0.0-20250513091006-aa00f694b606/go.mod h1:JLP+9W8NkN2qxIiolJRTMDFFjFOcI2CMqAlC1Dqp2LI=
 github.com/oapi-codegen/runtime v1.1.1 h1:EXLHh0DXIJnWhdRPN2w4MXAzFyE4CskzhNLUmtpMYro=
 github.com/oapi-codegen/runtime v1.1.1/go.mod h1:SK9X900oXmPWilYR5/WKPzt3Kqxn/uS/+lbpREv+eCg=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=

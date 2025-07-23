@@ -7,14 +7,16 @@ spec:
   podSpec:
     containers:
       - name: main
-        image: nginx:mainline-alpine
+        image: ghcr.io/kloudlite/hub/httpbin
 
   services:
-    - port: 80
+    - port: 8080
 
   router:
+    https:
+      enabled: true
     routes:
       - host: "nginx.kloudlite.local"
         service: sample
         path: /
-        port: 3000
+        port: 8080

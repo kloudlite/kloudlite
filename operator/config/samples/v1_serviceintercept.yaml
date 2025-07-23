@@ -1,0 +1,9 @@
+apiVersion: kloudlite.io/v1
+kind: ServiceIntercept
+metadata:
+  labels:
+    app.kubernetes.io/name: app
+    app.kubernetes.io/managed-by: kustomize
+  name: serviceintercept-sample
+spec:
+  # TODO(user): Add fields here

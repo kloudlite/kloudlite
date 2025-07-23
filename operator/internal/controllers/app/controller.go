@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/codingconcepts/env"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 
 	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 	"github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
@@ -24,7 +26,7 @@ import (
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 )
 
-type Env struct {
+type envVars struct {
 	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES" default:"5"`
 }
 
@@ -33,7 +35,7 @@ type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	Env Env
+	env envVars
 
 	templateHPASpec             []byte
 	templateAppInterceptPodSpec []byte
@@ -92,6 +94,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	})
 }
 
+func getMatchSelector(obj *v1.App) map[string]string {
+	return fn.MapMerge(
+		fn.MapFilterWithPrefix(obj.GetLabels(), reconciler.ProjectDomain),
+		map[string]string{
+			"app.kubernetes.io/name": obj.GetName(),
+		},
+	)
+}
+
 func (r *Reconciler) setupDeployment(check *reconciler.Check[*v1.App], obj *v1.App) reconciler.StepResult {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -100,13 +111,7 @@ func (r *Reconciler) setupDeployment(check *reconciler.Check[*v1.App], obj *v1.A
 		},
 	}
 
-	selectorLabels := fn.MapMerge(
-		obj.GetLabels(),
-		fn.MapFilterWithPrefix(obj.GetLabels(), reconciler.ProjectDomain),
-		map[string]string{
-			"app.kubernetes.io/name": obj.GetName(),
-		},
-	)
+	selectorLabels := getMatchSelector(obj)
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, deployment, func() error {
 		deployment.SetLabels(selectorLabels)
@@ -196,7 +201,7 @@ func (r *Reconciler) setupService(check *reconciler.Check[*v1.App], obj *v1.App)
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svc, func() error {
 		svc.SetLabels(fn.MapMerge(svc.GetLabels(), fn.MapFilterWithPrefix(obj.GetLabels(), reconciler.ProjectDomain)))
 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		svc.Spec.Selector = map[string]string{"app": obj.Name}
+		svc.Spec.Selector = getMatchSelector(obj)
 		svc.Spec.Ports = make([]corev1.ServicePort, 0, len(obj.Spec.Services))
 		for i := range obj.Spec.Services {
 			svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
@@ -411,6 +416,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 
+	if err := env.Set(&r.env); err != nil {
+		return fmt.Errorf("failed to set env: %w", err)
+	}
+
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.App{}).Named(r.GetName())
 	builder.Owns(&appsv1.Deployment{})
 	builder.Owns(&corev1.Service{})
@@ -427,6 +436,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.env.MaxConcurrentReconciles})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor(r.GetName())))
 	return builder.Complete(r)
 }

@@ -20,6 +20,8 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the Project itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
+- serviceintercept_editor_role.yaml
+- serviceintercept_viewer_role.yaml
 - router_editor_role.yaml
 - router_viewer_role.yaml
 - app_editor_role.yaml

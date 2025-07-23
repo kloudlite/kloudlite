@@ -1,8 +1,8 @@
 module github.com/kloudlite/operator
 
-go 1.23.0
+go 1.23.4
 
-toolchain go1.23.3
+toolchain go1.24.4
 
 replace github.com/kloudlite/kloudlite/operator/toolkit => ./toolkit/
 
@@ -86,6 +86,7 @@ require (
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/nxtcoder17/fastlog v0.0.0-20250702035423-1739653a5c24 // indirect
+	github.com/nxtcoder17/ivy v0.0.0-20250513091006-aa00f694b606 // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/samber/lo v1.47.0 // indirect
