@@ -234,10 +234,6 @@ type AppSpec struct {
 	Services   []AppSvc       `json:"services,omitempty"`
 	Containers []AppContainer `json:"containers"`
 
-	Hpa *HPA `json:"hpa,omitempty"`
-
-	Router *AppRouter `json:"router,omitempty"`
-
 	// +kubebuilder:validation:Optional
 	NodeSelector              map[string]string                 `json:"nodeSelector,omitempty"`
 	Tolerations               []corev1.Toleration               `json:"tolerations,omitempty"`

@@ -8,8 +8,8 @@ import (
 
 	"github.com/nxtcoder17/go.pkgs/log"
 
-	"github.com/kloudlite/operator/toolkit/kubectl"
-	reconciler "github.com/kloudlite/operator/toolkit/reconciler"
+	"github.com/kloudlite/kloudlite/operator/toolkit/kubectl"
+	reconciler "github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"

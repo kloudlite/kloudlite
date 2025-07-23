@@ -1,0 +1,22 @@
+apiVersion: kloudlite.io/v1
+kind: App
+metadata:
+  name: sample
+  namespace: sample
+spec:
+  podSpec:
+    containers:
+      - name: main
+        image: ghcr.io/kloudlite/hub/httpbin
+
+  services:
+    - port: 8080
+
+  router:
+    https:
+      enabled: true
+    routes:
+      - host: "nginx.kloudlite.local"
+        service: sample
+        path: /
+        port: 8080
