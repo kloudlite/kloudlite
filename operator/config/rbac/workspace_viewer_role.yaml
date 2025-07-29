@@ -1,0 +1,23 @@
+# permissions for end users to view workspaces.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: app
+    app.kubernetes.io/managed-by: kustomize
+  name: workspace-viewer-role
+rules:
+- apiGroups:
+  - kloudlite.io
+  resources:
+  - workspaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kloudlite.io
+  resources:
+  - workspaces/status
+  verbs:
+  - get

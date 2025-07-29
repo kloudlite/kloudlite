@@ -32,8 +32,8 @@ import (
 )
 
 type YAMLClient interface {
-	Apply(ctx context.Context, obj client.Object) ([]ResourceRef, error)
-	ApplyYAML(ctx context.Context, yamls ...[]byte) ([]ResourceRef, error)
+	Apply(ctx context.Context, obj client.Object) ([]*unstructured.Unstructured, error)
+	ApplyYAML(ctx context.Context, yamls ...[]byte) ([]*unstructured.Unstructured, error)
 	DeleteResource(ctx context.Context, obj client.Object) error
 	DeleteYAML(ctx context.Context, yamls ...[]byte) error
 	RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error
@@ -58,7 +58,7 @@ func (yc *yamlClient) Client() *kubernetes.Clientset {
 	return yc.k8sClient
 }
 
-func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]ResourceRef, error) {
+func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]*unstructured.Unstructured, error) {
 	b, err := myaml.Marshal(obj)
 	if err != nil {
 		return nil, err
@@ -67,11 +67,11 @@ func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]ResourceR
 	return yc.ApplyYAML(ctx, b)
 }
 
-func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]ResourceRef, error) {
+func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]*unstructured.Unstructured, error) {
 	b := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(b), 100)
 
-	var resources []ResourceRef
+	var objects []*unstructured.Unstructured
 
 	for {
 		var obj unstructured.Unstructured
@@ -86,7 +86,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]Resourc
 			continue
 		}
 
-		resources = append(resources, parseResourceRef(&obj))
+		objects = append(objects, &obj)
 
 		gvk := obj.GroupVersionKind()
 		mapping, err := yc.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
@@ -124,7 +124,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]Resourc
 
 		b, err := json.Marshal(obj.Object)
 		if err != nil {
-			return resources, err
+			return objects, err
 		}
 
 		ann[reconciler.LastAppliedKey] = string(b)
@@ -141,7 +141,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]Resourc
 			obj.SetLabels(labels)
 			_, err = resourceClient.Create(ctx, &obj, metav1.CreateOptions{})
 			if err != nil {
-				return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
+				return objects, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 			}
 
 			logger.Info("created resource")
@@ -154,7 +154,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]Resourc
 
 		if cobj == nil {
 			// INFO: it should not happen, but just for sanity check
-			return resources, nil
+			return objects, nil
 		}
 
 		prevLastApplied, ok := cobj.GetAnnotations()[reconciler.LastAppliedKey]
@@ -194,11 +194,11 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]Resourc
 
 		// If exists, update it
 		if _, err = resourceClient.Update(ctx, &obj, metav1.UpdateOptions{}); err != nil {
-			return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
+			return objects, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 		}
 		logger.Info("Updated Resource")
 	}
-	return resources, nil
+	return objects, nil
 }
 
 func parseResourceRef(obj client.Object) ResourceRef {
@@ -333,6 +333,9 @@ func (yc *yamlClient) DeleteResource(ctx context.Context, obj client.Object) err
 func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 	jYamls := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
+
+	deletionStatus := make(map[string]bool, len(yamls))
+
 	for {
 		var rawObj runtime.RawExtension
 		if err := decoder.Decode(&rawObj); err != nil {
@@ -373,11 +376,22 @@ func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 			dri = yc.dynamicClient.Resource(mapping.Resource)
 		}
 
+		resourceRef := fmt.Sprintf("resource (%s/%s) (gvk: %s)", unstructuredObj.GetNamespace(), unstructuredObj.GetName(), unstructuredObj.GetObjectKind().GroupVersionKind().String())
+		deletionStatus[resourceRef] = false
+
 		if err := dri.Delete(ctx, unstructuredObj.GetName(), metav1.DeleteOptions{}); err != nil {
-			// if apiErrors.IsNotFound(err) {
-			// 	return nil
-			// }
-			return err
+			if !apiErrors.IsNotFound(err) {
+				return err
+			}
+
+			deletionStatus[resourceRef] = true
+			continue
+		}
+	}
+
+	for k, v := range deletionStatus {
+		if !v {
+			return fmt.Errorf("waiting for (%s) to be removed from k8s", k)
 		}
 	}
 

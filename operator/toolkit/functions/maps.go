@@ -1,6 +1,9 @@
 package functions
 
-import "strings"
+import (
+	"maps"
+	"strings"
+)
 
 // MapSet sets a key, value in a map. If a map is nil, it firsts initializes the map
 func mapSet[K comparable, V any](m *map[K]V, key K, value V) {
@@ -95,4 +98,14 @@ func MapJoin[K comparable, V any](first *map[K]V, second map[K]V) {
 	for k, v := range second {
 		mapSet(first, k, v)
 	}
+}
+
+func MapMerge[K comparable, V any](source ...map[K]V) map[K]V {
+	result := make(map[K]V)
+
+	for _, m := range source {
+		maps.Copy(result, m)
+	}
+
+	return result
 }

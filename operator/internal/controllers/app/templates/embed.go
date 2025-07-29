@@ -15,6 +15,7 @@ type templateFile string
 const (
 	HPASpec             templateFile = "./hpa-spec.yml.tpl"
 	AppInterceptPodSpec templateFile = "./app-intercept-pod-spec.yml.tpl"
+	Deployment          templateFile = "./deployment.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {

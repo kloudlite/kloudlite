@@ -1,0 +1,9 @@
+apiVersion: kloudlite.io/v1
+kind: PlatformService
+metadata:
+  labels:
+    app.kubernetes.io/name: app
+    app.kubernetes.io/managed-by: kustomize
+  name: platformservice-sample
+spec:
+  # TODO(user): Add fields here

@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
+	"github.com/kloudlite/kloudlite/operator/toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
 	"github.com/kloudlite/operator/api/v1"
 	"github.com/kloudlite/operator/internal/controllers/app/templates"
@@ -35,14 +36,17 @@ type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
+	YAMLClient kubectl.YAMLClient
+
 	env envVars
 
 	templateHPASpec             []byte
 	templateAppInterceptPodSpec []byte
+	templateDeployment          []byte
 }
 
 func (r *Reconciler) GetName() string {
-	return "app-controller"
+	return v1.ProjectDomain + "/app-controller"
 }
 
 // +kubebuilder:rbac:groups=kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -104,33 +108,40 @@ func getMatchSelector(obj *v1.App) map[string]string {
 }
 
 func (r *Reconciler) setupDeployment(check *reconciler.Check[*v1.App], obj *v1.App) reconciler.StepResult {
-	deployment := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.Name,
-			Namespace: obj.Namespace,
+	labels := fn.MapFilterWithPrefix(obj.GetLabels(), v1.ProjectDomain)
+	annotations := fn.MapFilterWithPrefix(obj.GetAnnotations(), v1.ProjectDomain)
+
+	b, err := templates.ParseBytes(r.templateDeployment, templates.DeploymentParams{
+		Metadata: metav1.ObjectMeta{
+			Name:            obj.Name,
+			Namespace:       obj.Namespace,
+			Labels:          labels,
+			Annotations:     annotations,
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		},
+		Paused:         obj.Spec.Paused,
+		Replicas:       obj.Spec.Replicas,
+		Selector:       map[string]string{v1.AppNameKey: obj.Name},
+		PodLabels:      labels,
+		PodAnnotations: annotations,
+		PodSpec:        obj.Spec.PodSpec,
+	})
+	if err != nil {
+		return check.Failed(err)
 	}
 
-	selectorLabels := getMatchSelector(obj)
+	results, err := r.YAMLClient.ApplyYAML(check.Context(), b)
+	if err != nil {
+		return check.Failed(err)
+	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, deployment, func() error {
-		deployment.SetLabels(selectorLabels)
-		deployment.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		deployment.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: selectorLabels,
-		}
-		deployment.Spec.Replicas = fn.New(int32(obj.Spec.Replicas))
-		deployment.Spec.Paused = obj.Spec.Paused
-		deployment.Spec.Template = corev1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels:      selectorLabels,
-				Annotations: fn.MapFilterWithPrefix(obj.GetAnnotations(), reconciler.ProjectDomain),
-			},
-			Spec: obj.Spec.PodSpec,
-		}
+	if len(results) != 1 {
+		return check.Failed(fmt.Errorf("wanted 1 result from apply YAML client, go %d", len(results)))
+	}
 
-		return nil
-	}); err != nil {
+	deployment := &appsv1.Deployment{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(results[0].Object, deployment); err != nil {
+		fmt.Printf("Error converting unstructured to pod: %v\n", err)
 		return check.Failed(err)
 	}
 
@@ -141,7 +152,7 @@ func (r *Reconciler) setupDeployment(check *reconciler.Check[*v1.App], obj *v1.A
 				var podList corev1.PodList
 				if err := r.List(
 					check.Context(), &podList, &client.ListOptions{
-						LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
+						LabelSelector: apiLabels.SelectorFromValidatedSet(deployment.Spec.Template.Labels),
 						Namespace:     obj.Namespace,
 					},
 				); err != nil {
@@ -432,6 +443,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	r.templateAppInterceptPodSpec, err = templates.Read(templates.AppInterceptPodSpec)
+	if err != nil {
+		return err
+	}
+
+	r.templateDeployment, err = templates.Read(templates.Deployment)
 	if err != nil {
 		return err
 	}

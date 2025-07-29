@@ -1,0 +1,11 @@
+apiVersion: kloudlite.io/v1
+kind: Workmachine
+metadata:
+  name: "master"
+spec:
+  type: "kloudlite/no-op"
+  ssh:
+    publicKeys:
+      - |+
+        ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDBcb36zl1C8iVqFdwGPdVCNcfGVbOcjWjoxyhgYT7lZmqm0GWmGWiwmx1jQxC0IOT03489NkDnvT8GWuj+EQrNb7ba7iEHOyFZt+/2q2JA3JhWQECIqpsT5tfx2SwFbygdBWmr3EJ/X9Zt4v35jR44MttiKHreXOvsem5KBgRz+xtkhgbrNPJw/G4ImdTqryIsmmGR9SK9s/e4AG0KgW7Lle5ihYz4Pznw1HIhg6oLSmr1TLaD3eabHvynrPAWeP+ZZ+DpREi7N2Nzho3Gm5tnTOUT0+yim+mYjE3fUKOdyhkjsmYEHcSklKPOokiDx4dFT+kzaOYmlWZy7JAD4aL4czEFPe1XTpnRK+N2WWoovYlc6VsAbixANWj4cBlb+B3qkrYC5vjfGVhdjt9Nt48aLpjQ/7kpnnJehmt+/u5byw7jvK0XogjQSysWWDlqs2zHgPHnSB7NZeoRod8gwsN3wQAecb7xWHWEuVKPwAIlOJqMpHw8YvC1Pw1oDfaALgTWJZ/1DjlPcTM6/FLIApGjHrK2RGXVp6eSnr4O0tlelvcpqPYoXGkfDT1nIde3f1624togtFY5X060nmwDpB5LNO71y/YNcLoJZVWgnh2lyMGvk5Z+nLjqZBnfJrObtKkD9xHnHY69G62RaX53RCz1UQ9/260RfVzeWBMxzmByWQ== rog-baby
+

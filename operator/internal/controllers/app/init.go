@@ -8,6 +8,6 @@ import (
 func RegisterInto(mgr operator.Operator) {
 	mgr.AddToSchemes(v1.AddToScheme)
 	mgr.RegisterControllers(
-		&Reconciler{},
+		&Reconciler{YAMLClient: mgr.Operator().KubeYAMLClient()},
 	)
 }

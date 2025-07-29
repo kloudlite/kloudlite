@@ -49,7 +49,7 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) GetName() string {
-	return "service-intercept-controller"
+	return v1.ProjectDomain + "/service-intercept-controller"
 }
 
 const (
@@ -352,7 +352,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 	}()
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ServiceIntercept{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ServiceIntercept{}).Named(r.GetName())
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Pod{})

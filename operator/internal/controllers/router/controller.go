@@ -36,7 +36,7 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) GetName() string {
-	return "router-controller"
+	return v1.ProjectDomain + "/router-controller"
 }
 
 // +kubebuilder:rbac:groups=kloudlite.io,resources=routers,verbs=get;list;watch;create;update;patch;delete
@@ -333,7 +333,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.Router{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.Router{}).Named(r.GetName())
 	builder.Owns(&networkingv1.Ingress{})
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.env.MaxConcurrentReconciles})

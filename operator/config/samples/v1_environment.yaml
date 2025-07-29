@@ -1,0 +1,9 @@
+apiVersion: kloudlite.io/v1
+kind: Environment
+metadata:
+  labels:
+    app.kubernetes.io/name: app
+    app.kubernetes.io/managed-by: kustomize
+  name: environment-sample
+spec:
+  # TODO(user): Add fields here
