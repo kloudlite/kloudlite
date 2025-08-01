@@ -32,6 +32,39 @@ spec:
           effect: "NoExecute"
 
       initContainers:
+        - name: volume-permissions
+          image: {{.ImageInitContainer}}
+          imagePullPolicy: Always
+          env:
+            - name: KL_WORKSPACE
+              value: {{.Metadata.Name}}
+
+            - name: HOME
+              value: "/home/kl"
+
+            - name: KL_BOX_MODE
+              value: "true"
+          command:
+            - "bash"
+            - "-c"
+            - |
+              set -e
+              set +x
+
+              chown -R kl /nix
+
+              # creates ssh directory
+              mkdir -p $HOME/.ssh
+              mkdir -p $HOME/workspaces
+              chown -R kl $HOME
+
+          volumeMounts: &volume-mounts
+            - mountPath: /home/kl
+              name: home-dir
+            
+            - mountPath: /nix
+              name: nix-dir
+
         - name: init-home-dir
           image: {{.ImageInitContainer}}
           imagePullPolicy: Always
@@ -54,44 +87,23 @@ spec:
             set -e
             set +x
 
-            if [ ! -d "/home/kl/.ssh" ]; then
-              mkdir -p /home/kl/.ssh
-              chown -R 1000:1000 /home/kl/.ssh
-            fi
+            export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$PATH"
 
-
-            if [ -f "/home/kl/.ssh/authorized_keys" ]; then
-              if ! cmp -s /tmp/authorized_keys /home/kl/.ssh/authorized_keys; then
-                echo "authorized_keys file differs, copying new one"
-                cp /tmp/authorized_keys /home/kl/.ssh/authorized_keys
-              fi
-              echo "authorized_keys file is up to date"
-            else
-              echo "authorized_keys file not found, copying new one"
-              {{- /* rm -rf /home/kl/.ssh/authorized_keys */}}
-              cp /tmp/authorized_keys /home/kl/.ssh/authorized_keys
-            fi
-            
-            if [ -f "/home/kl/.ssh/id_rsa" ]; then
-              if ! cmp -s /tmp/id_rsa /home/kl/.ssh/id_rsa; then
-                echo "id_rsa file differs, copying new one"
-                rm -f /home/kl/.ssh/id_rsa* 2>/dev/null || true
-                cp /tmp/id_rsa /home/kl/.ssh/id_rsa
-                cp /tmp/id_rsa.pub /home/kl/.ssh/id_rsa.pub
-              fi
-              echo "id_rsa file is up to date"
-            else
-              echo "id_rsa file not found, copying new one"
-              rm -f /home/kl/.ssh/id_rsa* 2>/dev/null || true
-              cp /tmp/id_rsa /home/kl/.ssh/id_rsa
-              cp /tmp/id_rsa.pub /home/kl/.ssh/id_rsa.pub
-            fi
-            
-            if [ ! -d "/nix/store" ]; then
+            if ! command -v nix >/dev/null 2>&1; then
+              echo "[#] nix is not installed, will install it"
               curl -L https://nixos.org/nix/install | sh
-              mkdir -p ~/.config/nix
-              echo 'experimental-features = nix-command flakes' > ~/.config/nix/nix.conf
             fi
+
+            append_if_not_exists() {
+              line=$1
+              file=$2
+
+              mkdir -p "$(dirname $file)"
+              grep -qxF "$line" "$file" || echo "$line" >> "$file"
+            }
+
+            append_if_not_exists 'experimental-features = nix-command flakes' $HOME/.config/nix/nix.conf
+
             kl_bin_dir="/home/kl/.local/bin"
             if [ ! -f "$kl_bin_dir/kl" ]; then
               mkdir -p $kl_bin_dir
@@ -100,7 +112,8 @@ spec:
               popd
             fi
 
-            workspace_dir="/home/kl/workspaces/$(KL_WORKSPACE)"
+            mkdir -p $HOME/workspaces
+            workspace_dir="$HOME/workspaces/$(KL_WORKSPACE)"
             if [ ! -d "$workspace_dir" ]; then
               mkdir -p $workspace_dir
               pushd $workspace_dir
@@ -154,15 +167,15 @@ spec:
             - mountPath: /home/kl
               name: home-dir
             
-            - mountPath: /tmp/authorized_keys
+            - mountPath: /home/kl/.ssh/authorized_keys
               name: ssh-keys
               subPath: authorized_keys
             
-            - mountPath: /tmp/id_rsa.pub
+            - mountPath: /home/kl/.ssh/id_rsa.pub
               name: ssh-keys
               subPath: public_key
             
-            - mountPath: /tmp/id_rsa
+            - mountPath: /home/kl/.ssh/id_rsa
               name: ssh-keys
               subPath: private_key
 
@@ -237,7 +250,8 @@ spec:
         - name: vscode-server
           {{- /* image: ghcr.io/kloudlite/iac/vscode-server:latest */}}
           image: {{.ImageVSCodeServer}}
-          imagePullPolicy: {{.ImagePullPolicy}}
+          {{- /* imagePullPolicy: {{.ImagePullPolicy}} */}}
+          imagePullPolicy: Always
           env: *env
           volumeMounts: *volume-mounts
           securityContext:

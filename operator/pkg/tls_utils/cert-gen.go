@@ -56,7 +56,7 @@ func GenTLSCert(args GenTLSCertArgs) (caBundle []byte, tlsCert []byte, tlsKey []
 			Organization: []string{"Kloudlite CA"},
 		},
 		NotBefore:             *args.NotBefore,
-		NotAfter:              args.NotAfter.Add(24 * time.Hour),
+		NotAfter:              *args.NotAfter,
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
@@ -72,7 +72,7 @@ func GenTLSCert(args GenTLSCertArgs) (caBundle []byte, tlsCert []byte, tlsKey []
 	caCertPEM := new(bytes.Buffer)
 	err = pem.Encode(caCertPEM, &pem.Block{Type: "CERTIFICATE", Bytes: caCertBytes})
 	if err != nil {
-		// return nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Encode the CA private key to PEM

@@ -1,0 +1,8 @@
+tasks:
+  dev:
+    env:
+      DEV_WEBHOOK_PROXY: "true"
+      DEV_WEBHOOK_PROXY_SERVICE_NAME: "wireguard"
+      DEV_WEBHOOK_PROXY_SERVICE_NAMESPACE: "wg-wireguard"
+    cmd:
+      - go run ./main.go

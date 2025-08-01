@@ -12,6 +12,7 @@ RUN userdel ubuntu || echo "ubuntu user already deleted"
 RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl && chsh -s $(which zsh) kl
 RUN echo "kl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kl
 
+# INFO: helps prevent failures in SSH session setup inside containers
 RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
 # Expose SSH Port

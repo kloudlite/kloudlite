@@ -39,8 +39,9 @@ type StatefulSetTemplateArgs struct {
 }
 
 type ServiceTemplateArgs struct {
-	Metadata metav1.ObjectMeta
-	Selector map[string]string
+	Metadata                metav1.ObjectMeta
+	HeadlessServiceMetadata metav1.ObjectMeta
+	Selector                map[string]string
 
 	EnableJupyterNotebook bool
 	EnableCodeServer      bool

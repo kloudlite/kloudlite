@@ -7,21 +7,21 @@ spec:
     forceRedirect: true
   routes:
     {{- if .EnableCodeServer }}
-    - host: code.{{.Metadata.Name}}.{{.WorkMachineName}}.{{.KloudliteDomain}}
+    - host: code-{{.Metadata.Name}}-{{.WorkMachineName}}.{{.KloudliteDomain}}
       service: {{.ServiceName}}
       path: {{.ServicePath}}
       port: {{.CodeServerPort}}
     {{- end }}
 
     {{- if .EnableJupyterNotebook }}
-    - host: notebook.{{.Metadata.Name}}.{{.WorkMachineName}}.{{.KloudliteDomain}}
+    - host: notebook-{{.Metadata.Name}}-{{.WorkMachineName}}.{{.KloudliteDomain}}
       service: {{.ServiceName}}
       path: {{.ServicePath}}
       port: {{.NotebookPort}}
     {{- end }}
 
     {{- if .EnableTTYD }}
-    - host: ttyd.{{.Metadata.Name}}.{{.WorkMachineName}}.{{.KloudliteDomain}}
+    - host: ttyd-{{.Metadata.Name}}-{{.WorkMachineName}}.{{.KloudliteDomain}}
       service: {{.ServiceName}}
       path: {{.ServicePath}}
       port: {{.TTYDPort}}

@@ -7,8 +7,13 @@ webhooks:
   - name: {{.ServiceName}}.kloudlite.io
     clientConfig:
       service:
+        {{- if .LocalDebug }}
         name: {{ .ServiceName | squote }}
         namespace: {{.ServiceNamespace | squote}}
+        {{- else }}
+        name: {{ .ServiceName | squote }}
+        namespace: {{.ServiceNamespace | squote}}
+        {{- end }}
         path: /mutate/pod
         port: 443
       caBundle: {{ .CaBundle | b64enc | squote }}

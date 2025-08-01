@@ -1,41 +1,41 @@
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sample
-  namespace: "sample"
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sample
-  template:
-    metadata:
-      labels:
-        app: sample
-    spec:
-      containers:
-      - name: sample
-        image: nginx:mainline-alpine
-        ports:
-        - containerPort: 80
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: sample
-  namespace: "sample"
-spec:
-  selector:
-    app: sample
-  ports:
-    - name: "http"
-      protocol: TCP
-      port: 80
-      targetPort: 80
-
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: sample
+#   namespace: "sample"
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: sample
+#   template:
+#     metadata:
+#       labels:
+#         app: sample
+#     spec:
+#       containers:
+#       - name: sample
+#         image: nginx:mainline-alpine
+#         ports:
+#         - containerPort: 80
+#
+# ---
+#
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: sample
+#   namespace: "sample"
+# spec:
+#   selector:
+#     app: sample
+#   ports:
+#     - name: "http"
+#       protocol: TCP
+#       port: 80
+#       targetPort: 80
+#
 ---
 
 apiVersion: "kloudlite.io/v1"
@@ -44,10 +44,11 @@ metadata:
   name: "sample"
   namespace: "sample"
 spec:
-  toHost: "localhost"
+  # toHost: "localhost"
+  toHost: "10.13.0.2"
   serviceRef:
     name: sample
   portMappings:
-    - servicePort: 80
+    - servicePort: 8080
       devicePort: 3000
 

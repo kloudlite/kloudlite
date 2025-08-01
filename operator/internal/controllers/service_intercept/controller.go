@@ -3,22 +3,24 @@ package service_intercept
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/codingconcepts/env"
 	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 	"github.com/kloudlite/kloudlite/operator/toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
 	v1 "github.com/kloudlite/operator/api/v1"
+	"github.com/kloudlite/operator/common"
 	"github.com/kloudlite/operator/internal/controllers/service_intercept/templates"
 	"github.com/kloudlite/operator/internal/controllers/service_intercept/webhook"
 	"github.com/kloudlite/operator/pkg/errors"
@@ -29,20 +31,29 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type Env struct {
+type envVars struct {
 	MaxConcurrentReconciles int    `env:"MAX_CONCURRENT_RECONCILES" default:"5"`
 	KloudliteNamespace      string `env:"KLOUDLITE_NAMESPACE" default:"kloudlite"`
+
+	DevMode                         bool   `env:"DEV" default:"false"`
+	DevWebhookProxy                 bool   `env:"DEV_WEBHOOK_PROXY" default:"false"`
+	DevWebhookProxyServiceName      string `env:"DEV_WEBHOOK_PROXY_SERVICE_NAME"`
+	DevWebhookProxyServiceNamespace string `env:"DEV_WEBHOOK_PROXY_SERVICE_NAMESPACE"`
 }
+
+const (
+	serviceInterceptorPodLabelKey   = v1.ProjectDomain + "/pod.role"
+	serviceInterceptorPodLabelValue = "service-interceptor"
+)
 
 // Reconciler reconciles a ServiceIntercept object
 type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	env Env
+	env envVars
 
 	YAMLClient kubectl.YAMLClient
-	recorder   record.EventRecorder
 
 	svcInterceptTemplate []byte
 	templateWebhook      []byte
@@ -106,35 +117,21 @@ func (r *Reconciler) createSvcIntercept(check *reconciler.Check[*v1.ServiceInter
 				return check.Failed(err)
 			}
 
-			udpPorts := make(map[int32]corev1.ServicePort)
-			tcpPorts := make(map[int32]corev1.ServicePort)
+			svcPortMap := make(map[string]corev1.ServicePort, len(svc.Spec.Ports))
 
-			for _, port := range svc.Spec.Ports {
-				switch port.Protocol {
-				case corev1.ProtocolTCP:
-					tcpPorts[port.Port] = port
-				case corev1.ProtocolUDP:
-					udpPorts[port.Port] = port
-				}
+			for _, svcPort := range svc.Spec.Ports {
+				svcPortMap[fmt.Sprintf("%s/%s", svcPort.Protocol, svcPort.Port)] = svcPort
 			}
 
-			tcpPortMappings := make(map[int32]int32)
-			udpPortMappings := make(map[int32]int32)
-
 			for _, pm := range obj.Spec.PortMappings {
-				if _, ok := tcpPorts[pm.ServicePort]; ok {
-					tcpPortMappings[pm.ServicePort] = pm.DevicePort
-				}
-
-				if _, ok := udpPorts[pm.ServicePort]; ok {
-					udpPortMappings[pm.ServicePort] = pm.DevicePort
+				if _, ok := svcPortMap[fmt.Sprintf("%s/%s", pm.Protocol, pm.ServicePort)]; !ok {
+					return check.Failed(fmt.Errorf("%s/%s port is not configured on service %s/%s", pm.Protocol, pm.ServicePort, obj.Namespace, obj.Spec.ServiceRef.Name))
 				}
 			}
 
 			b, err := templates.ParseBytes(r.svcInterceptTemplate, templates.ServiceInterceptPodSpecParams{
-				DeviceHost:      obj.Spec.ToHost,
-				TCPPortMappings: tcpPortMappings,
-				UDPPortMappings: udpPortMappings,
+				TargetHost:   obj.Spec.ToHost,
+				PortMappings: obj.Spec.PortMappings,
 			})
 			if err != nil {
 				return check.Failed(err).NoRequeue()
@@ -142,7 +139,9 @@ func (r *Reconciler) createSvcIntercept(check *reconciler.Check[*v1.ServiceInter
 
 			if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, pod, func() error {
 				pod.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-				pod.SetLabels(fn.MapMerge(pod.GetLabels(), svc.Spec.Selector))
+				pod.SetLabels(fn.MapMerge(pod.GetLabels(), svc.Spec.Selector, map[string]string{
+					serviceInterceptorPodLabelKey: serviceInterceptorPodLabelValue,
+				}))
 				pod.SetAnnotations(fn.MapMerge(pod.GetAnnotations(), map[string]string{svciGenerationKey: fmt.Sprintf("%d", obj.Generation)}))
 
 				if err := yaml.Unmarshal(b, &pod.Spec); err != nil {
@@ -210,9 +209,12 @@ func (r *Reconciler) setupTrackServicePods(check *reconciler.Check[*v1.ServiceIn
 	}
 
 	for _, p := range podList.Items {
-		if cf := p.Labels[CreatedForLabel]; cf == "intercept" {
+		if p.Name == obj.Name+"-intercept" {
 			continue
 		}
+		// if cf := p.Labels[CreatedForLabel]; cf == "intercept" {
+		// 	continue
+		// }
 
 		check.Logger().Info("pod", "name", p.GetName())
 
@@ -227,7 +229,7 @@ func (r *Reconciler) setupTrackServicePods(check *reconciler.Check[*v1.ServiceIn
 type SetupWebhookArgs struct {
 	Client          client.Client
 	YAMLClient      kubectl.YAMLClient
-	Env             *Env
+	Env             *envVars
 	templateWebhook []byte
 }
 
@@ -268,13 +270,44 @@ func setupAdmissionWebhook(ctx context.Context, args SetupWebhookArgs) (tlsCert,
 		}
 	}
 
+	if args.Env.DevWebhookProxy {
+		caBundle, cert, key, err := tls_utils.GenTLSCert(tls_utils.GenTLSCertArgs{
+			DNSNames: []string{
+				fmt.Sprintf("%s.%s.svc", args.Env.DevWebhookProxyServiceName, args.Env.DevWebhookProxyServiceNamespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", args.Env.DevWebhookProxyServiceName, args.Env.DevWebhookProxyServiceNamespace),
+			},
+			CertificateLabel: "service intercept webhook cert",
+		})
+		if err != nil {
+			return nil, nil, errors.NewEf(err, "failed to generate TLS certificates")
+		}
+
+		if _, err := controllerutil.CreateOrUpdate(ctx, args.Client, webhookCert, func() error {
+			webhookCert.Data = map[string][]byte{
+				"ca.crt":  caBundle,
+				"tls.crt": cert,
+				"tls.key": key,
+			}
+
+			return nil
+		}); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	b, err := templates.ParseBytes(args.templateWebhook, templates.WebhookTemplateArgs{
+		WebhookProxy: templates.WebhookProxy{
+			Enabled:          args.Env.DevWebhookProxy,
+			ServiceName:      args.Env.DevWebhookProxyServiceName,
+			ServiceNamespace: args.Env.DevWebhookProxyServiceNamespace,
+		},
+
 		CaBundle:         string(webhookCert.Data["ca.crt"]),
 		ServiceName:      ServiceInterceptServiceName,
 		ServiceNamespace: certSecretNamespace,
 		ServiceHTTPSPort: 9443,
 		ServiceSelector: map[string]string{
-			"kloudlite.io/type": "service-intercept",
+			v1.ProjectDomain + "/type": "service-intercept",
 		},
 
 		NamespaceSelector: metav1.LabelSelector{
@@ -282,6 +315,8 @@ func setupAdmissionWebhook(ctx context.Context, args SetupWebhookArgs) (tlsCert,
 				"kloudlite.io/gateway.enabled": "true",
 			},
 		},
+		InterceptorPodLabelKey:   serviceInterceptorPodLabelKey,
+		InterceptorPodLabelValue: serviceInterceptorPodLabelValue,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -318,8 +353,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	go func() {
-		<-time.After(5 * time.Second)
+	// INFO: running service intercept mutating webhook as manager.Runnable
+	mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
 		tlsCert, tlsKey, err := setupAdmissionWebhook(context.TODO(), SetupWebhookArgs{
 			Client:          r.Client,
 			YAMLClient:      r.YAMLClient,
@@ -327,30 +362,46 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 			templateWebhook: templateWebhook,
 		})
 		if err != nil {
-			panic(err)
+			return err
 		}
 
-		tlsCertFile, tlsKeyPath := "/tmp/tls.crt", "/tmp/tls.key"
+		tlsCertPath, tlsKeyPath := "/tmp/tls.crt", "/tmp/tls.key"
 
-		if err := os.WriteFile(tlsCertFile, tlsCert, 0o666); err != nil {
-			panic(err)
+		if err := os.WriteFile(tlsCertPath, tlsCert, 0o666); err != nil {
+			return err
 		}
 
 		if err := os.WriteFile(tlsKeyPath, tlsKey, 0o666); err != nil {
-			panic(err)
+			return err
 		}
 
-		if err := webhook.Run(webhook.RunArgs{
-			Addr:               ":9443",
-			Debug:              os.Getenv("DEBUG") == "true",
-			KubeRestConfig:     mgr.GetConfig(),
-			CreatedForLabelKey: CreatedForLabel,
-			TLSCertFilePath:    tlsCertFile,
-			TLSKeyFilePath:     tlsKeyPath,
-		}); err != nil {
-			panic(err)
+		mw := webhook.MutationWebhook{
+			Debug:      r.env.DevMode,
+			KubeClient: mgr.GetClient(),
+			Scheme:     mgr.GetScheme(),
+			ShouldIgnorePod: func(pod *corev1.Pod) bool {
+				return pod.Labels[serviceInterceptorPodLabelKey] == serviceInterceptorPodLabelValue
+			},
 		}
-	}()
+
+		handler, err := mw.Handler()
+		if err != nil {
+			return err
+		}
+
+		server := &http.Server{Addr: ":9443", Handler: handler}
+
+		go func() {
+			<-ctx.Done()
+			_ = server.Shutdown(context.Background())
+		}()
+
+		common.PrintMetadataBanner(common.Metadata{
+			Name:    "service intercept webhook",
+			Message: "HTTP Server Running @ :9443",
+		})
+		return server.ListenAndServeTLS(tlsCertPath, tlsKeyPath)
+	}))
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.ServiceIntercept{}).Named(r.GetName())
 

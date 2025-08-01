@@ -6,16 +6,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type SvcInterceptPortMappings struct {
-	ServicePort int32 `json:"servicePort"`
-	DevicePort  int32 `json:"devicePort"`
+type ServiceInterceptPortMappings struct {
+	// +kubebuilder:default="TCP"
+	Protocol    corev1.Protocol `json:"protocol,omitempty"`
+	ServicePort int32           `json:"servicePort"`
+	DevicePort  int32           `json:"devicePort"`
 }
 
 // ServiceInterceptSpec defines the desired state of ServiceIntercept.
 type ServiceInterceptSpec struct {
-	ToHost       string                      `json:"toHost"`
-	PortMappings []SvcInterceptPortMappings  `json:"portMappings"`
-	ServiceRef   corev1.LocalObjectReference `json:"serviceRef"`
+	ToHost       string                         `json:"toHost"`
+	PortMappings []ServiceInterceptPortMappings `json:"portMappings"`
+	ServiceRef   corev1.LocalObjectReference    `json:"serviceRef"`
 }
 
 type ServiceInterceptStatus struct {
@@ -25,6 +27,10 @@ type ServiceInterceptStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.operator\\.kloudlite\\.io\\/checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.operator\\.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ServiceIntercept is the Schema for the serviceintercepts API.
 type ServiceIntercept struct {

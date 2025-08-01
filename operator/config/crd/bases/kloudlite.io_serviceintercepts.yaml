@@ -14,7 +14,20 @@ spec:
     singular: serviceintercept
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.operator\.kloudlite\.io\/checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.operator\.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: ServiceIntercept is the Schema for the serviceintercepts API.
@@ -45,6 +58,11 @@ spec:
                     devicePort:
                       format: int32
                       type: integer
+                    protocol:
+                      default: TCP
+                      description: Protocol defines network protocols supported for
+                        things like container ports.
+                      type: string
                     servicePort:
                       format: int32
                       type: integer

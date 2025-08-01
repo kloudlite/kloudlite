@@ -32,4 +32,13 @@ spec:
       targetPort: {{.CodeServerPort}}
 {{ end }}
 
+---
+
+apiVersion: v1
+kind: Service
+metadata: {{.HeadlessServiceMetadata | toJson }}
+spec:
+  clusterIP: None
+  selector: {{.Selector | toJson}}
+
 {{- end }}

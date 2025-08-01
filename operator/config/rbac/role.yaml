@@ -5,6 +5,26 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - clusters
   resources:
   - clusters
@@ -292,7 +312,12 @@ rules:
   - kloudlite.io
   resources:
   - apps
+  - environments
+  - platformservices
   - routers
+  - serviceintercepts
+  - workmachines
+  - workspaces
   verbs:
   - create
   - delete
@@ -305,14 +330,24 @@ rules:
   - kloudlite.io
   resources:
   - apps/finalizers
+  - environments/finalizers
+  - platformservices/finalizers
   - routers/finalizers
+  - serviceintercepts/finalizers
+  - workmachines/finalizers
+  - workspaces/finalizers
   verbs:
   - update
 - apiGroups:
   - kloudlite.io
   resources:
   - apps/status
+  - environments/status
+  - platformservices/status
   - routers/status
+  - serviceintercepts/status
+  - workmachines/status
+  - workspaces/status
   verbs:
   - get
   - patch

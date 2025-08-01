@@ -31,7 +31,7 @@ type envVars struct {
 	// WorkspaceImageCodeServer      string `env:"WORKSPACE_IMAGE_CODE_SERVER" default:"ghcr.io/kloudlite/iac/code-server:latest"`
 	WorkspaceImageCodeServer string `env:"WORKSPACE_IMAGE_CODE_SERVER" default:"ghcr.io/kloudlite/kloudlite/operator/workspace-code-server:debug"`
 	// WorkspaceImageVscodeServer    string `env:"WORKSPACE_IMAGE_VSCODE_SERVER" default:"ghcr.io/kloudlite/iac/vscode-server:latest"`
-	WorkspaceImageVscodeServer string `env:"WORKSPACE_IMAGE_VSCODE_SERVER" default:"ghcr.io/kloudlite/kloudlite/operator/workspace-vscode-server:debug"`
+	WorkspaceImageVscodeServer string `env:"WORKSPACE_IMAGE_VSCODE_SERVER" default:"ghcr.io/kloudlite/kloudlite/operator/workspace-vscode-tunnel:debug"`
 }
 
 // Reconciler reconciles a Workspace object
@@ -171,6 +171,15 @@ func (r *Reconciler) createService(check *reconciler.Check[*v1.Workspace], obj *
 			Namespace: obj.Namespace,
 			Labels: map[string]string{
 				v1.WorkspaceNameKey: obj.Name,
+			},
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
+		HeadlessServiceMetadata: metav1.ObjectMeta{
+			Name:      obj.Name + "-headless",
+			Namespace: obj.Namespace,
+			Labels: map[string]string{
+				v1.WorkspaceNameKey:           obj.Name,
+				"app.kubernetes.io/component": "headless-service",
 			},
 			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		},
