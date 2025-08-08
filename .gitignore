@@ -34,3 +34,19 @@ config/crd/bases/_.yaml
 .tmp
 .kube
 .out
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Binary files
+api/apps/runner/runner
+api/apps/runner/runner-new
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out

@@ -4,6 +4,7 @@ option go_package = "kloudlite.io/rpc/accounts";
 
 service AccountsInternal {
   rpc GetAccount(GetAccountIn) returns (GetAccountOut);
+  rpc GetPlatformSettingsInternal(GetPlatformSettingsInternalRequest) returns (GetPlatformSettingsInternalResponse);
 }
 
 message GetAccountIn {
@@ -16,4 +17,50 @@ message GetAccountOut {
   string targetNamespace = 2;
   string accountId = 3;
   string kloudliteGatewayRegion = 4;
+}
+
+message GetPlatformSettingsInternalRequest {}
+
+message GetPlatformSettingsInternalResponse {
+  PlatformSettingsInternal settings = 1;
+}
+
+message PlatformSettingsInternal {
+  string platformOwnerEmail = 1;
+  string supportEmail = 2;
+  bool allowSignup = 3;
+  OAuthProviderSettingsInternal oauthProviders = 4;
+  TeamSettingsInternal teamSettings = 5;
+  PlatformFeaturesInternal features = 6;
+}
+
+message OAuthProviderSettingsInternal {
+  OAuthProviderInternal google = 1;
+  OAuthProviderInternal github = 2;
+  MicrosoftOAuthProviderInternal microsoft = 3;
+}
+
+message OAuthProviderInternal {
+  bool enabled = 1;
+  string clientId = 2;
+  string clientSecret = 3;
+}
+
+message MicrosoftOAuthProviderInternal {
+  bool enabled = 1;
+  string clientId = 2;
+  string clientSecret = 3;
+  string tenantId = 4;
+}
+
+message TeamSettingsInternal {
+  bool requireApproval = 1;
+  bool autoApproveFirstTeam = 2;
+  int32 maxTeamsPerUser = 3;
+}
+
+message PlatformFeaturesInternal {
+  bool enableDeviceFlow = 1;
+  bool enableCLI = 2;
+  bool enableAPI = 3;
 }
