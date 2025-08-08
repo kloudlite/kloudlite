@@ -1,0 +1,66 @@
+version: '3'
+
+vars:
+  APP_NAME: kl
+  VERSION: 
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+  COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "none"
+  DATE:
+    sh: date -u +"%Y-%m-%dT%H:%M:%SZ"
+  LDFLAGS: >-
+    -X main.Version={{.VERSION}}
+    -X main.Commit={{.COMMIT}}
+    -X main.Date={{.DATE}}
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the CLI binary
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o {{.APP_NAME}} .
+
+  install:
+    desc: Build and install the CLI to $GOPATH/bin
+    cmds:
+      - go install -ldflags "{{.LDFLAGS}}" .
+
+  run:
+    desc: Run the CLI
+    cmds:
+      - go run -ldflags "{{.LDFLAGS}}" . {{.CLI_ARGS}}
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  fmt:
+    desc: Format code
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -f {{.APP_NAME}}
+
+  deps:
+    desc: Download dependencies
+    cmds:
+      - go mod download
+      - go mod tidy

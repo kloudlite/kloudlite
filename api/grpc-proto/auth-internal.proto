@@ -10,6 +10,28 @@ service AuthInternal {
   rpc ClearMachineSessionByMachine(ClearMachineSessionByMachineIn) returns (ClearMachineSessionByMachineOut);
   rpc ClearMachineSessionByUser(ClearMachineSessionByUserIn) returns (ClearMachineSessionByUserOut);
   rpc ClearMachineSessionByTeam(ClearMachineSessionByTeamIn) returns (ClearMachineSessionByTeamOut);
+  
+  // Email methods
+  rpc SendAccountInviteEmail(SendAccountInviteEmailRequest) returns (SendEmailResponse);
+  rpc SendPlatformInviteEmail(SendPlatformInviteEmailRequest) returns (SendEmailResponse);
+  rpc SendAlertEmail(SendAlertEmailRequest) returns (SendEmailResponse);
+  rpc SendContactUsEmail(SendContactUsEmailRequest) returns (SendEmailResponse);
+  
+  // Platform user checks
+  rpc CanUserCreateTeam(UserIdRequest) returns (BoolResponse);
+  rpc IsPlatformAdmin(UserIdRequest) returns (BoolResponse);
+  rpc IsPlatformSuperAdmin(UserIdRequest) returns (BoolResponse);
+  rpc GetPlatformUser(GetPlatformUserRequest) returns (GetPlatformUserResponse);
+  
+  // Platform initialization
+  rpc InitializePlatform(InitializePlatformRequest) returns (InitializePlatformResponse);
+  
+  // Platform user management
+  rpc CreateOrUpdatePlatformUser(CreateOrUpdatePlatformUserRequest) returns (CreateOrUpdatePlatformUserResponse);
+  
+  // Notifications
+  rpc CreateNotification(CreateNotificationRequest) returns (CreateNotificationResponse);
+  rpc ListPlatformUsers(InternalListPlatformUsersRequest) returns (InternalListPlatformUsersResponse);
 }
 
 message GetUserByEmailRequest {
@@ -80,4 +102,129 @@ message ClearMachineSessionByTeamIn {
 }
 message ClearMachineSessionByTeamOut {
   bool done = 1;
+}
+
+// Email messages
+message SendEmailResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message SendAccountInviteEmailRequest {
+  string email = 1;
+  string name = 2;
+  string invitedBy = 3;
+  string accountName = 4;
+  string inviteLink = 5;
+}
+
+message SendPlatformInviteEmailRequest {
+  string email = 1;
+  string name = 2;
+  string invitedBy = 3;
+  string role = 4;
+  string inviteLink = 5;
+}
+
+message SendAlertEmailRequest {
+  string email = 1;
+  string alertTitle = 2;
+  string alertMessage = 3;
+  map<string, string> alertData = 4;
+}
+
+message SendContactUsEmailRequest {
+  string customerEmail = 1;
+  string customerName = 2;
+  string subject = 3;
+  string message = 4;
+}
+
+// Platform user check messages
+message UserIdRequest {
+  string userId = 1;
+}
+
+message BoolResponse {
+  bool result = 1;
+}
+
+message GetPlatformUserRequest {
+  string userId = 1;
+}
+
+message GetPlatformUserResponse {
+  AuthPlatformUser platformUser = 1;
+}
+
+message AuthPlatformUser {
+  string userId = 1;
+  string email = 2;
+  string role = 3; // "super_admin", "admin", "user"
+  string createdAt = 4;
+}
+
+message InitializePlatformRequest {
+  string ownerEmail = 1;
+}
+
+message InitializePlatformResponse {
+  bool success = 1;
+  string userId = 2;
+}
+
+message CreateOrUpdatePlatformUserRequest {
+  string userId = 1;
+  string email = 2;
+  string role = 3; // "super_admin", "admin", "user"
+}
+
+message CreateOrUpdatePlatformUserResponse {
+  bool success = 1;
+  string userId = 2;
+}
+
+message InternalListPlatformUsersRequest {
+  string role = 1; // optional filter by role
+}
+
+message InternalListPlatformUsersResponse {
+  repeated AuthPlatformUser users = 1;
+}
+
+// Notification messages
+message NotificationTargetInternal {
+  string type = 1; // "user", "team_role", "platform_role"
+  string userId = 2;
+  string teamId = 3;
+  string minTeamRole = 4;
+  string minPlatformRole = 5;
+}
+
+message NotificationActionInternal {
+  string id = 1;       // e.g., "approve", "reject", "accept", "decline"
+  string label = 2;    // e.g., "Approve", "Reject"
+  string style = 3;    // e.g., "primary", "danger", "default"
+  string endpoint = 4; // e.g., "/api/teams/approve"
+  string method = 5;   // e.g., "POST", "DELETE"
+  map<string, string> data = 6; // Additional data to send
+}
+
+message CreateNotificationRequest {
+  NotificationTargetInternal target = 1;
+  string type = 2;
+  string title = 3;
+  string description = 4;
+  string teamId = 5;
+  string teamName = 6;
+  string requestId = 7;
+  string inviteId = 8;
+  bool actionRequired = 9;
+  repeated NotificationActionInternal actions = 10; // 1-4 actions
+  string dedupeKey = 11;
+}
+
+message CreateNotificationResponse {
+  string notificationId = 1;
+  bool success = 2;
 }
