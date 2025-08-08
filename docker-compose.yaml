@@ -6,7 +6,9 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - .mongodata:/data/db
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=kloudlite
   nats:
     image: nats:latest
     container_name: nats
@@ -15,4 +17,8 @@ services:
       - "8222:8222"
     command: ["-js", "--store_dir", "/data"]
     volumes:
-      - .natsdata:/data
+      - nats_data:/data
+
+volumes:
+  mongodb_data:
+  nats_data:

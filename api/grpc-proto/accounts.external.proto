@@ -3,83 +3,392 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/accounts";
 
 service Accounts {
-  rpc GetAccountDetails(GetAccountDetailsRequest) returns (GetAccountDetailsResponse);
-  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
-  rpc CheckAccountNameAvailability(CheckAccountNameAvailabilityRequest) returns (CheckAccountNameAvailabilityResponse);
-  rpc DisableAccount(DisableAccountRequest) returns (DisableAccountResponse);
-  rpc EnableAccount(EnableAccountRequest) returns (EnableAccountResponse);
-  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
-  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+  rpc GetTeamDetails(GetTeamDetailsRequest) returns (GetTeamDetailsResponse);
+  rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse);
+  rpc CheckTeamSlugAvailability(CheckTeamSlugAvailabilityRequest) returns (CheckTeamSlugAvailabilityResponse);
+  rpc GenerateTeamSlugSuggestions(GenerateTeamSlugSuggestionsRequest) returns (GenerateTeamSlugSuggestionsResponse);
+  rpc DisableTeam(DisableTeamRequest) returns (DisableTeamResponse);
+  rpc EnableTeam(EnableTeamRequest) returns (EnableTeamResponse);
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse);
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
+  rpc SearchTeams(SearchTeamsRequest) returns (SearchTeamsResponse);
+  rpc GetUserTeams(GetUserTeamsRequest) returns (GetUserTeamsResponse);
+  rpc GetTeamMembers(GetTeamMembersRequest) returns (GetTeamMembersResponse);
+  rpc InviteTeamMember(InviteTeamMemberRequest) returns (InviteTeamMemberResponse);
+  rpc RemoveTeamMember(RemoveTeamMemberRequest) returns (RemoveTeamMemberResponse);
+  rpc UpdateTeamMemberRole(UpdateTeamMemberRoleRequest) returns (UpdateTeamMemberRoleResponse);
+  
+  // Platform management
+  rpc RequestTeamCreation(RequestTeamCreationRequest) returns (RequestTeamCreationResponse);
+  rpc ListTeamRequests(ListTeamRequestsRequest) returns (ListTeamRequestsResponse);
+  rpc GetTeamRequest(GetTeamRequestRequest) returns (GetTeamRequestResponse);
+  rpc ApproveTeamRequest(ApproveTeamRequestRequest) returns (ApproveTeamRequestResponse);
+  rpc RejectTeamRequest(RejectTeamRequestRequest) returns (RejectTeamRequestResponse);
+  
+  // Platform settings management
+  rpc GetPlatformSettings(GetPlatformSettingsRequest) returns (GetPlatformSettingsResponse);
+  rpc UpdatePlatformSettings(UpdatePlatformSettingsRequest) returns (UpdatePlatformSettingsResponse);
+  
+  // Platform user invitations
+  rpc InvitePlatformUser(InvitePlatformUserRequest) returns (InvitePlatformUserResponse);
+  rpc ListPlatformInvitations(ListPlatformInvitationsRequest) returns (ListPlatformInvitationsResponse);
+  rpc ResendPlatformInvitation(ResendPlatformInvitationRequest) returns (ResendPlatformInvitationResponse);
+  rpc CancelPlatformInvitation(CancelPlatformInvitationRequest) returns (CancelPlatformInvitationResponse);
+  rpc AcceptPlatformInvitation(AcceptPlatformInvitationRequest) returns (AcceptPlatformInvitationResponse);
 }
 
-message CheckAccountNameAvailabilityRequest {
-  string name = 1;
+message CheckTeamSlugAvailabilityRequest {
+  string slug = 1;
 }
 
-message CheckAccountNameAvailabilityResponse {
+message CheckTeamSlugAvailabilityResponse {
   bool result = 1;
-  repeated string suggested_names = 2;
+  repeated string suggested_slugs = 2;
 }
 
-message GetAccountDetailsRequest {
-  string accountId = 1;
+message GenerateTeamSlugSuggestionsRequest {
+  string displayName = 1;
 }
 
-message GetAccountDetailsResponse {
-  string accountId = 1;
-  string name = 2;
-  string ownerId = 3;
-  string status = 4; // e.g., "active", "disabled", "deleted"
+message GenerateTeamSlugSuggestionsResponse {
+  repeated string suggestions = 1;
 }
 
-message CreateAccountRequest {
-  string name = 1;
+message GetTeamDetailsRequest {
+  string teamId = 1;
+}
+
+message GetTeamDetailsResponse {
+  string teamId = 1;
+  string slug = 2;
+  string displayName = 3;
+  string ownerId = 4;
+  string status = 5; // e.g., "active", "disabled", "deleted"
+  string region = 6;
+}
+
+message CreateTeamRequest {
+  string slug = 1;
   string displayName = 2;
   string region = 3;
+  string description = 4;
 }
 
-message CreateAccountResponse {
-  string accountId = 1;
+message CreateTeamResponse {
+  string teamId = 1;
 }
 
-message DisableAccountRequest {
-  string accountId = 1;
+message DisableTeamRequest {
+  string teamId = 1;
 }
 
-message DisableAccountResponse {
-  string accountId = 1;
+message DisableTeamResponse {
+  string teamId = 1;
   string status = 2; // e.g., "disabled"
 }
 
-message EnableAccountRequest {
-  string accountId = 1;
+message EnableTeamRequest {
+  string teamId = 1;
 }
 
-message EnableAccountResponse {
-  string accountId = 1;
+message EnableTeamResponse {
+  string teamId = 1;
   string status = 2; // e.g., "active"
 }
 
-message DeleteAccountRequest {
-  string accountId = 1;
+message DeleteTeamRequest {
+  string teamId = 1;
 }
 
-message DeleteAccountResponse {
-  string accountId = 1;
+message DeleteTeamResponse {
+  string teamId = 1;
   string status = 2; // e.g., "deleted"
 }
 
-message ListAccountsRequest {
-  string ownerId = 1; // User ID to list accounts for
+message ListTeamsRequest {
+  string userId = 1; // User ID to list teams for
 }
 
-message ListAccountsResponse {
-  repeated AccountDetails accounts = 1;
+message ListTeamsResponse {
+  repeated TeamDetails teams = 1;
 }
 
-message AccountDetails {
-  string accountId = 1;
-  string name = 2;
-  string ownerId = 3; // User ID of the account owner
-  string status = 4; // e.g., "active", "disabled", "deleted"
+message TeamDetails {
+  string teamId = 1;
+  string slug = 2;
+  string displayName = 3;
+  string ownerId = 4; // User ID of the team owner
+  string status = 5; // e.g., "active", "disabled", "deleted"
+  string region = 6;
+  string role = 7; // User's role in the team
+}
+
+message SearchTeamsRequest {
+  string query = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message SearchTeamsResponse {
+  repeated TeamDetails teams = 1;
+  int32 totalCount = 2;
+}
+
+message GetUserTeamsRequest {
+  string userId = 1; // User ID to get teams for
+}
+
+message GetUserTeamsResponse {
+  repeated TeamDetails teams = 1;
+}
+
+message GetTeamMembersRequest {
+  string teamId = 1;
+}
+
+message GetTeamMembersResponse {
+  repeated TeamMember members = 1;
+}
+
+message TeamMember {
+  string userId = 1;
+  string email = 2;
+  string name = 3;
+  string role = 4;
+  string joinedAt = 5;
+}
+
+message InviteTeamMemberRequest {
+  string teamId = 1;
+  string email = 2;
+  string role = 3;
+}
+
+message InviteTeamMemberResponse {
+  string invitationId = 1;
+}
+
+message RemoveTeamMemberRequest {
+  string teamId = 1;
+  string userId = 2;
+}
+
+message RemoveTeamMemberResponse {
+  bool success = 1;
+}
+
+message UpdateTeamMemberRoleRequest {
+  string teamId = 1;
+  string userId = 2;
+  string role = 3;
+}
+
+message UpdateTeamMemberRoleResponse {
+  bool success = 1;
+}
+
+// Platform management messages
+message RequestTeamCreationRequest {
+  string slug = 1;
+  string displayName = 2;
+  string description = 3;
+  string region = 4;
+}
+
+message RequestTeamCreationResponse {
+  string requestId = 1;
+  string status = 2;
+}
+
+message ListTeamRequestsRequest {
+  string status = 1; // optional: "pending", "approved", "rejected"
+}
+
+message ListTeamRequestsResponse {
+  repeated TeamRequest requests = 1;
+}
+
+message TeamRequest {
+  string requestId = 1;
+  string slug = 2;
+  string displayName = 3;
+  string description = 4;
+  string region = 5;
+  string status = 6;
+  string requestedBy = 7;
+  string requestedByEmail = 8;
+  string requestedAt = 9;
+  string reviewedBy = 10;
+  string reviewedByEmail = 11;
+  string reviewedAt = 12;
+  string rejectionReason = 13;
+}
+
+message GetTeamRequestRequest {
+  string requestId = 1;
+}
+
+message GetTeamRequestResponse {
+  TeamRequest request = 1;
+}
+
+message ApproveTeamRequestRequest {
+  string requestId = 1;
+}
+
+message ApproveTeamRequestResponse {
+  string teamId = 1;
+}
+
+message RejectTeamRequestRequest {
+  string requestId = 1;
+  string reason = 2;
+}
+
+message RejectTeamRequestResponse {
+  bool success = 1;
+}
+
+// Platform settings messages
+message GetPlatformSettingsRequest {}
+
+message GetPlatformSettingsResponse {
+  PlatformSettings settings = 1;
+}
+
+message PlatformSettings {
+  string platformOwnerEmail = 1;
+  string supportEmail = 2;
+  bool allowSignup = 3;
+  OAuthProviderSettings oauthProviders = 4;
+  TeamSettings teamSettings = 5;
+  PlatformFeatures features = 6;
+  CloudProviderConfig cloudProvider = 7;
+}
+
+message OAuthProviderSettings {
+  OAuthProvider google = 1;
+  OAuthProvider github = 2;
+  MicrosoftOAuthProvider microsoft = 3;
+}
+
+message OAuthProvider {
+  bool enabled = 1;
+  string clientId = 2;
+  string clientSecret = 3;
+}
+
+message MicrosoftOAuthProvider {
+  bool enabled = 1;
+  string clientId = 2;
+  string clientSecret = 3;
+  string tenantId = 4;
+}
+
+message TeamSettings {
+  bool requireApproval = 1;
+  bool autoApproveFirstTeam = 2;
+  int32 maxTeamsPerUser = 3;
+}
+
+message PlatformFeatures {
+  bool enableDeviceFlow = 1;
+  bool enableCLI = 2;
+  bool enableAPI = 3;
+}
+
+message CloudProviderConfig {
+  string provider = 1; // "aws", "gcp", "azure", "digitalocean" - empty means no provider
+  AWSConfig aws = 2;
+  GCPConfig gcp = 3;
+  AzureConfig azure = 4;
+  DigitalOceanConfig digitalocean = 5;
+}
+
+message AWSConfig {
+  string accessKeyId = 1;
+  string secretAccessKey = 2;
+  string region = 3;
+}
+
+message GCPConfig {
+  string projectId = 1;
+  string serviceAccountKey = 2;
+}
+
+message AzureConfig {
+  string subscriptionId = 1;
+  string tenantId = 2;
+  string clientId = 3;
+  string clientSecret = 4;
+}
+
+message DigitalOceanConfig {
+  string token = 1;
+}
+
+message UpdatePlatformSettingsRequest {
+  PlatformSettings settings = 1;
+}
+
+message UpdatePlatformSettingsResponse {
+  bool success = 1;
+}
+
+// Platform invitation messages
+message InvitePlatformUserRequest {
+  string email = 1;
+  string role = 2; // "super_admin", "admin", "user"
+}
+
+message InvitePlatformUserResponse {
+  bool success = 1;
+  string invitationId = 2;
+  string error = 3;
+}
+
+message ListPlatformInvitationsRequest {
+  string status = 1; // optional filter: "pending", "accepted", "expired", "cancelled"
+}
+
+message ListPlatformInvitationsResponse {
+  repeated PlatformInvitation invitations = 1;
+}
+
+message PlatformInvitation {
+  string id = 1;
+  string email = 2;
+  string role = 3;
+  string invitedBy = 4;
+  string invitedByEmail = 5;
+  string status = 6; // "pending", "accepted", "expired", "cancelled"
+  string createdAt = 7;
+  string expiresAt = 8;
+  string acceptedAt = 9;
+}
+
+message ResendPlatformInvitationRequest {
+  string invitationId = 1;
+}
+
+message ResendPlatformInvitationResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message CancelPlatformInvitationRequest {
+  string invitationId = 1;
+}
+
+message CancelPlatformInvitationResponse {
+  bool success = 1;
+}
+
+message AcceptPlatformInvitationRequest {
+  string token = 1;
+}
+
+message AcceptPlatformInvitationResponse {
+  bool success = 1;
+  string error = 2;
 }

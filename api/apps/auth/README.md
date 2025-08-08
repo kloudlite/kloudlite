@@ -16,11 +16,8 @@ The `internal` directory contains the main components of the hexagonal architect
 
 The `app` directory contains the application's core business logic and is organized as follows:
 
-- `github.go`, `gitlab.go`, `google.go`: Implementations of authentication providers.
-- `gqlgen.yml`: Configuration file for the Golang GraphQL library, gqlgen.
-- `graph`: Contains GraphQL-related files such as resolvers, schema, and generated code.
-- `grpc-server.go`: Implements a gRPC server for the application.
-- `main.go`: The main entry point for the app layer.
+- `grpc`: Contains gRPC server implementations for the application.
+- `app.go`: The main module definition for the app layer.
 
 #### Domain Layer
 
