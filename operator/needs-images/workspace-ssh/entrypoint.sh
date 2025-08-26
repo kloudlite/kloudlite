@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 
-$(which sshd) -D &
+[ -z "$PORT" ] && echo "WARNING: PORT env-var is not defined, defaulting to 22"
+PORT=${PORT:-22}
+
+$(which sshd) -D -p "$PORT" &
 pid=$!
 trap 'kill -9 $pid' TERM INT EXIT
 cat <<EOF
@@ -8,6 +11,6 @@ cat <<EOF
 ██      ██      ██   ██ 
 ███████ ███████ ███████ 
      ██      ██ ██   ██ 
-███████ ███████ ██   ██ Daemon Running
+███████ ███████ ██   ██ Daemon Running on :$PORT
 EOF
 wait $pid

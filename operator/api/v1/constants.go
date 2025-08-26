@@ -26,3 +26,9 @@ const (
 	WorkspaceNameKey   string = ProjectDomain + "/workspace.name"
 	WorkMachineNameKey string = ProjectDomain + "/workmachine.name"
 )
+
+const (
+	NameLabelKey       string = ProjectDomain + "/name"
+	KindLabelKey       string = ProjectDomain + "/kind"
+	ControllerLabelKey string = ProjectDomain + "/controller"
+)

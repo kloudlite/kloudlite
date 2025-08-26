@@ -15,8 +15,8 @@ type WorkspaceSpec struct {
 
 	EnableTTYD            bool `json:"enableTTYD,omitempty"`
 	EnableJupyterNotebook bool `json:"enableJupyterNotebook,omitempty"`
-	EnableCodeServer      bool `json:"enableCodeServer,omitempty"`
 	EnableVSCodeServer    bool `json:"enableVSCodeServer,omitempty"`
+	EnableVSCodeTunnel    bool `json:"enableVSCodeTunnel,omitempty"`
 
 	// +kubebuilder:default=IfNotPresent
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`

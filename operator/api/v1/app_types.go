@@ -89,7 +89,10 @@ func (r *App) GetStatus() *reconciler.Status {
 }
 
 func (r *App) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		NameLabelKey: r.Name,
+		KindLabelKey: "App",
+	}
 }
 
 func (m *App) GetEnsuredAnnotations() map[string]string {

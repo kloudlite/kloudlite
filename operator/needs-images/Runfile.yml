@@ -38,3 +38,16 @@ tasks:
           --cache-from type=registry,ref="$cache_image" \
           --output=type=image,compression=zstd,force-compression=true,compression-level=13,push=true \
           .
+
+  workspace-vscode-server:
+    dir: ./workspace-vscode-server
+    env:
+      image: ghcr.io/kloudlite/kloudlite/operator/workspace-vscode-server:debug
+      cache_image: "ghcr.io/kloudlite/kloudlite/operator/workspace-vscode-server:build-cache"
+    cmd:
+      - |+
+        docker buildx build -t "$image" \
+          --cache-to type=registry,ref="$cache_image",mode=max,compression=zstd,compression-level=13,force-compression=true \
+          --cache-from type=registry,ref="$cache_image" \
+          --output=type=image,compression=zstd,force-compression=true,compression-level=13,push=true \
+          .

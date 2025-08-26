@@ -2,13 +2,13 @@ package main
 
 import (
 	"github.com/kloudlite/kloudlite/operator/toolkit/operator"
-	"github.com/kloudlite/operator/internal/controllers/app"
-	"github.com/kloudlite/operator/internal/controllers/environment"
-	"github.com/kloudlite/operator/internal/controllers/platform_service"
-	"github.com/kloudlite/operator/internal/controllers/router"
-	"github.com/kloudlite/operator/internal/controllers/service_intercept"
-	"github.com/kloudlite/operator/internal/controllers/workmachine"
-	"github.com/kloudlite/operator/internal/controllers/workspace"
+	"github.com/kloudlite/operator/internal/app"
+	"github.com/kloudlite/operator/internal/environment"
+	"github.com/kloudlite/operator/internal/platform_service"
+	"github.com/kloudlite/operator/internal/router"
+	"github.com/kloudlite/operator/internal/service_intercept"
+	"github.com/kloudlite/operator/internal/workmachine"
+	"github.com/kloudlite/operator/internal/workspace"
 )
 
 func main() {

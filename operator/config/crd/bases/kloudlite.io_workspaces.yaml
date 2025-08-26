@@ -52,13 +52,13 @@ spec:
           spec:
             description: WorkspaceSpec defines the desired state of Workspace.
             properties:
-              enableCodeServer:
-                type: boolean
               enableJupyterNotebook:
                 type: boolean
               enableTTYD:
                 type: boolean
               enableVSCodeServer:
+                type: boolean
+              enableVSCodeTunnel:
                 type: boolean
               imagePullPolicy:
                 default: IfNotPresent
