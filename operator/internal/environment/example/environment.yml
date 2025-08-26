@@ -1,0 +1,6 @@
+apiVersion: kloudlite.io/v1
+kind: Environment
+metadata:
+  name: "sample"
+spec:
+  targetNamespace: "sample"

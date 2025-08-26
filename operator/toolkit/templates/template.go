@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/kloudlite/operator/toolkit/errors"
+	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
 )
 
 type TextTemplate struct {

@@ -1,12 +1,9 @@
 package functions
 
+import "slices"
+
 func Contains[T comparable](arr []T, item T) bool {
-	for _, v := range arr {
-		if v == item {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(arr, item)
 }
 
 func ContainsAll[T comparable](arr []T, items []T) bool {
@@ -36,13 +33,10 @@ func ContainsAllWithPredicate[T comparable, K comparable](arr []T, items []T, pr
 	return true
 }
 
-func MapMerge[K comparable, V any](source ...map[K]V) map[K]V {
-	result := make(map[K]V)
-
-	for _, m := range source {
-		for k, v := range m {
-			result[k] = v
-		}
+func TransformSlice[T any, V any](items []T, predicate func(item T) V) []V {
+	result := make([]V, 0, len(items))
+	for i := range items {
+		result = append(result, predicate(items[i]))
 	}
 
 	return result

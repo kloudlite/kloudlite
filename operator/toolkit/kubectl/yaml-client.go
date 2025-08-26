@@ -8,14 +8,13 @@ import (
 	"io"
 	"time"
 
-	"github.com/kloudlite/operator/toolkit/errors"
-	"github.com/nxtcoder17/go.pkgs/log"
+	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
 
-	rApi "github.com/kloudlite/operator/toolkit/reconciler"
+	"github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	myaml "sigs.k8s.io/yaml"
 
-	fn "github.com/kloudlite/operator/toolkit/functions"
+	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,11 +28,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"log/slog"
 )
 
 type YAMLClient interface {
-	Apply(ctx context.Context, obj client.Object) ([]rApi.ResourceRef, error)
-	ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error)
+	Apply(ctx context.Context, obj client.Object) ([]*unstructured.Unstructured, error)
+	ApplyYAML(ctx context.Context, yamls ...[]byte) ([]*unstructured.Unstructured, error)
 	DeleteResource(ctx context.Context, obj client.Object) error
 	DeleteYAML(ctx context.Context, yamls ...[]byte) error
 	RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error
@@ -41,18 +41,24 @@ type YAMLClient interface {
 	Client() *kubernetes.Clientset
 }
 
+type ResourceRef struct {
+	metav1.TypeMeta `json:",inline" graphql:"children-required"`
+	Namespace       string `json:"namespace"`
+	Name            string `json:"name"`
+}
+
 type yamlClient struct {
 	k8sClient     *kubernetes.Clientset
 	dynamicClient dynamic.Interface
 	mapper        meta.RESTMapper
-	logger        log.Logger
+	logger        *slog.Logger
 }
 
 func (yc *yamlClient) Client() *kubernetes.Clientset {
 	return yc.k8sClient
 }
 
-func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]rApi.ResourceRef, error) {
+func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]*unstructured.Unstructured, error) {
 	b, err := myaml.Marshal(obj)
 	if err != nil {
 		return nil, err
@@ -61,11 +67,11 @@ func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]rApi.Reso
 	return yc.ApplyYAML(ctx, b)
 }
 
-func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
+func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]*unstructured.Unstructured, error) {
 	b := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(b), 100)
 
-	var resources []rApi.ResourceRef
+	var objects []*unstructured.Unstructured
 
 	for {
 		var obj unstructured.Unstructured
@@ -80,7 +86,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			continue
 		}
 
-		resources = append(resources, rApi.ParseResourceRef(&obj))
+		objects = append(objects, &obj)
 
 		gvk := obj.GroupVersionKind()
 		mapping, err := yc.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
@@ -102,7 +108,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		logger := yc.logger.With("gvk", gvk.String(), "resource", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()))
 
 		ann := obj.GetAnnotations()
-		delete(ann, rApi.LastAppliedKey)
+		delete(ann, reconciler.LastAppliedKey)
 		obj.SetAnnotations(ann)
 
 		if ann == nil {
@@ -118,10 +124,10 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 
 		b, err := json.Marshal(obj.Object)
 		if err != nil {
-			return resources, err
+			return objects, err
 		}
 
-		ann[rApi.LastAppliedKey] = string(b)
+		ann[reconciler.LastAppliedKey] = string(b)
 
 		// Check if the resource exists
 		cobj, err := resourceClient.Get(ctx, obj.GetName(), metav1.GetOptions{})
@@ -135,7 +141,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			obj.SetLabels(labels)
 			_, err = resourceClient.Create(ctx, &obj, metav1.CreateOptions{})
 			if err != nil {
-				return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
+				return objects, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 			}
 
 			logger.Info("created resource")
@@ -148,14 +154,14 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 
 		if cobj == nil {
 			// INFO: it should not happen, but just for sanity check
-			return resources, nil
+			return objects, nil
 		}
 
-		prevLastApplied, ok := cobj.GetAnnotations()[rApi.LastAppliedKey]
+		prevLastApplied, ok := cobj.GetAnnotations()[reconciler.LastAppliedKey]
 		if ok {
 			logger.Debug("prev last applied", "value", prevLastApplied)
-			logger.Debug("new last applied", "value", ann[rApi.LastAppliedKey])
-			if prevLastApplied == ann[rApi.LastAppliedKey] {
+			logger.Debug("new last applied", "value", ann[reconciler.LastAppliedKey])
+			if prevLastApplied == ann[reconciler.LastAppliedKey] {
 				logger.Info("No changes for resource")
 				continue
 			}
@@ -188,18 +194,29 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 
 		// If exists, update it
 		if _, err = resourceClient.Update(ctx, &obj, metav1.UpdateOptions{}); err != nil {
-			return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
+			return objects, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 		}
 		logger.Info("Updated Resource")
 	}
-	return resources, nil
+	return objects, nil
 }
 
-func (yc *yamlClient) ApplyYAMLOld(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
+func parseResourceRef(obj client.Object) ResourceRef {
+	return ResourceRef{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+			APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		},
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+	}
+}
+
+func (yc *yamlClient) ApplyYAMLOld(ctx context.Context, yamls ...[]byte) ([]ResourceRef, error) {
 	b := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(b), 100)
 
-	var resources []rApi.ResourceRef
+	var resources []ResourceRef
 
 	for {
 		var rawObj runtime.RawExtension
@@ -227,19 +244,19 @@ func (yc *yamlClient) ApplyYAMLOld(ctx context.Context, yamls ...[]byte) ([]rApi
 		unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
 
 		// TODO: (this is failing cross importing)
-		resources = append(resources, rApi.ParseResourceRef(unstructuredObj))
+		resources = append(resources, parseResourceRef(unstructuredObj))
 		ann := unstructuredObj.GetAnnotations()
 		if ann == nil {
 			ann = make(map[string]string, 2)
 		}
 
-		ann[rApi.GVKKey] = gvk.String()
+		ann[reconciler.GVKKey] = gvk.String()
 		metadata, ok := unstructuredMap["metadata"].(map[string]any)
 		if !ok {
 			return nil, fmt.Errorf("invalid object format")
 		}
 		if metadata["annotations"] != nil {
-			delete(metadata["annotations"].(map[string]any), rApi.LastAppliedKey)
+			delete(metadata["annotations"].(map[string]any), reconciler.LastAppliedKey)
 		}
 
 		delete(unstructuredMap, "status")
@@ -249,7 +266,7 @@ func (yc *yamlClient) ApplyYAMLOld(ctx context.Context, yamls ...[]byte) ([]rApi
 			return nil, err
 		}
 
-		ann[rApi.LastAppliedKey] = string(b)
+		ann[reconciler.LastAppliedKey] = string(b)
 
 		unstructuredObj.SetAnnotations(ann)
 
@@ -277,7 +294,7 @@ func (yc *yamlClient) ApplyYAMLOld(ctx context.Context, yamls ...[]byte) ([]rApi
 		}
 
 		// TODO (nxtcoder17): delete, and recreate deployment if service account has been changed
-		if resource != nil && resource.GetAnnotations()[rApi.LastAppliedKey] == string(b) {
+		if resource != nil && resource.GetAnnotations()[reconciler.LastAppliedKey] == string(b) {
 			continue
 		}
 
@@ -316,6 +333,9 @@ func (yc *yamlClient) DeleteResource(ctx context.Context, obj client.Object) err
 func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 	jYamls := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
+
+	deletionStatus := make(map[string]bool, len(yamls))
+
 	for {
 		var rawObj runtime.RawExtension
 		if err := decoder.Decode(&rawObj); err != nil {
@@ -356,11 +376,22 @@ func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 			dri = yc.dynamicClient.Resource(mapping.Resource)
 		}
 
+		resourceRef := fmt.Sprintf("resource (%s/%s) (gvk: %s)", unstructuredObj.GetNamespace(), unstructuredObj.GetName(), unstructuredObj.GetObjectKind().GroupVersionKind().String())
+		deletionStatus[resourceRef] = false
+
 		if err := dri.Delete(ctx, unstructuredObj.GetName(), metav1.DeleteOptions{}); err != nil {
-			// if apiErrors.IsNotFound(err) {
-			// 	return nil
-			// }
-			return err
+			if !apiErrors.IsNotFound(err) {
+				return err
+			}
+
+			deletionStatus[resourceRef] = true
+			continue
+		}
+	}
+
+	for k, v := range deletionStatus {
+		if !v {
+			return fmt.Errorf("waiting for (%s) to be removed from k8s", k)
 		}
 	}
 
@@ -426,7 +457,7 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 }
 
 type YAMLClientOpts struct {
-	Logger log.Logger
+	Logger *slog.Logger
 }
 
 func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error) {
@@ -448,7 +479,7 @@ func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error)
 	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
 	if opts.Logger == nil {
-		opts.Logger = log.DefaultLogger()
+		opts.Logger = slog.Default()
 	}
 
 	return &yamlClient{

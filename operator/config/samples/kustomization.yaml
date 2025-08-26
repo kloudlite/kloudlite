@@ -112,4 +112,12 @@ resources:
 - crds_v1_managedserviceplugin.yaml
 - crds_v1_workspace.yaml
 - crds_v1_workmachine.yaml
+- v1_app.yaml
+- v1_router.yaml
+- v1_service.yaml
+- v1_serviceintercept.yaml
+- v1_platformservice.yaml
+- v1_workspace.yaml
+- v1_workmachine.yaml
+- v1_environment.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

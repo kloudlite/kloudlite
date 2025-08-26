@@ -3,7 +3,7 @@ package v1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kloudlite/operator/toolkit/reconciler"
+	"github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
 )
 
 type Route struct {

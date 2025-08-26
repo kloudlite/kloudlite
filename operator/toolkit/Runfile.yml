@@ -1,4 +1,4 @@
 tasks:
   generate:
     cmd:
-      - ../bin/controller-gen object:headerFile="../hack/boilerplate.go.txt" paths="./types/..."
+      - ../bin/controller-gen object:headerFile="../hack/boilerplate.go.txt" paths="./..."

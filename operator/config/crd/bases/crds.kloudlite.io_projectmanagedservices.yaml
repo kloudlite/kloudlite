@@ -78,13 +78,7 @@ spec:
                     properties:
                       apiVersion:
                         type: string
-                      export:
-                        properties:
-                          template:
-                            type: string
-                          viaSecret:
-                            type: string
-                        type: object
+                      export: {}
                       kind:
                         type: string
                       spec:
@@ -99,13 +93,7 @@ spec:
                     properties:
                       apiVersion:
                         type: string
-                      export:
-                        properties:
-                          template:
-                            type: string
-                          viaSecret:
-                            type: string
-                        type: object
+                      export: {}
                       kind:
                         type: string
                       spec:

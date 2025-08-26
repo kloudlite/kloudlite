@@ -20,6 +20,20 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the Project itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
+- environment_editor_role.yaml
+- environment_viewer_role.yaml
+- workmachine_editor_role.yaml
+- workmachine_viewer_role.yaml
+- workspace_editor_role.yaml
+- workspace_viewer_role.yaml
+- platformservice_editor_role.yaml
+- platformservice_viewer_role.yaml
+- serviceintercept_editor_role.yaml
+- serviceintercept_viewer_role.yaml
+- router_editor_role.yaml
+- router_viewer_role.yaml
+- app_editor_role.yaml
+- app_viewer_role.yaml
 - crds_workmachine_editor_role.yaml
 - crds_workmachine_viewer_role.yaml
 - crds_workspace_editor_role.yaml

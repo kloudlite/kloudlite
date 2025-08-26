@@ -18,7 +18,7 @@ import (
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
-	"github.com/kloudlite/operator/toolkit/errors"
+	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
 )
 
 type JsonFeatures interface {

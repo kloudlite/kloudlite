@@ -17,8 +17,8 @@ type res struct {
 	// 	Patches []jsonPatch.PatchOperation `json:"patches,omitempty"`
 	// } `json:"overrides,omitempty"`
 	Status struct {
-		Checks  map[string]Check `json:"checks,omitempty"`
-		IsReady *bool            `json:"isReady,omitempty"`
+		Checks  map[string]CheckResult `json:"checks,omitempty"`
+		IsReady *bool                  `json:"isReady,omitempty"`
 	} `json:"status"`
 }
 

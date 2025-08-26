@@ -1,0 +1,55 @@
+name: Build Operators With Nix Flakes
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag: 
+        type: string
+        description: "image_tag"
+        required: true
+        default: ""
+
+  push:
+    paths:
+      - "operators/**"
+      - "operator/**"
+      - "cmd/agent-operator/**"
+      - "cmd/platform-operator/**"
+      - "pkg/**"
+      - "common/**"
+      - "go.*"
+      - ".github/workflows/**"
+      - "apis/**/*.go"
+      - "needs-images/**"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-images:
+    strategy:
+      fail-fast: false
+      matrix:
+        images:
+          - name: service-intercept-webhook
+          - name: platform-operator
+          - name: wireguard-operator
+          - name: helm-charts-operator
+          - name: helm-charts-job-runner
+          - name: networking-operator
+          - name: networking/cmd/ip-binding-controller
+          - name: networking/cmd/ip-manager
+          - name: networking/cmd/webhook
+          - name: networking/cmd/dns
+          - name: networking/cmd/logs-proxy
+        os: linux
+        arch:
+          - amd64
+          - arm64
+
+    runs-on: ubuntu-latest
+    name: ${{ matrix.images.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4

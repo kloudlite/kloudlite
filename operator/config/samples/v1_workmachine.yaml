@@ -1,0 +1,9 @@
+apiVersion: kloudlite.io/v1
+kind: Workmachine
+metadata:
+  labels:
+    app.kubernetes.io/name: app
+    app.kubernetes.io/managed-by: kustomize
+  name: workmachine-sample
+spec:
+  # TODO(user): Add fields here

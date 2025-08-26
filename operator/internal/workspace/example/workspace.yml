@@ -1,0 +1,9 @@
+apiVersion: kloudlite.io/v1
+kind: Workspace
+metadata:
+  name: sample-ws
+  namespace: wm-master
+spec:
+  workMachine: "master"
+  enableVSCodeServer: true
+  enableCodeServer: true

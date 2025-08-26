@@ -79,3 +79,34 @@ func PrintBuildInfo() {
 📦 built at %s
   `, BuiltAt)
 }
+
+type Metadata struct {
+	Name             string
+	Message          string
+	StartedRunningIn time.Time
+}
+
+func PrintMetadataBanner(meta Metadata) {
+	// NOTE: Kloudlite Logo converted into ASCII art [via](https://www.asciiart.eu/image-to-ascii)
+	// NOTE: Kloudlite Text [from](https://patorjk.com/software/taag/#p=display&h=1&v=1&f=RubiFont&t=kloudlite%0A)
+
+	builtAt := BuiltAt
+	if BuiltAt == "" {
+		builtAt = time.Now().Format("2006-01-02 15:04:05")
+	}
+
+	fmt.Printf(`
+         **                                                            
+       ****              ▗▖ ▗▖▗▖    ▗▄▖ ▗▖ ▗▖▗▄▄▄ ▗▖   ▗▄▄▄▖▗▄▄▄▖▗▄▄▄▖ 
+      ****     *         ▐▌▗▞▘▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌  █▐▌     █    █  ▐▌   
+    ****     *****       ▐▛▚▖ ▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌  █▐▌     █    █  ▐▛▀▀▘
+  ****     *********     ▐▌ ▐▌▐▙▄▄▖▝▚▄▞▘▝▚▄▞▘▐▙▄▄▀▐▙▄▄▖▗▄█▄▖  █  ▐▙▄▄▖
+ ****     ************                                                
+  ****     *********      📦 %s                                       
+    ****     *****        ⚒️ %s                                       
+      ****     *          🗩  %s                                       
+       ****              
+         **              
+                                                                          
+`, meta.Name, builtAt, meta.Message)
+}

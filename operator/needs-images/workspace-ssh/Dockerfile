@@ -1,0 +1,22 @@
+FROM ubuntu:24.04
+
+# Install OpenSSH Server
+RUN apt-get update && apt-get install -y git openssh-server sudo zsh xz-utils curl ttyd build-essential
+
+RUN mkdir /var/run/sshd && \
+  echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && \
+  echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+  echo 'PermitUserEnvironment yes' >> /etc/ssh/sshd_config
+
+RUN userdel ubuntu || echo "ubuntu user already deleted"
+RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl && chsh -s $(which zsh) kl
+RUN echo "kl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kl
+
+# INFO: helps prevent failures in SSH session setup inside containers
+RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
+
+# Expose SSH Port
+# EXPOSE 22
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]

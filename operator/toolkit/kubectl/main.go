@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/kloudlite/operator/toolkit/errors"
+	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
 )
 
 type batchable string

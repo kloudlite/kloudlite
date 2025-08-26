@@ -60,7 +60,7 @@ func (jr *JobTracker) HasJobFinished() bool {
 	return false
 }
 
-func (jr *JobTracker) Process(ctx context.Context) (phase JobPhase, message string, err error) {
+func (jr *JobTracker) StartTracking(ctx context.Context) (phase JobPhase, message string, err error) {
 	if !jr.isTargetJob(jr.job) {
 		if !jr.HasJobFinished() {
 			return JobPhasePending, "waiting for previous jobs to finish execution", nil

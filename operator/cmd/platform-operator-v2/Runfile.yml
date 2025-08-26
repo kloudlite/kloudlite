@@ -1,0 +1,30 @@
+env:
+  CGO_ENABLED: 0
+
+tasks:
+  dev:
+    env:
+      DEV_WEBHOOK_PROXY: "true"
+      DEV_WEBHOOK_PROXY_SERVICE_NAME: "wireguard"
+      DEV_WEBHOOK_PROXY_SERVICE_NAMESPACE: "wg-wireguard"
+    cmd:
+      - go run ./main.go
+
+  build:
+    env:
+      GOARCH:
+        default: go env GOARCH
+    cmd:
+      - go build -o ./bin/platform-operator-${GOARCH} ./main.go
+
+  container:build-and-push:
+    interactive: true
+    cmd:
+      - run: build
+        env:
+          GOARCH: amd64
+      - run: build
+        env:
+          GOARCH: arm64
+      - |+
+        docker buildx build --platform linux/amd64,linux/arm64 --build-arg BINARY=./bin/platform-operator -t ghcr.io/kloudlite/kloudlite/operator/platform:v2.0.0-nightly --push .

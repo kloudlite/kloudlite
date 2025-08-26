@@ -539,4 +539,60 @@ resources:
   kind: WorkMachine
   path: github.com/kloudlite/operator/api/crds/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  kind: App
+  path: github.com/kloudlite/operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  kind: Router
+  path: github.com/kloudlite/operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  kind: ServiceIntercept
+  path: github.com/kloudlite/operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  kind: PlatformService
+  path: github.com/kloudlite/operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  kind: Workspace
+  path: github.com/kloudlite/operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  kind: Workmachine
+  path: github.com/kloudlite/operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kloudlite.io
+  kind: Environment
+  path: github.com/kloudlite/operator/api/v1
+  version: v1
 version: "3"

@@ -3,6 +3,7 @@ package functions
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,9 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/kloudlite/operator/toolkit/errors"
+	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
 
 	"github.com/gobuffalo/flect"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func toUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
@@ -30,6 +32,14 @@ func toUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
 
 	t := &unstructured.Unstructured{Object: m}
 	return t, nil
+}
+
+func FromUnstructured[T client.Object](obj *unstructured.Unstructured, result T) (T, error) {
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, result); err != nil {
+		return result, fmt.Errorf("Error converting unstructured to pod: %v\n", err)
+	}
+
+	return result, nil
 }
 
 func KubectlApply(ctx context.Context, cli client.Client, obj client.Object) error {

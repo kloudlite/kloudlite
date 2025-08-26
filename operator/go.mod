@@ -1,10 +1,10 @@
 module github.com/kloudlite/operator
 
-go 1.23.0
+go 1.23.4
 
-toolchain go1.23.3
+toolchain go1.24.4
 
-replace github.com/kloudlite/operator/toolkit => ./toolkit/
+replace github.com/kloudlite/kloudlite/operator/toolkit => ./toolkit/
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
@@ -20,7 +20,7 @@ require (
 	github.com/gobuffalo/flect v1.0.3
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
-	github.com/kloudlite/operator/toolkit v0.0.0-20250323044516-4d91d0b9477a
+	github.com/kloudlite/kloudlite/operator/toolkit v0.0.0-20250624185629-c16ed4e4a162
 	github.com/kloudlite/plugin-helm-chart v0.0.0-20250317052100-fef043b111a2
 	github.com/kloudlite/plugin-k3s-cluster v0.0.0-20250420192843-f0fae9cd7d36
 	github.com/kloudlite/plugin-mongodb v0.0.0-20250316175205-312ba86d8873
@@ -85,6 +85,8 @@ require (
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
+	github.com/nxtcoder17/fastlog v0.0.0-20250809192232-860e1962f4cd // indirect
+	github.com/nxtcoder17/ivy v0.0.0-20250513091006-aa00f694b606 // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/samber/lo v1.47.0 // indirect

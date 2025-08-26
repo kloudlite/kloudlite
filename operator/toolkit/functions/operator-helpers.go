@@ -155,8 +155,8 @@ func FilterObservabilityAnnotations(ann map[string]string) map[string]string {
 	return m
 }
 
-func DeleteAndWait[T client.Object](ctx context.Context, logger *slog.Logger, kcli client.Client, resources ...T) error {
-	deletionStatus := make(map[string]bool)
+func DeleteAndWait(ctx context.Context, kcli client.Client, resources ...client.Object) error {
+	deletionStatus := make(map[string]bool, len(resources))
 
 	for i := range resources {
 		resourceRef := fmt.Sprintf("resource (%s/%s) (gvk: %s)", resources[i].GetNamespace(), resources[i].GetName(), resources[i].GetObjectKind().GroupVersionKind().String())
@@ -172,8 +172,6 @@ func DeleteAndWait[T client.Object](ctx context.Context, logger *slog.Logger, kc
 		}
 
 		if resources[i].GetDeletionTimestamp() == nil {
-			logger.Info("deleting", "resource-ref", resourceRef)
-
 			if err := kcli.Delete(ctx, resources[i], &client.DeleteOptions{
 				GracePeriodSeconds: New(int64(30)),
 				PropagationPolicy:  New(metav1.DeletePropagationForeground),

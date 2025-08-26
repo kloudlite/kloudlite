@@ -1,118 +1,48 @@
 package grpc
 
 import (
-	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"log"
-	"net"
-	"time"
 
-	"github.com/kloudlite/operator/pkg/errors"
-	"github.com/kloudlite/operator/pkg/logging"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/peer"
 )
+
+type ConnectTLSParams struct {
+	// ServerName is name with which certificate is valid
+	ServerName string
+
+	// CACertPem could be optional, if host is verified through a public CA
+	CACertPem []byte
+}
 
 type ConnectOpts struct {
 	SecureConnect bool
-	Timeout       time.Duration
+	*ConnectTLSParams
 }
 
-func Connect(url string, opts ConnectOpts) (*grpc.ClientConn, error) {
-	ctx, cf := context.WithTimeout(context.TODO(), opts.Timeout)
-	defer cf()
-	if opts.SecureConnect {
-		conn, err := grpc.DialContext(ctx, url, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-			InsecureSkipVerify: false,
-		})))
-		if err == nil {
-			return conn, nil
-		}
-		log.Printf("Failed to connect: %v, please retry", err)
-		return nil, err
+func Connect(addr string, opts ConnectOpts) (*grpc.ClientConn, error) {
+	if !opts.SecureConnect {
+		return grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	// conn, err := grpc.DialContext(ctx, url, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	conn, err := grpc.DialContext(ctx, url, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err == nil {
-		return conn, nil
-	}
-	log.Printf("Failed to connect: %v, please retry", err)
-	return nil, err
-}
 
-func ConnectSecure(url string) (*grpc.ClientConn, error) {
-	for {
-		conn, err := grpc.Dial(url, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-			InsecureSkipVerify: false,
-			// })), grpc.WithBlock())
-		})))
-		if err == nil {
-			return conn, nil
-		}
-
-		connState := conn.GetState()
-		for connState != connectivity.Ready {
-			log.Printf("connection is not ready yet, current: %s", connState)
-			<-time.After(2 * time.Second)
-			time.Sleep(2 * time.Second)
-		}
-
-		log.Printf("grpc connection is ready now")
-	}
-}
-
-type GrpcServerOpts struct {
-	Logger logging.Logger
-}
-
-type GrpcServer struct {
-	GrpcServer *grpc.Server
-	logger     logging.Logger
-}
-
-func (g *GrpcServer) Listen(addr string) error {
-	listen, err := net.Listen("tcp", addr)
-	defer func() {
-		g.logger.Infof("[GRPC Server] started on port (%s)", addr)
-	}()
+	// Load system cert pool
+	roots, err := x509.SystemCertPool()
 	if err != nil {
-		return errors.NewEf(err, "could not listen to net/tcp server")
+		log.Fatal(err)
 	}
 
-	go func() error {
-		err := g.GrpcServer.Serve(listen)
-		if err != nil {
-			return errors.NewEf(err, "could not start grpc server ")
-		}
-		return nil
-	}()
-	return nil
-}
+	if opts.CACertPem != nil {
+		roots.AppendCertsFromPEM(opts.CACertPem)
+	}
 
-func (g *GrpcServer) Stop() {
-	g.GrpcServer.Stop()
-}
+	tlsCfg := &tls.Config{RootCAs: roots}
 
-func NewGrpcServer(opts ...GrpcServerOpts) *GrpcServer {
-	logger := func() logging.Logger {
-		if len(opts) == 0 {
-			return logging.NewOrDie(&logging.Options{Name: "grpc-server", Dev: false})
-		}
-		return opts[0].Logger
-	}()
+	if opts.ServerName != "" {
+		tlsCfg.ServerName = opts.ServerName
+	}
 
-	server := grpc.NewServer(
-		grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-			p, ok := peer.FromContext(stream.Context())
-			if ok {
-				logger.Debugf("New connection from %s", p.Addr.String())
-			}
-			return handler(srv, stream)
-		}),
-	)
-
-	return &GrpcServer{GrpcServer: server, logger: logger}
+	return grpc.NewClient(addr, grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)))
 }
