@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/operator/toolkit/errors"
-	"github.com/nxtcoder17/go.pkgs/log"
 
 	"github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,6 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"log/slog"
 )
 
 type YAMLClient interface {
@@ -51,7 +51,7 @@ type yamlClient struct {
 	k8sClient     *kubernetes.Clientset
 	dynamicClient dynamic.Interface
 	mapper        meta.RESTMapper
-	logger        log.Logger
+	logger        *slog.Logger
 }
 
 func (yc *yamlClient) Client() *kubernetes.Clientset {
@@ -457,7 +457,7 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 }
 
 type YAMLClientOpts struct {
-	Logger log.Logger
+	Logger *slog.Logger
 }
 
 func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error) {
@@ -479,7 +479,7 @@ func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error)
 	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
 	if opts.Logger == nil {
-		opts.Logger = log.DefaultLogger()
+		opts.Logger = slog.Default()
 	}
 
 	return &yamlClient{

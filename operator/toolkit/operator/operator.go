@@ -3,10 +3,11 @@ package operator
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
-	"github.com/nxtcoder17/go.pkgs/log"
+	"github.com/nxtcoder17/fastlog"
 
 	"github.com/kloudlite/kloudlite/operator/toolkit/kubectl"
 	reconciler "github.com/kloudlite/kloudlite/operator/toolkit/reconciler"
@@ -124,23 +125,17 @@ func New(name string) Operator {
 		return ctrl.GetConfigOrDie(), cOpts
 	}()
 
-	logger := log.New(log.Options{
-		Writer:        os.Stderr,
-		ShowTimestamp: false,
-		ShowCaller:    true,
-		ShowDebugLogs: debug,
-		ShowLogLevel:  true,
-		JSONFormat:    false,
-	})
+	logger := fastlog.New(fastlog.Console(), fastlog.WithoutTimestamp(), fastlog.ShowDebugLogs(debug))
 
-	log.SetDefaultLogger(logger)
+	slogger := logger.Slog()
 
-	k8sYamlClient, err := kubectl.NewYAMLClient(mgrConfig, kubectl.YAMLClientOpts{Logger: logger})
+	slog.SetDefault(slogger)
+
+	k8sYamlClient, err := kubectl.NewYAMLClient(mgrConfig, kubectl.YAMLClientOpts{Logger: slogger})
 	if err != nil {
-		logger.Fatal("failed to create YAML client", "err", err)
+		logger.Error("failed to create YAML client, got", "err", err)
+		os.Exit(1)
 	}
-
-	logger.Debug("Starting .............")
 
 	return &operator{
 		startedAt:     time.Now(),
@@ -166,41 +161,19 @@ func (op *operator) RegisterControllers(controllers ...reconciler.Reconciler) {
 			_, ok := op.registeredControllers[controller.GetName()]
 			if ok {
 				return
-				// ctrl.Log.Info("controller %s already registered, skipping", controller.GetName())
 			}
 			if op.registeredControllers == nil {
 				op.registeredControllers = make(map[string]struct{})
 			}
 			op.registeredControllers[controller.GetName()] = struct{}{}
 			setupLog.Info("registering controller", "controller", controller.GetName())
-			// go func() {
-			// controller.Client = mgr.GetClient()
 			if err := controller.SetupWithManager(mgr); err != nil {
 				setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
 				os.Exit(1)
 			}
-			// }()
 		})
 	}
 }
-
-// type WebhookEnabledType interface {
-// 	client.Object
-// 	SetupWebhookWithManager(mgr ctrl.Manager) error
-// }
-//
-// func (op *operator) RegisterWebhooks(types ...WebhookEnabledType) {
-// 	for i := range types {
-// 		webhookType := types[i]
-// 		op.webhooks = append(op.webhooks, func(mgr manager.Manager) {
-// 			setupLog.Info("registering webhook", "for", webhookType.GetName())
-// 			if err := webhookType.SetupWebhookWithManager(mgr); err != nil {
-// 				setupLog.Error(err, "unable to create webhook", "webhook", types[i].GetName())
-// 				os.Exit(1)
-// 			}
-// 		})
-// 	}
-// }
 
 func (op *operator) Operator() *operator {
 	return op
@@ -209,16 +182,13 @@ func (op *operator) Operator() *operator {
 func (op *operator) Start() {
 	mgr, err := ctrl.NewManager(op.mgrConfig, op.mgrOptions)
 	if err != nil {
-		log.DefaultLogger().Fatal("failed to create new controller runtime manager", "err", err)
+		slog.Error("failed to create new controller runtime manager", "err", err)
+		panic(err)
 	}
 
 	for i := range op.controllers {
 		op.controllers[i](mgr)
 	}
-
-	// for i := range op.webhooks {
-	// 	op.webhooks[i](mgr)
-	// }
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
@@ -231,6 +201,7 @@ func (op *operator) Start() {
 	}
 
 	printReadyBanner(time.Since(op.startedAt))
+
 	ctrl.Log.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

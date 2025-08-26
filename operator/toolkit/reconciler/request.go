@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
-	"os"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/nxtcoder17/fastlog"
 
 	// "github.com/nxtcoder17/go.pkgs/log"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -77,22 +75,22 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 
 	resource.EnsureGVK()
 
-	logger := fastlog.New(fastlog.Options{
-		Writer:        os.Stderr,
-		Format:        fastlog.ConsoleFormat,
-		LogLevel:      slog.LevelInfo,
-		ShowDebugLogs: false,
-		ShowCaller:    true,
-		ShowTimestamp: false,
-		EnableColors:  true,
-	})
+	// logger := fastlog.New(fastlog.Options{
+	// 	Writer:        os.Stderr,
+	// 	Format:        fastlog.ConsoleFormat,
+	// 	LogLevel:      slog.LevelInfo,
+	// 	ShowDebugLogs: false,
+	// 	ShowCaller:    true,
+	// 	ShowTimestamp: false,
+	// 	EnableColors:  true,
+	// })
 
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         logger.Clone(fastlog.Options{SkipCallerFrames: 1}).Slog().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
-		internalLogger: logger.Clone().Slog().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
+		Logger:         slog.With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
+		internalLogger: slog.With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
 		KV:             KV{},
 	}, nil
 }
@@ -248,6 +246,7 @@ var checkStates = map[CheckState]string{
 	WaitingState: "🔶",
 	RunningState: "⌛",
 	ErroredState: "🔴",
+	FailedState:  "❌",
 	PassedState:  "🌿",
 }
 

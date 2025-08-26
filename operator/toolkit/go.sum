@@ -117,6 +117,8 @@ github.com/nxtcoder17/fastlog v0.0.0-20250701195932-37bf116aed2c h1:+kGNZZ1nUU6B
 github.com/nxtcoder17/fastlog v0.0.0-20250701195932-37bf116aed2c/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
 github.com/nxtcoder17/fastlog v0.0.0-20250702035423-1739653a5c24 h1:oLLpFv1p7jRRrrsZzyf77pECLAMKrTxzHRSoHNRoELw=
 github.com/nxtcoder17/fastlog v0.0.0-20250702035423-1739653a5c24/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
+github.com/nxtcoder17/fastlog v0.0.0-20250809192232-860e1962f4cd h1:2KJZ+QdhVOIb+GXqeTcpP7U3x5e8mrAvmfoYn90H+YY=
+github.com/nxtcoder17/fastlog v0.0.0-20250809192232-860e1962f4cd/go.mod h1:x6o+8WEHRGaWu9XEhSdTrjmDjKhVnKNXd/XZ56bNN/o=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd h1:bP80t6mgiwIVEpdfZwg/w22GzDcHBgDRVZItH5QWxis=
 github.com/nxtcoder17/go.pkgs v0.0.0-20250401173049-502a28e591dd/go.mod h1:raSGHj5CMHNHZf4fCV9CWpFk0hsb2CSKFZSPd4zW8JM=
 github.com/onsi/ginkgo/v2 v2.19.0 h1:9Cnnf7UHo57Hy3k6/m5k3dRfGTMXGvxhHFvkDTCTpvA=

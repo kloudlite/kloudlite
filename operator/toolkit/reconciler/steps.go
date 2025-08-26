@@ -18,6 +18,9 @@ func isBeingDeleted(obj client.Object) bool {
 }
 
 func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, error) {
+	req.PreReconcile()
+	defer req.PostReconcile()
+
 	checkList := make([]CheckDefinition, 0, len(steps))
 	if isBeingDeleted(req.Object) {
 		for i := range steps {
