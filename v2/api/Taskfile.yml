@@ -1,0 +1,168 @@
+version: '3'
+
+vars:
+  APP_NAME: kloudlite-api-v2
+  MAIN_PATH: cmd/server/main.go
+  BINARY_NAME: server
+  DOCKER_IMAGE: kloudlite/api:v2
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  deps:
+    desc: Download and install dependencies
+    cmds:
+      - go mod download
+      - go mod tidy
+
+  build:
+    desc: Build the application
+    cmds:
+      - go build -v -o {{.BINARY_NAME}} {{.MAIN_PATH}}
+    sources:
+      - ./**/*.go
+      - go.mod
+      - go.sum
+    generates:
+      - ./{{.BINARY_NAME}}
+
+  run:
+    desc: Run the application
+    deps: [deps]
+    cmds:
+      - go run {{.MAIN_PATH}}
+
+  dev:
+    desc: Run in development mode with hot reload
+    cmds:
+      - |
+        which air > /dev/null || go install github.com/cosmtrek/air@latest
+        air
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test -v -race -coverprofile=coverage.out ./...
+
+  test-coverage:
+    desc: Run tests with coverage report
+    deps: [test]
+    cmds:
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo Coverage report generated coverage.html
+
+  test-coverage-text:
+    desc: Show test coverage in terminal
+    deps: [test]
+    cmds:
+      - go tool cover -func=coverage.out
+
+  test-watch:
+    desc: Run tests in watch mode
+    cmds:
+      - |
+        which gotestsum > /dev/null || go install gotest.tools/gotestsum@latest
+        gotestsum --watch -- -v -race ./...
+
+  test-specific:
+    desc: "Run specific test (usage: task test-specific -- TestName)"
+    cmds:
+      - go test -v -race -run {{.CLI_ARGS}} ./...
+
+  lint:
+    desc: Run linters
+    cmds:
+      - |
+        which golangci-lint > /dev/null || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        golangci-lint run --timeout=5m
+
+  fmt:
+    desc: Format code
+    cmds:
+      - go fmt ./...
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -f {{.BINARY_NAME}}
+      - rm -f coverage.out coverage.html
+      - rm -rf dist/
+      - rm -rf tmp/
+
+  migrate:
+    desc: Run database migrations (CRD installation)
+    cmds:
+      - kubectl apply -f ../../infrastructure-as-code/crds/
+
+  docker-build:
+    desc: Build Docker image
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}} .
+
+  docker-run:
+    desc: Run application in Docker
+    deps: [docker-build]
+    cmds:
+      - |
+        docker run -it --rm \
+          -p 8080:8080 \
+          --env-file .env \
+          {{.DOCKER_IMAGE}}
+
+  docker-push:
+    desc: Push Docker image to registry
+    deps: [docker-build]
+    cmds:
+      - docker push {{.DOCKER_IMAGE}}
+
+  generate:
+    desc: Generate code (mocks, clients, etc.)
+    cmds:
+      - go generate ./...
+
+  install:
+    desc: Install binary to GOPATH/bin
+    deps: [build]
+    cmds:
+      - go install {{.MAIN_PATH}}
+
+  prod:
+    desc: Build for production
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o {{.BINARY_NAME}} {{.MAIN_PATH}}
+    sources:
+      - ./**/*.go
+      - go.mod
+      - go.sum
+    generates:
+      - ./{{.BINARY_NAME}}
+
+  setup:
+    desc: Initial project setup
+    cmds:
+      - cp .env.example .env
+      - task: deps
+      - echo Project setup complete. Edit .env file and run task run
+
+  ci-test:
+    desc: Run unit tests for CI/CD pipeline
+    cmds:
+      - go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+      - go tool cover -func=coverage.out
+
+  ci-lint:
+    desc: Run linters for CI/CD
+    cmds:
+      - |
+        which golangci-lint > /dev/null || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+        golangci-lint run --timeout=5m --config=.golangci.yml
+
+  validate:
+    desc: Validate code (format, lint, test)
+    cmds:
+      - task: fmt
+      - task: lint
+      - task: test
