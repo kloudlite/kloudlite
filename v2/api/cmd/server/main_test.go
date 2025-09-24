@@ -73,7 +73,6 @@ func TestSetupRouter(t *testing.T) {
 		Port:        "8080",
 		Environment: "test",
 		LogLevel:    "debug",
-		Namespace:   "test-namespace",
 	}
 
 	// Create router
