@@ -21,13 +21,6 @@ type Config struct {
 	Port        string `envconfig:"PORT" default:"8080"`
 	Environment string `envconfig:"ENVIRONMENT" default:"development"`
 	LogLevel    string `envconfig:"LOG_LEVEL" default:"info"`
-
-	// Kubernetes
-	KubeConfig string `envconfig:"KUBECONFIG"`
-	InCluster  bool   `envconfig:"IN_CLUSTER" default:"false"`
-
-	// Database (CRDs)
-	Namespace string `envconfig:"NAMESPACE" default:"kloudlite-system"`
 }
 
 func main() {

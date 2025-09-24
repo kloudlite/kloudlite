@@ -1,37 +1,24 @@
 # Kloudlite API v2
 
 ## Overview
-Backend API server for Kloudlite v2 platform built with Go and clean architecture.
+Backend API server for Kloudlite v2 platform built with Go.
 
 ## Structure
 ```
 api/
-├── cmd/
-│   └── server/         # Application entry points
-├── internal/
-│   ├── domain/         # Business logic and entities
-│   ├── app/           # Application layer (use cases)
-│   └── infra/         # Infrastructure layer (k8s, external services)
-├── pkg/
-│   ├── utils/         # Shared utilities
-│   └── errors/        # Error handling
-└── Taskfile.yml       # Build automation
+├── cmd/server/     # Main application entry point
+├── pkg/test/       # Test utilities and helpers
+└── Taskfile.yml    # Build automation
 ```
 
 ## Quick Start
 
 ### Prerequisites
 - Go 1.21+
-- Kubernetes cluster (local K3s or remote)
-- kubectl configured
 
 ### Setup
 ```bash
-# Initial setup
-task setup
-
-# Or manually:
-cp .env.example .env
+# Install dependencies
 task deps
 
 # Run the server
@@ -63,9 +50,6 @@ task build
 
 # Build for production
 task prod
-
-# Build Docker image
-task docker-build
 ```
 
 ## Configuration
