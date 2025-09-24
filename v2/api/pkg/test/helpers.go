@@ -85,6 +85,5 @@ func CreateTestConfig() map[string]string {
 		"PORT":        "8080",
 		"ENVIRONMENT": "test",
 		"LOG_LEVEL":   "debug",
-		"NAMESPACE":   "test-namespace",
 	}
 }

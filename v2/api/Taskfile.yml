@@ -4,7 +4,6 @@ vars:
   APP_NAME: kloudlite-api-v2
   MAIN_PATH: cmd/server/main.go
   BINARY_NAME: server
-  DOCKER_IMAGE: kloudlite/api:v2
 
 tasks:
   default:
@@ -92,31 +91,6 @@ tasks:
       - rm -rf dist/
       - rm -rf tmp/
 
-  migrate:
-    desc: Run database migrations (CRD installation)
-    cmds:
-      - kubectl apply -f ../../infrastructure-as-code/crds/
-
-  docker-build:
-    desc: Build Docker image
-    cmds:
-      - docker build -t {{.DOCKER_IMAGE}} .
-
-  docker-run:
-    desc: Run application in Docker
-    deps: [docker-build]
-    cmds:
-      - |
-        docker run -it --rm \
-          -p 8080:8080 \
-          --env-file .env \
-          {{.DOCKER_IMAGE}}
-
-  docker-push:
-    desc: Push Docker image to registry
-    deps: [docker-build]
-    cmds:
-      - docker push {{.DOCKER_IMAGE}}
 
   generate:
     desc: Generate code (mocks, clients, etc.)
