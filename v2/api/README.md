@@ -1,65 +1,31 @@
 # Kloudlite API v2
 
-## Overview
-Backend API server for Kloudlite v2 platform built with Go.
-
-## Structure
-```
-api/
-├── cmd/server/     # Main application entry point
-├── pkg/test/       # Test utilities and helpers
-└── Taskfile.yml    # Build automation
-```
+Backend API server using Kubernetes CRDs as persistence layer.
 
 ## Quick Start
 
-### Prerequisites
-- Go 1.21+
+**Prerequisites:**
+- Go 1.24+
+- Docker with colima context
+- kubectl
 
-### Setup
+**Setup:**
 ```bash
-# Install dependencies
-task deps
+# Start K3s cluster
+docker context use colima
+docker-compose up -d k3s
 
-# Run the server
-task run
+# Run API server
+go run ./cmd/server
 ```
 
-### Development
-```bash
-# Run with automatic reload
-task dev
-
-# Run tests
-task test
-
-# Format code
-task fmt
-
-# Run linters
-task lint
-
-# Show all available tasks
-task --list
-```
-
-### Build
-```bash
-# Build binary
-task build
-
-# Build for production
-task prod
-```
-
-## Configuration
-Configuration is managed through environment variables. See `.env.example` for available options.
-
-## API Endpoints
-
-### Health
+**API Endpoints:**
 - `GET /health` - Health check
-- `GET /ready` - Readiness check
+- `GET /api/v1/users` - List users
+- `POST /api/v1/users` - Create user
+- `GET /api/v1/users/:name` - Get user
+- `PUT /api/v1/users/:name` - Update user
+- `DELETE /api/v1/users/:name` - Delete user
 
-### API v1
-- `GET /api/v1/info` - API information
+**Environment Variables:**
+See `.env` file for Kubernetes configuration options.
