@@ -4,17 +4,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// UserSpec defines the desired state of User
-type UserSpec struct {
-	// Email address of the user
-	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+// ProviderAccount represents an OAuth provider account
+type ProviderAccount struct {
+	// Provider name (google, github, microsoft-entra-id)
+	Provider string `json:"provider"`
+
+	// Provider-specific user ID
+	ProviderID string `json:"providerId"`
+
+	// Email from provider
 	Email string `json:"email"`
 
-	// Unique username for the user
-	// +kubebuilder:validation:MinLength=3
-	// +kubebuilder:validation:MaxLength=30
-	// +kubebuilder:validation:Pattern=`^[a-z0-9][a-z0-9-]*[a-z0-9]$`
-	Username string `json:"username"`
+	// Name from provider
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// Avatar URL from provider
+	// +optional
+	Image string `json:"image,omitempty"`
+
+	// When this provider was connected
+	ConnectedAt metav1.Time `json:"connectedAt"`
+}
+
+// UserSpec defines the desired state of User
+type UserSpec struct {
+	// Email address of the user (primary identifier)
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	Email string `json:"email"`
 
 	// Display name of the user
 	// +kubebuilder:validation:MaxLength=100
@@ -25,16 +43,22 @@ type UserSpec struct {
 	// +optional
 	AvatarURL string `json:"avatarUrl,omitempty"`
 
-	// Role of the user in the platform
-	// +kubebuilder:validation:Enum=admin;developer;viewer
-	// +kubebuilder:default=developer
+	// OAuth provider accounts linked to this user
 	// +optional
-	Role string `json:"role,omitempty"`
+	Providers []ProviderAccount `json:"providers,omitempty"`
+
+	// Roles of the user in the platform
+	// +optional
+	Roles []string `json:"roles,omitempty"`
 
 	// Whether the user account is active
 	// +kubebuilder:default=true
 	// +optional
 	Active *bool `json:"active,omitempty"`
+
+	// Additional metadata
+	// +optional
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 // UserStatus defines the observed state of User
@@ -60,9 +84,9 @@ type UserStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,shortName=usr
-// +kubebuilder:printcolumn:name="Username",type="string",JSONPath=".spec.username"
 // +kubebuilder:printcolumn:name="Email",type="string",JSONPath=".spec.email"
-// +kubebuilder:printcolumn:name="Role",type="string",JSONPath=".spec.role"
+// +kubebuilder:printcolumn:name="DisplayName",type="string",JSONPath=".spec.displayName"
+// +kubebuilder:printcolumn:name="Providers",type="string",JSONPath=".spec.providers[*].provider"
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
