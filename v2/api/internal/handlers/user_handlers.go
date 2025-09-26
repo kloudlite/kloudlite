@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	platformv1alpha1 "github.com/kloudlite/api/v2/pkg/apis/platform/v1alpha1"
+	"github.com/kloudlite/api/v2/internal/repository"
 	"github.com/kloudlite/api/v2/internal/services"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"go.uber.org/zap"
 )
 
@@ -25,8 +28,8 @@ func NewUserHandlers(userService services.UserService, logger *zap.Logger) *User
 
 // CreateUser handles POST /users
 func (h *UserHandlers) CreateUser(c *gin.Context) {
-	var req services.CreateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var userSpec platformv1alpha1.UserSpec
+	if err := c.ShouldBindJSON(&userSpec); err != nil {
 		h.logger.Error("Failed to parse create user request", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",
@@ -38,14 +41,22 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 	// Get namespace from query param or header, default to "default"
 	namespace := getNamespace(c)
 
-	// Set name and namespace in request
-	req.Name = c.Query("name")
-	if req.Name == "" && req.Username != "" {
-		req.Name = req.Username // Use username as name if name not provided
+	// Create User object
+	user := &platformv1alpha1.User{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+		},
+		Spec: userSpec,
 	}
-	req.Namespace = namespace
 
-	user, err := h.userService.CreateUser(c.Request.Context(), &req)
+	// Get name from query if provided, otherwise use GenerateName
+	if name := c.Query("name"); name != "" {
+		user.Name = name
+	} else {
+		user.GenerateName = "user-"
+	}
+
+	createdUser, err := h.userService.CreateUser(c.Request.Context(), user)
 	if err != nil {
 		h.logger.Error("Failed to create user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -55,7 +66,7 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
+	c.JSON(http.StatusCreated, createdUser)
 }
 
 // GetUser handles GET /users/:name
@@ -76,13 +87,36 @@ func (h *UserHandlers) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// GetUserByEmail handles GET /users/by-email?email=xxx
+func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
+	email := c.Query("email")
+	if email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "email parameter is required",
+		})
+		return
+	}
+
+	user, err := h.userService.GetUserByEmail(c.Request.Context(), email)
+	if err != nil {
+		h.logger.Error("Failed to get user by email", zap.Error(err), zap.String("email", email))
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":   "User not found",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
 // UpdateUser handles PUT /users/:name
 func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	name := c.Param("name")
 	namespace := getNamespace(c)
 
-	var req services.UpdateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var userSpec platformv1alpha1.UserSpec
+	if err := c.ShouldBindJSON(&userSpec); err != nil {
 		h.logger.Error("Failed to parse update user request", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",
@@ -91,7 +125,16 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.UpdateUser(c.Request.Context(), name, namespace, &req)
+	// Create User object with updated spec
+	user := &platformv1alpha1.User{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: userSpec,
+	}
+
+	updatedUser, err := h.userService.UpdateUser(c.Request.Context(), user)
 	if err != nil {
 		h.logger.Error("Failed to update user", zap.Error(err), zap.String("name", name))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -101,7 +144,7 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, updatedUser)
 }
 
 // DeleteUser handles DELETE /users/:name
@@ -126,21 +169,32 @@ func (h *UserHandlers) DeleteUser(c *gin.Context) {
 func (h *UserHandlers) ListUsers(c *gin.Context) {
 	namespace := getNamespace(c)
 
-	req := &services.ListUsersRequest{
-		Namespace:     namespace,
-		LabelSelector: c.Query("labelSelector"),
-		FieldSelector: c.Query("fieldSelector"),
-		Continue:      c.Query("continue"),
+	var opts []repository.ListOption
+
+	// Add label selector if provided
+	if labelSelector := c.Query("labelSelector"); labelSelector != "" {
+		opts = append(opts, repository.WithLabelSelector(labelSelector))
 	}
 
-	// Parse limit
-	if limitStr := c.Query("limit"); limitStr != "" {
-		if limit, err := strconv.ParseInt(limitStr, 10, 64); err == nil {
-			req.Limit = limit
+	// Add field selector if provided
+	if fieldSelector := c.Query("fieldSelector"); fieldSelector != "" {
+		opts = append(opts, repository.WithFieldSelector(fieldSelector))
+	}
+
+	// Add limit if provided
+	if limit := c.Query("limit"); limit != "" {
+		var limitVal int64
+		if _, err := fmt.Sscanf(limit, "%d", &limitVal); err == nil {
+			opts = append(opts, repository.WithLimit(limitVal))
 		}
 	}
 
-	users, err := h.userService.ListUsers(c.Request.Context(), namespace, req)
+	// Add continue token if provided
+	if continueToken := c.Query("continue"); continueToken != "" {
+		opts = append(opts, repository.WithContinue(continueToken))
+	}
+
+	users, err := h.userService.ListUsers(c.Request.Context(), namespace, opts...)
 	if err != nil {
 		h.logger.Error("Failed to list users", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
