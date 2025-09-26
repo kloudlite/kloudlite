@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	platformv1alpha1 "github.com/kloudlite/api/v2/pkg/apis/platform/v1alpha1"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"

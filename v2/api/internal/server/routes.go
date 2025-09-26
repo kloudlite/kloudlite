@@ -2,10 +2,10 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kloudlite/api/v2/internal/config"
-	"github.com/kloudlite/api/v2/internal/handlers"
-	"github.com/kloudlite/api/v2/internal/middleware"
-	"github.com/kloudlite/api/v2/internal/services"
+	"github.com/kloudlite/kloudlite/v2/api/internal/config"
+	"github.com/kloudlite/kloudlite/v2/api/internal/handlers"
+	"github.com/kloudlite/kloudlite/v2/api/internal/middleware"
+	"github.com/kloudlite/kloudlite/v2/api/internal/services"
 	"go.uber.org/zap"
 )
 

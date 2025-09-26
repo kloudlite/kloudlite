@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	platformv1alpha1 "github.com/kloudlite/api/v2/pkg/apis/platform/v1alpha1"
-	"github.com/kloudlite/api/v2/internal/repository"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
+	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
 )
 
 // UserService provides business logic for User operations

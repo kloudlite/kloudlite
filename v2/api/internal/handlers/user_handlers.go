@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	platformv1alpha1 "github.com/kloudlite/api/v2/pkg/apis/platform/v1alpha1"
-	"github.com/kloudlite/api/v2/internal/repository"
-	"github.com/kloudlite/api/v2/internal/services"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
+	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
+	"github.com/kloudlite/kloudlite/v2/api/internal/services"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"go.uber.org/zap"
 )
@@ -115,6 +115,17 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	name := c.Param("name")
 	namespace := getNamespace(c)
 
+	// First get the existing user to preserve metadata
+	existingUser, err := h.userService.GetUser(c.Request.Context(), name, namespace)
+	if err != nil {
+		h.logger.Error("Failed to get user for update", zap.Error(err), zap.String("name", name))
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":   "User not found",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	var userSpec platformv1alpha1.UserSpec
 	if err := c.ShouldBindJSON(&userSpec); err != nil {
 		h.logger.Error("Failed to parse update user request", zap.Error(err))
@@ -125,16 +136,10 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Create User object with updated spec
-	user := &platformv1alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: userSpec,
-	}
+	// Update only the spec, preserve metadata including ResourceVersion
+	existingUser.Spec = userSpec
 
-	updatedUser, err := h.userService.UpdateUser(c.Request.Context(), user)
+	updatedUser, err := h.userService.UpdateUser(c.Request.Context(), existingUser)
 	if err != nil {
 		h.logger.Error("Failed to update user", zap.Error(err), zap.String("name", name))
 		c.JSON(http.StatusInternalServerError, gin.H{

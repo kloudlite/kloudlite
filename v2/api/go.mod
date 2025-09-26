@@ -1,4 +1,4 @@
-module github.com/kloudlite/api/v2
+module github.com/kloudlite/kloudlite/v2/api
 
 go 1.24.0
 

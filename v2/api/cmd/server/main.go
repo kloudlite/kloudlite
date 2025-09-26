@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kloudlite/api/v2/internal/config"
-	"github.com/kloudlite/api/v2/internal/server"
-	"github.com/kloudlite/api/v2/pkg/logger"
+	"github.com/kloudlite/kloudlite/v2/api/internal/config"
+	"github.com/kloudlite/kloudlite/v2/api/internal/server"
+	"github.com/kloudlite/kloudlite/v2/api/pkg/logger"
 )
 
 func main() {

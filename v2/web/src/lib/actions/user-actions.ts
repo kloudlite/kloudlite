@@ -74,7 +74,7 @@ export async function authenticateUser(userData: UserData) {
       ...existingUser.spec,
       providers: updatedProviders,
       metadata: {
-        ...existingUser.spec.metadata,
+        ...(existingUser.spec.metadata ?? {}),
         lastLoginAt: new Date().toISOString(),
         lastProvider: userData.provider,
         totalProviders: updatedProviders.length.toString(),
