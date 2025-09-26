@@ -38,6 +38,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		users := v1.Group("/users")
 		{
 			users.POST("", userHandlers.CreateUser)
+			users.GET("/by-email", userHandlers.GetUserByEmail)
 			users.GET("/:name", userHandlers.GetUser)
 			users.PUT("/:name", userHandlers.UpdateUser)
 			users.DELETE("/:name", userHandlers.DeleteUser)
