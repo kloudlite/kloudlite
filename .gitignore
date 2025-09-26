@@ -34,3 +34,8 @@ config/crd/bases/_.yaml
 .tmp
 .kube
 .out
+
+# Kubernetes configs
+v2/kubeconfig/
+kubeconfig/
+*.kubeconfig

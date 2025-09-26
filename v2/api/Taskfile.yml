@@ -1,0 +1,33 @@
+version: '3'
+
+vars:
+  MAIN_PATH: cmd/server/main.go
+
+tasks:
+  run:
+    desc: Run the API server
+    cmds:
+      - go run {{.MAIN_PATH}}
+
+  build:
+    desc: Build the binary
+    cmds:
+      - go build -o server {{.MAIN_PATH}}
+
+  k3s:
+    desc: Start K3s cluster
+    dir: ../
+    cmds:
+      - docker context use colima
+      - docker-compose up -d k3s
+
+  k3s-stop:
+    desc: Stop K3s cluster
+    dir: ../
+    cmds:
+      - docker-compose stop k3s
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -f server
