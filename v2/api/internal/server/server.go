@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kloudlite/api/v2/internal/config"
-	"github.com/kloudlite/api/v2/internal/k8s"
-	"github.com/kloudlite/api/v2/internal/repository"
-	"github.com/kloudlite/api/v2/internal/services"
+	"github.com/kloudlite/kloudlite/v2/api/internal/config"
+	"github.com/kloudlite/kloudlite/v2/api/internal/k8s"
+	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
+	"github.com/kloudlite/kloudlite/v2/api/internal/services"
 	"go.uber.org/zap"
 )
 

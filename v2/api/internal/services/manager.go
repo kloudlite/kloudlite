@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kloudlite/api/v2/internal/repository"
+	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
 )
 
 // Manager coordinates all services and provides a unified interface
