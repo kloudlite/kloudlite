@@ -1,0 +1,154 @@
+---
+# Namespace for the API server
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite-system
+---
+# Secret for storing the kubeconfig (already created by RBAC script)
+# This references the kubeconfig created by create-k8s-user.sh
+---
+# ConfigMap for API configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: kloudlite-system
+data:
+  PORT: "8080"
+  ENVIRONMENT: "development"
+  LOG_LEVEL: "debug"
+  KUBERNETES_DEFAULT_NAMESPACE: "default"
+  KUBERNETES_IN_CLUSTER: "true"  # Use in-cluster config when deployed
+  KUBERNETES_TIMEOUT_SECONDS: "30"
+---
+# Deployment for the API server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kloudlite-api
+  namespace: kloudlite-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kloudlite-api
+  template:
+    metadata:
+      labels:
+        app: kloudlite-api
+    spec:
+      serviceAccountName: kloudlite-api
+      containers:
+      - name: api
+        image: kloudlite-api:latest
+        imagePullPolicy: Never  # For local development
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 8443
+          name: https
+        env:
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: PORT
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: ENVIRONMENT
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: LOG_LEVEL
+        - name: KUBERNETES_IN_CLUSTER
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: KUBERNETES_IN_CLUSTER
+        - name: KUBERNETES_DEFAULT_NAMESPACE
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: KUBERNETES_DEFAULT_NAMESPACE
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+---
+# Service for the API server
+apiVersion: v1
+kind: Service
+metadata:
+  name: kloudlite-api
+  namespace: kloudlite-system
+spec:
+  selector:
+    app: kloudlite-api
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: https
+    port: 8443
+    targetPort: 8443
+---
+# ServiceAccount for the API server
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kloudlite-api
+  namespace: kloudlite-system
+---
+# ClusterRole for API server permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kloudlite-api
+rules:
+# User CRD permissions
+- apiGroups: ["platform.kloudlite.io"]
+  resources: ["users"]
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: ["platform.kloudlite.io"]
+  resources: ["users/status"]
+  verbs: ["get", "patch", "update"]
+# Core resources needed by the API
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "create"]
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kloudlite-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kloudlite-api
+subjects:
+- kind: ServiceAccount
+  name: kloudlite-api
+  namespace: kloudlite-system
