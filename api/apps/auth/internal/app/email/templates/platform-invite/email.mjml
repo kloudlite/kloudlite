@@ -1,0 +1,38 @@
+<!-- vim: set ft=html: -->
+<mjml>
+  <mj-body background-color="#f7f7f7">
+    <mj-section padding="20px 0">
+      <mj-column width="100%">
+        <!-- image-ref: https://github.com/kloudlite/oss/issues/37 -->
+        <mj-image align="left" width="120px" src="https://raw.githubusercontent.com/kloudlite/static-assets/master/kloudlite-logo.png"></mj-image>
+        <mj-divider border-color="#ddd" border-width="1px"></mj-divider>
+        <mj-text font-family="Open Sans, Arial" font-size="18px" color="#333" line-height="1.5">
+          Hello {{.Name}},
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          <strong>{{.InvitedBy}}</strong> has invited you to join the <strong>Kloudlite Platform Management Team</strong> as a <strong>{{.Role}}</strong>.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          As a platform {{.Role}}, you will have administrative privileges to manage platform-wide settings, users, and teams.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          To accept this invitation and join the platform management team, please click the button below.
+        </mj-text>
+        <mj-button align="left" href="{{.Link}}" rel="noopener noreferrer" background-color="#2563EB" font-size="16px" color="#fff">
+          Join Platform Management
+        </mj-button>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          Alternatively, you can copy and paste the following URL into your browser:
+          <a href="{{.Link}}" rel="noopener noreferrer">{{.Link}}</a>
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          This invitation will expire in 7 days. If you have any questions about your role or need assistance, please contact the platform administrator.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          - Kloudlite Platform Team
+        </mj-text>
+        <mj-divider border-color="#ddd" border-width="1px"></mj-divider>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
