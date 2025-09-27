@@ -1,0 +1,58 @@
+---
+# ValidatingWebhookConfiguration for User CRD
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: user-validator.platform.kloudlite.io
+webhooks:
+- name: validate.users.platform.kloudlite.io
+  clientConfig:
+    # For development: Use proxy endpoint (requires setting up TLS on proxy)
+    # url: "https://host.api:3001/webhooks/validate/users"
+
+    # For production: Use in-cluster service
+    service:
+      name: kloudlite-api
+      namespace: kloudlite-system
+      path: "/webhooks/validate/users"
+      port: 8443
+
+    # CA bundle is required for TLS verification
+    caBundle: ""  # Base64 encoded CA certificate
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["platform.kloudlite.io"]
+    apiVersions: ["v1alpha1"]
+    resources: ["users"]
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: None
+  # Use Ignore for development without TLS, Fail for production
+  failurePolicy: Ignore  # Change to Fail in production
+  timeoutSeconds: 10
+---
+# MutatingWebhookConfiguration for User CRD
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: user-mutator.platform.kloudlite.io
+webhooks:
+- name: mutate.users.platform.kloudlite.io
+  clientConfig:
+    service:
+      name: kloudlite-api
+      namespace: kloudlite-system
+      path: "/webhooks/mutate/users"
+      port: 8443
+    # For development without TLS (will be ignored if caBundle is not set)
+    # In production, you must provide a valid CA bundle
+    caBundle: ""  # Base64 encoded CA certificate
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["platform.kloudlite.io"]
+    apiVersions: ["v1alpha1"]
+    resources: ["users"]
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: None
+  # Use Ignore for development without TLS, Fail for production
+  failurePolicy: Ignore  # Change to Fail in production
+  timeoutSeconds: 10

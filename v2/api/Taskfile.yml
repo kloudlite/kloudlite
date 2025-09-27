@@ -18,7 +18,6 @@ tasks:
     desc: Start K3s cluster
     dir: ../
     cmds:
-      - docker context use colima
       - docker-compose up -d k3s
 
   k3s-stop:
@@ -67,3 +66,23 @@ tasks:
       KUBECONFIG: ./kubeconfig/kloudlite-api-kubeconfig.yaml
     cmds:
       - go run {{.MAIN_PATH}}
+
+  deploy:
+    desc: Deploy API server to Kubernetes cluster
+    cmds:
+      - ./scripts/deploy-api.sh
+
+  port-forward:
+    desc: Port-forward API service for local access
+    cmds:
+      - kubectl port-forward -n kloudlite-system svc/kloudlite-api 8080:8080
+
+  logs:
+    desc: Stream logs from API server in Kubernetes
+    cmds:
+      - kubectl logs -n kloudlite-system deployment/kloudlite-api -f
+
+  test-webhooks:
+    desc: Test webhook validation and mutation
+    cmds:
+      - ./test/test-webhook.sh
