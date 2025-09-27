@@ -1,0 +1,51 @@
+# Build artifacts
+server
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+*.out
+coverage.out
+
+# Certificates and configs
+kubeconfig/
+*.kubeconfig
+*.yaml.bak
+*.pem
+*.key
+*.crt
+*.csr
+
+# Development files
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Scripts (not needed in container)
+scripts/
+test/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/

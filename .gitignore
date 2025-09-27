@@ -35,6 +35,15 @@ config/crd/bases/_.yaml
 .kube
 .out
 
+# Kubernetes configs
+v2/kubeconfig/
+v2/kubeconfig.yaml
+kubeconfig/
+*.kubeconfig
+
+# Test scripts
+v2/api/test/test-webhook.sh
+
 # Environment files
 .env
 .env.local

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kloudlite/api/v2/internal/config"
+	"github.com/kloudlite/kloudlite/v2/api/internal/config"
 )
 
 type APIHandlers struct {
