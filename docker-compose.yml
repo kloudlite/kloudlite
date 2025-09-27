@@ -1,0 +1,108 @@
+services:
+  k3s:
+    image: rancher/k3s:latest
+    container_name: kloudlite-k3s
+    privileged: true
+    ports:
+      - "6443:6443"  # Kubernetes API
+      - "30000-30100:30000-30100"  # NodePort range for services
+    volumes:
+      - k3s-data:/var/lib/rancher/k3s
+      # Output directory for kubeconfig files
+      - ./v2/api/kubeconfig:/output
+    environment:
+      - K3S_KUBECONFIG_OUTPUT=/output/k3s.yaml
+      - K3S_KUBECONFIG_MODE=666
+    command:
+      - server
+      - --node-name
+      - master
+      - --disable
+      - traefik
+      - --disable-helm-controller
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kubectl", "get", "nodes"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Setup container that runs after K3s is ready
+  k3s-setup:
+    image: bitnami/kubectl:latest
+    container_name: kloudlite-k3s-setup
+    volumes:
+      - ./v2/api/crds:/crds:ro
+      - ./v2/api/k8s-setup:/k8s-setup:ro
+      - ./v2/api/kubeconfig:/output
+    environment:
+      - KUBECONFIG=/output/k3s.yaml
+    network_mode: "host"
+    depends_on:
+      k3s:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "K3s is ready. Running setup..."
+
+        # Apply CRDs
+        kubectl apply -f /crds/
+
+        # Apply RBAC
+        kubectl apply -f /k8s-setup/rbac.yaml
+
+        # Create namespace and service account
+        kubectl create namespace kloudlite-system --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create serviceaccount kloudlite-api -n kloudlite-system --dry-run=client -o yaml | kubectl apply -f -
+
+        # Create token for service account
+        kubectl apply -f - <<'TOKENEOF'
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: kloudlite-api-token
+          namespace: kloudlite-system
+          annotations:
+            kubernetes.io/service-account.name: kloudlite-api
+        type: kubernetes.io/service-account-token
+        TOKENEOF
+
+        # Wait for token
+        echo "Waiting for service account token..."
+        until kubectl get secret kloudlite-api-token -n kloudlite-system -o jsonpath='{.data.token}' 2>/dev/null | grep -q .; do
+          sleep 1
+        done
+
+        # Generate kubeconfig
+        CLUSTER_CA=$$(kubectl get secret kloudlite-api-token -n kloudlite-system -o jsonpath='{.data.ca\.crt}')
+        SA_TOKEN=$$(kubectl get secret kloudlite-api-token -n kloudlite-system -o jsonpath='{.data.token}' | base64 -d)
+
+        cat > /output/kloudlite-api-kubeconfig.yaml <<KUBECONFIGEOF
+        apiVersion: v1
+        kind: Config
+        clusters:
+        - cluster:
+            certificate-authority-data: $$CLUSTER_CA
+            server: https://localhost:6443
+          name: k3s-default
+        contexts:
+        - context:
+            cluster: k3s-default
+            user: kloudlite-api
+            namespace: kloudlite-system
+          name: kloudlite-api@k3s-default
+        current-context: kloudlite-api@k3s-default
+        users:
+        - name: kloudlite-api
+          user:
+            token: $$SA_TOKEN
+        KUBECONFIGEOF
+
+        echo "Setup completed! Kubeconfig written to /output/kloudlite-api-kubeconfig.yaml"
+
+        # Keep alive for a moment to ensure file is written
+        sleep 5
+
+volumes:
+  k3s-data: {}
