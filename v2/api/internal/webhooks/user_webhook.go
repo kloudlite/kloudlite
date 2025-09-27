@@ -3,6 +3,7 @@ package webhooks
 import (
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"net/http"
 	"strings"
@@ -108,11 +109,7 @@ func (w *UserWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admis
 		messages = append(messages, "Invalid name format (must be lowercase alphanumeric or '-')")
 	}
 
-	// Validate roles
-	if len(user.Spec.Roles) == 0 {
-		allowed = false
-		messages = append(messages, "At least one role is required")
-	}
+	// Roles validation removed - MutatingWebhook adds default roles
 
 	// Build response
 	response := &admissionv1.AdmissionResponse{
@@ -144,6 +141,33 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 	// Create patches for mutations
 	var patches []patchOperation
 
+	// Add GenerateName if name is empty
+	if user.Name == "" && user.GenerateName == "" {
+		patches = append(patches, patchOperation{
+			Op:    "add",
+			Path:  "/metadata/generateName",
+			Value: "user-",
+		})
+	}
+
+	// Add default roles if empty or missing
+	if len(user.Spec.Roles) == 0 {
+		patches = append(patches, patchOperation{
+			Op:    "add",
+			Path:  "/spec/roles",
+			Value: []string{"user"},
+		})
+	}
+
+	// Set active to true by default if not specified
+	if user.Spec.Active == nil {
+		patches = append(patches, patchOperation{
+			Op:    "add",
+			Path:  "/spec/active",
+			Value: true,
+		})
+	}
+
 	// Ensure labels map exists
 	if user.ObjectMeta.Labels == nil {
 		patches = append(patches, patchOperation{
@@ -153,30 +177,46 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 		})
 	}
 
-	// Add email label for efficient lookups
+	// Add email labels for efficient lookups
 	if user.Spec.Email != "" {
 		emailLabel := sanitizeEmailForLabel(user.Spec.Email)
-		labelPath := "/metadata/labels/platform.kloudlite.io~1user-email"
+		emailHash := hashEmail(user.Spec.Email)
 
-		// Check if we need to add or replace
+		// Add both sanitized email and hash labels
 		if user.ObjectMeta.Labels == nil {
 			patches = append(patches, patchOperation{
 				Op:   "add",
 				Path: "/metadata/labels",
 				Value: map[string]string{
-					"platform.kloudlite.io/user-email": emailLabel,
+					"kloudlite.io/user-email":      emailLabel,
+					"kloudlite.io/user-email-hash": emailHash,
 				},
 			})
-		} else if existingLabel, exists := user.ObjectMeta.Labels["platform.kloudlite.io/user-email"]; !exists || existingLabel != emailLabel {
-			op := "add"
-			if exists {
-				op = "replace"
+		} else {
+			// Add email label
+			if existingLabel, exists := user.ObjectMeta.Labels["kloudlite.io/user-email"]; !exists || existingLabel != emailLabel {
+				op := "add"
+				if exists {
+					op = "replace"
+				}
+				patches = append(patches, patchOperation{
+					Op:    op,
+					Path:  "/metadata/labels/kloudlite.io~1user-email",
+					Value: emailLabel,
+				})
 			}
-			patches = append(patches, patchOperation{
-				Op:    op,
-				Path:  labelPath,
-				Value: emailLabel,
-			})
+			// Add email hash label
+			if existingHash, exists := user.ObjectMeta.Labels["kloudlite.io/user-email-hash"]; !exists || existingHash != emailHash {
+				op := "add"
+				if exists {
+					op = "replace"
+				}
+				patches = append(patches, patchOperation{
+					Op:    op,
+					Path:  "/metadata/labels/kloudlite.io~1user-email-hash",
+					Value: emailHash,
+				})
+			}
 		}
 	}
 
@@ -251,4 +291,11 @@ func sanitizeEmailForLabel(email string) string {
 	}
 
 	return sanitized
+}
+
+func hashEmail(email string) string {
+	// Simple hash for label value (first 16 chars of hex encoding)
+	h := fnv.New64a()
+	h.Write([]byte(strings.ToLower(email)))
+	return fmt.Sprintf("%016x", h.Sum64())[:16]
 }
