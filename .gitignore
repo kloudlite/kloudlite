@@ -37,6 +37,7 @@ config/crd/bases/_.yaml
 
 # Kubernetes configs
 v2/kubeconfig/
+v2/kubeconfig.yaml
 kubeconfig/
 *.kubeconfig
 
