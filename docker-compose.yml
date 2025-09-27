@@ -1,24 +1,42 @@
 services:
-  k8s:
+  k3s:
     image: rancher/k3s
     privileged: true
     ports:
       - 6443:6443
-      # NOTE: if not using wireguard, expose ports 80, and 443
-      # - 80:80
-      # - 443:443
+      # Expose NodePort range for development access
+      - 30000-30100:30000-30100
       - 31820:31820/udp
     volumes:
       - k3s-data:/var/lib/rancher/k3s
+      - ./v2/api/kubeconfig:/output
+    environment:
+      - K3S_KUBECONFIG_OUTPUT=/output/k3s.yaml
+      - K3S_KUBECONFIG_MODE=666
     command:
       - server
-      - -node-name
+      - --node-name
       - master
       - --disable
       - traefik
       - --disable-helm-controller
-    mem_limit: 6GB
-    cpus: 6
+    restart: unless-stopped
+
+  # Nginx proxy to forward traffic to host API server
+  api-proxy:
+    image: nginx:alpine
+    ports:
+      - 3001:3001
+    volumes:
+      - ./v2/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      # Map host.api to host machine IP
+      # Default to Docker's host gateway (works on Docker Desktop)
+      # Can be overridden with HOST_IP environment variable
+      - "host.api:${HOST_IP:-host-gateway}"
+    depends_on:
+      - k3s
+    restart: unless-stopped
 
 volumes:
   k3s-data: {}
