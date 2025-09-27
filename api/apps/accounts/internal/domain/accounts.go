@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	fc "github.com/kloudlite/api/apps/accounts/internal/entities/field-constants"
@@ -16,9 +15,6 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (d *domain) findAccount(ctx context.Context, name string) (*entities.Account, error) {
@@ -64,88 +60,6 @@ func (d *domain) GetAccount(ctx UserContext, name string) (*entities.Account, er
 	return d.findAccount(ctx, name)
 }
 
-func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName string, targetNamespace string) error {
-	if err := d.k8sClient.Get(ctx, fn.NN("", targetNamespace), &corev1.Namespace{}); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return errors.NewE(err)
-		}
-	}
-
-	if err := d.k8sClient.Create(ctx, &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: targetNamespace,
-			Labels: map[string]string{
-				constants.AccountNameKey: accountName,
-			},
-		},
-	}); err != nil {
-		return errors.NewE(err)
-	}
-
-	return nil
-}
-
-func (d *domain) deleteNamespaceForAccount(ctx context.Context, targetNamespace string) error {
-	// panic("not implemented. Yet to decide if we want to delete namespace when account is deleted")
-	return fmt.Errorf("not supported yet")
-}
-
-func (d *domain) ensureKloudliteRegistryCredentials(ctx UserContext, account *entities.Account) error {
-	credentialsName := "kloudlite-registry-pull-creds"
-
-	secret := &corev1.Secret{}
-	if err := d.k8sClient.Get(ctx, fn.NN(account.TargetNamespace, credentialsName), secret); err != nil {
-		secret = nil
-	}
-
-	if secret != nil {
-		d.logger.Info("kloudlite registry image pull secret already exists")
-		return nil
-	}
-
-	// out, err := d.containerRegistryClient.CreateReadOnlyCredential(ctx, &container_registry.CreateReadOnlyCredentialIn{
-	// 	AccountName:      account.Name,
-	// 	UserId:           string(ctx.UserId),
-	// 	CredentialName:   credentialsName,
-	// 	RegistryUsername: fmt.Sprintf("account_%s", account.Name),
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if err := d.k8sClient.Create(ctx, &corev1.Secret{
-	// 	TypeMeta: metav1.TypeMeta{
-	// 		Kind:       "Secret",
-	// 		APIVersion: "v1",
-	// 	},
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name:      credentialsName,
-	// 		Namespace: account.TargetNamespace,
-	// 	},
-	// 	Immutable: new(bool),
-	// 	Data: map[string][]byte{
-	// 		corev1.DockerConfigJsonKey: []byte(out.DockerConfigJson),
-	// 	},
-	// 	Type: corev1.SecretTypeDockerConfigJson,
-	// }); err != nil {
-	// 	return err
-	// }
-
-	return nil
-}
-
-func (d *domain) EnsureKloudliteRegistryCredentials(ctx UserContext, accountName string) error {
-	a, err := d.findAccount(ctx, accountName)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	return d.ensureKloudliteRegistryCredentials(ctx, a)
-}
 
 func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*entities.Account, error) {
 	account.TargetNamespace = constants.GetAccountTargetNamespace(account.Name)
@@ -165,14 +79,6 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 	if err := d.addMembership(ctx, acc.Name, ctx.UserId, iamT.RoleAccountOwner); err != nil {
 		return nil, errors.NewE(err)
 	}
-
-	// if err := d.ensureNamespaceForAccount(ctx, account.Name, account.TargetNamespace); err != nil {
-	// 	return nil, errors.NewE(err)
-	// }
-
-	// if err := d.ensureKloudliteRegistryCredentials(ctx, &account); err != nil {
-	// 	return nil, errors.NewE(err)
-	// }
 
 	return acc, nil
 }
@@ -236,18 +142,6 @@ func (d *domain) DeleteAccount(ctx UserContext, name string) (bool, error) {
 
 	return true, nil
 }
-
-func (d *domain) ResyncAccount(ctx UserContext, name string) error {
-	acc, err := d.findAccount(ctx, name)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	if err := d.ensureNamespaceForAccount(ctx, acc.Name, acc.TargetNamespace); err != nil {
-		return errors.NewE(err)
-	}
-	return nil
-}
-
 func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {
 	if err := d.checkAccountAccess(ctx, name, ctx.UserId, iamT.ActivateAccount); err != nil {
 		return false, errors.NewE(err)

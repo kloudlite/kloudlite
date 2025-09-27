@@ -11,12 +11,10 @@ import (
 
 	accountsapp "github.com/kloudlite/api/apps/accounts/fx-app"
 	authapp "github.com/kloudlite/api/apps/auth/fx-app"
-	commsapp "github.com/kloudlite/api/apps/comms/fx-app"
 	"github.com/kloudlite/api/apps/infra/protobufs/infra"
 	"github.com/kloudlite/api/apps/runner/env"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
@@ -54,14 +52,14 @@ func main() {
 		fx.Module(
 			"grpc-clients",
 			fx.Provide(func(env *env.Env) (auth.AuthClient, error) {
-				conn, err := grpc.NewClient(env.CommsServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				conn, err := grpc.NewClient(env.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				if err != nil {
 					return nil, errors.NewE(err)
 				}
 				return auth.NewAuthClient(conn), nil
 			}),
 			fx.Provide(func(env *env.Env) (auth.AuthInternalClient, error) {
-				conn, err := grpc.NewClient(env.CommsServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				conn, err := grpc.NewClient(env.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				if err != nil {
 					return nil, errors.NewE(err)
 				}
@@ -87,13 +85,6 @@ func main() {
 					return nil, errors.NewE(err)
 				}
 				return iam.NewIAMClient(conn), nil
-			}),
-			fx.Provide(func(env *env.Env) (comms.CommsClient, error) {
-				conn, err := grpc.NewClient(env.CommsServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-				if err != nil {
-					return nil, errors.NewE(err)
-				}
-				return comms.NewCommsClient(conn), nil
 			}),
 		),
 
@@ -179,7 +170,6 @@ func main() {
 		fn.FxErrorHandler(),
 
 		authapp.NewAuthModule(),
-		commsapp.NewCommsModule(),
 		accountsapp.NewAccountsModule(),
 	)
 

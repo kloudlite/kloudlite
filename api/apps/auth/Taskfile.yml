@@ -14,12 +14,6 @@ tasks:
     cmds:
       - go run main.go --dev
 
-  gql:
-    dir: internal/app
-    cmds:
-      - go run github.com/99designs/gqlgen generate
-      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
-
   build:
     cmds:
       - task: go:build 

@@ -1,0 +1,31 @@
+{
+  "semi": false,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "bracketSpacing": true,
+  "jsxBracketSameLine": false,
+  "jsxSingleQuote": false,
+  "quoteProps": "as-needed",
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindConfig": "./web/tailwind.config.ts",
+  "overrides": [
+    {
+      "files": ["*.json", "*.md", "*.yml", "*.yaml"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.go"],
+      "options": {
+        "tabWidth": 4,
+        "useTabs": true
+      }
+    }
+  ]
+}

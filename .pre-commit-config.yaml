@@ -1,0 +1,133 @@
+# Pre-commit hooks for Kloudlite v2
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.md$
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: ^(.*/)?helm/.*\.yaml$
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-json
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: no-commit-to-branch
+        args: ['--branch', 'master', '--branch', 'main']
+
+  # Go hooks
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.55.2
+    hooks:
+      - id: golangci-lint
+        files: \.go$
+        args: ['--config=api/.golangci.yml']
+        pass_filenames: false
+
+  # Go imports formatting
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+      - id: go-imports
+        args: ['-local=github.com/kloudlite']
+      - id: go-vet
+      - id: go-mod-tidy
+        files: go\.mod$
+        pass_filenames: false
+
+  # TypeScript/JavaScript hooks
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        entry: bash -c 'cd web && pnpm lint'
+        language: system
+        types: [file]
+        files: \.(ts|tsx|js|jsx)$
+        exclude: ^web/node_modules/
+        pass_filenames: false
+
+      - id: prettier
+        name: Prettier
+        entry: bash -c 'cd web && pnpm prettier --write'
+        language: system
+        types: [file]
+        files: \.(ts|tsx|js|jsx|css|scss|json|md)$
+        exclude: ^web/node_modules/
+        pass_filenames: true
+
+      - id: typecheck
+        name: TypeScript Type Check
+        entry: bash -c 'cd web && pnpm typecheck'
+        language: system
+        types: [file]
+        files: \.(ts|tsx)$
+        exclude: ^web/node_modules/
+        pass_filenames: false
+
+  # Proto files
+  - repo: https://github.com/bufbuild/buf
+    rev: v1.28.1
+    hooks:
+      - id: buf-lint
+        files: \.proto$
+        exclude: vendor/
+
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: .*\.lock$|package-lock\.json$|go\.sum$
+
+  # Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        exclude: node_modules/
+
+  # Commit message
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+# Additional local hooks
+  - repo: local
+    hooks:
+      # Check for console.log in TypeScript files
+      - id: no-console-log
+        name: Check for console.log
+        entry: sh -c 'grep -r "console\.log" --include="*.ts" --include="*.tsx" . && exit 1 || exit 0'
+        language: system
+        types: [file]
+        files: \.(ts|tsx)$
+        exclude: ^web/node_modules/
+
+      # Check for TODO comments
+      - id: no-todo
+        name: Check for TODO comments
+        entry: sh -c 'grep -r "TODO\|FIXME\|XXX" --include="*.go" --include="*.ts" --include="*.tsx" . && echo "Warning: TODO comments found" || exit 0'
+        language: system
+        always_run: true
+        pass_filenames: false
+
+      # Ensure no .env files are committed
+      - id: no-env-files
+        name: Block .env files
+        entry: sh -c 'test -z "$(git ls-files | grep -E "\.env$|\.env\.")"'
+        language: system
+        pass_filenames: false

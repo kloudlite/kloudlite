@@ -6,16 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/kloudlite/api/pkg/errors"
-
+	fx_app "github.com/kloudlite/api/apps/accounts/fx-app"
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"k8s.io/client-go/rest"
-
-	"github.com/kloudlite/api/apps/accounts/internal/env"
-	"github.com/kloudlite/api/apps/accounts/internal/framework"
 )
 
 func main() {
@@ -41,37 +35,8 @@ func main() {
 
 	app := fx.New(
 		fx.NopLogger,
-
-		fx.Provide(func() (logging.Logger, error) {
-			return logging.New(&logging.Options{Name: "accounts-api", Dev: isDev, ShowDebugLog: debug})
-		}),
-
 		fx.Supply(logger),
-
-		fx.Provide(func() (*env.Env, error) {
-			e, err := env.LoadEnv()
-			if err != nil {
-				return nil, errors.NewE(err)
-			}
-			e.IsDev = isDev
-			return e, nil
-		}),
-
-		fx.Provide(func(e *env.Env) (*rest.Config, error) {
-			if e.KubernetesApiProxy != "" {
-				return &rest.Config{
-					Host: e.KubernetesApiProxy,
-				}, nil
-			}
-
-			return k8s.RestInclusterConfig()
-		}),
-
-		fx.Provide(func(cfg *rest.Config) (k8s.Client, error) {
-			return k8s.NewClient(cfg, nil)
-		}),
-
-		framework.Module,
+		fx_app.NewAccountsModule(),
 	)
 
 	ctx, cancelFunc := func() (context.Context, context.CancelFunc) {
