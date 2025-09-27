@@ -1,0 +1,226 @@
+# GolangCI-Lint configuration for Kloudlite v2
+
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs:
+    - vendor
+    - node_modules
+    - .git
+    - dist
+    - build
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*\\.pb\\.gw\\.go$"
+    - ".*_gen\\.go$"
+    - ".*_generated\\.go$"
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable:
+    # Default linters
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    
+    # Additional linters
+    - bodyclose
+    - contextcheck
+    - decorder
+    - dogsled
+    - dupl
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - gci
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - gofmt
+    - gofumpt
+    - goimports
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - grouper
+    - importas
+    - lll
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - stylecheck
+    - tenv
+    - testableexamples
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+
+  disable:
+    - exhaustruct # Too strict for our use case
+    - wrapcheck   # Too many false positives
+    - varnamelen  # Short names are fine in small scopes
+    - tagliatelle # We use different tag styles
+    - nlreturn    # Too opinionated
+    - wsl         # Too opinionated about whitespace
+    - gochecknoglobals # We use some globals
+    - gochecknoinits   # Init functions are sometimes needed
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+    
+  govet:
+    check-shadowing: true
+    enable-all: true
+    
+  gocyclo:
+    min-complexity: 15
+    
+  gocognit:
+    min-complexity: 20
+    
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+    
+  dupl:
+    threshold: 100
+    
+  lll:
+    line-length: 120
+    tab-width: 2
+    
+  misspell:
+    locale: US
+    
+  gomnd:
+    settings:
+      mnd:
+        checks:
+          - argument
+          - case
+          - condition
+          - operation
+          - return
+          - assign
+        ignored-numbers:
+          - '0'
+          - '1'
+          - '2'
+          - '10'
+          - '100'
+          
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - experimental
+      - opinionated
+    disabled-checks:
+      - whyNoLint
+      - wrapperFunc
+      - hugeParam
+      - rangeValCopy
+      - octalLiteral
+      
+  goimports:
+    local-prefixes: github.com/kloudlite/api
+    
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/kloudlite/api)
+      - blank
+      - dot
+      
+  godot:
+    scope: all
+    exclude:
+      - "^fixme:"
+      - "^todo:"
+      
+  revive:
+    severity: warning
+    rules:
+      - name: var-naming
+        disabled: true
+      - name: line-length-limit
+        disabled: true
+      - name: function-length
+        disabled: true
+        
+  gosec:
+    excludes:
+      - G104  # Unhandled errors - we use errcheck
+      - G304  # File path provided as taint input
+      - G307  # Deferring unsafe method
+      
+  stylecheck:
+    checks: ["all", "-ST1003"]
+    initialisms: ["ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "JWT", "K8s", "NATS", "QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "gRPC"]
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - goconst
+        - gomnd
+        - gocognit
+        
+    # Exclude protobuf generated files
+    - path: \.pb\.go
+      linters:
+        - goimports
+        - gofmt
+        - gofumpt
+        
+    # Allow TODO comments
+    - text: "TODO"
+      linters:
+        - godot
+        
+    # Allow init functions in main packages
+    - path: main\.go
+      linters:
+        - gochecknoinits
+        
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false

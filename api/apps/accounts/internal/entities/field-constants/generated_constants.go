@@ -4,10 +4,11 @@ package field_constants
 
 // constant vars generated for struct Account
 const (
-	AccountContactEmail    = "contactEmail"
-	AccountIsActive        = "isActive"
-	AccountLogo            = "logo"
-	AccountTargetNamespace = "targetNamespace"
+	AccountContactEmail           = "contactEmail"
+	AccountIsActive               = "isActive"
+	AccountKloudliteGatewayRegion = "kloudliteGatewayRegion"
+	AccountLogo                   = "logo"
+	AccountTargetNamespace        = "targetNamespace"
 )
 
 // constant vars generated for struct AccountMembership
@@ -25,4 +26,56 @@ const (
 	InvitationUserEmail   = "userEmail"
 	InvitationUserName    = "userName"
 	InvitationUserRole    = "userRole"
+)
+
+// constant vars generated for struct Team
+const (
+	TeamContactEmail = "contactEmail"
+	TeamIsActive     = "isActive"
+	TeamLogo         = "logo"
+	TeamOwnerId      = "ownerId"
+	TeamRegion       = "region"
+	TeamSlug         = "slug"
+)
+
+// constant vars generated for struct TeamMembership
+const (
+	TeamMembershipRole   = "role"
+	TeamMembershipTeamId = "teamId"
+	TeamMembershipUserId = "userId"
+)
+
+// constant vars generated for struct
+const (
+	AccountName                        = "accountName"
+	CreatedBy                          = "createdBy"
+	CreatedByUserEmail                 = "createdBy.userEmail"
+	CreatedByUserId                    = "createdBy.userId"
+	CreatedByUserName                  = "createdBy.userName"
+	CreationTime                       = "creationTime"
+	DisplayName                        = "displayName"
+	Id                                 = "id"
+	LastUpdatedBy                      = "lastUpdatedBy"
+	LastUpdatedByUserEmail             = "lastUpdatedBy.userEmail"
+	LastUpdatedByUserId                = "lastUpdatedBy.userId"
+	LastUpdatedByUserName              = "lastUpdatedBy.userName"
+	MarkedForDeletion                  = "markedForDeletion"
+	Metadata                           = "metadata"
+	MetadataAnnotations                = "metadata.annotations"
+	MetadataCreationTimestamp          = "metadata.creationTimestamp"
+	MetadataDeletionGracePeriodSeconds = "metadata.deletionGracePeriodSeconds"
+	MetadataDeletionTimestamp          = "metadata.deletionTimestamp"
+	MetadataFinalizers                 = "metadata.finalizers"
+	MetadataGenerateName               = "metadata.generateName"
+	MetadataGeneration                 = "metadata.generation"
+	MetadataLabels                     = "metadata.labels"
+	MetadataManagedFields              = "metadata.managedFields"
+	MetadataName                       = "metadata.name"
+	MetadataNamespace                  = "metadata.namespace"
+	MetadataOwnerReferences            = "metadata.ownerReferences"
+	MetadataResourceVersion            = "metadata.resourceVersion"
+	MetadataSelfLink                   = "metadata.selfLink"
+	MetadataUid                        = "metadata.uid"
+	RecordVersion                      = "recordVersion"
+	UpdateTime                         = "updateTime"
 )

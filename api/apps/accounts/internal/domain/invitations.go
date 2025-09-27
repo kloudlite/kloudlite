@@ -2,13 +2,13 @@ package domain
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	fc "github.com/kloudlite/api/apps/accounts/internal/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
@@ -81,13 +81,15 @@ func (d *domain) InviteMembers(ctx UserContext, accountName string, invitations 
 			return nil, errors.NewEf(err, "failed to create invitation")
 		}
 
-		if _, err := d.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
-			AccountName:     inv.AccountName,
-			InvitationToken: inv.InviteToken,
-			InvitedBy:       inv.InvitedBy,
-			Email:           inv.UserEmail,
-			// TODO: verify user name, if it is not empty, then use it, otherwise use email
-			Name: inv.UserName,
+		// Generate invite link
+		inviteLink := fmt.Sprintf("%s/invite/%s", d.Env.WebURL, inv.InviteToken)
+		
+		if _, err := d.authClient.SendAccountInviteEmail(ctx, &auth.SendAccountInviteEmailRequest{
+			Email:       inv.UserEmail,
+			Name:        inv.UserName,
+			InvitedBy:   inv.InvitedBy,
+			AccountName: inv.AccountName,
+			InviteLink:  inviteLink,
 		}); err != nil {
 			return nil, errors.NewE(err)
 		}
@@ -113,12 +115,15 @@ func (d *domain) ResendInviteEmail(ctx UserContext, accountName string, invitati
 		return false, errors.NewE(err)
 	}
 
-	if _, err := d.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
-		AccountName:     accountName,
-		InvitationToken: inv.InviteToken,
-		InvitedBy:       inv.InvitedBy,
-		Email:           inv.UserEmail,
-		Name:            accountName,
+	// Generate invite link
+	inviteLink := fmt.Sprintf("%s/invite/%s", d.Env.WebURL, inv.InviteToken)
+	
+	if _, err := d.authClient.SendAccountInviteEmail(ctx, &auth.SendAccountInviteEmailRequest{
+		Email:       inv.UserEmail,
+		Name:        inv.UserName,
+		InvitedBy:   inv.InvitedBy,
+		AccountName: accountName,
+		InviteLink:  inviteLink,
 	}); err != nil {
 		return false, errors.NewE(err)
 	}

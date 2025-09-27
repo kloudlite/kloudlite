@@ -13,6 +13,24 @@ service Auth {
   rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
   rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
   rpc ResendEmailVerification(ResendEmailVerificationRequest) returns (ResendEmailVerificationResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  
+  // For CLI Device Flow
+  rpc InitiateDeviceFlow(InitiateDeviceFlowRequest) returns (InitiateDeviceFlowResponse);
+  rpc PollDeviceToken(PollDeviceTokenRequest) returns (PollDeviceTokenResponse);
+  rpc VerifyDeviceCode(VerifyDeviceCodeRequest) returns (VerifyDeviceCodeResponse);
+  
+  // Platform user management
+  rpc GetPlatformRole(GetPlatformRoleRequest) returns (GetPlatformRoleResponse);
+  rpc ListPlatformUsers(ListPlatformUsersRequest) returns (ListPlatformUsersResponse);
+  rpc UpdatePlatformUserRole(UpdatePlatformUserRoleRequest) returns (UpdatePlatformUserRoleResponse);
+  
+  // Notifications
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc GetUnreadNotificationCount(GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse);
+  rpc MarkNotificationAsRead(MarkNotificationAsReadRequest) returns (MarkNotificationAsReadResponse);
+  rpc MarkAllNotificationsAsRead(MarkAllNotificationsAsReadRequest) returns (MarkAllNotificationsAsReadResponse);
+  rpc MarkNotificationActionTaken(MarkNotificationActionTakenRequest) returns (MarkNotificationActionTakenResponse);
 }
 
 message LoginWithOAuthRequest {
@@ -23,6 +41,8 @@ message LoginWithOAuthRequest {
 
 message LoginWithOAuthResponse {
   string userId = 1;
+  string token = 2;
+  string refreshToken = 3;
 }
 
 message LoginWithSSORequest {
@@ -32,6 +52,8 @@ message LoginWithSSORequest {
 
 message LoginWithSSOResponse {
   string userId = 1;
+  string token = 2;
+  string refreshToken = 3;
 }
 
 message GetUserDetailsRequest {
@@ -52,6 +74,8 @@ message LoginRequest {
 
 message LoginResponse {
   string userId = 1;
+  string token = 2;
+  string refreshToken = 3;
 }
 
 message SignupRequest {
@@ -62,6 +86,8 @@ message SignupRequest {
 
 message SignupResponse {
   string userId = 1;
+  string token = 2;
+  string refreshToken = 3;
 }
 
 message ResetPasswordRequest {
@@ -98,4 +124,160 @@ message ResendEmailVerificationRequest {
 message ResendEmailVerificationResponse {
   bool success = 1;
   string message = 2; // e.g., "Verification email resent"
+}
+
+message RefreshTokenRequest {
+  string refreshToken = 1;
+}
+
+message RefreshTokenResponse {
+  string token = 1;
+  string refreshToken = 2;
+}
+
+// Device Flow Messages
+message InitiateDeviceFlowRequest {
+  string clientId = 1; // CLI client identifier
+}
+
+message InitiateDeviceFlowResponse {
+  string deviceCode = 1;
+  string userCode = 2; // The code user enters on the website
+  string verificationUri = 3; // URL like https://kloudlite.io/device
+  string verificationUriComplete = 4; // URL with code pre-filled if supported
+  int32 expiresIn = 5; // Seconds until device code expires
+  int32 interval = 6; // Seconds between polling requests
+}
+
+message PollDeviceTokenRequest {
+  string deviceCode = 1;
+  string clientId = 2;
+}
+
+message PollDeviceTokenResponse {
+  bool authorized = 1;
+  string userId = 2;
+  string token = 3;
+  string refreshToken = 4;
+  string error = 5; // "authorization_pending", "slow_down", "expired_token", "access_denied"
+}
+
+message VerifyDeviceCodeRequest {
+  string userCode = 1;
+  string userId = 2; // User ID from the logged in session
+}
+
+message VerifyDeviceCodeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Platform user management messages
+message GetPlatformRoleRequest {}
+
+message GetPlatformRoleResponse {
+  string role = 1; // "super_admin", "admin", "user", or empty
+  bool canCreateTeams = 2;
+  bool canManagePlatform = 3;
+}
+
+message ListPlatformUsersRequest {
+  string role = 1; // optional filter by role
+}
+
+message ListPlatformUsersResponse {
+  repeated PlatformUser users = 1;
+}
+
+message PlatformUser {
+  string userId = 1;
+  string email = 2;
+  string role = 3;
+  string createdAt = 4;
+}
+
+message UpdatePlatformUserRoleRequest {
+  string userId = 1;
+  string role = 2; // "super_admin", "admin", "user"
+}
+
+message UpdatePlatformUserRoleResponse {
+  bool success = 1;
+}
+
+// Notification messages
+message NotificationTarget {
+  string type = 1; // "user", "team_role", "platform_role"
+  string userId = 2;
+  string teamId = 3;
+  string minTeamRole = 4;
+  string minPlatformRole = 5;
+}
+
+message NotificationAction {
+  string id = 1;       // e.g., "approve", "reject", "accept", "decline"
+  string label = 2;    // e.g., "Approve", "Reject"
+  string style = 3;    // e.g., "primary", "danger", "default"
+  string endpoint = 4; // e.g., "/api/teams/approve"
+  string method = 5;   // e.g., "POST", "DELETE"
+  map<string, string> data = 6; // Additional data to send
+}
+
+message Notification {
+  string id = 1;
+  NotificationTarget target = 2;
+  string type = 3;
+  string title = 4;
+  string description = 5;
+  string teamId = 6;
+  string teamName = 7;
+  string requestId = 8;
+  string inviteId = 9;
+  bool read = 10;
+  string readAt = 11;
+  bool actionRequired = 12;
+  repeated NotificationAction actions = 13; // 1-4 actions
+  bool actionTaken = 14;
+  string createdAt = 15;
+}
+
+message ListNotificationsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  bool unreadOnly = 3;
+  bool actionRequiredOnly = 4;
+}
+
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  int32 totalCount = 2;
+}
+
+message GetUnreadNotificationCountRequest {}
+
+message GetUnreadNotificationCountResponse {
+  int32 count = 1;
+}
+
+message MarkNotificationAsReadRequest {
+  string notificationId = 1;
+}
+
+message MarkNotificationAsReadResponse {
+  bool success = 1;
+}
+
+message MarkAllNotificationsAsReadRequest {}
+
+message MarkAllNotificationsAsReadResponse {
+  int32 markedCount = 1;
+}
+
+message MarkNotificationActionTakenRequest {
+  string notificationId = 1;
+  string actionId = 2; // Which action was taken
+}
+
+message MarkNotificationActionTakenResponse {
+  bool success = 1;
 }

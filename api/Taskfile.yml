@@ -12,11 +12,6 @@ tasks:
     cmds:
       - task run
 
-  run:comms:
-    desc: Run the auth service
-    dir: ./apps/comms
-    cmds:
-      - task run
     
   go:upgrade:github.com/kloudlite/operator:
     cmds:
