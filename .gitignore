@@ -42,3 +42,19 @@ kubeconfig/
 
 # Test scripts
 v2/api/test/test-webhook.sh
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Binary files
+api/apps/runner/runner
+api/apps/runner/runner-new
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out

@@ -1,0 +1,196 @@
+syntax = "proto3";
+
+package kloudlite.template.v1;
+
+option go_package = "kloudlite.io/rpc/template";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Template service provides operations for managing entities
+service Template {
+    // Entity Management
+    rpc CreateEntity(CreateEntityRequest) returns (CreateEntityResponse);
+    rpc GetEntity(GetEntityRequest) returns (GetEntityResponse);
+    rpc UpdateEntity(UpdateEntityRequest) returns (UpdateEntityResponse);
+    rpc DeleteEntity(DeleteEntityRequest) returns (DeleteEntityResponse);
+    rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse);
+    
+    // Batch Operations
+    rpc BatchGetEntities(BatchGetEntitiesRequest) returns (BatchGetEntitiesResponse);
+    rpc BatchDeleteEntities(BatchDeleteEntitiesRequest) returns (BatchDeleteEntitiesResponse);
+    
+    // Search and Filter
+    rpc SearchEntities(SearchEntitiesRequest) returns (SearchEntitiesResponse);
+}
+
+// ===== MESSAGES =====
+
+// Entity represents the core domain model
+message Entity {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    EntityStatus status = 4;
+    map<string, string> metadata = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+    string created_by = 8;
+    string updated_by = 9;
+}
+
+// EntityStatus defines possible entity states
+enum EntityStatus {
+    ENTITY_STATUS_UNSPECIFIED = 0;
+    ENTITY_STATUS_ACTIVE = 1;
+    ENTITY_STATUS_INACTIVE = 2;
+    ENTITY_STATUS_PENDING = 3;
+}
+
+// ===== CREATE ENTITY =====
+
+message CreateEntityRequest {
+    // Required: unique name for the entity
+    string name = 1;
+    
+    // Optional: description of the entity
+    optional string description = 2;
+    
+    // Optional: initial status (defaults to ACTIVE)
+    optional EntityStatus status = 3;
+    
+    // Optional: additional metadata
+    map<string, string> metadata = 4;
+}
+
+message CreateEntityResponse {
+    Entity entity = 1;
+}
+
+// ===== GET ENTITY =====
+
+message GetEntityRequest {
+    // Entity ID or name
+    string identifier = 1;
+}
+
+message GetEntityResponse {
+    Entity entity = 1;
+}
+
+// ===== UPDATE ENTITY =====
+
+message UpdateEntityRequest {
+    // Required: entity ID
+    string id = 1;
+    
+    // Optional: new name
+    optional string name = 2;
+    
+    // Optional: new description
+    optional string description = 3;
+    
+    // Optional: new status
+    optional EntityStatus status = 4;
+    
+    // Optional: metadata updates (replaces existing)
+    map<string, string> metadata = 5;
+}
+
+message UpdateEntityResponse {
+    Entity entity = 1;
+}
+
+// ===== DELETE ENTITY =====
+
+message DeleteEntityRequest {
+    string id = 1;
+}
+
+message DeleteEntityResponse {
+    bool success = 1;
+}
+
+// ===== LIST ENTITIES =====
+
+message ListEntitiesRequest {
+    // Pagination
+    int32 page = 1;         // Page number (1-based)
+    int32 page_size = 2;    // Items per page (default: 20, max: 100)
+    
+    // Sorting
+    string sort_by = 3;     // Field to sort by (default: created_at)
+    SortOrder sort_order = 4;
+    
+    // Filtering
+    optional EntityStatus status = 5;
+    optional string search_query = 6;
+    map<string, string> metadata_filters = 7;
+}
+
+message ListEntitiesResponse {
+    repeated Entity entities = 1;
+    PageInfo page_info = 2;
+}
+
+// ===== BATCH OPERATIONS =====
+
+message BatchGetEntitiesRequest {
+    repeated string ids = 1;
+}
+
+message BatchGetEntitiesResponse {
+    repeated Entity entities = 1;
+    repeated string not_found_ids = 2;
+}
+
+message BatchDeleteEntitiesRequest {
+    repeated string ids = 1;
+}
+
+message BatchDeleteEntitiesResponse {
+    int32 deleted_count = 1;
+    repeated string failed_ids = 2;
+}
+
+// ===== SEARCH =====
+
+message SearchEntitiesRequest {
+    string query = 1;
+    SearchOptions options = 2;
+}
+
+message SearchOptions {
+    int32 limit = 1;
+    int32 offset = 2;
+    repeated string fields = 3; // Fields to search in
+    bool fuzzy = 4;            // Enable fuzzy matching
+}
+
+message SearchEntitiesResponse {
+    repeated SearchResult results = 1;
+    int32 total_count = 2;
+}
+
+message SearchResult {
+    Entity entity = 1;
+    float score = 2;           // Relevance score
+    map<string, string> highlights = 3; // Field highlights
+}
+
+// ===== COMMON TYPES =====
+
+enum SortOrder {
+    SORT_ORDER_UNSPECIFIED = 0;
+    SORT_ORDER_ASC = 1;
+    SORT_ORDER_DESC = 2;
+}
+
+message PageInfo {
+    int32 total_items = 1;
+    int32 total_pages = 2;
+    int32 current_page = 3;
+    int32 page_size = 4;
+    bool has_next = 5;
+    bool has_previous = 6;
+}

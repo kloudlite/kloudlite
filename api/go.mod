@@ -18,7 +18,6 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/vektah/gqlparser/v2 v2.5.17
 	github.com/xanzy/go-gitlab v0.63.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -43,6 +42,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/charmbracelet/log v0.4.0
 	github.com/go-chi/chi/v5 v5.2.0
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/kloudlite/operator v1.1.1
 	github.com/kloudlite/operator/toolkit v0.0.0-20250316093242-493e9b587c10
@@ -56,7 +56,6 @@ require (
 	github.com/shamaton/msgpack/v2 v2.2.2
 	github.com/ztrue/tracerr v0.4.0
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
-	golang.org/x/net v0.33.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	helm.sh/helm/v3 v3.16.4
 )
@@ -142,6 +141,7 @@ require (
 	go.opentelemetry.io/otel v1.33.0 // indirect
 	go.opentelemetry.io/otel/metric v1.33.0 // indirect
 	go.opentelemetry.io/otel/trace v1.33.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241216192217-9240e9c98484 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -201,7 +201,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sanity-io/litter v1.5.5
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
-	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.5

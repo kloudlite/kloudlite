@@ -19,3 +19,14 @@ tasks:
       - kubectl rollout restart deployment/app
       - kubectl rollout status deployment/app --watch=true
       - POD=$(kubectl get pods -l app=app -o jsonpath="{.items[-1].metadata.name}") && kubectl logs -f $POD
+  
+  init-nats:
+    desc: Initialize NATS KV buckets and streams
+    cmds:
+      - ./init-nats.sh
+  
+  run-local:
+    desc: Run the runner locally with .env file
+    dotenv: [".env"]
+    cmds:
+      - go run main.go
