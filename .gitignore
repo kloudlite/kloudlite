@@ -39,3 +39,6 @@ config/crd/bases/_.yaml
 v2/kubeconfig/
 kubeconfig/
 *.kubeconfig
+
+# Test scripts
+v2/api/test/test-webhook.sh

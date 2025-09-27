@@ -76,9 +76,9 @@ func (s *userService) GetUserByEmail(ctx context.Context, email string) (*platfo
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 
-	for _, user := range users.Items {
-		if user.Spec.Email == email {
-			return &user, nil
+	for i := range users.Items {
+		if users.Items[i].Spec.Email == email {
+			return &users.Items[i], nil
 		}
 	}
 
