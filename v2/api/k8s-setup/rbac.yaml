@@ -1,0 +1,43 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite-system
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kloudlite-api
+  namespace: kloudlite-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kloudlite-api-role
+rules:
+# Users CRD permissions
+- apiGroups: ["platform.kloudlite.io"]
+  resources: ["users"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["platform.kloudlite.io"]
+  resources: ["users/status"]
+  verbs: ["get", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kloudlite-api-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kloudlite-api-role
+subjects:
+- kind: ServiceAccount
+  name: kloudlite-api
+  namespace: kloudlite-system
+- kind: Group
+  name: platform:admins
+  apiGroup: rbac.authorization.k8s.io
