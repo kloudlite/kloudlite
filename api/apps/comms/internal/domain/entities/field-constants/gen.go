@@ -1,5 +1,0 @@
-package field_constants
-
-//go:generate go run github.com/kloudlite/api/cmd/struct-json-path --pkg github.com/kloudlite/api/apps/comms/internal/domain/entities  --common-path "metadata" --common-path "apiVersion" --common-path "kind" --common-path "status" --common-path "syncStatus" --common-path "lastUpdatedBy" --common-path "createdBy" --common-path "displayName" --common-path "creationTime" --common-path "updateTime" --common-path "id" --common-path "recordVersion" --common-path "accountName" --common-path "clusterName" --common-path "markedForDeletion"  --out-file ./generated_constants.go --banner "package field_constants" --ignore-nesting "time.Time" --ignore-nesting "k8s.io/apimachinery/pkg/apis/meta/v1.Time"
-
-//go:generate go run github.com/kloudlite/api/cmd/struct-json-path --pkg github.com/kloudlite/api/apps/comms/types --out-file ./generated_constants_notification.go --banner "package field_constants" --ignore-nesting "time.Time" --ignore-nesting "k8s.io/apimachinery/pkg/apis/meta/v1.Time"
