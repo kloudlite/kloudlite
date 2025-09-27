@@ -11,7 +11,6 @@ type mainEnv struct {
 	NatsURL     string `env:"NATS_URL" required:"true"`
 	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
 
-	CommsServiceAddr    string `env:"COMMS_SERVICE" required:"true"`
 	ConsoleServiceAddr  string `env:"CONSOLE_SERVICE" required:"true"`
 	AuthServiceAddr     string `env:"AUTH_SERVICE" required:"true"`
 	InfraServiceAddr    string `env:"INFRA_SERVICE" required:"true"`

@@ -71,6 +71,10 @@ func bsonToStruct[T any](r *mongo.SingleResult) (T, error) {
 	var m map[string]any
 	var result T
 	if err := r.Decode(&m); err != nil {
+		// Don't wrap mongo.ErrNoDocuments to preserve the error type
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return result, err
+		}
 		return result, errors.NewE(err)
 	}
 	b, err := json.Marshal(m)
@@ -149,7 +153,8 @@ func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	item, err := bsonToStruct[T](one)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return item, nil
+			var emptyItem T
+			return emptyItem, nil
 		}
 		return item, errors.NewE(err)
 	}
@@ -399,7 +404,7 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	return nil
 }
 
-var ErrNoDocuments error = fmt.Errorf("no documents found")
+var ErrNoDocuments = errors.New("no documents found")
 
 func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error) {
 	var x T

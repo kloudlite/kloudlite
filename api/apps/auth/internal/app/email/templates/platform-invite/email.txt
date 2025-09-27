@@ -1,0 +1,13 @@
+Hello {{.Name}},
+
+{{.InvitedBy}} has invited you to join the Kloudlite Platform Management Team as a {{.Role}}.
+
+As a platform {{.Role}}, you will have administrative privileges to manage platform-wide settings, users, and teams.
+
+To accept this invitation and join the platform management team, please click the link below:
+
+{{.Link}}
+
+This invitation will expire in 7 days. If you have any questions about your role or need assistance, please contact the platform administrator.
+
+- Kloudlite Platform Team

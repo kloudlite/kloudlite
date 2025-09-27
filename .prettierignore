@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+vendor
+
+# Build outputs
+.next
+out
+dist
+build
+bin
+
+# Generated files
+*.pb.go
+*.pb.gw.go
+*_gen.go
+*_generated.go
+lib/grpc/generated
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+go.sum
+
+# Environment
+.env*
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+tmp
+temp
+
+# Documentation
+*.md
