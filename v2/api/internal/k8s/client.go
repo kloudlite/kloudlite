@@ -7,9 +7,11 @@ import (
 	"path/filepath"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -60,11 +62,21 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 
 	// Create runtime scheme with our custom resources
 	scheme := runtime.NewScheme()
+
+	// Add core Kubernetes resources (ConfigMap, Secret, etc.)
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add kubernetes scheme: %w", err)
+	}
+
+	// Add our custom resources
 	if err := platformv1alpha1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add platform scheme: %w", err)
 	}
 	if err := environmentsv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add environments scheme: %w", err)
+	}
+	if err := machinesv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add machines scheme: %w", err)
 	}
 
 	// Create controller-runtime client

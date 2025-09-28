@@ -13,13 +13,13 @@ type Repository[T client.Object, L client.ObjectList] interface {
 	Create(ctx context.Context, obj T) error
 
 	// Get retrieves a resource by name and namespace
-	Get(ctx context.Context, name, namespace string) (T, error)
+	Get(ctx context.Context, namespace, name string) (T, error)
 
 	// Update updates an existing resource
 	Update(ctx context.Context, obj T) error
 
 	// Delete deletes a resource by name and namespace
-	Delete(ctx context.Context, name, namespace string) error
+	Delete(ctx context.Context, namespace, name string) error
 
 	// List lists resources with optional filters
 	List(ctx context.Context, namespace string, opts ...ListOption) (L, error)

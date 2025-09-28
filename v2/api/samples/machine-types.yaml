@@ -1,0 +1,70 @@
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: small-general
+spec:
+  displayName: "Small General Purpose"
+  description: "Small general purpose machine for light development work"
+  category: general
+  active: true
+  priority: 10
+  resources:
+    cpu: "2"
+    memory: "4Gi"
+    storage: "50Gi"
+    ephemeralStorage: "10Gi"
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: medium-general
+spec:
+  displayName: "Medium General Purpose"
+  description: "Medium general purpose machine for standard development work"
+  category: general
+  active: true
+  priority: 20
+  resources:
+    cpu: "4"
+    memory: "8Gi"
+    storage: "100Gi"
+    ephemeralStorage: "20Gi"
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: large-compute
+spec:
+  displayName: "Large Compute Optimized"
+  description: "Large compute-optimized machine for heavy compilation and processing"
+  category: compute-optimized
+  active: true
+  priority: 30
+  resources:
+    cpu: "8"
+    memory: "16Gi"
+    storage: "200Gi"
+    ephemeralStorage: "30Gi"
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: gpu-enabled
+spec:
+  displayName: "GPU Development Machine"
+  description: "GPU-enabled machine for AI/ML development"
+  category: gpu
+  active: true
+  priority: 40
+  resources:
+    cpu: "4"
+    memory: "16Gi"
+    gpu: "1"
+    storage: "200Gi"
+    ephemeralStorage: "50Gi"
+  nodeSelector:
+    node.kubernetes.io/gpu: "true"
+  tolerations:
+    - key: "nvidia.com/gpu"
+      operator: "Exists"
+      effect: "NoSchedule"
