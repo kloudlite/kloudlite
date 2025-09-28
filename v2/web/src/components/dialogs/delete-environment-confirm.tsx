@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -11,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { deleteEnvironment } from '@/app/actions/environment.actions'
@@ -33,6 +33,52 @@ export function DeleteEnvironmentConfirm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Clear error when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      setError(null)
+    }
+  }, [open])
+
+  const parseErrorMessage = (errorString: string): string => {
+    // Try to extract meaningful error message from API response
+    if (errorString.includes('API Error:')) {
+      // Try to parse JSON from the error string
+      try {
+        const jsonMatch = errorString.match(/\{[^}]+\}/)
+        if (jsonMatch) {
+          const errorData = JSON.parse(jsonMatch[0])
+          // Check for various error fields
+          if (errorData.error) {
+            return errorData.error
+          }
+          if (errorData.details) {
+            return errorData.details
+          }
+        }
+      } catch (e) {
+        // If JSON parsing fails, try to extract key messages
+      }
+    }
+
+    // Check for common error patterns
+    if (errorString.includes('Cannot delete an activated environment')) {
+      return 'Cannot delete an activated environment. Please deactivate it first.'
+    }
+    if (errorString.includes('Deactivate the environment first')) {
+      return 'Please deactivate the environment before deleting it.'
+    }
+    if (errorString.includes('not found')) {
+      return 'Environment not found.'
+    }
+    if (errorString.includes('permission denied')) {
+      return 'You do not have permission to delete this environment.'
+    }
+
+    // If no specific pattern matched, return the original or a generic message
+    return errorString || 'Failed to delete environment. Please try again.'
+  }
+
   const handleDelete = async () => {
     setError(null)
     setLoading(true)
@@ -45,11 +91,11 @@ export function DeleteEnvironmentConfirm({
           onSuccess()
         }
       } else {
-        setError(result.error || 'Failed to delete environment. Please try again.')
+        setError(parseErrorMessage(result.error || ''))
       }
     } catch (err: any) {
       console.error('Failed to delete environment:', err)
-      setError(err.message || 'Failed to delete environment. Please try again.')
+      setError(parseErrorMessage(err.message || ''))
     } finally {
       setLoading(false)
     }
@@ -75,14 +121,18 @@ export function DeleteEnvironmentConfirm({
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
+          <Button
+            onClick={(e) => {
+              e.preventDefault()
+              handleDelete()
+            }}
             disabled={loading}
+            variant="destructive"
             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading ? 'Deleting...' : 'Delete'}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
