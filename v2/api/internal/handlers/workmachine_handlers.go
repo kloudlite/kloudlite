@@ -1,0 +1,439 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
+	"github.com/kloudlite/kloudlite/v2/api/internal/managers"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// WorkMachineHandlers handles HTTP requests for WorkMachine resources
+type WorkMachineHandlers struct {
+	manager *managers.Manager
+}
+
+// NewWorkMachineHandlers creates a new WorkMachine handler
+func NewWorkMachineHandlers(manager *managers.Manager) *WorkMachineHandlers {
+	return &WorkMachineHandlers{
+		manager: manager,
+	}
+}
+
+// WorkMachineCreateRequest represents a request to create a WorkMachine
+type WorkMachineCreateRequest struct {
+	MachineType   string   `json:"machineType" binding:"required"`
+	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
+}
+
+// WorkMachineUpdateRequest represents a request to update a WorkMachine
+type WorkMachineUpdateRequest struct {
+	MachineType   string   `json:"machineType,omitempty"`
+	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
+}
+
+// GetMyWorkMachine returns the current user's work machine
+func (h *WorkMachineHandlers) GetMyWorkMachine(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get current user
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get user's machine
+	machine, err := h.manager.WorkMachineRepository.GetByOwner(ctx, userName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "No work machine found for current user",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, machine)
+}
+
+// CreateMyWorkMachine creates a work machine for the current user
+func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get current user
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	var req WorkMachineCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Check if user already has a machine
+	existingMachine, _ := h.manager.WorkMachineRepository.GetByOwner(ctx, userName)
+	if existingMachine != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "User already has a work machine",
+		})
+		return
+	}
+
+	// Create new machine
+	machine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "", // Will be set by webhook
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			OwnedBy:       userName,
+			MachineType:   req.MachineType,
+			DesiredState:  machinesv1.MachineStateStopped,
+			SSHPublicKeys: req.SSHPublicKeys,
+		},
+	}
+
+	// Apply defaults via webhook
+	if err := h.manager.WorkMachineWebhook.Default(ctx, machine); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Validate via webhook
+	if err := h.manager.WorkMachineWebhook.ValidateCreate(ctx, machine); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Create the resource
+	if err := h.manager.WorkMachineRepository.Create(ctx, machine); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, machine)
+}
+
+// UpdateMyWorkMachine updates the current user's work machine
+func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get current user
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	var req WorkMachineUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Get user's machine
+	machine, err := h.manager.WorkMachineRepository.GetByOwner(ctx, userName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "No work machine found for current user",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	oldMachine := machine.DeepCopy()
+
+	// Update fields
+	if req.MachineType != "" {
+		machine.Spec.MachineType = req.MachineType
+	}
+	if req.SSHPublicKeys != nil {
+		machine.Spec.SSHPublicKeys = req.SSHPublicKeys
+	}
+
+	// Apply defaults via webhook
+	if err := h.manager.WorkMachineWebhook.Default(ctx, machine); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Validate via webhook
+	if err := h.manager.WorkMachineWebhook.ValidateUpdate(ctx, oldMachine, machine); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Update the resource
+	if err := h.manager.WorkMachineRepository.Update(ctx, machine); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, machine)
+}
+
+// DeleteMyWorkMachine deletes the current user's work machine
+func (h *WorkMachineHandlers) DeleteMyWorkMachine(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get current user
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get user's machine
+	machine, err := h.manager.WorkMachineRepository.GetByOwner(ctx, userName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "No work machine found for current user",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Validate via webhook
+	if err := h.manager.WorkMachineWebhook.ValidateDelete(ctx, machine); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Delete the resource
+	if err := h.manager.WorkMachineRepository.Delete(ctx, "", machine.Name); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Work machine deleted successfully",
+	})
+}
+
+// StartMyWorkMachine starts the current user's work machine
+func (h *WorkMachineHandlers) StartMyWorkMachine(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get current user
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get user's machine
+	machine, err := h.manager.WorkMachineRepository.GetByOwner(ctx, userName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "No work machine found for current user",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Start the machine
+	if err := h.manager.WorkMachineRepository.StartMachine(ctx, machine.Name); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Work machine starting",
+		"state":   machinesv1.MachineStateStarting,
+	})
+}
+
+// StopMyWorkMachine stops the current user's work machine
+func (h *WorkMachineHandlers) StopMyWorkMachine(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get current user
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get user's machine
+	machine, err := h.manager.WorkMachineRepository.GetByOwner(ctx, userName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "No work machine found for current user",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Stop the machine
+	if err := h.manager.WorkMachineRepository.StopMachine(ctx, machine.Name); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Work machine stopping",
+		"state":   machinesv1.MachineStateStopping,
+	})
+}
+
+// ListAllWorkMachines lists all work machines (admin only)
+func (h *WorkMachineHandlers) ListAllWorkMachines(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Only admin users can list all machines
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// TODO: Check if user has admin role
+
+	// Get machine type filter
+	machineType := c.Query("machineType")
+
+	var list *machinesv1.WorkMachineList
+	var err error
+
+	if machineType != "" {
+		list, err = h.manager.WorkMachineRepository.ListByMachineType(ctx, machineType)
+	} else {
+		list, err = h.manager.WorkMachineRepository.List(ctx, "")
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"items": list.Items,
+		"count": len(list.Items),
+	})
+}
+
+// GetWorkMachine gets a specific work machine by name (admin only)
+func (h *WorkMachineHandlers) GetWorkMachine(c *gin.Context) {
+	ctx := c.Request.Context()
+	name := c.Param("name")
+
+	// Only admin users can get any machine
+	userName := c.GetHeader("X-User-Name")
+	if userName == "" {
+		userName = c.GetHeader("X-User-Email")
+	}
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// TODO: Check if user has admin role
+
+	machine, err := h.manager.WorkMachineRepository.Get(ctx, "", name)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Work machine not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, machine)
+}

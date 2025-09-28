@@ -10,6 +10,7 @@ export function AdminNavigation() {
   const navItems = [
     { href: '/admin/users', label: 'Users' },
     { href: '/admin/machine-configs', label: 'Machine Configurations' },
+    { href: '/admin/oauth-providers', label: 'OAuth Providers' },
   ]
 
   return (

@@ -51,7 +51,7 @@ func (r *K8sRepository[T, L]) Create(ctx context.Context, obj T) error {
 }
 
 // Get retrieves a resource by name and namespace
-func (r *K8sRepository[T, L]) Get(ctx context.Context, name, namespace string) (T, error) {
+func (r *K8sRepository[T, L]) Get(ctx context.Context, namespace, name string) (T, error) {
 	obj := r.newObject()
 
 	key := types.NamespacedName{
@@ -61,6 +61,9 @@ func (r *K8sRepository[T, L]) Get(ctx context.Context, name, namespace string) (
 
 	if err := r.client.Get(ctx, key, obj); err != nil {
 		if apierrors.IsNotFound(err) {
+			if namespace == "" {
+				return obj, fmt.Errorf("resource not found: %s", name)
+			}
 			return obj, fmt.Errorf("resource not found: %s/%s", namespace, name)
 		}
 		return obj, fmt.Errorf("failed to get resource: %w", err)
@@ -84,13 +87,16 @@ func (r *K8sRepository[T, L]) Update(ctx context.Context, obj T) error {
 }
 
 // Delete deletes a resource by name and namespace
-func (r *K8sRepository[T, L]) Delete(ctx context.Context, name, namespace string) error {
+func (r *K8sRepository[T, L]) Delete(ctx context.Context, namespace, name string) error {
 	obj := r.newObject()
 	obj.SetName(name)
 	obj.SetNamespace(namespace)
 
 	if err := r.client.Delete(ctx, obj); err != nil {
 		if apierrors.IsNotFound(err) {
+			if namespace == "" {
+				return fmt.Errorf("resource not found: %s", name)
+			}
 			return fmt.Errorf("resource not found: %s/%s", namespace, name)
 		}
 		return fmt.Errorf("failed to delete resource: %w", err)
