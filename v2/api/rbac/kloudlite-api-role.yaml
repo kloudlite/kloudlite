@@ -1,0 +1,83 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kloudlite-api-role
+rules:
+- apiGroups:
+  - platform.kloudlite.io
+  resources:
+  - users
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - platform.kloudlite.io
+  resources:
+  - users/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - environments.kloudlite.io
+  resources:
+  - environments
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - environments.kloudlite.io
+  resources:
+  - environments/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - machines.kloudlite.io
+  resources:
+  - machinetypes
+  - workmachines
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - machines.kloudlite.io
+  resources:
+  - machinetypes/status
+  - workmachines/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resourceNames:
+  - oauth-providers
+  resources:
+  - secrets
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
