@@ -1,0 +1,40 @@
+apiVersion: environments.kloudlite.io/v1
+kind: Environment
+metadata:
+  name: staging-environment
+spec:
+  targetNamespace: staging
+  activated: true  # Environment is active
+  resourceQuotas:
+    limits.cpu: "20"
+    limits.memory: "40Gi"
+    requests.cpu: "10"
+    requests.memory: "20Gi"
+    persistentvolumeclaims: "30"
+    services.nodeports: "10"
+    services.loadbalancers: "5"
+  networkPolicies:
+    enabled: true  # Enable network isolation
+    allowedNamespaces:
+      - monitoring        # Allow monitoring namespace to access
+      - ingress-nginx    # Allow ingress controller
+      - cert-manager     # Allow cert-manager
+    ingressRules:
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: development
+        ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 443
+  labels:
+    environment: staging
+    team: platform-team
+    managed-by: kloudlite
+    tier: pre-production
+  annotations:
+    description: "Staging environment for pre-production testing"
+    owner: "platform-team@example.com"
+    sla: "99.5"

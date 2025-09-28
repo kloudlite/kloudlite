@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,6 +62,9 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	scheme := runtime.NewScheme()
 	if err := platformv1alpha1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add platform scheme: %w", err)
+	}
+	if err := environmentsv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add environments scheme: %w", err)
 	}
 
 	// Create controller-runtime client
