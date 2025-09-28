@@ -13,8 +13,10 @@ type Manager struct {
 	K8sClient client.Client
 
 	// Individual repositories
-	Users        UserRepository
-	Environments EnvironmentRepository
+	Users         UserRepository
+	Environments  EnvironmentRepository
+	MachineTypes  MachineTypeRepository
+	WorkMachines  WorkMachineRepository
 }
 
 // ManagerOptions contains options for creating a repository manager
@@ -49,11 +51,15 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	// Create individual repositories
 	users := NewUserRepository(k8sClient)
 	environments := NewEnvironmentRepository(k8sClient)
+	machineTypes := NewMachineTypeRepository(k8sClient)
+	workMachines := NewWorkMachineRepository(k8sClient)
 
 	return &Manager{
 		K8sClient:    k8sClient,
 		Users:        users,
 		Environments: environments,
+		MachineTypes: machineTypes,
+		WorkMachines: workMachines,
 	}, nil
 }
 
