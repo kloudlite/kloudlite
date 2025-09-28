@@ -1,0 +1,147 @@
+'use client'
+
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { MoreHorizontal, Box, FileCode, Lock } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+
+interface Environment {
+  id: string
+  name: string
+  owner: string
+  status: 'active' | 'inactive'
+  created: string
+  services: number
+  configs: number
+  secrets: number
+  workspaces: string[]
+  lastDeployed: string
+}
+
+interface EnvironmentCardProps {
+  environment: Environment
+}
+
+export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
+  return (
+    <Link href={`/environments/${env.id}`} className="block group">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all cursor-pointer">
+        {/* Card Header */}
+        <div className="px-6 py-4 border-b border-gray-100">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {env.name}
+                </h3>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  env.status === 'active'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {env.status}
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5 mt-1">
+                <p className="text-sm text-gray-500">
+                  Owned by {env.owner.split('@')[0]}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Last deployed {env.lastDeployed}
+                </p>
+              </div>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                  Clone Environment
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                  Export Config
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Card Body */}
+        <div className="px-6 py-4">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Box className="h-4 w-4 text-gray-400" />
+              <div>
+                <p className="text-sm font-medium">{env.services}</p>
+                <p className="text-xs text-gray-500">Services</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <FileCode className="h-4 w-4 text-gray-400" />
+              <div>
+                <p className="text-sm font-medium">{env.configs}</p>
+                <p className="text-xs text-gray-500">Configs</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-gray-400" />
+              <div>
+                <p className="text-sm font-medium">{env.secrets}</p>
+                <p className="text-xs text-gray-500">Secrets</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Connected Workspaces */}
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-gray-500">Connected Workspaces</p>
+              {env.workspaces.length > 0 && (
+                <span className="text-xs text-gray-400">{env.workspaces.length}</span>
+              )}
+            </div>
+            {env.workspaces.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {env.workspaces.map(workspace => (
+                  <span key={workspace} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">
+                    {workspace}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">No workspaces connected</p>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="pt-3 mt-3 border-t border-gray-100">
+            <span className="text-xs text-gray-500">
+              Created {env.created}
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}
