@@ -91,6 +91,13 @@ rules:
 - apiGroups: ["platform.kloudlite.io"]
   resources: ["users/status"]
   verbs: ["get", "patch", "update"]
+# Environment CRD permissions
+- apiGroups: ["environments.kloudlite.io"]
+  resources: ["environments"]
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: ["environments.kloudlite.io"]
+  resources: ["environments/status"]
+  verbs: ["get", "patch", "update"]
 # Core resources needed by the API
 - apiGroups: [""]
   resources: ["namespaces"]

@@ -9,6 +9,9 @@ import (
 
 // Manager coordinates all services and provides a unified interface
 type Manager struct {
+	// Repository manager (exposed for direct repository access)
+	RepositoryManager *repository.Manager
+
 	// Individual services
 	Users UserService
 
@@ -38,7 +41,8 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	userService := NewUserService(opts.RepositoryManager.Users)
 
 	return &Manager{
-		Users: userService,
+		RepositoryManager: opts.RepositoryManager,
+		Users:            userService,
 	}, nil
 }
 
