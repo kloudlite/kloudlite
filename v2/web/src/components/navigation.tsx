@@ -82,7 +82,7 @@ export function Navigation({ email, isSuperAdmin, isAdmin }: NavigationProps) {
               {(isAdmin || isSuperAdmin) && (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link href="/administration" className="cursor-pointer">
+                    <Link href="/admin" className="cursor-pointer">
                       <Shield className="mr-2 h-4 w-4" />
                       Administration
                     </Link>
