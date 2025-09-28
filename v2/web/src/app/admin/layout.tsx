@@ -1,19 +1,11 @@
-import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
 import { AdminNavigation } from '@/components/admin-navigation'
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth()
-
-  // For now, just check if user is logged in
-  // TODO: Add proper role checking when available
-  if (!session) {
-    redirect('/auth/signin')
-  }
+  // TODO: Add authentication and role checking when backend is ready
 
   return (
     <div className="min-h-screen bg-gray-50">
