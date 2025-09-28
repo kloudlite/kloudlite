@@ -33,6 +33,8 @@ tasks:
 
   create-k8s-user:
     desc: Create Kubernetes user with certificates and RBAC
+    env:
+      KUBECONFIG: ./kubeconfig/k3s.yaml
     cmds:
       - ./scripts/create-k8s-user.sh {{.USER_NAME | default "kloudlite-api"}} {{.NAMESPACE | default "kloudlite-system"}}
     vars:
@@ -51,6 +53,8 @@ tasks:
 
   apply-crds:
     desc: Apply CRD definitions to cluster
+    env:
+      KUBECONFIG: ./kubeconfig/k3s.yaml
     cmds:
       - kubectl apply -f crds/
 

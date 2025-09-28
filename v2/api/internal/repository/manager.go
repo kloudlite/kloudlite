@@ -9,11 +9,12 @@ import (
 
 // Manager coordinates all repositories and provides a unified interface
 type Manager struct {
-	// K8s client
-	k8sClient client.Client
+	// K8s client (exposed for webhook usage)
+	K8sClient client.Client
 
 	// Individual repositories
-	Users UserRepository
+	Users        UserRepository
+	Environments EnvironmentRepository
 }
 
 // ManagerOptions contains options for creating a repository manager
@@ -47,10 +48,12 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 
 	// Create individual repositories
 	users := NewUserRepository(k8sClient)
+	environments := NewEnvironmentRepository(k8sClient)
 
 	return &Manager{
-		k8sClient: k8sClient,
-		Users:     users,
+		K8sClient:    k8sClient,
+		Users:        users,
+		Environments: environments,
 	}, nil
 }
 
