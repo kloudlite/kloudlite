@@ -25,10 +25,25 @@ export class ApiClient {
     const response = await fetch(url, config)
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text().catch(() => response.statusText)
+      throw new Error(`API Error: ${response.status} ${errorText}`)
     }
 
-    return response.json()
+    // Handle empty responses (like 204 No Content)
+    if (response.status === 204) {
+      return {} as T
+    }
+
+    const text = await response.text()
+    if (!text) {
+      return {} as T
+    }
+
+    try {
+      return JSON.parse(text)
+    } catch {
+      return text as unknown as T
+    }
   }
 
   // HTTP methods

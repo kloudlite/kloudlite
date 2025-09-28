@@ -1,0 +1,25 @@
+apiVersion: environments.kloudlite.io/v1
+kind: Environment
+metadata:
+  name: dev-environment
+spec:
+  targetNamespace: development
+  activated: true  # Environment is active
+  resourceQuotas:
+    limits.cpu: "10"
+    limits.memory: "20Gi"
+    requests.cpu: "5"
+    requests.memory: "10Gi"
+    persistentvolumeclaims: "20"
+    services.nodeports: "5"
+    services.loadbalancers: "2"
+  networkPolicies:
+    enabled: false  # No network isolation for dev
+    allowedNamespaces: []
+  labels:
+    environment: development
+    team: platform-team
+    managed-by: kloudlite
+  annotations:
+    description: "Development environment for platform team"
+    owner: "platform-team@example.com"

@@ -1,0 +1,7 @@
+apiVersion: environments.kloudlite.io/v1
+kind: Environment
+metadata:
+  name: minimal-env
+spec:
+  targetNamespace: minimal
+  activated: true  # Only required fields - webhook will add defaults
