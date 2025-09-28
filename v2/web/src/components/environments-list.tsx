@@ -1,37 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Plus, MoreHorizontal, ExternalLink } from 'lucide-react'
+import { Plus, MoreHorizontal, ExternalLink, Power, PowerOff, Edit } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-
-interface Environment {
-  id: string
-  name: string
-  owner: string
-  status: 'active' | 'inactive'
-  created: string
-  services: number
-  configs: number
-  secrets: number
-  workspaces: string[]
-  lastDeployed: string
-}
+import { CreateEnvironmentDialog } from '@/components/dialogs/create-environment'
+import { EditEnvironmentDialog } from '@/components/dialogs/edit-environment'
+import { DeleteEnvironmentConfirm } from '@/components/dialogs/delete-environment-confirm'
+import { activateEnvironment, deactivateEnvironment } from '@/app/actions/environment.actions'
+import { toast } from 'sonner'
+import type { EnvironmentUIModel } from '@/types/environment'
 
 interface EnvironmentsListProps {
-  environments: Environment[]
+  environments: EnvironmentUIModel[]
   currentUser: string
 }
 
 export function EnvironmentsList({ environments, currentUser }: EnvironmentsListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
+  const [deleteEnvironmentName, setDeleteEnvironmentName] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   let filteredEnvironments = environments
 
@@ -51,6 +53,78 @@ export function EnvironmentsList({ environments, currentUser }: EnvironmentsList
     active: environments.filter(env => env.status === 'active').length,
     allActive: environments.filter(env => env.status === 'active').length,
     mineActive: environments.filter(env => env.owner === currentUser && env.status === 'active').length,
+  }
+
+  const handleActivate = async (envName: string) => {
+    try {
+      const result = await activateEnvironment(envName, currentUser)
+      if (result.success) {
+        toast.success('Environment activated', {
+          description: `${envName} has been activated successfully.`,
+        })
+        startTransition(() => {
+          router.refresh()
+        })
+      } else {
+        toast.error('Failed to activate environment', {
+          description: result.error || 'An error occurred',
+        })
+      }
+    } catch (error: any) {
+      toast.error('Failed to activate environment', {
+        description: error.message || 'An error occurred',
+      })
+    }
+  }
+
+  const handleDeactivate = async (envName: string) => {
+    try {
+      const result = await deactivateEnvironment(envName, currentUser)
+      if (result.success) {
+        toast.success('Environment deactivated', {
+          description: `${envName} has been deactivated successfully.`,
+        })
+        startTransition(() => {
+          router.refresh()
+        })
+      } else {
+        toast.error('Failed to deactivate environment', {
+          description: result.error || 'An error occurred',
+        })
+      }
+    } catch (error: any) {
+      toast.error('Failed to deactivate environment', {
+        description: error.message || 'An error occurred',
+      })
+    }
+  }
+
+  const handleEditClick = (env: EnvironmentUIModel) => {
+    setSelectedEnvironment(env)
+    setEditDialogOpen(true)
+  }
+
+  const handleDeleteClick = (envName: string) => {
+    setDeleteEnvironmentName(envName)
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleCreateSuccess = () => {
+    toast.success('Environment created', {
+      description: 'Your new environment has been created successfully.',
+    })
+    startTransition(() => {
+      router.refresh()
+    })
+  }
+
+  const handleDeleteSuccess = () => {
+    toast.success('Environment deleted', {
+      description: 'The environment has been deleted successfully.',
+    })
+    startTransition(() => {
+      router.refresh()
+    })
   }
 
   return (
@@ -110,7 +184,7 @@ export function EnvironmentsList({ environments, currentUser }: EnvironmentsList
             {filteredEnvironments.length} {filteredEnvironments.length === 1 ? 'environment' : 'environments'}
           </span>
         </div>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" className="gap-2" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           New Environment
         </Button>
@@ -190,9 +264,36 @@ export function EnvironmentsList({ environments, currentUser }: EnvironmentsList
                           View Details
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleEditClick(env)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Settings
+                      </DropdownMenuItem>
+                      {env.status === 'active' ? (
+                        <DropdownMenuItem
+                          onClick={() => handleDeactivate(env.name)}
+                          className="text-orange-600"
+                        >
+                          <PowerOff className="h-4 w-4 mr-2" />
+                          Deactivate
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          onClick={() => handleActivate(env.name)}
+                          className="text-green-600"
+                        >
+                          <Power className="h-4 w-4 mr-2" />
+                          Activate
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem>Clone Environment</DropdownMenuItem>
                       <DropdownMenuItem>Export Config</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDeleteClick(env.name)}
+                      >
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -216,6 +317,34 @@ export function EnvironmentsList({ environments, currentUser }: EnvironmentsList
               : "No environments found"}
           </p>
         </div>
+      )}
+
+      {/* Dialogs */}
+      <CreateEnvironmentDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleCreateSuccess}
+        currentUser={currentUser}
+      />
+
+      {selectedEnvironment && (
+        <EditEnvironmentDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          environment={selectedEnvironment}
+          onSuccess={handleCreateSuccess}
+          currentUser={currentUser}
+        />
+      )}
+
+      {deleteEnvironmentName && (
+        <DeleteEnvironmentConfirm
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          environmentName={deleteEnvironmentName}
+          onSuccess={handleDeleteSuccess}
+          currentUser={currentUser}
+        />
       )}
     </div>
   )

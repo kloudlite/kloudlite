@@ -1,0 +1,159 @@
+// Environment types matching the backend API structure
+
+export interface EnvironmentMetadata {
+  name: string
+  uid?: string
+  resourceVersion?: string
+  generation?: number
+  creationTimestamp?: string
+  managedFields?: any[]
+}
+
+export interface ResourceQuotas {
+  limitsCPU?: string
+  limitsMemory?: string
+  requestsCPU?: string
+  requestsMemory?: string
+  persistentVolumeClaims?: string
+}
+
+export interface NetworkPolicyPort {
+  port: number
+  protocol?: 'TCP' | 'UDP'
+}
+
+export interface LabelSelector {
+  matchLabels?: Record<string, string>
+}
+
+export interface NetworkPolicyPeer {
+  namespaceSelector?: LabelSelector
+  podSelector?: LabelSelector
+}
+
+export interface IngressRule {
+  from?: NetworkPolicyPeer[]
+  ports?: NetworkPolicyPort[]
+}
+
+export interface NetworkPolicies {
+  allowedNamespaces?: string[]
+  ingressRules?: IngressRule[]
+}
+
+export interface EnvironmentSpec {
+  targetNamespace: string
+  activated: boolean
+  labels?: Record<string, string>
+  annotations?: Record<string, string>
+  resourceQuotas?: ResourceQuotas
+  networkPolicies?: NetworkPolicies
+}
+
+export interface EnvironmentStatus {
+  phase?: string
+  namespaceCreated?: boolean
+  resourcesApplied?: boolean
+  lastActivatedTime?: string
+  lastDeactivatedTime?: string
+  resourceCount?: {
+    deployments?: number
+    services?: number
+    configMaps?: number
+    secrets?: number
+  }
+  conditions?: Array<{
+    type: string
+    status: string
+    reason?: string
+    message?: string
+    lastTransitionTime?: string
+  }>
+}
+
+export interface Environment {
+  metadata: EnvironmentMetadata
+  spec: EnvironmentSpec
+  status?: EnvironmentStatus
+}
+
+// API Response types
+export interface EnvironmentCreateRequest {
+  name: string
+  spec: EnvironmentSpec
+}
+
+export interface EnvironmentUpdateRequest {
+  spec: EnvironmentSpec
+}
+
+export interface EnvironmentListResponse {
+  environments: Environment[]
+  count: number
+}
+
+export interface EnvironmentResponse {
+  environment: Environment
+  message: string
+}
+
+export interface EnvironmentDeleteResponse {
+  name: string
+  message: string
+}
+
+export interface EnvironmentStatusResponse {
+  status: EnvironmentStatus
+  message: string
+}
+
+// UI-specific types for compatibility with existing components
+export interface EnvironmentUIModel {
+  id: string
+  name: string
+  owner: string
+  status: 'active' | 'inactive'
+  created: string
+  targetNamespace: string
+  services: number
+  configs: number
+  secrets: number
+  workspaces: string[]
+  lastDeployed: string
+}
+
+// Converter functions
+export function environmentToUIModel(env: Environment, owner?: string): EnvironmentUIModel {
+  const createdDate = env.metadata.creationTimestamp
+    ? new Date(env.metadata.creationTimestamp)
+    : new Date()
+
+  const now = new Date()
+  const diffMs = now.getTime() - createdDate.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  let createdText = 'Just now'
+  if (diffDays > 30) {
+    createdText = `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`
+  } else if (diffDays > 7) {
+    createdText = `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`
+  } else if (diffDays > 0) {
+    createdText = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+  }
+
+  return {
+    id: env.metadata.name,
+    name: env.metadata.name,
+    owner: owner || env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown',
+    status: env.spec.activated ? 'active' : 'inactive',
+    created: createdText,
+    targetNamespace: env.spec.targetNamespace,
+    services: env.status?.resourceCount?.services || 0,
+    configs: env.status?.resourceCount?.configMaps || 0,
+    secrets: env.status?.resourceCount?.secrets || 0,
+    workspaces: [],
+    lastDeployed: env.status?.lastActivatedTime
+      ? new Date(env.status.lastActivatedTime).toLocaleString()
+      : 'Never'
+  }
+}
