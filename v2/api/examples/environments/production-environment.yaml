@@ -1,0 +1,53 @@
+apiVersion: environments.kloudlite.io/v1
+kind: Environment
+metadata:
+  name: production-environment
+spec:
+  targetNamespace: production
+  activated: true  # Environment is active
+  resourceQuotas:
+    limits.cpu: "100"
+    limits.memory: "200Gi"
+    requests.cpu: "50"
+    requests.memory: "100Gi"
+    persistentvolumeclaims: "100"
+    services.nodeports: "20"
+    services.loadbalancers: "10"
+  networkPolicies:
+    enabled: true  # Strict network isolation for production
+    allowedNamespaces:
+      - monitoring        # Allow monitoring namespace
+      - ingress-nginx    # Allow ingress controller
+      - cert-manager     # Allow cert-manager
+      - logging          # Allow logging namespace
+    ingressRules:
+      # Allow traffic from load balancers
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+      # Allow monitoring scraping
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+        ports:
+        - protocol: TCP
+          port: 9090  # Prometheus metrics
+  labels:
+    environment: production
+    team: platform-team
+    managed-by: kloudlite
+    tier: production
+    criticality: high
+  annotations:
+    description: "Production environment for live services"
+    owner: "platform-team@example.com"
+    sla: "99.99"
+    backup-policy: "daily"
+    dr-enabled: "true"

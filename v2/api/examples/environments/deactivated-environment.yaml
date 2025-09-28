@@ -1,0 +1,23 @@
+apiVersion: environments.kloudlite.io/v1
+kind: Environment
+metadata:
+  name: test-environment-deactivated
+spec:
+  targetNamespace: test-inactive
+  activated: false  # Environment is deactivated - all deployments/statefulsets will be scaled to 0
+  resourceQuotas:
+    limits.cpu: "5"
+    limits.memory: "10Gi"
+    requests.cpu: "2"
+    requests.memory: "4Gi"
+    persistentvolumeclaims: "10"
+  networkPolicies:
+    enabled: false
+  labels:
+    environment: test
+    status: inactive
+    managed-by: kloudlite
+  annotations:
+    description: "Test environment - currently deactivated to save resources"
+    owner: "qa-team@example.com"
+    deactivation-reason: "Cost optimization - not needed during weekends"

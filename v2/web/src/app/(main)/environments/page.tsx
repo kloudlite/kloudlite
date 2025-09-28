@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { EnvironmentsList } from '@/components/environments-list'
+import { environmentService } from '@/lib/services/environment.service'
+import { environmentToUIModel } from '@/types/environment'
 
 export default async function EnvironmentsPage() {
   const session = await auth()
@@ -9,9 +11,37 @@ export default async function EnvironmentsPage() {
     redirect('/auth/signin')
   }
 
-  const currentUser = session.user?.email || 'user@example.com'
+  const currentUser = session.user?.email || 'test-user'
 
-  // Mock data for environments from all users
+  // Fetch real environments from API
+  let allEnvironments = []
+  try {
+    const response = await environmentService.listEnvironments(currentUser)
+    allEnvironments = response.environments.map(env => {
+      let owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
+
+      // Try to get and decode the email if available
+      const encodedEmail = env.spec.labels?.['kloudlite.io/owner-email']
+      if (encodedEmail) {
+        try {
+          // Decode base64 URL-encoded email
+          owner = Buffer.from(encodedEmail, 'base64').toString('utf-8')
+        } catch (e) {
+          // Fall back to username if decoding fails
+          owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
+        }
+      }
+
+      return environmentToUIModel(env, owner)
+    })
+  } catch (error) {
+    console.error('Failed to fetch environments:', error)
+    // Use empty array on error
+    allEnvironments = []
+  }
+
+  // Commented out mock data - keeping for reference
+  /*
   const allEnvironments = [
     {
       id: '1',
@@ -254,7 +284,7 @@ export default async function EnvironmentsPage() {
       lastDeployed: '3 hours ago'
     },
   ]
-
+  */
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
