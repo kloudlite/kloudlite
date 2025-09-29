@@ -1,82 +1,74 @@
 import { UserManagementList } from '@/components/user-management-list'
+import { getAllUsers } from '@/lib/actions/user-actions'
+import { UserDisplay } from '@/types/user'
+import { AlertCircle } from 'lucide-react'
+import { auth } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
-// Mock data for users
-const mockUsers = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@company.com',
-    role: 'admin',
-    status: 'active',
-    lastLogin: '2 mins ago',
-    created: '6 months ago',
-    machineType: 'standard',
-    machineQuota: 2,
-    storageQuota: 100,
-  },
-  {
-    id: '2',
-    name: 'Sarah Smith',
-    email: 'sarah.smith@company.com',
-    role: 'user',
-    status: 'active',
-    lastLogin: '15 mins ago',
-    created: '4 months ago',
-    machineType: 'basic',
-    machineQuota: 1,
-    storageQuota: 50,
-  },
-  {
-    id: '3',
-    name: 'Mike Wilson',
-    email: 'mike.wilson@company.com',
-    role: 'user',
-    status: 'suspended',
-    lastLogin: '5 days ago',
-    created: '3 months ago',
-    machineType: 'basic',
-    machineQuota: 1,
-    storageQuota: 50,
-  },
-  {
-    id: '4',
-    name: 'Emma Davis',
-    email: 'emma.davis@company.com',
-    role: 'admin',
-    status: 'active',
-    lastLogin: '1 hour ago',
-    created: '5 months ago',
-    machineType: 'premium',
-    machineQuota: 5,
-    storageQuota: 500,
-  },
-  {
-    id: '5',
-    name: 'Alex Johnson',
-    email: 'alex.johnson@company.com',
-    role: 'user',
-    status: 'inactive',
-    lastLogin: '2 weeks ago',
-    created: '2 months ago',
-    machineType: 'standard',
-    machineQuota: 2,
-    storageQuota: 100,
-  },
-]
-
-export default function UsersPage() {
+// Error component
+function UsersError({ error }: { error: string }) {
   return (
     <main className="space-y-6">
-      {/* Page Header */}
       <div>
         <h1 className="text-3xl font-light tracking-tight">User Management</h1>
         <p className="text-sm text-gray-600 mt-2">
           Manage user accounts, roles, and permissions
         </p>
       </div>
-
-      {/* Users List Component */}
-      <UserManagementList users={mockUsers} />
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center max-w-md">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load users</h3>
+          <p className="text-sm text-gray-600">{error}</p>
+        </div>
+      </div>
     </main>
   )
+}
+
+export default async function UsersPage() {
+  // Check authentication and permissions
+  const session = await auth()
+  if (!session || !session.user?.email) {
+    redirect('/auth/signin')
+  }
+
+  // Check if user has admin or super-admin role
+  const userRoles = session.user?.roles || []
+  const isAdmin = userRoles.includes('admin')
+  const isSuperAdmin = userRoles.includes('super-admin')
+
+  if (!isAdmin && !isSuperAdmin) {
+    redirect('/')
+  }
+
+  try {
+    const result = await getAllUsers()
+
+    if (!result.success) {
+      return <UsersError error={result.error || 'Unknown error occurred'} />
+    }
+
+    const users: UserDisplay[] = result.users || []
+
+    return (
+      <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-3xl font-light tracking-tight">User Management</h1>
+          <p className="text-sm text-gray-600 mt-2">
+            Manage user accounts, roles, and permissions
+          </p>
+        </div>
+
+        {/* Users List Component */}
+        <UserManagementList
+          users={users}
+          currentUserRole={isSuperAdmin ? 'super-admin' : 'admin'}
+        />
+      </div>
+    )
+  } catch (error) {
+    return <UsersError error="An unexpected error occurred while loading users" />
+  }
 }

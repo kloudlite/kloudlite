@@ -169,7 +169,7 @@ func (h *EnvironmentHandlers) GetEnvironment(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name, "") // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
@@ -208,9 +208,9 @@ func (h *EnvironmentHandlers) ListEnvironments(c *gin.Context) {
 	default:
 		// List all environments (cluster-scoped, so namespace is empty)
 		if labelSelector != "" {
-			envList, err = h.envRepo.List(c.Request.Context(), "", repository.WithLabelSelector(labelSelector))
+			envList, err = h.envRepo.List(c.Request.Context(), repository.WithLabelSelector(labelSelector))
 		} else {
-			envList, err = h.envRepo.List(c.Request.Context(), "")
+			envList, err = h.envRepo.List(c.Request.Context())
 		}
 	}
 
@@ -253,7 +253,7 @@ func (h *EnvironmentHandlers) UpdateEnvironment(c *gin.Context) {
 	}
 
 	// Get existing environment
-	env, err := h.envRepo.Get(c.Request.Context(), name, "") // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment for update",
 			zap.String("name", name),
@@ -316,7 +316,7 @@ func (h *EnvironmentHandlers) PatchEnvironment(c *gin.Context) {
 	}
 
 	// Get existing environment
-	env, err := h.envRepo.Get(c.Request.Context(), name, "") // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment for patch",
 			zap.String("name", name),
@@ -392,7 +392,7 @@ func (h *EnvironmentHandlers) DeleteEnvironment(c *gin.Context) {
 	force := c.Query("force") == "true"
 
 	// Get the environment first to check if it's activated
-	env, err := h.envRepo.Get(c.Request.Context(), name, "") // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment for deletion",
 			zap.String("name", name),
@@ -420,7 +420,7 @@ func (h *EnvironmentHandlers) DeleteEnvironment(c *gin.Context) {
 	}
 
 	// Delete the environment (cluster-scoped)
-	if err := h.envRepo.Delete(c.Request.Context(), name, ""); err != nil {
+	if err := h.envRepo.Delete(c.Request.Context(), name); err != nil {
 		h.logger.Error("Failed to delete environment",
 			zap.String("name", name),
 			zap.Error(err))
@@ -450,7 +450,7 @@ func (h *EnvironmentHandlers) ActivateEnvironment(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name, "") // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
@@ -506,7 +506,7 @@ func (h *EnvironmentHandlers) DeactivateEnvironment(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name, "") // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
@@ -562,7 +562,7 @@ func (h *EnvironmentHandlers) GetEnvironmentStatus(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name, "") // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
