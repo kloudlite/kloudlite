@@ -103,13 +103,49 @@ func (w *UserWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admis
 		messages = append(messages, "Invalid email format")
 	}
 
+	// For UPDATE operations, check if email is being changed
+	if req.Operation == admissionv1.Update && req.OldObject.Raw != nil {
+		var oldUser platformv1alpha1.User
+		if err := json.Unmarshal(req.OldObject.Raw, &oldUser); err != nil {
+			w.logger.Error("Failed to unmarshal old user object: " + err.Error())
+			return &admissionv1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Message: fmt.Sprintf("Failed to parse old User object: %v", err),
+				},
+			}
+		}
+
+		// Check if email is being changed
+		if oldUser.Spec.Email != user.Spec.Email {
+			allowed = false
+			messages = append(messages, "Email cannot be changed after user creation")
+		}
+	}
+
 	// Validate name (if provided)
 	if user.Name != "" && !isValidKubernetesName(user.Name) {
 		allowed = false
 		messages = append(messages, "Invalid name format (must be lowercase alphanumeric or '-')")
 	}
 
-	// Roles validation removed - MutatingWebhook adds default roles
+	// Validate roles - users must have at least one valid role
+	if len(user.Spec.Roles) == 0 {
+		allowed = false
+		messages = append(messages, "At least one role is required")
+	} else {
+		validRoles := map[string]bool{
+			"super-admin": true,
+			"admin":       true,
+			"user":        true,
+		}
+		for _, role := range user.Spec.Roles {
+			if !validRoles[string(role)] {
+				allowed = false
+				messages = append(messages, fmt.Sprintf("Invalid role '%s'. Valid roles are: super-admin, admin, user", role))
+			}
+		}
+	}
 
 	// Build response
 	response := &admissionv1.AdmissionResponse{
@@ -150,7 +186,7 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 		})
 	}
 
-	// Add default roles if empty or missing
+	// Add default roles if empty or missing - ensure users always have at least "user" role
 	if len(user.Spec.Roles) == 0 {
 		patches = append(patches, patchOperation{
 			Op:    "add",

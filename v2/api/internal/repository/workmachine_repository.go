@@ -8,9 +8,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// WorkMachineRepository provides access to WorkMachine resources
+// WorkMachineRepository provides access to WorkMachine resources (cluster-scoped)
 type WorkMachineRepository interface {
-	Repository[*machinesv1.WorkMachine, *machinesv1.WorkMachineList]
+	ClusterRepository[*machinesv1.WorkMachine, *machinesv1.WorkMachineList]
 	GetByOwner(ctx context.Context, owner string) (*machinesv1.WorkMachine, error)
 	StartMachine(ctx context.Context, name string) error
 	StopMachine(ctx context.Context, name string) error
@@ -18,20 +18,20 @@ type WorkMachineRepository interface {
 }
 
 type workMachineRepository struct {
-	Repository[*machinesv1.WorkMachine, *machinesv1.WorkMachineList]
+	ClusterRepository[*machinesv1.WorkMachine, *machinesv1.WorkMachineList]
 	k8sClient client.Client
 }
 
 // NewWorkMachineRepository creates a new WorkMachine repository
 func NewWorkMachineRepository(k8sClient client.Client) WorkMachineRepository {
-	baseRepo := NewK8sRepository(
+	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *machinesv1.WorkMachine { return &machinesv1.WorkMachine{} },
 		func() *machinesv1.WorkMachineList { return &machinesv1.WorkMachineList{} },
 	)
 	return &workMachineRepository{
-		Repository: baseRepo,
-		k8sClient:  k8sClient,
+		ClusterRepository: baseRepo,
+		k8sClient:         k8sClient,
 	}
 }
 
@@ -54,7 +54,7 @@ func (r *workMachineRepository) GetByOwner(ctx context.Context, owner string) (*
 
 // StartMachine starts a WorkMachine
 func (r *workMachineRepository) StartMachine(ctx context.Context, name string) error {
-	machine, err := r.Get(ctx, "", name)
+	machine, err := r.Get(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (r *workMachineRepository) StartMachine(ctx context.Context, name string) e
 
 // StopMachine stops a WorkMachine
 func (r *workMachineRepository) StopMachine(ctx context.Context, name string) error {
-	machine, err := r.Get(ctx, "", name)
+	machine, err := r.Get(ctx, name)
 	if err != nil {
 		return err
 	}

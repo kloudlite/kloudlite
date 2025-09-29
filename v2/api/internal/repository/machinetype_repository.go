@@ -7,28 +7,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// MachineTypeRepository provides access to MachineType resources
+// MachineTypeRepository provides access to MachineType resources (cluster-scoped)
 type MachineTypeRepository interface {
-	Repository[*machinesv1.MachineType, *machinesv1.MachineTypeList]
+	ClusterRepository[*machinesv1.MachineType, *machinesv1.MachineTypeList]
 	ListActive(ctx context.Context) (*machinesv1.MachineTypeList, error)
 	GetByCategory(ctx context.Context, category string) (*machinesv1.MachineTypeList, error)
 }
 
 type machineTypeRepository struct {
-	Repository[*machinesv1.MachineType, *machinesv1.MachineTypeList]
+	ClusterRepository[*machinesv1.MachineType, *machinesv1.MachineTypeList]
 	k8sClient client.Client
 }
 
 // NewMachineTypeRepository creates a new MachineType repository
 func NewMachineTypeRepository(k8sClient client.Client) MachineTypeRepository {
-	baseRepo := NewK8sRepository(
+	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *machinesv1.MachineType { return &machinesv1.MachineType{} },
 		func() *machinesv1.MachineTypeList { return &machinesv1.MachineTypeList{} },
 	)
 	return &machineTypeRepository{
-		Repository: baseRepo,
-		k8sClient:  k8sClient,
+		ClusterRepository: baseRepo,
+		k8sClient:         k8sClient,
 	}
 }
 

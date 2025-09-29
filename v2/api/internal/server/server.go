@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/v2/api/internal/config"
+	"github.com/kloudlite/kloudlite/v2/api/internal/controllers"
 	"github.com/kloudlite/kloudlite/v2/api/internal/k8s"
 	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
 	"github.com/kloudlite/kloudlite/v2/api/internal/services"
@@ -14,12 +15,13 @@ import (
 )
 
 type Server struct {
-	httpServer        *http.Server
-	logger            *zap.Logger
-	config            *config.Config
-	k8sClient         *k8s.Client
-	repositoryManager *repository.Manager
-	servicesManager   *services.Manager
+	httpServer         *http.Server
+	logger             *zap.Logger
+	config             *config.Config
+	k8sClient          *k8s.Client
+	repositoryManager  *repository.Manager
+	servicesManager    *services.Manager
+	controllerManager  *controllers.Manager
 }
 
 func New(cfg *config.Config, logger *zap.Logger) *Server {
@@ -48,9 +50,17 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 	// Initialize services manager
 	servicesManager, err := services.NewManager(ctx, &services.ManagerOptions{
 		RepositoryManager: repoManager,
+		Config:            cfg,
+		Logger:            logger,
 	})
 	if err != nil {
 		logger.Fatal("Failed to create services manager", zap.Error(err))
+	}
+
+	// Initialize controller manager
+	controllerManager, err := controllers.NewManager(k8sClient.Config, logger)
+	if err != nil {
+		logger.Fatal("Failed to create controller manager", zap.Error(err))
 	}
 
 	// Setup router with dependencies
@@ -66,11 +76,19 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		k8sClient:         k8sClient,
 		repositoryManager: repoManager,
 		servicesManager:   servicesManager,
+		controllerManager: controllerManager,
 	}
 }
 
 func (s *Server) Start() error {
 	s.logger.Info("Starting server", zap.String("port", s.config.Port))
+
+	// Start controller manager in goroutine
+	go func() {
+		if err := s.controllerManager.Start(context.Background()); err != nil {
+			s.logger.Error("Controller manager stopped with error", zap.Error(err))
+		}
+	}()
 
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("failed to start server: %w", err)
