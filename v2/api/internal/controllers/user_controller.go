@@ -26,6 +26,8 @@ type UserReconciler struct {
 	Logger *zap.Logger
 }
 
+const UserFinalizerName = "user.platform.kloudlite.io/cleanup"
+
 // Reconcile handles User events and ensures each user has a WorkMachine
 func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
@@ -50,8 +52,19 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 
 	// Check if user is being deleted
 	if user.DeletionTimestamp != nil {
-		logger.Info("User is being deleted, skipping WorkMachine creation")
-		return reconcile.Result{}, nil
+		logger.Info("User is being deleted, starting cleanup")
+		return r.handleUserDeletion(ctx, user, logger)
+	}
+
+	// Add finalizer if not present
+	if !controllerutil.ContainsFinalizer(user, UserFinalizerName) {
+		logger.Info("Adding finalizer to user")
+		controllerutil.AddFinalizer(user, UserFinalizerName)
+		if err := r.Update(ctx, user); err != nil {
+			logger.Error("Failed to add finalizer", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Check if WorkMachine already exists for this user
@@ -180,6 +193,55 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 		// Don't fail the reconciliation for metadata update failures
 	}
 
+	return reconcile.Result{}, nil
+}
+
+// handleUserDeletion handles cleanup when a user is being deleted
+func (r *UserReconciler) handleUserDeletion(ctx context.Context, user *platformv1alpha1.User, logger *zap.Logger) (reconcile.Result, error) {
+	workMachineName := r.generateWorkMachineName(user)
+
+	// Clean up the WorkMachine namespace
+	namespaceName := workMachineName // Same as WorkMachine name
+	namespace := &corev1.Namespace{}
+
+	err := r.Get(ctx, client.ObjectKey{Name: namespaceName}, namespace)
+	if err == nil {
+		// Namespace exists, delete it
+		logger.Info("Deleting WorkMachine namespace", zap.String("namespace", namespaceName))
+		if err := r.Delete(ctx, namespace); err != nil && !apierrors.IsNotFound(err) {
+			logger.Error("Failed to delete namespace", zap.String("namespace", namespaceName), zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		logger.Info("Successfully deleted namespace", zap.String("namespace", namespaceName))
+	} else if !apierrors.IsNotFound(err) {
+		logger.Error("Failed to get namespace", zap.String("namespace", namespaceName), zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Clean up the WorkMachine (this should be automatic due to owner reference, but ensure it's done)
+	workMachine := &machinesv1.WorkMachine{}
+	err = r.Get(ctx, client.ObjectKey{Name: workMachineName}, workMachine)
+	if err == nil {
+		logger.Info("Deleting WorkMachine", zap.String("workMachine", workMachineName))
+		if err := r.Delete(ctx, workMachine); err != nil && !apierrors.IsNotFound(err) {
+			logger.Error("Failed to delete WorkMachine", zap.String("workMachine", workMachineName), zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		logger.Info("Successfully deleted WorkMachine", zap.String("workMachine", workMachineName))
+	} else if !apierrors.IsNotFound(err) {
+		logger.Error("Failed to get WorkMachine", zap.String("workMachine", workMachineName), zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Remove finalizer to allow user deletion
+	logger.Info("Removing finalizer from user")
+	controllerutil.RemoveFinalizer(user, UserFinalizerName)
+	if err := r.Update(ctx, user); err != nil {
+		logger.Error("Failed to remove finalizer", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("User cleanup completed successfully")
 	return reconcile.Result{}, nil
 }
 

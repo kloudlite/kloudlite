@@ -13,6 +13,7 @@ export async function NavigationWrapper() {
       displayName={session?.user?.name}
       isSuperAdmin={isSuperAdmin}
       isAdmin={isAdmin}
+      userRoles={userRoles}
     />
   )
 }
