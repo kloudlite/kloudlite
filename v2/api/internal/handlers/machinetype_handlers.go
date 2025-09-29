@@ -49,7 +49,7 @@ func (h *MachineTypeHandlers) ListMachineTypes(c *gin.Context) {
 	} else if category != "" {
 		list, err = h.manager.MachineTypeRepository.GetByCategory(ctx, category)
 	} else {
-		list, err = h.manager.MachineTypeRepository.List(ctx, "")
+		list, err = h.manager.MachineTypeRepository.List(ctx)
 	}
 
 	if err != nil {
@@ -70,7 +70,7 @@ func (h *MachineTypeHandlers) GetMachineType(c *gin.Context) {
 	ctx := c.Request.Context()
 	name := c.Param("name")
 
-	machineType, err := h.manager.MachineTypeRepository.Get(ctx, "", name)
+	machineType, err := h.manager.MachineTypeRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -173,7 +173,7 @@ func (h *MachineTypeHandlers) UpdateMachineType(c *gin.Context) {
 	}
 
 	// Get existing machine type
-	existing, err := h.manager.MachineTypeRepository.Get(ctx, "", name)
+	existing, err := h.manager.MachineTypeRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -236,7 +236,7 @@ func (h *MachineTypeHandlers) DeleteMachineType(c *gin.Context) {
 	}
 
 	// Get existing machine type
-	existing, err := h.manager.MachineTypeRepository.Get(ctx, "", name)
+	existing, err := h.manager.MachineTypeRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -259,7 +259,7 @@ func (h *MachineTypeHandlers) DeleteMachineType(c *gin.Context) {
 	}
 
 	// Delete the resource
-	if err := h.manager.MachineTypeRepository.Delete(ctx, "", name); err != nil {
+	if err := h.manager.MachineTypeRepository.Delete(ctx, name); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -289,7 +289,7 @@ func (h *MachineTypeHandlers) ActivateMachineType(c *gin.Context) {
 	}
 
 	// Get existing machine type
-	machineType, err := h.manager.MachineTypeRepository.Get(ctx, "", name)
+	machineType, err := h.manager.MachineTypeRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -346,7 +346,7 @@ func (h *MachineTypeHandlers) DeactivateMachineType(c *gin.Context) {
 	}
 
 	// Get existing machine type
-	machineType, err := h.manager.MachineTypeRepository.Get(ctx, "", name)
+	machineType, err := h.manager.MachineTypeRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -403,7 +403,7 @@ func (h *MachineTypeHandlers) ToggleMachineTypeActive(c *gin.Context) {
 	}
 
 	// Get existing machine type
-	machineType, err := h.manager.MachineTypeRepository.Get(ctx, "", name)
+	machineType, err := h.manager.MachineTypeRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{

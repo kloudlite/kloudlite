@@ -13,8 +13,10 @@ type Manager struct {
 	EnvironmentRepository repository.EnvironmentRepository
 	MachineTypeRepository repository.MachineTypeRepository
 	WorkMachineRepository repository.WorkMachineRepository
+	WorkspaceRepository   repository.WorkspaceRepository
 	UserWebhook           *webhooks.UserWebhook
 	EnvironmentWebhook    *webhooks.EnvironmentWebhook
 	MachineTypeWebhook    *webhooks.MachineTypeWebhook
 	WorkMachineWebhook    *webhooks.WorkMachineWebhook
+	// WorkspaceWebhook      *webhooks.WorkspaceWebhook // TODO: fix webhook implementation
 }

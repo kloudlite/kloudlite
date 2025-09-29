@@ -33,14 +33,14 @@ func NewOAuthHandlers(k8sClient client.Client, namespace string) *OAuthHandlers 
 
 const oauthConfigMapName = "oauth-providers-config"
 
+type PublicOAuthProvider struct {
+	Type    string `json:"type"`
+	Enabled bool   `json:"enabled"`
+}
+
 // GetOAuthProviders retrieves all OAuth provider configurations
 func (h *OAuthHandlers) GetOAuthProviders(c *gin.Context) {
-	// Check authentication
-	userEmail := c.GetHeader("X-User-Email")
-	if userEmail == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
+	// JWT middleware already handles authentication, user context is available
 
 	// Get or create the ConfigMap
 	configMap := &corev1.ConfigMap{}
@@ -99,12 +99,7 @@ func (h *OAuthHandlers) GetOAuthProviders(c *gin.Context) {
 func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 	providerType := c.Param("type")
 
-	// Check authentication
-	userEmail := c.GetHeader("X-User-Email")
-	if userEmail == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
+	// JWT middleware already handles authentication, user context is available
 
 	// Validate provider type
 	validTypes := []string{"google", "github", "microsoft"}
@@ -184,4 +179,63 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// GetPublicOAuthProviders retrieves enabled OAuth providers without secrets (public endpoint)
+func (h *OAuthHandlers) GetPublicOAuthProviders(c *gin.Context) {
+	// Get the ConfigMap
+	configMap := &corev1.ConfigMap{}
+	err := h.k8sClient.Get(context.Background(), client.ObjectKey{
+		Name:      oauthConfigMapName,
+		Namespace: h.namespace,
+	}, configMap)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Return default disabled providers
+			providers := map[string]PublicOAuthProvider{
+				"google": {
+					Type:    "google",
+					Enabled: false,
+				},
+				"github": {
+					Type:    "github",
+					Enabled: false,
+				},
+				"microsoft": {
+					Type:    "microsoft",
+					Enabled: false,
+				},
+			}
+			c.JSON(http.StatusOK, providers)
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Parse providers from ConfigMap (without secrets)
+	providers := make(map[string]PublicOAuthProvider)
+	for providerType, data := range configMap.Data {
+		var provider OAuthProvider
+		if err := json.Unmarshal([]byte(data), &provider); err != nil {
+			continue
+		}
+		// Only return type and enabled status (no secrets)
+		providers[providerType] = PublicOAuthProvider{
+			Type:    provider.Type,
+			Enabled: provider.Enabled && provider.ClientID != "",
+		}
+	}
+
+	// Ensure all provider types exist
+	for _, providerType := range []string{"google", "github", "microsoft"} {
+		if _, exists := providers[providerType]; !exists {
+			providers[providerType] = PublicOAuthProvider{
+				Type:    providerType,
+				Enabled: false,
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, providers)
 }

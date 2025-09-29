@@ -17,6 +17,7 @@ type Manager struct {
 	Environments  EnvironmentRepository
 	MachineTypes  MachineTypeRepository
 	WorkMachines  WorkMachineRepository
+	Workspaces    WorkspaceRepository
 }
 
 // ManagerOptions contains options for creating a repository manager
@@ -53,6 +54,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	environments := NewEnvironmentRepository(k8sClient)
 	machineTypes := NewMachineTypeRepository(k8sClient)
 	workMachines := NewWorkMachineRepository(k8sClient)
+	workspaces := NewWorkspaceRepository(k8sClient)
 
 	return &Manager{
 		K8sClient:    k8sClient,
@@ -60,6 +62,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 		Environments: environments,
 		MachineTypes: machineTypes,
 		WorkMachines: workMachines,
+		Workspaces:   workspaces,
 	}, nil
 }
 
@@ -69,7 +72,7 @@ func (m *Manager) HealthCheck(ctx context.Context) error {
 	// This uses the underlying k8s client to verify connectivity
 
 	// Try to list a few resources to ensure the connection is working
-	_, err := m.Users.List(ctx, "", WithLimit(1))
+	_, err := m.Users.List(ctx, WithLimit(1))
 	if err != nil {
 		return ErrConnection("failed to connect to user repository", err)
 	}
