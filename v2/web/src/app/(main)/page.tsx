@@ -1,16 +1,15 @@
-import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { WorkMachinesContent } from '@/components/work-machines-content'
 
+// Main dashboard page - middleware ensures only users with 'user' role can access this
 export default async function WorkMachinesPage() {
   const session = await auth()
 
-  if (!session) {
-    redirect('/auth/signin')
-  }
+  // Session is guaranteed to exist due to middleware checks
 
-  const currentUser = session.user?.email || 'user@example.com'
-  const isAdmin = currentUser.endsWith('@kloudlite.io')
+  const currentUser = session!.user?.email || 'user@example.com'
+  const userRoles = session!.user?.roles || []
+  const isAdmin = userRoles.includes('admin') || userRoles.includes('super-admin')
 
   // Mock data for work machines
   const workMachines = [

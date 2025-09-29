@@ -7,8 +7,6 @@ export interface UserDisplay {
   status: string
   lastLogin: string
   created: string
-  firstName?: string
-  lastName?: string
   displayName?: string
   providers?: Array<{
     provider: string
@@ -27,18 +25,13 @@ export interface CreateUserFormData {
 export interface UpdateUserFormData {
   email?: string
   displayName?: string
-  firstName?: string
-  lastName?: string
   isActive?: boolean
 }
 
 // Utility function to convert API User to UserDisplay
 export function userToDisplay(user: any): UserDisplay {
   const email = user.spec?.email || ''
-  const displayName = user.spec?.displayName ||
-    (user.spec?.firstName && user.spec?.lastName
-      ? `${user.spec.firstName} ${user.spec.lastName}`.trim()
-      : user.spec?.firstName || user.spec?.lastName || email.split('@')[0])
+  const displayName = user.spec?.displayName || email.split('@')[0]
 
   const createdAt = user.metadata?.creationTimestamp
     ? new Date(user.metadata.creationTimestamp)
@@ -60,12 +53,10 @@ export function userToDisplay(user: any): UserDisplay {
     id: user.metadata?.name || user.metadata?.uid || email,
     name: displayName,
     email: email,
-    role: userRoles.length > 1 ? userRoles.join(', ') : primaryRole, // Show all roles if multiple
+    role: userRoles.join(', '), // Always show all roles consistently
     status: user.spec?.active !== false ? 'active' : 'inactive',
     lastLogin: lastLoginAt ? formatTimeAgo(lastLoginAt) : 'Never',
     created: formatTimeAgo(createdAt),
-    firstName: user.spec?.firstName,
-    lastName: user.spec?.lastName,
     displayName: user.spec?.displayName,
     providers: user.spec?.providers?.map((p: any) => ({
       provider: p.provider,

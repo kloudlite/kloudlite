@@ -15,6 +15,7 @@ import { ChevronDown, User, LogOut, Home } from 'lucide-react'
 import { AdminNavigation } from '@/components/admin-navigation'
 import { KloudliteLogo } from '@/components/kloudlite-logo'
 
+// Admin layout - middleware ensures only users with admin/super-admin roles (and no 'user' role) can access this
 export default async function AdminLayout({
   children,
 }: {
@@ -22,13 +23,9 @@ export default async function AdminLayout({
 }) {
   const session = await auth()
 
-  // Only allow super-admin and admin users
-  const userRoles = session?.user?.roles || []
-  const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('super-admin')
-
-  if (!hasAdminAccess) {
-    redirect('/')
-  }
+  // Session and role access is guaranteed by middleware
+  const userRoles = session!.user?.roles || []
+  const hasUserRole = userRoles.includes('user')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -52,25 +49,29 @@ export default async function AdminLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1">
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">{session?.user?.name || session?.user?.email?.split('@')[0] || 'User'}</span>
+                  <span className="hidden sm:inline">{session!.user?.name || 'User'}</span>
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{session?.user?.name || session?.user?.email?.split('@')[0] || 'User'}</p>
-                    <p className="text-xs text-gray-500">{session?.user?.email}</p>
+                    <p className="text-sm font-medium">{session!.user?.name || 'User'}</p>
+                    <p className="text-xs text-gray-500">{session!.user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/" className="cursor-pointer">
-                    <Home className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {hasUserRole && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/" className="cursor-pointer">
+                        <Home className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <form action={signOutAction}>
                   <DropdownMenuItem variant="destructive" asChild>
                     <button type="submit" className="w-full">

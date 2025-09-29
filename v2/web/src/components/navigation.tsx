@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, User, Settings, LogOut, Shield, Home, Cloud, Monitor } from 'lucide-react'
+import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
 
 interface NavigationProps {
@@ -20,9 +20,10 @@ interface NavigationProps {
   displayName?: string
   isSuperAdmin?: boolean
   isAdmin?: boolean
+  userRoles?: string[]
 }
 
-export function Navigation({ email, displayName, isSuperAdmin, isAdmin }: NavigationProps) {
+export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRoles = [] }: NavigationProps) {
   const pathname = usePathname()
 
   const navItems = [
@@ -69,14 +70,14 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin }: Naviga
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-1">
                 <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{displayName || email?.split('@')[0] || 'User'}</span>
+                <span className="hidden sm:inline">{displayName || 'User'}</span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{displayName || email?.split('@')[0] || 'User'}</p>
+                  <p className="text-sm font-medium">{displayName || 'User'}</p>
                   <p className="text-xs text-gray-500">{email}</p>
                 </div>
               </DropdownMenuLabel>
@@ -87,17 +88,6 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin }: Naviga
                     <Link href="/admin" className="cursor-pointer">
                       <Shield className="mr-2 h-4 w-4" />
                       Administration
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              {isSuperAdmin && (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link href="/super-admin/dashboard" className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Platform Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
