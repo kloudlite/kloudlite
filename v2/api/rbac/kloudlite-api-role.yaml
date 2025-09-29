@@ -81,3 +81,15 @@ rules:
   - secrets
   verbs:
   - create
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
