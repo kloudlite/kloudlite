@@ -58,6 +58,7 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
   const [newPassword, setNewPassword] = useState('')
   const [isPending, startTransition] = useTransition()
   const [formError, setFormError] = useState<string | null>(null)
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState<CreateUserFormData>({
@@ -73,6 +74,7 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
       roles: []
     })
     setFormError(null)
+    setHasAttemptedSubmit(false)
     setEditingUser(null)
     setIsAddUserOpen(false)
   }
@@ -87,11 +89,22 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
   }
 
   const handleEditUser = (user: UserDisplay) => {
+    // Clear any previous errors first
+    setFormError(null)
+    setHasAttemptedSubmit(false)
+
     setEditingUser(user)
+
+    // Parse roles safely with fallback
+    let roles: string[] = []
+    if (user.role && typeof user.role === 'string') {
+      roles = user.role.split(', ').filter(role => role.trim() !== '')
+    }
+
     setFormData({
       email: user.email,
       displayName: user.displayName || '',
-      roles: user.role.split(', ')
+      roles: roles.length > 0 ? roles : ['user'] // Ensure at least one role
     })
   }
 
@@ -111,6 +124,9 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
   }
 
   const handleSubmit = async () => {
+    // Mark that user has attempted to submit
+    setHasAttemptedSubmit(true)
+
     // Clear previous errors
     setFormError(null)
 
@@ -526,7 +542,7 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
                   </button>
                 ))}
               </div>
-              {formData.roles.length === 0 && (
+              {hasAttemptedSubmit && formData.roles.length === 0 && (
                 <p className="text-sm text-destructive mt-2">At least one role is required</p>
               )}
             </div>

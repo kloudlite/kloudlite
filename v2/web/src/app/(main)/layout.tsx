@@ -1,6 +1,7 @@
 import { NavigationWrapper } from '@/components/navigation-wrapper'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
+// Main layout - middleware ensures only users with 'user' role can access this
 export default function MainLayout({
   children,
 }: {
