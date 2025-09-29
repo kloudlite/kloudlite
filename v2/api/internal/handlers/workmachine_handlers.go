@@ -257,7 +257,7 @@ func (h *WorkMachineHandlers) DeleteMyWorkMachine(c *gin.Context) {
 	}
 
 	// Delete the resource
-	if err := h.manager.WorkMachineRepository.Delete(ctx, "", machine.Name); err != nil {
+	if err := h.manager.WorkMachineRepository.Delete(ctx, machine.Name); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -386,7 +386,7 @@ func (h *WorkMachineHandlers) ListAllWorkMachines(c *gin.Context) {
 	if machineType != "" {
 		list, err = h.manager.WorkMachineRepository.ListByMachineType(ctx, machineType)
 	} else {
-		list, err = h.manager.WorkMachineRepository.List(ctx, "")
+		list, err = h.manager.WorkMachineRepository.List(ctx)
 	}
 
 	if err != nil {
@@ -421,7 +421,7 @@ func (h *WorkMachineHandlers) GetWorkMachine(c *gin.Context) {
 
 	// TODO: Check if user has admin role
 
-	machine, err := h.manager.WorkMachineRepository.Get(ctx, "", name)
+	machine, err := h.manager.WorkMachineRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{

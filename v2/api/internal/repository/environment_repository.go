@@ -7,9 +7,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// EnvironmentRepository provides operations for Environment resources
+// EnvironmentRepository provides operations for Environment resources (cluster-scoped)
 type EnvironmentRepository interface {
-	Repository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
+	ClusterRepository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
 
 	// Domain-specific methods
 	GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error)
@@ -21,28 +21,28 @@ type EnvironmentRepository interface {
 
 // environmentRepository implements EnvironmentRepository
 type environmentRepository struct {
-	Repository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
+	ClusterRepository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
 	client client.Client
 }
 
 // NewEnvironmentRepository creates a new EnvironmentRepository
 func NewEnvironmentRepository(k8sClient client.Client) EnvironmentRepository {
-	baseRepo := NewK8sRepository(
+	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *environmentsv1.Environment { return &environmentsv1.Environment{} },
 		func() *environmentsv1.EnvironmentList { return &environmentsv1.EnvironmentList{} },
 	)
 
 	return &environmentRepository{
-		Repository: baseRepo,
-		client:     k8sClient,
+		ClusterRepository: baseRepo,
+		client:            k8sClient,
 	}
 }
 
 // GetByNamespace retrieves an environment by its target namespace
 func (r *environmentRepository) GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
 	// Use field selector to find environment by target namespace
-	envs, err := r.List(ctx, "", WithFieldSelector("spec.targetNamespace="+namespace))
+	envs, err := r.List(ctx, WithFieldSelector("spec.targetNamespace="+namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -61,19 +61,19 @@ func (r *environmentRepository) GetByNamespace(ctx context.Context, namespace st
 // ListActive retrieves all active environments
 func (r *environmentRepository) ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
 	// Use field selector to find active environments
-	return r.List(ctx, "", WithFieldSelector("spec.activated=true"))
+	return r.List(ctx, WithFieldSelector("spec.activated=true"))
 }
 
 // ListInactive retrieves all inactive environments
 func (r *environmentRepository) ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
 	// Use field selector to find inactive environments
-	return r.List(ctx, "", WithFieldSelector("spec.activated=false"))
+	return r.List(ctx, WithFieldSelector("spec.activated=false"))
 }
 
 // ActivateEnvironment activates an environment by name
 func (r *environmentRepository) ActivateEnvironment(ctx context.Context, name string) error {
-	// Get the environment (cluster-scoped, so namespace is empty)
-	env, err := r.Get(ctx, name, "")
+	// Get the environment (cluster-scoped)
+	env, err := r.Get(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -98,8 +98,8 @@ func (r *environmentRepository) ActivateEnvironment(ctx context.Context, name st
 
 // DeactivateEnvironment deactivates an environment by name
 func (r *environmentRepository) DeactivateEnvironment(ctx context.Context, name string) error {
-	// Get the environment (cluster-scoped, so namespace is empty)
-	env, err := r.Get(ctx, name, "")
+	// Get the environment (cluster-scoped)
+	env, err := r.Get(ctx, name)
 	if err != nil {
 		return err
 	}

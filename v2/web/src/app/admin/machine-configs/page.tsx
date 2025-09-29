@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth'
 import { MachineConfigsList } from '@/components/machine-configs-list'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import type { MachineType } from '@/types/machine'
@@ -33,6 +35,21 @@ function transformMachineTypes(machineTypes: MachineType[]) {
 }
 
 export default async function MachineConfigsPage() {
+  // Check authentication and permissions
+  const session = await auth()
+  if (!session || !session.user?.email) {
+    redirect('/auth/signin')
+  }
+
+  // Check if user has admin or super-admin role
+  const userRoles = session.user?.roles || []
+  const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('super-admin')
+  const isSuperAdmin = userRoles.includes('super-admin')
+
+  if (!hasAdminAccess) {
+    redirect('/')
+  }
+
   // Fetch machine types from the API
   const result = await listMachineTypes()
 
@@ -43,7 +60,7 @@ export default async function MachineConfigsPage() {
   const transformedConfigs = transformMachineTypes(machineTypes)
 
   return (
-    <main className="space-y-6">
+    <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-light tracking-tight">Machine Configurations</h1>
@@ -53,7 +70,7 @@ export default async function MachineConfigsPage() {
       </div>
 
       {/* Machine Configs List Component */}
-      <MachineConfigsList configs={transformedConfigs} />
-    </main>
+      <MachineConfigsList configs={transformedConfigs} isReadOnly={!isSuperAdmin} />
+    </div>
   )
 }

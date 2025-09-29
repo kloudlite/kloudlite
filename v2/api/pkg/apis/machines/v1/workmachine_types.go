@@ -35,8 +35,13 @@ type WorkMachineSpec struct {
 	// +kubebuilder:validation:Required
 	MachineType string `json:"machineType"`
 
+	// TargetNamespace is the namespace where the WorkMachine workloads will run
+	// Defaults to wm-{username}
+	// +kubebuilder:validation:Required
+	TargetNamespace string `json:"targetNamespace"`
+
 	// DesiredState indicates whether the machine should be running or stopped
-	// +kubebuilder:validation:Enum=running;stopped
+	// +kubebuilder:validation:Enum=running;stopped;disabled
 	// +kubebuilder:default=stopped
 	DesiredState MachineState `json:"desiredState"`
 
@@ -148,6 +153,9 @@ const (
 
 	// MachineStateError means there was an error
 	MachineStateError MachineState = "error"
+
+	// MachineStateDisabled means the machine is disabled (user inactive)
+	MachineStateDisabled MachineState = "disabled"
 )
 
 // WorkMachineStatus defines the observed state of WorkMachine

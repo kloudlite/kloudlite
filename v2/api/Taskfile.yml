@@ -31,25 +31,6 @@ tasks:
     cmds:
       - rm -f server
 
-  create-k8s-user:
-    desc: Create Kubernetes user with certificates and RBAC
-    env:
-      KUBECONFIG: ./kubeconfig/k3s.yaml
-    cmds:
-      - ./scripts/create-k8s-user.sh {{.USER_NAME | default "kloudlite-api"}} {{.NAMESPACE | default "kloudlite-system"}}
-    vars:
-      USER_NAME: '{{.USER_NAME | default "kloudlite-api"}}'
-      NAMESPACE: '{{.NAMESPACE | default "kloudlite-system"}}'
-
-  setup-rbac:
-    desc: Set up RBAC for the API server
-    deps: [apply-crds]
-    cmds:
-      - task: create-k8s-user
-        vars:
-          USER_NAME: kloudlite-api
-          NAMESPACE: kloudlite-system
-      - echo "✅ RBAC setup complete. Kubeconfig saved to ./kubeconfig/kloudlite-api-kubeconfig.yaml"
 
   apply-crds:
     desc: Apply CRD definitions to cluster
@@ -58,35 +39,3 @@ tasks:
     cmds:
       - kubectl apply -f crds/
 
-  test-rbac:
-    desc: Test RBAC setup with created user
-    cmds:
-      - kubectl --kubeconfig=./kubeconfig/kloudlite-api-kubeconfig.yaml get users
-      - kubectl --kubeconfig=./kubeconfig/kloudlite-api-kubeconfig.yaml auth can-i create users --all-namespaces
-
-  run-with-k8s-auth:
-    desc: Run API server with Kubernetes user authentication
-    env:
-      KUBECONFIG: ./kubeconfig/kloudlite-api-kubeconfig.yaml
-    cmds:
-      - go run {{.MAIN_PATH}}
-
-  deploy:
-    desc: Deploy API server to Kubernetes cluster
-    cmds:
-      - ./scripts/deploy-api.sh
-
-  port-forward:
-    desc: Port-forward API service for local access
-    cmds:
-      - kubectl port-forward -n kloudlite-system svc/kloudlite-api 8080:8080
-
-  logs:
-    desc: Stream logs from API server in Kubernetes
-    cmds:
-      - kubectl logs -n kloudlite-system deployment/kloudlite-api -f
-
-  test-webhooks:
-    desc: Test webhook validation and mutation
-    cmds:
-      - ./test/test-webhook.sh

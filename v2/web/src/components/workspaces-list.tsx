@@ -2,56 +2,74 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Plus, MoreHorizontal, ExternalLink } from 'lucide-react'
+import { Plus, MoreHorizontal, ExternalLink, Loader2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-
-interface Workspace {
-  id: string
-  name: string
-  description: string
-  status: 'active' | 'idle'
-  lastActivity: string
-  branch: string
-  team: number
-  environment: string
-  language: string
-  framework: string
-}
+import type { Workspace } from '@/types/workspace'
+import { workspaceService } from '@/services/workspace-service'
 
 interface WorkspacesListProps {
   workspaces: Workspace[]
   currentUser: string
   isAdmin?: boolean
+  namespace?: string
 }
 
-export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: WorkspacesListProps) {
+export function WorkspacesList({ workspaces, currentUser, isAdmin = false, namespace = 'default' }: WorkspacesListProps) {
+  const router = useRouter()
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('mine')
-  const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
+  const [statusFilter, setStatus] = useState<'all' | 'active' | 'suspended' | 'archived'>('all')
+  const [deletingWorkspace, setDeletingWorkspace] = useState<string | null>(null)
 
-  // For demo purposes, assign workspaces to different users if admin view
-  const workspacesWithOwner = workspaces.map((ws, index) => ({
-    ...ws,
-    owner: isAdmin && scopeFilter === 'all' && index % 3 !== 0
-      ? `user${index}@team.com`
-      : currentUser
-  }))
-
-  let filteredWorkspaces = workspacesWithOwner
+  let filteredWorkspaces = workspaces
 
   // Apply scope filter (only for admins)
   if (isAdmin && scopeFilter === 'mine') {
-    filteredWorkspaces = filteredWorkspaces.filter(ws => ws.owner === currentUser)
+    filteredWorkspaces = filteredWorkspaces.filter(ws => ws.spec.owner === currentUser)
   }
 
   // Apply status filter
-  if (statusFilter === 'active') {
-    filteredWorkspaces = filteredWorkspaces.filter(ws => ws.status === 'active')
+  if (statusFilter !== 'all') {
+    filteredWorkspaces = filteredWorkspaces.filter(ws => ws.spec.status === statusFilter)
+  }
+
+  const handleDelete = async (workspace: Workspace) => {
+    if (!confirm(`Are you sure you want to delete workspace "${workspace.metadata.name}"?`)) {
+      return
+    }
+
+    setDeletingWorkspace(workspace.metadata.name)
+    try {
+      await workspaceService.delete(workspace.metadata.name, workspace.metadata.namespace)
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to delete workspace:', error)
+      alert('Failed to delete workspace')
+    } finally {
+      setDeletingWorkspace(null)
+    }
+  }
+
+  const handleWorkspaceAction = async (workspace: Workspace, action: 'suspend' | 'activate' | 'archive') => {
+    try {
+      if (action === 'suspend') {
+        await workspaceService.suspend(workspace.metadata.name, workspace.metadata.namespace)
+      } else if (action === 'activate') {
+        await workspaceService.activate(workspace.metadata.name, workspace.metadata.namespace)
+      } else if (action === 'archive') {
+        await workspaceService.archive(workspace.metadata.name, workspace.metadata.namespace)
+      }
+      router.refresh()
+    } catch (error) {
+      console.error(`Failed to ${action} workspace:`, error)
+      alert(`Failed to ${action} workspace`)
+    }
   }
 
   return (
@@ -107,13 +125,37 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: Wor
             >
               Active
             </button>
+            <button
+              onClick={() => setStatus('suspended')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                statusFilter === 'suspended'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Suspended
+            </button>
+            <button
+              onClick={() => setStatus('archived')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                statusFilter === 'archived'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Archived
+            </button>
           </div>
 
           <span className="text-sm text-gray-500">
             {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
           </span>
         </div>
-        <Button size="sm" className="gap-2">
+        <Button
+          size="sm"
+          className="gap-2"
+          onClick={() => router.push('/workspaces/new')}
+        >
           <Plus className="h-4 w-4" />
           New Workspace
         </Button>
@@ -134,13 +176,13 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: Wor
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Environment
+                Work Machine
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stack
+                Resources
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Last Activity
+                Created
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -148,66 +190,108 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: Wor
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredWorkspaces.map((workspace) => (
-              <tr key={workspace.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <Link
-                    href={`/workspaces/${workspace.id}`}
-                    className="text-sm font-medium text-gray-900 hover:text-blue-600 flex items-center gap-1"
-                  >
-                    {workspace.name}
-                    <ExternalLink className="h-3 w-3" />
-                  </Link>
-                  <p className="text-xs text-gray-500 mt-0.5">{workspace.description}</p>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {workspace.owner.split('@')[0]}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    workspace.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {workspace.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {workspace.environment}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <span>{workspace.language}</span>
-                    <span className="text-gray-400">•</span>
-                    <span>{workspace.framework}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {workspace.lastActivity}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/workspaces/${workspace.id}`}>
-                          Open Workspace
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>View Logs</DropdownMenuItem>
-                      <DropdownMenuItem>Settings</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
+            {filteredWorkspaces.map((workspace) => {
+              const isDeleting = deletingWorkspace === workspace.metadata.name
+              const statusColor = workspace.spec.status === 'active'
+                ? 'bg-green-100 text-green-800'
+                : workspace.spec.status === 'suspended'
+                ? 'bg-yellow-100 text-yellow-800'
+                : workspace.spec.status === 'archived'
+                ? 'bg-gray-100 text-gray-600'
+                : 'bg-gray-100 text-gray-600'
+
+              return (
+                <tr key={workspace.metadata.uid || workspace.metadata.name} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Link
+                      href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}
+                      className="text-sm font-medium text-gray-900 hover:text-blue-600 flex items-center gap-1"
+                    >
+                      {workspace.spec.displayName || workspace.metadata.name}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                    {workspace.spec.description && (
+                      <p className="text-xs text-gray-500 mt-0.5">{workspace.spec.description}</p>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {workspace.spec.owner.split('@')[0]}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                      {workspace.spec.status || 'active'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {workspace.spec.workMachineRef?.name || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <div className="text-xs">
+                      {workspace.spec.resourceQuota ? (
+                        <>
+                          <div>CPU: {workspace.spec.resourceQuota.cpu || '-'}</div>
+                          <div>Mem: {workspace.spec.resourceQuota.memory || '-'}</div>
+                        </>
+                      ) : (
+                        '-'
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {workspace.metadata.creationTimestamp
+                      ? new Date(workspace.metadata.creationTimestamp).toLocaleDateString()
+                      : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <MoreHorizontal className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}>
+                            Open Workspace
+                          </Link>
+                        </DropdownMenuItem>
+                        {workspace.spec.status !== 'suspended' && (
+                          <DropdownMenuItem onClick={() => handleWorkspaceAction(workspace, 'suspend')}>
+                            Suspend
+                          </DropdownMenuItem>
+                        )}
+                        {workspace.spec.status === 'suspended' && (
+                          <DropdownMenuItem onClick={() => handleWorkspaceAction(workspace, 'activate')}>
+                            Activate
+                          </DropdownMenuItem>
+                        )}
+                        {workspace.spec.status !== 'archived' && (
+                          <DropdownMenuItem onClick={() => handleWorkspaceAction(workspace, 'archive')}>
+                            Archive
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem>Settings</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDelete(workspace)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

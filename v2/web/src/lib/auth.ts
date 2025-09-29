@@ -5,7 +5,7 @@ import MicrosoftEntraId from 'next-auth/providers/microsoft-entra-id'
 import Credentials from 'next-auth/providers/credentials'
 import type { NextAuthConfig } from 'next-auth'
 import { authenticateUser } from '@/lib/actions/user-actions'
-import { apiClient } from '@/lib/api-client'
+import { unauthenticatedApiClient } from '@/lib/api-client'
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -21,19 +21,21 @@ export const authConfig: NextAuthConfig = {
         }
 
         try {
-          // Call backend API to authenticate
-          const response = await apiClient.post('/api/v1/auth/login', {
+          // Call backend API to authenticate and get JWT token
+          const response = await unauthenticatedApiClient.post('/api/v1/auth/login', {
             email: credentials.email,
             password: credentials.password
           })
 
-          if (response.token) {
-            // Return user object that will be encoded in JWT
+          if (response.token && response.user) {
+            // Return user object with JWT token that will be stored in NextAuth JWT cookie
             return {
-              id: response.email,
-              email: response.email,
-              name: response.email,
-              roles: response.roles
+              id: response.user.email,
+              email: response.user.email,
+              name: response.user.displayName || response.user.email,
+              roles: response.roles,
+              backendToken: response.token, // This will be stored in the NextAuth JWT cookie
+              isActive: response.user.isActive
             }
           }
           return null
@@ -64,14 +66,37 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
+        // Store backend JWT token for API calls
+        if ('backendToken' in user) {
+          token.backendToken = user.backendToken
+        }
         // For credentials provider, user will have roles
         if ('roles' in user) {
           token.roles = user.roles
+        }
+        if ('isActive' in user) {
+          token.isActive = user.isActive
         }
         // For OAuth providers
         if (account) {
           token.provider = account.provider
           token.providerId = account.providerAccountId
+
+          // Get JWT token from backend for OAuth providers
+          if (account.provider !== 'credentials' && user.email) {
+            try {
+              const response = await unauthenticatedApiClient.post('/api/v1/auth/token', {
+                email: user.email
+              })
+              if (response.token) {
+                token.backendToken = response.token
+                token.roles = response.roles
+                token.isActive = response.user?.isActive
+              }
+            } catch (error) {
+              console.error('Failed to get backend token for OAuth user:', error)
+            }
+          }
         }
       }
       return token
@@ -84,6 +109,12 @@ export const authConfig: NextAuthConfig = {
         }
         if (token.roles) {
           session.user.roles = token.roles as string[]
+        }
+        if (token.backendToken) {
+          session.user.backendToken = token.backendToken as string
+        }
+        if (token.isActive !== undefined) {
+          session.user.isActive = token.isActive as boolean
         }
       }
       return session
@@ -119,6 +150,14 @@ export const authConfig: NextAuthConfig = {
 
       console.log(`Sign-in successful: ${user.email} via ${account.provider}`)
       return true
+    },
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url
+      // Default redirect to homepage after login
+      return baseUrl
     },
   },
   session: {

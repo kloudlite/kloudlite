@@ -96,7 +96,7 @@ func (in *UserSpec) DeepCopyInto(out *UserSpec) {
 	}
 	if in.Roles != nil {
 		in, out := &in.Roles, &out.Roles
-		*out = make([]string, len(*in))
+		*out = make([]RoleType, len(*in))
 		copy(*out, *in)
 	}
 	if in.Active != nil {

@@ -3,8 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/kloudlite/kloudlite/v2/api/internal/config"
 	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
+	"go.uber.org/zap"
 )
 
 // Manager coordinates all services and provides a unified interface
@@ -14,6 +17,7 @@ type Manager struct {
 
 	// Individual services
 	Users UserService
+	Auth  AuthService
 
 	// You can add other services here as needed:
 	// Workspaces WorkspaceService
@@ -25,6 +29,12 @@ type Manager struct {
 type ManagerOptions struct {
 	// Repository manager
 	RepositoryManager *repository.Manager
+
+	// Configuration
+	Config *config.Config
+
+	// Logger
+	Logger *zap.Logger
 }
 
 // NewManager creates a new services manager
@@ -37,12 +47,30 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 		return nil, fmt.Errorf("RepositoryManager is required")
 	}
 
+	if opts.Config == nil {
+		return nil, fmt.Errorf("Config is required")
+	}
+
+	if opts.Logger == nil {
+		return nil, fmt.Errorf("Logger is required")
+	}
+
 	// Create individual services
-	userService := NewUserService(opts.RepositoryManager.Users)
+	userService := NewUserService(opts.RepositoryManager.Users, opts.RepositoryManager.WorkMachines)
+
+	// Create auth service
+	tokenExpiry := time.Duration(opts.Config.Auth.TokenExpiryHours) * time.Hour
+	authService := NewAuthService(
+		opts.Config.Auth.JWTSecret,
+		tokenExpiry,
+		userService,
+		opts.Logger,
+	)
 
 	return &Manager{
 		RepositoryManager: opts.RepositoryManager,
 		Users:            userService,
+		Auth:             authService,
 	}, nil
 }
 
