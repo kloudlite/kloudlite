@@ -193,8 +193,7 @@ export async function updateUser(userName: string, data: Partial<CreateUserFormD
     const updateData: UpdateUserRequest = {
       email: data.email,
       displayName: data.displayName,
-      firstName: data.firstName,
-      lastName: data.lastName,
+      roles: data.roles,
       isActive: data.isActive
     }
 
