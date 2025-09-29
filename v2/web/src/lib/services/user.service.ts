@@ -12,8 +12,6 @@ export interface User {
   spec: {
     email: string
     displayName?: string
-    firstName?: string
-    lastName?: string
     roles: string[]
     isActive?: boolean
     providers?: Array<{
@@ -36,8 +34,6 @@ export interface User {
 export interface CreateUserRequest {
   email: string
   displayName?: string
-  firstName?: string
-  lastName?: string
   roles: string[]
   isActive?: boolean
 }
@@ -45,8 +41,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   email?: string
   displayName?: string
-  firstName?: string
-  lastName?: string
+  roles?: string[]
   isActive?: boolean
 }
 
