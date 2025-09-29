@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, MoreHorizontal, UserPlus, Edit, Trash2, Key, Mail } from 'lucide-react'
+import { Plus, MoreHorizontal, UserPlus, Edit, Trash2, Key, Mail, Loader2, UserCheck, UserX } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,31 +27,205 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { createUser, updateUser, deleteUser, resetUserPassword } from '@/lib/actions/user-actions'
+import { UserDisplay, CreateUserFormData } from '@/types/user'
+import { toast } from 'sonner'
 
-interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  status: string
-  lastLogin: string
-  created: string
-  machineType: string
-  machineQuota: number
-  storageQuota: number
+// Helper function to get available roles based on current user's role
+function getAvailableRoles(currentUserRole: 'super-admin' | 'admin'): string[] {
+  if (currentUserRole === 'super-admin') {
+    return ['user', 'admin', 'super-admin']
+  } else {
+    // Admin can only create regular users
+    return ['user']
+  }
 }
 
 interface UserManagementListProps {
-  users: User[]
+  users: UserDisplay[]
+  currentUserRole: 'super-admin' | 'admin'
 }
 
-export function UserManagementList({ users: initialUsers }: UserManagementListProps) {
+export function UserManagementList({ users: initialUsers, currentUserRole }: UserManagementListProps) {
   const [users, setUsers] = useState(initialUsers)
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all')
+  const [roleFilter, setRoleFilter] = useState<'all' | 'super-admin' | 'admin' | 'user'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editingUser, setEditingUser] = useState<UserDisplay | null>(null)
+  const [deletingUser, setDeletingUser] = useState<UserDisplay | null>(null)
+  const [resettingPasswordUser, setResettingPasswordUser] = useState<UserDisplay | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [isPending, startTransition] = useTransition()
+  const [formError, setFormError] = useState<string | null>(null)
+
+  // Form state
+  const [formData, setFormData] = useState<CreateUserFormData>({
+    email: '',
+    displayName: '',
+    roles: []
+  })
+
+  const resetForm = () => {
+    setFormData({
+      email: '',
+      displayName: '',
+      roles: []
+    })
+    setFormError(null)
+    setEditingUser(null)
+    setIsAddUserOpen(false)
+  }
+
+  const resetDeleteDialog = () => {
+    setDeletingUser(null)
+  }
+
+  const resetPasswordDialog = () => {
+    setResettingPasswordUser(null)
+    setNewPassword('')
+  }
+
+  const handleEditUser = (user: UserDisplay) => {
+    setEditingUser(user)
+    setFormData({
+      email: user.email,
+      displayName: user.displayName || '',
+      roles: user.role.split(', ')
+    })
+  }
+
+  // Helper function to check if current user can edit another user
+  const canEditUser = (targetUser: UserDisplay): boolean => {
+    if (currentUserRole === 'super-admin') {
+      return true // Super admin can edit anyone
+    }
+
+    if (currentUserRole === 'admin') {
+      // Admin can only edit regular users, not other admins or super-admins
+      const targetRoles = targetUser.role.split(', ')
+      return !targetRoles.includes('admin') && !targetRoles.includes('super-admin')
+    }
+
+    return false
+  }
+
+  const handleSubmit = async () => {
+    // Clear previous errors
+    setFormError(null)
+
+    // Validate required fields
+    if (!formData.email) {
+      setFormError('Email is required')
+      return
+    }
+
+    if (!formData.roles || formData.roles.length === 0) {
+      setFormError('At least one role is required')
+      return
+    }
+
+    startTransition(async () => {
+      try {
+        if (editingUser) {
+          // Update existing user
+          const result = await updateUser(editingUser.id, formData)
+          if (result.success && result.user) {
+            setUsers(prev => prev.map(u => u.id === editingUser.id ? result.user! : u))
+            toast.success('User updated successfully')
+            resetForm()
+          } else {
+            setFormError(result.error || 'Failed to update user')
+            toast.error(result.error || 'Failed to update user')
+          }
+        } else {
+          // Create new user
+          const result = await createUser(formData)
+          if (result.success && result.user) {
+            setUsers(prev => [...prev, result.user!])
+            toast.success('User created successfully')
+            resetForm()
+          } else {
+            setFormError(result.error || 'Failed to create user')
+            toast.error(result.error || 'Failed to create user')
+          }
+        }
+      } catch (error) {
+        const errorMessage = 'An unexpected error occurred'
+        setFormError(errorMessage)
+        toast.error(errorMessage)
+        console.error('Form submission error:', error)
+      }
+    })
+  }
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return
+
+    startTransition(async () => {
+      try {
+        const result = await deleteUser(deletingUser.id)
+        if (result.success) {
+          setUsers(prev => prev.filter(u => u.id !== deletingUser.id))
+          toast.success('User deleted successfully')
+          resetDeleteDialog()
+        } else {
+          toast.error(result.error || 'Failed to delete user')
+        }
+      } catch (error) {
+        toast.error('An unexpected error occurred')
+        console.error('Delete error:', error)
+      }
+    })
+  }
+
+  const handleResetPassword = async () => {
+    if (!resettingPasswordUser || !newPassword) return
+
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters long')
+      return
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await resetUserPassword(resettingPasswordUser.id, newPassword)
+        if (result.success) {
+          toast.success('Password reset successfully')
+          resetPasswordDialog()
+        } else {
+          toast.error(result.error || 'Failed to reset password')
+        }
+      } catch (error) {
+        toast.error('An unexpected error occurred')
+        console.error('Reset password error:', error)
+      }
+    })
+  }
+
+  const handleToggleUserStatus = async (user: UserDisplay, enable: boolean) => {
+    startTransition(async () => {
+      try {
+        const action = enable ? 'activate' : 'deactivate'
+        const result = await updateUser(user.id, { isActive: enable })
+
+        if (result.success) {
+          // Update the user status in the local state
+          setUsers(prev => prev.map(u =>
+            u.id === user.id
+              ? { ...u, status: enable ? 'active' : 'inactive' }
+              : u
+          ))
+          toast.success(`User ${enable ? 'enabled' : 'disabled'} successfully`)
+        } else {
+          toast.error(result.error || `Failed to ${action} user`)
+        }
+      } catch (error) {
+        toast.error('An unexpected error occurred')
+        console.error('Toggle user status error:', error)
+      }
+    })
+  }
 
   let filteredUsers = users
 
@@ -159,9 +333,8 @@ export function UserManagementList({ users: initialUsers }: UserManagementListPr
               <th className="text-left p-4 font-medium text-sm text-gray-900">User</th>
               <th className="text-left p-4 font-medium text-sm text-gray-900">Role</th>
               <th className="text-left p-4 font-medium text-sm text-gray-900">Status</th>
-              <th className="text-left p-4 font-medium text-sm text-gray-900">Machine Type</th>
-              <th className="text-left p-4 font-medium text-sm text-gray-900">Quotas</th>
               <th className="text-left p-4 font-medium text-sm text-gray-900">Last Login</th>
+              <th className="text-left p-4 font-medium text-sm text-gray-900">Created</th>
               <th className="text-left p-4 font-medium text-sm text-gray-900">Actions</th>
             </tr>
           </thead>
@@ -175,13 +348,19 @@ export function UserManagementList({ users: initialUsers }: UserManagementListPr
                   </div>
                 </td>
                 <td className="p-4">
-                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                    user.role === 'admin'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {user.role}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {user.role.split(', ').map((role, index) => (
+                      <span key={index} className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                        role === 'super-admin'
+                          ? 'bg-purple-100 text-purple-700'
+                          : role === 'admin'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {role}
+                      </span>
+                    ))}
+                  </div>
                 </td>
                 <td className="p-4">
                   <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
@@ -195,16 +374,10 @@ export function UserManagementList({ users: initialUsers }: UserManagementListPr
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className="text-sm capitalize">{user.machineType}</span>
-                </td>
-                <td className="p-4">
-                  <div className="text-sm">
-                    <div>{user.machineQuota} machines</div>
-                    <div className="text-gray-600">{user.storageQuota}GB storage</div>
-                  </div>
-                </td>
-                <td className="p-4">
                   <span className="text-sm text-gray-600">{user.lastLogin}</span>
+                </td>
+                <td className="p-4">
+                  <span className="text-sm text-gray-600">{user.created}</span>
                 </td>
                 <td className="p-4">
                   <DropdownMenu>
@@ -214,23 +387,54 @@ export function UserManagementList({ users: initialUsers }: UserManagementListPr
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditingUser(user)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit User
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Key className="mr-2 h-4 w-4" />
-                        Reset Password
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Invite
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete User
-                      </DropdownMenuItem>
+                      {canEditUser(user) && (
+                        <>
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit User
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setResettingPasswordUser(user)}>
+                            <Key className="mr-2 h-4 w-4" />
+                            Reset Password
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send Invite
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {user.status === 'active' ? (
+                            <DropdownMenuItem
+                              className="text-orange-600"
+                              onClick={() => handleToggleUserStatus(user, false)}
+                            >
+                              <UserX className="mr-2 h-4 w-4" />
+                              Disable User
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              className="text-green-600"
+                              onClick={() => handleToggleUserStatus(user, true)}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Enable User
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => setDeletingUser(user)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete User
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {!canEditUser(user) && (
+                        <DropdownMenuItem disabled>
+                          <Edit className="mr-2 h-4 w-4" />
+                          View Only (Insufficient Permissions)
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
@@ -243,8 +447,7 @@ export function UserManagementList({ users: initialUsers }: UserManagementListPr
       {/* Add/Edit User Dialog */}
       <Dialog open={isAddUserOpen || !!editingUser} onOpenChange={(open) => {
         if (!open) {
-          setIsAddUserOpen(false)
-          setEditingUser(null)
+          resetForm()
         }
       }}>
         <DialogContent>
@@ -252,67 +455,185 @@ export function UserManagementList({ users: initialUsers }: UserManagementListPr
             <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
             <DialogDescription>
               {editingUser ? 'Update user information and permissions' : 'Create a new user account'}
+              {!editingUser && currentUserRole === 'admin' && (
+                <span className="block mt-1 text-sm text-muted-foreground">
+                  As an admin, you can only create regular users. Contact a super admin to create admin users.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" defaultValue={editingUser?.name} />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue={editingUser?.email} />
-              </div>
+          {formError && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 mx-6">
+              <p className="text-sm text-destructive">{formError}</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="role">Role</Label>
-                <Select defaultValue={editingUser?.role || 'user'}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="machine-type">Machine Type</Label>
-                <Select defaultValue={editingUser?.machineType || 'basic'}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="performance">Performance</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          )}
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="Enter email address"
+                required
+                disabled={!!editingUser}
+                className={editingUser ? "bg-muted cursor-not-allowed" : ""}
+              />
+              {editingUser && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Email cannot be changed after user creation
+                </p>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="machine-quota">Machine Quota</Label>
-                <Input id="machine-quota" type="number" defaultValue={editingUser?.machineQuota || 1} />
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                value={formData.displayName || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                placeholder="Enter display name (optional)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="roles">Roles *</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {getAvailableRoles(currentUserRole).map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => {
+                      const isSelected = formData.roles.includes(role)
+                      if (isSelected) {
+                        setFormData(prev => ({
+                          ...prev,
+                          roles: prev.roles.filter(r => r !== role)
+                        }))
+                      } else {
+                        setFormData(prev => ({
+                          ...prev,
+                          roles: [...prev.roles, role]
+                        }))
+                      }
+                    }}
+                    className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                      formData.roles.includes(role)
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background hover:bg-muted border-border'
+                    }`}
+                  >
+                    {role === 'super-admin' ? 'Super Admin' : role.charAt(0).toUpperCase() + role.slice(1)}
+                  </button>
+                ))}
               </div>
-              <div>
-                <Label htmlFor="storage-quota">Storage Quota (GB)</Label>
-                <Input id="storage-quota" type="number" defaultValue={editingUser?.storageQuota || 50} />
-              </div>
+              {formData.roles.length === 0 && (
+                <p className="text-sm text-destructive mt-2">At least one role is required</p>
+              )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setIsAddUserOpen(false)
-              setEditingUser(null)
-            }}>
+            <Button variant="outline" onClick={resetForm} disabled={isPending}>
               Cancel
             </Button>
-            <Button>
-              {editingUser ? 'Update' : 'Create'}
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending || !formData.email || formData.roles.length === 0}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {editingUser ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                editingUser ? 'Update' : 'Create'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={!!deletingUser} onOpenChange={(open) => {
+        if (!open) {
+          resetDeleteDialog()
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete user "{deletingUser?.name}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={resetDeleteDialog} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete User'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resettingPasswordUser} onOpenChange={(open) => {
+        if (!open) {
+          resetPasswordDialog()
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for user "{resettingPasswordUser?.email}". The password must be at least 8 characters long.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password (min 8 characters)"
+                minLength={8}
+                required
+                className="w-full"
+              />
+              {newPassword && newPassword.length < 8 && (
+                <p className="text-sm text-red-600">Password must be at least 8 characters long</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={resetPasswordDialog} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={isPending || newPassword.length < 8}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Resetting...
+                </>
+              ) : (
+                'Reset Password'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

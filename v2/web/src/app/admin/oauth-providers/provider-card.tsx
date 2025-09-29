@@ -14,9 +14,10 @@ import type { OAuthProvider } from '@/lib/services/oauth-provider.service'
 interface ProviderCardProps {
   provider: OAuthProvider
   displayName: string
+  isReadOnly?: boolean
 }
 
-export function ProviderCard({ provider, displayName }: ProviderCardProps) {
+export function ProviderCard({ provider, displayName, isReadOnly = false }: ProviderCardProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -86,7 +87,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
           <Switch
             checked={formData.enabled}
             onCheckedChange={handleToggle}
-            disabled={saving || isEditing}
+            disabled={saving || isEditing || isReadOnly}
             className="data-[state=checked]:bg-blue-600"
           />
         </div>
@@ -160,15 +161,17 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
               </div>
             </div>
 
-            <Button
-              onClick={() => setIsEditing(true)}
-              variant="outline"
-              size="sm"
-              className="w-full border-gray-300 hover:bg-gray-50"
-              disabled={saving}
-            >
-              Configure
-            </Button>
+            {!isReadOnly && (
+              <Button
+                onClick={() => setIsEditing(true)}
+                variant="outline"
+                size="sm"
+                className="w-full border-gray-300 hover:bg-gray-50"
+                disabled={saving}
+              >
+                Configure
+              </Button>
+            )}
           </>
         )}
       </CardContent>

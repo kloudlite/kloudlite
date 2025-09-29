@@ -12,8 +12,22 @@ type Config struct {
 	Environment string `envconfig:"ENVIRONMENT" default:"development"`
 	LogLevel    string `envconfig:"LOG_LEVEL" default:"info"`
 
+	// JWT Authentication configuration
+	Auth AuthConfig `envconfig:"AUTH"`
+
 	// Kubernetes configuration
 	Kubernetes KubernetesConfig `envconfig:"KUBERNETES"`
+}
+
+type AuthConfig struct {
+	// JWT secret for token verification (should be a strong secret)
+	JWTSecret string `envconfig:"JWT_SECRET" default:"kloudlite-jwt-secret-change-me"`
+
+	// Token expiry duration in hours
+	TokenExpiryHours int `envconfig:"TOKEN_EXPIRY_HOURS" default:"24"`
+
+	// Skip authentication for development/testing
+	SkipAuthentication bool `envconfig:"SKIP_AUTHENTICATION" default:"false"`
 }
 
 type KubernetesConfig struct {

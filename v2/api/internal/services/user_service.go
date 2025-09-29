@@ -3,45 +3,50 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"golang.org/x/crypto/bcrypt"
+	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // UserService provides business logic for User operations
 type UserService interface {
 	// CRUD operations
 	CreateUser(ctx context.Context, user *platformv1alpha1.User) (*platformv1alpha1.User, error)
-	GetUser(ctx context.Context, name, namespace string) (*platformv1alpha1.User, error)
+	GetUser(ctx context.Context, name string) (*platformv1alpha1.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*platformv1alpha1.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*platformv1alpha1.User, error)
 	UpdateUser(ctx context.Context, user *platformv1alpha1.User) (*platformv1alpha1.User, error)
-	DeleteUser(ctx context.Context, name, namespace string) error
-	ListUsers(ctx context.Context, namespace string, opts ...repository.ListOption) (*platformv1alpha1.UserList, error)
+	DeleteUser(ctx context.Context, name string) error
+	ListUsers(ctx context.Context, opts ...repository.ListOption) (*platformv1alpha1.UserList, error)
 
-	// Business operations
-	ActivateUser(ctx context.Context, name, namespace string) error
-	DeactivateUser(ctx context.Context, name, namespace string) error
+	// Domain-specific operations
+	ActivateUser(ctx context.Context, name string) (*platformv1alpha1.User, error)
+	DeactivateUser(ctx context.Context, name string) (*platformv1alpha1.User, error)
+	ResetUserPassword(ctx context.Context, name, newPassword string) error
+	UpdateUserLastLogin(ctx context.Context, name string) error
 }
 
 // userService implements UserService
 type userService struct {
-	userRepo repository.UserRepository
+	userRepo        repository.UserRepository
+	workMachineRepo repository.WorkMachineRepository
 }
 
 // NewUserService creates a new UserService
-func NewUserService(userRepo repository.UserRepository) UserService {
+func NewUserService(userRepo repository.UserRepository, workMachineRepo repository.WorkMachineRepository) UserService {
 	return &userService{
-		userRepo: userRepo,
+		userRepo:        userRepo,
+		workMachineRepo: workMachineRepo,
 	}
 }
 
 // CreateUser creates a new user
 func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.User) (*platformv1alpha1.User, error) {
-	// Set namespace if not provided
-	if user.Namespace == "" {
-		user.Namespace = "default"
-	}
+	// Users are cluster-scoped resources, no namespace needed
 
 	// All validations and mutations are handled by webhooks
 	// Just create the user in repository
@@ -52,15 +57,21 @@ func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.Use
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
+	// Create WorkMachine for the user
+	if err := s.createWorkMachineForUser(ctx, user); err != nil {
+		// Log error but don't fail user creation
+		fmt.Printf("Warning: Failed to create WorkMachine for user %s: %v\n", user.Spec.Email, err)
+	}
+
 	return user, nil
 }
 
-// GetUser retrieves a user by name and namespace
-func (s *userService) GetUser(ctx context.Context, name, namespace string) (*platformv1alpha1.User, error) {
-	user, err := s.userRepo.Get(ctx, name, namespace)
+// GetUser retrieves a user by name (cluster-scoped)
+func (s *userService) GetUser(ctx context.Context, name string) (*platformv1alpha1.User, error) {
+	user, err := s.userRepo.Get(ctx, name)
 	if err != nil {
 		if repository.IsNotFound(err) {
-			return nil, fmt.Errorf("user not found: %s/%s", namespace, name)
+			return nil, fmt.Errorf("user not found: %s", name)
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -71,7 +82,7 @@ func (s *userService) GetUser(ctx context.Context, name, namespace string) (*pla
 func (s *userService) GetUserByEmail(ctx context.Context, email string) (*platformv1alpha1.User, error) {
 	// This would need to iterate through users or use a label selector
 	// The webhook adds labels for efficient lookup
-	users, err := s.userRepo.List(ctx, "")
+	users, err := s.userRepo.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
@@ -100,10 +111,10 @@ func (s *userService) GetUserByUsername(ctx context.Context, username string) (*
 // UpdateUser updates an existing user
 func (s *userService) UpdateUser(ctx context.Context, user *platformv1alpha1.User) (*platformv1alpha1.User, error) {
 	// Get existing user to preserve system fields
-	existing, err := s.userRepo.Get(ctx, user.Name, user.Namespace)
+	existing, err := s.userRepo.Get(ctx, user.Name)
 	if err != nil {
 		if repository.IsNotFound(err) {
-			return nil, fmt.Errorf("user not found: %s/%s", user.Namespace, user.Name)
+			return nil, fmt.Errorf("user not found: %s", user.Name)
 		}
 		return nil, fmt.Errorf("failed to get user for update: %w", err)
 	}
@@ -123,46 +134,190 @@ func (s *userService) UpdateUser(ctx context.Context, user *platformv1alpha1.Use
 }
 
 // DeleteUser deletes a user
-func (s *userService) DeleteUser(ctx context.Context, name, namespace string) error {
-	if err := s.userRepo.Delete(ctx, name, namespace); err != nil {
+func (s *userService) DeleteUser(ctx context.Context, name string) error {
+	if err := s.userRepo.Delete(ctx, name); err != nil {
 		if repository.IsNotFound(err) {
-			return fmt.Errorf("user not found: %s/%s", namespace, name)
+			return fmt.Errorf("user not found: %s", name)
 		}
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
 	return nil
 }
 
+// ResetUserPassword resets a user's password
+func (s *userService) ResetUserPassword(ctx context.Context, name, newPassword string) error {
+	// Get the user first
+	user, err := s.userRepo.Get(ctx, name)
+	if err != nil {
+		if repository.IsNotFound(err) {
+			return fmt.Errorf("user not found: %s", name)
+		}
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Update the user with the new password
+	user.Spec.Password = string(hashedPassword)
+
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return fmt.Errorf("failed to update user password: %w", err)
+	}
+
+	return nil
+}
+
 // ListUsers lists users with optional filters
-func (s *userService) ListUsers(ctx context.Context, namespace string, opts ...repository.ListOption) (*platformv1alpha1.UserList, error) {
-	userList, err := s.userRepo.List(ctx, namespace, opts...)
+func (s *userService) ListUsers(ctx context.Context, opts ...repository.ListOption) (*platformv1alpha1.UserList, error) {
+	userList, err := s.userRepo.List(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 	return userList, nil
 }
 
-// ActivateUser activates a user
-func (s *userService) ActivateUser(ctx context.Context, name, namespace string) error {
-	user, err := s.GetUser(ctx, name, namespace)
+// UpdateUserLastLogin updates the last login timestamp in the user's status
+func (s *userService) UpdateUserLastLogin(ctx context.Context, name string) error {
+	// Get the user
+	user, err := s.userRepo.Get(ctx, name)
 	if err != nil {
-		return err
+		if repository.IsNotFound(err) {
+			return fmt.Errorf("user not found: %s", name)
+		}
+		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	user.Spec.Active = &[]bool{true}[0]
-	_, err = s.UpdateUser(ctx, user)
-	return err
+	// Update the last login time in status
+	now := metav1.Now()
+	user.Status.LastLogin = &now
+
+	// Update user status in repository
+	if err := s.userRepo.UpdateStatus(ctx, user); err != nil {
+		return fmt.Errorf("failed to update user last login: %w", err)
+	}
+
+	return nil
 }
 
-// DeactivateUser deactivates a user
-func (s *userService) DeactivateUser(ctx context.Context, name, namespace string) error {
-	user, err := s.GetUser(ctx, name, namespace)
-	if err != nil {
-		return err
+
+// createWorkMachineForUser creates a WorkMachine for a newly created user
+func (s *userService) createWorkMachineForUser(ctx context.Context, user *platformv1alpha1.User) error {
+	// Extract username from email (part before @)
+	username := user.Spec.Email
+	if idx := strings.Index(username, "@"); idx > 0 {
+		username = username[:idx]
+	}
+	// Replace dots and special characters with hyphens for valid k8s names
+	username = strings.ReplaceAll(username, ".", "-")
+	username = strings.ReplaceAll(username, "_", "-")
+	username = strings.ToLower(username)
+
+	// Create WorkMachine name and targetNamespace
+	workMachineName := fmt.Sprintf("wm-%s", username)
+	targetNamespace := fmt.Sprintf("wm-%s", username)
+
+	// Create WorkMachine object
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: workMachineName,
+			Labels: map[string]string{
+				"kloudlite.io/user-email": sanitizeForLabel(user.Spec.Email),
+				"kloudlite.io/managed":    "true",
+			},
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			OwnedBy:         user.Spec.Email,
+			MachineType:     "standard-2vcpu-4gb", // Default machine type
+			TargetNamespace: targetNamespace,
+			DesiredState:    machinesv1.MachineStateStopped,
+		},
 	}
 
-	user.Spec.Active = &[]bool{false}[0]
-	_, err = s.UpdateUser(ctx, user)
-	return err
+	// Check if WorkMachine already exists
+	existing, err := s.workMachineRepo.Get(ctx, workMachineName)
+	if err == nil && existing != nil {
+		// WorkMachine already exists, skip creation
+		return nil
+	}
+
+	// Create the WorkMachine
+	if err := s.workMachineRepo.Create(ctx, workMachine); err != nil {
+		if repository.IsAlreadyExists(err) {
+			// WorkMachine already exists, that's fine
+			return nil
+		}
+		return fmt.Errorf("failed to create WorkMachine: %w", err)
+	}
+
+	return nil
+}
+
+// sanitizeForLabel sanitizes a string to be used as a label value
+func sanitizeForLabel(value string) string {
+	// Replace special characters with hyphens for label value
+	sanitized := strings.ReplaceAll(value, "@", "-at-")
+	sanitized = strings.ReplaceAll(sanitized, ".", "-dot-")
+	sanitized = strings.ReplaceAll(sanitized, "_", "-")
+	sanitized = strings.ToLower(sanitized)
+
+	// Ensure it starts and ends with alphanumeric
+	sanitized = strings.Trim(sanitized, "-")
+
+	// Limit length to 63 characters (Kubernetes label value limit)
+	if len(sanitized) > 63 {
+		sanitized = sanitized[:63]
+	}
+
+	return sanitized
+}
+
+// ActivateUser activates a user account
+func (s *userService) ActivateUser(ctx context.Context, name string) (*platformv1alpha1.User, error) {
+	// Use patch to update only the active field
+	active := true
+	patchData := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"active": active,
+		},
+	}
+
+	user, err := s.userRepo.Patch(ctx, name, patchData)
+	if err != nil {
+		if repository.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found: %s", name)
+		}
+		if repository.IsConflict(err) {
+			return nil, fmt.Errorf("user has been modified by another process, please retry")
+		}
+		return nil, fmt.Errorf("failed to activate user: %w", err)
+	}
+	return user, nil
+}
+
+// DeactivateUser deactivates a user account
+func (s *userService) DeactivateUser(ctx context.Context, name string) (*platformv1alpha1.User, error) {
+	// Use patch to update only the active field
+	active := false
+	patchData := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"active": active,
+		},
+	}
+
+	user, err := s.userRepo.Patch(ctx, name, patchData)
+	if err != nil {
+		if repository.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found: %s", name)
+		}
+		if repository.IsConflict(err) {
+			return nil, fmt.Errorf("user has been modified by another process, please retry")
+		}
+		return nil, fmt.Errorf("failed to deactivate user: %w", err)
+	}
+	return user, nil
 }
 

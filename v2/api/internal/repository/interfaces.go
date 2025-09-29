@@ -7,7 +7,55 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Repository defines the common interface for all resource repositories
+// ClusterRepository defines the interface for cluster-scoped resources (no namespace)
+type ClusterRepository[T client.Object, L client.ObjectList] interface {
+	// Create creates a new resource
+	Create(ctx context.Context, obj T) error
+
+	// Get retrieves a resource by name (cluster-scoped)
+	Get(ctx context.Context, name string) (T, error)
+
+	// Update updates an existing resource
+	Update(ctx context.Context, obj T) error
+
+	// Patch patches an existing resource
+	Patch(ctx context.Context, name string, patchData map[string]interface{}) (T, error)
+
+	// Delete deletes a resource by name (cluster-scoped)
+	Delete(ctx context.Context, name string) error
+
+	// List lists resources with optional filters (cluster-scoped)
+	List(ctx context.Context, opts ...ListOption) (L, error)
+
+	// Watch watches for changes to resources (cluster-scoped)
+	Watch(ctx context.Context, opts ...WatchOption) (<-chan WatchEvent[T], error)
+}
+
+// NamespacedRepository defines the interface for namespace-scoped resources
+type NamespacedRepository[T client.Object, L client.ObjectList] interface {
+	// Create creates a new resource
+	Create(ctx context.Context, obj T) error
+
+	// Get retrieves a resource by name and namespace
+	Get(ctx context.Context, namespace, name string) (T, error)
+
+	// Update updates an existing resource
+	Update(ctx context.Context, obj T) error
+
+	// Patch patches an existing resource
+	Patch(ctx context.Context, namespace, name string, patchData map[string]interface{}) (T, error)
+
+	// Delete deletes a resource by name and namespace
+	Delete(ctx context.Context, namespace, name string) error
+
+	// List lists resources with optional filters
+	List(ctx context.Context, namespace string, opts ...ListOption) (L, error)
+
+	// Watch watches for changes to resources
+	Watch(ctx context.Context, namespace string, opts ...WatchOption) (<-chan WatchEvent[T], error)
+}
+
+// Repository defines the common interface for all resource repositories (deprecated - use specific interfaces)
 type Repository[T client.Object, L client.ObjectList] interface {
 	// Create creates a new resource
 	Create(ctx context.Context, obj T) error

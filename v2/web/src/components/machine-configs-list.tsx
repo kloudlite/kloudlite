@@ -50,6 +50,7 @@ interface MachineConfig {
 
 interface MachineConfigsListProps {
   configs: MachineConfig[]
+  isReadOnly?: boolean
 }
 
 const categoryColors: Record<string, string> = {
@@ -74,7 +75,7 @@ const categoryLabels: Record<string, string> = {
   memory: 'Memory',
 }
 
-export function MachineConfigsList({ configs: initialConfigs }: MachineConfigsListProps) {
+export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false }: MachineConfigsListProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [configs, setConfigs] = useState(initialConfigs)
@@ -173,10 +174,12 @@ export function MachineConfigsList({ configs: initialConfigs }: MachineConfigsLi
           {configs.length} configuration{configs.length !== 1 ? 's' : ''} defined
         </div>
 
-        <Button onClick={() => setIsAddConfigOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Configuration
-        </Button>
+        {!isReadOnly && (
+          <Button onClick={() => setIsAddConfigOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Configuration
+          </Button>
+        )}
       </div>
 
       {/* Configurations Table */}
@@ -189,7 +192,9 @@ export function MachineConfigsList({ configs: initialConfigs }: MachineConfigsLi
               <th className="text-left p-4 font-medium text-sm text-gray-700">Instances</th>
               <th className="text-left p-4 font-medium text-sm text-gray-700">Price</th>
               <th className="text-left p-4 font-medium text-sm text-gray-700">Status</th>
-              <th className="text-left p-4 font-medium text-sm text-gray-700">Actions</th>
+              {!isReadOnly && (
+                <th className="text-left p-4 font-medium text-sm text-gray-700">Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -259,47 +264,49 @@ export function MachineConfigsList({ configs: initialConfigs }: MachineConfigsLi
                     )}
                   </div>
                 </td>
-                <td className="p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        setEditingConfig(config)
-                        setIsActive(config.active !== false)
-                        setIsAddConfigOpen(true)
-                      }}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Configuration
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleActive(config.id, config.active || false)}>
-                        {config.active ? (
-                          <>
-                            <PowerOff className="mr-2 h-4 w-4" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <Power className="mr-2 h-4 w-4" />
-                            Activate
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => handleDelete(config.id)}
-                        disabled={isLoading}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Configuration
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
+                {!isReadOnly && (
+                  <td className="p-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setEditingConfig(config)
+                          setIsActive(config.active !== false)
+                          setIsAddConfigOpen(true)
+                        }}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Configuration
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleActive(config.id, config.active || false)}>
+                          {config.active ? (
+                            <>
+                              <PowerOff className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <Power className="mr-2 h-4 w-4" />
+                              Activate
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDelete(config.id)}
+                          disabled={isLoading}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Configuration
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

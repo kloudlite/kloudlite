@@ -4,6 +4,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// RoleType represents a user role in the platform
+// +kubebuilder:validation:Enum=super-admin;admin;user
+type RoleType string
+
+const (
+	RoleSuperAdmin RoleType = "super-admin"
+	RoleAdmin      RoleType = "admin"
+	RoleUser       RoleType = "user"
+)
+
 // ProviderAccount represents an OAuth provider account
 type ProviderAccount struct {
 	// Provider name (google, github, microsoft-entra-id)
@@ -48,13 +58,18 @@ type UserSpec struct {
 	Providers []ProviderAccount `json:"providers,omitempty"`
 
 	// Roles of the user in the platform
-	// +optional
-	Roles []string `json:"roles,omitempty"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	Roles []RoleType `json:"roles"`
 
 	// Whether the user account is active
 	// +kubebuilder:default=true
 	// +optional
 	Active *bool `json:"active,omitempty"`
+
+	// Hashed password for credential-based authentication
+	// +optional
+	Password string `json:"password,omitempty"`
 
 	// Additional metadata
 	// +optional

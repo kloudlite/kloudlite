@@ -9,6 +9,7 @@ import (
 	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
+	workspacesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/workspaces/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -77,6 +78,9 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 	if err := machinesv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add machines scheme: %w", err)
+	}
+	if err := workspacesv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add workspaces scheme: %w", err)
 	}
 
 	// Create controller-runtime client
