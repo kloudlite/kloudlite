@@ -46,7 +46,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
       }
 
       if (result?.ok) {
-        router.push('/home')
+        router.push('/')
         router.refresh()
       }
     } catch (err: any) {
@@ -58,7 +58,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
   const handleOAuthLogin = async (provider: string) => {
     setLoading(true)
     try {
-      await signIn(provider, { callbackUrl: '/home' })
+      await signIn(provider, { callbackUrl: '/' })
     } catch (error) {
       console.error(`OAuth login error with ${provider}:`, error)
       setError(`Failed to sign in with ${provider}`)

@@ -12,21 +12,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, User, Settings, LogOut, Shield } from 'lucide-react'
+import { ChevronDown, User, Settings, LogOut, Shield, Home, Cloud, Monitor } from 'lucide-react'
+import { KloudliteLogo } from './kloudlite-logo'
 
 interface NavigationProps {
   email?: string
+  displayName?: string
   isSuperAdmin?: boolean
   isAdmin?: boolean
 }
 
-export function Navigation({ email, isSuperAdmin, isAdmin }: NavigationProps) {
+export function Navigation({ email, displayName, isSuperAdmin, isAdmin }: NavigationProps) {
   const pathname = usePathname()
 
   const navItems = [
-    { href: '/', label: 'Home' },
-    { href: '/environments', label: 'Environments' },
-    { href: '/workspaces', label: 'Workspaces' },
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/environments', label: 'Environments', icon: Cloud },
+    { href: '/workspaces', label: 'Workspaces', icon: Monitor },
   ]
 
   return (
@@ -35,26 +37,26 @@ export function Navigation({ email, isSuperAdmin, isAdmin }: NavigationProps) {
         <div className="flex h-16 items-center justify-between">
           {/* Logo / Brand */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-lg font-medium">
-              Kloudlite
-            </Link>
+            <KloudliteLogo className="text-lg font-medium" />
 
             {/* Main Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
                 // Check if current path is the item's path or a sub-path
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                const Icon = item.icon
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
                       isActive
                         ? 'bg-gray-100 text-gray-900 font-medium'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                   >
+                    <Icon className="h-4 w-4" />
                     {item.label}
                   </Link>
                 )
@@ -67,14 +69,14 @@ export function Navigation({ email, isSuperAdmin, isAdmin }: NavigationProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-1">
                 <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{email?.split('@')[0] || 'User'}</span>
+                <span className="hidden sm:inline">{displayName || email?.split('@')[0] || 'User'}</span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">Account</p>
+                  <p className="text-sm font-medium">{displayName || email?.split('@')[0] || 'User'}</p>
                   <p className="text-xs text-gray-500">{email}</p>
                 </div>
               </DropdownMenuLabel>
@@ -101,14 +103,14 @@ export function Navigation({ email, isSuperAdmin, isAdmin }: NavigationProps) {
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem asChild>
-                <form action={signOutAction} className="w-full">
-                  <button type="submit" className="flex w-full items-center cursor-pointer">
+              <form action={signOutAction}>
+                <DropdownMenuItem variant="destructive" asChild>
+                  <button type="submit" className="w-full">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign out
                   </button>
-                </form>
-              </DropdownMenuItem>
+                </DropdownMenuItem>
+              </form>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
