@@ -291,8 +291,8 @@ export default async function EnvironmentsPage() {
         {/* Title and Filter Section */}
         <div className="mb-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-light tracking-tight">Environments</h1>
-            <p className="text-sm text-gray-600 mt-2">
+            <h1 className="text-2xl font-semibold text-gray-900">Environments</h1>
+            <p className="text-sm text-gray-600 mt-1.5">
               Manage development environments across your team
             </p>
           </div>

@@ -54,8 +54,8 @@ export default async function EnvironmentDetailPage({ params }: PageProps) {
           <div className="pb-4">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-light tracking-tight">{environment.name}</h1>
-                <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
+                <h1 className="text-2xl font-semibold text-gray-900">{environment.name}</h1>
+                <div className="mt-1.5 flex items-center gap-4 text-sm text-gray-600">
                   <span>Owner: {environment.owner}</span>
                   <span>•</span>
                   <span>Created: {environment.created}</span>

@@ -147,7 +147,7 @@ type NetworkPolicyPort struct {
 // EnvironmentStatus defines the observed state of Environment
 type EnvironmentStatus struct {
 	// State represents the current state of the environment
-	// +kubebuilder:validation:Enum=active;inactive;activating;deactivating;error
+	// +kubebuilder:validation:Enum=active;inactive;activating;deactivating;deleting;error
 	State EnvironmentState `json:"state,omitempty"`
 
 	// Message provides human-readable information about the current state
@@ -190,6 +190,9 @@ const (
 
 	// EnvironmentStateDeactivating means the environment is being deactivated
 	EnvironmentStateDeactivating EnvironmentState = "deactivating"
+
+	// EnvironmentStateDeleting means the environment is being deleted
+	EnvironmentStateDeleting EnvironmentState = "deleting"
 
 	// EnvironmentStateError means there was an error with the environment
 	EnvironmentStateError EnvironmentState = "error"
