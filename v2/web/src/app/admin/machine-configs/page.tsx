@@ -59,8 +59,8 @@ export default async function MachineConfigsPage() {
     <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-light tracking-tight">Machine Configurations</h1>
-        <p className="text-sm text-gray-600 mt-2">
+        <h1 className="text-2xl font-semibold text-gray-900">Machine Configurations</h1>
+        <p className="text-sm text-gray-600 mt-1.5">
           Define machine types and resource allocations
         </p>
       </div>
