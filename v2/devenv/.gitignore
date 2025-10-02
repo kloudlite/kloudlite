@@ -1,0 +1,10 @@
+# Sensitive development files - do not commit
+# Kubeconfig directory with cluster credentials
+k3s-config/
+
+# User manifests with passwords
+manifests/admin-user.yaml
+manifests/super-admin-user.yaml
+
+# K3s generated data
+k3s-data/
