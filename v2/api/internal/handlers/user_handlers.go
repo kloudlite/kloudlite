@@ -130,15 +130,7 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Validate user spec
-	if err := h.validateUserSpec(&userSpec); err != nil {
-		h.logger.Error("User validation failed", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "User validation failed",
-			"details": err.Error(),
-		})
-		return
-	}
+	// Note: Validation is handled by admission webhooks for consistency across all entry points
 
 	// Create User object (cluster-scoped, no namespace)
 	user := &platformv1alpha1.User{
@@ -158,6 +150,26 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 	createdUser, err := h.userService.CreateUser(c.Request.Context(), user)
 	if err != nil {
 		h.logger.Error("Failed to create user", zap.Error(err))
+
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			// Extract user-friendly message from webhook error
+			errorMsg := "User validation failed"
+			if strings.Contains(err.Error(), "already exists") {
+				errorMsg = "A user with this email address already exists"
+			} else if strings.Contains(err.Error(), "email") {
+				errorMsg = "Invalid email address"
+			} else if strings.Contains(err.Error(), "role") {
+				errorMsg = "Invalid user role specified"
+			}
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": errorMsg,
+			})
+			return
+		}
+
+		// For other errors, return generic message
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to create user",
 			"details": err.Error(),
@@ -266,15 +278,7 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Validate user spec for full updates
-	if err := h.validateUserSpec(&userSpec); err != nil {
-		h.logger.Error("User validation failed", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "User validation failed",
-			"details": err.Error(),
-		})
-		return
-	}
+	// Note: Validation is handled by admission webhooks for consistency across all entry points
 
 	// Update only the spec, preserve metadata including ResourceVersion
 	existingUser.Spec = userSpec
@@ -282,6 +286,26 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	updatedUser, err := h.userService.UpdateUser(c.Request.Context(), existingUser)
 	if err != nil {
 		h.logger.Error("Failed to update user", zap.Error(err), zap.String("name", name))
+
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			// Extract user-friendly message from webhook error
+			errorMsg := "User validation failed"
+			if strings.Contains(err.Error(), "already exists") {
+				errorMsg = "A user with this email address already exists"
+			} else if strings.Contains(err.Error(), "email") {
+				errorMsg = "Invalid email address"
+			} else if strings.Contains(err.Error(), "role") {
+				errorMsg = "Invalid user role specified"
+			}
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": errorMsg,
+			})
+			return
+		}
+
+		// For other errors, return generic message
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to update user",
 			"details": err.Error(),
@@ -537,38 +561,8 @@ func (h *UserHandlers) ListUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-// validateUserSpec validates the user specification
-func (h *UserHandlers) validateUserSpec(userSpec *platformv1alpha1.UserSpec) error {
-	// Validate email
-	if userSpec.Email == "" {
-		return fmt.Errorf("email is required")
-	}
-
-	// Basic email validation
-	if !strings.Contains(userSpec.Email, "@") || !strings.Contains(userSpec.Email, ".") {
-		return fmt.Errorf("invalid email format")
-	}
-
-	// Validate roles - must have at least one role
-	if len(userSpec.Roles) == 0 {
-		return fmt.Errorf("at least one role is required")
-	}
-
-	// Validate each role is valid
-	validRoles := map[string]bool{
-		"super-admin": true,
-		"admin":       true,
-		"user":        true,
-	}
-
-	for _, role := range userSpec.Roles {
-		if !validRoles[string(role)] {
-			return fmt.Errorf("invalid role '%s'. Valid roles are: super-admin, admin, user", role)
-		}
-	}
-
-	return nil
-}
+// validateUserSpec function removed - validation is now handled by admission webhooks
+// This ensures consistency across all entry points (API, kubectl, etc.)
 
 // getNamespace extracts namespace from query param, header, or uses default
 func getNamespace(c *gin.Context) string {

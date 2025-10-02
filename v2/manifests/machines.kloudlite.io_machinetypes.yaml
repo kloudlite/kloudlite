@@ -118,14 +118,9 @@ spec:
                   memory:
                     description: Memory in Gi (e.g., "4Gi", "8Gi", "16Gi")
                     type: string
-                  storage:
-                    default: 50Gi
-                    description: Storage for workspace (e.g., "50Gi", "100Gi")
-                    type: string
                 required:
                 - cpu
                 - memory
-                - storage
                 type: object
               tolerations:
                 description: Tolerations for pod scheduling
