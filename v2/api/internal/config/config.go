@@ -30,6 +30,7 @@ type AuthConfig struct {
 	SkipAuthentication bool `envconfig:"SKIP_AUTHENTICATION" default:"false"`
 }
 
+
 type KubernetesConfig struct {
 	// Kubeconfig file path (optional, will auto-detect if not provided)
 	KubeconfigPath string `envconfig:"KUBECONFIG_PATH" default:""`
