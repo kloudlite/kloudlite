@@ -77,6 +77,12 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 		return
 	}
 
+	// Update last login time
+	if err := h.userService.UpdateUserLastLogin(c.Request.Context(), user.Name); err != nil {
+		h.logger.Warn("Failed to update last login time", zap.String("email", req.Email), zap.Error(err))
+		// Don't fail the login if we can't update last login time
+	}
+
 	// Prepare response
 	response := AuthResponse{
 		Token: token,
@@ -124,6 +130,12 @@ func (h *AuthHandlers) GenerateToken(c *gin.Context) {
 		h.logger.Error("Failed to generate token", zap.String("email", req.Email), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
 		return
+	}
+
+	// Update last login time
+	if err := h.userService.UpdateUserLastLogin(c.Request.Context(), user.Name); err != nil {
+		h.logger.Warn("Failed to update last login time", zap.String("email", req.Email), zap.Error(err))
+		// Don't fail the login if we can't update last login time
 	}
 
 	// Prepare response

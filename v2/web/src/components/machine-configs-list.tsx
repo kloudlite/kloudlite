@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Plus, MoreHorizontal, Edit, Trash2, Server, Cpu, HardDrive, DollarSign, Gpu, Power, PowerOff, CheckCircle, Circle } from 'lucide-react'
+import { Plus, MoreHorizontal, Edit, Trash2, Server, Cpu, HardDrive, Gpu, Power, PowerOff, CheckCircle, Circle } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
@@ -38,11 +38,7 @@ interface MachineConfig {
   name: string
   cpu: number
   memory: number
-  storage: number
   gpu?: number
-  maxInstances: number
-  activeInstances: number
-  pricePerHour: number
   description: string
   category?: 'general' | 'compute' | 'memory' | 'gpu'
   active?: boolean
@@ -138,10 +134,8 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
         description: formData.get('description') as string,
         cpu: parseInt(formData.get('cpu') as string),
         memory: parseInt(formData.get('memory') as string),
-        storage: parseInt(formData.get('storage') as string),
         gpu: formData.get('gpu') ? parseInt(formData.get('gpu') as string) : undefined,
         category: (formData.get('category') as 'general' | 'compute' | 'memory' | 'gpu') || 'general',
-        pricePerHour: parseFloat(formData.get('pricePerHour') as string),
         active: isActive
       }
 
@@ -189,8 +183,6 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
             <tr className="border-b bg-gray-50/50">
               <th className="text-left p-4 font-medium text-sm text-gray-700">Configuration</th>
               <th className="text-left p-4 font-medium text-sm text-gray-700">Resources</th>
-              <th className="text-left p-4 font-medium text-sm text-gray-700">Instances</th>
-              <th className="text-left p-4 font-medium text-sm text-gray-700">Price</th>
               <th className="text-left p-4 font-medium text-sm text-gray-700">Status</th>
               {!isReadOnly && (
                 <th className="text-left p-4 font-medium text-sm text-gray-700">Actions</th>
@@ -220,7 +212,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                     </div>
                     <div className="flex items-center gap-2">
                       <HardDrive className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="text-gray-700">{config.memory}GB RAM, {config.storage}GB Storage</span>
+                      <span className="text-gray-700">{config.memory}GB RAM</span>
                     </div>
                     {config.gpu && (
                       <div className="flex items-center gap-2">
@@ -228,25 +220,6 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                         <span className="text-gray-700">{config.gpu} GPU</span>
                       </div>
                     )}
-                  </div>
-                </td>
-                <td className="p-4">
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium text-gray-900">
-                      {config.activeInstances} / {config.maxInstances}
-                    </div>
-                    <div className="w-24 bg-gray-200 rounded-full h-1.5">
-                      <div
-                        className="bg-blue-600 h-1.5 rounded-full"
-                        style={{ width: `${(config.activeInstances / config.maxInstances) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-1 text-sm font-semibold text-green-600">
-                    <DollarSign className="h-3.5 w-3.5" />
-                    {config.pricePerHour.toFixed(2)}/hour
                   </div>
                 </td>
                 <td className="p-4">
@@ -316,11 +289,15 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
           <div className="p-12 text-center">
             <Server className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No machine configurations</h3>
-            <p className="text-sm text-gray-500 mb-4">Get started by creating your first machine configuration.</p>
-            <Button onClick={() => setIsAddConfigOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Configuration
-            </Button>
+            <p className="text-sm text-gray-500 mb-4">
+              {isReadOnly ? 'No machine configurations have been created yet.' : 'Get started by creating your first machine configuration.'}
+            </p>
+            {!isReadOnly && (
+              <Button onClick={() => setIsAddConfigOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Configuration
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -385,41 +362,27 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                 </div>
               </div>
 
-              {/* Category and Pricing */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-                  <Select name="category" defaultValue={editingConfig?.category || 'general'} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General Purpose</SelectItem>
-                      <SelectItem value="compute-optimized">Compute Optimized</SelectItem>
-                      <SelectItem value="memory-optimized">Memory Optimized</SelectItem>
-                      <SelectItem value="gpu">GPU Accelerated</SelectItem>
-                      <SelectItem value="development">Development</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pricePerHour">Price per Hour ($)</Label>
-                  <Input
-                    id="pricePerHour"
-                    name="pricePerHour"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    defaultValue={editingConfig?.pricePerHour}
-                    required
-                  />
-                </div>
+              {/* Category */}
+              <div className="space-y-2">
+                <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+                <Select name="category" defaultValue={editingConfig?.category || 'general'} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General Purpose</SelectItem>
+                    <SelectItem value="compute-optimized">Compute Optimized</SelectItem>
+                    <SelectItem value="memory-optimized">Memory Optimized</SelectItem>
+                    <SelectItem value="gpu">GPU Accelerated</SelectItem>
+                    <SelectItem value="development">Development</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Resources */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Resources</Label>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="cpu" className="text-xs text-gray-600">CPU (vCPU)</Label>
                     <Input
@@ -439,17 +402,6 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                       type="number"
                       placeholder="8"
                       defaultValue={editingConfig?.memory}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="storage" className="text-xs text-gray-600">Storage (GB)</Label>
-                    <Input
-                      id="storage"
-                      name="storage"
-                      type="number"
-                      placeholder="100"
-                      defaultValue={editingConfig?.storage}
                       required
                     />
                   </div>

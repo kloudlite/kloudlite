@@ -49,6 +49,11 @@ type MachineTypeSpec struct {
 	// +kubebuilder:default=true
 	Active bool `json:"active"`
 
+	// IsDefault marks this machine type as the default choice when none is specified
+	// Only one machine type can be marked as default at a time
+	// +kubebuilder:default=false
+	IsDefault bool `json:"isDefault"`
+
 	// Priority for sorting in UI (lower numbers appear first)
 	// +kubebuilder:default=100
 	Priority int32 `json:"priority,omitempty"`
@@ -83,16 +88,6 @@ type MachineResources struct {
 	// GPU count (optional, e.g., "1", "2")
 	// +optional
 	GPU string `json:"gpu,omitempty"`
-
-	// Storage for workspace (e.g., "50Gi", "100Gi")
-	// +kubebuilder:validation:Required
-	// +kubebuilder:default="50Gi"
-	Storage string `json:"storage"`
-
-	// EphemeralStorage for temporary files
-	// +optional
-	// +kubebuilder:default="10Gi"
-	EphemeralStorage string `json:"ephemeralStorage,omitempty"`
 }
 
 // Toleration represents a pod toleration
