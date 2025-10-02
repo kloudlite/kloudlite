@@ -34,8 +34,8 @@ export default async function WorkspacesPage() {
       {/* Title and Filter Section */}
       <div className="mb-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-light tracking-tight">Workspaces</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="text-2xl font-semibold text-gray-900">Workspaces</h1>
+          <p className="text-sm text-gray-600 mt-1.5">
             Manage your development workspaces and collaborate with your team
           </p>
         </div>

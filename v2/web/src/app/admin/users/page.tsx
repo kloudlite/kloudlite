@@ -10,8 +10,8 @@ function UsersError({ error }: { error: string }) {
   return (
     <main className="space-y-6">
       <div>
-        <h1 className="text-3xl font-light tracking-tight">User Management</h1>
-        <p className="text-sm text-gray-600 mt-2">
+        <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
+        <p className="text-sm text-gray-600 mt-1.5">
           Manage user accounts, roles, and permissions
         </p>
       </div>
@@ -55,8 +55,8 @@ export default async function UsersPage() {
       <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-light tracking-tight">User Management</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
+          <p className="text-sm text-gray-600 mt-1.5">
             Manage user accounts, roles, and permissions
           </p>
         </div>
