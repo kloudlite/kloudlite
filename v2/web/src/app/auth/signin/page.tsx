@@ -25,22 +25,34 @@ export default async function SignInPage() {
   const enabledProviders = await getEnabledProviders()
 
   return (
-    <div className="min-h-screen flex flex-col justify-center bg-gray-50">
-      <div className="mx-auto w-full max-w-md px-6">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <KloudliteLogo className="h-10" linkToHome={false} />
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex bg-gray-900 text-white p-12 flex-col justify-between">
+        <div>
+          <KloudliteLogo className="h-8" variant="white" linkToHome={false} />
         </div>
+        <div>
+          <h2 className="text-2xl font-light mb-4">Cloud Development Environments</h2>
+          <p className="text-sm text-gray-400 leading-relaxed max-w-md">
+            Designed to reduce the development loop
+          </p>
+        </div>
+      </div>
 
-        {/* Sign In Card */}
-        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-              Sign in to your account
+      {/* Right side - Form */}
+      <div className="flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="lg:hidden mb-8">
+            <KloudliteLogo className="h-8" linkToHome={false} />
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-lg font-medium text-gray-900">
+              Sign in
             </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Enter your credentials to access your dashboard
+            <p className="mt-1 text-sm text-gray-500">
+              Access your workspace
             </p>
           </div>
 

@@ -31,11 +31,11 @@ export function WorkMachineMetrics({ cpu, memory, disk }: WorkMachineMetricsProp
               <Cpu className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-900">CPU Usage</h3>
+              <h3 className="text-sm font-semibold text-gray-900">CPU Usage</h3>
               <p className="text-xs text-gray-500">Processing power</p>
             </div>
           </div>
-          <span className={`text-2xl font-light ${getUsageTextColor(cpu)}`}>
+          <span className={`text-2xl font-medium ${getUsageTextColor(cpu)}`}>
             {cpu}%
           </span>
         </div>
@@ -61,11 +61,11 @@ export function WorkMachineMetrics({ cpu, memory, disk }: WorkMachineMetricsProp
               <MemoryStick className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-900">Memory Usage</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Memory Usage</h3>
               <p className="text-xs text-gray-500">RAM utilization</p>
             </div>
           </div>
-          <span className={`text-2xl font-light ${getUsageTextColor(memory)}`}>
+          <span className={`text-2xl font-medium ${getUsageTextColor(memory)}`}>
             {memory}%
           </span>
         </div>
@@ -81,7 +81,7 @@ export function WorkMachineMetrics({ cpu, memory, disk }: WorkMachineMetricsProp
             <span>100%</span>
           </div>
         </div>
-        <div className="mt-3 text-xs text-gray-600">
+        <div className="mt-3 text-xs text-gray-700">
           {Math.round((memory / 100) * 16)} GB / 16 GB
         </div>
       </div>
@@ -94,11 +94,11 @@ export function WorkMachineMetrics({ cpu, memory, disk }: WorkMachineMetricsProp
               <HardDrive className="h-5 w-5 text-orange-600" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-900">Disk Usage</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Disk Usage</h3>
               <p className="text-xs text-gray-500">Storage space</p>
             </div>
           </div>
-          <span className={`text-2xl font-light ${getUsageTextColor(disk)}`}>
+          <span className={`text-2xl font-medium ${getUsageTextColor(disk)}`}>
             {disk}%
           </span>
         </div>
@@ -114,7 +114,7 @@ export function WorkMachineMetrics({ cpu, memory, disk }: WorkMachineMetricsProp
             <span>100%</span>
           </div>
         </div>
-        <div className="mt-3 text-xs text-gray-600">
+        <div className="mt-3 text-xs text-gray-700">
           {Math.round((disk / 100) * 500)} GB / 500 GB
         </div>
       </div>

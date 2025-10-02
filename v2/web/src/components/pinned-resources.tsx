@@ -56,7 +56,7 @@ export function PinnedResources({
       {/* Pinned Workspaces */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <Pin className="h-4 w-4" />
             Pinned Workspaces
           </h3>
@@ -88,7 +88,7 @@ export function PinnedResources({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                          <h4 className="text-sm font-semibold text-gray-900 truncate">
                             {workspace.name}
                           </h4>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -154,7 +154,7 @@ export function PinnedResources({
       {/* Pinned Environments */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <Pin className="h-4 w-4" />
             Pinned Environments
           </h3>
@@ -186,7 +186,7 @@ export function PinnedResources({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                          <h4 className="text-sm font-semibold text-gray-900 truncate">
                             {env.name}
                           </h4>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${

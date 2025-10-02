@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Plus, MoreHorizontal, ExternalLink, Power, PowerOff, Edit } from 'lucide-react'
+import { Plus, MoreHorizontal, ExternalLink, Power, PowerOff, Edit, Loader2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,7 @@ interface EnvironmentsListProps {
   currentUser: string
 }
 
-export function EnvironmentsList({ environments, currentUser }: EnvironmentsListProps) {
+export function EnvironmentsList({ environments: initialEnvironments, currentUser }: EnvironmentsListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -33,7 +33,29 @@ export function EnvironmentsList({ environments, currentUser }: EnvironmentsList
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
   const [deleteEnvironmentName, setDeleteEnvironmentName] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [environments, setEnvironments] = useState<EnvironmentUIModel[]>(initialEnvironments)
   const router = useRouter()
+
+  // Poll for environment updates every 3 seconds
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      // Check if any environment is in a transitional state
+      const hasTransitionalEnv = environments.some(
+        env => env.status === 'deleting' || env.status === 'activating' || env.status === 'deactivating'
+      )
+
+      if (hasTransitionalEnv) {
+        router.refresh()
+      }
+    }, 3000)
+
+    return () => clearInterval(pollInterval)
+  }, [environments, router])
+
+  // Update local state when server data changes
+  useEffect(() => {
+    setEnvironments(initialEnvironments)
+  }, [initialEnvironments])
 
   let filteredEnvironments = environments
 
@@ -221,25 +243,32 @@ export function EnvironmentsList({ environments, currentUser }: EnvironmentsList
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     href={`/environments/${env.id}`}
-                    className="text-sm font-medium text-gray-900 hover:text-blue-600 flex items-center gap-1"
+                    className="text-sm font-semibold text-gray-900 hover:text-blue-600 flex items-center gap-1"
                   >
                     {env.name}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                   {env.owner.split('@')[0]}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                     env.status === 'active'
                       ? 'bg-green-100 text-green-800'
+                      : env.status === 'deleting'
+                      ? 'bg-red-100 text-red-800'
+                      : env.status === 'activating' || env.status === 'deactivating'
+                      ? 'bg-blue-100 text-blue-800'
                       : 'bg-gray-100 text-gray-600'
                   }`}>
+                    {(env.status === 'deleting' || env.status === 'activating' || env.status === 'deactivating') && (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    )}
                     {env.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                   <div className="flex items-center gap-4">
                     <span>{env.services} services</span>
                     <span className="text-gray-400">•</span>
@@ -248,56 +277,60 @@ export function EnvironmentsList({ environments, currentUser }: EnvironmentsList
                     <span>{env.secrets} secrets</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                   {env.lastDeployed}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/environments/${env.id}`}>
-                          View Details
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleEditClick(env)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Settings
-                      </DropdownMenuItem>
-                      {env.status === 'active' ? (
-                        <DropdownMenuItem
-                          onClick={() => handleDeactivate(env.name)}
-                          className="text-orange-600"
-                        >
-                          <PowerOff className="h-4 w-4 mr-2" />
-                          Deactivate
+                  {env.status === 'deleting' ? (
+                    <span className="text-xs text-gray-500">Deleting...</span>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/environments/${env.id}`}>
+                            View Details
+                          </Link>
                         </DropdownMenuItem>
-                      ) : (
                         <DropdownMenuItem
-                          onClick={() => handleActivate(env.name)}
-                          className="text-green-600"
+                          onClick={() => handleEditClick(env)}
                         >
-                          <Power className="h-4 w-4 mr-2" />
-                          Activate
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Settings
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem>Clone Environment</DropdownMenuItem>
-                      <DropdownMenuItem>Export Config</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => handleDeleteClick(env.name)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        {env.status === 'active' ? (
+                          <DropdownMenuItem
+                            onClick={() => handleDeactivate(env.name)}
+                            className="text-orange-600"
+                          >
+                            <PowerOff className="h-4 w-4 mr-2" />
+                            Deactivate
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => handleActivate(env.name)}
+                            className="text-green-600"
+                          >
+                            <Power className="h-4 w-4 mr-2" />
+                            Activate
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem>Clone Environment</DropdownMenuItem>
+                        <DropdownMenuItem>Export Config</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDeleteClick(env.name)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </td>
               </tr>
             ))}

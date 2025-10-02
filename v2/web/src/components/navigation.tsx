@@ -53,8 +53,8 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
                     href={item.href}
                     className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
                       isActive
-                        ? 'bg-gray-100 text-gray-900 font-medium'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        ? 'bg-gray-100 text-gray-900 font-semibold'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -77,7 +77,7 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{displayName || 'User'}</p>
+                  <p className="text-sm font-semibold text-gray-900">{displayName || 'User'}</p>
                   <p className="text-xs text-gray-500">{email}</p>
                 </div>
               </DropdownMenuLabel>
