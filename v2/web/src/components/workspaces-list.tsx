@@ -205,7 +205,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}
-                      className="text-sm font-medium text-gray-900 hover:text-blue-600 flex items-center gap-1"
+                      className="text-sm font-semibold text-gray-900 hover:text-blue-600 flex items-center gap-1"
                     >
                       {workspace.spec.displayName || workspace.metadata.name}
                       <ExternalLink className="h-3 w-3" />
@@ -214,7 +214,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                       <p className="text-xs text-gray-500 mt-0.5">{workspace.spec.description}</p>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {workspace.spec.owner.split('@')[0]}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -222,10 +222,10 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                       {workspace.spec.status || 'active'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {workspace.spec.workMachineRef?.name || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     <div className="text-xs">
                       {workspace.spec.resourceQuota ? (
                         <>

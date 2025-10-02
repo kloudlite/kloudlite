@@ -16,6 +16,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const (
+	environmentFinalizer = "environments.kloudlite.io/finalizer"
+)
+
 // EnvironmentReconciler reconciles Environment objects and creates namespaces
 type EnvironmentReconciler struct {
 	client.Client
@@ -46,8 +50,19 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 
 	// Check if environment is being deleted
 	if environment.DeletionTimestamp != nil {
-		logger.Info("Environment is being deleted, skipping namespace creation")
-		return reconcile.Result{}, nil
+		logger.Info("Environment is being deleted, starting cleanup")
+		return r.handleDeletion(ctx, environment, logger)
+	}
+
+	// Add finalizer if not present
+	if !controllerutil.ContainsFinalizer(environment, environmentFinalizer) {
+		logger.Info("Adding finalizer to environment")
+		controllerutil.AddFinalizer(environment, environmentFinalizer)
+		if err := r.Update(ctx, environment); err != nil {
+			logger.Error("Failed to add finalizer", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Check if namespace already exists
@@ -66,18 +81,21 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 
 		// Add environment labels
 		namespace.Labels["kloudlite.io/environment"] = environment.Name
-		namespace.Labels["kloudlite.io/created-by"] = environment.Spec.CreatedBy
-
-		// Add any custom labels from the environment spec
-		if environment.Spec.Labels != nil {
-			for k, v := range environment.Spec.Labels {
-				namespace.Labels[k] = v
-			}
-		}
 
 		// Update namespace annotations if needed
 		if namespace.Annotations == nil {
 			namespace.Annotations = make(map[string]string)
+		}
+
+		// Add createdBy to annotations (emails contain invalid label characters)
+		namespace.Annotations["kloudlite.io/created-by"] = environment.Spec.CreatedBy
+
+		// Add any custom labels from the environment spec to annotations
+		// (they may contain invalid label characters like @, =, etc.)
+		if environment.Spec.Labels != nil {
+			for k, v := range environment.Spec.Labels {
+				namespace.Annotations[k] = v
+			}
 		}
 
 		// Add any custom annotations from the environment spec
@@ -109,19 +127,21 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			Name: environment.Spec.TargetNamespace,
 			Labels: map[string]string{
 				"kloudlite.io/environment": environment.Name,
-				"kloudlite.io/created-by":  environment.Spec.CreatedBy,
 			},
 			Annotations: map[string]string{
 				"kloudlite.io/environment-uid": string(environment.UID),
 				"kloudlite.io/creation-reason": "auto-created-for-environment",
+				"kloudlite.io/created-by":      environment.Spec.CreatedBy, // Move email to annotations
 			},
 		},
 	}
 
-	// Add custom labels from environment spec
+	// Add custom labels from environment spec (skip invalid label values)
 	if environment.Spec.Labels != nil {
 		for k, v := range environment.Spec.Labels {
-			namespace.Labels[k] = v
+			// Only add valid label values (no @, =, etc.)
+			// Labels with emails or special chars should go to annotations
+			namespace.Annotations[k] = v
 		}
 	}
 
@@ -196,6 +216,60 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		// Don't fail the reconciliation for status update failures
 	}
 
+	return reconcile.Result{}, nil
+}
+
+// handleDeletion handles the deletion of an environment and its child resources
+func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
+	// Update status to show deletion in progress
+	if environment.Status.State != environmentsv1.EnvironmentStateDeleting {
+		environment.Status.State = environmentsv1.EnvironmentStateDeleting
+		environment.Status.Message = "Deleting environment and cleaning up resources"
+
+		if err := r.Status().Update(ctx, environment); err != nil {
+			logger.Warn("Failed to update environment status to deleting", zap.Error(err))
+			// Continue with deletion even if status update fails
+		}
+	}
+
+	// Check if namespace exists
+	namespace := &corev1.Namespace{}
+	err := r.Get(ctx, client.ObjectKey{Name: environment.Spec.TargetNamespace}, namespace)
+
+	if err == nil {
+		// Namespace exists, delete it
+		logger.Info("Deleting namespace for environment",
+			zap.String("namespace", environment.Spec.TargetNamespace))
+
+		if err := r.Delete(ctx, namespace); err != nil {
+			if !apierrors.IsNotFound(err) {
+				logger.Error("Failed to delete namespace", zap.Error(err))
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, err
+			}
+		}
+
+		// Requeue to wait for namespace deletion to complete
+		logger.Info("Waiting for namespace deletion to complete")
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	if !apierrors.IsNotFound(err) {
+		logger.Error("Failed to check namespace", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, err
+	}
+
+	// Namespace is deleted, remove finalizer
+	logger.Info("Namespace deleted, removing finalizer from environment")
+
+	if controllerutil.ContainsFinalizer(environment, environmentFinalizer) {
+		controllerutil.RemoveFinalizer(environment, environmentFinalizer)
+		if err := r.Update(ctx, environment); err != nil {
+			logger.Error("Failed to remove finalizer", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+	}
+
+	logger.Info("Environment cleanup completed successfully")
 	return reconcile.Result{}, nil
 }
 

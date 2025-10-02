@@ -22,27 +22,27 @@ export default async function Dashboard() {
     <main className="mx-auto max-w-7xl px-6 py-8">
         {/* Page Header */}
         <div className="py-8 border-b bg-white">
-          <h1 className="text-2xl font-light">Welcome back</h1>
-          <p className="text-sm text-gray-600 mt-1">{session.user?.email}</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Welcome back</h1>
+          <p className="text-sm text-gray-600 mt-1.5">{session.user?.email}</p>
         </div>
 
         {/* Stats Section */}
         <div className="py-8 border-b bg-white">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <p className="text-3xl font-light">{stats.environments}</p>
+              <p className="text-3xl font-semibold text-gray-900">{stats.environments}</p>
               <p className="text-sm text-gray-600 mt-1">Environments</p>
             </div>
             <div>
-              <p className="text-3xl font-light">{stats.activeEnvironments}</p>
+              <p className="text-3xl font-semibold text-gray-900">{stats.activeEnvironments}</p>
               <p className="text-sm text-gray-600 mt-1">Active</p>
             </div>
             <div>
-              <p className="text-3xl font-light">{stats.workspaces}</p>
+              <p className="text-3xl font-semibold text-gray-900">{stats.workspaces}</p>
               <p className="text-sm text-gray-600 mt-1">Workspaces</p>
             </div>
             <div>
-              <p className="text-3xl font-light">{stats.runningWorkspaces}</p>
+              <p className="text-3xl font-semibold text-gray-900">{stats.runningWorkspaces}</p>
               <p className="text-sm text-gray-600 mt-1">Running</p>
             </div>
           </div>
@@ -50,12 +50,12 @@ export default async function Dashboard() {
 
         {/* Content Section */}
         <div className="py-8 bg-white">
-          <h2 className="text-lg font-medium mb-6">Resources</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-6">Resources</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <Link href="/environments" className="group block">
               <div className="p-6 border rounded-lg hover:border-gray-400 transition-colors">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">Environments</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Environments</h3>
                   <span className="text-sm text-gray-400 group-hover:text-gray-600">→</span>
                 </div>
                 <p className="text-sm text-gray-600">Create and manage your development environments</p>
@@ -66,7 +66,7 @@ export default async function Dashboard() {
             <Link href="/workspaces" className="group block">
               <div className="p-6 border rounded-lg hover:border-gray-400 transition-colors">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">Workspaces</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Workspaces</h3>
                   <span className="text-sm text-gray-400 group-hover:text-gray-600">→</span>
                 </div>
                 <p className="text-sm text-gray-600">Manage your application workspaces</p>

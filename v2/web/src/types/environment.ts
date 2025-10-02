@@ -51,6 +51,8 @@ export interface EnvironmentSpec {
 }
 
 export interface EnvironmentStatus {
+  state?: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
+  message?: string
   phase?: string
   namespaceCreated?: boolean
   resourcesApplied?: boolean
@@ -112,7 +114,7 @@ export interface EnvironmentUIModel {
   id: string
   name: string
   owner: string
-  status: 'active' | 'inactive'
+  status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
   created: string
   targetNamespace: string
   services: number
@@ -141,11 +143,25 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     createdText = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
   }
 
+  // Determine status: prioritize deletionTimestamp, then status.state, then spec.activated
+  let status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
+
+  if (env.metadata.deletionTimestamp) {
+    // If deletionTimestamp is set, the resource is being deleted
+    status = 'deleting'
+  } else if (env.status?.state) {
+    // Use the controller-reported state if available
+    status = env.status.state
+  } else {
+    // Fall back to spec.activated
+    status = env.spec.activated ? 'active' : 'inactive'
+  }
+
   return {
     id: env.metadata.name,
     name: env.metadata.name,
     owner: owner || env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown',
-    status: env.spec.activated ? 'active' : 'inactive',
+    status,
     created: createdText,
     targetNamespace: env.spec.targetNamespace,
     services: env.status?.resourceCount?.services || 0,
