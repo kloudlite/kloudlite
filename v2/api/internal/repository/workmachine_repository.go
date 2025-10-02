@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,26 +55,58 @@ func (r *workMachineRepository) GetByOwner(ctx context.Context, owner string) (*
 
 // StartMachine starts a WorkMachine
 func (r *workMachineRepository) StartMachine(ctx context.Context, name string) error {
+	log.Printf("[DEBUG] StartMachine called for machine: %s", name)
+
 	machine, err := r.Get(ctx, name)
 	if err != nil {
+		log.Printf("[ERROR] Failed to get machine %s: %v", name, err)
 		return err
 	}
 
+	log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
+		machine.Name, machine.Status.State, machine.Spec.DesiredState)
+
 	// Update desired state to running
+	oldDesiredState := machine.Spec.DesiredState
 	machine.Spec.DesiredState = machinesv1.MachineStateRunning
-	return r.Update(ctx, machine)
+	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.DesiredState)
+
+	err = r.Update(ctx, machine)
+	if err != nil {
+		log.Printf("[ERROR] Failed to update machine %s: %v", name, err)
+		return err
+	}
+
+	log.Printf("[DEBUG] Successfully updated machine %s", name)
+	return nil
 }
 
 // StopMachine stops a WorkMachine
 func (r *workMachineRepository) StopMachine(ctx context.Context, name string) error {
+	log.Printf("[DEBUG] StopMachine called for machine: %s", name)
+
 	machine, err := r.Get(ctx, name)
 	if err != nil {
+		log.Printf("[ERROR] Failed to get machine %s: %v", name, err)
 		return err
 	}
 
+	log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
+		machine.Name, machine.Status.State, machine.Spec.DesiredState)
+
 	// Update desired state to stopped
+	oldDesiredState := machine.Spec.DesiredState
 	machine.Spec.DesiredState = machinesv1.MachineStateStopped
-	return r.Update(ctx, machine)
+	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.DesiredState)
+
+	err = r.Update(ctx, machine)
+	if err != nil {
+		log.Printf("[ERROR] Failed to update machine %s: %v", name, err)
+		return err
+	}
+
+	log.Printf("[DEBUG] Successfully updated machine %s", name)
+	return nil
 }
 
 // ListByMachineType returns WorkMachines using a specific machine type
