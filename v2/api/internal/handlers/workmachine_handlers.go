@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
@@ -24,7 +25,7 @@ func NewWorkMachineHandlers(manager *managers.Manager) *WorkMachineHandlers {
 
 // WorkMachineCreateRequest represents a request to create a WorkMachine
 type WorkMachineCreateRequest struct {
-	MachineType   string   `json:"machineType" binding:"required"`
+	MachineType   string   `json:"machineType,omitempty"` // Optional - uses default if not specified
 	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
 }
 
@@ -101,6 +102,19 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 		return
 	}
 
+	// Determine machine type - use default if not specified
+	machineType := req.MachineType
+	if machineType == "" {
+		defaultType, err := h.manager.MachineTypeRepository.GetDefault(ctx)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "No machine type specified and no default machine type configured",
+			})
+			return
+		}
+		machineType = defaultType.Name
+	}
+
 	// Create new machine
 	machine := &machinesv1.WorkMachine{
 		ObjectMeta: metav1.ObjectMeta{
@@ -108,30 +122,25 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 		},
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:       userName,
-			MachineType:   req.MachineType,
+			MachineType:   machineType,
 			DesiredState:  machinesv1.MachineStateStopped,
 			SSHPublicKeys: req.SSHPublicKeys,
 		},
 	}
 
-	// Apply defaults via webhook
-	if err := h.manager.WorkMachineWebhook.Default(ctx, machine); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
-	// Validate via webhook
-	if err := h.manager.WorkMachineWebhook.ValidateCreate(ctx, machine); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Create the resource
 	if err := h.manager.WorkMachineRepository.Create(ctx, machine); err != nil {
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			errorMsg := "Work machine validation failed"
+			if strings.Contains(err.Error(), "already exists") {
+				errorMsg = "A work machine with this configuration already exists"
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -180,7 +189,7 @@ func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
 		return
 	}
 
-	oldMachine := machine.DeepCopy()
+	_ = machine.DeepCopy()
 
 	// Update fields
 	if req.MachineType != "" {
@@ -190,24 +199,16 @@ func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
 		machine.Spec.SSHPublicKeys = req.SSHPublicKeys
 	}
 
-	// Apply defaults via webhook
-	if err := h.manager.WorkMachineWebhook.Default(ctx, machine); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
-	// Validate via webhook
-	if err := h.manager.WorkMachineWebhook.ValidateUpdate(ctx, oldMachine, machine); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Update the resource
 	if err := h.manager.WorkMachineRepository.Update(ctx, machine); err != nil {
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			errorMsg := "Work machine validation failed"
+			c.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -248,13 +249,6 @@ func (h *WorkMachineHandlers) DeleteMyWorkMachine(c *gin.Context) {
 		return
 	}
 
-	// Validate via webhook
-	if err := h.manager.WorkMachineWebhook.ValidateDelete(ctx, machine); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Delete the resource
 	if err := h.manager.WorkMachineRepository.Delete(ctx, machine.Name); err != nil {

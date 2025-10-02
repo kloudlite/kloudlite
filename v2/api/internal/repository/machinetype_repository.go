@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -12,6 +13,7 @@ type MachineTypeRepository interface {
 	ClusterRepository[*machinesv1.MachineType, *machinesv1.MachineTypeList]
 	ListActive(ctx context.Context) (*machinesv1.MachineTypeList, error)
 	GetByCategory(ctx context.Context, category string) (*machinesv1.MachineTypeList, error)
+	GetDefault(ctx context.Context) (*machinesv1.MachineType, error)
 }
 
 type machineTypeRepository struct {
@@ -66,4 +68,21 @@ func (r *machineTypeRepository) GetByCategory(ctx context.Context, category stri
 	}
 
 	return categoryList, nil
+}
+
+// GetDefault returns the default machine type
+func (r *machineTypeRepository) GetDefault(ctx context.Context) (*machinesv1.MachineType, error) {
+	list := &machinesv1.MachineTypeList{}
+	if err := r.k8sClient.List(ctx, list); err != nil {
+		return nil, err
+	}
+
+	// Find the default machine type
+	for _, mt := range list.Items {
+		if mt.Spec.IsDefault && mt.Spec.Active {
+			return &mt, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no default machine type found")
 }

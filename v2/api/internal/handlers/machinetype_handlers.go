@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
@@ -120,24 +121,19 @@ func (h *MachineTypeHandlers) CreateMachineType(c *gin.Context) {
 		Spec: req.Spec,
 	}
 
-	// Apply defaults via webhook
-	if err := h.manager.MachineTypeWebhook.Default(ctx, machineType); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
-	// Validate via webhook
-	if err := h.manager.MachineTypeWebhook.ValidateCreate(ctx, machineType); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Create the resource
 	if err := h.manager.MachineTypeRepository.Create(ctx, machineType); err != nil {
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			errorMsg := "Machine type validation failed"
+			if strings.Contains(err.Error(), "already exists") {
+				errorMsg = "A machine type with this name already exists"
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -188,7 +184,7 @@ func (h *MachineTypeHandlers) UpdateMachineType(c *gin.Context) {
 	}
 
 	// Update spec
-	oldMachineType := existing.DeepCopy()
+	_ = existing.DeepCopy()
 	existing.Spec = req.Spec
 
 	// Apply defaults via webhook
@@ -199,16 +195,15 @@ func (h *MachineTypeHandlers) UpdateMachineType(c *gin.Context) {
 		return
 	}
 
-	// Validate via webhook
-	if err := h.manager.MachineTypeWebhook.ValidateUpdate(ctx, oldMachineType, existing); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, existing); err != nil {
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			errorMsg := "Machine type validation failed"
+			c.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -236,7 +231,7 @@ func (h *MachineTypeHandlers) DeleteMachineType(c *gin.Context) {
 	}
 
 	// Get existing machine type
-	existing, err := h.manager.MachineTypeRepository.Get(ctx, name)
+	_, err := h.manager.MachineTypeRepository.Get(ctx, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -250,13 +245,6 @@ func (h *MachineTypeHandlers) DeleteMachineType(c *gin.Context) {
 		return
 	}
 
-	// Validate via webhook
-	if err := h.manager.MachineTypeWebhook.ValidateDelete(ctx, existing); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Delete the resource
 	if err := h.manager.MachineTypeRepository.Delete(ctx, name); err != nil {
@@ -306,16 +294,15 @@ func (h *MachineTypeHandlers) ActivateMachineType(c *gin.Context) {
 	// Set active to true
 	machineType.Spec.Active = true
 
-	// Apply defaults via webhook
-	if err := h.manager.MachineTypeWebhook.Default(ctx, machineType); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, machineType); err != nil {
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			errorMsg := "Machine type validation failed"
+			c.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -363,16 +350,15 @@ func (h *MachineTypeHandlers) DeactivateMachineType(c *gin.Context) {
 	// Set active to false
 	machineType.Spec.Active = false
 
-	// Apply defaults via webhook
-	if err := h.manager.MachineTypeWebhook.Default(ctx, machineType); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, machineType); err != nil {
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			errorMsg := "Machine type validation failed"
+			c.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -420,16 +406,15 @@ func (h *MachineTypeHandlers) ToggleMachineTypeActive(c *gin.Context) {
 	// Toggle active state
 	machineType.Spec.Active = !machineType.Spec.Active
 
-	// Apply defaults via webhook
-	if err := h.manager.MachineTypeWebhook.Default(ctx, machineType); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, machineType); err != nil {
+		// Check if this is a webhook validation error
+		if strings.Contains(err.Error(), "admission webhook") && strings.Contains(err.Error(), "denied the request") {
+			errorMsg := "Machine type validation failed"
+			c.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

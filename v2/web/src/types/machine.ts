@@ -15,23 +15,17 @@ export interface MachineTypeSpec {
   // Resources (can be either direct fields or in a resources object)
   cpu?: number | string
   memory?: number | string // in GB
-  storage?: number | string // in GB
   gpu?: number | string
 
   // K8s-style resources object
   resources?: {
     cpu?: string
     memory?: string
-    storage?: string
     gpu?: string
-    ephemeralStorage?: string
   }
 
   // Categorization
   category?: 'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'
-
-  // Pricing
-  pricePerHour?: number
 
   // Status
   active?: boolean
@@ -69,10 +63,8 @@ export interface MachineTypeCreateRequest {
   description?: string
   cpu: number
   memory: number
-  storage: number
   gpu?: number
   category: 'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'
-  pricePerHour: number
   active?: boolean
 }
 
@@ -81,10 +73,8 @@ export interface MachineTypeUpdateRequest {
   description?: string
   cpu?: number
   memory?: number
-  storage?: number
   gpu?: number
   category?: 'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'
-  pricePerHour?: number
   active?: boolean
 }
 

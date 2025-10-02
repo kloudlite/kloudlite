@@ -23,11 +23,7 @@ function transformMachineTypes(machineTypes: MachineType[]) {
     name: mt.spec.displayName || mt.metadata.name,
     cpu: parseResourceValue(mt.spec.resources?.cpu || mt.spec.cpu),
     memory: parseResourceValue(mt.spec.resources?.memory || mt.spec.memory),
-    storage: parseResourceValue(mt.spec.resources?.storage || mt.spec.storage),
     gpu: mt.spec.resources?.gpu ? parseResourceValue(mt.spec.resources.gpu) : mt.spec.gpu,
-    maxInstances: 10, // Default value, can be made configurable
-    activeInstances: 0, // Would need to be fetched from actual usage
-    pricePerHour: mt.spec.pricePerHour || 0,
     description: mt.spec.description || '',
     category: mt.spec.category || 'general',
     active: mt.spec.active !== false

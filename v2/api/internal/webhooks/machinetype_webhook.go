@@ -50,16 +50,6 @@ func (w *MachineTypeWebhook) Default(ctx context.Context, obj runtime.Object) er
 		machineType.Spec.Priority = 100
 	}
 
-	// Set default storage if not specified
-	if machineType.Spec.Resources.Storage == "" {
-		machineType.Spec.Resources.Storage = "50Gi"
-	}
-
-	// Set default ephemeral storage if not specified
-	if machineType.Spec.Resources.EphemeralStorage == "" {
-		machineType.Spec.Resources.EphemeralStorage = "10Gi"
-	}
-
 	return nil
 }
 
@@ -95,7 +85,7 @@ func (w *MachineTypeWebhook) ValidateCreate(ctx context.Context, obj runtime.Obj
 		return fmt.Errorf("invalid category: must be one of %v", validCategories)
 	}
 
-	// Validate resources (includes validation of required CPU, Memory, Storage)
+	// Validate resources (includes validation of required CPU, Memory)
 	if err := validateResources(&machineType.Spec.Resources); err != nil {
 		return fmt.Errorf("invalid resources: %v", err)
 	}
@@ -113,6 +103,13 @@ func (w *MachineTypeWebhook) ValidateCreate(ctx context.Context, obj runtime.Obj
 			   existing.Name != machineType.Name {
 				return fmt.Errorf("active machine type with display name %s already exists", machineType.Spec.DisplayName)
 			}
+		}
+	}
+
+	// Validate only one machine type is marked as default
+	if machineType.Spec.IsDefault {
+		if err := w.validateSingleDefault(ctx, machineType.Name); err != nil {
+			return err
 		}
 	}
 
@@ -146,7 +143,7 @@ func (w *MachineTypeWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj 
 		return fmt.Errorf("invalid category: must be one of %v", validCategories)
 	}
 
-	// Validate resources (includes validation of required CPU, Memory, Storage)
+	// Validate resources (includes validation of required CPU, Memory)
 	if err := validateResources(&newMachineType.Spec.Resources); err != nil {
 		return fmt.Errorf("invalid resources: %v", err)
 	}
@@ -164,6 +161,13 @@ func (w *MachineTypeWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj 
 			   existing.Name != newMachineType.Name {
 				return fmt.Errorf("active machine type with display name %s already exists", newMachineType.Spec.DisplayName)
 			}
+		}
+	}
+
+	// Validate only one machine type is marked as default
+	if newMachineType.Spec.IsDefault {
+		if err := w.validateSingleDefault(ctx, newMachineType.Name); err != nil {
+			return err
 		}
 	}
 
@@ -224,14 +228,6 @@ func validateResources(resources *machinesv1.MachineResources) error {
 		return fmt.Errorf("invalid memory quantity: %v", err)
 	}
 
-	// Validate Storage is provided (required field)
-	if resources.Storage == "" {
-		return fmt.Errorf("storage is required")
-	}
-	if _, err := resource.ParseQuantity(resources.Storage); err != nil {
-		return fmt.Errorf("invalid storage quantity: %v", err)
-	}
-
 	// Validate GPU if specified (optional field)
 	if resources.GPU != "" {
 		if _, err := resource.ParseQuantity(resources.GPU); err != nil {
@@ -239,10 +235,19 @@ func validateResources(resources *machinesv1.MachineResources) error {
 		}
 	}
 
-	// Validate EphemeralStorage if specified (optional field)
-	if resources.EphemeralStorage != "" {
-		if _, err := resource.ParseQuantity(resources.EphemeralStorage); err != nil {
-			return fmt.Errorf("invalid ephemeral storage quantity: %v", err)
+	return nil
+}
+
+// validateSingleDefault ensures only one machine type is marked as default
+func (w *MachineTypeWebhook) validateSingleDefault(ctx context.Context, currentName string) error {
+	existingTypes := &machinesv1.MachineTypeList{}
+	if err := w.k8sClient.List(ctx, existingTypes); err != nil {
+		return fmt.Errorf("failed to list machine types: %v", err)
+	}
+
+	for _, existing := range existingTypes.Items {
+		if existing.Spec.IsDefault && existing.Name != currentName {
+			return fmt.Errorf("another machine type '%s' is already marked as default; only one default machine type is allowed", existing.Name)
 		}
 	}
 
