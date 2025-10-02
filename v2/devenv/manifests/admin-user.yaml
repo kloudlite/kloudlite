@@ -1,0 +1,11 @@
+apiVersion: platform.kloudlite.io/v1alpha1
+kind: User
+metadata:
+  name: admin
+spec:
+  email: admin@kloudlite.io
+  displayName: Admin User
+  password: karthik001
+  active: true
+  roles:
+    - admin

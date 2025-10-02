@@ -1,6 +1,7 @@
 package webhooks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -8,20 +9,24 @@ import (
 	"net/http"
 	"strings"
 
+	"golang.org/x/crypto/bcrypt"
 	"github.com/gin-gonic/gin"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	"github.com/kloudlite/kloudlite/v2/api/pkg/logger"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type UserWebhook struct {
 	logger logger.Logger
+	client client.Client
 }
 
-func NewUserWebhook(logger logger.Logger) *UserWebhook {
+func NewUserWebhook(logger logger.Logger, client client.Client) *UserWebhook {
 	return &UserWebhook{
 		logger: logger,
+		client: client,
 	}
 }
 
@@ -101,6 +106,16 @@ func (w *UserWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admis
 	} else if !isValidEmail(user.Spec.Email) {
 		allowed = false
 		messages = append(messages, "Invalid email format")
+	} else if req.Operation == admissionv1.Create {
+		// Check email uniqueness for CREATE operations
+		if exists, err := w.checkEmailExists(user.Spec.Email); err != nil {
+			w.logger.Error("Failed to check email uniqueness: " + err.Error())
+			allowed = false
+			messages = append(messages, "Failed to validate email uniqueness")
+		} else if exists {
+			allowed = false
+			messages = append(messages, fmt.Sprintf("User with email '%s' already exists", user.Spec.Email))
+		}
 	}
 
 	// For UPDATE operations, check if email is being changed
@@ -268,6 +283,26 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 		})
 	}
 
+	// Hash password if it's provided as plain text
+	if user.Spec.Password != "" && !isPasswordHashed(user.Spec.Password) {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Spec.Password), bcrypt.DefaultCost)
+		if err != nil {
+			w.logger.Error("Failed to hash password: " + err.Error())
+			return &admissionv1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Message: fmt.Sprintf("Failed to hash password: %v", err),
+				},
+			}
+		}
+
+		patches = append(patches, patchOperation{
+			Op:    "replace",
+			Path:  "/spec/password",
+			Value: string(hashedPassword),
+		})
+	}
+
 	// Create patch response
 	patchBytes, err := json.Marshal(patches)
 	if err != nil {
@@ -334,4 +369,37 @@ func hashEmail(email string) string {
 	h := fnv.New64a()
 	h.Write([]byte(strings.ToLower(email)))
 	return fmt.Sprintf("%016x", h.Sum64())[:16]
+}
+
+// isPasswordHashed checks if a password is already bcrypt hashed
+func isPasswordHashed(password string) bool {
+	// bcrypt hashes start with $2a$, $2b$, $2x$, or $2y$ followed by cost and salt
+	return strings.HasPrefix(password, "$2a$") ||
+		strings.HasPrefix(password, "$2b$") ||
+		strings.HasPrefix(password, "$2x$") ||
+		strings.HasPrefix(password, "$2y$")
+}
+
+// checkEmailExists checks if a user with the given email already exists
+func (w *UserWebhook) checkEmailExists(email string) (bool, error) {
+	// Use the email hash label for efficient lookup
+	emailHash := hashEmail(email)
+
+	// List users with matching email hash
+	var userList platformv1alpha1.UserList
+	err := w.client.List(context.TODO(), &userList, client.MatchingLabels{
+		"kloudlite.io/user-email-hash": emailHash,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to list users: %w", err)
+	}
+
+	// Check if any user has the exact email (hash collisions are possible)
+	for _, existingUser := range userList.Items {
+		if strings.EqualFold(existingUser.Spec.Email, email) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

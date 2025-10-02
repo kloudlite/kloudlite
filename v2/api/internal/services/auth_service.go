@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"github.com/golang-jwt/jwt/v5"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	"go.uber.org/zap"
@@ -113,12 +114,17 @@ func (s *authService) VerifyPassword(ctx context.Context, email, password string
 		return nil, fmt.Errorf("authentication failed: %w", err)
 	}
 
-	// For now, we'll implement a simple password check
-	// In a real implementation, you would hash and compare passwords
-	// TODO: Implement proper password hashing and verification
-	if user.Spec.Email != email {
-		s.logger.Warn("Email mismatch during authentication", zap.String("email", email))
-		return nil, fmt.Errorf("authentication failed")
+	// Check if user has a password set
+	if user.Spec.Password == "" {
+		s.logger.Warn("User has no password set", zap.String("email", email))
+		return nil, fmt.Errorf("authentication failed: no password set")
+	}
+
+	// Verify password using bcrypt
+	err = bcrypt.CompareHashAndPassword([]byte(user.Spec.Password), []byte(password))
+	if err != nil {
+		s.logger.Warn("Password verification failed", zap.String("email", email), zap.Error(err))
+		return nil, fmt.Errorf("authentication failed: invalid password")
 	}
 
 	// Check if user is active
