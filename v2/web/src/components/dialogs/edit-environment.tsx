@@ -36,6 +36,9 @@ export function EditEnvironmentDialog({
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Prevent editing if environment is in a transitional state
+  const isTransitional = ['deleting', 'activating', 'deactivating'].includes(environment.status)
+
   const [formData, setFormData] = useState({
     cpuRequests: environment.resourceQuotas?.cpuRequests || '',
     memoryRequests: environment.resourceQuotas?.memoryRequests || '',
@@ -221,7 +224,7 @@ export function EditEnvironmentDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || isTransitional}>
               {isSubmitting ? 'Updating...' : 'Update Environment'}
             </Button>
           </DialogFooter>

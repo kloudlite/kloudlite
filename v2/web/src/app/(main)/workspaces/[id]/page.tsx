@@ -65,8 +65,8 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
           <div className="pb-6">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-light tracking-tight">{workspace.name}</h1>
-                <p className="text-sm text-gray-600 mt-1">{workspace.description}</p>
+                <h1 className="text-2xl font-semibold text-gray-900">{workspace.name}</h1>
+                <p className="text-sm text-gray-600 mt-1.5">{workspace.description}</p>
                 <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
                   <span>Environment: {workspace.environment}</span>
                   <span>•</span>

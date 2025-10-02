@@ -78,8 +78,8 @@ export function AdminPolicies() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-light tracking-tight">Machine Policies</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="text-2xl font-semibold text-gray-900">Machine Policies</h1>
+          <p className="text-sm text-gray-600 mt-1.5">
             Configure machine types, resource limits, and user policies
           </p>
         </div>
