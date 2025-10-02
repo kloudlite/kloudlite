@@ -11,7 +11,8 @@ import {
   HardDrive,
   Zap,
   AlertCircle,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,68 +36,39 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-interface MachineType {
-  id: string
-  name: string
-  cpu: number
-  memory: number
-  disk: number
-  description: string
-}
-
 interface WorkMachineControlsProps {
   machineId: string
   machineName: string
   status: 'active' | 'idle' | 'stopped'
+  currentState: string
+  desiredState: string
   currentType?: string
+  availableMachineTypes: any[]
   onStart?: () => void
   onStop?: () => void
   onTypeChange?: (typeId: string) => void
+  isLoading?: boolean
 }
 
-const machineTypes: MachineType[] = [
-  {
-    id: 'basic',
-    name: 'Basic',
-    cpu: 2,
-    memory: 4,
-    disk: 100,
-    description: 'For light development work'
-  },
-  {
-    id: 'standard',
-    name: 'Standard',
-    cpu: 4,
-    memory: 8,
-    disk: 250,
-    description: 'For regular development'
-  },
-  {
-    id: 'performance',
-    name: 'Performance',
-    cpu: 8,
-    memory: 16,
-    disk: 500,
-    description: 'For heavy workloads'
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    cpu: 16,
-    memory: 32,
-    disk: 1000,
-    description: 'For enterprise workloads'
-  }
-]
+// Parse K8s resource strings (e.g., "4", "8Gi" -> numbers)
+function parseResourceValue(value?: string): number {
+  if (!value) return 0
+  const match = value.match(/^(\d+(?:\.\d+)?)/)
+  return match ? parseFloat(match[1]) : 0
+}
 
 export function WorkMachineControls({
   machineId,
   machineName,
   status,
+  currentState,
+  desiredState,
   currentType = 'standard',
+  availableMachineTypes,
   onStart,
   onStop,
-  onTypeChange
+  onTypeChange,
+  isLoading = false
 }: WorkMachineControlsProps) {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedType, setSelectedType] = useState(currentType)
@@ -106,7 +78,7 @@ export function WorkMachineControls({
   const [showTypeChangeWarning, setShowTypeChangeWarning] = useState(false)
   const [isChangingType, setIsChangingType] = useState(false)
 
-  const currentMachineType = machineTypes.find(t => t.id === selectedType) || machineTypes[1]
+  const currentMachineType = availableMachineTypes.find(t => t.id === currentType) || availableMachineTypes[0]
 
   const handleStart = () => {
     if (onStart) onStart()
@@ -141,46 +113,98 @@ export function WorkMachineControls({
     setSettingsOpen(false)
   }
 
+  const isTransitioning = currentState !== desiredState
+  const isStarting = currentState === 'starting' || (isTransitioning && desiredState === 'running')
+  const isStopping = currentState === 'stopping' || (isTransitioning && desiredState === 'stopped')
+
+  // Determine button state based on current and desired states
+  const getButtonConfig = () => {
+    if (currentState === 'stopped') {
+      return {
+        action: 'start',
+        label: 'Start Machine',
+        icon: <Play className="h-4 w-4" />,
+        variant: 'default' as const,
+        disabled: isLoading
+      }
+    }
+
+    if (currentState === 'starting' || isStarting) {
+      return {
+        action: 'none',
+        label: 'Starting...',
+        icon: <Loader2 className="h-4 w-4 animate-spin" />,
+        variant: 'default' as const,
+        disabled: true
+      }
+    }
+
+    if (currentState === 'stopping' || isStopping) {
+      return {
+        action: 'none',
+        label: 'Stopping...',
+        icon: <Loader2 className="h-4 w-4 animate-spin" />,
+        variant: 'outline' as const,
+        disabled: true
+      }
+    }
+
+    if (currentState === 'running') {
+      return {
+        action: 'stop',
+        label: 'Stop Machine',
+        icon: <Square className="h-4 w-4" />,
+        variant: 'destructive' as const,
+        disabled: isLoading
+      }
+    }
+
+    // Error or disabled state
+    return {
+      action: 'none',
+      label: currentState.charAt(0).toUpperCase() + currentState.slice(1),
+      icon: <AlertCircle className="h-4 w-4" />,
+      variant: 'outline' as const,
+      disabled: true
+    }
+  }
+
+  const buttonConfig = getButtonConfig()
+
   return (
     <>
       <div className="flex items-center gap-2">
         {/* Start/Stop Button */}
-        {status === 'stopped' ? (
-          <Button
-            onClick={handleStart}
-            size="sm"
-            className="gap-2"
-            variant="default"
-          >
-            <Play className="h-4 w-4" />
-            Start Machine
-          </Button>
-        ) : (
-          <Button
-            onClick={handleStop}
-            size="sm"
-            className="gap-2"
-            variant={status === 'active' ? 'destructive' : 'outline'}
-            disabled={status === 'idle'}
-          >
-            <Square className="h-4 w-4" />
-            Stop Machine
-          </Button>
-        )}
+        <Button
+          onClick={buttonConfig.action === 'start' ? handleStart : buttonConfig.action === 'stop' ? handleStop : undefined}
+          size="sm"
+          className="gap-2"
+          variant={buttonConfig.variant}
+          disabled={buttonConfig.disabled}
+        >
+          {buttonConfig.icon}
+          {buttonConfig.label}
+        </Button>
 
         {/* Machine Type Selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={isLoading || isTransitioning}
+              title={isTransitioning ? 'Machine type cannot be changed during state transitions' : undefined}
+            >
               <Zap className="h-4 w-4" />
-              {currentMachineType.name}
+              {currentMachineType?.name || 'Select Type'}
               <ChevronDown className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>Machine Type</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {machineTypes.map((type) => (
+            {availableMachineTypes.map((type) => (
               <DropdownMenuItem
                 key={type.id}
                 className="flex items-start gap-3 p-3"
@@ -197,16 +221,18 @@ export function WorkMachineControls({
                   <div className="flex items-center gap-4 text-xs text-gray-600 mt-2">
                     <span className="flex items-center gap-1">
                       <Cpu className="h-3 w-3" />
-                      {type.cpu} vCPU
+                      {parseResourceValue(type.cpu)} vCPU
                     </span>
                     <span className="flex items-center gap-1">
                       <MemoryStick className="h-3 w-3" />
-                      {type.memory} GB
+                      {parseResourceValue(type.memory)} GB
                     </span>
-                    <span className="flex items-center gap-1">
-                      <HardDrive className="h-3 w-3" />
-                      {type.disk} GB
-                    </span>
+                    {type.gpu && (
+                      <span className="flex items-center gap-1">
+                        <Zap className="h-3 w-3" />
+                        {parseResourceValue(type.gpu)} GPU
+                      </span>
+                    )}
                   </div>
                 </div>
               </DropdownMenuItem>

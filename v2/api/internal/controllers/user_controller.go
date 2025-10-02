@@ -156,7 +156,11 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 	// Note: RBAC for workspace management is handled by ClusterRoleBinding
 	// No need to create namespace-specific RBAC resources
 
-	workMachine := r.buildWorkMachineForUser(user, workMachineName)
+	workMachine, err := r.buildWorkMachineForUser(ctx, user, workMachineName)
+	if err != nil {
+		logger.Error("Failed to build WorkMachine", zap.Error(err))
+		return reconcile.Result{}, err
+	}
 
 	// Set User as the owner of the WorkMachine using OwnerReferences
 	// This ensures the WorkMachine is garbage collected if the User is deleted
@@ -252,7 +256,7 @@ func (r *UserReconciler) generateWorkMachineName(user *platformv1alpha1.User) st
 }
 
 // buildWorkMachineForUser creates a WorkMachine resource for the user
-func (r *UserReconciler) buildWorkMachineForUser(user *platformv1alpha1.User, workMachineName string) *machinesv1.WorkMachine {
+func (r *UserReconciler) buildWorkMachineForUser(ctx context.Context, user *platformv1alpha1.User, workMachineName string) (*machinesv1.WorkMachine, error) {
 	// Use the User resource name for the target namespace
 	targetNamespace := fmt.Sprintf("wm-%s", user.Name)
 
@@ -261,6 +265,21 @@ func (r *UserReconciler) buildWorkMachineForUser(user *platformv1alpha1.User, wo
 	isUserActive := user.Spec.Active != nil && *user.Spec.Active
 	if !isUserActive {
 		initialState = machinesv1.MachineStateDisabled
+	}
+
+	// Query for the default machine type
+	machineTypeList := &machinesv1.MachineTypeList{}
+	if err := r.List(ctx, machineTypeList); err != nil {
+		return nil, fmt.Errorf("failed to list machine types: %v", err)
+	}
+
+	// Find the default machine type
+	machineType := "standard-2vcpu-4gb" // Fallback default
+	for _, mt := range machineTypeList.Items {
+		if mt.Spec.IsDefault && mt.Spec.Active {
+			machineType = mt.Name
+			break
+		}
 	}
 
 	return &machinesv1.WorkMachine{
@@ -279,11 +298,11 @@ func (r *UserReconciler) buildWorkMachineForUser(user *platformv1alpha1.User, wo
 		},
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:         user.Spec.Email,
-			MachineType:     "standard-2vcpu-4gb", // Default machine type
+			MachineType:     machineType,
 			TargetNamespace: targetNamespace,
 			DesiredState:    initialState,
 		},
-	}
+	}, nil
 }
 
 // extractUsernameFromEmail extracts the username part from an email
