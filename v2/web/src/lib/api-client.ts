@@ -23,7 +23,7 @@ export class ApiClient {
         authHeaders.Authorization = `Bearer ${session.user.backendToken}`
       }
     } catch (error) {
-      console.error(`[API Client] Error getting session for ${endpoint}:`, error)
+      console.error('[API Client] Error getting session for endpoint:', endpoint, error)
     }
 
     // Explicitly construct headers to ensure they're passed correctly
