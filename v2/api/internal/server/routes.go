@@ -62,6 +62,15 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
+	compositionHandlers := handlers.NewCompositionHandlers(
+		servicesManager.RepositoryManager.Compositions,
+		servicesManager.RepositoryManager.K8sClient,
+		logger,
+	)
+	serviceHandlers := handlers.NewServiceHandlers(
+		servicesManager.RepositoryManager.K8sClient,
+		logger,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
@@ -166,6 +175,23 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.POST("/:name/suspend", workspaceHandlers.SuspendWorkspace)
 				workspaces.POST("/:name/activate", workspaceHandlers.ActivateWorkspace)
 				workspaces.POST("/:name/archive", workspaceHandlers.ArchiveWorkspace)
+			}
+
+			// Composition routes (namespaced)
+			compositions := protected.Group("/namespaces/:namespace/compositions")
+			{
+				compositions.POST("", compositionHandlers.CreateComposition)
+				compositions.GET("/:name", compositionHandlers.GetComposition)
+				compositions.PUT("/:name", compositionHandlers.UpdateComposition)
+				compositions.DELETE("/:name", compositionHandlers.DeleteComposition)
+				compositions.GET("", compositionHandlers.ListCompositions)
+				compositions.GET("/:name/status", compositionHandlers.GetCompositionStatus)
+			}
+
+			// Service routes (namespaced, read-only)
+			services := protected.Group("/namespaces/:namespace/services")
+			{
+				services.GET("", serviceHandlers.ListServices)
 			}
 
 			// OAuth Provider routes (protected - for admin management)

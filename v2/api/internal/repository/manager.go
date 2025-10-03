@@ -18,6 +18,7 @@ type Manager struct {
 	MachineTypes  MachineTypeRepository
 	WorkMachines  WorkMachineRepository
 	Workspaces    WorkspaceRepository
+	Compositions  CompositionRepository
 }
 
 // ManagerOptions contains options for creating a repository manager
@@ -55,6 +56,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	machineTypes := NewMachineTypeRepository(k8sClient)
 	workMachines := NewWorkMachineRepository(k8sClient)
 	workspaces := NewWorkspaceRepository(k8sClient)
+	compositions := NewCompositionRepository(k8sClient)
 
 	return &Manager{
 		K8sClient:    k8sClient,
@@ -63,6 +65,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 		MachineTypes: machineTypes,
 		WorkMachines: workMachines,
 		Workspaces:   workspaces,
+		Compositions: compositions,
 	}, nil
 }
 
