@@ -204,38 +204,38 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 func (r *UserReconciler) handleUserDeletion(ctx context.Context, user *platformv1alpha1.User, logger *zap.Logger) (reconcile.Result, error) {
 	workMachineName := r.generateWorkMachineName(user)
 
-	// Clean up the WorkMachine namespace
-	namespaceName := workMachineName // Same as WorkMachine name
-	namespace := &corev1.Namespace{}
+	// Check if WorkMachine still exists
+	workMachine := &machinesv1.WorkMachine{}
+	err := r.Get(ctx, client.ObjectKey{Name: workMachineName}, workMachine)
 
-	err := r.Get(ctx, client.ObjectKey{Name: namespaceName}, namespace)
 	if err == nil {
-		// Namespace exists, delete it
-		logger.Info("Deleting WorkMachine namespace", zap.String("namespace", namespaceName))
-		if err := r.Delete(ctx, namespace); err != nil && !apierrors.IsNotFound(err) {
-			logger.Error("Failed to delete namespace", zap.String("namespace", namespaceName), zap.Error(err))
-			return reconcile.Result{}, err
+		// WorkMachine still exists
+		if workMachine.DeletionTimestamp == nil {
+			// WorkMachine is not being deleted yet, delete it
+			logger.Info("Deleting WorkMachine", zap.String("workMachine", workMachineName))
+			if err := r.Delete(ctx, workMachine); err != nil && !apierrors.IsNotFound(err) {
+				logger.Error("Failed to delete WorkMachine", zap.String("workMachine", workMachineName), zap.Error(err))
+				return reconcile.Result{}, err
+			}
+			logger.Info("WorkMachine deletion initiated", zap.String("workMachine", workMachineName))
+		} else {
+			// WorkMachine is being deleted, wait for it to complete
+			logger.Info("Waiting for WorkMachine deletion to complete",
+				zap.String("workMachine", workMachineName),
+				zap.Time("deletionTimestamp", workMachine.DeletionTimestamp.Time))
 		}
-		logger.Info("Successfully deleted namespace", zap.String("namespace", namespaceName))
-	} else if !apierrors.IsNotFound(err) {
-		logger.Error("Failed to get namespace", zap.String("namespace", namespaceName), zap.Error(err))
-		return reconcile.Result{}, err
+
+		// Requeue to wait for WorkMachine deletion (WorkMachine finalizer will handle namespace cleanup)
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// Clean up the WorkMachine (this should be automatic due to owner reference, but ensure it's done)
-	workMachine := &machinesv1.WorkMachine{}
-	err = r.Get(ctx, client.ObjectKey{Name: workMachineName}, workMachine)
-	if err == nil {
-		logger.Info("Deleting WorkMachine", zap.String("workMachine", workMachineName))
-		if err := r.Delete(ctx, workMachine); err != nil && !apierrors.IsNotFound(err) {
-			logger.Error("Failed to delete WorkMachine", zap.String("workMachine", workMachineName), zap.Error(err))
-			return reconcile.Result{}, err
-		}
-		logger.Info("Successfully deleted WorkMachine", zap.String("workMachine", workMachineName))
-	} else if !apierrors.IsNotFound(err) {
+	if !apierrors.IsNotFound(err) {
 		logger.Error("Failed to get WorkMachine", zap.String("workMachine", workMachineName), zap.Error(err))
 		return reconcile.Result{}, err
 	}
+
+	// WorkMachine is fully deleted (which means namespace is also deleted by WorkMachine controller)
+	logger.Info("WorkMachine is fully deleted, proceeding with user cleanup", zap.String("workMachine", workMachineName))
 
 	// Remove finalizer to allow user deletion
 	logger.Info("Removing finalizer from user")
