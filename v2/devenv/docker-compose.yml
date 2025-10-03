@@ -9,7 +9,6 @@ services:
     volumes:
       - k3s-data:/var/lib/rancher/k3s
       - k3s-config:/etc/rancher/k3s
-      - ./manifests:/var/lib/rancher/k3s/server/manifests
     ports:
       - "6443:6443"
       - "80:80"
@@ -34,6 +33,7 @@ services:
       - ./k3s-config:/output
       - webhook-certs:/certs
       - ../manifests:/crds
+      - ./manifests:/bootstrap
     command:
       - /bin/sh
       - -c
@@ -77,6 +77,9 @@ services:
 
         echo "Applying CRDs..."
         kubectl --kubeconfig=/tmp/k3s.yaml apply -f /crds/
+
+        echo "Applying bootstrap manifests..."
+        kubectl --kubeconfig=/tmp/k3s.yaml apply -f /bootstrap/
 
         echo "Configuring webhook configurations atomically..."
         # Create ValidatingWebhookConfiguration

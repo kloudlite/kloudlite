@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { auth } from '@/lib/auth'
 import { machineTypeService } from '@/lib/services/machine-type.service'
 import type {
   MachineTypeCreateRequest,
@@ -13,11 +12,7 @@ import type {
  */
 export async function listMachineTypes() {
   try {
-    // Get the current session
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const result = await machineTypeService.listMachineTypes(userEmail)
+    const result = await machineTypeService.listMachineTypes()
     return { success: true, data: result }
   } catch (error: any) {
     console.error('List machine types error:', error)
@@ -33,11 +28,7 @@ export async function listMachineTypes() {
  */
 export async function getMachineType(name: string) {
   try {
-    // Get the current session
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const result = await machineTypeService.getMachineType(name, userEmail)
+    const result = await machineTypeService.getMachineType(name)
     return { success: true, data: result }
   } catch (error: any) {
     console.error('Get machine type error:', error)
@@ -53,11 +44,7 @@ export async function getMachineType(name: string) {
  */
 export async function createMachineType(data: MachineTypeCreateRequest) {
   try {
-    // Get the current session
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const result = await machineTypeService.createMachineType(data, userEmail)
+    const result = await machineTypeService.createMachineType(data)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (error: any) {
@@ -74,11 +61,7 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
  */
 export async function updateMachineType(name: string, data: MachineTypeUpdateRequest) {
   try {
-    // Get the current session
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const result = await machineTypeService.updateMachineType(name, data, userEmail)
+    const result = await machineTypeService.updateMachineType(name, data)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (error: any) {
@@ -95,11 +78,7 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
  */
 export async function deleteMachineType(name: string) {
   try {
-    // Get the current session
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const result = await machineTypeService.deleteMachineType(name, userEmail)
+    const result = await machineTypeService.deleteMachineType(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (error: any) {
@@ -116,11 +95,7 @@ export async function deleteMachineType(name: string) {
  */
 export async function activateMachineType(name: string) {
   try {
-    // Get the current session
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const result = await machineTypeService.activateMachineType(name, userEmail)
+    const result = await machineTypeService.activateMachineType(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (error: any) {
@@ -137,11 +112,7 @@ export async function activateMachineType(name: string) {
  */
 export async function deactivateMachineType(name: string) {
   try {
-    // Get the current session
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const result = await machineTypeService.deactivateMachineType(name, userEmail)
+    const result = await machineTypeService.deactivateMachineType(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (error: any) {
@@ -149,6 +120,24 @@ export async function deactivateMachineType(name: string) {
     return {
       success: false,
       error: error.message || 'Failed to deactivate machine type'
+    }
+  }
+}
+
+/**
+ * Server action to set a machine type as default
+ */
+export async function setMachineTypeAsDefault(name: string) {
+  try {
+    const result = await machineTypeService.setMachineTypeAsDefault(name)
+    revalidatePath('/admin/machine-configs')
+    revalidatePath('/')
+    return { success: true, data: result }
+  } catch (error: any) {
+    console.error('Set machine type as default error:', error)
+    return {
+      success: false,
+      error: error.message || 'Failed to set machine type as default'
     }
   }
 }

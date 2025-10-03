@@ -40,7 +40,7 @@ interface MachineConfig {
   memory: number
   gpu?: number
   description: string
-  category?: 'general' | 'compute' | 'memory' | 'gpu'
+  category?: 'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'
   active?: boolean
 }
 
@@ -79,6 +79,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
   const [editingConfig, setEditingConfig] = useState<MachineConfig | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isActive, setIsActive] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState<'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'>('general')
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this machine configuration?')) {
@@ -135,7 +136,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
         cpu: parseInt(formData.get('cpu') as string),
         memory: parseInt(formData.get('memory') as string),
         gpu: formData.get('gpu') ? parseInt(formData.get('gpu') as string) : undefined,
-        category: (formData.get('category') as 'general' | 'compute' | 'memory' | 'gpu') || 'general',
+        category: selectedCategory,
         active: isActive
       }
 
@@ -169,7 +170,11 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
         </div>
 
         {!isReadOnly && (
-          <Button onClick={() => setIsAddConfigOpen(true)}>
+          <Button onClick={() => {
+            setSelectedCategory('general')
+            setIsActive(true)
+            setIsAddConfigOpen(true)
+          }}>
             <Plus className="h-4 w-4 mr-2" />
             Add Configuration
           </Button>
@@ -194,9 +199,12 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
               <tr key={config.id} className="border-b hover:bg-gray-50/50 transition-colors">
                 <td className="p-4">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Server className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-sm text-gray-900">{config.name}</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Server className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium text-sm text-gray-900">{config.name}</span>
+                      </div>
+                      <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">{config.id}</code>
                     </div>
                     <p className="text-sm text-gray-500">{config.description}</p>
                     <Badge variant="outline" className={`${categoryColors[config.category || 'general']} text-xs`}>
@@ -249,6 +257,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                         <DropdownMenuItem onClick={() => {
                           setEditingConfig(config)
                           setIsActive(config.active !== false)
+                          setSelectedCategory((config.category || 'general') as any)
                           setIsAddConfigOpen(true)
                         }}>
                           <Edit className="mr-2 h-4 w-4" />
@@ -293,7 +302,11 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
               {isReadOnly ? 'No machine configurations have been created yet.' : 'Get started by creating your first machine configuration.'}
             </p>
             {!isReadOnly && (
-              <Button onClick={() => setIsAddConfigOpen(true)}>
+              <Button onClick={() => {
+                setSelectedCategory('general')
+                setIsActive(true)
+                setIsAddConfigOpen(true)
+              }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Configuration
               </Button>
@@ -308,8 +321,10 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
           setIsAddConfigOpen(false)
           setEditingConfig(null)
           setIsActive(true) // Reset to default
+          setSelectedCategory('general') // Reset to default
         } else if (editingConfig) {
           setIsActive(editingConfig.active !== false)
+          setSelectedCategory((editingConfig.category || 'general') as any)
         }
       }}>
         <DialogContent className="max-w-2xl">
@@ -365,7 +380,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
               {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-                <Select name="category" defaultValue={editingConfig?.category || 'general'} required>
+                <Select value={selectedCategory} onValueChange={(value: any) => setSelectedCategory(value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>

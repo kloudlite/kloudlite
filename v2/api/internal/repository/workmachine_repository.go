@@ -6,6 +6,8 @@ import (
 	"log"
 
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -50,7 +52,11 @@ func (r *workMachineRepository) GetByOwner(ctx context.Context, owner string) (*
 		}
 	}
 
-	return nil, fmt.Errorf("no machine found for owner %s", owner)
+	// Return a proper Kubernetes NotFound error
+	return nil, apierrors.NewNotFound(
+		schema.GroupResource{Group: "machines.kloudlite.io", Resource: "workmachines"},
+		fmt.Sprintf("owner:%s", owner),
+	)
 }
 
 // StartMachine starts a WorkMachine

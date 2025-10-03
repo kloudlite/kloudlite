@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.org/x/crypto/bcrypt"
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
@@ -155,14 +154,8 @@ func (s *userService) ResetUserPassword(ctx context.Context, name, newPassword s
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// Hash the new password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	// Update the user with the new password
-	user.Spec.Password = string(hashedPassword)
+	// Set the passwordString field - controller will hash it and update spec.password
+	user.Spec.PasswordString = newPassword
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)

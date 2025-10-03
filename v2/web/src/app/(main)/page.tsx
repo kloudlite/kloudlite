@@ -53,7 +53,24 @@ export default async function WorkMachinesPage() {
   // Session is guaranteed to exist due to middleware checks
   const currentUser = session!.user?.email || 'user@example.com'
   const userRoles = session!.user?.roles || []
-  const isAdmin = userRoles.includes('admin') || userRoles.includes('super-admin')
+  const isSuperAdmin = userRoles.includes('super-admin')
+  const isAdmin = userRoles.includes('admin') || isSuperAdmin
+
+  // Fetch machine types
+  const machineTypesResult = await listMachineTypes()
+  const availableMachineTypes = machineTypesResult.success && machineTypesResult.data
+    ? machineTypesResult.data.items
+      .filter(mt => mt.spec.active !== false) // Only active types
+      .map(mt => ({
+        id: mt.metadata.name,
+        name: mt.spec.displayName || mt.metadata.name,
+        description: mt.spec.description || '',
+        category: mt.spec.category || 'general',
+        cpu: mt.spec.resources?.cpu || '',
+        memory: mt.spec.resources?.memory || '',
+        gpu: mt.spec.resources?.gpu,
+      }))
+    : []
 
   // Fetch real work machine data from CRs
   let workMachines: any[] = []
@@ -71,22 +88,6 @@ export default async function WorkMachinesPage() {
       workMachines = [transformWorkMachine(result.data)]
     }
   }
-
-  // Fetch machine types for user to choose from
-  const machineTypesResult = await listMachineTypes()
-  const availableMachineTypes = machineTypesResult.success && machineTypesResult.data
-    ? machineTypesResult.data.items
-      .filter(mt => mt.spec.active !== false) // Only active types
-      .map(mt => ({
-        id: mt.metadata.name,
-        name: mt.spec.displayName || mt.metadata.name,
-        description: mt.spec.description || '',
-        category: mt.spec.category || 'general',
-        cpu: mt.spec.resources?.cpu || '',
-        memory: mt.spec.resources?.memory || '',
-        gpu: mt.spec.resources?.gpu,
-      }))
-    : []
 
   // TODO: Fetch pinned resources from actual CRs
   // For now, using empty arrays until workspace/environment CRs are implemented
