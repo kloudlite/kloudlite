@@ -7,6 +7,7 @@ import (
 	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
+	workspacesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/workspaces/v1"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -31,6 +32,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	utilruntime.Must(platformv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(machinesv1.AddToScheme(scheme))
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
+	utilruntime.Must(workspacesv1.AddToScheme(scheme))
 
 	// Set controller-runtime logger
 	ctrl.SetLogger(zaplog.New(func(o *zaplog.Options) {
