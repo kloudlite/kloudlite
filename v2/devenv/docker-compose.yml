@@ -30,10 +30,10 @@ services:
       - k3s
     volumes:
       - k3s-config:/kubeconfig
-      - ./k3s-config:/output
+      - ./k3s-config:/output:Z
       - webhook-certs:/certs
-      - ../manifests:/crds
-      - ./manifests:/bootstrap
+      - ../manifests:/crds:Z
+      - ./manifests:/bootstrap:Z
     command:
       - /bin/sh
       - -c
