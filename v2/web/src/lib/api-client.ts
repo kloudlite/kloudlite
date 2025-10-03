@@ -23,17 +23,25 @@ export class ApiClient {
         authHeaders.Authorization = `Bearer ${session.user.backendToken}`
       }
     } catch (error) {
-      // In client components or when no session, continue without auth
-      console.debug('No session available for API request:', endpoint)
+      console.error(`[API Client] Error getting session for ${endpoint}:`, error)
+    }
+
+    // Explicitly construct headers to ensure they're passed correctly
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    }
+
+    // Merge any additional headers from options
+    if (options.headers) {
+      const optionHeaders = options.headers as Record<string, string>
+      Object.assign(headers, optionHeaders)
     }
 
     const config: RequestInit = {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        ...options.headers,
-      },
+      cache: 'no-store', // Prevent Next.js from caching and potentially stripping headers
+      headers,
     }
 
     const response = await fetch(url, config)

@@ -100,24 +100,15 @@ spec:
                   cpu:
                     description: CPU cores (e.g., "2", "4", "8")
                     type: string
-                  ephemeralStorage:
-                    default: 10Gi
-                    description: EphemeralStorage for temporary files
-                    type: string
                   gpu:
                     description: GPU count (optional, e.g., "1", "2")
                     type: string
                   memory:
                     description: Memory in Gi (e.g., "4Gi", "8Gi", "16Gi")
                     type: string
-                  storage:
-                    default: 50Gi
-                    description: Storage for workspace (e.g., "50Gi", "100Gi")
-                    type: string
                 required:
                 - cpu
                 - memory
-                - storage
                 type: object
               conditions:
                 description: Conditions represent the latest available observations

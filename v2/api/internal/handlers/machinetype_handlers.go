@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	"github.com/kloudlite/kloudlite/v2/api/internal/managers"
+	"github.com/kloudlite/kloudlite/v2/api/internal/middleware"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -93,11 +94,8 @@ func (h *MachineTypeHandlers) CreateMachineType(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Only admin users can create machine types
-	userName := c.GetHeader("X-User-Name")
-	if userName == "" {
-		userName = c.GetHeader("X-User-Email")
-	}
-	if userName == "" {
+	_, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
 		})
@@ -149,11 +147,8 @@ func (h *MachineTypeHandlers) UpdateMachineType(c *gin.Context) {
 	name := c.Param("name")
 
 	// Only admin users can update machine types
-	userName := c.GetHeader("X-User-Name")
-	if userName == "" {
-		userName = c.GetHeader("X-User-Email")
-	}
-	if userName == "" {
+	_, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
 		})
@@ -219,11 +214,8 @@ func (h *MachineTypeHandlers) DeleteMachineType(c *gin.Context) {
 	name := c.Param("name")
 
 	// Only admin users can delete machine types
-	userName := c.GetHeader("X-User-Name")
-	if userName == "" {
-		userName = c.GetHeader("X-User-Email")
-	}
-	if userName == "" {
+	_, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
 		})
@@ -265,11 +257,8 @@ func (h *MachineTypeHandlers) ActivateMachineType(c *gin.Context) {
 	name := c.Param("name")
 
 	// Only admin users can activate machine types
-	userName := c.GetHeader("X-User-Name")
-	if userName == "" {
-		userName = c.GetHeader("X-User-Email")
-	}
-	if userName == "" {
+	_, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
 		})
@@ -321,11 +310,8 @@ func (h *MachineTypeHandlers) DeactivateMachineType(c *gin.Context) {
 	name := c.Param("name")
 
 	// Only admin users can deactivate machine types
-	userName := c.GetHeader("X-User-Name")
-	if userName == "" {
-		userName = c.GetHeader("X-User-Email")
-	}
-	if userName == "" {
+	_, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
 		})
@@ -377,11 +363,8 @@ func (h *MachineTypeHandlers) ToggleMachineTypeActive(c *gin.Context) {
 	name := c.Param("name")
 
 	// Only admin users can toggle machine types
-	userName := c.GetHeader("X-User-Name")
-	if userName == "" {
-		userName = c.GetHeader("X-User-Email")
-	}
-	if userName == "" {
+	_, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
 		})

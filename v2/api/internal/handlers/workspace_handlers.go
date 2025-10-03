@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	workspacesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/workspaces/v1"
+	"github.com/kloudlite/kloudlite/v2/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,12 +54,13 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	}
 
 	// Get the authenticated user from context
-	userEmail := c.GetHeader("X-User-Email")
-	if userEmail == "" {
-		userEmail = c.Query("email")
-	}
-	if userEmail == "" {
-		userEmail = "admin@kloudlite.io" // Default for testing
+	userEmail, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
 	}
 
 	// Find the user's WorkMachine
