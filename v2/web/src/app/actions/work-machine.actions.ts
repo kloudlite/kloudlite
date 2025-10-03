@@ -1,14 +1,10 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { workMachineService } from '@/lib/services/work-machine.service'
 
 export async function getMyWorkMachine() {
   try {
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const data = await workMachineService.getMyWorkMachine(userEmail)
+    const data = await workMachineService.getMyWorkMachine()
     return { success: true, data }
   } catch (error: any) {
     console.error('Get my work machine error:', error)
@@ -21,10 +17,7 @@ export async function getMyWorkMachine() {
 
 export async function listAllWorkMachines() {
   try {
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const data = await workMachineService.listAllWorkMachines(userEmail)
+    const data = await workMachineService.listAllWorkMachines()
     return { success: true, data }
   } catch (error: any) {
     console.error('List work machines error:', error)
@@ -37,10 +30,7 @@ export async function listAllWorkMachines() {
 
 export async function startMyWorkMachine() {
   try {
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const data = await workMachineService.startMyWorkMachine(userEmail)
+    const data = await workMachineService.startMyWorkMachine()
     return { success: true, data }
   } catch (error: any) {
     console.error('Start work machine error:', error)
@@ -53,10 +43,7 @@ export async function startMyWorkMachine() {
 
 export async function stopMyWorkMachine() {
   try {
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const data = await workMachineService.stopMyWorkMachine(userEmail)
+    const data = await workMachineService.stopMyWorkMachine()
     return { success: true, data }
   } catch (error: any) {
     console.error('Stop work machine error:', error)
@@ -69,10 +56,7 @@ export async function stopMyWorkMachine() {
 
 export async function updateMyWorkMachine(updateData: { machineType?: string; sshPublicKeys?: string[] }) {
   try {
-    const session = await auth()
-    const userEmail = session?.user?.email
-
-    const data = await workMachineService.updateMyWorkMachine(updateData, userEmail)
+    const data = await workMachineService.updateMyWorkMachine(updateData)
     return { success: true, data }
   } catch (error: any) {
     console.error('Update work machine error:', error)

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	"golang.org/x/crypto/bcrypt"
 	"github.com/gin-gonic/gin"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	"github.com/kloudlite/kloudlite/v2/api/pkg/logger"
@@ -283,25 +282,8 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 		})
 	}
 
-	// Hash password if it's provided as plain text
-	if user.Spec.Password != "" && !isPasswordHashed(user.Spec.Password) {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Spec.Password), bcrypt.DefaultCost)
-		if err != nil {
-			w.logger.Error("Failed to hash password: " + err.Error())
-			return &admissionv1.AdmissionResponse{
-				Allowed: false,
-				Result: &metav1.Status{
-					Message: fmt.Sprintf("Failed to hash password: %v", err),
-				},
-			}
-		}
-
-		patches = append(patches, patchOperation{
-			Op:    "replace",
-			Path:  "/spec/password",
-			Value: string(hashedPassword),
-		})
-	}
+	// Note: Password hashing is now handled by the User controller
+	// Controller will hash spec.passwordString and store it in spec.password
 
 	// Create patch response
 	patchBytes, err := json.Marshal(patches)
@@ -369,15 +351,6 @@ func hashEmail(email string) string {
 	h := fnv.New64a()
 	h.Write([]byte(strings.ToLower(email)))
 	return fmt.Sprintf("%016x", h.Sum64())[:16]
-}
-
-// isPasswordHashed checks if a password is already bcrypt hashed
-func isPasswordHashed(password string) bool {
-	// bcrypt hashes start with $2a$, $2b$, $2x$, or $2y$ followed by cost and salt
-	return strings.HasPrefix(password, "$2a$") ||
-		strings.HasPrefix(password, "$2b$") ||
-		strings.HasPrefix(password, "$2x$") ||
-		strings.HasPrefix(password, "$2y$")
 }
 
 // checkEmailExists checks if a user with the given email already exists

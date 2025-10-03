@@ -13,25 +13,15 @@ export class OAuthProviderService {
   /**
    * Get all OAuth providers
    */
-  async getOAuthProviders(user?: string): Promise<Record<string, OAuthProvider>> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User-Email'] = user
-    }
-
-    return apiClient.get<Record<string, OAuthProvider>>(this.baseUrl, { headers })
+  async getOAuthProviders(): Promise<Record<string, OAuthProvider>> {
+    return apiClient.get<Record<string, OAuthProvider>>(this.baseUrl)
   }
 
   /**
    * Update an OAuth provider
    */
-  async updateOAuthProvider(type: string, provider: OAuthProvider, user?: string): Promise<{ success: boolean }> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User-Email'] = user
-    }
-
-    return apiClient.put<{ success: boolean }>(`${this.baseUrl}/${type}`, provider, { headers })
+  async updateOAuthProvider(type: string, provider: OAuthProvider): Promise<{ success: boolean }> {
+    return apiClient.put<{ success: boolean }>(`${this.baseUrl}/${type}`, provider)
   }
 }
 

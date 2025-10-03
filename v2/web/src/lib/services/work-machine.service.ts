@@ -10,14 +10,9 @@ export class WorkMachineService {
   /**
    * Get current user's work machine
    */
-  async getMyWorkMachine(user?: string): Promise<WorkMachine | null> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User-Email'] = user
-    }
-
+  async getMyWorkMachine(): Promise<WorkMachine | null> {
     try {
-      return await apiClient.get<WorkMachine>(`${this.baseUrl}/my`, { headers })
+      return await apiClient.get<WorkMachine>(`${this.baseUrl}/my`)
     } catch (error: any) {
       if (error.message?.includes('404')) {
         return null
@@ -29,49 +24,29 @@ export class WorkMachineService {
   /**
    * List all work machines (admin only)
    */
-  async listAllWorkMachines(user?: string): Promise<WorkMachineListResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User-Email'] = user
-    }
-
-    return apiClient.get<WorkMachineListResponse>(this.baseUrl, { headers })
+  async listAllWorkMachines(): Promise<WorkMachineListResponse> {
+    return apiClient.get<WorkMachineListResponse>(this.baseUrl)
   }
 
   /**
    * Start current user's work machine
    */
-  async startMyWorkMachine(user?: string): Promise<{message: string; state: string}> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User-Email'] = user
-    }
-
-    return apiClient.post<{message: string; state: string}>(`${this.baseUrl}/my/start`, undefined, { headers })
+  async startMyWorkMachine(): Promise<{message: string; state: string}> {
+    return apiClient.post<{message: string; state: string}>(`${this.baseUrl}/my/start`, undefined)
   }
 
   /**
    * Stop current user's work machine
    */
-  async stopMyWorkMachine(user?: string): Promise<{message: string; state: string}> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User-Email'] = user
-    }
-
-    return apiClient.post<{message: string; state: string}>(`${this.baseUrl}/my/stop`, undefined, { headers })
+  async stopMyWorkMachine(): Promise<{message: string; state: string}> {
+    return apiClient.post<{message: string; state: string}>(`${this.baseUrl}/my/stop`, undefined)
   }
 
   /**
    * Update current user's work machine
    */
-  async updateMyWorkMachine(data: { machineType?: string; sshPublicKeys?: string[] }, user?: string): Promise<WorkMachine> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User-Email'] = user
-    }
-
-    return apiClient.put<WorkMachine>(`${this.baseUrl}/my`, data, { headers })
+  async updateMyWorkMachine(data: { machineType?: string; sshPublicKeys?: string[] }): Promise<WorkMachine> {
+    return apiClient.put<WorkMachine>(`${this.baseUrl}/my`, data)
   }
 }
 

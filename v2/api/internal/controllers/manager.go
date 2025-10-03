@@ -88,6 +88,17 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 		return nil, fmt.Errorf("unable to create WorkMachine controller: %w", err)
 	}
 
+	// Setup Composition controller
+	compositionReconciler := &CompositionReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "composition")),
+	}
+
+	if err = compositionReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create Composition controller: %w", err)
+	}
+
 	logger.Info("Controllers initialized successfully")
 
 	return &Manager{

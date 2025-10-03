@@ -14,6 +14,7 @@ import {
 import { ChevronDown, User, LogOut, Home } from 'lucide-react'
 import { AdminNavigation } from '@/components/admin-navigation'
 import { KloudliteLogo } from '@/components/kloudlite-logo'
+import { isSystemReady, SystemSetupPage } from '@/lib/system-check'
 
 // Admin layout - middleware ensures only users with admin/super-admin roles (and no 'user' role) can access this
 export default async function AdminLayout({
@@ -26,6 +27,15 @@ export default async function AdminLayout({
   // Session and role access is guaranteed by middleware
   const userRoles = session!.user?.roles || []
   const hasUserRole = userRoles.includes('user')
+  const isSuperAdmin = userRoles.includes('super-admin')
+
+  // Check if system is configured
+  const systemReady = await isSystemReady()
+
+  // If system not ready and not super-admin, show under construction
+  if (!systemReady && !isSuperAdmin) {
+    return <SystemSetupPage />
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
