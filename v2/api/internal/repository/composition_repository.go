@@ -65,7 +65,7 @@ func (r *compositionRepository) ListByState(ctx context.Context, namespace strin
 // UpdateState updates the state of a composition
 func (r *compositionRepository) UpdateState(ctx context.Context, name string, namespace string, state environmentsv1.CompositionState, message string) error {
 	// Get the composition
-	composition, err := r.Get(ctx, name, namespace)
+	composition, err := r.Get(ctx, namespace, name)
 	if err != nil {
 		return err
 	}

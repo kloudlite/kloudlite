@@ -90,6 +90,12 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 func (r *CompositionReconciler) deployComposition(ctx context.Context, composition *environmentsv1.Composition, logger *zap.Logger) error {
 	logger.Info("Deploying Composition")
 
+	// Save old deployed resources for cleanup comparison
+	var oldDeployedResources *environmentsv1.DeployedResources
+	if composition.Status.DeployedResources != nil {
+		oldDeployedResources = composition.Status.DeployedResources.DeepCopy()
+	}
+
 	// Parse the docker-compose file
 	project, err := ParseComposeFile(composition.Spec.ComposeContent, composition.Name)
 	if err != nil {
@@ -136,6 +142,11 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 			return fmt.Errorf("failed to apply Service %s: %w", service.Name, err)
 		}
 		deployedServices = append(deployedServices, service.Name)
+	}
+
+	// Cleanup removed resources using OLD deployed resources
+	if err := r.cleanupRemovedResources(ctx, composition, oldDeployedResources, deployedDeployments, deployedServices, logger); err != nil {
+		return fmt.Errorf("failed to cleanup removed resources: %w", err)
 	}
 
 	// Update status with deployed resources
@@ -185,6 +196,62 @@ func (r *CompositionReconciler) applyResource(ctx context.Context, resource clie
 	return r.Update(ctx, resource)
 }
 
+// cleanupRemovedResources deletes resources that were deployed before but are no longer in the compose file
+func (r *CompositionReconciler) cleanupRemovedResources(ctx context.Context, composition *environmentsv1.Composition, oldDeployedResources *environmentsv1.DeployedResources, currentDeployments, currentServices []string, logger *zap.Logger) error {
+	// Skip cleanup if this is the first deployment (no previous resources)
+	if oldDeployedResources == nil {
+		logger.Info("First deployment, skipping cleanup")
+		return nil
+	}
+
+	// Convert current resources to sets for efficient lookup
+	currentDeploymentSet := make(map[string]bool)
+	for _, name := range currentDeployments {
+		currentDeploymentSet[name] = true
+	}
+
+	currentServiceSet := make(map[string]bool)
+	for _, name := range currentServices {
+		currentServiceSet[name] = true
+	}
+
+	// Find deployments to delete
+	for _, oldDeployment := range oldDeployedResources.Deployments {
+		if !currentDeploymentSet[oldDeployment] {
+			logger.Info("Deleting removed deployment", zap.String("name", oldDeployment))
+			deployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      oldDeployment,
+					Namespace: composition.Namespace,
+				},
+			}
+			if err := r.Delete(ctx, deployment); err != nil && !apierrors.IsNotFound(err) {
+				logger.Error("Failed to delete deployment", zap.String("name", oldDeployment), zap.Error(err))
+				return err
+			}
+		}
+	}
+
+	// Find services to delete
+	for _, oldService := range oldDeployedResources.Services {
+		if !currentServiceSet[oldService] {
+			logger.Info("Deleting removed service", zap.String("name", oldService))
+			service := &corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      oldService,
+					Namespace: composition.Namespace,
+				},
+			}
+			if err := r.Delete(ctx, service); err != nil && !apierrors.IsNotFound(err) {
+				logger.Error("Failed to delete service", zap.String("name", oldService), zap.Error(err))
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // getPVCNames extracts PVC names from a list
 func getPVCNames(pvcs []*corev1.PersistentVolumeClaim) []string {
 	names := make([]string, len(pvcs))
@@ -197,6 +264,16 @@ func getPVCNames(pvcs []*corev1.PersistentVolumeClaim) []string {
 // handleDeletion handles cleanup when Composition is being deleted
 func (r *CompositionReconciler) handleDeletion(ctx context.Context, composition *environmentsv1.Composition, logger *zap.Logger) (reconcile.Result, error) {
 	logger.Info("Cleaning up Composition resources")
+
+	// Update status to deleting if not already set
+	if composition.Status.State != environmentsv1.CompositionStateDeleting {
+		composition.Status.State = environmentsv1.CompositionStateDeleting
+		composition.Status.Message = "Deleting composition and associated resources"
+		if err := r.Status().Update(ctx, composition); err != nil {
+			logger.Error("Failed to update status to deleting", zap.Error(err))
+			// Continue with deletion even if status update fails
+		}
+	}
 
 	// Common label selector for all resources created by this composition
 	labelSelector := client.MatchingLabels{
