@@ -15,38 +15,23 @@ export class EnvironmentService {
   /**
    * List all environments
    */
-  async listEnvironments(user?: string): Promise<EnvironmentListResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
-    return apiClient.get<EnvironmentListResponse>(this.baseUrl, { headers })
+  async listEnvironments(): Promise<EnvironmentListResponse> {
+    return apiClient.get<EnvironmentListResponse>(this.baseUrl)
   }
 
   /**
    * Get a specific environment by name
    */
-  async getEnvironment(name: string, user?: string): Promise<Environment> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
-    const response = await apiClient.get<Environment>(`${this.baseUrl}/${name}`, { headers })
+  async getEnvironment(name: string): Promise<Environment> {
+    const response = await apiClient.get<Environment>(`${this.baseUrl}/${name}`)
     return response
   }
 
   /**
    * Create a new environment
    */
-  async createEnvironment(data: EnvironmentCreateRequest, user?: string): Promise<EnvironmentResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
-    return apiClient.post<EnvironmentResponse>(this.baseUrl, data, { headers })
+  async createEnvironment(data: EnvironmentCreateRequest): Promise<EnvironmentResponse> {
+    return apiClient.post<EnvironmentResponse>(this.baseUrl, data)
   }
 
   /**
@@ -54,71 +39,43 @@ export class EnvironmentService {
    */
   async updateEnvironment(
     name: string,
-    data: EnvironmentUpdateRequest,
-    user?: string
+    data: EnvironmentUpdateRequest
   ): Promise<EnvironmentResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
-    return apiClient.put<EnvironmentResponse>(`${this.baseUrl}/${name}`, data, { headers })
+    return apiClient.put<EnvironmentResponse>(`${this.baseUrl}/${name}`, data)
   }
 
   /**
    * Delete an environment
    */
-  async deleteEnvironment(name: string, user?: string): Promise<EnvironmentDeleteResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
-    return apiClient.delete<EnvironmentDeleteResponse>(`${this.baseUrl}/${name}`, { headers })
+  async deleteEnvironment(name: string): Promise<EnvironmentDeleteResponse> {
+    return apiClient.delete<EnvironmentDeleteResponse>(`${this.baseUrl}/${name}`)
   }
 
   /**
    * Activate an environment
    */
-  async activateEnvironment(name: string, user?: string): Promise<EnvironmentResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
+  async activateEnvironment(name: string): Promise<EnvironmentResponse> {
     return apiClient.post<EnvironmentResponse>(
       `${this.baseUrl}/${name}/activate`,
-      undefined,
-      { headers }
+      undefined
     )
   }
 
   /**
    * Deactivate an environment
    */
-  async deactivateEnvironment(name: string, user?: string): Promise<EnvironmentResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
+  async deactivateEnvironment(name: string): Promise<EnvironmentResponse> {
     return apiClient.post<EnvironmentResponse>(
       `${this.baseUrl}/${name}/deactivate`,
-      undefined,
-      { headers }
+      undefined
     )
   }
 
   /**
    * Get environment status
    */
-  async getEnvironmentStatus(name: string, user?: string): Promise<EnvironmentStatusResponse> {
-    const headers: Record<string, string> = {}
-    if (user) {
-      headers['X-User'] = user
-    }
-
-    return apiClient.get<EnvironmentStatusResponse>(`${this.baseUrl}/${name}/status`, { headers })
+  async getEnvironmentStatus(name: string): Promise<EnvironmentStatusResponse> {
+    return apiClient.get<EnvironmentStatusResponse>(`${this.baseUrl}/${name}/status`)
   }
 }
 

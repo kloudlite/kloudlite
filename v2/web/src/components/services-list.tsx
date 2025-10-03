@@ -1,0 +1,98 @@
+'use client'
+
+import { Network } from 'lucide-react'
+import type { K8sService } from '@/types/service'
+
+interface ServicesListProps {
+  services: K8sService[]
+  namespace: string
+}
+
+export function ServicesList({ services, namespace }: ServicesListProps) {
+  if (services.length === 0) {
+    return (
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <div>
+          <h3 className="text-lg font-medium">Services</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Kubernetes services in namespace: {namespace}
+          </p>
+        </div>
+        <div className="mt-8 text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+          <Network className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No services found</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            No Kubernetes services exist in this namespace.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mb-4">
+        <h3 className="text-lg font-medium">Services</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Kubernetes services in namespace: {namespace}
+        </p>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  DNS
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  IP
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ports
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {services.map((service) => (
+                <tr key={`${service.namespace}-${service.name}`} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Network className="h-5 w-5 text-gray-400 mr-3" />
+                      <span className="text-sm font-medium text-gray-900">{service.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm font-mono text-gray-600">
+                      {service.name}.{service.namespace}.svc.cluster.local
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm font-mono text-gray-600">{service.clusterIP}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      {service.ports.map((port, idx) => (
+                        <div key={idx} className="text-sm text-gray-600">
+                          {port.port}
+                          {port.targetPort && port.targetPort !== String(port.port) && (
+                            <span className="text-gray-400"> → {port.targetPort}</span>
+                          )}
+                          <span className="text-gray-400 ml-1">/{port.protocol}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
