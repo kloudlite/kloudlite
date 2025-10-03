@@ -244,6 +244,9 @@ const (
 
 	// WorkMachineConditionAutoStopScheduled indicates auto-stop is scheduled
 	WorkMachineConditionAutoStopScheduled WorkMachineConditionType = "AutoStopScheduled"
+
+	// WorkMachineConditionDeletionBlocked indicates deletion is blocked due to active resources
+	WorkMachineConditionDeletionBlocked WorkMachineConditionType = "DeletionBlocked"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
