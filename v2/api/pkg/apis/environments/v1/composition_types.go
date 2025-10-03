@@ -97,7 +97,7 @@ type ServiceResourceOverride struct {
 // CompositionStatus defines the observed state of Composition
 type CompositionStatus struct {
 	// State represents the current state of the composition
-	// +kubebuilder:validation:Enum=pending;deploying;running;degraded;stopped;failed
+	// +kubebuilder:validation:Enum=pending;deploying;running;degraded;stopped;failed;deleting
 	State CompositionState `json:"state,omitempty"`
 
 	// Message provides human-readable information about the current state
@@ -158,6 +158,9 @@ const (
 
 	// CompositionStateFailed means the composition deployment failed
 	CompositionStateFailed CompositionState = "failed"
+
+	// CompositionStateDeleting means the composition is being deleted
+	CompositionStateDeleting CompositionState = "deleting"
 )
 
 // ServiceStatus tracks the status of an individual service

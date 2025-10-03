@@ -319,6 +319,7 @@ spec:
                 - degraded
                 - stopped
                 - failed
+                - deleting
                 type: string
             type: object
         type: object

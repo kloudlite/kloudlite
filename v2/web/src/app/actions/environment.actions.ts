@@ -10,9 +10,9 @@ import type {
 /**
  * Server action to create an environment
  */
-export async function createEnvironment(data: EnvironmentCreateRequest, user: string) {
+export async function createEnvironment(data: EnvironmentCreateRequest) {
   try {
-    const result = await environmentService.createEnvironment(data, user)
+    const result = await environmentService.createEnvironment(data)
     revalidatePath('/environments')
     return { success: true, data: result }
   } catch (error: any) {
@@ -27,9 +27,9 @@ export async function createEnvironment(data: EnvironmentCreateRequest, user: st
 /**
  * Server action to update an environment
  */
-export async function updateEnvironment(name: string, data: EnvironmentUpdateRequest, user: string) {
+export async function updateEnvironment(name: string, data: EnvironmentUpdateRequest) {
   try {
-    const result = await environmentService.updateEnvironment(name, data, user)
+    const result = await environmentService.updateEnvironment(name, data)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -45,9 +45,9 @@ export async function updateEnvironment(name: string, data: EnvironmentUpdateReq
 /**
  * Server action to delete an environment
  */
-export async function deleteEnvironment(name: string, user: string) {
+export async function deleteEnvironment(name: string) {
   try {
-    const result = await environmentService.deleteEnvironment(name, user)
+    const result = await environmentService.deleteEnvironment(name)
     revalidatePath('/environments')
     return { success: true, data: result }
   } catch (error: any) {
@@ -62,9 +62,9 @@ export async function deleteEnvironment(name: string, user: string) {
 /**
  * Server action to activate an environment
  */
-export async function activateEnvironment(name: string, user: string) {
+export async function activateEnvironment(name: string) {
   try {
-    const result = await environmentService.activateEnvironment(name, user)
+    const result = await environmentService.activateEnvironment(name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -80,9 +80,9 @@ export async function activateEnvironment(name: string, user: string) {
 /**
  * Server action to deactivate an environment
  */
-export async function deactivateEnvironment(name: string, user: string) {
+export async function deactivateEnvironment(name: string) {
   try {
-    const result = await environmentService.deactivateEnvironment(name, user)
+    const result = await environmentService.deactivateEnvironment(name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -98,9 +98,9 @@ export async function deactivateEnvironment(name: string, user: string) {
 /**
  * Server action to get environment status
  */
-export async function getEnvironmentStatus(name: string, user: string) {
+export async function getEnvironmentStatus(name: string) {
   try {
-    const result = await environmentService.getEnvironmentStatus(name, user)
+    const result = await environmentService.getEnvironmentStatus(name)
     return { success: true, data: result }
   } catch (error: any) {
     console.error('Get environment status error:', error)
