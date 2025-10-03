@@ -43,6 +43,8 @@ tasks:
   web:dev:
     desc: Run frontend web app in development mode
     dir: ../web
+    env:
+      AUTH_SECRET: "sample"
     cmds:
       - echo "Killing any process running on port 3000..."
       - lsof -ti:3000 | xargs kill -9 2>/dev/null || true
