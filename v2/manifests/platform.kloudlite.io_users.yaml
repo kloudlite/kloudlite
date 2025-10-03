@@ -78,7 +78,13 @@ spec:
                 description: Additional metadata
                 type: object
               password:
-                description: Hashed password for credential-based authentication
+                description: Hashed password for credential-based authentication (generated
+                  by controller)
+                type: string
+              passwordString:
+                description: |-
+                  Plain text password for setting/updating password (will be hashed by controller)
+                  This field will be cleared after password is hashed
                 type: string
               providers:
                 description: OAuth provider accounts linked to this user
@@ -193,6 +199,10 @@ spec:
               lastLogin:
                 description: Last login timestamp
                 format: date-time
+                type: string
+              passwordHash:
+                description: Hash of the last processed passwordString (for change
+                  detection)
                 type: string
               phase:
                 description: Current status of the user

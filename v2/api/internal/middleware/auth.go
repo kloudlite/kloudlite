@@ -23,7 +23,15 @@ func JWTMiddleware(authService services.AuthService, logger *zap.Logger, skipAut
 		// Extract token from Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			logger.Warn("Missing Authorization header")
+			// Log all headers for debugging
+			allHeaders := make(map[string]string)
+			for key, values := range c.Request.Header {
+				allHeaders[key] = values[0]
+			}
+			logger.Warn("Missing Authorization header",
+				zap.String("path", c.Request.URL.Path),
+				zap.Any("all_headers", allHeaders),
+			)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
 			return

@@ -81,6 +81,12 @@ spec:
               displayName:
                 description: DisplayName is the human-friendly name shown to users
                 type: string
+              isDefault:
+                default: false
+                description: |-
+                  IsDefault marks this machine type as the default choice when none is specified
+                  Only one machine type can be marked as default at a time
+                type: boolean
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -107,10 +113,6 @@ spec:
                 properties:
                   cpu:
                     description: CPU cores (e.g., "2", "4", "8")
-                    type: string
-                  ephemeralStorage:
-                    default: 10Gi
-                    description: EphemeralStorage for temporary files
                     type: string
                   gpu:
                     description: GPU count (optional, e.g., "1", "2")
@@ -155,6 +157,7 @@ spec:
             - active
             - category
             - displayName
+            - isDefault
             - resources
             type: object
           status:

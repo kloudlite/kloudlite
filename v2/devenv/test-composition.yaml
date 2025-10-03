@@ -1,0 +1,27 @@
+apiVersion: environments.kloudlite.io/v1
+kind: Composition
+metadata:
+  name: nginx-app
+  namespace: test-env
+spec:
+  displayName: "Nginx Web Server"
+  description: "Simple nginx web server for testing"
+  composeContent: |
+    services:
+      web:
+        image: nginx:alpine
+        ports:
+          - "80:80"
+      redis:
+        image: redis:alpine
+        ports:
+          - "6379:6379"
+      mongodb:
+        image: mongo:7
+        ports:
+          - "27017:27017"
+        volumes:
+          - mongodb-data:/data/db
+
+    volumes:
+      mongodb-data:
