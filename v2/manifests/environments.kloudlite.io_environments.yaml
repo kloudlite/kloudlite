@@ -260,6 +260,7 @@ spec:
                 - inactive
                 - activating
                 - deactivating
+                - deleting
                 - error
                 type: string
             type: object
