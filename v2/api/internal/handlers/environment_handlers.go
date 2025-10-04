@@ -4,23 +4,23 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/v2/api/internal/middleware"
+	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
 	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
-	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // EnvironmentHandlers handles HTTP requests for Environment resources
 type EnvironmentHandlers struct {
-	envRepo    repository.EnvironmentRepository
-	userRepo   repository.UserRepository
-	k8sClient  client.Client
-	logger     *zap.Logger
+	envRepo   repository.EnvironmentRepository
+	userRepo  repository.UserRepository
+	k8sClient client.Client
+	logger    *zap.Logger
 }
 
 // NewEnvironmentHandlers creates a new EnvironmentHandlers
@@ -49,66 +49,43 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		return
 	}
 
-	// Get the authenticated user from context (this would normally come from auth middleware)
-	// For now, we'll check if a user header is provided
-	userName := c.GetHeader("X-User")
-	if userName == "" {
-		// Try to get from query param for testing
-		userName = c.Query("user")
+	// Get the authenticated user email from JWT middleware context
+	userEmail, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
 	}
 
-	// If still no user, use a default for testing (in production, this should fail)
-	if userName == "" {
-		userName = "test-user" // Default for testing
+	// Find user by email from JWT token
+	userList := &platformv1alpha1.UserList{}
+	if err := h.k8sClient.List(c.Request.Context(), userList); err != nil {
+		h.logger.Error("Failed to list users", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to validate user",
+		})
+		return
 	}
 
-	// Validate that the user exists
-	// First try to find user by email if userName looks like an email
-	var user platformv1alpha1.User
 	var actualUserName string
+	found := false
+	for _, u := range userList.Items {
+		if u.Spec.Email == userEmail {
+			actualUserName = u.Name
+			found = true
+			break
+		}
+	}
 
-	if strings.Contains(userName, "@") {
-		// userName is likely an email, find user by email
-		userList := &platformv1alpha1.UserList{}
-		err := h.k8sClient.List(c.Request.Context(), userList)
-		if err != nil {
-			h.logger.Error("Failed to list users", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to validate user",
-			})
-			return
-		}
-
-		found := false
-		for _, u := range userList.Items {
-			if u.Spec.Email == userName {
-				user = u
-				actualUserName = u.Name
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			h.logger.Error("User not found by email", zap.String("email", userName))
-			c.JSON(http.StatusForbidden, gin.H{
-				"error":   "User not authorized",
-				"details": fmt.Sprintf("User with email %s does not exist or is not authorized to create environments", userName),
-			})
-			return
-		}
-	} else {
-		// userName is a resource name, get directly
-		err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{Name: userName}, &user)
-		if err != nil {
-			h.logger.Error("User not found", zap.String("user", userName), zap.Error(err))
-			c.JSON(http.StatusForbidden, gin.H{
-				"error":   "User not authorized",
-				"details": fmt.Sprintf("User %s does not exist or is not authorized to create environments", userName),
-			})
-			return
-		}
-		actualUserName = userName
+	if !found {
+		h.logger.Error("User not found by email", zap.String("email", userEmail))
+		c.JSON(http.StatusForbidden, gin.H{
+			"error":   "User not authorized",
+			"details": fmt.Sprintf("User with email %s does not exist or is not authorized to create environments", userEmail),
+		})
+		return
 	}
 
 	// Create Environment object with ownership
@@ -119,8 +96,8 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		Spec: req.Spec,
 	}
 
-	// Set the CreatedBy field with the original username (email if provided)
-	env.Spec.CreatedBy = userName
+	// Set the CreatedBy field with the user email from JWT token
+	env.Spec.CreatedBy = userEmail
 
 	// Initialize labels if not present
 	if env.Spec.Labels == nil {
@@ -131,7 +108,6 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	env.Spec.Labels["kloudlite.io/owned-by"] = actualUserName
 
 	// Add email label (base64 encoded to comply with Kubernetes label requirements)
-	userEmail := user.Spec.Email
 	if userEmail != "" {
 		encodedEmail := base64.URLEncoding.EncodeToString([]byte(userEmail))
 		env.Spec.Labels["kloudlite.io/owner-email"] = encodedEmail
@@ -413,7 +389,7 @@ func (h *EnvironmentHandlers) DeleteEnvironment(c *gin.Context) {
 	// Prevent deletion of activated environment unless forced
 	if env.Spec.Activated && !force {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Cannot delete an activated environment",
+			"error":   "Cannot delete an activated environment",
 			"details": "Deactivate the environment first or use force=true query parameter",
 		})
 		return
@@ -581,11 +557,11 @@ func (h *EnvironmentHandlers) GetEnvironmentStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"name":           env.Name,
-		"namespace":      env.Spec.TargetNamespace,
-		"activated":      env.Spec.Activated,
-		"status":         env.Status,
-		"resourceQuotas": env.Spec.ResourceQuotas,
+		"name":            env.Name,
+		"namespace":       env.Spec.TargetNamespace,
+		"activated":       env.Spec.Activated,
+		"status":          env.Status,
+		"resourceQuotas":  env.Spec.ResourceQuotas,
 		"networkPolicies": env.Spec.NetworkPolicies,
 	})
 }

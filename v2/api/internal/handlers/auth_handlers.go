@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/v2/api/internal/dto"
 	"github.com/kloudlite/kloudlite/v2/api/internal/services"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	"go.uber.org/zap"
@@ -38,8 +39,8 @@ type TokenRequest struct {
 
 // AuthResponse represents the response for successful authentication
 type AuthResponse struct {
-	Token string                       `json:"token"`
-	User  UserInfo                     `json:"user"`
+	Token string                      `json:"token"`
+	User  UserInfo                    `json:"user"`
 	Roles []platformv1alpha1.RoleType `json:"roles"`
 }
 
@@ -55,7 +56,7 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Warn("Invalid login request", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid request payload"})
 		return
 	}
 
@@ -65,7 +66,7 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 	user, err := h.authService.VerifyPassword(c.Request.Context(), req.Email, req.Password)
 	if err != nil {
 		h.logger.Warn("Login failed", zap.String("email", req.Email), zap.Error(err))
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid credentials"})
 		return
 	}
 
@@ -73,7 +74,7 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 	token, err := h.authService.GenerateToken(c.Request.Context(), user.Spec.Email, user.Spec.Roles)
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.String("email", req.Email), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate authentication token"})
 		return
 	}
 
@@ -103,7 +104,7 @@ func (h *AuthHandlers) GenerateToken(c *gin.Context) {
 	var req TokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Warn("Invalid token request", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid request payload"})
 		return
 	}
 
@@ -113,14 +114,14 @@ func (h *AuthHandlers) GenerateToken(c *gin.Context) {
 	user, err := h.userService.GetUserByEmail(c.Request.Context(), req.Email)
 	if err != nil {
 		h.logger.Warn("User not found for token generation", zap.String("email", req.Email), zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: "User not found"})
 		return
 	}
 
 	// Check if user is active
 	if user.Spec.Active != nil && !*user.Spec.Active {
 		h.logger.Warn("Inactive user attempted token generation", zap.String("email", req.Email))
-		c.JSON(http.StatusForbidden, gin.H{"error": "User account is inactive"})
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "User account is inactive"})
 		return
 	}
 
@@ -128,7 +129,7 @@ func (h *AuthHandlers) GenerateToken(c *gin.Context) {
 	token, err := h.authService.GenerateToken(c.Request.Context(), user.Spec.Email, user.Spec.Roles)
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.String("email", req.Email), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate authentication token"})
 		return
 	}
 
@@ -157,14 +158,14 @@ func (h *AuthHandlers) GenerateToken(c *gin.Context) {
 func (h *AuthHandlers) ValidateToken(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization header required"})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Authorization header required"})
 		return
 	}
 
 	// Extract token from Bearer header
 	const bearerPrefix = "Bearer "
 	if len(authHeader) < len(bearerPrefix) || authHeader[:len(bearerPrefix)] != bearerPrefix {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid authorization header format"})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid authorization header format"})
 		return
 	}
 
@@ -174,14 +175,14 @@ func (h *AuthHandlers) ValidateToken(c *gin.Context) {
 	claims, err := h.authService.ValidateToken(c.Request.Context(), tokenString)
 	if err != nil {
 		h.logger.Warn("Token validation failed", zap.Error(err))
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid token"})
 		return
 	}
 
 	// Return user information
-	c.JSON(http.StatusOK, gin.H{
-		"valid": true,
-		"user": gin.H{
+	c.JSON(http.StatusOK, dto.ValidateTokenResponse{
+		Valid: true,
+		User: map[string]interface{}{
 			"email": claims.Email,
 			"roles": claims.Roles,
 		},
