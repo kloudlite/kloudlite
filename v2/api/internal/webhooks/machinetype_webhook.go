@@ -99,8 +99,8 @@ func (w *MachineTypeWebhook) ValidateCreate(ctx context.Context, obj runtime.Obj
 
 		for _, existing := range existingTypes.Items {
 			if existing.Spec.Active &&
-			   existing.Spec.DisplayName == machineType.Spec.DisplayName &&
-			   existing.Name != machineType.Name {
+				existing.Spec.DisplayName == machineType.Spec.DisplayName &&
+				existing.Name != machineType.Name {
 				return fmt.Errorf("active machine type with display name %s already exists", machineType.Spec.DisplayName)
 			}
 		}
@@ -157,8 +157,8 @@ func (w *MachineTypeWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj 
 
 		for _, existing := range existingTypes.Items {
 			if existing.Spec.Active &&
-			   existing.Spec.DisplayName == newMachineType.Spec.DisplayName &&
-			   existing.Name != newMachineType.Name {
+				existing.Spec.DisplayName == newMachineType.Spec.DisplayName &&
+				existing.Name != newMachineType.Name {
 				return fmt.Errorf("active machine type with display name %s already exists", newMachineType.Spec.DisplayName)
 			}
 		}

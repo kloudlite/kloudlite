@@ -1,0 +1,90 @@
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    enable-all: true
+
+  gocyclo:
+    min-complexity: 15
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  misspell:
+    locale: US
+
+  lll:
+    line-length: 140
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+
+  funlen:
+    lines: 100
+    statements: 50
+
+  goimports:
+    local-prefixes: github.com/kloudlite/kloudlite/v2/api
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck        # Check for unchecked errors
+    - gosimple        # Suggest code simplifications
+    - govet           # Reports suspicious constructs
+    - ineffassign     # Detect ineffectual assignments
+    - staticcheck     # Advanced Go linter
+    - typecheck       # Type-check Go code
+    - unused          # Check for unused code
+    - gosec           # Security problems
+    - gocyclo         # Cyclomatic complexity
+    - goconst         # Repeated strings that could be constants
+    - misspell        # Misspellings
+    - lll             # Line length
+    - unconvert       # Unnecessary type conversions
+    - dupl            # Code clone detection
+    - gocritic        # Opinionated Go linter
+    - gofmt           # Check formatting
+    - goimports       # Check import formatting
+    - revive          # Fast, configurable, extensible, flexible, and beautiful linter
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - funlen
+
+    # Exclude generated files
+    - path: zz_generated\.deepcopy\.go
+      linters:
+        - all
+
+    # Allow TODO comments (we're tracking them separately)
+    - linters:
+        - godox
+      text: "TODO|FIXME"
+
+  max-same-issues: 0
+  max-issues-per-linter: 0
+
+run:
+  timeout: 5m
+  skip-dirs:
+    - vendor
+    - .github
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - "zz_generated\\..*\\.go$"

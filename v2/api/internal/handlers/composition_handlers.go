@@ -5,18 +5,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
 	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // CompositionHandlers handles HTTP requests for Composition resources
 type CompositionHandlers struct {
-	compRepo   repository.CompositionRepository
-	k8sClient  client.Client
-	logger     *zap.Logger
+	compRepo  repository.CompositionRepository
+	k8sClient client.Client
+	logger    *zap.Logger
 }
 
 // NewCompositionHandlers creates a new CompositionHandlers
@@ -39,7 +39,7 @@ func (h *CompositionHandlers) CreateComposition(c *gin.Context) {
 	}
 
 	var req struct {
-		Name string                        `json:"name" binding:"required"`
+		Name string                         `json:"name" binding:"required"`
 		Spec environmentsv1.CompositionSpec `json:"spec" binding:"required"`
 	}
 
@@ -297,14 +297,14 @@ func (h *CompositionHandlers) GetCompositionStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"name":           composition.Name,
-		"namespace":      composition.Namespace,
-		"state":          composition.Status.State,
-		"message":        composition.Status.Message,
-		"servicesCount":  composition.Status.ServicesCount,
-		"runningCount":   composition.Status.RunningCount,
-		"services":       composition.Status.Services,
-		"endpoints":      composition.Status.Endpoints,
+		"name":             composition.Name,
+		"namespace":        composition.Namespace,
+		"state":            composition.Status.State,
+		"message":          composition.Status.Message,
+		"servicesCount":    composition.Status.ServicesCount,
+		"runningCount":     composition.Status.RunningCount,
+		"services":         composition.Status.Services,
+		"endpoints":        composition.Status.Endpoints,
 		"lastDeployedTime": composition.Status.LastDeployedTime,
 	})
 }

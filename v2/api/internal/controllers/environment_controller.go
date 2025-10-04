@@ -5,8 +5,8 @@ import (
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
-	corev1 "k8s.io/api/core/v1"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -186,10 +186,10 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	// Add condition for namespace creation
 	condition := environmentsv1.EnvironmentCondition{
 		Type:               environmentsv1.EnvironmentConditionNamespaceCreated,
-		Status:            metav1.ConditionTrue,
+		Status:             metav1.ConditionTrue,
 		LastTransitionTime: &metav1.Time{Time: time.Now()},
-		Reason:            "NamespaceCreated",
-		Message:           "Namespace has been created successfully",
+		Reason:             "NamespaceCreated",
+		Message:            "Namespace has been created successfully",
 	}
 
 	// Initialize conditions if nil

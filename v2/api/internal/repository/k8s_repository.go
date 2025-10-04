@@ -63,9 +63,9 @@ func (r *K8sRepository[T, L]) Get(ctx context.Context, namespace, name string) (
 	if err := r.client.Get(ctx, key, obj); err != nil {
 		if apierrors.IsNotFound(err) {
 			if namespace == "" {
-				return obj, fmt.Errorf("resource not found: %s", name)
+				return obj, fmt.Errorf("resource not found %s: %w", name, err)
 			}
-			return obj, fmt.Errorf("resource not found: %s/%s", namespace, name)
+			return obj, fmt.Errorf("resource not found %s/%s: %w", namespace, name, err)
 		}
 		return obj, fmt.Errorf("failed to get resource: %w", err)
 	}
@@ -100,9 +100,9 @@ func (r *K8sRepository[T, L]) Delete(ctx context.Context, namespace, name string
 	if err := r.client.Delete(ctx, obj); err != nil {
 		if apierrors.IsNotFound(err) {
 			if namespace == "" {
-				return fmt.Errorf("resource not found: %s", name)
+				return fmt.Errorf("resource not found %s: %w", name, err)
 			}
-			return fmt.Errorf("resource not found: %s/%s", namespace, name)
+			return fmt.Errorf("resource not found %s/%s: %w", namespace, name, err)
 		}
 		return fmt.Errorf("failed to delete resource: %w", err)
 	}
@@ -190,7 +190,7 @@ func (r *K8sClusterRepository[T, L]) Get(ctx context.Context, name string) (T, e
 
 	if err := r.client.Get(ctx, key, obj); err != nil {
 		if apierrors.IsNotFound(err) {
-			return obj, fmt.Errorf("resource not found: %s", name)
+			return obj, fmt.Errorf("resource not found %s: %w", name, err)
 		}
 		return obj, fmt.Errorf("failed to get resource: %w", err)
 	}
@@ -220,7 +220,7 @@ func (r *K8sClusterRepository[T, L]) Patch(ctx context.Context, name string, pat
 	// Get the existing resource
 	if err := r.client.Get(ctx, key, obj); err != nil {
 		if apierrors.IsNotFound(err) {
-			return obj, fmt.Errorf("resource not found: %s", name)
+			return obj, fmt.Errorf("resource not found %s: %w", name, err)
 		}
 		return obj, fmt.Errorf("failed to get resource for patch: %w", err)
 	}
@@ -235,7 +235,7 @@ func (r *K8sClusterRepository[T, L]) Patch(ctx context.Context, name string, pat
 	patch := client.RawPatch(types.MergePatchType, patchBytes)
 	if err := r.client.Patch(ctx, obj, patch); err != nil {
 		if apierrors.IsNotFound(err) {
-			return obj, fmt.Errorf("resource not found: %s", name)
+			return obj, fmt.Errorf("resource not found %s: %w", name, err)
 		}
 		return obj, fmt.Errorf("failed to patch resource: %w", err)
 	}
@@ -250,7 +250,7 @@ func (r *K8sClusterRepository[T, L]) Delete(ctx context.Context, name string) er
 
 	if err := r.client.Delete(ctx, obj); err != nil {
 		if apierrors.IsNotFound(err) {
-			return fmt.Errorf("resource not found: %s", name)
+			return fmt.Errorf("resource not found %s: %w", name, err)
 		}
 		return fmt.Errorf("failed to delete resource: %w", err)
 	}
@@ -338,7 +338,7 @@ func (r *K8sNamespacedRepository[T, L]) Get(ctx context.Context, namespace, name
 
 	if err := r.client.Get(ctx, key, obj); err != nil {
 		if apierrors.IsNotFound(err) {
-			return obj, fmt.Errorf("resource not found: %s/%s", namespace, name)
+			return obj, fmt.Errorf("resource not found %s/%s: %w", namespace, name, err)
 		}
 		return obj, fmt.Errorf("failed to get resource: %w", err)
 	}
@@ -371,7 +371,7 @@ func (r *K8sNamespacedRepository[T, L]) Patch(ctx context.Context, namespace, na
 	// Get the existing resource
 	if err := r.client.Get(ctx, key, obj); err != nil {
 		if apierrors.IsNotFound(err) {
-			return obj, fmt.Errorf("resource not found: %s/%s", namespace, name)
+			return obj, fmt.Errorf("resource not found %s/%s: %w", namespace, name, err)
 		}
 		return obj, fmt.Errorf("failed to get resource for patch: %w", err)
 	}
@@ -386,7 +386,7 @@ func (r *K8sNamespacedRepository[T, L]) Patch(ctx context.Context, namespace, na
 	patch := client.RawPatch(types.MergePatchType, patchBytes)
 	if err := r.client.Patch(ctx, obj, patch); err != nil {
 		if apierrors.IsNotFound(err) {
-			return obj, fmt.Errorf("resource not found: %s/%s", namespace, name)
+			return obj, fmt.Errorf("resource not found %s/%s: %w", namespace, name, err)
 		}
 		return obj, fmt.Errorf("failed to patch resource: %w", err)
 	}
@@ -402,7 +402,7 @@ func (r *K8sNamespacedRepository[T, L]) Delete(ctx context.Context, namespace, n
 
 	if err := r.client.Delete(ctx, obj); err != nil {
 		if apierrors.IsNotFound(err) {
-			return fmt.Errorf("resource not found: %s/%s", namespace, name)
+			return fmt.Errorf("resource not found %s/%s: %w", namespace, name, err)
 		}
 		return fmt.Errorf("failed to delete resource: %w", err)
 	}

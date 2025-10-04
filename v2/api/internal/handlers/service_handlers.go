@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/v2/api/internal/dto"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,47 +28,31 @@ func NewServiceHandlers(k8sClient client.Client, logger *zap.Logger) *ServiceHan
 func (h *ServiceHandlers) ListServices(c *gin.Context) {
 	namespace := c.Param("namespace")
 	if namespace == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Namespace is required",
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error: "Namespace is required",
 		})
 		return
 	}
 
 	// List all services in the namespace
 	serviceList := &corev1.ServiceList{}
-	if err := h.k8sClient.List(context.Background(), serviceList, client.InNamespace(namespace)); err != nil {
+	if err := h.k8sClient.List(c.Request.Context(), serviceList, client.InNamespace(namespace)); err != nil {
 		h.logger.Error("Failed to list services",
 			zap.String("namespace", namespace),
 			zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to list services",
-			"details": err.Error(),
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "Failed to list services",
+			Details: err.Error(),
 		})
 		return
 	}
 
 	// Transform the services to a simpler format
-	type ServicePort struct {
-		Name       string `json:"name"`
-		Protocol   string `json:"protocol"`
-		Port       int32  `json:"port"`
-		TargetPort string `json:"targetPort"`
-	}
-
-	type ServiceInfo struct {
-		Name      string        `json:"name"`
-		Namespace string        `json:"namespace"`
-		Type      string        `json:"type"`
-		ClusterIP string        `json:"clusterIP"`
-		Ports     []ServicePort `json:"ports"`
-		Selector  map[string]string `json:"selector,omitempty"`
-	}
-
-	services := make([]ServiceInfo, 0, len(serviceList.Items))
+	services := make([]dto.ServiceInfo, 0, len(serviceList.Items))
 	for _, svc := range serviceList.Items {
-		ports := make([]ServicePort, 0, len(svc.Spec.Ports))
+		ports := make([]dto.ServicePort, 0, len(svc.Spec.Ports))
 		for _, port := range svc.Spec.Ports {
-			ports = append(ports, ServicePort{
+			ports = append(ports, dto.ServicePort{
 				Name:       port.Name,
 				Protocol:   string(port.Protocol),
 				Port:       port.Port,
@@ -76,7 +60,7 @@ func (h *ServiceHandlers) ListServices(c *gin.Context) {
 			})
 		}
 
-		services = append(services, ServiceInfo{
+		services = append(services, dto.ServiceInfo{
 			Name:      svc.Name,
 			Namespace: svc.Namespace,
 			Type:      string(svc.Spec.Type),
@@ -86,8 +70,8 @@ func (h *ServiceHandlers) ListServices(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"services": services,
-		"count":    len(services),
+	c.JSON(http.StatusOK, dto.ServiceListResponse{
+		Services: services,
+		Count:    len(services),
 	})
 }

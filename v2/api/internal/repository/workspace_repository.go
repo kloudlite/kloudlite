@@ -88,7 +88,7 @@ func (r *workspaceRepository) ListArchived(ctx context.Context, namespace string
 // SuspendWorkspace suspends a workspace by name
 func (r *workspaceRepository) SuspendWorkspace(ctx context.Context, name string, namespace string) error {
 	// Get the workspace
-	workspace, err := r.Get(ctx, name, namespace)
+	workspace, err := r.Get(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (r *workspaceRepository) SuspendWorkspace(ctx context.Context, name string,
 // ActivateWorkspace activates a workspace by name
 func (r *workspaceRepository) ActivateWorkspace(ctx context.Context, name string, namespace string) error {
 	// Get the workspace
-	workspace, err := r.Get(ctx, name, namespace)
+	workspace, err := r.Get(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (r *workspaceRepository) ActivateWorkspace(ctx context.Context, name string
 // ArchiveWorkspace archives a workspace by name
 func (r *workspaceRepository) ArchiveWorkspace(ctx context.Context, name string, namespace string) error {
 	// Get the workspace
-	workspace, err := r.Get(ctx, name, namespace)
+	workspace, err := r.Get(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (r *workspaceRepository) ArchiveWorkspace(ctx context.Context, name string,
 // UpdatePhase updates the phase of a workspace
 func (r *workspaceRepository) UpdatePhase(ctx context.Context, name string, namespace string, phase string) error {
 	// Get the workspace
-	workspace, err := r.Get(ctx, name, namespace)
+	workspace, err := r.Get(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -144,4 +144,3 @@ func (r *workspaceRepository) UpdatePhase(ctx context.Context, name string, name
 	// Use status subresource to update only status
 	return r.client.Status().Update(ctx, workspace)
 }
-
