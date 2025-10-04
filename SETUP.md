@@ -27,8 +27,6 @@ task web:install
 
 ### 3. Start Infrastructure (K3s + Pre-setup)
 
-**Terminal 1:**
-
 ```bash
 cd devenv
 docker-compose up k3s pre-app
@@ -42,8 +40,6 @@ Wait for pre-app to complete:
 
 ### 4. Start Backend API
 
-**Terminal 2:**
-
 ```bash
 cd devenv
 task api:dev
@@ -53,9 +49,8 @@ Wait for API to start on `http://localhost:8080`
 
 ### 5. Complete Post-setup
 
-**Back to Terminal 1:**
-
 ```bash
+cd devenv
 docker-compose up post-app
 ```
 
@@ -69,8 +64,6 @@ This will:
 Wait for "POST-APP SETUP COMPLETE"
 
 ### 6. Start Frontend
-
-**Terminal 3:**
 
 ```bash
 cd devenv
