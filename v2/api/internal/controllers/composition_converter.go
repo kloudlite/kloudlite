@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	composego "github.com/compose-spec/compose-go/v2/types"
 	environmentsv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/environments/v1"
@@ -23,11 +24,22 @@ type ComposeResources struct {
 	ServiceNames []string
 }
 
+// EnvironmentData holds environment configuration data
+type EnvironmentData struct {
+	// EnvVars from environment ConfigMap (env-envvars)
+	EnvVars map[string]string
+	// Secrets from environment Secret (env-envvars)
+	Secrets map[string]string
+	// ConfigFiles from environment ConfigMap (env-config-files)
+	ConfigFiles map[string]string
+}
+
 // ConvertComposeToK8s converts a docker-compose project to Kubernetes resources
 func ConvertComposeToK8s(
 	project *composego.Project,
 	composition *environmentsv1.Composition,
 	namespace string,
+	envData *EnvironmentData,
 ) (*ComposeResources, error) {
 	resources := &ComposeResources{
 		Deployments:  make([]*appsv1.Deployment, 0),
@@ -61,6 +73,7 @@ func ConvertComposeToK8s(
 			composition,
 			namespace,
 			commonLabels,
+			envData,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert service %s: %w", serviceName, err)
@@ -90,6 +103,7 @@ func convertServiceToDeployment(
 	composition *environmentsv1.Composition,
 	namespace string,
 	commonLabels map[string]string,
+	envData *EnvironmentData,
 ) (*appsv1.Deployment, error) {
 	// Service-specific labels
 	labels := make(map[string]string)
@@ -127,7 +141,8 @@ func convertServiceToDeployment(
 		container.Command = service.Entrypoint
 	}
 
-	// Add environment variables
+	// Add environment variables from service definition
+	// Variables have already been resolved by the compose parser
 	envVars := make([]corev1.EnvVar, 0)
 	for key, val := range service.Environment {
 		if val != nil {
@@ -194,21 +209,54 @@ func convertServiceToDeployment(
 	volumes := make([]corev1.Volume, 0)
 
 	for _, vol := range service.Volumes {
-		if vol.Type == "volume" && vol.Source != "" {
-			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      vol.Source,
-				MountPath: vol.Target,
-			})
-			volumes = append(volumes, corev1.Volume{
-				Name: vol.Source,
-				VolumeSource: corev1.VolumeSource{
-					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: fmt.Sprintf("%s-%s", composition.Name, vol.Source),
+		if vol.Source != "" {
+			// Check if source is a file mount from environment: /files/filename
+			if strings.HasPrefix(vol.Source, "/files/") && envData != nil && envData.ConfigFiles != nil {
+				// Extract filename from /files/filename
+				filename := strings.TrimPrefix(vol.Source, "/files/")
+
+				if _, exists := envData.ConfigFiles[filename]; exists {
+					// Create a volume for this specific file's ConfigMap
+					// Replace dots with dashes in volume names (K8s requirement)
+					safeFilename := strings.ReplaceAll(filename, ".", "-")
+					volumeName := fmt.Sprintf("env-file-%s", safeFilename)
+					configMapName := fmt.Sprintf("env-file-%s", filename)
+
+					volumeMounts = append(volumeMounts, corev1.VolumeMount{
+						Name:      volumeName,
+						MountPath: vol.Target,
+						SubPath:   filename,
+					})
+
+					volumes = append(volumes, corev1.Volume{
+						Name: volumeName,
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: configMapName,
+								},
+							},
+						},
+					})
+				}
+			} else if vol.Type == "volume" {
+				// Regular PVC volume mount (named volumes only)
+				volumeMounts = append(volumeMounts, corev1.VolumeMount{
+					Name:      vol.Source,
+					MountPath: vol.Target,
+				})
+				volumes = append(volumes, corev1.Volume{
+					Name: vol.Source,
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: fmt.Sprintf("%s-%s", composition.Name, vol.Source),
+						},
 					},
-				},
-			})
+				})
+			}
 		}
 	}
+
 	container.VolumeMounts = volumeMounts
 
 	// Create deployment
