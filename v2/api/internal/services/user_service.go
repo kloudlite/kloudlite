@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
-	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -196,7 +196,6 @@ func (s *userService) UpdateUserLastLogin(ctx context.Context, name string) erro
 	return nil
 }
 
-
 // createWorkMachineForUser creates a WorkMachine for a newly created user
 func (s *userService) createWorkMachineForUser(ctx context.Context, user *platformv1alpha1.User) error {
 	// Extract username from email (part before @)
@@ -313,4 +312,3 @@ func (s *userService) DeactivateUser(ctx context.Context, name string) (*platfor
 	}
 	return user, nil
 }
-

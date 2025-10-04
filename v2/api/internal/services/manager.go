@@ -69,8 +69,8 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 
 	return &Manager{
 		RepositoryManager: opts.RepositoryManager,
-		Users:            userService,
-		Auth:             authService,
+		Users:             userService,
+		Auth:              authService,
 	}, nil
 }
 
