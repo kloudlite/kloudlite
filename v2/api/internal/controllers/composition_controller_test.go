@@ -9,9 +9,11 @@ import (
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -65,7 +67,11 @@ services:
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -95,7 +101,9 @@ services:
 	assert.Contains(t, updatedComp.Finalizers, compositionFinalizer)
 }
 
-func TestCompositionReconciler_Reconcile_SkipUnchangedGeneration(t *testing.T) {
+func TestCompositionReconciler_Reconcile_ReconcileOnConfigMapChange(t *testing.T) {
+	// This test verifies that reconciliation happens even when observedGeneration matches generation
+	// This allows ConfigMap/Secret changes to trigger redeployment
 	scheme := runtime.NewScheme()
 	_ = environmentsv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
@@ -116,11 +124,15 @@ services:
     image: nginx:latest`,
 		},
 		Status: environmentsv1.CompositionStatus{
-			ObservedGeneration: 1, // Same as current generation
+			ObservedGeneration: 1, // Same as current generation - deployment should still happen
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -137,8 +149,15 @@ services:
 	}
 
 	result, err := reconciler.Reconcile(context.Background(), req)
+	// Deployment should happen, updating status, so no error expected
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
+
+	// Verify that a deployment was created
+	deploymentList := &appsv1.DeploymentList{}
+	err = k8sClient.List(context.Background(), deploymentList, client.InNamespace("test-namespace"))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(deploymentList.Items), "Deployment should be created")
 }
 
 func TestCompositionReconciler_HandleDeletion(t *testing.T) {
@@ -190,7 +209,11 @@ func TestCompositionReconciler_HandleDeletion(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition, deployment).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition, deployment).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -258,7 +281,11 @@ services:
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -376,7 +403,11 @@ func TestCompositionReconciler_ApplyResource_Create(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -465,6 +496,88 @@ func TestCompositionReconciler_ApplyResource_Update(t *testing.T) {
 	}, retrievedDeployment)
 	assert.NoError(t, err)
 	assert.Equal(t, int32(3), *retrievedDeployment.Spec.Replicas)
+}
+
+func TestCompositionReconciler_ApplyResource_SkipPVCUpdate(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	composition := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-composition",
+			Namespace: "test-namespace",
+			UID:       "comp-123",
+		},
+	}
+
+	// Create an existing PVC with StorageClassName set
+	existingPVC := &corev1.PersistentVolumeClaim{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "PersistentVolumeClaim",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "test-namespace",
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse("1Gi"),
+				},
+			},
+			StorageClassName: func() *string { s := "local-path"; return &s }(),
+			VolumeName:       "pvc-123",
+		},
+	}
+
+	// Create a new PVC (without StorageClassName/VolumeName - would cause immutability error)
+	newPVC := &corev1.PersistentVolumeClaim{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "PersistentVolumeClaim",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "test-namespace",
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse("1Gi"),
+				},
+			},
+			// No StorageClassName or VolumeName - would fail if updated
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition, existingPVC).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	// Apply the new PVC - should skip update
+	err := reconciler.applyResource(context.Background(), newPVC, composition, logger)
+	assert.NoError(t, err)
+
+	// Verify PVC was NOT updated (StorageClassName should still be set)
+	retrievedPVC := &corev1.PersistentVolumeClaim{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{
+		Name:      "test-pvc",
+		Namespace: "test-namespace",
+	}, retrievedPVC)
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedPVC.Spec.StorageClassName)
+	assert.Equal(t, "local-path", *retrievedPVC.Spec.StorageClassName)
+	assert.Equal(t, "pvc-123", retrievedPVC.Spec.VolumeName)
 }
 
 func TestCompositionReconciler_CleanupRemovedResources_FirstDeployment(t *testing.T) {
@@ -589,7 +702,11 @@ func TestCompositionReconciler_UpdateStatus_Running(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -629,7 +746,11 @@ func TestCompositionReconciler_UpdateStatus_Failed(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -670,7 +791,11 @@ func TestCompositionReconciler_UpdateStatus_Deploying(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -680,12 +805,8 @@ func TestCompositionReconciler_UpdateStatus_Deploying(t *testing.T) {
 	}
 
 	result, err := reconciler.updateStatus(context.Background(), composition, environmentsv1.CompositionStateDeploying, "Deploying", logger)
-	// Fake client may delete object during status update
-	if err != nil {
-		assert.Contains(t, err.Error(), "not found")
-	} else {
-		assert.True(t, result.Requeue)
-	}
+	assert.NoError(t, err)
+	assert.Greater(t, result.RequeueAfter.Seconds(), float64(0))
 	assert.Equal(t, environmentsv1.CompositionStateDeploying, composition.Status.State)
 }
 
@@ -832,7 +953,11 @@ func TestCompositionReconciler_HandleDeletion_StatusUpdateFails(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -1047,7 +1172,11 @@ func TestCompositionReconciler_HandleDeletion_NoResources(t *testing.T) {
 	}
 
 	// No resources to delete
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -1103,7 +1232,11 @@ func TestCompositionReconciler_UpdateStatus_UpdateExistingCondition(t *testing.T
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -1167,7 +1300,11 @@ func TestCompositionReconciler_UpdateStatus_MultipleConditions(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -1214,7 +1351,11 @@ func TestCompositionReconciler_UpdateStatus_AddConditionWhenNoneExist(t *testing
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -1288,7 +1429,11 @@ services:
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -1415,7 +1560,11 @@ func TestCompositionReconciler_CleanupRemovedResources_DeleteError(t *testing.T)
 	}
 
 	// Don't create the actual resources - this will test the "not found" path
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(composition).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition).
+		WithStatusSubresource(composition).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &CompositionReconciler{
@@ -1427,6 +1576,288 @@ func TestCompositionReconciler_CleanupRemovedResources_DeleteError(t *testing.T)
 	// Should handle not found errors gracefully
 	err := reconciler.cleanupRemovedResources(context.Background(), composition, oldDeployedResources, []string{}, []string{}, logger)
 	assert.NoError(t, err)
+}
+
+func TestCompositionReconciler_FetchEnvironmentData(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create test ConfigMap for env-config
+	envConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-config",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"API_URL": "https://api.example.com",
+			"DEBUG":   "true",
+		},
+	}
+
+	// Create test Secret for env-secret
+	envSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-secret",
+			Namespace: "test-namespace",
+		},
+		Data: map[string][]byte{
+			"DB_PASSWORD": []byte("secret123"),
+			"API_KEY":     []byte("key456"),
+		},
+	}
+
+	// Create test ConfigMaps for config files
+	configFileMap1 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-file-app.yml",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"kloudlite.io/file-type": "environment-file",
+			},
+		},
+		Data: map[string]string{
+			"app.yml": "app config content",
+		},
+	}
+
+	configFileMap2 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-file-nginx.conf",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"kloudlite.io/file-type": "environment-file",
+			},
+		},
+		Data: map[string]string{
+			"nginx.conf": "nginx config",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(envConfigMap, envSecret, configFileMap1, configFileMap2).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	envData, err := reconciler.fetchEnvironmentData(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+	assert.NotNil(t, envData)
+
+	// Verify env vars
+	assert.Equal(t, 2, len(envData.EnvVars))
+	assert.Equal(t, "https://api.example.com", envData.EnvVars["API_URL"])
+	assert.Equal(t, "true", envData.EnvVars["DEBUG"])
+
+	// Verify secrets
+	assert.Equal(t, 2, len(envData.Secrets))
+	assert.Equal(t, "secret123", envData.Secrets["DB_PASSWORD"])
+	assert.Equal(t, "key456", envData.Secrets["API_KEY"])
+
+	// Verify config files
+	assert.Equal(t, 2, len(envData.ConfigFiles))
+	assert.Equal(t, "app config content", envData.ConfigFiles["app.yml"])
+	assert.Equal(t, "nginx config", envData.ConfigFiles["nginx.conf"])
+}
+
+func TestCompositionReconciler_FetchEnvironmentData_Missing(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	envData, err := reconciler.fetchEnvironmentData(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+	assert.NotNil(t, envData)
+
+	// Should return empty maps, not nil
+	assert.Equal(t, 0, len(envData.EnvVars))
+	assert.Equal(t, 0, len(envData.Secrets))
+	assert.Equal(t, 0, len(envData.ConfigFiles))
+}
+
+func TestCompositionReconciler_FindCompositionsForConfigMap(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	composition1 := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp1",
+			Namespace: "test-namespace",
+		},
+	}
+
+	composition2 := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp2",
+			Namespace: "test-namespace",
+		},
+	}
+
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-config",
+			Namespace: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition1, composition2, configMap).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	requests := reconciler.findCompositionsForConfigMap(context.Background(), configMap)
+
+	// Should return reconcile requests for all compositions in the namespace
+	assert.Equal(t, 2, len(requests))
+
+	names := []string{requests[0].Name, requests[1].Name}
+	assert.Contains(t, names, "comp1")
+	assert.Contains(t, names, "comp2")
+}
+
+func TestCompositionReconciler_FindCompositionsForConfigMap_WrongName(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	composition := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp1",
+			Namespace: "test-namespace",
+		},
+	}
+
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "some-other-config",
+			Namespace: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition, configMap).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	requests := reconciler.findCompositionsForConfigMap(context.Background(), configMap)
+
+	// Should not return any requests for non env-config ConfigMaps
+	assert.Equal(t, 0, len(requests))
+}
+
+func TestCompositionReconciler_FindCompositionsForSecret(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	composition1 := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp1",
+			Namespace: "test-namespace",
+		},
+	}
+
+	composition2 := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp2",
+			Namespace: "test-namespace",
+		},
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-secret",
+			Namespace: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition1, composition2, secret).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	requests := reconciler.findCompositionsForSecret(context.Background(), secret)
+
+	// Should return reconcile requests for all compositions in the namespace
+	assert.Equal(t, 2, len(requests))
+
+	names := []string{requests[0].Name, requests[1].Name}
+	assert.Contains(t, names, "comp1")
+	assert.Contains(t, names, "comp2")
+}
+
+func TestCompositionReconciler_FindCompositionsForSecret_WrongName(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	composition := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp1",
+			Namespace: "test-namespace",
+		},
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "some-other-secret",
+			Namespace: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition, secret).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	requests := reconciler.findCompositionsForSecret(context.Background(), secret)
+
+	// Should not return any requests for non env-secret Secrets
+	assert.Equal(t, 0, len(requests))
 }
 
 func int32Ptr(i int32) *int32 {
