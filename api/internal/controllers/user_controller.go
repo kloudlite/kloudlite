@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,6 +56,21 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 	if user.DeletionTimestamp != nil {
 		logger.Info("User is being deleted, starting cleanup")
 		return r.handleUserDeletion(ctx, user, logger)
+	}
+
+	if user.Spec.PasswordString != "" {
+		b, err := bcrypt.GenerateFromPassword([]byte(user.Spec.PasswordString), bcrypt.DefaultCost)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		user.Spec.Password = base64.StdEncoding.EncodeToString(b)
+		user.Spec.PasswordString = ""
+		if err := r.Update(ctx, user); err != nil {
+			logger.Error("failed to update user", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Add finalizer if not present
