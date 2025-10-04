@@ -1,4 +1,4 @@
-import { FilesList } from '@/components/files-list'
+import { FilesList } from '../_components/files-list'
 
 interface FilesPageProps {
   params: {

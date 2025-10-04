@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { WorkMachinesContent } from '@/components/work-machines-content'
+import { WorkMachinesContent } from './workspaces/_components/work-machines-content'
 import { getMyWorkMachine, listAllWorkMachines } from '@/app/actions/work-machine.actions'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import type { WorkMachine } from '@/types/work-machine'

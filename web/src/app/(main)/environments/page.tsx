@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { EnvironmentsList } from '@/components/environments-list'
+import { EnvironmentsList } from './_components/environments-list'
 import { environmentService } from '@/lib/services/environment.service'
 import { environmentToUIModel } from '@/types/environment'
 

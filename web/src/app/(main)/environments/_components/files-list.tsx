@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { listFiles, getFile, deleteFile } from '@/app/actions/environment-config'
 import type { FileInfo } from '@/types/environment'
-import { AddFileSheet } from '@/components/add-file-sheet'
-import { EditFileSheet } from '@/components/edit-file-sheet'
+import { AddFileSheet } from './add-file-sheet'
+import { EditFileSheet } from './edit-file-sheet'
 import { toast } from 'sonner'
 
 interface FilesListProps {

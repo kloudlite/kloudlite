@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { CompositionsList } from '@/components/compositions-list'
+import { CompositionsList } from '../_components/compositions-list'
 import { compositionService } from '@/lib/services/composition.service'
 import { environmentService } from '@/lib/services/environment.service'
 

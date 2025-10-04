@@ -1,4 +1,4 @@
-import { EnvVarsList } from '@/components/envvars-list'
+import { EnvVarsList } from '../_components/envvars-list'
 
 interface PageProps {
   params: {

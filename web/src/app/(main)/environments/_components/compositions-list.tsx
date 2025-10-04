@@ -4,8 +4,8 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileCode, Clock, Trash2, Loader2 } from 'lucide-react'
 import type { Composition } from '@/types/composition'
-import { CreateCompositionSheet } from '@/components/create-composition-sheet'
-import { EditCompositionSheet } from '@/components/edit-composition-sheet'
+import { CreateCompositionSheet } from './create-composition-sheet'
+import { EditCompositionSheet } from './edit-composition-sheet'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,

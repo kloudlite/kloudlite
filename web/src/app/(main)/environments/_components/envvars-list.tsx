@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getEnvVars, deleteEnvVar } from '@/app/actions/environment-config'
 import type { EnvVar } from '@/types/environment'
-import { AddEnvVarSheet } from '@/components/add-envvar-sheet'
-import { EditEnvVarSheet } from '@/components/edit-envvar-sheet'
+import { AddEnvVarSheet } from './add-envvar-sheet'
+import { EditEnvVarSheet } from './edit-envvar-sheet'
 import { toast } from 'sonner'
 
 interface EnvVarsListProps {

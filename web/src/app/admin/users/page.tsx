@@ -1,4 +1,4 @@
-import { UserManagementList } from '@/components/user-management-list'
+import { UserManagementList } from './_components/user-management-list'
 import { getAllUsers } from '@/lib/actions/user-actions'
 import { UserDisplay } from '@/types/user'
 import { AlertCircle } from 'lucide-react'
