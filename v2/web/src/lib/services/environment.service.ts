@@ -7,6 +7,22 @@ import type {
   EnvironmentResponse,
   EnvironmentDeleteResponse,
   EnvironmentStatusResponse,
+  ConfigData,
+  SetConfigResponse,
+  GetConfigResponse,
+  DeleteConfigResponse,
+  SecretData,
+  SetSecretResponse,
+  GetSecretResponse,
+  DeleteSecretResponse,
+  SetFileResponse,
+  GetFileResponse,
+  ListFilesResponse,
+  DeleteFileResponse,
+  EnvVar,
+  GetEnvVarsResponse,
+  SetEnvVarResponse,
+  DeleteEnvVarResponse,
 } from '@/types/environment'
 
 export class EnvironmentService {
@@ -76,6 +92,66 @@ export class EnvironmentService {
    */
   async getEnvironmentStatus(name: string): Promise<EnvironmentStatusResponse> {
     return apiClient.get<EnvironmentStatusResponse>(`${this.baseUrl}/${name}/status`)
+  }
+
+  // Config operations
+  async setConfig(name: string, data: ConfigData): Promise<SetConfigResponse> {
+    return apiClient.put(`${this.baseUrl}/${name}/config`, { data })
+  }
+
+  async getConfig(name: string): Promise<GetConfigResponse> {
+    return apiClient.get(`${this.baseUrl}/${name}/config`)
+  }
+
+  async deleteConfig(name: string): Promise<DeleteConfigResponse> {
+    return apiClient.delete(`${this.baseUrl}/${name}/config`)
+  }
+
+  // Secret operations
+  async setSecret(name: string, data: SecretData): Promise<SetSecretResponse> {
+    return apiClient.put(`${this.baseUrl}/${name}/secret`, { data })
+  }
+
+  async getSecret(name: string): Promise<GetSecretResponse> {
+    return apiClient.get(`${this.baseUrl}/${name}/secret`)
+  }
+
+  async deleteSecret(name: string): Promise<DeleteSecretResponse> {
+    return apiClient.delete(`${this.baseUrl}/${name}/secret`)
+  }
+
+  // EnvVars operations (unified configs + secrets)
+  async getEnvVars(name: string): Promise<GetEnvVarsResponse> {
+    return apiClient.get(`${this.baseUrl}/${name}/envvars`)
+  }
+
+  async createEnvVar(name: string, key: string, value: string, type: 'config' | 'secret'): Promise<SetEnvVarResponse> {
+    return apiClient.post(`${this.baseUrl}/${name}/envvars`, { key, value, type })
+  }
+
+  async setEnvVar(name: string, key: string, value: string, type: 'config' | 'secret'): Promise<SetEnvVarResponse> {
+    return apiClient.put(`${this.baseUrl}/${name}/envvars`, { key, value, type })
+  }
+
+  async deleteEnvVar(name: string, key: string): Promise<DeleteEnvVarResponse> {
+    return apiClient.delete(`${this.baseUrl}/${name}/envvars/${key}`)
+  }
+
+  // File operations
+  async setFile(name: string, filename: string, content: string): Promise<SetFileResponse> {
+    return apiClient.put(`${this.baseUrl}/${name}/files/${filename}`, { content })
+  }
+
+  async getFile(name: string, filename: string): Promise<GetFileResponse> {
+    return apiClient.get(`${this.baseUrl}/${name}/files/${filename}`)
+  }
+
+  async listFiles(name: string): Promise<ListFilesResponse> {
+    return apiClient.get(`${this.baseUrl}/${name}/files`)
+  }
+
+  async deleteFile(name: string, filename: string): Promise<DeleteFileResponse> {
+    return apiClient.delete(`${this.baseUrl}/${name}/files/${filename}`)
   }
 }
 

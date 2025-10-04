@@ -117,6 +117,48 @@ services:
             resources: ["environments"]
           admissionReviewVersions: ["v1"]
           sideEffects: None
+        - name: configmaps.core.envvars
+          clientConfig:
+            service:
+              name: nginx
+              namespace: default
+              path: /webhooks/validate/configmaps
+            caBundle: $${CA_BUNDLE}
+          rules:
+          - operations: ["CREATE", "UPDATE"]
+            apiGroups: [""]
+            apiVersions: ["v1"]
+            resources: ["configmaps"]
+          admissionReviewVersions: ["v1"]
+          sideEffects: None
+          namespaceSelector:
+            matchExpressions:
+            - key: kloudlite.io/environment
+              operator: Exists
+          objectSelector:
+            matchLabels:
+              kloudlite.io/config-type: "envvars"
+        - name: secrets.core.envvars
+          clientConfig:
+            service:
+              name: nginx
+              namespace: default
+              path: /webhooks/validate/secrets
+            caBundle: $${CA_BUNDLE}
+          rules:
+          - operations: ["CREATE", "UPDATE"]
+            apiGroups: [""]
+            apiVersions: ["v1"]
+            resources: ["secrets"]
+          admissionReviewVersions: ["v1"]
+          sideEffects: None
+          namespaceSelector:
+            matchExpressions:
+            - key: kloudlite.io/environment
+              operator: Exists
+          objectSelector:
+            matchLabels:
+              kloudlite.io/config-type: "envvars"
         EOF
 
         # Create MutatingWebhookConfiguration

@@ -53,6 +53,11 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
+	environmentConfigHandlers := handlers.NewEnvironmentConfigHandlers(
+		servicesManager.RepositoryManager.Environments,
+		servicesManager.RepositoryManager.K8sClient,
+		logger,
+	)
 	machineTypeHandlers := handlers.NewMachineTypeHandlers(manager)
 	workMachineHandlers := handlers.NewWorkMachineHandlers(manager)
 	workspaceHandlers := handlers.NewWorkspaceHandlers(
@@ -76,6 +81,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	appLogger := pkglogger.NewZapLogger(logger)
 	userWebhook := webhooks.NewUserWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	environmentWebhook := webhooks.NewEnvironmentWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, nil)
+	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	// workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, nil) // TODO: fix webhook implementation
 
 	// JWT middleware
@@ -131,6 +137,34 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.POST("/:name/activate", environmentHandlers.ActivateEnvironment)
 				environments.POST("/:name/deactivate", environmentHandlers.DeactivateEnvironment)
 				environments.GET("/:name/status", environmentHandlers.GetEnvironmentStatus)
+
+				// Environment config routes (legacy - keeping for backwards compatibility)
+				environments.PUT("/:name/config", environmentConfigHandlers.SetConfig)
+				environments.GET("/:name/config", environmentConfigHandlers.GetConfig)
+				environments.DELETE("/:name/config", environmentConfigHandlers.DeleteConfig)
+
+				// Environment secret routes (legacy - keeping for backwards compatibility)
+				environments.PUT("/:name/secret", environmentConfigHandlers.SetSecret)
+				environments.GET("/:name/secret", environmentConfigHandlers.GetSecret)
+				environments.DELETE("/:name/secret", environmentConfigHandlers.DeleteSecret)
+
+				// Environment variables (unified config + secrets)
+				environments.GET("/:name/envvars", environmentConfigHandlers.GetEnvVars)
+				environments.POST("/:name/envvars", environmentConfigHandlers.CreateEnvVar)
+				environments.PUT("/:name/envvars", environmentConfigHandlers.SetEnvVar)
+				environments.DELETE("/:name/envvars/:key", environmentConfigHandlers.DeleteEnvVar)
+
+				// Environment file routes (config files)
+				environments.PUT("/:name/config-files/:filename", environmentConfigHandlers.SetFile)
+				environments.GET("/:name/config-files/:filename", environmentConfigHandlers.GetFile)
+				environments.GET("/:name/config-files", environmentConfigHandlers.ListFiles)
+				environments.DELETE("/:name/config-files/:filename", environmentConfigHandlers.DeleteFile)
+
+				// Legacy file routes (keeping for backwards compatibility)
+				environments.PUT("/:name/files/:filename", environmentConfigHandlers.SetFile)
+				environments.GET("/:name/files/:filename", environmentConfigHandlers.GetFile)
+				environments.GET("/:name/files", environmentConfigHandlers.ListFiles)
+				environments.DELETE("/:name/files/:filename", environmentConfigHandlers.DeleteFile)
 			}
 
 			// Machine Type routes
@@ -210,6 +244,8 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/mutate/users", userWebhook.MutateUser)
 		webhooksGroup.POST("/validate/environments", environmentWebhook.ValidateEnvironment)
 		webhooksGroup.POST("/mutate/environments", environmentWebhook.MutateEnvironment)
+		webhooksGroup.POST("/validate/configmaps", envVarWebhook.ValidateConfigMap)
+		webhooksGroup.POST("/validate/secrets", envVarWebhook.ValidateSecret)
 		// webhooksGroup.POST("/validate/workspaces", workspaceWebhook.ValidateWorkspace) // TODO: fix webhook implementation
 		// webhooksGroup.POST("/mutate/workspaces", workspaceWebhook.MutateWorkspace) // TODO: fix webhook implementation
 	}
