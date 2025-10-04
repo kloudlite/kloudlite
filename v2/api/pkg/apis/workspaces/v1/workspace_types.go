@@ -53,7 +53,6 @@ type WorkspaceSpec struct {
 	Status string `json:"status,omitempty"`
 }
 
-
 // WorkspaceSettings contains workspace-specific configuration
 type WorkspaceSettings struct {
 	// AutoStop indicates if workspace should auto-stop when idle
