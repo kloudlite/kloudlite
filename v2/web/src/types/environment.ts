@@ -109,6 +109,104 @@ export interface EnvironmentStatusResponse {
   message: string
 }
 
+// Config, Secret, and File management types
+export interface ConfigData {
+  [key: string]: string
+}
+
+export interface SetConfigRequest {
+  data: ConfigData
+}
+
+export interface SetConfigResponse {
+  message: string
+  data: ConfigData
+}
+
+export interface GetConfigResponse {
+  data: ConfigData
+}
+
+export interface DeleteConfigResponse {
+  message: string
+}
+
+export interface SecretData {
+  [key: string]: string
+}
+
+export interface SetSecretRequest {
+  data: SecretData
+}
+
+export interface SetSecretResponse {
+  message: string
+  keys: string[]
+}
+
+export interface GetSecretResponse {
+  keys: string[]
+}
+
+export interface DeleteSecretResponse {
+  message: string
+}
+
+// EnvVars types (unified configs + secrets)
+export interface EnvVar {
+  key: string
+  value: string  // Empty for secrets (security)
+  type: 'config' | 'secret'
+}
+
+export interface GetEnvVarsResponse {
+  envVars: EnvVar[]
+  count: number
+}
+
+export interface SetEnvVarRequest {
+  key: string
+  value: string
+  type: 'config' | 'secret'
+}
+
+export interface SetEnvVarResponse {
+  message: string
+  envVar: EnvVar
+}
+
+export interface DeleteEnvVarResponse {
+  message: string
+}
+
+export interface FileInfo {
+  name: string
+  configMapName: string
+}
+
+export interface SetFileRequest {
+  content: string
+}
+
+export interface SetFileResponse {
+  message: string
+  filename: string
+}
+
+export interface GetFileResponse {
+  filename: string
+  content: string
+}
+
+export interface ListFilesResponse {
+  files: FileInfo[]
+  count: number
+}
+
+export interface DeleteFileResponse {
+  message: string
+}
+
 // UI-specific types for compatibility with existing components
 export interface EnvironmentUIModel {
   id: string
