@@ -20,185 +20,124 @@ services:
       - --disable
       - traefik
       - --disable-helm-controller
-    mem_limit: 4GB
-    cpus: 2
+      - --tls-san
+      - k3s-dev
 
-  k3s-setup:
+  # Pre-app: Extract kubeconfig and install CRDs
+  pre-app:
     image: alpine:latest
-    container_name: k3s-setup
+    container_name: kloudlite-pre-app
     depends_on:
       - k3s
     volumes:
       - k3s-config:/kubeconfig
-      - ./k3s-config:/output:Z
-      - webhook-certs:/certs:Z
-      - ../manifests:/crds:Z
-      - ./manifests:/bootstrap:Z
+      - ./k3s-config:/output
+      - ../manifests:/crds
     command:
       - /bin/sh
       - -c
       - |
-        echo "Installing kubectl and openssl..."
-        apk add --no-cache curl openssl
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        echo "=== PRE-APP SETUP ==="
+
+        echo "Installing kubectl..."
+        apk add --no-cache curl
+        curl -LO "https://dl.k8s.io/release/$$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
         chmod +x kubectl
         mv kubectl /usr/local/bin/
 
-        echo "Waiting for k3s to be ready..."
-        # Create a modified kubeconfig that points to k3s-dev container
-        cp /kubeconfig/k3s.yaml /tmp/k3s.yaml
-        sed -i 's/127.0.0.1/k3s-dev/g' /tmp/k3s.yaml
-        until kubectl --kubeconfig=/tmp/k3s.yaml get nodes 2>/dev/null; do sleep 2; done
+        echo "1. Waiting for k3s.yaml to be generated..."
+        until [ -f /kubeconfig/k3s.yaml ]; do sleep 1; done
 
-        echo "Copying kubeconfig..."
+        echo "2. Copying kubeconfig..."
         cp /kubeconfig/k3s.yaml /output/k3s.yaml
         chmod 644 /output/k3s.yaml
 
-        # Check if certificate already exists
-        if [ ! -f /certs/tls.crt ] || [ ! -f /certs/tls.key ]; then
-          echo "Generating self-signed certificate..."
-          mkdir -p /certs
+        echo "3. Waiting for k3s cluster to be ready..."
+        # Create a modified kubeconfig for container use only
+        cp /kubeconfig/k3s.yaml /tmp/k3s.yaml
+        sed -i 's|https://127.0.0.1:6443|https://k3s-dev:6443|g' /tmp/k3s.yaml
+        export KUBECONFIG=/tmp/k3s.yaml
+        until kubectl get nodes 2>/dev/null; do sleep 2; done
+
+        echo "4. Installing CRDs..."
+        kubectl apply -f /crds/
+
+        echo "=== PRE-APP SETUP COMPLETE ==="
+    restart: "no"
+
+  # Post-app: Install nginx and create initial resources
+  post-app:
+    image: alpine:latest
+    container_name: kloudlite-post-app
+    depends_on:
+      - pre-app
+    volumes:
+      - k3s-config:/kubeconfig
+      - ./k3s-config:/output
+      - ./manifests:/manifests
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "=== POST-APP SETUP ==="
+
+        echo "Installing kubectl and openssl..."
+        apk add --no-cache curl openssl
+        curl -LO "https://dl.k8s.io/release/$$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        mv kubectl /usr/local/bin/
+
+        echo "Setting up kubeconfig..."
+        cp /kubeconfig/k3s.yaml /tmp/k3s.yaml
+        sed -i 's|https://127.0.0.1:6443|https://k3s-dev:6443|g' /tmp/k3s.yaml
+        export KUBECONFIG=/tmp/k3s.yaml
+
+        echo "1. Checking for existing TLS certificate..."
+        mkdir -p /tmp/certs
+        if kubectl get secret webhook-server-cert -n default >/dev/null 2>&1; then
+          echo "Using existing TLS certificate..."
+          kubectl get secret webhook-server-cert -n default -o jsonpath='{.data.tls\.crt}' | base64 -d > /tmp/certs/tls.crt
+          kubectl get secret webhook-server-cert -n default -o jsonpath='{.data.tls\.key}' | base64 -d > /tmp/certs/tls.key
+        else
+          echo "Generating new TLS certificate..."
           openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout /certs/tls.key -out /certs/tls.crt \
+            -keyout /tmp/certs/tls.key -out /tmp/certs/tls.crt \
             -subj "/C=US/ST=State/L=City/O=Kloudlite/CN=nginx.default.svc" \
             -addext "subjectAltName=DNS:nginx.default.svc,DNS:nginx.default.svc.cluster.local,DNS:localhost,DNS:*.localhost,IP:127.0.0.1"
-        else
-          echo "Certificate already exists, skipping generation"
         fi
 
-        # Create/update TLS secret atomically
-        echo "Creating TLS secret..."
-        kubectl --kubeconfig=/tmp/k3s.yaml create secret tls webhook-server-cert \
-          --cert=/certs/tls.crt --key=/certs/tls.key -n default \
-          --dry-run=client -o yaml | kubectl --kubeconfig=/tmp/k3s.yaml apply -f -
+        echo "2. Creating/Updating TLS secret in k3s..."
+        kubectl create secret tls webhook-server-cert \
+          --cert=/tmp/certs/tls.crt --key=/tmp/certs/tls.key -n default \
+          --dry-run=client -o yaml | kubectl apply -f -
 
-        # Get CA bundle for webhooks
-        CA_BUNDLE=$(cat /certs/tls.crt | base64 | tr -d '\n')
+        echo "3. Deploying nginx..."
+        kubectl apply -f /manifests/nginx.yaml
 
-        echo "Applying CRDs..."
-        kubectl --kubeconfig=/tmp/k3s.yaml apply -f /crds/
+        echo "4. Restarting nginx..."
+        kubectl rollout restart deployment/nginx -n default 2>/dev/null || true
+        kubectl wait --for=condition=available --timeout=60s deployment/nginx -n default 2>/dev/null || true
 
-        echo "Applying bootstrap manifests..."
-        kubectl --kubeconfig=/tmp/k3s.yaml apply -f /bootstrap/
+        echo "5. Waiting for backend API to be available..."
+        until curl -s http://host.docker.internal:8080/health >/dev/null 2>&1; do
+          echo "Waiting for API..."
+          sleep 2
+        done
+        echo "Backend API is available!"
 
-        echo "Configuring webhook configurations atomically..."
-        # Create ValidatingWebhookConfiguration
-        cat <<EOF | kubectl --kubeconfig=/tmp/k3s.yaml apply -f -
-        apiVersion: admissionregistration.k8s.io/v1
-        kind: ValidatingWebhookConfiguration
-        metadata:
-          name: kloudlite-validating-webhook
-        webhooks:
-        - name: users.platform.kloudlite.io
-          clientConfig:
-            service:
-              name: nginx
-              namespace: default
-              path: /webhooks/validate/users
-            caBundle: $${CA_BUNDLE}
-          rules:
-          - operations: ["CREATE", "UPDATE"]
-            apiGroups: ["platform.kloudlite.io"]
-            apiVersions: ["v1alpha1"]
-            resources: ["users"]
-          admissionReviewVersions: ["v1"]
-          sideEffects: None
-        - name: environments.environments.kloudlite.io
-          clientConfig:
-            service:
-              name: nginx
-              namespace: default
-              path: /webhooks/validate/environments
-            caBundle: $${CA_BUNDLE}
-          rules:
-          - operations: ["CREATE", "UPDATE"]
-            apiGroups: ["environments.kloudlite.io"]
-            apiVersions: ["v1"]
-            resources: ["environments"]
-          admissionReviewVersions: ["v1"]
-          sideEffects: None
-        - name: configmaps.core.envvars
-          clientConfig:
-            service:
-              name: nginx
-              namespace: default
-              path: /webhooks/validate/configmaps
-            caBundle: $${CA_BUNDLE}
-          rules:
-          - operations: ["CREATE", "UPDATE"]
-            apiGroups: [""]
-            apiVersions: ["v1"]
-            resources: ["configmaps"]
-          admissionReviewVersions: ["v1"]
-          sideEffects: None
-          namespaceSelector:
-            matchExpressions:
-            - key: kloudlite.io/environment
-              operator: Exists
-          objectSelector:
-            matchLabels:
-              kloudlite.io/config-type: "envvars"
-        - name: secrets.core.envvars
-          clientConfig:
-            service:
-              name: nginx
-              namespace: default
-              path: /webhooks/validate/secrets
-            caBundle: $${CA_BUNDLE}
-          rules:
-          - operations: ["CREATE", "UPDATE"]
-            apiGroups: [""]
-            apiVersions: ["v1"]
-            resources: ["secrets"]
-          admissionReviewVersions: ["v1"]
-          sideEffects: None
-          namespaceSelector:
-            matchExpressions:
-            - key: kloudlite.io/environment
-              operator: Exists
-          objectSelector:
-            matchLabels:
-              kloudlite.io/config-type: "envvars"
-        EOF
+        echo "6. Applying users..."
+        kubectl apply -f /manifests/users.yaml
 
-        # Create MutatingWebhookConfiguration
-        cat <<EOF | kubectl --kubeconfig=/tmp/k3s.yaml apply -f -
-        apiVersion: admissionregistration.k8s.io/v1
-        kind: MutatingWebhookConfiguration
-        metadata:
-          name: kloudlite-mutating-webhook
-        webhooks:
-        - name: users.platform.kloudlite.io
-          clientConfig:
-            service:
-              name: nginx
-              namespace: default
-              path: /webhooks/mutate/users
-            caBundle: $${CA_BUNDLE}
-          rules:
-          - operations: ["CREATE", "UPDATE"]
-            apiGroups: ["platform.kloudlite.io"]
-            apiVersions: ["v1alpha1"]
-            resources: ["users"]
-          admissionReviewVersions: ["v1"]
-          sideEffects: None
-        - name: environments.environments.kloudlite.io
-          clientConfig:
-            service:
-              name: nginx
-              namespace: default
-              path: /webhooks/mutate/environments
-            caBundle: $${CA_BUNDLE}
-          rules:
-          - operations: ["CREATE", "UPDATE"]
-            apiGroups: ["environments.kloudlite.io"]
-            apiVersions: ["v1"]
-            resources: ["environments"]
-          admissionReviewVersions: ["v1"]
-          sideEffects: None
-        EOF
+        echo "7. Applying machine types..."
+        kubectl apply -f /manifests/machine-types.yaml
 
-        echo "Setup complete!"
+        echo "8. Configuring admission webhooks..."
+        CA_BUNDLE=$$(cat /tmp/certs/tls.crt | base64 | tr -d '\n')
+        cat /manifests/webhooks.yaml | sed "s|\$${CA_BUNDLE}|$$CA_BUNDLE|g" | kubectl apply -f -
+
+        echo "=== POST-APP SETUP COMPLETE ==="
     restart: "no"
 
 volumes:

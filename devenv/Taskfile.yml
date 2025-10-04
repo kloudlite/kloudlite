@@ -162,6 +162,37 @@ tasks:
       - echo "Generating code..."
       - go generate ./...
 
+  api:install-tools:
+    desc: Install code generation tools (controller-gen)
+    dir: ../api
+    cmds:
+      - echo "Installing controller-gen..."
+      - go install sigs.k8s.io/controller-tools/cmd/controller-gen@latest
+      - echo "Tools installed successfully"
+
+  api:generate-deepcopy:
+    desc: Generate deepcopy code for API types
+    dir: ../api
+    cmds:
+      - echo "Generating deepcopy code..."
+      - controller-gen object paths="./pkg/apis/..."
+      - echo "Deepcopy code generated successfully"
+
+  api:generate-crds:
+    desc: Generate CRD manifests
+    dir: ../api
+    cmds:
+      - echo "Generating CRD manifests..."
+      - controller-gen crd paths="./pkg/apis/..." output:crd:artifacts:config=../manifests
+      - echo "CRD manifests generated in manifests/"
+
+  api:generate-all:
+    desc: Generate all code and CRDs
+    cmds:
+      - task: api:generate-deepcopy
+      - task: api:generate-crds
+      - echo "All code generation complete"
+
   api:check:
     desc: Run all API checks (fmt, lint, test)
     dir: ../api
