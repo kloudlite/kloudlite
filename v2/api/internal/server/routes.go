@@ -36,10 +36,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		MachineTypeRepository: servicesManager.RepositoryManager.MachineTypes,
 		WorkMachineRepository: servicesManager.RepositoryManager.WorkMachines,
 		WorkspaceRepository:   servicesManager.RepositoryManager.Workspaces,
-		UserWebhook:          webhooks.NewUserWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient),
-		EnvironmentWebhook:   webhooks.NewEnvironmentWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient, nil),
-		MachineTypeWebhook:   webhooks.NewMachineTypeWebhook(servicesManager.RepositoryManager.K8sClient),
-		WorkMachineWebhook:   webhooks.NewWorkMachineWebhook(servicesManager.RepositoryManager.K8sClient),
+		UserWebhook:           webhooks.NewUserWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient),
+		EnvironmentWebhook:    webhooks.NewEnvironmentWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient, nil),
+		MachineTypeWebhook:    webhooks.NewMachineTypeWebhook(servicesManager.RepositoryManager.K8sClient),
+		WorkMachineWebhook:    webhooks.NewWorkMachineWebhook(servicesManager.RepositoryManager.K8sClient),
 		// WorkspaceWebhook:     webhooks.NewWorkspaceWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient, nil), // TODO: fix webhook implementation
 	}
 
