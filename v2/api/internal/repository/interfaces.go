@@ -120,10 +120,10 @@ type WatchOption func(*WatchOptions)
 
 // WatchOptions contains options for watching resources
 type WatchOptions struct {
-	LabelSelector    string
-	FieldSelector    string
-	ResourceVersion  string
-	TimeoutSeconds   *int64
+	LabelSelector       string
+	FieldSelector       string
+	ResourceVersion     string
+	TimeoutSeconds      *int64
 	AllowWatchBookmarks bool
 }
 
