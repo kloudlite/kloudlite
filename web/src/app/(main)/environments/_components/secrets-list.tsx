@@ -15,8 +15,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { getSecret, deleteSecret } from '@/app/actions/environment-config'
-import { AddSecretSheet } from '@/components/add-secret-sheet'
-import { EditSecretSheet } from '@/components/edit-secret-sheet'
+import { AddSecretSheet } from './add-secret-sheet'
+import { EditSecretSheet } from './edit-secret-sheet'
 import { toast } from 'sonner'
 
 interface SecretsListProps {

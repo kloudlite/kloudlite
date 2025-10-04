@@ -1,4 +1,4 @@
-import { ConfigSectionNav } from '@/components/config-section-nav'
+import { ConfigSectionNav } from '../_components/config-section-nav'
 
 interface LayoutProps {
   children: React.ReactNode

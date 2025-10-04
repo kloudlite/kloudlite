@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { WorkspacesList } from '@/components/workspaces-list'
+import { WorkspacesList } from './_components/workspaces-list'
 import { workspaceService } from '@/lib/services/workspace.service'
 
 export default async function WorkspacesPage() {

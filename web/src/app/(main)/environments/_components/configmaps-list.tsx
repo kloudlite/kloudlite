@@ -15,8 +15,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { getConfig, setConfig, deleteConfig } from '@/app/actions/environment-config'
-import { AddConfigSheet } from '@/components/add-config-sheet'
-import { EditConfigSheet } from '@/components/edit-config-sheet'
+import { AddConfigSheet } from './add-config-sheet'
+import { EditConfigSheet } from './edit-config-sheet'
 import { toast } from 'sonner'
 
 interface ConfigMapsListProps {

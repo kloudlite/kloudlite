@@ -2,9 +2,9 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { WorkMachineMetrics } from '@/components/work-machine-metrics'
-import { PinnedResources } from '@/components/pinned-resources'
-import { WorkMachineControls } from '@/components/work-machine-controls'
+import { WorkMachineMetrics } from './work-machine-metrics'
+import { PinnedResources } from '../../environments/_components/pinned-resources'
+import { WorkMachineControls } from './work-machine-controls'
 import { updateMyWorkMachine, startMyWorkMachine, stopMyWorkMachine } from '@/app/actions/work-machine.actions'
 import { toast } from 'sonner'
 import {

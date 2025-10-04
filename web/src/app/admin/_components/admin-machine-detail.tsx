@@ -22,7 +22,7 @@ import {
   FolderOpen
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { WorkMachineMetrics } from '@/components/work-machine-metrics'
+import { WorkMachineMetrics } from '../../(main)/workspaces/_components/work-machine-metrics'
 import {
   Tabs,
   TabsContent,

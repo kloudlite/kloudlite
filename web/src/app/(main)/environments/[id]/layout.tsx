@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { Breadcrumb } from '@/components/breadcrumb'
-import { EnvironmentNav } from '@/components/environment-nav'
+import { EnvironmentNav } from './_components/environment-nav'
 
 interface LayoutProps {
   children: React.ReactNode
