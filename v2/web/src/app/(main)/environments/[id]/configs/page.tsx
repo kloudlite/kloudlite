@@ -7,5 +7,5 @@ interface PageProps {
 }
 
 export default function ConfigsPage({ params }: PageProps) {
-  redirect(`/environments/${params.id}/configs/configmaps`)
+  redirect(`/environments/${params.id}/configs/envvars`)
 }
