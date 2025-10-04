@@ -12,7 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { Workspace } from '@/types/workspace'
-import { workspaceService } from '@/services/workspace-service'
+import {
+  deleteWorkspace,
+  suspendWorkspace,
+  activateWorkspace,
+  archiveWorkspace,
+} from '@/app/actions/workspace.actions'
 
 interface WorkspacesListProps {
   workspaces: Workspace[]
@@ -46,11 +51,14 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
 
     setDeletingWorkspace(workspace.metadata.name)
     try {
-      await workspaceService.delete(workspace.metadata.name, workspace.metadata.namespace)
+      const result = await deleteWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+      if (!result.success) {
+        throw new Error(result.error)
+      }
       router.refresh()
     } catch (error) {
       console.error('Failed to delete workspace:', error)
-      alert('Failed to delete workspace')
+      alert(error instanceof Error ? error.message : 'Failed to delete workspace')
     } finally {
       setDeletingWorkspace(null)
     }
@@ -58,17 +66,22 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
 
   const handleWorkspaceAction = async (workspace: Workspace, action: 'suspend' | 'activate' | 'archive') => {
     try {
+      let result
       if (action === 'suspend') {
-        await workspaceService.suspend(workspace.metadata.name, workspace.metadata.namespace)
+        result = await suspendWorkspace(workspace.metadata.name, workspace.metadata.namespace)
       } else if (action === 'activate') {
-        await workspaceService.activate(workspace.metadata.name, workspace.metadata.namespace)
+        result = await activateWorkspace(workspace.metadata.name, workspace.metadata.namespace)
       } else if (action === 'archive') {
-        await workspaceService.archive(workspace.metadata.name, workspace.metadata.namespace)
+        result = await archiveWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+      }
+
+      if (result && !result.success) {
+        throw new Error(result.error)
       }
       router.refresh()
     } catch (error) {
       console.error(`Failed to ${action} workspace:`, error)
-      alert(`Failed to ${action} workspace`)
+      alert(error instanceof Error ? error.message : `Failed to ${action} workspace`)
     }
   }
 
