@@ -10,7 +10,7 @@ import {
   Copy,
   Check
 } from 'lucide-react'
-import { WorkspaceConnectOptions } from './_components/workspace-connect-options'
+import { WorkspaceConnectOptions } from '../_components/workspace-connect-options'
 
 interface PageProps {
   params: {

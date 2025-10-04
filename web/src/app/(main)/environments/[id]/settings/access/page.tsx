@@ -1,4 +1,4 @@
-import { AccessSettings } from '../_components/access-settings'
+import { AccessSettings } from '../../../_components/access-settings'
 
 export default function AccessSettingsPage() {
   return <AccessSettings />

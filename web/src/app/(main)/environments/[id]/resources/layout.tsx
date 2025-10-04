@@ -1,4 +1,4 @@
-import { ResourceSectionNav } from '../_components/resource-section-nav'
+import { ResourceSectionNav } from '../../_components/resource-section-nav'
 
 interface LayoutProps {
   children: React.ReactNode
