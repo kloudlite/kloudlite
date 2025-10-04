@@ -7,14 +7,15 @@
 - pnpm
 - Docker & Docker Compose
 - kubectl
+- [Task](https://taskfile.dev) (install: `brew install go-task` or see [installation guide](https://taskfile.dev/installation/))
 
 ## Installation
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/kloudlite/kloudlite-v2.git
-cd kloudlite-v2
+git clone https://github.com/kloudlite/kloudlite.git
+cd kloudlite
 ```
 
 ### 2. Start K3s Cluster
