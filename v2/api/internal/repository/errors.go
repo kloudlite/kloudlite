@@ -22,16 +22,16 @@ func (e RepositoryError) Unwrap() error {
 
 // Error types
 const (
-	ErrTypeNotFound       = "NOT_FOUND"
-	ErrTypeAlreadyExists  = "ALREADY_EXISTS"
-	ErrTypeInvalidInput   = "INVALID_INPUT"
-	ErrTypeConflict       = "CONFLICT"
-	ErrTypeMultipleFound  = "MULTIPLE_FOUND"
-	ErrTypeConnection     = "CONNECTION_ERROR"
-	ErrTypeTimeout        = "TIMEOUT"
-	ErrTypeUnauthorized   = "UNAUTHORIZED"
-	ErrTypeForbidden      = "FORBIDDEN"
-	ErrTypeInternal       = "INTERNAL_ERROR"
+	ErrTypeNotFound      = "NOT_FOUND"
+	ErrTypeAlreadyExists = "ALREADY_EXISTS"
+	ErrTypeInvalidInput  = "INVALID_INPUT"
+	ErrTypeConflict      = "CONFLICT"
+	ErrTypeMultipleFound = "MULTIPLE_FOUND"
+	ErrTypeConnection    = "CONNECTION_ERROR"
+	ErrTypeTimeout       = "TIMEOUT"
+	ErrTypeUnauthorized  = "UNAUTHORIZED"
+	ErrTypeForbidden     = "FORBIDDEN"
+	ErrTypeInternal      = "INTERNAL_ERROR"
 )
 
 // ErrNotFound creates a not found error

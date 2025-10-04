@@ -13,12 +13,12 @@ type Manager struct {
 	K8sClient client.Client
 
 	// Individual repositories
-	Users         UserRepository
-	Environments  EnvironmentRepository
-	MachineTypes  MachineTypeRepository
-	WorkMachines  WorkMachineRepository
-	Workspaces    WorkspaceRepository
-	Compositions  CompositionRepository
+	Users        UserRepository
+	Environments EnvironmentRepository
+	MachineTypes MachineTypeRepository
+	WorkMachines WorkMachineRepository
+	Workspaces   WorkspaceRepository
+	Compositions CompositionRepository
 }
 
 // ManagerOptions contains options for creating a repository manager

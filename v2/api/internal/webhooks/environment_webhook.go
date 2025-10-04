@@ -143,16 +143,16 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 
 	// Add environment label to identify resources
 	labelPatch := map[string]interface{}{
-		"op":   "add",
-		"path": "/spec/labels/kloudlite.io~1environment-name",
+		"op":    "add",
+		"path":  "/spec/labels/kloudlite.io~1environment-name",
 		"value": env.Name,
 	}
 	patches = append(patches, labelPatch)
 
 	// Add managed-by label
 	managedByPatch := map[string]interface{}{
-		"op":   "add",
-		"path": "/spec/labels/kloudlite.io~1managed-by",
+		"op":    "add",
+		"path":  "/spec/labels/kloudlite.io~1managed-by",
 		"value": "environment-controller",
 	}
 	patches = append(patches, managedByPatch)
@@ -192,8 +192,8 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 
 	// Add owner label with the actual username
 	ownerPatch := map[string]interface{}{
-		"op":   "add",
-		"path": "/spec/labels/kloudlite.io~1owned-by",
+		"op":    "add",
+		"path":  "/spec/labels/kloudlite.io~1owned-by",
 		"value": userName,
 	}
 	patches = append(patches, ownerPatch)
@@ -202,8 +202,8 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	if userEmail != "" {
 		encodedEmail := base64.URLEncoding.EncodeToString([]byte(userEmail))
 		emailPatch := map[string]interface{}{
-			"op":   "add",
-			"path": "/spec/labels/kloudlite.io~1owner-email",
+			"op":    "add",
+			"path":  "/spec/labels/kloudlite.io~1owner-email",
 			"value": encodedEmail,
 		}
 		patches = append(patches, emailPatch)
@@ -221,8 +221,8 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	// Add creation timestamp annotation
 	if req.Operation == admissionv1.Create {
 		timestampPatch := map[string]interface{}{
-			"op":   "add",
-			"path": "/spec/annotations/kloudlite.io~1created-at",
+			"op":    "add",
+			"path":  "/spec/annotations/kloudlite.io~1created-at",
 			"value": metav1.Now().Format("2006-01-02T15:04:05Z07:00"),
 		}
 		patches = append(patches, timestampPatch)
@@ -234,10 +234,10 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 			"op":   "add",
 			"path": "/spec/resourceQuotas",
 			"value": map[string]string{
-				"limits.cpu":    "10",
-				"limits.memory": "10Gi",
-				"requests.cpu":  "5",
-				"requests.memory": "5Gi",
+				"limits.cpu":             "10",
+				"limits.memory":          "10Gi",
+				"requests.cpu":           "5",
+				"requests.memory":        "5Gi",
 				"persistentvolumeclaims": "10",
 			},
 		})
@@ -258,8 +258,8 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	// Return response with patches
 	patchType := admissionv1.PatchTypeJSONPatch
 	return &admissionv1.AdmissionResponse{
-		Allowed: true,
-		Patch:   patchBytes,
+		Allowed:   true,
+		Patch:     patchBytes,
 		PatchType: &patchType,
 	}
 }

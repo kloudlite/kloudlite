@@ -15,13 +15,13 @@ import (
 )
 
 type Server struct {
-	httpServer         *http.Server
-	logger             *zap.Logger
-	config             *config.Config
-	k8sClient          *k8s.Client
-	repositoryManager  *repository.Manager
-	servicesManager    *services.Manager
-	controllerManager  *controllers.Manager
+	httpServer        *http.Server
+	logger            *zap.Logger
+	config            *config.Config
+	k8sClient         *k8s.Client
+	repositoryManager *repository.Manager
+	servicesManager   *services.Manager
+	controllerManager *controllers.Manager
 }
 
 func New(cfg *config.Config, logger *zap.Logger) *Server {

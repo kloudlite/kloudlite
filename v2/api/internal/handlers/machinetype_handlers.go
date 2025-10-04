@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	"github.com/kloudlite/kloudlite/v2/api/internal/managers"
 	"github.com/kloudlite/kloudlite/v2/api/internal/middleware"
+	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -26,7 +26,7 @@ func NewMachineTypeHandlers(manager *managers.Manager) *MachineTypeHandlers {
 
 // MachineTypeCreateRequest represents a request to create a MachineType
 type MachineTypeCreateRequest struct {
-	Name string                  `json:"name" binding:"required"`
+	Name string                     `json:"name" binding:"required"`
 	Spec machinesv1.MachineTypeSpec `json:"spec" binding:"required"`
 }
 
@@ -119,8 +119,6 @@ func (h *MachineTypeHandlers) CreateMachineType(c *gin.Context) {
 		Spec: req.Spec,
 	}
 
-
-
 	// Create the resource
 	if err := h.manager.MachineTypeRepository.Create(ctx, machineType); err != nil {
 		// Check if this is a webhook validation error
@@ -190,7 +188,6 @@ func (h *MachineTypeHandlers) UpdateMachineType(c *gin.Context) {
 		return
 	}
 
-
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, existing); err != nil {
 		// Check if this is a webhook validation error
@@ -237,7 +234,6 @@ func (h *MachineTypeHandlers) DeleteMachineType(c *gin.Context) {
 		return
 	}
 
-
 	// Delete the resource
 	if err := h.manager.MachineTypeRepository.Delete(ctx, name); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -283,7 +279,6 @@ func (h *MachineTypeHandlers) ActivateMachineType(c *gin.Context) {
 	// Set active to true
 	machineType.Spec.Active = true
 
-
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, machineType); err != nil {
 		// Check if this is a webhook validation error
@@ -300,7 +295,7 @@ func (h *MachineTypeHandlers) ActivateMachineType(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data": machineType,
+		"data":    machineType,
 	})
 }
 
@@ -336,7 +331,6 @@ func (h *MachineTypeHandlers) DeactivateMachineType(c *gin.Context) {
 	// Set active to false
 	machineType.Spec.Active = false
 
-
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, machineType); err != nil {
 		// Check if this is a webhook validation error
@@ -353,7 +347,7 @@ func (h *MachineTypeHandlers) DeactivateMachineType(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data": machineType,
+		"data":    machineType,
 	})
 }
 
@@ -388,7 +382,6 @@ func (h *MachineTypeHandlers) ToggleMachineTypeActive(c *gin.Context) {
 
 	// Toggle active state
 	machineType.Spec.Active = !machineType.Spec.Active
-
 
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, machineType); err != nil {

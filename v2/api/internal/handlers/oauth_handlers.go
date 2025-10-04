@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -44,7 +43,7 @@ func (h *OAuthHandlers) GetOAuthProviders(c *gin.Context) {
 
 	// Get or create the ConfigMap
 	configMap := &corev1.ConfigMap{}
-	err := h.k8sClient.Get(context.Background(), client.ObjectKey{
+	err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      oauthConfigMapName,
 		Namespace: h.namespace,
 	}, configMap)
@@ -125,7 +124,7 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 
 	// Get or create ConfigMap
 	configMap := &corev1.ConfigMap{}
-	err := h.k8sClient.Get(context.Background(), client.ObjectKey{
+	err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      oauthConfigMapName,
 		Namespace: h.namespace,
 	}, configMap)
@@ -159,10 +158,10 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 	configMap.Data[providerType] = string(providerData)
 
 	// Save ConfigMap
-	if err := h.k8sClient.Get(context.Background(), client.ObjectKey{Name: oauthConfigMapName, Namespace: h.namespace}, &corev1.ConfigMap{}); err != nil {
+	if err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{Name: oauthConfigMapName, Namespace: h.namespace}, &corev1.ConfigMap{}); err != nil {
 		if errors.IsNotFound(err) {
 			// Create
-			if err := h.k8sClient.Create(context.Background(), configMap); err != nil {
+			if err := h.k8sClient.Create(c.Request.Context(), configMap); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -172,7 +171,7 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 		}
 	} else {
 		// Update
-		if err := h.k8sClient.Update(context.Background(), configMap); err != nil {
+		if err := h.k8sClient.Update(c.Request.Context(), configMap); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -185,7 +184,7 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 func (h *OAuthHandlers) GetPublicOAuthProviders(c *gin.Context) {
 	// Get the ConfigMap
 	configMap := &corev1.ConfigMap{}
-	err := h.k8sClient.Get(context.Background(), client.ObjectKey{
+	err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      oauthConfigMapName,
 		Namespace: h.namespace,
 	}, configMap)
