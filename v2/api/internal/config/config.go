@@ -20,8 +20,8 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	// JWT secret for token verification (should be a strong secret)
-	JWTSecret string `envconfig:"JWT_SECRET" default:"kloudlite-jwt-secret-change-me"`
+	// JWT secret for token verification (REQUIRED - must be set via environment variable)
+	JWTSecret string `envconfig:"JWT_SECRET" required:"true"`
 
 	// Token expiry duration in hours
 	TokenExpiryHours int `envconfig:"TOKEN_EXPIRY_HOURS" default:"24"`
@@ -29,7 +29,6 @@ type AuthConfig struct {
 	// Skip authentication for development/testing
 	SkipAuthentication bool `envconfig:"SKIP_AUTHENTICATION" default:"false"`
 }
-
 
 type KubernetesConfig struct {
 	// Kubeconfig file path (optional, will auto-detect if not provided)

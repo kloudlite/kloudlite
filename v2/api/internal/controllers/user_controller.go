@@ -8,8 +8,8 @@ import (
 
 	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -292,7 +292,7 @@ func (r *UserReconciler) buildWorkMachineForUser(ctx context.Context, user *plat
 				"kloudlite.io/created-by": "user-controller",
 			},
 			Annotations: map[string]string{
-				"kloudlite.io/user-uid":       string(user.UID),
+				"kloudlite.io/user-uid":        string(user.UID),
 				"kloudlite.io/creation-reason": "auto-created-for-user",
 			},
 		},
@@ -360,7 +360,6 @@ func sanitizeForLabel(value string) string {
 func isAlphanumeric(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= '0' && b <= '9')
 }
-
 
 // SetupWithManager sets up the controller with the Manager
 func (r *UserReconciler) SetupWithManager(mgr ctrl.Manager) error {

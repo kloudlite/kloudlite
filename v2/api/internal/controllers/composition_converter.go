@@ -41,7 +41,7 @@ func ConvertComposeToK8s(
 	// Common labels for all resources
 	commonLabels := map[string]string{
 		"kloudlite.io/docker-composition": composition.Name,
-		"kloudlite.io/managed":             "true",
+		"kloudlite.io/managed":            "true",
 	}
 
 	// Convert volumes first (they need to exist before services)

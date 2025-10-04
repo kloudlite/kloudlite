@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
 	"github.com/golang-jwt/jwt/v5"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/platform/v1alpha1"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthService handles JWT token generation and validation
@@ -20,7 +20,7 @@ type AuthService interface {
 
 // UserClaims represents the JWT claims for a user
 type UserClaims struct {
-	Email string                       `json:"email"`
+	Email string                      `json:"email"`
 	Roles []platformv1alpha1.RoleType `json:"roles"`
 	jwt.RegisteredClaims
 }

@@ -299,8 +299,8 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 
 	patchType := admissionv1.PatchTypeJSONPatch
 	return &admissionv1.AdmissionResponse{
-		Allowed: true,
-		Patch:   patchBytes,
+		Allowed:   true,
+		Patch:     patchBytes,
 		PatchType: &patchType,
 	}
 }

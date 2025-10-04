@@ -93,3 +93,78 @@ tasks:
       - echo ""
       - echo "=== CRDs ==="
       - kubectl --kubeconfig={{.KUBECONFIG}} get crds | grep kloudlite 2>/dev/null || echo "No kloudlite CRDs found"
+
+  api:test:
+    desc: Run API tests with coverage
+    dir: ../api
+    cmds:
+      - go test -v -race -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at api/coverage.html"
+
+  api:test:watch:
+    desc: Run API tests in watch mode
+    dir: ../api
+    cmds:
+      - |
+        echo "Running tests in watch mode..."
+        echo "Press Ctrl+C to stop"
+        while true; do
+          go test -v ./...
+          sleep 2
+        done
+
+  api:lint:
+    desc: Run linter on API code
+    dir: ../api
+    cmds:
+      - echo "Running golangci-lint..."
+      - golangci-lint run ./...
+
+  api:lint:fix:
+    desc: Run linter with auto-fix
+    dir: ../api
+    cmds:
+      - echo "Running golangci-lint with auto-fix..."
+      - golangci-lint run --fix ./...
+
+  api:fmt:
+    desc: Format API code
+    dir: ../api
+    cmds:
+      - echo "Formatting Go code..."
+      - gofmt -w .
+      - goimports -w . 2>/dev/null || true
+      - echo "Code formatted successfully"
+
+  api:build:
+    desc: Build API binary
+    dir: ../api
+    cmds:
+      - echo "Building API server..."
+      - go build -o bin/server cmd/server/main.go
+      - echo "Binary built at api/bin/server"
+
+  api:deps:update:
+    desc: Update API dependencies
+    dir: ../api
+    cmds:
+      - echo "Updating Go dependencies..."
+      - go get -u ./...
+      - go mod tidy
+      - echo "Dependencies updated"
+
+  api:generate:
+    desc: Generate code (mocks, etc.)
+    dir: ../api
+    cmds:
+      - echo "Generating code..."
+      - go generate ./...
+
+  api:check:
+    desc: Run all API checks (fmt, lint, test)
+    dir: ../api
+    cmds:
+      - task: api:fmt
+      - task: api:lint
+      - task: api:test
