@@ -13,25 +13,16 @@ export function ConfigSectionNav({ environmentId }: ConfigSectionNavProps) {
 
   const sections = [
     {
-      id: 'configmaps',
-      label: 'Config Maps',
+      id: 'envvars',
+      label: 'Envvars',
       icon: FileText,
-      href: `/environments/${environmentId}/configs/configmaps`,
-      count: 7
+      href: `/environments/${environmentId}/configs/envvars`,
     },
     {
-      id: 'secrets',
-      label: 'Secrets',
-      icon: Lock,
-      href: `/environments/${environmentId}/configs/secrets`,
-      count: 5
-    },
-    {
-      id: 'files',
-      label: 'File Configs',
+      id: 'config-files',
+      label: 'Config Files',
       icon: File,
-      href: `/environments/${environmentId}/configs/files`,
-      count: 4
+      href: `/environments/${environmentId}/configs/config-files`,
     },
   ]
 
@@ -53,7 +44,6 @@ export function ConfigSectionNav({ environmentId }: ConfigSectionNavProps) {
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
               {section.label}
-              <span className="ml-auto text-xs text-gray-500">{section.count}</span>
             </Link>
           )
         })}
