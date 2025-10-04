@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -120,8 +121,15 @@ func (s *authService) VerifyPassword(ctx context.Context, email, password string
 		return nil, fmt.Errorf("authentication failed: no password set")
 	}
 
+	// Decode base64-encoded password hash
+	hashedPassword, err := base64.StdEncoding.DecodeString(user.Spec.Password)
+	if err != nil {
+		s.logger.Error("Failed to decode password hash", zap.String("email", email), zap.Error(err))
+		return nil, fmt.Errorf("authentication failed: invalid password format")
+	}
+
 	// Verify password using bcrypt
-	err = bcrypt.CompareHashAndPassword([]byte(user.Spec.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 	if err != nil {
 		s.logger.Warn("Password verification failed", zap.String("email", email), zap.Error(err))
 		return nil, fmt.Errorf("authentication failed: invalid password")

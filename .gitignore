@@ -1,19 +1,15 @@
-CLAUDE.md
 .claude
-bin
 .secrets
 .cache_ggshield
 tags
 vendor
 go.work
 go.work.sum
-.mongodata
-.natsdata
 
 .idea
 *.log
 node_modules
-.dump
+.DS_Store
 
 .direnv
 
@@ -26,23 +22,19 @@ terraform.tfvars
 
 *.tar
 
-# operator
+# Build artifacts
 dist
 testbin
 .release
-config/crd/bases/_.yaml
 .tmp
 .kube
 .out
+bin/
 
 # Kubernetes configs
-v2/kubeconfig/
-v2/kubeconfig.yaml
 kubeconfig/
 *.kubeconfig
-
-# Test scripts
-v2/api/test/test-webhook.sh
+devenv/k3s-config/
 
 # Environment files
 .env
@@ -51,8 +43,6 @@ v2/api/test/test-webhook.sh
 .env.development
 
 # Binary files
-api/apps/runner/runner
-api/apps/runner/runner-new
 *.exe
 *.dll
 *.so
