@@ -1,5 +1,0 @@
-image:
-  tag: "v1.1.6-nightly"
-
-helmJobRunnerImage:
-  tag: "v1.1.6-nightly"

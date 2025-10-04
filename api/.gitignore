@@ -1,36 +1,44 @@
-.dev-k3s-config
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/server
 
-.task
+# Test binary, built with `go test -c`
+*.test
 
-bin
-vendor
-.idea
-*.log
-.keys
+# Output of the go coverage tool
+*.out
+coverage.html
 
-terraform.tfstate
-terraform.tfvars
-.terraform.lock.hcl
-.terraform
-.keys
-deploy/
-.task
-.settings
-# wgman
-.secrets
-node_modules
-.pnpm
-nohup.out
-tags
-
-.GOPATH
-.GO
-
-.kl/secret*
-__debug_bin*
-gqlenv.yml
-_graph2
-
+# Go workspace file
 go.work
-go.work.sum
-.direnv
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Air tmp directory
+tmp/
+
+# Logs
+*.log

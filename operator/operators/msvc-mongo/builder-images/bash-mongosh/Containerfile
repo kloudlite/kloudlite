@@ -1,2 +1,0 @@
-# vim: set ft=Dockerfile:
-FROM docker.io/alpine/mongosh:2.0.2
