@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	"github.com/kloudlite/kloudlite/v2/api/internal/managers"
 	"github.com/kloudlite/kloudlite/v2/api/internal/middleware"
+	machinesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/machines/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -111,9 +111,13 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 	}
 
 	// Create new machine
+	// Generate a name based on the username (webhook would normally do this)
+	machineName := strings.ReplaceAll(strings.ToLower(userName), "@", "-at-")
+	machineName = strings.ReplaceAll(machineName, ".", "-")
+
 	machine := &machinesv1.WorkMachine{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "", // Will be set by webhook
+			Name: machineName,
 		},
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:       userName,
@@ -122,8 +126,6 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 			SSHPublicKeys: req.SSHPublicKeys,
 		},
 	}
-
-
 
 	// Create the resource
 	if err := h.manager.WorkMachineRepository.Create(ctx, machine); err != nil {
@@ -191,8 +193,6 @@ func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
 		machine.Spec.SSHPublicKeys = req.SSHPublicKeys
 	}
 
-
-
 	// Update the resource
 	if err := h.manager.WorkMachineRepository.Update(ctx, machine); err != nil {
 		// Check if this is a webhook validation error
@@ -237,7 +237,6 @@ func (h *WorkMachineHandlers) DeleteMyWorkMachine(c *gin.Context) {
 		})
 		return
 	}
-
 
 	// Delete the resource
 	if err := h.manager.WorkMachineRepository.Delete(ctx, machine.Name); err != nil {
