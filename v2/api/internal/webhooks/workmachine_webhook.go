@@ -99,7 +99,6 @@ func (w *WorkMachineWebhook) Default(ctx context.Context, obj runtime.Object) er
 	machine.Labels["kloudlite.io/owner-email"] = encodedEmail
 	machine.Labels["kloudlite.io/machine-type"] = machine.Spec.MachineType
 
-
 	return nil
 }
 
@@ -171,7 +170,6 @@ func (w *WorkMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.Obj
 		return fmt.Errorf("machine type %s is not active", machine.Spec.MachineType)
 	}
 
-
 	return nil
 }
 
@@ -184,7 +182,6 @@ func (w *WorkMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj 
 	if oldMachine.Spec.OwnedBy != newMachine.Spec.OwnedBy {
 		return fmt.Errorf("cannot change machine owner")
 	}
-
 
 	// If machine type changed, validate new type
 	if oldMachine.Spec.MachineType != newMachine.Spec.MachineType {
