@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"testing"
 	"time"
@@ -317,7 +318,7 @@ func TestVerifyPassword(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
 					Spec: platformv1alpha1.UserSpec{
 						Email:    email,
-						Password: string(hashedPassword),
+						Password: base64.StdEncoding.EncodeToString(hashedPassword),
 						Active:   &activeTrue,
 						Roles:    []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
 					},
@@ -345,7 +346,7 @@ func TestVerifyPassword(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
 					Spec: platformv1alpha1.UserSpec{
 						Email:    email,
-						Password: string(hashedPassword),
+						Password: base64.StdEncoding.EncodeToString(hashedPassword),
 						Active:   &activeTrue,
 						Roles:    []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
 					},
@@ -416,7 +417,7 @@ func TestVerifyPassword(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: "inactive-user"},
 					Spec: platformv1alpha1.UserSpec{
 						Email:    email,
-						Password: string(hashedPassword),
+						Password: base64.StdEncoding.EncodeToString(hashedPassword),
 						Active:   &activeFalse,
 						Roles:    []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
 					},
@@ -443,7 +444,7 @@ func TestVerifyPassword(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
 					Spec: platformv1alpha1.UserSpec{
 						Email:    email,
-						Password: string(hashedPassword),
+						Password: base64.StdEncoding.EncodeToString(hashedPassword),
 						Active:   nil, // nil means active by default
 						Roles:    []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
 					},
@@ -469,7 +470,7 @@ func TestVerifyPassword(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: "admin-user"},
 					Spec: platformv1alpha1.UserSpec{
 						Email:    email,
-						Password: string(hashedPassword),
+						Password: base64.StdEncoding.EncodeToString(hashedPassword),
 						Active:   &activeTrue,
 						Roles: []platformv1alpha1.RoleType{
 							platformv1alpha1.RoleAdmin,
