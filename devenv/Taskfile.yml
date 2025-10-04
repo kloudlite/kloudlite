@@ -1,0 +1,171 @@
+version: '3'
+
+vars:
+  KUBECONFIG: "{{.TASKFILE_DIR}}/k3s-config/k3s.yaml"
+
+tasks:
+  k3s:up:
+    desc: Start k3s cluster
+    cmds:
+      - docker-compose up -d
+      - echo "Waiting for k3s cluster to be ready..."
+      - sleep 10
+      - echo "k3s cluster is ready!"
+      - echo "KUBECONFIG is at {{.KUBECONFIG}}"
+
+  k3s:down:
+    desc: Stop k3s cluster
+    cmds:
+      - docker-compose down
+
+  k3s:restart:
+    desc: Restart k3s cluster
+    cmds:
+      - task: k3s:down
+      - task: k3s:up
+
+  k3s:logs:
+    desc: View k3s logs
+    cmds:
+      - docker logs -f k3s-dev
+
+  api:dev:
+    desc: Run backend API server in development mode
+    dir: ../api
+    cmds:
+      - echo "Killing any process running on port 8080..."
+      - lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+      - echo "Starting API server..."
+      - go run cmd/server/main.go
+    env:
+      KUBERNETES_KUBECONFIG_PATH: "{{.TASKFILE_DIR}}/k3s-config/k3s.yaml"
+      JWT_SECRET: "hello"
+
+  web:dev:
+    desc: Run frontend web app in development mode
+    dir: ../web
+    env:
+      AUTH_SECRET: "sample"
+    cmds:
+      - echo "Killing any process running on port 3000..."
+      - lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+      - echo "Starting frontend server..."
+      - pnpm dev
+
+  web:install:
+    desc: Install frontend dependencies
+    dir: ../web
+    cmds:
+      - pnpm install
+
+  dev:
+    desc: Run both backend and frontend in development mode (requires running in separate terminals)
+    cmds:
+      - |
+        echo "To run development environment:"
+        echo "  Terminal 1: task api:dev"
+        echo "  Terminal 2: task web:dev"
+        echo ""
+        echo "Or use a process manager like 'mprocs' or 'overmind'"
+
+  setup:
+    desc: Initial setup - start k3s and install dependencies
+    cmds:
+      - task: k3s:up
+      - task: web:install
+      - echo "Setup complete! Run 'task dev' to start services"
+
+  clean:
+    desc: Clean up all resources
+    cmds:
+      - task: k3s:down
+      - docker volume rm devenv_k3s-data devenv_k3s-config 2>/dev/null || true
+      - rm -rf k3s-config/k3s.yaml
+      - echo "Cleanup complete!"
+
+  status:
+    desc: Check status of all services
+    cmds:
+      - echo "=== K3s Cluster Status ==="
+      - docker ps --filter name=k3s-dev --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+      - echo ""
+      - echo "=== K3s Nodes ==="
+      - kubectl --kubeconfig={{.KUBECONFIG}} get nodes 2>/dev/null || echo "K3s not accessible"
+      - echo ""
+      - echo "=== CRDs ==="
+      - kubectl --kubeconfig={{.KUBECONFIG}} get crds | grep kloudlite 2>/dev/null || echo "No kloudlite CRDs found"
+
+  api:test:
+    desc: Run API tests with coverage
+    dir: ../api
+    cmds:
+      - go test -v -race -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at api/coverage.html"
+
+  api:test:watch:
+    desc: Run API tests in watch mode
+    dir: ../api
+    cmds:
+      - |
+        echo "Running tests in watch mode..."
+        echo "Press Ctrl+C to stop"
+        while true; do
+          go test -v ./...
+          sleep 2
+        done
+
+  api:lint:
+    desc: Run linter on API code
+    dir: ../api
+    cmds:
+      - echo "Running golangci-lint..."
+      - golangci-lint run ./...
+
+  api:lint:fix:
+    desc: Run linter with auto-fix
+    dir: ../api
+    cmds:
+      - echo "Running golangci-lint with auto-fix..."
+      - golangci-lint run --fix ./...
+
+  api:fmt:
+    desc: Format API code
+    dir: ../api
+    cmds:
+      - echo "Formatting Go code..."
+      - gofmt -w .
+      - goimports -w . 2>/dev/null || true
+      - echo "Code formatted successfully"
+
+  api:build:
+    desc: Build API binary
+    dir: ../api
+    cmds:
+      - echo "Building API server..."
+      - go build -o bin/server cmd/server/main.go
+      - echo "Binary built at api/bin/server"
+
+  api:deps:update:
+    desc: Update API dependencies
+    dir: ../api
+    cmds:
+      - echo "Updating Go dependencies..."
+      - go get -u ./...
+      - go mod tidy
+      - echo "Dependencies updated"
+
+  api:generate:
+    desc: Generate code (mocks, etc.)
+    dir: ../api
+    cmds:
+      - echo "Generating code..."
+      - go generate ./...
+
+  api:check:
+    desc: Run all API checks (fmt, lint, test)
+    dir: ../api
+    cmds:
+      - task: api:fmt
+      - task: api:lint
+      - task: api:test

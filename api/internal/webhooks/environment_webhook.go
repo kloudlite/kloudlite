@@ -1,0 +1,499 @@
+package webhooks
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"regexp"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
+	"github.com/kloudlite/kloudlite/api/pkg/logger"
+	admissionv1 "k8s.io/api/admission/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+type EnvironmentWebhook struct {
+	logger    logger.Logger
+	k8sClient client.Client
+	clientset *kubernetes.Clientset
+}
+
+func NewEnvironmentWebhook(logger logger.Logger, k8sClient client.Client, clientset *kubernetes.Clientset) *EnvironmentWebhook {
+	return &EnvironmentWebhook{
+		logger:    logger,
+		k8sClient: k8sClient,
+		clientset: clientset,
+	}
+}
+
+// ValidateEnvironment handles validation webhook for Environment CRD
+func (w *EnvironmentWebhook) ValidateEnvironment(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		w.logger.Error("Failed to read request body: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var admissionReview admissionv1.AdmissionReview
+	if err := json.Unmarshal(body, &admissionReview); err != nil {
+		w.logger.Error("Failed to unmarshal admission review: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to unmarshal admission review"})
+		return
+	}
+
+	// Process the admission request
+	response := w.handleValidation(admissionReview.Request)
+
+	// Build the admission review response
+	admissionReview.Response = response
+	admissionReview.Response.UID = admissionReview.Request.UID
+
+	c.JSON(http.StatusOK, admissionReview)
+}
+
+// MutateEnvironment handles mutation webhook for Environment CRD
+func (w *EnvironmentWebhook) MutateEnvironment(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		w.logger.Error("Failed to read request body: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var admissionReview admissionv1.AdmissionReview
+	if err := json.Unmarshal(body, &admissionReview); err != nil {
+		w.logger.Error("Failed to unmarshal admission review: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to unmarshal admission review"})
+		return
+	}
+
+	// Process the admission request
+	response := w.handleMutation(admissionReview.Request)
+
+	// Build the admission review response
+	admissionReview.Response = response
+	admissionReview.Response.UID = admissionReview.Request.UID
+
+	c.JSON(http.StatusOK, admissionReview)
+}
+
+func (w *EnvironmentWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+	// Parse the environment object
+	var env environmentsv1.Environment
+	if err := json.Unmarshal(req.Object.Raw, &env); err != nil {
+		w.logger.Error("Failed to unmarshal environment: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: "Failed to unmarshal environment object",
+			},
+		}
+	}
+
+	// Perform validation
+	if err := w.validateEnvironment(&env, req.Operation, req.UserInfo.Username); err != nil {
+		w.logger.Warn("Environment validation failed: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	}
+
+	return &admissionv1.AdmissionResponse{
+		Allowed: true,
+	}
+}
+
+func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+	// Parse the environment object
+	var env environmentsv1.Environment
+	if err := json.Unmarshal(req.Object.Raw, &env); err != nil {
+		w.logger.Error("Failed to unmarshal environment: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: "Failed to unmarshal environment object",
+			},
+		}
+	}
+
+	// Create patches for mutations
+	var patches []map[string]interface{}
+
+	// Add default labels if not present
+	if env.Spec.Labels == nil {
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/labels",
+			"value": map[string]string{},
+		})
+	}
+
+	// Add environment label to identify resources
+	labelPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/spec/labels/kloudlite.io~1environment-name",
+		"value": env.Name,
+	}
+	patches = append(patches, labelPatch)
+
+	// Add managed-by label
+	managedByPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/spec/labels/kloudlite.io~1managed-by",
+		"value": "environment-controller",
+	}
+	patches = append(patches, managedByPatch)
+
+	// Use the CreatedBy field from the spec to determine ownership
+	createdBy := env.Spec.CreatedBy
+	var userName string
+	var userEmail string
+
+	// Determine if CreatedBy is an email or username
+	if strings.Contains(createdBy, "@") {
+		// CreatedBy is an email
+		userEmail = createdBy
+		// Find the actual user name
+		userList := &platformv1alpha1.UserList{}
+		if err := w.k8sClient.List(context.Background(), userList); err == nil {
+			for _, u := range userList.Items {
+				if u.Spec.Email == createdBy {
+					userName = u.Name
+					break
+				}
+			}
+		}
+		// If no user found, use a sanitized version of email as username
+		if userName == "" {
+			userName = strings.ReplaceAll(strings.Split(createdBy, "@")[0], ".", "-")
+		}
+	} else {
+		// CreatedBy is a username
+		userName = createdBy
+		// Look up the email
+		var user platformv1alpha1.User
+		if err := w.k8sClient.Get(context.Background(), client.ObjectKey{Name: userName}, &user); err == nil {
+			userEmail = user.Spec.Email
+		}
+	}
+
+	// Add owner label with the actual username
+	ownerPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/spec/labels/kloudlite.io~1owned-by",
+		"value": userName,
+	}
+	patches = append(patches, ownerPatch)
+
+	// Add base64 encoded email as a label
+	if userEmail != "" {
+		encodedEmail := base64.URLEncoding.EncodeToString([]byte(userEmail))
+		emailPatch := map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/labels/kloudlite.io~1owner-email",
+			"value": encodedEmail,
+		}
+		patches = append(patches, emailPatch)
+	}
+
+	// Add default annotations if not present
+	if env.Spec.Annotations == nil {
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/annotations",
+			"value": map[string]string{},
+		})
+	}
+
+	// Add creation timestamp annotation
+	if req.Operation == admissionv1.Create {
+		timestampPatch := map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/annotations/kloudlite.io~1created-at",
+			"value": metav1.Now().Format("2006-01-02T15:04:05Z07:00"),
+		}
+		patches = append(patches, timestampPatch)
+	}
+
+	// Set default resource quotas if not specified and environment is activated
+	if env.Spec.Activated && env.Spec.ResourceQuotas == nil {
+		patches = append(patches, map[string]interface{}{
+			"op":   "add",
+			"path": "/spec/resourceQuotas",
+			"value": map[string]string{
+				"limits.cpu":             "10",
+				"limits.memory":          "10Gi",
+				"requests.cpu":           "5",
+				"requests.memory":        "5Gi",
+				"persistentvolumeclaims": "10",
+			},
+		})
+	}
+
+	// Convert patches to JSON
+	patchBytes, err := json.Marshal(patches)
+	if err != nil {
+		w.logger.Error("Failed to marshal patches: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: "Failed to create patches",
+			},
+		}
+	}
+
+	// Return response with patches
+	patchType := admissionv1.PatchTypeJSONPatch
+	return &admissionv1.AdmissionResponse{
+		Allowed:   true,
+		Patch:     patchBytes,
+		PatchType: &patchType,
+	}
+}
+
+func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment, operation admissionv1.Operation, username string) error {
+	// Validate that the user exists and is valid
+	if username == "" {
+		return fmt.Errorf("user information is missing")
+	}
+
+	// Extract user from username (format could be "user:name" or just "name")
+	userName := username
+	if strings.Contains(username, ":") {
+		parts := strings.Split(username, ":")
+		if len(parts) >= 2 {
+			userName = parts[1]
+		}
+	}
+
+	// Check if the user exists in the platform
+	ctx := context.Background()
+	var user platformv1alpha1.User
+	err := w.k8sClient.Get(ctx, client.ObjectKey{Name: userName}, &user)
+	if err != nil {
+		// Also check by email if the username looks like an email
+		if strings.Contains(userName, "@") {
+			userList := &platformv1alpha1.UserList{}
+			if listErr := w.k8sClient.List(ctx, userList); listErr == nil {
+				for _, u := range userList.Items {
+					if u.Spec.Email == userName {
+						user = u
+						err = nil
+						break
+					}
+				}
+			}
+		}
+
+		if err != nil {
+			return fmt.Errorf("user %s does not exist or is not authorized to create environments", userName)
+		}
+	}
+	// Validate namespace name
+	if err := w.validateNamespaceName(env.Spec.TargetNamespace); err != nil {
+		return fmt.Errorf("invalid target namespace: %w", err)
+	}
+
+	// Check if namespace already exists and is not managed by another environment
+	if operation == admissionv1.Create {
+		ctx := context.Background()
+		ns := &corev1.Namespace{}
+		err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.TargetNamespace}, ns)
+		if err == nil {
+			// Namespace exists, check if it's managed by another environment
+			if ns.Labels != nil {
+				if existingEnv, ok := ns.Labels["kloudlite.io/environment"]; ok && existingEnv != env.Name {
+					return fmt.Errorf("namespace %s is already managed by environment %s", env.Spec.TargetNamespace, existingEnv)
+				}
+			}
+		}
+	}
+
+	// Validate resource quotas if specified
+	if env.Spec.ResourceQuotas != nil {
+		if err := w.validateResourceQuotas(env.Spec.ResourceQuotas); err != nil {
+			return fmt.Errorf("invalid resource quotas: %w", err)
+		}
+	}
+
+	// Validate network policies if specified
+	if env.Spec.NetworkPolicies != nil {
+		if err := w.validateNetworkPolicies(env.Spec.NetworkPolicies); err != nil {
+			return fmt.Errorf("invalid network policies: %w", err)
+		}
+	}
+
+	// Prevent deletion of activated environments
+	if operation == admissionv1.Delete && env.Spec.Activated {
+		return fmt.Errorf("cannot delete an activated environment, please deactivate it first")
+	}
+
+	// Check for conflicting environments with same namespace
+	if operation == admissionv1.Create || operation == admissionv1.Update {
+		ctx := context.Background()
+		envList := &environmentsv1.EnvironmentList{}
+		if err := w.k8sClient.List(ctx, envList); err == nil {
+			for _, existingEnv := range envList.Items {
+				if existingEnv.Name != env.Name && existingEnv.Spec.TargetNamespace == env.Spec.TargetNamespace {
+					return fmt.Errorf("target namespace %s is already used by environment %s", env.Spec.TargetNamespace, existingEnv.Name)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (w *EnvironmentWebhook) validateNamespaceName(name string) error {
+	if name == "" {
+		return fmt.Errorf("namespace name cannot be empty")
+	}
+
+	// Check length
+	if len(name) > 63 {
+		return fmt.Errorf("namespace name must be no more than 63 characters")
+	}
+
+	// Check for valid DNS-1123 label
+	dnsLabelRegex := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
+	if !dnsLabelRegex.MatchString(name) {
+		return fmt.Errorf("namespace name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character")
+	}
+
+	// Check for reserved namespaces
+	reservedNamespaces := []string{
+		"kube-system",
+		"kube-public",
+		"kube-node-lease",
+		"default",
+		"kloudlite-system",
+	}
+
+	for _, reserved := range reservedNamespaces {
+		if name == reserved {
+			return fmt.Errorf("cannot use reserved namespace name: %s", reserved)
+		}
+	}
+
+	// Check for reserved prefixes
+	reservedPrefixes := []string{
+		"kube-",
+		"openshift-",
+		"kubernetes-",
+	}
+
+	for _, prefix := range reservedPrefixes {
+		if strings.HasPrefix(name, prefix) {
+			return fmt.Errorf("cannot use namespace name with reserved prefix: %s", prefix)
+		}
+	}
+
+	return nil
+}
+
+func (w *EnvironmentWebhook) validateResourceQuotas(quotas *environmentsv1.ResourceQuotas) error {
+	// Validate CPU limits
+	if quotas.LimitsCPU != "" {
+		if _, err := parseQuantity(quotas.LimitsCPU); err != nil {
+			return fmt.Errorf("invalid CPU limit: %w", err)
+		}
+	}
+
+	// Validate memory limits
+	if quotas.LimitsMemory != "" {
+		if _, err := parseQuantity(quotas.LimitsMemory); err != nil {
+			return fmt.Errorf("invalid memory limit: %w", err)
+		}
+	}
+
+	// Validate CPU requests
+	if quotas.RequestsCPU != "" {
+		if _, err := parseQuantity(quotas.RequestsCPU); err != nil {
+			return fmt.Errorf("invalid CPU request: %w", err)
+		}
+	}
+
+	// Validate memory requests
+	if quotas.RequestsMemory != "" {
+		if _, err := parseQuantity(quotas.RequestsMemory); err != nil {
+			return fmt.Errorf("invalid memory request: %w", err)
+		}
+	}
+
+	// Validate PVC count
+	if quotas.PersistentVolumeClaims != "" {
+		if _, err := parseQuantity(quotas.PersistentVolumeClaims); err != nil {
+			return fmt.Errorf("invalid PVC count: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (w *EnvironmentWebhook) validateNetworkPolicies(policies *environmentsv1.NetworkPolicies) error {
+	// Validate allowed namespaces
+	for _, ns := range policies.AllowedNamespaces {
+		if err := w.validateNamespaceName(ns); err != nil {
+			return fmt.Errorf("invalid allowed namespace %s: %w", ns, err)
+		}
+	}
+
+	// Validate ingress rules
+	for i, rule := range policies.IngressRules {
+		if len(rule.From) == 0 && len(rule.Ports) == 0 {
+			return fmt.Errorf("ingress rule %d must have at least one 'from' or 'ports' specification", i)
+		}
+
+		// Validate ports
+		for j, port := range rule.Ports {
+			if port.Port < 1 || port.Port > 65535 {
+				return fmt.Errorf("invalid port number %d in ingress rule %d, port %d", port.Port, i, j)
+			}
+
+			if port.Protocol != "" && port.Protocol != "TCP" && port.Protocol != "UDP" {
+				return fmt.Errorf("invalid protocol %s in ingress rule %d, port %d (must be TCP or UDP)", port.Protocol, i, j)
+			}
+		}
+	}
+
+	return nil
+}
+
+// parseQuantity is a helper function to validate quantity strings
+func parseQuantity(quantity string) (int64, error) {
+	// Simple validation for common quantity formats
+	// This is a simplified version - in production, use k8s.io/apimachinery/pkg/api/resource.ParseQuantity
+
+	// Check for numeric value
+	numericRegex := regexp.MustCompile(`^[0-9]+$`)
+	if numericRegex.MatchString(quantity) {
+		return 0, nil
+	}
+
+	// Check for CPU units (m for millicores)
+	cpuRegex := regexp.MustCompile(`^[0-9]+m?$`)
+	if cpuRegex.MatchString(quantity) {
+		return 0, nil
+	}
+
+	// Check for memory units (Ki, Mi, Gi, Ti)
+	memoryRegex := regexp.MustCompile(`^[0-9]+([KMGT]i)?$`)
+	if memoryRegex.MatchString(quantity) {
+		return 0, nil
+	}
+
+	return 0, fmt.Errorf("invalid quantity format: %s", quantity)
+}
