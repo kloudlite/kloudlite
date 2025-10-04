@@ -18,35 +18,59 @@ git clone https://github.com/kloudlite/kloudlite.git
 cd kloudlite
 ```
 
-### 2. Start K3s Cluster
+### 2. Install Frontend Dependencies
 
 ```bash
 cd devenv
-task k3s:up
-```
-
-Wait for k3s to be ready (~30 seconds).
-
-### 3. Install Frontend Dependencies
-
-```bash
 task web:install
 ```
 
+### 3. Start Infrastructure (K3s + Pre-setup)
+
+**Terminal 1:**
+
+```bash
+cd devenv
+docker-compose up k3s pre-app
+```
+
+Wait for pre-app to complete:
+- ✓ K3s cluster starts
+- ✓ Kubeconfig extracted to `devenv/k3s-config/k3s.yaml`
+- ✓ CRDs installed
+- ✓ Pre-app exits with "PRE-APP SETUP COMPLETE"
+
 ### 4. Start Backend API
 
-Open a new terminal:
+**Terminal 2:**
 
 ```bash
 cd devenv
 task api:dev
 ```
 
-Backend runs on `http://localhost:8080`
+Wait for API to start on `http://localhost:8080`
 
-### 5. Start Frontend
+### 5. Complete Post-setup
 
-Open another terminal:
+**Back to Terminal 1:**
+
+```bash
+docker-compose up post-app
+```
+
+This will:
+- Generate TLS certificates
+- Deploy nginx in k3s
+- Wait for backend API (already running)
+- Create default users and machine types
+- Configure admission webhooks
+
+Wait for "POST-APP SETUP COMPLETE"
+
+### 6. Start Frontend
+
+**Terminal 3:**
 
 ```bash
 cd devenv
@@ -68,17 +92,21 @@ Frontend runs on `http://localhost:3000`
 ### Development
 
 ```bash
-# Check status
+# Check cluster status
 task status
 
 # View k3s logs
-task k3s:logs
+docker logs k3s-dev -f
 
-# Restart k3s
-task k3s:restart
+# Restart infrastructure
+docker-compose down
+docker-compose up k3s pre-app -d
 
-# Clean up everything
-task clean
+# Stop all containers
+docker-compose down
+
+# Clean up everything (removes volumes)
+docker-compose down -v
 ```
 
 ### API
@@ -109,11 +137,22 @@ Access the application at `http://localhost:3000` and login with any of the defa
 
 ## Troubleshooting
 
+### Post-app stuck waiting for API
+
+If post-app is stuck at "Waiting for API...", make sure:
+1. Backend API is running on port 8080
+2. Check API logs for errors
+
+```bash
+# Check if API is running
+curl http://localhost:8080/health
+```
+
 ### K3s not ready
 
 ```bash
-task k3s:down
-task k3s:up
+docker-compose down
+docker-compose up k3s pre-app
 ```
 
 ### Port conflicts
@@ -123,14 +162,20 @@ Kill processes on ports 3000, 6443, or 8080:
 ```bash
 lsof -ti:3000 | xargs kill -9
 lsof -ti:8080 | xargs kill -9
+lsof -ti:6443 | xargs kill -9
 ```
 
-### Reset everything
+### Complete reset
 
 ```bash
-task clean
-task k3s:up
-task web:install
-```
+# Stop all containers and remove volumes
+docker-compose down -v
 
-Then restart API and frontend servers.
+# Remove kubeconfig
+rm -rf devenv/k3s-config/
+
+# Reinstall frontend dependencies
+cd devenv && task web:install
+
+# Start from step 3
+```
