@@ -33,7 +33,7 @@ export function EnvironmentNav({ environmentId }: EnvironmentNavProps) {
     },
     {
       id: 'configs',
-      label: 'Configs & Secrets',
+      label: 'Config Management',
       icon: <Key className="h-4 w-4" />,
       href: `/environments/${environmentId}/configs`
     },
