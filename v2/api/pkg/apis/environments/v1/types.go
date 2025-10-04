@@ -200,12 +200,12 @@ const (
 
 // ResourceCount tracks resource counts in the namespace
 type ResourceCount struct {
-	Deployments   int32 `json:"deployments,omitempty"`
-	StatefulSets  int32 `json:"statefulsets,omitempty"`
-	Services      int32 `json:"services,omitempty"`
-	ConfigMaps    int32 `json:"configmaps,omitempty"`
-	Secrets       int32 `json:"secrets,omitempty"`
-	PVCs          int32 `json:"pvcs,omitempty"`
+	Deployments  int32 `json:"deployments,omitempty"`
+	StatefulSets int32 `json:"statefulsets,omitempty"`
+	Services     int32 `json:"services,omitempty"`
+	ConfigMaps   int32 `json:"configmaps,omitempty"`
+	Secrets      int32 `json:"secrets,omitempty"`
+	PVCs         int32 `json:"pvcs,omitempty"`
 }
 
 // EnvironmentCondition represents a condition of the environment
