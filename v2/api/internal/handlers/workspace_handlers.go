@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	workspacesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/workspaces/v1"
 	"github.com/kloudlite/kloudlite/v2/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/v2/api/internal/repository"
+	workspacesv1 "github.com/kloudlite/kloudlite/v2/api/pkg/apis/workspaces/v1"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"go.uber.org/zap"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -136,7 +136,7 @@ func (h *WorkspaceHandlers) GetWorkspace(c *gin.Context) {
 		namespace = "default"
 	}
 
-	workspace, err := h.wsRepo.Get(c.Request.Context(), name, namespace)
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -215,7 +215,7 @@ func (h *WorkspaceHandlers) UpdateWorkspace(c *gin.Context) {
 	}
 
 	// Get existing workspace
-	workspace, err := h.wsRepo.Get(c.Request.Context(), name, namespace)
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -271,7 +271,7 @@ func (h *WorkspaceHandlers) DeleteWorkspace(c *gin.Context) {
 		namespace = "default"
 	}
 
-	err := h.wsRepo.Delete(c.Request.Context(), name, namespace)
+	err := h.wsRepo.Delete(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -379,4 +379,3 @@ func (h *WorkspaceHandlers) ArchiveWorkspace(c *gin.Context) {
 		"message": "Workspace archived successfully",
 	})
 }
-
