@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { MachineConfigsList } from './_components/machine-configs-list'
+import { MachineConfigsList } from '../_components/machine-configs-list'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import type { MachineType } from '@/types/machine'
 
