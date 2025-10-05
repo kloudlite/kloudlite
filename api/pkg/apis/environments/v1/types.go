@@ -55,6 +55,11 @@ type EnvironmentSpec struct {
 	// Annotations to apply to the namespace
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// CloneFrom specifies the source environment name to clone resources from
+	// This field is automatically cleared after successful cloning
+	// +optional
+	CloneFrom string `json:"cloneFrom,omitempty"`
 }
 
 // ResourceQuotas defines resource quotas for the environment
@@ -244,6 +249,9 @@ const (
 
 	// EnvironmentConditionNetworkPolicyApplied indicates network policies have been applied
 	EnvironmentConditionNetworkPolicyApplied EnvironmentConditionType = "NetworkPolicyApplied"
+
+	// EnvironmentConditionCloned indicates resources have been cloned from source environment
+	EnvironmentConditionCloned EnvironmentConditionType = "Cloned"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

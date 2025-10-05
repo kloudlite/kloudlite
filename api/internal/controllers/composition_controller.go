@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -83,9 +84,42 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	return r.updateStatus(ctx, composition, environmentsv1.CompositionStateRunning, "Composition deployed successfully", zapLogger)
 }
 
+// getEnvironmentForNamespace finds the environment that owns the given namespace
+func (r *CompositionReconciler) getEnvironmentForNamespace(ctx context.Context, namespace string, logger *zap.Logger) (*environmentsv1.Environment, error) {
+	envList := &environmentsv1.EnvironmentList{}
+	if err := r.List(ctx, envList); err != nil {
+		logger.Error("Failed to list environments", zap.Error(err))
+		return nil, err
+	}
+
+	for _, env := range envList.Items {
+		if env.Spec.TargetNamespace == namespace {
+			return &env, nil
+		}
+	}
+
+	logger.Warn("No environment found for namespace", zap.String("namespace", namespace))
+	return nil, nil
+}
+
 // deployComposition deploys the docker compose to Kubernetes
 func (r *CompositionReconciler) deployComposition(ctx context.Context, composition *environmentsv1.Composition, logger *zap.Logger) error {
 	logger.Info("Deploying Composition")
+
+	// Get the environment for this composition's namespace
+	environment, err := r.getEnvironmentForNamespace(ctx, composition.Namespace, logger)
+	if err != nil {
+		return fmt.Errorf("failed to get environment: %w", err)
+	}
+
+	// Check if environment is activated
+	environmentActivated := true
+	if environment != nil {
+		environmentActivated = environment.Spec.Activated
+		logger.Info("Environment activation state",
+			zap.String("environment", environment.Name),
+			zap.Bool("activated", environmentActivated))
+	}
 
 	// Save old deployed resources for cleanup comparison
 	var oldDeployedResources *environmentsv1.DeployedResources
@@ -142,9 +176,41 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 		}
 	}
 
-	// Apply Deployments
+	// Apply Deployments (scale to 0 if environment is inactive)
 	deployedDeployments := make([]string, 0)
 	for _, deployment := range resources.Deployments {
+		// If environment is not activated, scale deployment to 0 replicas
+		if !environmentActivated {
+			if deployment.Spec.Replicas != nil && *deployment.Spec.Replicas > 0 {
+				// Store original replica count in annotation
+				if deployment.Annotations == nil {
+					deployment.Annotations = make(map[string]string)
+				}
+				deployment.Annotations["kloudlite.io/original-replicas"] = fmt.Sprintf("%d", *deployment.Spec.Replicas)
+
+				// Scale to 0
+				zero := int32(0)
+				deployment.Spec.Replicas = &zero
+				logger.Info("Scaling deployment to 0 (environment inactive)",
+					zap.String("deployment", deployment.Name))
+			}
+		} else {
+			// Environment is active - restore original replicas if they exist
+			if deployment.Annotations != nil {
+				if originalReplicas, exists := deployment.Annotations["kloudlite.io/original-replicas"]; exists {
+					if replicas, err := strconv.ParseInt(originalReplicas, 10, 32); err == nil && replicas > 0 {
+						r := int32(replicas)
+						deployment.Spec.Replicas = &r
+						// Remove the annotation since we've restored the value
+						delete(deployment.Annotations, "kloudlite.io/original-replicas")
+						logger.Info("Restored deployment replicas (environment active)",
+							zap.String("deployment", deployment.Name),
+							zap.Int32("replicas", r))
+					}
+				}
+			}
+		}
+
 		if err := r.applyResource(ctx, deployment, composition, logger); err != nil {
 			return fmt.Errorf("failed to apply Deployment %s: %w", deployment.Name, err)
 		}
@@ -554,6 +620,10 @@ func (r *CompositionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findCompositionsForSecret),
 		).
+		Watches(
+			&environmentsv1.Environment{},
+			handler.EnqueueRequestsFromMapFunc(r.findCompositionsForEnvironment),
+		).
 		Complete(r)
 }
 
@@ -598,6 +668,33 @@ func (r *CompositionReconciler) findCompositionsForSecret(ctx context.Context, o
 	// List all Compositions in the same namespace
 	compositionList := &environmentsv1.CompositionList{}
 	if err := r.List(ctx, compositionList, client.InNamespace(secret.Namespace)); err != nil {
+		return []reconcile.Request{}
+	}
+
+	// Create reconcile requests for all Compositions
+	requests := make([]reconcile.Request, len(compositionList.Items))
+	for i, composition := range compositionList.Items {
+		requests[i] = reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      composition.Name,
+				Namespace: composition.Namespace,
+			},
+		}
+	}
+
+	return requests
+}
+
+// findCompositionsForEnvironment triggers reconciliation of all Compositions when environment activation changes
+func (r *CompositionReconciler) findCompositionsForEnvironment(ctx context.Context, obj client.Object) []reconcile.Request {
+	environment := obj.(*environmentsv1.Environment)
+
+	// Get the target namespace for this environment
+	targetNamespace := environment.Spec.TargetNamespace
+
+	// List all Compositions in the environment's namespace
+	compositionList := &environmentsv1.CompositionList{}
+	if err := r.List(ctx, compositionList, client.InNamespace(targetNamespace)); err != nil {
 		return []reconcile.Request{}
 	}
 
