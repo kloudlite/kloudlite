@@ -1863,3 +1863,235 @@ func TestCompositionReconciler_FindCompositionsForSecret_WrongName(t *testing.T)
 func int32Ptr(i int32) *int32 {
 	return &i
 }
+
+func TestCompositionReconciler_DeployComposition_WithInactiveEnvironment(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create inactive environment
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-env",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       false, // Inactive
+		},
+	}
+
+	composition := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-composition",
+			Namespace:  "test-namespace",
+			Finalizers: []string{compositionFinalizer},
+		},
+		Spec: environmentsv1.CompositionSpec{
+			DisplayName: "Test Composition",
+			ComposeContent: `version: '3.8'
+services:
+  web:
+    image: nginx:latest
+    deploy:
+      replicas: 3`,
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition, environment).
+		WithStatusSubresource(composition).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	err := reconciler.deployComposition(context.Background(), composition, logger)
+	assert.NoError(t, err)
+
+	// Verify deployment was created with 0 replicas
+	deploymentList := &appsv1.DeploymentList{}
+	err = k8sClient.List(context.Background(), deploymentList, client.InNamespace("test-namespace"))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(deploymentList.Items))
+
+	deployment := deploymentList.Items[0]
+	assert.NotNil(t, deployment.Spec.Replicas)
+	assert.Equal(t, int32(0), *deployment.Spec.Replicas)
+	assert.Equal(t, "3", deployment.Annotations["kloudlite.io/original-replicas"])
+}
+
+func TestCompositionReconciler_DeployComposition_WithActiveEnvironment(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create active environment
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-env",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       true, // Active
+		},
+	}
+
+	composition := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-composition",
+			Namespace:  "test-namespace",
+			Finalizers: []string{compositionFinalizer},
+		},
+		Spec: environmentsv1.CompositionSpec{
+			DisplayName: "Test Composition",
+			ComposeContent: `version: '3.8'
+services:
+  web:
+    image: nginx:latest
+    deploy:
+      replicas: 2`,
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition, environment).
+		WithStatusSubresource(composition).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	err := reconciler.deployComposition(context.Background(), composition, logger)
+	assert.NoError(t, err)
+
+	// Verify deployment was created with original replicas
+	deploymentList := &appsv1.DeploymentList{}
+	err = k8sClient.List(context.Background(), deploymentList, client.InNamespace("test-namespace"))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(deploymentList.Items))
+
+	deployment := deploymentList.Items[0]
+	assert.NotNil(t, deployment.Spec.Replicas)
+	assert.Equal(t, int32(2), *deployment.Spec.Replicas)
+	assert.NotContains(t, deployment.Annotations, "kloudlite.io/original-replicas")
+}
+
+func TestCompositionReconciler_FindCompositionsForEnvironment(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	composition1 := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp1",
+			Namespace: "test-namespace",
+		},
+	}
+
+	composition2 := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "comp2",
+			Namespace: "test-namespace",
+		},
+	}
+
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-env",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       true,
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(composition1, composition2, environment).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	requests := reconciler.findCompositionsForEnvironment(context.Background(), environment)
+
+	// Should return reconcile requests for all compositions in the environment's namespace
+	assert.Equal(t, 2, len(requests))
+
+	names := []string{requests[0].Name, requests[1].Name}
+	assert.Contains(t, names, "comp1")
+	assert.Contains(t, names, "comp2")
+}
+
+func TestCompositionReconciler_GetEnvironmentForNamespace(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-env",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       true,
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(environment).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	env, err := reconciler.getEnvironmentForNamespace(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+	assert.NotNil(t, env)
+	assert.Equal(t, "test-env", env.Name)
+	assert.True(t, env.Spec.Activated)
+}
+
+func TestCompositionReconciler_GetEnvironmentForNamespace_NotFound(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &CompositionReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	env, err := reconciler.getEnvironmentForNamespace(context.Background(), "nonexistent-namespace", logger)
+	assert.NoError(t, err)
+	assert.Nil(t, env)
+}

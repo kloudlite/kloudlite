@@ -506,3 +506,282 @@ func TestEnvironmentReconciler_Reconcile_CustomLabelsAndAnnotations(t *testing.T
 	assert.Equal(t, "Test environment", namespace.Annotations["description"])
 	assert.Equal(t, "team@example.com", namespace.Annotations["owner"])
 }
+
+func TestEnvironmentReconciler_HandleCloning_Success(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create source environment
+	sourceEnv := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "source-env",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "source-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       true,
+		},
+	}
+
+	// Create target environment with cloneFrom
+	targetEnv := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "target-env",
+			Finalizers: []string{environmentFinalizer},
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "target-namespace",
+			CreatedBy:       "admin@example.com",
+			CloneFrom:       "source-env",
+			Activated:       false,
+		},
+	}
+
+	// Create source ConfigMap
+	sourceConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-config",
+			Namespace: "source-namespace",
+			Labels: map[string]string{
+				"kloudlite.io/resource-type": "environment-config",
+			},
+		},
+		Data: map[string]string{
+			"API_URL": "https://api.example.com",
+		},
+	}
+
+	// Create source Secret
+	sourceSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "env-secret",
+			Namespace: "source-namespace",
+			Labels: map[string]string{
+				"kloudlite.io/resource-type": "environment-config",
+			},
+		},
+		Data: map[string][]byte{
+			"DB_PASSWORD": []byte("secret123"),
+		},
+	}
+
+	// Create source Composition
+	sourceComposition := &environmentsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "web-app",
+			Namespace: "source-namespace",
+		},
+		Spec: environmentsv1.CompositionSpec{
+			DisplayName:    "Web App",
+			ComposeContent: "version: '3.8'",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(sourceEnv, targetEnv, sourceConfigMap, sourceSecret, sourceComposition).
+		WithStatusSubresource(targetEnv).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &EnvironmentReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "target-env",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.True(t, result.Requeue)
+
+	// Verify target namespace was created
+	targetNamespace := &corev1.Namespace{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "target-namespace"}, targetNamespace)
+	assert.NoError(t, err)
+	assert.Equal(t, "source-env", targetNamespace.Annotations["kloudlite.io/cloned-from"])
+
+	// Verify ConfigMap was cloned
+	clonedConfigMap := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "env-config", Namespace: "target-namespace"}, clonedConfigMap)
+	assert.NoError(t, err)
+	assert.Equal(t, "https://api.example.com", clonedConfigMap.Data["API_URL"])
+	assert.Equal(t, "target-env", clonedConfigMap.Labels["kloudlite.io/environment"])
+
+	// Verify Secret was cloned
+	clonedSecret := &corev1.Secret{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "env-secret", Namespace: "target-namespace"}, clonedSecret)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("secret123"), clonedSecret.Data["DB_PASSWORD"])
+	assert.Equal(t, "target-env", clonedSecret.Labels["kloudlite.io/environment"])
+
+	// Verify Composition was cloned
+	clonedComposition := &environmentsv1.Composition{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "web-app", Namespace: "target-namespace"}, clonedComposition)
+	assert.NoError(t, err)
+	assert.Equal(t, "Web App", clonedComposition.Spec.DisplayName)
+}
+
+func TestEnvironmentReconciler_HandleCloning_SourceNotFound(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create target environment with cloneFrom pointing to nonexistent source
+	targetEnv := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "target-env",
+			Finalizers: []string{environmentFinalizer},
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "target-namespace",
+			CreatedBy:       "admin@example.com",
+			CloneFrom:       "nonexistent-env",
+			Activated:       false,
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(targetEnv).
+		WithStatusSubresource(targetEnv).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &EnvironmentReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "target-env",
+		},
+	}
+
+	_, err := reconciler.Reconcile(context.Background(), req)
+	assert.Error(t, err)
+}
+
+func TestEnvironmentReconciler_ActivationStatusUpdate(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	env := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-env",
+			Finalizers: []string{environmentFinalizer},
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       true,
+		},
+		Status: environmentsv1.EnvironmentStatus{
+			State: environmentsv1.EnvironmentStateInactive,
+		},
+	}
+
+	namespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(env, namespace).
+		WithStatusSubresource(env).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &EnvironmentReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test-env",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify status was updated to active
+	updatedEnv := &environmentsv1.Environment{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-env"}, updatedEnv)
+	assert.NoError(t, err)
+	assert.Equal(t, environmentsv1.EnvironmentStateActive, updatedEnv.Status.State)
+	assert.Equal(t, "Environment is active", updatedEnv.Status.Message)
+	assert.NotNil(t, updatedEnv.Status.LastActivatedTime)
+}
+
+func TestEnvironmentReconciler_DeactivationStatusUpdate(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = environmentsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	env := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-env",
+			Finalizers: []string{environmentFinalizer},
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       false,
+		},
+		Status: environmentsv1.EnvironmentStatus{
+			State: environmentsv1.EnvironmentStateActive,
+		},
+	}
+
+	namespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(env, namespace).
+		WithStatusSubresource(env).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &EnvironmentReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test-env",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify status was updated to inactive
+	updatedEnv := &environmentsv1.Environment{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-env"}, updatedEnv)
+	assert.NoError(t, err)
+	assert.Equal(t, environmentsv1.EnvironmentStateInactive, updatedEnv.Status.State)
+	assert.Equal(t, "Environment is inactive", updatedEnv.Status.Message)
+	assert.NotNil(t, updatedEnv.Status.LastDeactivatedTime)
+}
