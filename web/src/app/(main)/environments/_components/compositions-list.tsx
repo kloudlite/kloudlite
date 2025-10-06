@@ -1,25 +1,11 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileCode, Clock, Trash2, Loader2 } from 'lucide-react'
+import { FileCode, Clock, Loader2 } from 'lucide-react'
 import type { Composition } from '@/types/composition'
 import { CreateCompositionSheet } from './create-composition-sheet'
-import { EditCompositionSheet } from './edit-composition-sheet'
-import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { deleteComposition } from '@/app/actions/composition.actions'
-import { toast } from 'sonner'
+import { CompositionRowActions } from './composition-row-actions'
 
 interface CompositionsListProps {
   compositions: Composition[]
@@ -43,105 +29,63 @@ function formatTimeAgo(timestamp?: string): string {
   return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
 }
 
-function DeleteButton({ composition, namespace, user }: { composition: Composition; namespace: string; user: string }) {
+export function CompositionsList({ compositions, namespace, user }: CompositionsListProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
 
-  const handleDelete = async () => {
-    startTransition(async () => {
-      const result = await deleteComposition(namespace, composition.metadata.name, user)
-      if (result.success) {
-        toast.success('Composition deleted successfully')
-        router.refresh()
-      } else {
-        toast.error(result.error || 'Failed to delete composition')
-      }
-    })
-  }
-
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" disabled={isPending}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Composition</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete <strong>{composition.spec.displayName}</strong>? This action cannot be undone and will remove all associated resources.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
-
-export function CompositionsList({ compositions: initialCompositions, namespace, user }: CompositionsListProps) {
-  const router = useRouter()
-  const [compositions, setCompositions] = useState<Composition[]>(initialCompositions)
-
-  // Poll for composition updates every 3 seconds
+  // Poll for updates when resources are in transitional states
   useEffect(() => {
-    const pollInterval = setInterval(() => {
-      // Check if any composition is in a transitional state (deletionTimestamp set or deploying)
-      const hasTransitionalComp = compositions.some(
-        comp => comp.metadata.deletionTimestamp || comp.status?.state === 'deploying'
-      )
+    const transitionalStates = ['deploying', 'pending', 'stopping', 'starting']
+    const hasTransitionalState = compositions.some(
+      comp =>
+        comp.metadata.deletionTimestamp ||
+        transitionalStates.includes(comp.status?.state || '') ||
+        !comp.status?.state // Also poll if no status yet (newly created)
+    )
 
-      if (hasTransitionalComp) {
-        router.refresh()
-      }
-    }, 3000)
+    if (!hasTransitionalState) {
+      return
+    }
 
-    return () => clearInterval(pollInterval)
+    const interval = setInterval(() => {
+      router.refresh()
+    }, 3000) // Poll every 3 seconds
+
+    return () => clearInterval(interval)
   }, [compositions, router])
-
-  // Update local state when server data changes
-  useEffect(() => {
-    setCompositions(initialCompositions)
-  }, [initialCompositions])
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-medium">Compositions</h3>
-          <p className="text-sm text-gray-500 mt-1">Container stacks managed with Docker Compose</p>
+          <p className="text-sm text-muted-foreground mt-1">Container stacks managed with Docker Compose</p>
         </div>
         <CreateCompositionSheet namespace={namespace} user={user} />
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
+      <div className="bg-card rounded-lg border">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <tr className="border-b bg-muted/50">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Composition
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Last Deployed
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y">
               {compositions.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={4} className="px-6 py-8 text-center text-sm text-muted-foreground">
                     No compositions found. Create your first composition to get started.
                   </td>
                 </tr>
@@ -152,25 +96,26 @@ export function CompositionsList({ compositions: initialCompositions, namespace,
                     ? 'deleting'
                     : (composition.status?.state || 'pending')
                   const lastDeployed = formatTimeAgo(composition.status?.lastDeployedTime)
+                  const isDeleting = state === 'deleting'
 
                   // Determine status color based on state
-                  let statusColor = 'bg-gray-100 text-gray-800'
-                  if (state === 'running') statusColor = 'bg-green-100 text-green-800'
-                  else if (state === 'deploying') statusColor = 'bg-blue-100 text-blue-800'
-                  else if (state === 'degraded') statusColor = 'bg-yellow-100 text-yellow-800'
-                  else if (state === 'failed') statusColor = 'bg-red-100 text-red-800'
-                  else if (state === 'stopped') statusColor = 'bg-gray-100 text-gray-800'
-                  else if (state === 'deleting') statusColor = 'bg-red-100 text-red-800'
+                  let statusColor = 'bg-secondary text-secondary-foreground'
+                  if (state === 'running') statusColor = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                  else if (state === 'deploying') statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                  else if (state === 'degraded') statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  else if (state === 'failed') statusColor = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  else if (state === 'stopped') statusColor = 'bg-secondary text-secondary-foreground'
+                  else if (state === 'deleting') statusColor = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
 
                   return (
-                    <tr key={composition.metadata.uid || composition.metadata.name} className="hover:bg-gray-50">
+                    <tr key={composition.metadata.uid || composition.metadata.name} className="hover:bg-muted/50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <FileCode className="h-5 w-5 text-gray-400 mr-3" />
+                          <FileCode className="h-5 w-5 text-muted-foreground mr-3" />
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{composition.spec.displayName}</div>
+                            <div className="text-sm font-medium">{composition.spec.displayName}</div>
                             {composition.spec.description && (
-                              <div className="text-xs text-gray-500 mt-0.5">{composition.spec.description}</div>
+                              <div className="text-xs text-muted-foreground mt-0.5">{composition.spec.description}</div>
                             )}
                           </div>
                         </div>
@@ -184,20 +129,18 @@ export function CompositionsList({ compositions: initialCompositions, namespace,
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {lastDeployed}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {state === 'deleting' ? (
-                          <span className="text-xs text-gray-500">Deleting...</span>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <EditCompositionSheet composition={composition} namespace={namespace} user={user} />
-                            <DeleteButton composition={composition} namespace={namespace} user={user} />
-                          </div>
-                        )}
+                        <CompositionRowActions
+                          composition={composition}
+                          namespace={namespace}
+                          user={user}
+                          isDeleting={isDeleting}
+                        />
                       </td>
                     </tr>
                   )

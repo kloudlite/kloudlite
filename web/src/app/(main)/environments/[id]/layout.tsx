@@ -2,12 +2,35 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
+import { environmentService } from '@/lib/services/environment.service'
 
 interface LayoutProps {
   children: React.ReactNode
   params: {
     id: string
   }
+}
+
+function formatTimeAgo(timestamp?: string): string {
+  if (!timestamp) return 'Unknown'
+
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7)
+    return `${weeks} week${weeks > 1 ? 's' : ''} ago`
+  }
+  const months = Math.floor(diffDays / 30)
+  return `${months} month${months > 1 ? 's' : ''} ago`
 }
 
 export default async function EnvironmentLayout({ children, params }: LayoutProps) {
@@ -17,13 +40,42 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
     redirect('/auth/signin')
   }
 
-  // Mock environment data - in real app, fetch by ID
-  const environment = {
-    id: params.id,
-    name: params.id === '1' ? 'my-dev-env' : 'feature-auth',
-    owner: session.user?.email || 'user@example.com',
-    status: 'active' as const,
-    created: '2 days ago',
+  // Await params (required in Next.js 15)
+  const { id } = await params
+
+  // Fetch real environment data
+  let environment
+  try {
+    const env = await environmentService.getEnvironment(id)
+
+    // Extract owner email from labels
+    let owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
+    const encodedEmail = env.spec.labels?.['kloudlite.io/owner-email']
+    if (encodedEmail) {
+      try {
+        owner = Buffer.from(encodedEmail, 'base64').toString('utf-8')
+      } catch {
+        // Fall back to username
+      }
+    }
+
+    environment = {
+      id,
+      name: env.spec.displayName || env.metadata.name,
+      owner,
+      status: env.status?.state || 'unknown',
+      created: formatTimeAgo(env.metadata.creationTimestamp),
+    }
+  } catch (error) {
+    console.error('Failed to fetch environment:', error)
+    // Fallback to basic data if API fails
+    environment = {
+      id,
+      name: id,
+      owner: session.user?.email || 'unknown',
+      status: 'unknown',
+      created: 'Unknown',
+    }
   }
 
   const breadcrumbItems = [
@@ -34,7 +86,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   return (
     <>
       {/* Environment Header with Info */}
-      <div className="bg-white">
+      <div className="bg-background border-b">
         <div className="mx-auto max-w-7xl px-6">
           {/* Breadcrumb */}
           <div className="py-4">
@@ -45,16 +97,22 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
           <div className="pb-4">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">{environment.name}</h1>
-                <div className="mt-1.5 flex items-center gap-4 text-sm text-gray-600">
+                <h1 className="text-2xl font-semibold">{environment.name}</h1>
+                <div className="mt-1.5 flex items-center gap-4 text-sm text-muted-foreground">
                   <span>Owner: {environment.owner}</span>
                   <span>•</span>
                   <span>Created: {environment.created}</span>
                   <span>•</span>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    environment.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                    environment.status === 'ready' || environment.status === 'active'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : environment.status === 'creating' || environment.status === 'updating'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                      : environment.status === 'error' || environment.status === 'failed'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                      : environment.status === 'deleting'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                      : 'bg-secondary text-secondary-foreground'
                   }`}>
                     {environment.status}
                   </span>
@@ -66,7 +124,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
       </div>
 
       {/* Navigation */}
-      <EnvironmentNav environmentId={params.id} />
+      <EnvironmentNav environmentId={id} />
 
       {/* Page Content */}
       <div className="flex-1">

@@ -34,21 +34,21 @@ export default async function WorkspacesPage() {
       {/* Title and Filter Section */}
       <div className="mb-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Workspaces</h1>
-          <p className="text-sm text-gray-600 mt-1.5">
+          <h1 className="text-2xl font-semibold">Workspaces</h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
             Manage your development workspaces and collaborate with your team
           </p>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 rounded-md bg-red-50 border border-red-200 p-4">
+          <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
             <div className="flex">
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
                   Failed to load workspaces
                 </h3>
-                <div className="mt-2 text-sm text-red-700">
+                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
                   <p>{error}</p>
                 </div>
               </div>

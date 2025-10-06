@@ -90,7 +90,7 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                 required
                 className="font-mono text-sm"
               />
-              <p className="text-sm text-gray-500">The envvar name</p>
+              <p className="text-sm text-muted-foreground">The envvar name</p>
             </div>
 
             <div className="space-y-2">
@@ -105,13 +105,13 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                 required
                 className="font-mono text-sm"
               />
-              <p className="text-sm text-gray-500">The envvar value</p>
+              <p className="text-sm text-muted-foreground">The envvar value</p>
             </div>
 
             <div className="space-y-3">
               <Label>Type</Label>
               <div className="space-y-2">
-                <label className="flex items-center space-x-3 border rounded-lg p-3 cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center space-x-3 border rounded-lg p-3 cursor-pointer hover:bg-accent/50">
                   <input
                     type="radio"
                     name="type"
@@ -122,10 +122,10 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                   />
                   <div className="flex-1">
                     <div className="font-medium">Config</div>
-                    <div className="text-sm text-gray-500">Regular configuration variable (visible in list)</div>
+                    <div className="text-sm text-muted-foreground">Regular configuration variable (visible in list)</div>
                   </div>
                 </label>
-                <label className="flex items-center space-x-3 border rounded-lg p-3 cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center space-x-3 border rounded-lg p-3 cursor-pointer hover:bg-accent/50">
                   <input
                     type="radio"
                     name="type"
@@ -136,7 +136,7 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                   />
                   <div className="flex-1">
                     <div className="font-medium">Secret</div>
-                    <div className="text-sm text-gray-500">Sensitive data (value hidden in list)</div>
+                    <div className="text-sm text-muted-foreground">Sensitive data (value hidden in list)</div>
                   </div>
                 </label>
               </div>

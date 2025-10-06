@@ -29,7 +29,7 @@ export default async function MainLayout({
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-background">
       <div className="flex-shrink-0">
         <NavigationWrapper />
       </div>
