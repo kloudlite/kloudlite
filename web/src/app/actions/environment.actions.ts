@@ -110,3 +110,34 @@ export async function getEnvironmentStatus(name: string) {
     }
   }
 }
+
+/**
+ * Server action to clone an environment
+ */
+export async function cloneEnvironment(
+  sourceName: string,
+  targetName: string,
+  targetNamespace: string,
+  cloneEnvVars: boolean,
+  cloneFiles: boolean,
+  currentUser: string
+) {
+  try {
+    const result = await environmentService.cloneEnvironment(
+      sourceName,
+      targetName,
+      targetNamespace,
+      cloneEnvVars,
+      cloneFiles,
+      currentUser
+    )
+    revalidatePath('/environments')
+    return { success: true, data: result }
+  } catch (error: any) {
+    console.error('Clone environment error:', error)
+    return {
+      success: false,
+      error: error.message || 'Failed to clone environment'
+    }
+  }
+}

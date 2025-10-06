@@ -7,17 +7,17 @@ export function NetworkSettings() {
     <div className="space-y-4">
       <div className="mb-4">
         <h3 className="text-lg font-medium">Network Settings</h3>
-        <p className="text-sm text-gray-500">Configure network and domain settings</p>
+        <p className="text-sm text-muted-foreground">Configure network and domain settings</p>
       </div>
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-card rounded-lg border p-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1">
               Custom Domain
             </label>
             <input
               type="text"
-              className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full max-w-md px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="app.example.com"
             />
           </div>

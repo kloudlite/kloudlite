@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
+import { ThemeSwitcher } from './theme-switcher'
 
 interface NavigationProps {
   email?: string
@@ -33,7 +34,7 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
   ]
 
   return (
-    <header className="border-b bg-white">
+    <header className="border-b bg-background">
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo / Brand */}
@@ -53,8 +54,8 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
                     href={item.href}
                     className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
                       isActive
-                        ? 'bg-gray-100 text-gray-900 font-semibold'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                        ? 'bg-accent text-accent-foreground font-semibold'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -65,20 +66,21 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
             </nav>
           </div>
 
-          {/* User Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{displayName || 'User'}</span>
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
+          {/* User Dropdown & Theme Switcher */}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">{displayName || 'User'}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-semibold text-gray-900">{displayName || 'User'}</p>
-                  <p className="text-xs text-gray-500">{email}</p>
+                  <p className="text-sm font-semibold">{displayName || 'User'}</p>
+                  <p className="text-xs text-muted-foreground">{email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -103,6 +105,8 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
               </form>
             </DropdownMenuContent>
           </DropdownMenu>
+            <ThemeSwitcher />
+          </div>
         </div>
       </div>
     </header>

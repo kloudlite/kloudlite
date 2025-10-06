@@ -117,6 +117,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    font-size: 105%;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     line-height: 2rem;

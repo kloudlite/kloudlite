@@ -88,7 +88,19 @@ export function CreateCompositionSheet({ namespace, user }: CreateCompositionShe
         setName('')
         setDisplayName('')
         setComposeContent(defaultComposeContent)
+
+        // Immediately refresh and then poll for a few seconds to catch state changes
         router.refresh()
+
+        // Poll every second for 10 seconds to catch the composition state updates
+        let pollCount = 0
+        const pollInterval = setInterval(() => {
+          router.refresh()
+          pollCount++
+          if (pollCount >= 10) {
+            clearInterval(pollInterval)
+          }
+        }, 1000)
       } else {
         toast.error(result.error || 'Failed to create composition')
       }

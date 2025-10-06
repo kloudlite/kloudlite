@@ -46,7 +46,7 @@ export function EnvironmentNav({ environmentId }: EnvironmentNavProps) {
   ]
 
   return (
-    <div className="bg-white border-b border-gray-200">
+    <div className="bg-background border-b">
       <div className="mx-auto max-w-7xl px-6">
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
           {tabs.map((tab) => {
@@ -58,8 +58,8 @@ export function EnvironmentNav({ environmentId }: EnvironmentNavProps) {
                 className={`
                   flex items-center gap-2 px-1 py-4 text-sm font-medium border-b-2 transition-colors
                   ${isActive
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
                   }
                 `}
               >

@@ -58,11 +58,11 @@ export function SettingsSectionNav({ environmentId }: SettingsSectionNavProps) {
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                 isActive
                   ? isDanger
-                    ? 'bg-red-50 text-red-700 font-medium'
-                    : 'bg-gray-100 text-gray-900 font-medium'
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 font-medium'
+                    : 'bg-accent text-accent-foreground font-medium'
                   : isDanger
-                  ? 'text-red-600 hover:bg-red-50'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
               }`}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />

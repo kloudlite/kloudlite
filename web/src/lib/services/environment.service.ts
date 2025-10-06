@@ -153,6 +153,29 @@ export class EnvironmentService {
   async deleteFile(name: string, filename: string): Promise<DeleteFileResponse> {
     return apiClient.delete(`${this.baseUrl}/${name}/files/${filename}`)
   }
+
+  /**
+   * Clone an environment by creating a new environment with cloneFrom field
+   */
+  async cloneEnvironment(
+    sourceName: string,
+    targetName: string,
+    targetNamespace: string,
+    cloneEnvVars: boolean,
+    cloneFiles: boolean,
+    currentUser: string
+  ): Promise<EnvironmentResponse> {
+    const request: EnvironmentCreateRequest = {
+      name: targetName,
+      spec: {
+        targetNamespace,
+        createdBy: currentUser,
+        activated: false,
+        cloneFrom: sourceName,
+      }
+    }
+    return this.createEnvironment(request)
+  }
 }
 
 // Export singleton instance

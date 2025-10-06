@@ -56,7 +56,7 @@ export function PinnedResources({
       {/* Pinned Workspaces */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
             <Pin className="h-4 w-4" />
             Pinned Workspaces
           </h3>
@@ -73,7 +73,7 @@ export function PinnedResources({
             {workspaces.map((workspace) => (
               <div
                 key={workspace.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+                className="bg-card rounded-lg border p-4 hover:border-accent transition-colors"
                 onMouseEnter={() => setHoveredWorkspace(workspace.id)}
                 onMouseLeave={() => setHoveredWorkspace(null)}
               >
@@ -83,34 +83,34 @@ export function PinnedResources({
                     className="flex-1 min-w-0"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Code2 className="h-4 w-4 text-blue-600" />
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                        <Code2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-gray-900 truncate">
+                          <h4 className="text-sm font-semibold truncate">
                             {workspace.name}
                           </h4>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             workspace.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-600'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-secondary text-secondary-foreground'
                           }`}>
                             {workspace.status}
                           </span>
                         </div>
                         <div className="flex items-center gap-4 mt-1.5">
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Globe className="h-3 w-3" />
                             {workspace.environment}
                           </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <GitBranch className="h-3 w-3" />
                             {workspace.branch}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {workspace.language} • {workspace.framework}
                           </span>
                         </div>
@@ -139,9 +139,9 @@ export function PinnedResources({
             ))}
           </div>
         ) : (
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
-            <Folder className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">No pinned workspaces</p>
+          <div className="bg-muted/50 rounded-lg border p-8 text-center">
+            <Folder className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No pinned workspaces</p>
             <Link href="/workspaces">
               <Button variant="outline" size="sm" className="mt-3">
                 Browse Workspaces
@@ -154,7 +154,7 @@ export function PinnedResources({
       {/* Pinned Environments */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
             <Pin className="h-4 w-4" />
             Pinned Environments
           </h3>
@@ -171,7 +171,7 @@ export function PinnedResources({
             {environments.map((env) => (
               <div
                 key={env.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+                className="bg-card rounded-lg border p-4 hover:border-accent transition-colors"
                 onMouseEnter={() => setHoveredEnvironment(env.id)}
                 onMouseLeave={() => setHoveredEnvironment(null)}
               >
@@ -181,33 +181,33 @@ export function PinnedResources({
                     className="flex-1 min-w-0"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-50 rounded-lg">
-                        <Server className="h-4 w-4 text-green-600" />
+                      <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                        <Server className="h-4 w-4 text-green-600 dark:text-green-400" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-gray-900 truncate">
+                          <h4 className="text-sm font-semibold truncate">
                             {env.name}
                           </h4>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             env.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-600'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-secondary text-secondary-foreground'
                           }`}>
                             {env.status}
                           </span>
                         </div>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {env.services} services
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {env.workspaces} workspaces
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {env.configs} configs
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {env.secrets} secrets
                           </span>
                         </div>
@@ -236,9 +236,9 @@ export function PinnedResources({
             ))}
           </div>
         ) : (
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
-            <Server className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">No pinned environments</p>
+          <div className="bg-muted/50 rounded-lg border p-8 text-center">
+            <Server className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No pinned environments</p>
             <Link href="/environments">
               <Button variant="outline" size="sm" className="mt-3">
                 Browse Environments
