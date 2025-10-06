@@ -142,6 +142,22 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 
+	// Check if user has 'user' role - only users with 'user' role get WorkMachines
+	hasUserRole := false
+	for _, role := range user.Spec.Roles {
+		if role == platformv1alpha1.RoleUser {
+			hasUserRole = true
+			break
+		}
+	}
+
+	if !hasUserRole {
+		logger.Info("User does not have 'user' role - skipping WorkMachine creation",
+			zap.String("user", user.Name),
+			zap.Strings("roles", rolesToStrings(user.Spec.Roles)))
+		return reconcile.Result{}, nil
+	}
+
 	// Create WorkMachine for the user
 	logger.Info("Creating WorkMachine for user", zap.String("workMachine", workMachineName))
 
@@ -376,6 +392,15 @@ func sanitizeForLabel(value string) string {
 // isAlphanumeric checks if a byte is alphanumeric
 func isAlphanumeric(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= '0' && b <= '9')
+}
+
+// rolesToStrings converts RoleType slice to string slice for logging
+func rolesToStrings(roles []platformv1alpha1.RoleType) []string {
+	result := make([]string, len(roles))
+	for i, role := range roles {
+		result[i] = string(role)
+	}
+	return result
 }
 
 // SetupWithManager sets up the controller with the Manager

@@ -7,7 +7,9 @@ import (
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,7 +20,9 @@ import (
 func TestWorkMachineReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	workMachine := &machinesv1.WorkMachine{
 		ObjectMeta: metav1.ObjectMeta{
@@ -59,6 +63,7 @@ func TestWorkMachineReconciler_Reconcile_AddFinalizer(t *testing.T) {
 func TestWorkMachineReconciler_Reconcile_WorkMachineNotFound(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
@@ -81,7 +86,9 @@ func TestWorkMachineReconciler_Reconcile_WorkMachineNotFound(t *testing.T) {
 func TestWorkMachineReconciler_Reconcile_InitializeStatus(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -126,7 +133,9 @@ func TestWorkMachineReconciler_Reconcile_InitializeStatus(t *testing.T) {
 func TestWorkMachineReconciler_Reconcile_StateTransition_StoppedToRunning(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -173,7 +182,9 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_StoppedToRunning(t *tes
 func TestWorkMachineReconciler_Reconcile_StateTransition_RunningToStopped(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -220,8 +231,10 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_RunningToStopped(t *tes
 func TestWorkMachineReconciler_HandleDeletion_WithActiveWorkspaces(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{
@@ -271,8 +284,10 @@ func TestWorkMachineReconciler_HandleDeletion_WithActiveWorkspaces(t *testing.T)
 func TestWorkMachineReconciler_HandleDeletion_NoActiveWorkspaces(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{
@@ -315,8 +330,10 @@ func TestWorkMachineReconciler_HandleDeletion_NoActiveWorkspaces(t *testing.T) {
 func TestWorkMachineReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{
@@ -361,7 +378,9 @@ func TestWorkMachineReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing
 func TestWorkMachineReconciler_EnsureNamespace_CreateNew(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
@@ -386,7 +405,9 @@ func TestWorkMachineReconciler_EnsureNamespace_CreateNew(t *testing.T) {
 func TestWorkMachineReconciler_EnsureNamespace_ExistingWithoutFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	existingNamespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -415,7 +436,9 @@ func TestWorkMachineReconciler_EnsureNamespace_ExistingWithoutFinalizer(t *testi
 func TestWorkMachineReconciler_EnsureNamespace_ExistingWithFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	existingNamespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -445,6 +468,7 @@ func TestWorkMachineReconciler_EnsureNamespace_ExistingWithFinalizer(t *testing.
 func TestWorkMachineReconciler_SetupWithManager(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 
 	reconciler := &WorkMachineReconciler{
 		Client: nil,
@@ -460,7 +484,9 @@ func TestWorkMachineReconciler_SetupWithManager(t *testing.T) {
 func TestWorkMachineReconciler_Reconcile_NamespaceBeingDeleted(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	namespace := &corev1.Namespace{
@@ -509,7 +535,9 @@ func TestWorkMachineReconciler_Reconcile_NamespaceBeingDeleted(t *testing.T) {
 func TestWorkMachineReconciler_Reconcile_StateTransition_StartingToRunning(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -556,7 +584,9 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_StartingToRunning(t *te
 func TestWorkMachineReconciler_Reconcile_StateTransition_StoppingToStopped(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -603,7 +633,9 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_StoppingToStopped(t *te
 func TestWorkMachineReconciler_Reconcile_InitializeStatus_DesiredRunning(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -650,7 +682,9 @@ func TestWorkMachineReconciler_Reconcile_InitializeStatus_DesiredRunning(t *test
 func TestWorkMachineReconciler_Reconcile_SameState_NoTransition(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -696,8 +730,10 @@ func TestWorkMachineReconciler_Reconcile_SameState_NoTransition(t *testing.T) {
 func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_NewCondition(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{
@@ -746,8 +782,10 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_New
 func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_ExistingCondition(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{
@@ -804,8 +842,10 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_Exi
 func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceBeingDeleted_WithFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{
@@ -850,8 +890,10 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceBeingDeleted_W
 func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceBeingDeleted_NoFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{
@@ -893,8 +935,10 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceBeingDeleted_N
 func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceNeedsDeletion(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	workMachine := &machinesv1.WorkMachine{

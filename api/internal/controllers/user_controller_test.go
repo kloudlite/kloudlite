@@ -8,7 +8,9 @@ import (
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,7 +22,9 @@ func TestUserReconciler_Reconcile_CreateWorkMachine(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	active := true
 	user := &platformv1alpha1.User{
@@ -30,6 +34,7 @@ func TestUserReconciler_Reconcile_CreateWorkMachine(t *testing.T) {
 		},
 		Spec: platformv1alpha1.UserSpec{
 			Email:  "test@example.com",
+			Roles:  []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
 			Active: &active,
 		},
 	}
@@ -88,7 +93,9 @@ func TestUserReconciler_Reconcile_UserNotFound(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
@@ -114,7 +121,9 @@ func TestUserReconciler_Reconcile_ExistingWorkMachine(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	active := true
 	user := &platformv1alpha1.User{
@@ -170,7 +179,9 @@ func TestUserReconciler_Reconcile_UserDeactivation(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	inactive := false
 	user := &platformv1alpha1.User{
@@ -226,7 +237,9 @@ func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	active := true
 	user := &platformv1alpha1.User{
@@ -282,7 +295,9 @@ func TestUserReconciler_HandleUserDeletion(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	user := &platformv1alpha1.User{
@@ -333,7 +348,9 @@ func TestUserReconciler_HandleUserDeletion_WorkMachineBeingDeleted(t *testing.T)
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	user := &platformv1alpha1.User{
@@ -379,7 +396,9 @@ func TestUserReconciler_HandleUserDeletion_WorkMachineDeleted(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	user := &platformv1alpha1.User{
@@ -424,7 +443,9 @@ func TestUserReconciler_HandleUserDeletion_InitiatesWorkMachineDeletion(t *testi
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 
 	now := metav1.Now()
 	user := &platformv1alpha1.User{
@@ -484,6 +505,7 @@ func TestUserReconciler_BuildWorkMachineForUser(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 
 	active := true
 	user := &platformv1alpha1.User{
@@ -534,6 +556,7 @@ func TestUserReconciler_BuildWorkMachineForUser_InactiveUser(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 
 	inactive := false
 	user := &platformv1alpha1.User{
@@ -634,6 +657,7 @@ func TestUserReconciler_Reconcile_WorkMachineOwnedByDifferentUser(t *testing.T) 
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 
 	active := true
 	user := &platformv1alpha1.User{
@@ -690,6 +714,7 @@ func TestUserReconciler_Reconcile_UpdateWorkMachineStateFailure(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
 
 	active := true
 	user := &platformv1alpha1.User{
