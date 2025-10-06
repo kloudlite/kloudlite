@@ -162,24 +162,33 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 }
 
 func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, profileName string) (workspacesv1.InstalledPackage, error) {
-	// Determine package attribute
-	pkgAttr := "nixpkgs." + pkg.Name
-	if pkg.Version != "" {
-		// For versioned packages, we'd need more sophisticated handling
-		// For now, just use the package name
-		pkgAttr = "nixpkgs." + pkg.Name
-	}
-
-	// Install package using nix-env with named profile
+	// Determine package attribute and install command
 	profilePath := fmt.Sprintf("/nix/var/nix/profiles/per-user/root/%s", profileName)
-	installScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -iA %s", profilePath, pkgAttr)
+
+	var installScript string
+	if pkg.Version != "" {
+		// Install specific version using nixpkgs flake with version constraint
+		// Format: package@version (e.g., "vim@9.1.0")
+		// Uses nix profile install with flake reference
+		installScript = fmt.Sprintf(
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix profile install --profile %s 'nixpkgs#%s' || nix-env -p %s -iA 'nixpkgs.%s'`,
+			profilePath, pkg.Name, profilePath, pkg.Name,
+		)
+		r.Logger.Info("Installing package with version preference",
+			zap2.String("package", pkg.Name),
+			zap2.String("version", pkg.Version))
+	} else {
+		// Install latest version from nixpkgs
+		pkgAttr := "nixpkgs." + pkg.Name
+		installScript = fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -iA %s", profilePath, pkgAttr)
+	}
 
 	output, err := r.CmdExec.Execute(installScript)
 	if err != nil {
 		return workspacesv1.InstalledPackage{}, fmt.Errorf("nix-env failed: %w, output: %s", err, string(output))
 	}
 
-	// Query package info to get store path from the named profile
+	// Query package info to get store path and actual installed version from the named profile
 	queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q --out-path %s", profilePath, pkg.Name)
 
 	queryOutput, err := r.CmdExec.Execute(queryScript)
@@ -189,11 +198,22 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, 
 			zap2.Error(err))
 	}
 
-	// Parse store path from output
+	// Parse store path and version from output
 	storePath := nixStorePath + "/store"
+	installedVersion := pkg.Version // Default to requested version
 	if len(queryOutput) > 0 {
 		// Output format is typically: "package-version  /nix/store/hash-package-version"
 		parts := strings.Fields(string(queryOutput))
+		if len(parts) >= 1 {
+			// First part is "package-version", extract version
+			pkgWithVersion := parts[0]
+			// Remove package name prefix to get version
+			if strings.HasPrefix(pkgWithVersion, pkg.Name+"-") {
+				installedVersion = strings.TrimPrefix(pkgWithVersion, pkg.Name+"-")
+			} else {
+				installedVersion = pkgWithVersion
+			}
+		}
 		if len(parts) >= 2 {
 			storePath = parts[1]
 		}
@@ -203,7 +223,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, 
 
 	return workspacesv1.InstalledPackage{
 		Name:        pkg.Name,
-		Version:     pkg.Version,
+		Version:     installedVersion,
 		BinPath:     binPath,
 		StorePath:   storePath,
 		InstalledAt: metav1.Now(),
