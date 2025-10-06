@@ -7,14 +7,21 @@ import (
 
 // PackageSpec defines a Nix package to install
 type PackageSpec struct {
-	// Name of the package
+	// Name of the package (e.g., nodejs_22, vim, git)
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 
-	// Version of the package (optional, defaults to latest from nixpkgs)
+	// Channel specifies the nixpkgs channel/release to use (e.g., "nixos-24.05", "nixos-23.11", "unstable")
+	// Use this for stable, well-known package versions from official releases
 	// +optional
-	Version string `json:"version,omitempty"`
+	Channel string `json:"channel,omitempty"`
+
+	// NixpkgsCommit specifies an exact nixpkgs commit hash for precise version control
+	// Use this when you need a specific historical package version
+	// Takes precedence over Channel if both are specified
+	// +optional
+	NixpkgsCommit string `json:"nixpkgsCommit,omitempty"`
 }
 
 // InstalledPackage represents a successfully installed package

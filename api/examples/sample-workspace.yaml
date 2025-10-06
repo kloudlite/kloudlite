@@ -15,11 +15,20 @@ spec:
 
   # Packages to install in the workspace (using Nix)
   packages:
+    # Latest from unstable (no channel/commit specified)
     - name: vim
-      # version: "9.1.0"  # Optional: specify version (uses latest if omitted)
+
+    # From a specific stable release channel
+    - name: nodejs_22
+      channel: "nixos-24.05"
+
+    # From a specific nixpkgs commit for exact version control
+    # Use https://lazamar.co.uk/nix-versions/ to find commit hashes for specific versions
+    - name: nodejs_20
+      nixpkgsCommit: "abc123def456"  # Replace with actual commit hash
+
+    # Using git from unstable
     - name: git
-    - name: nodejs
-      # version: "20.10.0"
 
   resourceQuota:
     cpu: "1"
