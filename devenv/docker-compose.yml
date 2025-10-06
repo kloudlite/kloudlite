@@ -1,6 +1,6 @@
 services:
   k3s:
-    image: rancher/k3s
+    image: rancher/k3s:v1.30.5-k3s1
     container_name: k3s-dev
     privileged: true
     restart: unless-stopped
@@ -9,6 +9,7 @@ services:
     volumes:
       - k3s-data:/var/lib/rancher/k3s
       - k3s-config:/etc/rancher/k3s
+      - ../api/test-workspaces:/test-workspaces
     ports:
       - "6443:6443"
       - "80:80"
