@@ -6,7 +6,6 @@ import (
 
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -75,9 +74,7 @@ func TestWorkspaceRepository_GetByWorkMachine(t *testing.T) {
 				Namespace: "test-ns",
 			},
 			Spec: workspacesv1.WorkspaceSpec{
-				WorkMachineRef: &corev1.ObjectReference{
-					Name: "machine-1",
-				},
+				DisplayName: "Workspace 1",
 			},
 		},
 		{
@@ -86,9 +83,7 @@ func TestWorkspaceRepository_GetByWorkMachine(t *testing.T) {
 				Namespace: "test-ns",
 			},
 			Spec: workspacesv1.WorkspaceSpec{
-				WorkMachineRef: &corev1.ObjectReference{
-					Name: "machine-2",
-				},
+				DisplayName: "Workspace 2",
 			},
 		},
 	}
@@ -101,10 +96,12 @@ func TestWorkspaceRepository_GetByWorkMachine(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
+	// With 1:1 namespace-to-WorkMachine relationship, GetByWorkMachine returns all workspaces in the namespace
 	list, err := repo.GetByWorkMachine(context.Background(), "machine-1", "test-ns")
 	assert.NoError(t, err)
-	assert.Len(t, list.Items, 1)
-	assert.Equal(t, "machine-1", list.Items[0].Spec.WorkMachineRef.Name)
+	assert.Len(t, list.Items, 2) // Returns all workspaces in the namespace
+	assert.Equal(t, "workspace-1", list.Items[0].Name)
+	assert.Equal(t, "workspace-2", list.Items[1].Name)
 }
 
 func TestWorkspaceRepository_SuspendWorkspace(t *testing.T) {

@@ -15,7 +15,6 @@ import (
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -203,10 +202,9 @@ func TestListWorkspaces(t *testing.T) {
 				Namespace: "test-ns",
 			},
 			Spec: workspacesv1.WorkspaceSpec{
-				DisplayName:    "Workspace 2",
-				Owner:          "user2@example.com",
-				Status:         "suspended",
-				WorkMachineRef: &corev1.ObjectReference{Name: "wm-1"},
+				DisplayName: "Workspace 2",
+				Owner:       "user2@example.com",
+				Status:      "suspended",
 			},
 		}
 		_ = handlers.wsRepo.Create(context.Background(), workspace1)
@@ -259,10 +257,9 @@ func TestListWorkspaces(t *testing.T) {
 				Namespace: "test-ns",
 			},
 			Spec: workspacesv1.WorkspaceSpec{
-				DisplayName:    "Workspace 2",
-				Owner:          "user2@example.com",
-				Status:         "suspended",
-				WorkMachineRef: &corev1.ObjectReference{Name: "wm-1"},
+				DisplayName: "Workspace 2",
+				Owner:       "user2@example.com",
+				Status:      "suspended",
 			},
 		}
 		_ = handlers.wsRepo.Create(context.Background(), workspace2)

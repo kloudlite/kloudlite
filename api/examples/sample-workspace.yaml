@@ -1,0 +1,23 @@
+apiVersion: workspaces.kloudlite.io/v1
+kind: Workspace
+metadata:
+  name: test-workspace
+  namespace: default
+spec:
+  displayName: "Test Development Workspace"
+  description: "A test workspace for development"
+  owner: "test@kloudlite.io"
+  storageSize: "10Gi"
+  # storageClassName: "fast-ssd"  # Optional: specify storage class
+  workspacePath: "/workspace"
+  vscodeVersion: "latest"
+  status: "active"
+  resourceQuota:
+    cpu: "1"
+    memory: "2Gi"
+  settings:
+    autoStop: true
+    idleTimeout: 30
+    environmentVariables:
+      NODE_ENV: "development"
+      DEBUG: "true"

@@ -6,6 +6,7 @@ import (
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"go.uber.org/zap"
@@ -33,6 +34,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	utilruntime.Must(machinesv1.AddToScheme(scheme))
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacesv1.AddToScheme(scheme))
+	utilruntime.Must(packagesv1.AddToScheme(scheme))
 
 	// Set controller-runtime logger
 	ctrl.SetLogger(zaplog.New(func(o *zaplog.Options) {
@@ -97,6 +99,17 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 
 	if err = compositionReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create Composition controller: %w", err)
+	}
+
+	// Setup Workspace controller
+	workspaceReconciler := &WorkspaceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "workspace")),
+	}
+
+	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
 	}
 
 	logger.Info("Controllers initialized successfully")

@@ -5,6 +5,40 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// PackageSpec defines a Nix package to install
+type PackageSpec struct {
+	// Name of the package
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Version of the package (optional, defaults to latest from nixpkgs)
+	// +optional
+	Version string `json:"version,omitempty"`
+}
+
+// InstalledPackage represents a successfully installed package
+type InstalledPackage struct {
+	// Name of the package
+	Name string `json:"name"`
+
+	// Version of the installed package
+	// +optional
+	Version string `json:"version,omitempty"`
+
+	// BinPath where binaries are located
+	// +optional
+	BinPath string `json:"binPath,omitempty"`
+
+	// StorePath in the Nix store
+	// +optional
+	StorePath string `json:"storePath,omitempty"`
+
+	// InstalledAt timestamp
+	// +optional
+	InstalledAt metav1.Time `json:"installedAt,omitempty"`
+}
+
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
 	// DisplayName is the human-readable name for the workspace
@@ -22,10 +56,6 @@ type WorkspaceSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	Owner string `json:"owner"`
-
-	// WorkMachineRef references the WorkMachine where this workspace runs
-	// +kubebuilder:validation:Required
-	WorkMachineRef *corev1.ObjectReference `json:"workMachineRef"`
 
 	// EnvironmentRef references the default environment for this workspace
 	// +optional
@@ -46,6 +76,36 @@ type WorkspaceSpec struct {
 	// ResourceQuota defines resource limits for the workspace
 	// +optional
 	ResourceQuota *ResourceQuota `json:"resourceQuota,omitempty"`
+
+	// StorageSize is the size of the persistent volume for the workspace
+	// +kubebuilder:default="10Gi"
+	// +optional
+	StorageSize string `json:"storageSize,omitempty"`
+
+	// StorageClassName specifies the storage class to use for the workspace PVC
+	// If not specified, uses the cluster's default storage class
+	// +optional
+	StorageClassName *string `json:"storageClassName,omitempty"`
+
+	// WorkspacePath is the path inside the workspace container where storage will be mounted
+	// +kubebuilder:default=/workspace
+	// +optional
+	WorkspacePath string `json:"workspacePath,omitempty"`
+
+	// VSCodeVersion specifies the version of VS Code server to use
+	// +kubebuilder:default=latest
+	// +optional
+	VSCodeVersion string `json:"vscodeVersion,omitempty"`
+
+	// ServerType specifies which server to run (code-server, jupyter, ttyd, code-web)
+	// +kubebuilder:validation:Enum=code-server;jupyter;ttyd;code-web
+	// +kubebuilder:default=code-server
+	// +optional
+	ServerType string `json:"serverType,omitempty"`
+
+	// Packages list of Nix packages to install in the workspace
+	// +optional
+	Packages []PackageSpec `json:"packages,omitempty"`
 
 	// Status indicates whether the workspace is active or suspended
 	// +kubebuilder:validation:Enum=active;suspended;archived
@@ -166,9 +226,29 @@ type WorkspaceStatus struct {
 	// +optional
 	TotalRuntime int64 `json:"totalRuntime,omitempty"`
 
-	// AssignedWorkMachine references the actual WorkMachine resource that was assigned
+	// PodName is the name of the pod running the VS Code server
 	// +optional
-	AssignedWorkMachine *corev1.ObjectReference `json:"assignedWorkMachine,omitempty"`
+	PodName string `json:"podName,omitempty"`
+
+	// PodIP is the IP address of the workspace pod
+	// +optional
+	PodIP string `json:"podIP,omitempty"`
+
+	// NodeName where the pod is running
+	// +optional
+	NodeName string `json:"nodeName,omitempty"`
+
+	// InstalledPackages list of successfully installed packages
+	// +optional
+	InstalledPackages []InstalledPackage `json:"installedPackages,omitempty"`
+
+	// FailedPackages list of packages that failed to install
+	// +optional
+	FailedPackages []string `json:"failedPackages,omitempty"`
+
+	// PackageInstallationMessage provides information about package installation
+	// +optional
+	PackageInstallationMessage string `json:"packageInstallationMessage,omitempty"`
 }
 
 // ResourceUsage tracks current resource consumption

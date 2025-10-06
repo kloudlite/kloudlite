@@ -9,7 +9,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -101,16 +100,6 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	// Set default values if not provided
 	if workspace.Spec.Status == "" {
 		workspace.Spec.Status = "active"
-	}
-
-	// Set WorkMachine reference if not provided
-	if workspace.Spec.WorkMachineRef == nil {
-		workspace.Spec.WorkMachineRef = &corev1.ObjectReference{
-			APIVersion: "machines.kloudlite.io/v1",
-			Kind:       "WorkMachine",
-			Name:       workMachine.Name,
-			Namespace:  workMachine.Namespace,
-		}
 	}
 
 	// Create the workspace

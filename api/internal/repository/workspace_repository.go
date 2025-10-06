@@ -49,22 +49,13 @@ func (r *workspaceRepository) GetByOwner(ctx context.Context, owner string, name
 	return r.List(ctx, namespace, WithFieldSelector("spec.owner="+owner))
 }
 
-// GetByWorkMachine retrieves all workspaces running on a specific WorkMachine
+// GetByWorkMachine retrieves all workspaces in a namespace
+// Note: With the 1:1 namespace-to-WorkMachine relationship, this simply returns all workspaces in the namespace
+// The workMachineName parameter is kept for backward compatibility but is effectively unused
 func (r *workspaceRepository) GetByWorkMachine(ctx context.Context, workMachineName string, namespace string) (*workspacesv1.WorkspaceList, error) {
-	// List all workspaces and filter by WorkMachine reference
-	allWorkspaces, err := r.List(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &workspacesv1.WorkspaceList{}
-	for _, ws := range allWorkspaces.Items {
-		if ws.Spec.WorkMachineRef != nil && ws.Spec.WorkMachineRef.Name == workMachineName {
-			result.Items = append(result.Items, ws)
-		}
-	}
-
-	return result, nil
+	// Since there's a 1:1 relationship between namespace and WorkMachine,
+	// all workspaces in the namespace belong to the same WorkMachine
+	return r.List(ctx, namespace)
 }
 
 // ListActive retrieves all active workspaces
