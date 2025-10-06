@@ -67,6 +67,11 @@ spec:
                   type: string
                 description: Annotations to apply to the namespace
                 type: object
+              cloneFrom:
+                description: |-
+                  CloneFrom specifies the source environment name to clone resources from
+                  This field is automatically cleared after successful cloning
+                type: string
               createdBy:
                 description: CreatedBy is the username/email of the user who created
                   this environment

@@ -112,6 +112,11 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              hostPath:
+                description: HostPath is the path on the host machine to mount into
+                  the workspace
+                minLength: 1
+                type: string
               machineTypeRef:
                 description: MachineTypeRef references the default machine type for
                   this workspace
@@ -160,6 +165,23 @@ spec:
                 description: Owner is the email/username of the workspace owner
                 minLength: 1
                 type: string
+              packages:
+                description: Packages list of Nix packages to install in the workspace
+                items:
+                  description: PackageSpec defines a Nix package to install
+                  properties:
+                    name:
+                      description: Name of the package
+                      minLength: 1
+                      type: string
+                    version:
+                      description: Version of the package (optional, defaults to latest
+                        from nixpkgs)
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               resourceQuota:
                 description: ResourceQuota defines resource limits for the workspace
                 properties:
@@ -179,6 +201,16 @@ spec:
                     description: Storage limit (e.g., "100Gi")
                     type: string
                 type: object
+              serverType:
+                default: code-server
+                description: ServerType specifies which server to run (code-server,
+                  jupyter, ttyd, code-web)
+                enum:
+                - code-server
+                - jupyter
+                - ttyd
+                - code-web
+                type: string
               settings:
                 description: Settings contains workspace-specific settings
                 properties:
@@ -242,6 +274,11 @@ spec:
                 items:
                   type: string
                 type: array
+              vscodeVersion:
+                default: latest
+                description: VSCodeVersion specifies the version of VS Code server
+                  to use
+                type: string
               workMachineRef:
                 description: WorkMachineRef references the WorkMachine where this
                   workspace runs
@@ -286,10 +323,15 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              workspacePath:
+                default: /workspace
+                description: WorkspacePath is the path inside the workspace container
+                  where the host path will be mounted
+                type: string
             required:
             - displayName
+            - hostPath
             - owner
-            - workMachineRef
             type: object
           status:
             description: WorkspaceStatus defines the observed state of Workspace
@@ -399,6 +441,37 @@ spec:
                   - type
                   type: object
                 type: array
+              failedPackages:
+                description: FailedPackages list of packages that failed to install
+                items:
+                  type: string
+                type: array
+              installedPackages:
+                description: InstalledPackages list of successfully installed packages
+                items:
+                  description: InstalledPackage represents a successfully installed
+                    package
+                  properties:
+                    binPath:
+                      description: BinPath where binaries are located
+                      type: string
+                    installedAt:
+                      description: InstalledAt timestamp
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name of the package
+                      type: string
+                    storePath:
+                      description: StorePath in the Nix store
+                      type: string
+                    version:
+                      description: Version of the installed package
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               lastActivityTime:
                 description: LastActivityTime tracks when the workspace was last active
                 format: date-time
@@ -406,6 +479,13 @@ spec:
               message:
                 description: Message provides additional information about the current
                   state
+                type: string
+              nodeName:
+                description: NodeName where the pod is running
+                type: string
+              packageInstallationMessage:
+                description: PackageInstallationMessage provides information about
+                  package installation
                 type: string
               phase:
                 description: Phase represents the current phase of the workspace
@@ -417,6 +497,12 @@ spec:
                 - Stopped
                 - Failed
                 - Terminating
+                type: string
+              podIP:
+                description: PodIP is the IP address of the workspace pod
+                type: string
+              podName:
+                description: PodName is the name of the pod running the VS Code server
                 type: string
               resourceUsage:
                 description: ResourceUsage current resource consumption
