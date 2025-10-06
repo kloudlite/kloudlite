@@ -1,0 +1,46 @@
+FROM golang:1.24 AS builder
+
+# Copy source code
+WORKDIR /workspace
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# Build the package-manager binary
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o package-manager ./cmd/package-manager
+
+# Final image
+FROM debian:bookworm-slim
+
+# Install dependencies including nix
+RUN apt-get update && apt-get install -y \
+    curl \
+    xz-utils \
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create /nix directory for Nix installation
+RUN mkdir -m 0755 /nix && chown root /nix
+
+# Create nixbld group and build users
+RUN groupadd -g 30000 nixbld && \
+    for i in $(seq 1 10); do \
+        useradd -c "Nix build user $i" -d /var/empty -g nixbld -G nixbld -M -N -r -s "$(command -v nologin)" "nixbld$i"; \
+    done
+
+# Install Nix in single-user mode
+RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
+
+# Source nix profile
+ENV PATH="/root/.nix-profile/bin:${PATH}"
+
+# Create nix store directory
+RUN mkdir -p /var/lib/kloudlite/nix-store && chmod 755 /var/lib/kloudlite/nix-store
+
+# Copy the package-manager binary
+COPY --from=builder /workspace/package-manager /usr/local/bin/package-manager
+
+# Run package-manager
+CMD ["/usr/local/bin/package-manager"]
