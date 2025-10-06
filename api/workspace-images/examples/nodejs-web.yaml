@@ -1,0 +1,28 @@
+# Node.js Web Development Workspace Configuration
+# Place this file at .kloudlite/packages.yaml in your project
+
+packages:
+  # Node.js runtime and package managers
+  - nodejs-18_x
+  - nodePackages.npm
+  - nodePackages.yarn
+  - nodePackages.pnpm
+
+  # TypeScript tooling
+  - nodePackages.typescript
+  - nodePackages.typescript-language-server
+
+  # Common CLI tools
+  - nodePackages.prettier
+  - nodePackages.eslint
+
+  # System tools
+  - git
+  - curl
+  - wget
+  - vim
+  - jq
+
+  # Database clients
+  - postgresql
+  - redis

@@ -1,0 +1,26 @@
+# Rust Development Workspace Configuration
+# Place this file at .kloudlite/packages.yaml in your project
+
+packages:
+  # Rust toolchain
+  - rustc
+  - cargo
+  - rustfmt
+  - clippy
+  - rust-analyzer
+
+  # Build dependencies
+  - gcc
+  - gnumake
+  - cmake
+  - pkg-config
+  - openssl
+
+  # System tools
+  - git
+  - curl
+  - wget
+  - vim
+
+  # Optional: LLDB for debugging
+  - lldb

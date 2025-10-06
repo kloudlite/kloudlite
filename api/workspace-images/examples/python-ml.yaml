@@ -1,0 +1,27 @@
+# Python Machine Learning Workspace Configuration
+# Place this file at .kloudlite/packages.yaml in your project
+
+packages:
+  # Python runtime and tools
+  - python311
+  - python311Packages.pip
+  - python311Packages.virtualenv
+
+  # ML/Data Science packages
+  - python311Packages.numpy
+  - python311Packages.pandas
+  - python311Packages.matplotlib
+  - python311Packages.scikit-learn
+  - python311Packages.jupyter
+  - python311Packages.ipython
+
+  # System tools
+  - git
+  - curl
+  - wget
+  - vim
+
+  # Build dependencies
+  - gcc
+  - gnumake
+  - cmake
