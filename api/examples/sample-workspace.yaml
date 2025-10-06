@@ -12,6 +12,15 @@ spec:
   workspacePath: "/workspace"
   vscodeVersion: "latest"
   status: "active"
+
+  # Packages to install in the workspace (using Nix)
+  packages:
+    - name: vim
+      # version: "9.1.0"  # Optional: specify version (uses latest if omitted)
+    - name: git
+    - name: nodejs
+      # version: "20.10.0"
+
   resourceQuota:
     cpu: "1"
     memory: "2Gi"

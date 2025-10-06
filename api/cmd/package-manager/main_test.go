@@ -932,3 +932,163 @@ func TestPackageManagerReconciler_Reconcile_FinalStatusUpdateFails(t *testing.T)
 	assert.Contains(t, err.Error(), "simulated final status update failure")
 	assert.Equal(t, reconcile.Result{}, result)
 }
+
+func TestPackageManagerReconciler_InstallPackage_VersionScriptGeneration(t *testing.T) {
+	// Test that the correct install script is generated for versioned packages
+	var installScriptCaptured string
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			// Capture install script
+			if strings.Contains(script, "nix profile install") || strings.Contains(script, "nix-env") && strings.Contains(script, "-iA") {
+				installScriptCaptured = script
+				return []byte("installing 'nodejs-18.0.0'"), nil
+			}
+			// Handle query script
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("nodejs-18.0.0  /nix/store/abc123-nodejs-18.0.0"), nil
+			}
+			return nil, fmt.Errorf("unexpected script: %s", script)
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+
+	pkg := workspacesv1.PackageSpec{
+		Name:    "nodejs",
+		Version: "18.0.0",
+	}
+
+	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
+	assert.NoError(t, err)
+	assert.Equal(t, "nodejs", installedPkg.Name)
+	// Verify the install script (not the query script)
+	assert.Contains(t, installScriptCaptured, "nix profile install")
+	assert.Contains(t, installScriptCaptured, "nixpkgs#nodejs")
+}
+
+func TestPackageManagerReconciler_InstallPackage_NoVersionUsesNixEnv(t *testing.T) {
+	// Test that nix-env is used for packages without version
+	var installScriptCaptured string
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			// Capture install script
+			if strings.Contains(script, "nix-env") && strings.Contains(script, "-iA") {
+				installScriptCaptured = script
+				return []byte("installing 'git-2.40.0'"), nil
+			}
+			// Handle query script
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("git-2.40.0  /nix/store/xyz789-git-2.40.0"), nil
+			}
+			return nil, fmt.Errorf("unexpected script: %s", script)
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+
+	pkg := workspacesv1.PackageSpec{
+		Name: "git",
+		// No version specified
+	}
+
+	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
+	assert.NoError(t, err)
+	assert.Equal(t, "git", installedPkg.Name)
+	// Verify the install script (not the query script)
+	assert.Contains(t, installScriptCaptured, "nix-env")
+	assert.Contains(t, installScriptCaptured, "nixpkgs.git")
+	assert.NotContains(t, installScriptCaptured, "nix profile install")
+}
+
+func TestPackageManagerReconciler_InstallPackage_VersionExtraction(t *testing.T) {
+	// Test version extraction from nix-env query output
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			if strings.Contains(script, "nix-env -p") && strings.Contains(script, "-iA") {
+				// Simulate successful install
+				return []byte("installing 'vim-9.1.1623'"), nil
+			}
+			if strings.Contains(script, "nix-env -p") && strings.Contains(script, "-q --out-path") {
+				// Simulate query output with version
+				return []byte("vim-9.1.1623  /nix/store/hash123-vim-9.1.1623"), nil
+			}
+			return nil, fmt.Errorf("unexpected script: %s", script)
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+
+	pkg := workspacesv1.PackageSpec{
+		Name:    "vim",
+		Version: "9.1.0", // Request 9.1.0 but might get 9.1.1623
+	}
+
+	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
+	assert.NoError(t, err)
+	assert.Equal(t, "vim", installedPkg.Name)
+	// Verify the extracted version from query output
+	assert.Equal(t, "9.1.1623", installedPkg.Version)
+	assert.Contains(t, installedPkg.StorePath, "/nix/store/hash123-vim-9.1.1623")
+}
+
+func TestPackageManagerReconciler_InstallPackage_VersionExtractionEdgeCases(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryOutput    string
+		expectedVer    string
+		packageName    string
+	}{
+		{
+			name:        "Standard format with version",
+			queryOutput: "nodejs-20.10.0  /nix/store/abc-nodejs-20.10.0",
+			expectedVer: "20.10.0",
+			packageName: "nodejs",
+		},
+		{
+			name:        "Package name with dashes",
+			queryOutput: "code-server-4.20.0  /nix/store/def-code-server-4.20.0",
+			expectedVer: "4.20.0",
+			packageName: "code-server",
+		},
+		{
+			name:        "Single field output (no path)",
+			queryOutput: "python-3.11.0",
+			expectedVer: "3.11.0", // Version extracted after removing package name prefix
+			packageName: "python",
+		},
+		{
+			name:        "Complex version string",
+			queryOutput: "gcc-13.2.0-x86_64-unknown-linux-gnu  /nix/store/ghi-gcc-13.2.0",
+			expectedVer: "13.2.0-x86_64-unknown-linux-gnu",
+			packageName: "gcc",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockExec := &MockCommandExecutor{
+				ExecuteFunc: func(script string) ([]byte, error) {
+					if strings.Contains(script, "-iA") {
+						return []byte("installing package"), nil
+					}
+					if strings.Contains(script, "-q --out-path") {
+						return []byte(tt.queryOutput), nil
+					}
+					return nil, fmt.Errorf("unexpected script")
+				},
+			}
+
+			reconciler := setupTestReconcilerWithMock(t, mockExec)
+
+			pkg := workspacesv1.PackageSpec{
+				Name:    tt.packageName,
+				Version: "latest",
+			}
+
+			installedPkg, err := reconciler.installPackage(pkg, "test-profile")
+			assert.NoError(t, err)
+			assert.Equal(t, tt.packageName, installedPkg.Name)
+			assert.Equal(t, tt.expectedVer, installedPkg.Version)
+		})
+	}
+}
