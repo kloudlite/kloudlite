@@ -162,25 +162,39 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 }
 
 func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, profileName string) (workspacesv1.InstalledPackage, error) {
-	// Determine package attribute and install command
+	// Determine package source and install command
 	profilePath := fmt.Sprintf("/nix/var/nix/profiles/per-user/root/%s", profileName)
 
 	var installScript string
-	if pkg.Version != "" {
-		// Install specific version using nixpkgs flake with version constraint
-		// Format: package@version (e.g., "vim@9.1.0")
-		// Uses nix profile install with flake reference
+	var pkgSource string
+
+	// Priority: NixpkgsCommit > Channel > latest unstable
+	if pkg.NixpkgsCommit != "" {
+		// Install from specific nixpkgs commit for exact version control
+		pkgSource = fmt.Sprintf("github:nixos/nixpkgs/%s#%s", pkg.NixpkgsCommit, pkg.Name)
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix profile install --profile %s 'nixpkgs#%s' || nix-env -p %s -iA 'nixpkgs.%s'`,
-			profilePath, pkg.Name, profilePath, pkg.Name,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix profile install --profile %s '%s'`,
+			profilePath, pkgSource,
 		)
-		r.Logger.Info("Installing package with version preference",
+		r.Logger.Info("Installing package from nixpkgs commit",
 			zap2.String("package", pkg.Name),
-			zap2.String("version", pkg.Version))
+			zap2.String("commit", pkg.NixpkgsCommit))
+	} else if pkg.Channel != "" {
+		// Install from specific channel/release (e.g., nixos-24.05, nixos-23.11, unstable)
+		pkgSource = fmt.Sprintf("nixpkgs/%s#%s", pkg.Channel, pkg.Name)
+		installScript = fmt.Sprintf(
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix profile install --profile %s '%s'`,
+			profilePath, pkgSource,
+		)
+		r.Logger.Info("Installing package from channel",
+			zap2.String("package", pkg.Name),
+			zap2.String("channel", pkg.Channel))
 	} else {
-		// Install latest version from nixpkgs
+		// Install latest version from nixpkgs unstable using nix-env (legacy, more compatible)
 		pkgAttr := "nixpkgs." + pkg.Name
 		installScript = fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -iA %s", profilePath, pkgAttr)
+		r.Logger.Info("Installing package from nixpkgs unstable",
+			zap2.String("package", pkg.Name))
 	}
 
 	output, err := r.CmdExec.Execute(installScript)
@@ -200,7 +214,15 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, 
 
 	// Parse store path and version from output
 	storePath := nixStorePath + "/store"
-	installedVersion := pkg.Version // Default to requested version
+	installedVersion := ""
+
+	// Determine version source for status
+	if pkg.NixpkgsCommit != "" {
+		installedVersion = "commit:" + pkg.NixpkgsCommit[:8] // Short commit hash
+	} else if pkg.Channel != "" {
+		installedVersion = "channel:" + pkg.Channel
+	}
+
 	if len(queryOutput) > 0 {
 		// Output format is typically: "package-version  /nix/store/hash-package-version"
 		parts := strings.Fields(string(queryOutput))
@@ -209,8 +231,14 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, 
 			pkgWithVersion := parts[0]
 			// Remove package name prefix to get version
 			if strings.HasPrefix(pkgWithVersion, pkg.Name+"-") {
-				installedVersion = strings.TrimPrefix(pkgWithVersion, pkg.Name+"-")
-			} else {
+				actualVersion := strings.TrimPrefix(pkgWithVersion, pkg.Name+"-")
+				// Append actual version to source info
+				if installedVersion != "" {
+					installedVersion = actualVersion + " (" + installedVersion + ")"
+				} else {
+					installedVersion = actualVersion
+				}
+			} else if installedVersion == "" {
 				installedVersion = pkgWithVersion
 			}
 		}

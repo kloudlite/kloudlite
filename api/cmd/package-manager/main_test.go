@@ -281,7 +281,7 @@ func TestPackageManagerReconciler_Reconcile_MultiplePackages(t *testing.T) {
 	assert.Len(t, updatedPkgReq.Status.FailedPackages, 3)
 }
 
-func TestPackageManagerReconciler_Reconcile_PackageWithVersion(t *testing.T) {
+func TestPackageManagerReconciler_Reconcile_PackageWithChannel(t *testing.T) {
 	pkgReq := &packagesv1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
@@ -291,7 +291,7 @@ func TestPackageManagerReconciler_Reconcile_PackageWithVersion(t *testing.T) {
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
 			Packages: []workspacesv1.PackageSpec{
-				{Name: "nodejs", Version: "18.0.0"},
+				{Name: "nodejs_22", Channel: "nixos-24.05"},
 			},
 		},
 		Status: packagesv1.PackageRequestStatus{
@@ -308,7 +308,7 @@ func TestPackageManagerReconciler_Reconcile_PackageWithVersion(t *testing.T) {
 		},
 	}
 
-	// Will attempt to install versioned package
+	// Will attempt to install package from channel
 	_, _ = reconciler.Reconcile(context.Background(), req)
 
 	// Verify status was updated
@@ -462,8 +462,8 @@ func TestPackageManagerReconciler_InstallPackage(t *testing.T) {
 
 	// Test installPackage directly - will fail in test env but exercises code paths
 	pkg := workspacesv1.PackageSpec{
-		Name:    "testpkg",
-		Version: "",
+		Name: "testpkg",
+		// No channel/commit = uses latest
 	}
 
 	_, err := reconciler.installPackage(pkg, "test-profile")
@@ -473,13 +473,13 @@ func TestPackageManagerReconciler_InstallPackage(t *testing.T) {
 	assert.Contains(t, err.Error(), "nix-env failed")
 }
 
-func TestPackageManagerReconciler_InstallPackageWithVersion(t *testing.T) {
+func TestPackageManagerReconciler_InstallPackageWithChannel(t *testing.T) {
 	reconciler := setupTestReconciler(t)
 
-	// Test installPackage with version
+	// Test installPackage with channel
 	pkg := workspacesv1.PackageSpec{
-		Name:    "nodejs",
-		Version: "18.0.0",
+		Name:    "nodejs_22",
+		Channel: "nixos-24.05",
 	}
 
 	_, err := reconciler.installPackage(pkg, "test-profile")
@@ -612,8 +612,8 @@ func TestPackageManagerReconciler_InstallPackage_Success(t *testing.T) {
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
 	pkg := workspacesv1.PackageSpec{
-		Name:    "git",
-		Version: "",
+		Name: "git",
+		// No channel/commit = uses latest
 	}
 
 	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
@@ -933,19 +933,19 @@ func TestPackageManagerReconciler_Reconcile_FinalStatusUpdateFails(t *testing.T)
 	assert.Equal(t, reconcile.Result{}, result)
 }
 
-func TestPackageManagerReconciler_InstallPackage_VersionScriptGeneration(t *testing.T) {
-	// Test that the correct install script is generated for versioned packages
+func TestPackageManagerReconciler_InstallPackage_ChannelScriptGeneration(t *testing.T) {
+	// Test that the correct install script is generated for channel-based packages
 	var installScriptCaptured string
 	mockExec := &MockCommandExecutor{
 		ExecuteFunc: func(script string) ([]byte, error) {
 			// Capture install script
 			if strings.Contains(script, "nix profile install") || strings.Contains(script, "nix-env") && strings.Contains(script, "-iA") {
 				installScriptCaptured = script
-				return []byte("installing 'nodejs-18.0.0'"), nil
+				return []byte("installing 'nodejs-22.19.0'"), nil
 			}
 			// Handle query script
 			if strings.Contains(script, "-q --out-path") {
-				return []byte("nodejs-18.0.0  /nix/store/abc123-nodejs-18.0.0"), nil
+				return []byte("nodejs-22.19.0  /nix/store/abc123-nodejs-22.19.0"), nil
 			}
 			return nil, fmt.Errorf("unexpected script: %s", script)
 		},
@@ -954,16 +954,49 @@ func TestPackageManagerReconciler_InstallPackage_VersionScriptGeneration(t *test
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
 	pkg := workspacesv1.PackageSpec{
-		Name:    "nodejs",
-		Version: "18.0.0",
+		Name:    "nodejs_22",
+		Channel: "nixos-24.05",
 	}
 
 	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
 	assert.NoError(t, err)
-	assert.Equal(t, "nodejs", installedPkg.Name)
-	// Verify the install script (not the query script)
+	assert.Equal(t, "nodejs_22", installedPkg.Name)
+	// Verify the install script contains channel reference
 	assert.Contains(t, installScriptCaptured, "nix profile install")
-	assert.Contains(t, installScriptCaptured, "nixpkgs#nodejs")
+	assert.Contains(t, installScriptCaptured, "nixpkgs/nixos-24.05#nodejs_22")
+}
+
+func TestPackageManagerReconciler_InstallPackage_CommitScriptGeneration(t *testing.T) {
+	// Test that the correct install script is generated for commit-based packages
+	var installScriptCaptured string
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			// Capture install script
+			if strings.Contains(script, "nix profile install") {
+				installScriptCaptured = script
+				return []byte("installing 'nodejs-20.10.0'"), nil
+			}
+			// Handle query script
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("nodejs-20.10.0  /nix/store/xyz-nodejs-20.10.0"), nil
+			}
+			return nil, fmt.Errorf("unexpected script: %s", script)
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+
+	pkg := workspacesv1.PackageSpec{
+		Name:           "nodejs_20",
+		NixpkgsCommit:  "abc123def456789",
+	}
+
+	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
+	assert.NoError(t, err)
+	assert.Equal(t, "nodejs_20", installedPkg.Name)
+	// Verify the install script contains GitHub commit reference
+	assert.Contains(t, installScriptCaptured, "nix profile install")
+	assert.Contains(t, installScriptCaptured, "github:nixos/nixpkgs/abc123def456789#nodejs_20")
 }
 
 func TestPackageManagerReconciler_InstallPackage_NoVersionUsesNixEnv(t *testing.T) {
@@ -1000,15 +1033,15 @@ func TestPackageManagerReconciler_InstallPackage_NoVersionUsesNixEnv(t *testing.
 	assert.NotContains(t, installScriptCaptured, "nix profile install")
 }
 
-func TestPackageManagerReconciler_InstallPackage_VersionExtraction(t *testing.T) {
-	// Test version extraction from nix-env query output
+func TestPackageManagerReconciler_InstallPackage_VersionExtractionWithChannel(t *testing.T) {
+	// Test version extraction from nix-env query output with channel
 	mockExec := &MockCommandExecutor{
 		ExecuteFunc: func(script string) ([]byte, error) {
-			if strings.Contains(script, "nix-env -p") && strings.Contains(script, "-iA") {
+			if strings.Contains(script, "nix profile install") {
 				// Simulate successful install
 				return []byte("installing 'vim-9.1.1623'"), nil
 			}
-			if strings.Contains(script, "nix-env -p") && strings.Contains(script, "-q --out-path") {
+			if strings.Contains(script, "-q --out-path") {
 				// Simulate query output with version
 				return []byte("vim-9.1.1623  /nix/store/hash123-vim-9.1.1623"), nil
 			}
@@ -1020,47 +1053,48 @@ func TestPackageManagerReconciler_InstallPackage_VersionExtraction(t *testing.T)
 
 	pkg := workspacesv1.PackageSpec{
 		Name:    "vim",
-		Version: "9.1.0", // Request 9.1.0 but might get 9.1.1623
+		Channel: "nixos-24.05",
 	}
 
 	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
 	assert.NoError(t, err)
 	assert.Equal(t, "vim", installedPkg.Name)
-	// Verify the extracted version from query output
-	assert.Equal(t, "9.1.1623", installedPkg.Version)
+	// Verify the version includes both actual version and source
+	assert.Contains(t, installedPkg.Version, "9.1.1623")
+	assert.Contains(t, installedPkg.Version, "channel:nixos-24.05")
 	assert.Contains(t, installedPkg.StorePath, "/nix/store/hash123-vim-9.1.1623")
 }
 
 func TestPackageManagerReconciler_InstallPackage_VersionExtractionEdgeCases(t *testing.T) {
 	tests := []struct {
-		name           string
-		queryOutput    string
-		expectedVer    string
-		packageName    string
+		name                string
+		queryOutput         string
+		expectedVerContains []string
+		packageName         string
 	}{
 		{
-			name:        "Standard format with version",
-			queryOutput: "nodejs-20.10.0  /nix/store/abc-nodejs-20.10.0",
-			expectedVer: "20.10.0",
-			packageName: "nodejs",
+			name:                "Standard format with version",
+			queryOutput:         "nodejs-20.10.0  /nix/store/abc-nodejs-20.10.0",
+			expectedVerContains: []string{"20.10.0", "channel:nixos-24.05"},
+			packageName:         "nodejs",
 		},
 		{
-			name:        "Package name with dashes",
-			queryOutput: "code-server-4.20.0  /nix/store/def-code-server-4.20.0",
-			expectedVer: "4.20.0",
-			packageName: "code-server",
+			name:                "Package name with dashes",
+			queryOutput:         "code-server-4.20.0  /nix/store/def-code-server-4.20.0",
+			expectedVerContains: []string{"4.20.0", "channel:nixos-24.05"},
+			packageName:         "code-server",
 		},
 		{
-			name:        "Single field output (no path)",
-			queryOutput: "python-3.11.0",
-			expectedVer: "3.11.0", // Version extracted after removing package name prefix
-			packageName: "python",
+			name:                "Single field output (no path)",
+			queryOutput:         "python-3.11.0",
+			expectedVerContains: []string{"3.11.0", "channel:nixos-24.05"},
+			packageName:         "python",
 		},
 		{
-			name:        "Complex version string",
-			queryOutput: "gcc-13.2.0-x86_64-unknown-linux-gnu  /nix/store/ghi-gcc-13.2.0",
-			expectedVer: "13.2.0-x86_64-unknown-linux-gnu",
-			packageName: "gcc",
+			name:                "Complex version string",
+			queryOutput:         "gcc-13.2.0-x86_64-unknown-linux-gnu  /nix/store/ghi-gcc-13.2.0",
+			expectedVerContains: []string{"13.2.0-x86_64-unknown-linux-gnu", "channel:nixos-24.05"},
+			packageName:         "gcc",
 		},
 	}
 
@@ -1068,6 +1102,10 @@ func TestPackageManagerReconciler_InstallPackage_VersionExtractionEdgeCases(t *t
 		t.Run(tt.name, func(t *testing.T) {
 			mockExec := &MockCommandExecutor{
 				ExecuteFunc: func(script string) ([]byte, error) {
+					if strings.Contains(script, "nix profile install") {
+						// Handle channel-based installation
+						return []byte("installing package"), nil
+					}
 					if strings.Contains(script, "-iA") {
 						return []byte("installing package"), nil
 					}
@@ -1082,13 +1120,16 @@ func TestPackageManagerReconciler_InstallPackage_VersionExtractionEdgeCases(t *t
 
 			pkg := workspacesv1.PackageSpec{
 				Name:    tt.packageName,
-				Version: "latest",
+				Channel: "nixos-24.05",
 			}
 
 			installedPkg, err := reconciler.installPackage(pkg, "test-profile")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.packageName, installedPkg.Name)
-			assert.Equal(t, tt.expectedVer, installedPkg.Version)
+			// Verify all expected strings are in the version
+			for _, expected := range tt.expectedVerContains {
+				assert.Contains(t, installedPkg.Version, expected)
+			}
 		})
 	}
 }
