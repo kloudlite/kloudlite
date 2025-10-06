@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: package-manager
+  namespace: wm-user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: package-manager
+  template:
+    metadata:
+      labels:
+        app: package-manager
+    spec:
+      serviceAccountName: package-manager
+      initContainers:
+      - name: init-nix-store
+        image: kloudlite/package-manager:latest
+        imagePullPolicy: Never
+        command:
+        - sh
+        - -c
+        - |
+          echo "Checking if nix store needs initialization..."
+          if [ ! -d /host-nix/store ]; then
+            echo "Initializing nix store from image..."
+            cp -r /nix/* /host-nix/
+            echo "Nix store initialized successfully"
+          else
+            echo "Nix store already initialized, skipping"
+          fi
+        volumeMounts:
+        - name: nix-store-host
+          mountPath: /host-nix
+      containers:
+      - name: package-manager
+        image: kloudlite/package-manager:latest
+        imagePullPolicy: Never
+        env:
+        - name: NAMESPACE
+          value: wm-user
+        volumeMounts:
+        - name: nix-store-host
+          mountPath: /nix
+      volumes:
+      - name: nix-store-host
+        hostPath:
+          path: /var/lib/kloudlite/nix-store
+          type: DirectoryOrCreate

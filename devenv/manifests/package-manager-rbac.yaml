@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: package-manager
+  namespace: wm-user
+  labels:
+    app: package-manager
+    kloudlite.io/package-mgmt: "true"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: package-manager-role
+  labels:
+    app: package-manager
+    kloudlite.io/package-mgmt: "true"
+rules:
+  # PackageRequest permissions
+  - apiGroups:
+      - packages.kloudlite.io
+    resources:
+      - packagerequests
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - packages.kloudlite.io
+    resources:
+      - packagerequests/status
+    verbs:
+      - get
+      - update
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: package-manager-rolebinding
+  labels:
+    app: package-manager
+    kloudlite.io/package-mgmt: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: package-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: package-manager
+    namespace: wm-user
