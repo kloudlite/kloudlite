@@ -43,11 +43,13 @@ export interface NetworkPolicies {
 
 export interface EnvironmentSpec {
   targetNamespace: string
+  createdBy: string
   activated: boolean
   labels?: Record<string, string>
   annotations?: Record<string, string>
   resourceQuotas?: ResourceQuotas
   networkPolicies?: NetworkPolicies
+  cloneFrom?: string
 }
 
 export interface EnvironmentStatus {
