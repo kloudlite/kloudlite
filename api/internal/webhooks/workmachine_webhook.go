@@ -106,9 +106,9 @@ func (w *WorkMachineWebhook) Default(ctx context.Context, obj runtime.Object) er
 func (w *WorkMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.Object) error {
 	machine := obj.(*machinesv1.WorkMachine)
 
-	// Validate owner exists
+	// Validate owner exists and has 'user' role
 	ownedBy := machine.Spec.OwnedBy
-	var userFound bool
+	var foundUser *platformv1alpha1.User
 
 	if strings.Contains(ownedBy, "@") {
 		// Check by email
@@ -119,7 +119,7 @@ func (w *WorkMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.Obj
 
 		for _, user := range userList.Items {
 			if user.Spec.Email == ownedBy {
-				userFound = true
+				foundUser = &user
 				break
 			}
 		}
@@ -127,7 +127,7 @@ func (w *WorkMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.Obj
 		// Check by username or ID
 		user := &platformv1alpha1.User{}
 		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: ownedBy}, user); err == nil {
-			userFound = true
+			foundUser = user
 		} else {
 			// Try to find by username
 			userList := &platformv1alpha1.UserList{}
@@ -137,14 +137,14 @@ func (w *WorkMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.Obj
 
 			for _, u := range userList.Items {
 				if u.Name == ownedBy {
-					userFound = true
+					foundUser = &u
 					break
 				}
 			}
 		}
 	}
 
-	if !userFound {
+	if foundUser == nil {
 		return fmt.Errorf("owner %s not found", ownedBy)
 	}
 

@@ -8,7 +8,9 @@ import (
 	"github.com/go-logr/logr"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -65,6 +67,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
+	// Ensure RBAC resources exist for package-manager
+	if err := r.ensurePackageManagerRBAC(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
+		logger.Error(err, "Failed to ensure package-manager RBAC")
+		return ctrl.Result{}, err
+	}
+
 	// Check if namespace is being deleted (but WorkMachine is not)
 	namespace := &corev1.Namespace{}
 	if err := r.Get(ctx, client.ObjectKey{Name: workMachine.Spec.TargetNamespace}, namespace); err == nil {
@@ -96,6 +104,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Check if state transition is needed
 	currentState := workMachine.Status.State
 	desiredState := workMachine.Spec.DesiredState
+
+	// Ensure package manager deployment exists (regardless of machine state)
+	if err := r.ensurePackageManagerDeployment(ctx, workMachine, logger); err != nil {
+		logger.Error(err, "Failed to ensure package-manager deployment")
+		return ctrl.Result{}, err
+	}
 
 	if currentState == desiredState {
 		// No transition needed, machine is in desired state
@@ -307,6 +321,188 @@ func (r *WorkMachineReconciler) ensureNamespace(ctx context.Context, namespaceNa
 	}
 
 	logger.Info("Created namespace for WorkMachine with finalizer", "namespace", namespaceName)
+	return nil
+}
+
+// ensurePackageManagerRBAC ensures RBAC resources for package-manager exist in the namespace
+func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, namespace string, logger logr.Logger) error {
+	// Create ServiceAccount
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "package-manager",
+			Namespace: namespace,
+		},
+	}
+
+	if err := r.Get(ctx, client.ObjectKey{Name: sa.Name, Namespace: namespace}, sa); err != nil {
+		if !errors.IsNotFound(err) {
+			return fmt.Errorf("failed to check service account: %w", err)
+		}
+
+		// Create service account
+		if err := r.Create(ctx, sa); err != nil && !errors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create service account: %w", err)
+		}
+		logger.Info("Created ServiceAccount for package-manager", "namespace", namespace)
+	}
+
+	// Create Role with PackageRequest permissions
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "package-manager",
+			Namespace: namespace,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"packages.kloudlite.io"},
+				Resources: []string{"packagerequests"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"packages.kloudlite.io"},
+				Resources: []string{"packagerequests/status"},
+				Verbs:     []string{"get", "update", "patch"},
+			},
+		},
+	}
+
+	existingRole := &rbacv1.Role{}
+	if err := r.Get(ctx, client.ObjectKey{Name: role.Name, Namespace: namespace}, existingRole); err != nil {
+		if !errors.IsNotFound(err) {
+			return fmt.Errorf("failed to check role: %w", err)
+		}
+
+		// Create role
+		if err := r.Create(ctx, role); err != nil && !errors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create role: %w", err)
+		}
+		logger.Info("Created Role for package-manager", "namespace", namespace)
+	}
+
+	// Create RoleBinding
+	rb := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "package-manager",
+			Namespace: namespace,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "package-manager",
+				Namespace: namespace,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     "package-manager",
+		},
+	}
+
+	existingRB := &rbacv1.RoleBinding{}
+	if err := r.Get(ctx, client.ObjectKey{Name: rb.Name, Namespace: namespace}, existingRB); err != nil {
+		if !errors.IsNotFound(err) {
+			return fmt.Errorf("failed to check role binding: %w", err)
+		}
+
+		// Create role binding
+		if err := r.Create(ctx, rb); err != nil && !errors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create role binding: %w", err)
+		}
+		logger.Info("Created RoleBinding for package-manager", "namespace", namespace)
+	}
+
+	return nil
+}
+
+// ensurePackageManagerDeployment ensures the package-manager deployment exists in the WorkMachine's namespace
+func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Context, workMachine *machinesv1.WorkMachine, logger logr.Logger) error {
+	namespace := workMachine.Spec.TargetNamespace
+	deployment := &appsv1.Deployment{}
+	err := r.Get(ctx, client.ObjectKey{Name: "package-manager", Namespace: namespace}, deployment)
+
+	if err == nil {
+		// Deployment already exists
+		return nil
+	}
+
+	if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to check package-manager deployment: %w", err)
+	}
+
+	// Create the Deployment
+	hostPathDirectoryOrCreate := corev1.HostPathDirectoryOrCreate
+	privileged := true
+	replicas := int32(1)
+
+	deployment = &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "package-manager",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app":                       "package-manager",
+				"kloudlite.io/package-mgmt": "true",
+				"kloudlite.io/workmachine":  workMachine.Name,
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "package-manager",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "package-manager",
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "package-manager",
+					Containers: []corev1.Container{
+						{
+							Name:            "package-manager",
+							Image:           "kloudlite/package-manager:latest",
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: &privileged,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "NAMESPACE",
+									Value: namespace,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "nix-store",
+									MountPath: "/var/lib/kloudlite/nix-store",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "nix-store",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/var/lib/kloudlite/nix-store",
+									Type: &hostPathDirectoryOrCreate,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := r.Create(ctx, deployment); err != nil {
+		return fmt.Errorf("failed to create package-manager deployment: %w", err)
+	}
+
+	logger.Info("Created package-manager Deployment", "namespace", namespace)
 	return nil
 }
 
