@@ -1,0 +1,17 @@
+apiVersion: environments.kloudlite.io/v1
+kind: HelmChart
+metadata:
+  name: nginx-test
+  namespace: default
+spec:
+  chart:
+    url: https://charts.bitnami.com/bitnami
+    name: nginx
+    version: "18.2.4"
+  helmValues: {}
+    # replicaCount: 2
+    # service: |+
+    #   {
+    #     "type": "ClusterIP",
+    #     "port": 80
+    #   }

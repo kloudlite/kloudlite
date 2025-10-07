@@ -256,7 +256,6 @@ func (r *CompositionReconciler) applyResource(ctx context.Context, resource clie
 	// Try to get existing resource
 	existing := resource.DeepCopyObject().(client.Object)
 	err := r.Get(ctx, client.ObjectKeyFromObject(resource), existing)
-
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Create new resource

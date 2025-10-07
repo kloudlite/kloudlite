@@ -1,0 +1,11 @@
+version: 3
+
+tasks:
+  manifests:
+    cmds:
+      # generate CRDs from type definitions
+      - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=./tmp-manifests
+
+      # generate deep copy go files
+      - controller-gen object paths="./..."
+      # - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:stdout
