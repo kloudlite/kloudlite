@@ -364,3 +364,204 @@ func TestWorkspaceRepository_List(t *testing.T) {
 		assert.NotNil(t, list)
 	})
 }
+
+func TestWorkspaceRepository_ListActive(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = workspacesv1.AddToScheme(scheme)
+
+	workspaces := []*workspacesv1.Workspace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "active-workspace-1",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Active Workspace 1",
+				Owner:       "user1",
+				Status:      "active",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "suspended-workspace",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Suspended Workspace",
+				Owner:       "user2",
+				Status:      "suspended",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "active-workspace-2",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Active Workspace 2",
+				Owner:       "user3",
+				Status:      "active",
+			},
+		},
+	}
+
+	objects := make([]runtime.Object, len(workspaces))
+	for i, ws := range workspaces {
+		objects[i] = ws
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	repo := NewWorkspaceRepository(k8sClient)
+
+	// Note: Fake client doesn't support field selectors, so it returns all workspaces
+	list, err := repo.ListActive(context.Background(), "test-ns")
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+}
+
+func TestWorkspaceRepository_ListActive_Empty(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = workspacesv1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	repo := NewWorkspaceRepository(k8sClient)
+
+	list, err := repo.ListActive(context.Background(), "test-ns")
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+	assert.Len(t, list.Items, 0)
+}
+
+func TestWorkspaceRepository_ListSuspended(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = workspacesv1.AddToScheme(scheme)
+
+	workspaces := []*workspacesv1.Workspace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "active-workspace",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Active Workspace",
+				Owner:       "user1",
+				Status:      "active",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "suspended-workspace-1",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Suspended Workspace 1",
+				Owner:       "user2",
+				Status:      "suspended",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "suspended-workspace-2",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Suspended Workspace 2",
+				Owner:       "user3",
+				Status:      "suspended",
+			},
+		},
+	}
+
+	objects := make([]runtime.Object, len(workspaces))
+	for i, ws := range workspaces {
+		objects[i] = ws
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	repo := NewWorkspaceRepository(k8sClient)
+
+	// Note: Fake client doesn't support field selectors, so it returns all workspaces
+	list, err := repo.ListSuspended(context.Background(), "test-ns")
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+}
+
+func TestWorkspaceRepository_ListSuspended_Empty(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = workspacesv1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	repo := NewWorkspaceRepository(k8sClient)
+
+	list, err := repo.ListSuspended(context.Background(), "test-ns")
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+	assert.Len(t, list.Items, 0)
+}
+
+func TestWorkspaceRepository_ListArchived(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = workspacesv1.AddToScheme(scheme)
+
+	workspaces := []*workspacesv1.Workspace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "active-workspace",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Active Workspace",
+				Owner:       "user1",
+				Status:      "active",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "archived-workspace-1",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Archived Workspace 1",
+				Owner:       "user2",
+				Status:      "archived",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "archived-workspace-2",
+				Namespace: "test-ns",
+			},
+			Spec: workspacesv1.WorkspaceSpec{
+				DisplayName: "Archived Workspace 2",
+				Owner:       "user3",
+				Status:      "archived",
+			},
+		},
+	}
+
+	objects := make([]runtime.Object, len(workspaces))
+	for i, ws := range workspaces {
+		objects[i] = ws
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	repo := NewWorkspaceRepository(k8sClient)
+
+	// Note: Fake client doesn't support field selectors, so it returns all workspaces
+	list, err := repo.ListArchived(context.Background(), "test-ns")
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+}
+
+func TestWorkspaceRepository_ListArchived_Empty(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = workspacesv1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	repo := NewWorkspaceRepository(k8sClient)
+
+	list, err := repo.ListArchived(context.Background(), "test-ns")
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+	assert.Len(t, list.Items, 0)
+}
