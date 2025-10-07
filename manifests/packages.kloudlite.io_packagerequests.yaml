@@ -63,13 +63,20 @@ spec:
                 items:
                   description: PackageSpec defines a Nix package to install
                   properties:
+                    channel:
+                      description: |-
+                        Channel specifies the nixpkgs channel/release to use (e.g., "nixos-24.05", "nixos-23.11", "unstable")
+                        Use this for stable, well-known package versions from official releases
+                      type: string
                     name:
-                      description: Name of the package
+                      description: Name of the package (e.g., nodejs_22, vim, git)
                       minLength: 1
                       type: string
-                    version:
-                      description: Version of the package (optional, defaults to latest
-                        from nixpkgs)
+                    nixpkgsCommit:
+                      description: |-
+                        NixpkgsCommit specifies an exact nixpkgs commit hash for precise version control
+                        Use this when you need a specific historical package version
+                        Takes precedence over Channel if both are specified
                       type: string
                   required:
                   - name

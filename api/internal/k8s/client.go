@@ -16,6 +16,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -67,6 +68,11 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	// Add core Kubernetes resources (ConfigMap, Secret, etc.)
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add kubernetes scheme: %w", err)
+	}
+
+	// Add metrics API scheme
+	if err := metricsv1beta1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add metrics scheme: %w", err)
 	}
 
 	// Add our custom resources

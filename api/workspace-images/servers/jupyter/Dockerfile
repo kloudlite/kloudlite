@@ -2,16 +2,17 @@ FROM kloudlite/workspace-base:latest
 
 USER root
 
-# Install Python and pip via Nix
-RUN . /home/workspace/.nix-profile/etc/profile.d/nix.sh && \
-    nix-env -iA nixpkgs.python311 nixpkgs.python311Packages.pip
+# Install Python and pip
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
 USER workspace
 
 # Install JupyterLab
-RUN . /home/workspace/.nix-profile/etc/profile.d/nix.sh && \
-    pip install --user jupyterlab notebook ipykernel && \
-    python -m ipykernel install --user --name python3
+RUN pip3 install --user jupyterlab notebook ipykernel && \
+    python3 -m ipykernel install --user --name python3
 
 # Configure Jupyter
 RUN mkdir -p /home/workspace/.jupyter && \

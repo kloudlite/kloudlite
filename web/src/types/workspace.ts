@@ -17,13 +17,24 @@ export interface WorkspaceSpec {
   displayName: string
   description?: string
   owner: string
-  workMachineRef: ObjectReference
+  workMachineRef?: ObjectReference
   environmentRef?: ObjectReference
   machineTypeRef?: ObjectReference
+  packages?: PackageSpec[]
   resourceQuota?: ResourceQuota
   settings?: WorkspaceSettings
   status?: 'active' | 'suspended' | 'archived'
   tags?: string[]
+  storageSize?: string
+  storageClassName?: string
+  workspacePath?: string
+  vscodeVersion?: string
+}
+
+export interface PackageSpec {
+  name: string
+  channel?: string
+  nixpkgsCommit?: string
 }
 
 export interface ObjectReference {
@@ -55,6 +66,14 @@ export interface WorkspaceSettings {
   dotfilesRepo?: string
 }
 
+export interface InstalledPackage {
+  name: string
+  version?: string
+  binPath?: string
+  storePath?: string
+  installedAt?: string
+}
+
 export interface WorkspaceStatus {
   phase?: string
   message?: string
@@ -72,6 +91,17 @@ export interface WorkspaceStatus {
     storage?: string
   }
   lastActivity?: string
+  installedPackages?: InstalledPackage[]
+  failedPackages?: string[]
+  packageInstallationMessage?: string
+  accessUrl?: string
+  accessUrls?: Record<string, string> // Multiple access URLs for different services
+  podName?: string
+  podIP?: string
+  nodeName?: string
+  startTime?: string
+  stopTime?: string
+  totalRuntime?: number
 }
 
 // Request/Response types
@@ -104,4 +134,17 @@ export interface WorkspaceListParams {
 export interface WorkspaceActionResponse {
   message: string
   error?: string
+}
+
+export interface WorkspaceMetrics {
+  cpu: {
+    usage: number // percentage 0-100
+    limit?: string
+  }
+  memory: {
+    usage: number // in bytes
+    usagePercent: number // percentage 0-100
+    limit?: string
+  }
+  timestamp: string
 }

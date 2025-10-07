@@ -1,0 +1,45 @@
+# Starship configuration for Kloudlite workspaces
+
+format = """
+[┌───────────────────>](bold green)
+[│](bold green) $directory$git_branch$git_status
+[└─>](bold green) $character"""
+
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[➜](bold red)"
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+
+[git_status]
+style = "bold yellow"
+ahead = "⇡${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+behind = "⇣${count}"
+
+[env_var.WORKSPACE_NAME]
+variable = "WORKSPACE_NAME"
+default = ""
+format = " [$env_value](bold blue)"
+
+[env_var.ENVIRONMENT_NAME]
+variable = "ENVIRONMENT_NAME"
+default = ""
+format = "@[$env_value](bold green)"
+
+[custom.workspace]
+command = "echo $WORKSPACE_NAME"
+when = "test -n \"$WORKSPACE_NAME\""
+format = " [$output](bold blue)"
+
+[custom.environment]
+command = "echo $ENVIRONMENT_NAME"
+when = "test -n \"$ENVIRONMENT_NAME\""
+format = "@[$output](bold green)"

@@ -1,15 +1,20 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -367,4 +372,195 @@ func (h *WorkspaceHandlers) ArchiveWorkspace(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Workspace archived successfully",
 	})
+}
+
+// WorkspaceMetrics represents CPU and memory metrics for a workspace
+type WorkspaceMetrics struct {
+	CPU struct {
+		Usage int64 `json:"usage"` // in millicores
+	} `json:"cpu"`
+	Memory struct {
+		Usage int64 `json:"usage"` // in bytes
+	} `json:"memory"`
+	Timestamp string `json:"timestamp"`
+}
+
+// GetMetrics handles GET /api/v1/namespaces/:namespace/workspaces/:name/metrics
+func (h *WorkspaceHandlers) GetMetrics(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	// Get the workspace to find its pod
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Workspace not found",
+			})
+			return
+		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Get pod name from workspace status
+	podName := workspace.Status.PodName
+	if podName == "" {
+		c.JSON(http.StatusOK, &WorkspaceMetrics{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		})
+		return
+	}
+
+	// Get pod metrics from Kubernetes metrics API
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	var podMetrics metricsv1beta1.PodMetrics
+	err = h.k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      podName,
+	}, &podMetrics)
+
+	if err != nil {
+		h.logger.Warn("Failed to get pod metrics", zap.Error(err), zap.String("pod", podName))
+		c.JSON(http.StatusOK, &WorkspaceMetrics{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		})
+		return
+	}
+
+	// Get pod to read resource limits
+	var pod corev1.Pod
+	err = h.k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      podName,
+	}, &pod)
+
+	if err != nil {
+		h.logger.Warn("Failed to get pod", zap.Error(err), zap.String("pod", podName))
+	}
+
+	// Calculate metrics from all containers
+	var totalCPU resource.Quantity
+	var totalMemory resource.Quantity
+	var cpuLimit resource.Quantity
+	var memLimit resource.Quantity
+
+	for _, container := range podMetrics.Containers {
+		if cpu, ok := container.Usage[corev1.ResourceCPU]; ok {
+			totalCPU.Add(cpu)
+		}
+		if mem, ok := container.Usage[corev1.ResourceMemory]; ok {
+			totalMemory.Add(mem)
+		}
+	}
+
+	// Get limits from pod spec
+	if pod.Name != "" {
+		for _, container := range pod.Spec.Containers {
+			if limit, ok := container.Resources.Limits[corev1.ResourceCPU]; ok {
+				cpuLimit.Add(limit)
+			}
+			if limit, ok := container.Resources.Limits[corev1.ResourceMemory]; ok {
+				memLimit.Add(limit)
+			}
+		}
+	}
+
+	metrics := &WorkspaceMetrics{
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// CPU in millicores
+	metrics.CPU.Usage = totalCPU.MilliValue()
+
+	// Memory in bytes
+	metrics.Memory.Usage = totalMemory.Value()
+
+	c.JSON(http.StatusOK, metrics)
+}
+
+// NodeMetrics represents CPU and memory metrics for a node
+type NodeMetrics struct {
+	CPU struct {
+		Usage     int64 `json:"usage"`     // in millicores
+		Capacity  int64 `json:"capacity"`  // in millicores
+		Allocatable int64 `json:"allocatable"` // in millicores
+	} `json:"cpu"`
+	Memory struct {
+		Usage     int64 `json:"usage"`     // in bytes
+		Capacity  int64 `json:"capacity"`  // in bytes
+		Allocatable int64 `json:"allocatable"` // in bytes
+	} `json:"memory"`
+	Timestamp string `json:"timestamp"`
+}
+
+// GetNodeMetrics handles GET /api/v1/nodes/:nodeName/metrics
+func (h *WorkspaceHandlers) GetNodeMetrics(c *gin.Context) {
+	nodeName := c.Param("nodeName")
+	if nodeName == "" {
+		nodeName = "master" // default to master node
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	// Get node metrics from Kubernetes metrics API
+	var nodeMetrics metricsv1beta1.NodeMetrics
+	err := h.k8sClient.Get(ctx, client.ObjectKey{Name: nodeName}, &nodeMetrics)
+	if err != nil {
+		h.logger.Warn("Failed to get node metrics", zap.Error(err), zap.String("node", nodeName))
+		c.JSON(http.StatusOK, &NodeMetrics{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		})
+		return
+	}
+
+	// Get node to read capacity and allocatable resources
+	var node corev1.Node
+	err = h.k8sClient.Get(ctx, client.ObjectKey{Name: nodeName}, &node)
+	if err != nil {
+		h.logger.Warn("Failed to get node", zap.Error(err), zap.String("node", nodeName))
+		c.JSON(http.StatusOK, &NodeMetrics{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		})
+		return
+	}
+
+	metrics := &NodeMetrics{
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// CPU metrics
+	if cpu, ok := nodeMetrics.Usage[corev1.ResourceCPU]; ok {
+		metrics.CPU.Usage = cpu.MilliValue()
+	}
+	if capacity, ok := node.Status.Capacity[corev1.ResourceCPU]; ok {
+		metrics.CPU.Capacity = capacity.MilliValue()
+	}
+	if allocatable, ok := node.Status.Allocatable[corev1.ResourceCPU]; ok {
+		metrics.CPU.Allocatable = allocatable.MilliValue()
+	}
+
+	// Memory metrics
+	if mem, ok := nodeMetrics.Usage[corev1.ResourceMemory]; ok {
+		metrics.Memory.Usage = mem.Value()
+	}
+	if capacity, ok := node.Status.Capacity[corev1.ResourceMemory]; ok {
+		metrics.Memory.Capacity = capacity.Value()
+	}
+	if allocatable, ok := node.Status.Allocatable[corev1.ResourceMemory]; ok {
+		metrics.Memory.Allocatable = allocatable.Value()
+	}
+
+	c.JSON(http.StatusOK, metrics)
 }

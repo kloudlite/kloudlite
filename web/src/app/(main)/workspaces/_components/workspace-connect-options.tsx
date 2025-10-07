@@ -10,9 +10,11 @@ import {
   Copy,
   Check
 } from 'lucide-react'
+import type { Workspace } from '@/types/workspace'
 
 interface WorkspaceConnectOptionsProps {
   workspaceId: string
+  workspace: Workspace
 }
 
 interface ConnectOption {
@@ -23,81 +25,73 @@ interface ConnectOption {
   type: 'desktop' | 'web' | 'terminal'
   available: boolean
   command?: string
+  url?: string
 }
 
-export function WorkspaceConnectOptions({ workspaceId }: WorkspaceConnectOptionsProps) {
+export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceConnectOptionsProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
+
+  // Extract access URLs from workspace status
+  const codeServerUrl = workspace.status?.accessUrls?.['code-server'] || workspace.status?.accessUrl
+  const ttydUrl = workspace.status?.accessUrls?.['ttyd']
+  const sshPort = workspace.status?.accessUrls?.['ssh']
 
   const connectOptions: ConnectOption[] = [
     {
+      id: 'code-server',
+      name: 'code-server',
+      description: 'Browser-based VS Code instance running in the workspace',
+      icon: <Globe className="h-5 w-5" />,
+      type: 'web',
+      available: !!codeServerUrl,
+      url: codeServerUrl
+    },
+    {
+      id: 'terminal',
+      name: 'Web Terminal (ttyd)',
+      description: 'Terminal access in your browser with Fish shell',
+      icon: <Globe className="h-5 w-5" />,
+      type: 'web',
+      available: !!ttydUrl,
+      url: ttydUrl
+    },
+    {
+      id: 'ssh',
+      name: 'SSH',
+      description: 'Connect via SSH terminal',
+      icon: <Terminal className="h-5 w-5" />,
+      type: 'terminal',
+      available: !!workspace.status?.podIP,
+      command: sshPort
+        ? `ssh -p ${sshPort} kl@${workspace.status?.podIP || 'workspace'}`
+        : `ssh kl@${workspace.status?.podIP || 'workspace'}`
+    },
+    {
       id: 'vscode-desktop',
       name: 'VS Code Desktop',
-      description: 'Connect with Visual Studio Code on your machine',
+      description: 'Connect with Visual Studio Code via SSH Remote',
       icon: <Code2 className="h-5 w-5" />,
       type: 'desktop',
-      available: true,
-      command: `code --folder-uri vscode-remote://kloudlite-workspace-${workspaceId}`
+      available: !!workspace.status?.podIP,
+      command: `code --remote ssh-remote+kl@${workspace.status?.podIP || 'workspace'} /workspace`
     },
     {
       id: 'claude-code',
       name: 'Claude Code',
-      description: 'Connect with Claude Code AI assistant',
+      description: 'Connect with Claude Code AI assistant via SSH',
       icon: <Code2 className="h-5 w-5" />,
       type: 'desktop',
-      available: true,
-      command: `claude-code connect workspace-${workspaceId}`
+      available: !!workspace.status?.podIP,
+      command: `claude-code --ssh kl@${workspace.status?.podIP || 'workspace'}`
     },
     {
       id: 'cursor-desktop',
       name: 'Cursor Desktop',
-      description: 'Connect with Cursor IDE',
+      description: 'Connect with Cursor IDE via SSH Remote',
       icon: <Code2 className="h-5 w-5" />,
       type: 'desktop',
-      available: true,
-      command: `cursor --folder-uri cursor-remote://kloudlite-workspace-${workspaceId}`
-    },
-    {
-      id: 'goland',
-      name: 'GoLand',
-      description: 'Connect with JetBrains GoLand IDE',
-      icon: <Code2 className="h-5 w-5" />,
-      type: 'desktop',
-      available: true,
-      command: `goland --remote workspace-${workspaceId}`
-    },
-    {
-      id: 'vscode-web',
-      name: 'VS Code Web',
-      description: 'Open Visual Studio Code in your browser',
-      icon: <Globe className="h-5 w-5" />,
-      type: 'web',
-      available: true
-    },
-    {
-      id: 'zed',
-      name: 'Zed',
-      description: 'Connect with Zed collaborative editor',
-      icon: <Code2 className="h-5 w-5" />,
-      type: 'desktop',
-      available: true,
-      command: `zed remote://workspace-${workspaceId}`
-    },
-    {
-      id: 'code-server',
-      name: 'code-server',
-      description: 'Browser-based VS Code instance',
-      icon: <Globe className="h-5 w-5" />,
-      type: 'web',
-      available: true
-    },
-    {
-      id: 'terminal',
-      name: 'Terminal',
-      description: 'Connect via SSH terminal',
-      icon: <Terminal className="h-5 w-5" />,
-      type: 'terminal',
-      available: true,
-      command: `ssh workspace-${workspaceId}@dev.kloudlite.io`
+      available: !!workspace.status?.podIP,
+      command: `cursor --remote ssh-remote+kl@${workspace.status?.podIP || 'workspace'} /workspace`
     }
   ]
 
@@ -108,9 +102,9 @@ export function WorkspaceConnectOptions({ workspaceId }: WorkspaceConnectOptions
   }
 
   const handleConnect = (option: ConnectOption) => {
-    if (option.type === 'web') {
-      // For web-based options, open in new tab
-      window.open(`/workspaces/${workspaceId}/connect/${option.id}`, '_blank')
+    if (option.type === 'web' && option.url) {
+      // For web-based options with URLs, open in new tab
+      window.open(option.url, '_blank')
     } else if (option.command) {
       // For desktop/terminal options, copy command
       handleCopyCommand(option.command, option.id)
@@ -120,35 +114,35 @@ export function WorkspaceConnectOptions({ workspaceId }: WorkspaceConnectOptions
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium text-gray-900">Connect to Workspace</h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <h2 className="text-lg font-medium">Connect to Workspace</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Choose your preferred development environment to connect to this workspace
         </p>
       </div>
 
       {/* Desktop Applications */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Desktop Applications</h3>
+        <h3 className="text-sm font-medium mb-3">Desktop Applications</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {connectOptions
             .filter(option => option.type === 'desktop')
             .map((option) => (
               <div
                 key={option.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+                className="bg-card rounded-lg border p-4 hover:border-primary/50 transition-colors"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     {option.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-gray-900">{option.name}</h4>
-                    <p className="text-xs text-gray-600 mt-0.5">{option.description}</p>
+                    <h4 className="text-sm font-medium">{option.name}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
                     {option.command && (
                       <div className="mt-2">
                         <button
                           onClick={() => handleCopyCommand(option.command!, option.id)}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                          className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                         >
                           {copiedCommand === option.id ? (
                             <>
@@ -181,22 +175,22 @@ export function WorkspaceConnectOptions({ workspaceId }: WorkspaceConnectOptions
 
       {/* Web Applications */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Web Applications</h3>
+        <h3 className="text-sm font-medium mb-3">Web Applications</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {connectOptions
             .filter(option => option.type === 'web')
             .map((option) => (
               <div
                 key={option.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+                className="bg-card rounded-lg border p-4 hover:border-primary/50 transition-colors"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     {option.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-gray-900">{option.name}</h4>
-                    <p className="text-xs text-gray-600 mt-0.5">{option.description}</p>
+                    <h4 className="text-sm font-medium">{option.name}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
                   </div>
                   <Button
                     size="sm"
@@ -216,30 +210,30 @@ export function WorkspaceConnectOptions({ workspaceId }: WorkspaceConnectOptions
 
       {/* Terminal */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Terminal</h3>
+        <h3 className="text-sm font-medium mb-3">Terminal</h3>
         <div className="grid gap-3">
           {connectOptions
             .filter(option => option.type === 'terminal')
             .map((option) => (
               <div
                 key={option.id}
-                className="bg-gray-900 text-white rounded-lg border border-gray-800 p-4"
+                className="bg-card rounded-lg border p-4"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     {option.icon}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium">{option.name}</h4>
-                    <p className="text-xs text-gray-400 mt-0.5">{option.description}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
                     {option.command && (
                       <div className="mt-2 flex items-center gap-2">
-                        <code className="text-xs bg-gray-800 px-2 py-1 rounded font-mono">
+                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
                           {option.command}
                         </code>
                         <button
                           onClick={() => handleCopyCommand(option.command!, option.id)}
-                          className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1"
+                          className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                         >
                           {copiedCommand === option.id ? (
                             <>

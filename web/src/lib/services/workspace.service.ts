@@ -6,6 +6,7 @@ import type {
   WorkspaceListResponse,
   WorkspaceListParams,
   WorkspaceActionResponse,
+  WorkspaceMetrics,
 } from '@/types/workspace'
 
 export class WorkspaceService {
@@ -61,6 +62,13 @@ export class WorkspaceService {
   async archive(name: string, namespace: string = 'default'): Promise<WorkspaceActionResponse> {
     return apiClient.post<WorkspaceActionResponse>(
       `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/archive`
+    )
+  }
+
+  // Get real-time metrics for a workspace
+  async getMetrics(name: string, namespace: string = 'default'): Promise<WorkspaceMetrics> {
+    return apiClient.get<WorkspaceMetrics>(
+      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/metrics`
     )
   }
 }
