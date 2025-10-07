@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllers/helmchart"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
@@ -120,6 +121,17 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
+	}
+
+	// Setup HelmChart controller
+	helmChartReconciler := &helmchart.Reconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "helmchart")),
+	}
+
+	if err = helmChartReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create HelmChart controller: %w", err)
 	}
 
 	logger.Info("Controllers initialized successfully")

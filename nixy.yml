@@ -1,0 +1,12 @@
+nixpkgs: 554be6495561ff07b6c724047bdd7e0716aa7b46
+env:
+  KUBECONFIG: "$PWD/devenv/k3s-config/k3s.yaml"
+packages:
+  - go
+  - nodejs
+  - nodePackages.pnpm
+  - kubernetes-controller-tools
+  - go-task
+  - kubectl
+  - kubernetes-helm
+  - k9s
