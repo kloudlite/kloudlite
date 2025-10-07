@@ -12,8 +12,10 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	zaplog "sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -35,6 +37,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacesv1.AddToScheme(scheme))
 	utilruntime.Must(packagesv1.AddToScheme(scheme))
+	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
 	// Set controller-runtime logger
 	ctrl.SetLogger(zaplog.New(func(o *zaplog.Options) {
@@ -102,10 +105,17 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	}
 
 	// Setup Workspace controller
+	clientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create kubernetes clientset: %w", err)
+	}
+
 	workspaceReconciler := &WorkspaceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "workspace")),
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		Logger:    logger.With(zap.String("controller", "workspace")),
+		Config:    cfg,
+		Clientset: clientset,
 	}
 
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {

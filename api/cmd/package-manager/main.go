@@ -26,7 +26,10 @@ import (
 )
 
 const (
-	nixStorePath = "/var/lib/kloudlite/nix-store"
+	nixStorePath        = "/var/lib/kloudlite/nix-store"
+	workspaceHomePath   = "/var/lib/kloudlite/workspace-homes/kl"
+	workspaceUserUID    = 1001
+	workspaceUserGID    = 1001
 )
 
 // CommandExecutor defines an interface for executing shell commands
@@ -296,14 +299,29 @@ func (r *PackageManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func main() {
-	// Get namespace from environment
-	namespace := os.Getenv("NAMESPACE")
-	if namespace == "" {
-		fmt.Println("NAMESPACE environment variable must be set")
-		os.Exit(1)
+func setupWorkspaceHome(logger *zap2.Logger) error {
+	logger.Info("Setting up workspace home directory",
+		zap2.String("path", workspaceHomePath),
+		zap2.Int("uid", workspaceUserUID),
+		zap2.Int("gid", workspaceUserGID))
+
+	// Create directory if it doesn't exist
+	if err := os.MkdirAll(workspaceHomePath, 0755); err != nil {
+		return fmt.Errorf("failed to create workspace home directory: %w", err)
 	}
 
+	// Set ownership to workspace user
+	if err := os.Chown(workspaceHomePath, workspaceUserUID, workspaceUserGID); err != nil {
+		return fmt.Errorf("failed to set ownership on workspace home directory: %w", err)
+	}
+
+	logger.Info("Successfully set up workspace home directory",
+		zap2.String("path", workspaceHomePath))
+
+	return nil
+}
+
+func main() {
 	// Setup logger using controller-runtime's zap logger
 	opts := zap.Options{
 		Development: false,
@@ -318,6 +336,19 @@ func main() {
 		os.Exit(1)
 	}
 	defer zapLogger.Sync()
+
+	// Setup workspace home directory with correct ownership (system-level operation)
+	if err := setupWorkspaceHome(zapLogger); err != nil {
+		zapLogger.Fatal("Failed to setup workspace home directory", zap2.Error(err))
+	}
+
+	// Get namespace from environment
+	namespace := os.Getenv("NAMESPACE")
+	if namespace == "" {
+		zapLogger.Info("NAMESPACE not set, running in system setup mode only (not watching PackageRequests)")
+		// Keep running but don't start the controller
+		select {} // Block forever
+	}
 
 	zapLogger.Info("Starting Package Manager",
 		zap2.String("namespace", namespace),

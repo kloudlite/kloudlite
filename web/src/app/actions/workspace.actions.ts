@@ -156,3 +156,93 @@ export async function archiveWorkspace(name: string, namespace: string = 'defaul
     }
   }
 }
+
+/**
+ * Server action to get workspace metrics
+ */
+export async function getWorkspaceMetrics(name: string, namespace: string = 'default') {
+  try {
+    // Import auth and env dynamically to ensure this only runs on server
+    const { auth } = await import('@/lib/auth')
+    const { env } = await import('@/lib/env')
+
+    const session = await auth()
+    if (!session?.user?.backendToken) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${name}/metrics`
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${session.user.backendToken}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      return {
+        success: false,
+        error: errorText || 'Failed to get workspace metrics',
+      }
+    }
+
+    const data = await response.json()
+    return { success: true, data }
+  } catch (error: any) {
+    console.error('Get workspace metrics error:', error)
+    return {
+      success: false,
+      error: error.message || 'Failed to get workspace metrics',
+    }
+  }
+}
+
+/**
+ * Server action to get node metrics
+ */
+export async function getNodeMetrics(nodeName: string = 'master') {
+  try {
+    // Import auth and env dynamically to ensure this only runs on server
+    const { auth } = await import('@/lib/auth')
+    const { env } = await import('@/lib/env')
+
+    const session = await auth()
+    if (!session?.user?.backendToken) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    const url = `${env.apiUrl}/api/v1/nodes/${nodeName}/metrics`
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${session.user.backendToken}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      return {
+        success: false,
+        error: errorText || 'Failed to get node metrics',
+      }
+    }
+
+    const data = await response.json()
+    return { success: true, data }
+  } catch (error: any) {
+    console.error('Get node metrics error:', error)
+    return {
+      success: false,
+      error: error.message || 'Failed to get node metrics',
+    }
+  }
+}

@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
@@ -14,6 +16,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -22,40 +29,310 @@ import (
 
 const (
 	workspaceFinalizer = "workspaces.kloudlite.io/finalizer"
+
+	// Auto-suspension configuration
+	// Activity threshold: CPU usage below this percentage (1%) is considered idle
+	activityCPUThresholdPercent = 1.0
+	// Network bytes threshold: activity below this per minute is considered idle (10KB/min)
+	activityNetworkBytesPerMinute = 10 * 1024
+	// Default idle timeout if not specified in workspace settings (30 minutes)
+	defaultIdleTimeoutMinutes = 30
 )
 
 // Port mappings for different server types
 var serverPorts = map[string]int32{
+	"ssh":         22,
 	"code-server": 8080,
-	"jupyter":     8888,
 	"ttyd":        7681,
-	"code-web":    3000,
+	"vscode-tunnel": 8000,
 }
 
 // WorkspaceReconciler reconciles Workspace objects and manages VS Code server pods
 type WorkspaceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	Logger *zap.Logger
+	Scheme    *runtime.Scheme
+	Logger    *zap.Logger
+	Config    *rest.Config
+	Clientset *kubernetes.Clientset
+}
+
+// getNetworkActivity checks network activity by comparing current and previous network stats
+func (r *WorkspaceReconciler) getNetworkActivity(ctx context.Context, workspace *workspacesv1.Workspace) (int64, error) {
+	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+
+	pod := &corev1.Pod{}
+	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get pod: %w", err)
+	}
+
+	// Get pod metrics for network stats
+	var podMetrics metricsv1beta1.PodMetrics
+	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, &podMetrics)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("failed to get pod metrics: %w", err)
+	}
+
+	// Calculate total network bytes (this is a simplified approach)
+	// In reality, we'd track delta from previous check
+	// For now, we'll check if there's any significant memory change as a proxy
+	var totalMemoryUsage int64
+	for _, container := range podMetrics.Containers {
+		memQuantity := container.Usage[corev1.ResourceMemory]
+		totalMemoryUsage += memQuantity.Value()
+	}
+
+	// Store previous values in workspace annotations for comparison
+	// This is a simplified version - in production you'd want a more sophisticated approach
+	return totalMemoryUsage, nil
+}
+
+// hasActiveConnections checks if there are active SSH or web connections to the workspace
+// by examining active TCP connections in the pod
+// Returns: hasConnections bool, connectionCount int, error
+func (r *WorkspaceReconciler) hasActiveConnections(ctx context.Context, workspace *workspacesv1.Workspace) (bool, int, error) {
+	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+
+	pod := &corev1.Pod{}
+	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	if err != nil {
+		return false, 0, fmt.Errorf("failed to get pod: %w", err)
+	}
+
+	// Check pod IP and if it's accessible
+	if pod.Status.PodIP == "" {
+		return false, 0, nil
+	}
+
+	// Check if pod is not ready yet (still initializing)
+	if pod.Status.Phase != corev1.PodRunning {
+		return true, 0, nil // Consider as active while starting
+	}
+
+	// If pod was just started (within last 2 minutes), consider it as having connections
+	// This gives time for the user to connect after starting the workspace
+	if pod.Status.StartTime != nil {
+		timeSinceStart := time.Since(pod.Status.StartTime.Time)
+		if timeSinceStart < 2*time.Minute {
+			return true, 0, nil
+		}
+	}
+
+	// Check for actual active network connections
+	// We check /proc/net/tcp for ESTABLISHED connections (state 01)
+	// Important ports: SSH (22=0016), ttyd (7681=1E01), code-server (8080=1F90), vscode-tunnel (8000=1F40)
+	// Connection state 01 = ESTABLISHED, 0A = LISTEN
+
+	// Get the main container name (usually the first container)
+	if len(pod.Spec.Containers) == 0 {
+		return false, 0, nil
+	}
+
+	// Count ESTABLISHED connections by checking /proc/net/tcp
+	// Format: awk '$4 == "01"' /proc/net/tcp /proc/net/tcp6 2>/dev/null | wc -l
+	// This counts all ESTABLISHED TCP connections (excluding LISTEN sockets)
+	command := []string{"sh", "-c", "awk '$4 == \"01\"' /proc/net/tcp /proc/net/tcp6 2>/dev/null | wc -l"}
+
+	output, err := r.execInPod(ctx, pod, pod.Spec.Containers[0].Name, command)
+	if err != nil {
+		// If we can't check connections, assume there might be connections (fail-safe)
+		r.Logger.Warn("Failed to check active connections, assuming active",
+			zap.String("workspace", workspace.Name),
+			zap.Error(err),
+		)
+		return true, 0, nil
+	}
+
+	// Parse the connection count
+	connectionCount := 0
+	fmt.Sscanf(strings.TrimSpace(output), "%d", &connectionCount)
+
+	// Log the connection count for debugging
+	r.Logger.Info("Active connection check",
+		zap.String("workspace", workspace.Name),
+		zap.Int("connectionCount", connectionCount),
+		zap.Bool("hasConnections", connectionCount > 0),
+	)
+
+	return connectionCount > 0, connectionCount, nil
+}
+
+// execInPod executes a command in a pod container and returns the stdout output
+func (r *WorkspaceReconciler) execInPod(ctx context.Context, pod *corev1.Pod, containerName string, command []string) (string, error) {
+	req := r.Clientset.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod.Name).
+		Namespace(pod.Namespace).
+		SubResource("exec")
+
+	req.VersionedParams(&corev1.PodExecOptions{
+		Container: containerName,
+		Command:   command,
+		Stdout:    true,
+		Stderr:    true,
+		Stdin:     false,
+		TTY:       false,
+	}, scheme.ParameterCodec)
+
+	exec, err := remotecommand.NewSPDYExecutor(r.Config, "POST", req.URL())
+	if err != nil {
+		return "", fmt.Errorf("failed to create executor: %w", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to exec command: %w (stderr: %s)", err, stderr.String())
+	}
+
+	return stdout.String(), nil
+}
+
+// isWorkspaceIdle checks if a workspace has been idle by checking for active connections
+// A workspace is considered idle ONLY if there are no active connections (SSH, ttyd, vscode, code-server)
+// Returns: isIdle bool, connectionCount int, error
+func (r *WorkspaceReconciler) isWorkspaceIdle(ctx context.Context, workspace *workspacesv1.Workspace) (bool, int, error) {
+	// Check for active connections - this is the ONLY factor that matters
+	hasConnections, connectionCount, err := r.hasActiveConnections(ctx, workspace)
+	if err != nil {
+		// If we can't check connections, assume workspace is active (fail-safe)
+		r.Logger.Warn("Failed to check active connections, assuming workspace is active",
+			zap.String("workspace", workspace.Name),
+			zap.Error(err),
+		)
+		return false, 0, nil
+	}
+
+	// Workspace is idle if there are NO active connections
+	isIdle := !hasConnections
+
+	// Log activity status for debugging
+	r.Logger.Info("Workspace activity check",
+		zap.String("workspace", workspace.Name),
+		zap.Bool("hasConnections", hasConnections),
+		zap.Int("connectionCount", connectionCount),
+		zap.Bool("isIdle", isIdle),
+	)
+
+	return isIdle, connectionCount, nil
+}
+
+// checkAndSuspendIdleWorkspace checks if a workspace should be auto-suspended and suspends it if needed
+func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
+	// Skip if auto-stop is not enabled
+	if workspace.Spec.Settings == nil || !workspace.Spec.Settings.AutoStop {
+		return nil
+	}
+
+	// Skip if workspace is not active
+	if workspace.Spec.Status != "active" {
+		return nil
+	}
+
+	// Get idle timeout from workspace settings or use default
+	idleTimeout := defaultIdleTimeoutMinutes
+	if workspace.Spec.Settings.IdleTimeout > 0 {
+		idleTimeout = int(workspace.Spec.Settings.IdleTimeout)
+	}
+
+	// Check if workspace is idle
+	isIdle, connectionCount, err := r.isWorkspaceIdle(ctx, workspace)
+	if err != nil {
+		logger.Warn("Failed to check workspace idle state", zap.Error(err))
+		return nil // Don't fail reconciliation on metrics errors
+	}
+
+	// Update active connections count in workspace status
+	workspace.Status.ActiveConnections = connectionCount
+
+	if !isIdle {
+		// Workspace is active, update last activity time
+		now := metav1.Now()
+		if workspace.Status.LastActivityTime == nil ||
+		   time.Since(workspace.Status.LastActivityTime.Time) > 30*time.Second {
+			workspace.Status.LastActivityTime = &now
+			if err := r.updateStatusPreservingPackages(ctx, workspace); err != nil {
+				logger.Warn("Failed to update last activity time", zap.Error(err))
+			}
+		}
+		return nil
+	}
+
+	// Workspace is idle, check if idle timeout has been reached
+	if workspace.Status.LastActivityTime == nil {
+		// No last activity time set, initialize it
+		now := metav1.Now()
+		workspace.Status.LastActivityTime = &now
+		if err := r.updateStatusPreservingPackages(ctx, workspace); err != nil {
+			logger.Warn("Failed to initialize last activity time", zap.Error(err))
+		}
+		return nil
+	}
+
+	// Calculate idle duration
+	idleDuration := time.Since(workspace.Status.LastActivityTime.Time)
+	idleTimeoutDuration := time.Duration(idleTimeout) * time.Minute
+
+	// Log idle duration for debugging
+	logger.Info("Checking idle timeout",
+		zap.String("workspace", workspace.Name),
+		zap.Duration("idleDuration", idleDuration),
+		zap.Duration("idleTimeout", idleTimeoutDuration),
+		zap.Bool("willSuspend", idleDuration >= idleTimeoutDuration),
+	)
+
+	if idleDuration >= idleTimeoutDuration {
+		// Idle timeout reached, suspend workspace
+		logger.Info("Auto-suspending idle workspace",
+			zap.String("workspace", workspace.Name),
+			zap.Duration("idleDuration", idleDuration),
+			zap.Duration("idleTimeout", idleTimeoutDuration),
+		)
+
+		// Fetch the latest version to avoid conflict errors
+		latest := &workspacesv1.Workspace{}
+		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name, Namespace: workspace.Namespace}, latest); err != nil {
+			return fmt.Errorf("failed to fetch latest workspace: %w", err)
+		}
+
+		latest.Spec.Status = "suspended"
+		if err := r.Update(ctx, latest); err != nil {
+			return fmt.Errorf("failed to suspend idle workspace: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // updateStatusPreservingPackages updates workspace status while preserving package-related fields
 func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context, workspace *workspacesv1.Workspace) error {
-	// Refetch to get the latest version with all status fields
+	// Refetch to get the latest version for optimistic locking
 	latest := &workspacesv1.Workspace{}
 	if err := r.Get(ctx, client.ObjectKeyFromObject(workspace), latest); err != nil {
 		return err
 	}
 
-	// Preserve package-related fields from the latest version
-	workspace.Status.InstalledPackages = latest.Status.InstalledPackages
-	workspace.Status.FailedPackages = latest.Status.FailedPackages
-	workspace.Status.PackageInstallationMessage = latest.Status.PackageInstallationMessage
+	// Preserve package-related fields from the current workspace object
+	// (these may have been updated by syncPackageStatus)
+	installedPackages := workspace.Status.InstalledPackages
+	failedPackages := workspace.Status.FailedPackages
+	packageMessage := workspace.Status.PackageInstallationMessage
 
-	// Also update the resource version to ensure optimistic locking works
-	workspace.ResourceVersion = latest.ResourceVersion
+	// Copy all status fields to the latest version
+	latest.Status = workspace.Status
 
-	return r.Status().Update(ctx, workspace)
+	// Ensure package fields are preserved
+	latest.Status.InstalledPackages = installedPackages
+	latest.Status.FailedPackages = failedPackages
+	latest.Status.PackageInstallationMessage = packageMessage
+
+	return r.Status().Update(ctx, latest)
 }
 
 // Reconcile handles Workspace events and ensures the workspace pod exists
@@ -106,17 +383,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		workspace.Spec.VSCodeVersion = "latest"
 	}
 
-	// Set default server type if not provided
-	if workspace.Spec.ServerType == "" {
-		workspace.Spec.ServerType = "code-server"
-	}
-
 	// Handle workspace based on its status
+	var result reconcile.Result
+
 	switch workspace.Spec.Status {
 	case "active":
-		return r.handleActiveWorkspace(ctx, workspace, logger)
+		result, err = r.handleActiveWorkspace(ctx, workspace, logger)
 	case "suspended", "archived":
-		return r.handleSuspendedWorkspace(ctx, workspace, logger)
+		result, err = r.handleSuspendedWorkspace(ctx, workspace, logger)
 	default:
 		// Default to active if status is not set
 		workspace.Spec.Status = "active"
@@ -126,6 +400,15 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
+
+	// Requeue after 1 minute to check idle status periodically
+	if workspace.Spec.Status == "active" && workspace.Spec.Settings != nil && workspace.Spec.Settings.AutoStop {
+		if result.RequeueAfter == 0 && !result.Requeue {
+			result.RequeueAfter = 1 * time.Minute
+		}
+	}
+
+	return result, err
 }
 
 // ensurePackageRequest creates or updates PackageRequest for the workspace
@@ -176,7 +459,9 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 		packagesChanged = true
 	} else {
 		for i, pkg := range workspace.Spec.Packages {
-			if pkgReq.Spec.Packages[i].Name != pkg.Name || pkgReq.Spec.Packages[i].Version != pkg.Version {
+			if pkgReq.Spec.Packages[i].Name != pkg.Name ||
+				pkgReq.Spec.Packages[i].Channel != pkg.Channel ||
+				pkgReq.Spec.Packages[i].NixpkgsCommit != pkg.NixpkgsCommit {
 				packagesChanged = true
 				break
 			}
@@ -260,8 +545,41 @@ func (r *WorkspaceReconciler) ensurePVC(ctx context.Context, workspace *workspac
 	return nil
 }
 
+// syncPackageStatus syncs package installation status from PackageRequest to Workspace
+func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
+	// Only sync if packages are defined
+	if len(workspace.Spec.Packages) == 0 {
+		return nil
+	}
+
+	// Get the PackageRequest
+	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
+	pkgReq := &packagesv1.PackageRequest{}
+	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: workspace.Namespace}, pkgReq)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// PackageRequest not yet created
+			return nil
+		}
+		return fmt.Errorf("failed to get PackageRequest: %w", err)
+	}
+
+	// Copy package status from PackageRequest to Workspace
+	workspace.Status.InstalledPackages = pkgReq.Status.InstalledPackages
+	workspace.Status.FailedPackages = pkgReq.Status.FailedPackages
+	workspace.Status.PackageInstallationMessage = pkgReq.Status.Message
+
+	return nil
+}
+
 // handleActiveWorkspace ensures the workspace pod is running
 func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+	// Check and suspend idle workspace if auto-stop is enabled
+	if err := r.checkAndSuspendIdleWorkspace(ctx, workspace, logger); err != nil {
+		logger.Warn("Failed to check idle workspace", zap.Error(err))
+		// Don't fail reconciliation, just log the warning
+	}
+
 	// Ensure PackageRequest is created if packages are defined
 	if err := r.ensurePackageRequest(ctx, workspace, logger); err != nil {
 		logger.Error("Failed to ensure PackageRequest", zap.Error(err))
@@ -269,6 +587,12 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		workspace.Status.Message = fmt.Sprintf("Failed to create PackageRequest: %v", err)
 		r.updateStatusPreservingPackages(ctx, workspace)
 		return reconcile.Result{}, err
+	}
+
+	// Sync package installation status from PackageRequest
+	if err := r.syncPackageStatus(ctx, workspace, logger); err != nil {
+		logger.Warn("Failed to sync package status", zap.Error(err))
+		// Don't fail the reconciliation, just log the warning
 	}
 
 	// Ensure PVC exists
@@ -416,33 +740,29 @@ func getServerArgs(serverType string) []string {
 	}
 }
 
-// createWorkspacePod creates a pod with the selected server and host volume mount
+// createWorkspacePod creates a pod with multiple containers for different access methods
 func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspace) (*corev1.Pod, error) {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 
-	// Get server image and port based on server type
-	serverImage := getServerImage(workspace.Spec.ServerType)
-	serverPort := getServerPort(workspace.Spec.ServerType)
-
-	// Build resource requirements
-	resources := corev1.ResourceRequirements{
+	// Default resource requirements per container
+	defaultResources := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("100m"),
+			corev1.ResourceMemory: resource.MustParse("256Mi"),
+		},
+		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:    resource.MustParse("500m"),
 			corev1.ResourceMemory: resource.MustParse("1Gi"),
 		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("2"),
-			corev1.ResourceMemory: resource.MustParse("4Gi"),
-		},
 	}
 
-	// Override with custom resource quota if provided
+	// Override with custom resource quota if provided (divided among containers)
 	if workspace.Spec.ResourceQuota != nil {
 		if workspace.Spec.ResourceQuota.CPU != "" {
-			resources.Limits[corev1.ResourceCPU] = resource.MustParse(workspace.Spec.ResourceQuota.CPU)
+			defaultResources.Limits[corev1.ResourceCPU] = resource.MustParse(workspace.Spec.ResourceQuota.CPU)
 		}
 		if workspace.Spec.ResourceQuota.Memory != "" {
-			resources.Limits[corev1.ResourceMemory] = resource.MustParse(workspace.Spec.ResourceQuota.Memory)
+			defaultResources.Limits[corev1.ResourceMemory] = resource.MustParse(workspace.Spec.ResourceQuota.Memory)
 		}
 	}
 
@@ -498,17 +818,32 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
+				// Comprehensive workspace container with all services
 				{
-					Name:            workspace.Spec.ServerType,
-					Image:           serverImage,
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Resources:       resources,
+					Name:            "workspace",
+					Image:           "kloudlite/workspace-comprehensive:latest",
+					ImagePullPolicy: corev1.PullNever,
+					Resources:       defaultResources,
 					Env:             envVars,
-					Args:            getServerArgs(workspace.Spec.ServerType),
 					Ports: []corev1.ContainerPort{
 						{
-							Name:          "http",
-							ContainerPort: serverPort,
+							Name:          "ssh",
+							ContainerPort: 22,
+							Protocol:      corev1.ProtocolTCP,
+						},
+						{
+							Name:          "code-server",
+							ContainerPort: 8080,
+							Protocol:      corev1.ProtocolTCP,
+						},
+						{
+							Name:          "ttyd",
+							ContainerPort: 7681,
+							Protocol:      corev1.ProtocolTCP,
+						},
+						{
+							Name:          "vscode-tunnel",
+							ContainerPort: 8000,
 							Protocol:      corev1.ProtocolTCP,
 						},
 					},
@@ -521,11 +856,15 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 							Name:      "nix-store",
 							MountPath: "/nix",
 						},
+						{
+							Name:      "kl-home",
+							MountPath: "/home/kl",
+						},
 					},
 					LivenessProbe: &corev1.Probe{
 						ProbeHandler: corev1.ProbeHandler{
 							TCPSocket: &corev1.TCPSocketAction{
-								Port: intstr.FromInt(int(serverPort)),
+								Port: intstr.FromInt(22),
 							},
 						},
 						InitialDelaySeconds: 30,
@@ -536,7 +875,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 					ReadinessProbe: &corev1.Probe{
 						ProbeHandler: corev1.ProbeHandler{
 							TCPSocket: &corev1.TCPSocketAction{
-								Port: intstr.FromInt(int(serverPort)),
+								Port: intstr.FromInt(8080),
 							},
 						},
 						InitialDelaySeconds: 10,
@@ -567,6 +906,18 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 						},
 					},
 				},
+				{
+					Name: "kl-home",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/kloudlite/workspace-homes/kl",
+							Type: func() *corev1.HostPathType {
+								t := corev1.HostPathDirectoryOrCreate
+								return &t
+							}(),
+						},
+					},
+				},
 
 			},
 			RestartPolicy: corev1.RestartPolicyAlways,
@@ -588,15 +939,18 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	workspace.Status.PodIP = pod.Status.PodIP
 	workspace.Status.NodeName = pod.Spec.NodeName
 
-	// Build access URL if pod is running
+	// Build access URLs for all services if pod is running
 	if pod.Status.PodIP != "" && phase == "Running" {
-		serverPort := getServerPort(workspace.Spec.ServerType)
-		workspace.Status.AccessURL = fmt.Sprintf("http://%s:%d", pod.Status.PodIP, serverPort)
-	}
+		accessURLs := make(map[string]string)
+		accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
+		accessURLs["code-server"] = fmt.Sprintf("http://%s:8080", pod.Status.PodIP)
+		accessURLs["ttyd"] = fmt.Sprintf("http://%s:7681", pod.Status.PodIP)
+		accessURLs["vscode-tunnel"] = fmt.Sprintf("http://%s:8000", pod.Status.PodIP)
+		workspace.Status.AccessURLs = accessURLs
 
-	// Update last activity time
-	now := metav1.Now()
-	workspace.Status.LastActivityTime = &now
+		// Keep AccessURL for backward compatibility (default to code-server)
+		workspace.Status.AccessURL = accessURLs["code-server"]
+	}
 
 	if err := r.updateStatusPreservingPackages(ctx, workspace); err != nil {
 		logger.Warn("Failed to update workspace status", zap.Error(err))

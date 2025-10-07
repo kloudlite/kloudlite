@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Plus, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import type { Workspace } from '@/types/workspace'
 import { WorkspaceRowActions } from './workspace-row-actions'
+import { CreateWorkspaceSheet } from './create-workspace-sheet'
 
 interface WorkspacesListProps {
   workspaces: Workspace[]
@@ -15,8 +14,7 @@ interface WorkspacesListProps {
   namespace?: string
 }
 
-export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: WorkspacesListProps) {
-  const router = useRouter()
+export function WorkspacesList({ workspaces, currentUser, isAdmin = false, namespace = 'default' }: WorkspacesListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('mine')
   const [statusFilter, setStatus] = useState<'all' | 'active' | 'suspended' | 'archived'>('all')
 
@@ -111,14 +109,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: Wor
             {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
           </span>
         </div>
-        <Button
-          size="sm"
-          className="gap-2"
-          onClick={() => router.push('/workspaces/new')}
-        >
-          <Plus className="h-4 w-4" />
-          New Workspace
-        </Button>
+        <CreateWorkspaceSheet namespace={namespace} user={currentUser} />
       </div>
 
       {/* Table */}
@@ -136,10 +127,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: Wor
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Work Machine
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Resources
+                Packages
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Created
@@ -158,6 +146,9 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: Wor
                 : workspace.spec.status === 'archived'
                 ? 'bg-secondary text-secondary-foreground'
                 : 'bg-secondary text-secondary-foreground'
+
+              const packageCount = workspace.spec.packages?.length || 0
+              const installedCount = workspace.status?.installedPackages?.length || 0
 
               return (
                 <tr key={workspace.metadata.uid || workspace.metadata.name} className="hover:bg-muted/50">
@@ -182,23 +173,23 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false }: Wor
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {workspace.spec.workMachineRef?.name || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="text-xs">
-                      {workspace.spec.resourceQuota ? (
-                        <>
-                          <div>CPU: {workspace.spec.resourceQuota.cpu || '-'}</div>
-                          <div>Mem: {workspace.spec.resourceQuota.memory || '-'}</div>
-                        </>
-                      ) : (
-                        '-'
-                      )}
-                    </div>
+                    {packageCount > 0 ? (
+                      <div className="text-xs">
+                        <span className="text-muted-foreground">
+                          {installedCount}/{packageCount} installed
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {workspace.metadata.creationTimestamp
-                      ? new Date(workspace.metadata.creationTimestamp).toLocaleDateString()
+                      ? new Date(workspace.metadata.creationTimestamp).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
                       : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">

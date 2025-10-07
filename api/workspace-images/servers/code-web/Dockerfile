@@ -2,15 +2,15 @@ FROM kloudlite/workspace-base:latest
 
 USER root
 
-# Install Node.js via Nix for building code-web
-RUN . /home/workspace/.nix-profile/etc/profile.d/nix.sh && \
-    nix-env -iA nixpkgs.nodejs-18_x
-
-USER workspace
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install serve for serving static files
-RUN . /home/workspace/.nix-profile/etc/profile.d/nix.sh && \
-    npm install -g serve
+RUN npm install -g serve
+
+USER workspace
 
 # Create a simple Monaco editor setup
 RUN mkdir -p /home/workspace/code-web && \

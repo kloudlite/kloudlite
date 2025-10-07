@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { WorkspacesList } from './_components/workspaces-list'
+import { WorkMachineMetrics } from './_components/work-machine-metrics'
 import { workspaceService } from '@/lib/services/workspace.service'
+import { workMachineService } from '@/lib/services/work-machine.service'
 
 export default async function WorkspacesPage() {
   const session = await auth()
@@ -15,12 +17,26 @@ export default async function WorkspacesPage() {
   // For demo, assume admin if email ends with @kloudlite.io
   const isAdmin = currentUser.endsWith('@kloudlite.io')
 
-  // Fetch real workspace data from API
+  // Get user's work machine to determine target namespace
+  let namespace = 'default'
+  let workMachineError = null
+
+  try {
+    const workMachine = await workMachineService.getMyWorkMachine()
+    if (workMachine?.spec?.targetNamespace) {
+      namespace = workMachine.spec.targetNamespace
+    }
+  } catch (err) {
+    console.error('Failed to fetch work machine:', err)
+    workMachineError = err instanceof Error ? err.message : 'Failed to fetch work machine'
+  }
+
+  // Fetch real workspace data from API using the work machine's target namespace
   let workspaces = []
   let error = null
 
   try {
-    const response = await workspaceService.list('default')
+    const response = await workspaceService.list(namespace)
     workspaces = response.items || []
   } catch (err) {
     console.error('Failed to fetch workspaces:', err)
@@ -40,16 +56,22 @@ export default async function WorkspacesPage() {
           </p>
         </div>
 
+        {/* Node Metrics Section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-4">Node Resources</h2>
+          <WorkMachineMetrics nodeName="master" />
+        </div>
+
         {/* Error Display */}
-        {error && (
+        {(error || workMachineError) && (
           <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-                  Failed to load workspaces
+                  {workMachineError ? 'Failed to load work machine' : 'Failed to load workspaces'}
                 </h3>
                 <div className="mt-2 text-sm text-red-700 dark:text-red-300">
-                  <p>{error}</p>
+                  <p>{workMachineError || error}</p>
                 </div>
               </div>
             </div>
@@ -61,7 +83,7 @@ export default async function WorkspacesPage() {
           workspaces={workspaces}
           currentUser={currentUser}
           isAdmin={isAdmin}
-          namespace="default"
+          namespace={namespace}
         />
       </div>
     </main>

@@ -104,12 +104,6 @@ type WorkspaceSpec struct {
 	// +optional
 	VSCodeVersion string `json:"vscodeVersion,omitempty"`
 
-	// ServerType specifies which server to run (code-server, jupyter, ttyd, code-web)
-	// +kubebuilder:validation:Enum=code-server;jupyter;ttyd;code-web
-	// +kubebuilder:default=code-server
-	// +optional
-	ServerType string `json:"serverType,omitempty"`
-
 	// Packages list of Nix packages to install in the workspace
 	// +optional
 	Packages []PackageSpec `json:"packages,omitempty"`
@@ -221,9 +215,14 @@ type WorkspaceStatus struct {
 	// +optional
 	StopTime *metav1.Time `json:"stopTime,omitempty"`
 
-	// AccessURL for accessing the workspace
+	// AccessURL for accessing the workspace (deprecated, use AccessURLs instead)
 	// +optional
 	AccessURL string `json:"accessUrl,omitempty"`
+
+	// AccessURLs contains URLs for accessing different workspace services
+	// Keys are service names (code-server, ttyd, jupyter, code-web)
+	// +optional
+	AccessURLs map[string]string `json:"accessUrls,omitempty"`
 
 	// ResourceUsage current resource consumption
 	// +optional
@@ -256,6 +255,10 @@ type WorkspaceStatus struct {
 	// PackageInstallationMessage provides information about package installation
 	// +optional
 	PackageInstallationMessage string `json:"packageInstallationMessage,omitempty"`
+
+	// ActiveConnections is the number of active network connections in the workspace
+	// +optional
+	ActiveConnections int `json:"activeConnections,omitempty"`
 }
 
 // ResourceUsage tracks current resource consumption
@@ -280,6 +283,7 @@ type ResourceUsage struct {
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.spec.status`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Connections",type=integer,JSONPath=`.status.activeConnections`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // Workspace is the Schema for the workspaces API
