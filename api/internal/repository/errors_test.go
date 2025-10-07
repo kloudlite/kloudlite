@@ -133,3 +133,96 @@ func TestErrInternal(t *testing.T) {
 	assert.Equal(t, "internal error", repoErr.Message)
 	assert.Equal(t, cause, repoErr.Cause)
 }
+
+func TestErrInvalidInput(t *testing.T) {
+	err := ErrInvalidInput("invalid request parameters")
+
+	repoErr, ok := err.(RepositoryError)
+	assert.True(t, ok)
+	assert.Equal(t, ErrTypeInvalidInput, repoErr.Type)
+	assert.Equal(t, "invalid request parameters", repoErr.Message)
+	assert.Nil(t, repoErr.Cause)
+}
+
+func TestErrMultipleFound(t *testing.T) {
+	err := ErrMultipleFound("found 3 resources matching criteria")
+
+	repoErr, ok := err.(RepositoryError)
+	assert.True(t, ok)
+	assert.Equal(t, ErrTypeMultipleFound, repoErr.Type)
+	assert.Equal(t, "found 3 resources matching criteria", repoErr.Message)
+	assert.Nil(t, repoErr.Cause)
+}
+
+func TestErrTimeout(t *testing.T) {
+	cause := errors.New("context deadline exceeded")
+	err := ErrTimeout("operation timed out", cause)
+
+	repoErr, ok := err.(RepositoryError)
+	assert.True(t, ok)
+	assert.Equal(t, ErrTypeTimeout, repoErr.Type)
+	assert.Equal(t, "operation timed out", repoErr.Message)
+	assert.Equal(t, cause, repoErr.Cause)
+}
+
+func TestErrUnauthorized(t *testing.T) {
+	err := ErrUnauthorized("user not authenticated")
+
+	repoErr, ok := err.(RepositoryError)
+	assert.True(t, ok)
+	assert.Equal(t, ErrTypeUnauthorized, repoErr.Type)
+	assert.Equal(t, "user not authenticated", repoErr.Message)
+	assert.Nil(t, repoErr.Cause)
+}
+
+func TestErrForbidden(t *testing.T) {
+	err := ErrForbidden("user lacks required permissions")
+
+	repoErr, ok := err.(RepositoryError)
+	assert.True(t, ok)
+	assert.Equal(t, ErrTypeForbidden, repoErr.Type)
+	assert.Equal(t, "user lacks required permissions", repoErr.Message)
+	assert.Nil(t, repoErr.Cause)
+}
+
+func TestErrConflict(t *testing.T) {
+	err := ErrConflict("resource version mismatch")
+
+	repoErr, ok := err.(RepositoryError)
+	assert.True(t, ok)
+	assert.Equal(t, ErrTypeConflict, repoErr.Type)
+	assert.Equal(t, "resource version mismatch", repoErr.Message)
+	assert.Nil(t, repoErr.Cause)
+}
+
+func TestIsAlreadyExists_EdgeCases(t *testing.T) {
+	t.Run("should return false for nil error", func(t *testing.T) {
+		assert.False(t, IsAlreadyExists(nil))
+	})
+
+	t.Run("should return false for standard errors", func(t *testing.T) {
+		err := errors.New("some standard error")
+		assert.False(t, IsAlreadyExists(err))
+	})
+
+	t.Run("should return false for different repository error types", func(t *testing.T) {
+		err := ErrInvalidInput("bad input")
+		assert.False(t, IsAlreadyExists(err))
+	})
+}
+
+func TestIsConflict_EdgeCases(t *testing.T) {
+	t.Run("should return false for nil error", func(t *testing.T) {
+		assert.False(t, IsConflict(nil))
+	})
+
+	t.Run("should return false for standard errors", func(t *testing.T) {
+		err := errors.New("some standard error")
+		assert.False(t, IsConflict(err))
+	})
+
+	t.Run("should return false for different repository error types", func(t *testing.T) {
+		err := ErrTimeout("timeout", nil)
+		assert.False(t, IsConflict(err))
+	})
+}
