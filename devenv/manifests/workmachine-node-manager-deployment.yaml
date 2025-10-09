@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: package-manager
+  name: workmachine-node-manager
   namespace: wm-user
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: package-manager
+      app: workmachine-node-manager
   template:
     metadata:
       labels:
-        app: package-manager
+        app: workmachine-node-manager
     spec:
-      serviceAccountName: package-manager
+      serviceAccountName: workmachine-node-manager
       initContainers:
       - name: init-nix-store
-        image: kloudlite/package-manager:latest
+        image: kloudlite/workmachine-node-manager:latest
         imagePullPolicy: Never
         command:
         - sh
@@ -34,8 +34,8 @@ spec:
         - name: nix-store-host
           mountPath: /host-nix
       containers:
-      - name: package-manager
-        image: kloudlite/package-manager:latest
+      - name: workmachine-node-manager
+        image: kloudlite/workmachine-node-manager:latest
         imagePullPolicy: Never
         env:
         - name: NAMESPACE

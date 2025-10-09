@@ -1,11 +1,11 @@
-# Package Manager Deployment Status
+# WorkMachine Node Manager Deployment Status
 
 ## ✅ Completed Components
 
 ### 1. **Code Implementation**
 - ✅ PackageRequest CRD types (`api/pkg/apis/packages/v1/`)
-- ✅ Package Manager application (`api/cmd/package-manager/main.go`)
-- ✅ Dockerfile for package-manager (`api/Dockerfile.package-manager`)
+- ✅ WorkMachine Node Manager application (`api/cmd/workmachine-node-manager/main.go`)
+- ✅ Dockerfile for workmachine-node-manager (`api/Dockerfile.workmachine-node-manager`)
 - ✅ WorkMachine controller updated to deploy DaemonSet (`api/internal/controllers/workmachine_controller.go:103-109`)
 - ✅ Workspace controller updated to create PackageRequests (`api/internal/controllers/workspace_controller.go`)
 - ✅ PackageRequest CRD registered in API scheme (`api/internal/controllers/manager.go:37`)
@@ -14,17 +14,17 @@
 - ✅ RBAC resources deployed (ServiceAccount, ClusterRole, ClusterRoleBinding)
 - ✅ PackageRequest CRD deployed to cluster
 - ✅ CRD manifests generated (`devenv/manifests/packages.kloudlite.io_packagerequests.yaml`)
-- ✅ RBAC manifest created (`devenv/manifests/package-manager-rbac.yaml`)
+- ✅ RBAC manifest created (`devenv/manifests/workmachine-node-manager-rbac.yaml`)
 
 ## 📋 Remaining Steps
 
-### ✅ 1. Build and Push Package Manager Image (COMPLETED)
+### ✅ 1. Build and Push WorkMachine Node Manager Image (COMPLETED)
 
 The Docker image has been built and loaded into k3s:
 ```bash
 cd /Users/karthik/dev/kl-workspace/kloudlite-v2/api
-docker build -t kloudlite/package-manager:latest -f Dockerfile.package-manager .
-docker save kloudlite/package-manager:latest | docker exec -i k3s-dev ctr images import -
+docker build -t kloudlite/workmachine-node-manager:latest -f Dockerfile.workmachine-node-manager .
+docker save kloudlite/workmachine-node-manager:latest | docker exec -i k3s-dev ctr images import -
 ```
 
 **Note**: For the dockerized k3s setup, the image is loaded using `docker exec -i k3s-dev ctr images import -` instead of `sudo k3s ctr images import -`.
@@ -108,9 +108,9 @@ kubectl --kubeconfig=devenv/k3s-config/k3s.yaml exec -it <workspace-pod> -n test
 │                             │                                │
 │                             ▼                                │
 │  ┌────────────────────────────────────────────────────────┐ │
-│  │    PackageManager Deployment (in targetNamespace)     │ │
+│  │  WorkMachine Node Manager Deployment (targetNamespace)│ │
 │  │ ┌─────────────────────────────────────────────────┐   │ │
-│  │ │  package-manager container                       │   │ │
+│  │ │  workmachine-node-manager container              │   │ │
 │  │ │  - Watches PackageRequest CRs (namespace-scoped) │   │ │
 │  │ │  - Installs packages using Nix                   │   │ │
 │  │ │  - Mounts hostPath: /var/lib/kloudlite/nix-store │   │ │
@@ -149,22 +149,22 @@ kubectl --kubeconfig=devenv/k3s-config/k3s.yaml exec -it <workspace-pod> -n test
 
 ### Implementation
 - `api/pkg/apis/packages/v1/packagerequest_types.go` - CRD type definitions
-- `api/cmd/package-manager/main.go` - DaemonSet controller application
-- `api/Dockerfile.package-manager` - Container image definition
+- `api/cmd/workmachine-node-manager/main.go` - DaemonSet controller application
+- `api/Dockerfile.workmachine-node-manager` - Container image definition
 - `api/internal/controllers/workmachine_controller.go:103-109` - DaemonSet deployment
 - `api/internal/controllers/workspace_controller.go` - PackageRequest creation
 
 ### Manifests
 - `devenv/manifests/packages.kloudlite.io_packagerequests.yaml` - CRD manifest
-- `devenv/manifests/package-manager-rbac.yaml` - RBAC resources
+- `devenv/manifests/workmachine-node-manager-rbac.yaml` - RBAC resources
 
 ## 🎯 How It Works
 
-1. **WorkMachine starts**: Creates package-manager Deployment in WorkMachine's targetNamespace
+1. **WorkMachine starts**: Creates workmachine-node-manager Deployment in WorkMachine's targetNamespace
 2. **Deployment pod starts**: Watches PackageRequest CRs in its namespace
 3. **Workspace created**: Controller reads `.kloudlite/packages.yaml` from workspace repo
 4. **PackageRequest created**: Workspace controller creates CR with package list in the namespace
-5. **Packages installed**: Package-manager pod sees the request, installs packages to `/var/lib/kloudlite/nix-store`
+5. **Packages installed**: WorkMachine node manager pod sees the request, installs packages to `/var/lib/kloudlite/nix-store`
 6. **Status updated**: PackageRequest status updated to "Ready" with installed package info
 7. **Workspace pod starts**: Only after PackageRequest is Ready, mounts nix-store and uses packages
 
