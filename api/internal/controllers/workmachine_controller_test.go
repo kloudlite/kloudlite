@@ -974,3 +974,427 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceNeedsDeletion(
 	// Should requeue while waiting for namespace deletion to complete
 	assert.Greater(t, result.RequeueAfter.Seconds(), float64(0))
 }
+
+// ========== SSH Authorization Tests ==========
+
+func TestWorkMachineReconciler_EnsureSSHDConfigMap_CreateNew(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHDConfigMap(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+
+	// Verify ConfigMap was created
+	configMap := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "sshd-config", Namespace: "test-namespace"}, configMap)
+	assert.NoError(t, err)
+	assert.Equal(t, "sshd-config", configMap.Name)
+	assert.Equal(t, "test-namespace", configMap.Namespace)
+	assert.Contains(t, configMap.Data, "sshd_config")
+
+	// Verify security settings in sshd_config
+	sshdConfig := configMap.Data["sshd_config"]
+	assert.Contains(t, sshdConfig, "PasswordAuthentication no")
+	assert.Contains(t, sshdConfig, "PubkeyAuthentication yes")
+	assert.Contains(t, sshdConfig, "PermitRootLogin no")
+	assert.Contains(t, sshdConfig, "AllowTcpForwarding yes")
+	assert.Contains(t, sshdConfig, "GatewayPorts yes")
+	assert.Contains(t, sshdConfig, "Port 2222")
+	assert.Contains(t, sshdConfig, "LogLevel VERBOSE")
+	assert.Contains(t, sshdConfig, "MaxAuthTries 3")
+	assert.Contains(t, sshdConfig, "StrictModes yes")
+}
+
+func TestWorkMachineReconciler_EnsureSSHDConfigMap_UpdateExisting(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+
+	// Create existing ConfigMap with old configuration
+	oldConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "sshd-config",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"sshd_config": "Port 22\nPasswordAuthentication yes\n",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(oldConfigMap).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHDConfigMap(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+
+	// Verify ConfigMap was updated with new configuration
+	configMap := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "sshd-config", Namespace: "test-namespace"}, configMap)
+	assert.NoError(t, err)
+
+	sshdConfig := configMap.Data["sshd_config"]
+	assert.Contains(t, sshdConfig, "PasswordAuthentication no")
+	assert.Contains(t, sshdConfig, "Port 2222")
+}
+
+func TestWorkMachineReconciler_EnsureSSHDConfigMap_Idempotent(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+
+	// Create ConfigMap first time
+	err := reconciler.ensureSSHDConfigMap(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+
+	// Get the ConfigMap
+	configMap1 := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "sshd-config", Namespace: "test-namespace"}, configMap1)
+	assert.NoError(t, err)
+
+	// Call again - should be idempotent
+	err = reconciler.ensureSSHDConfigMap(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+
+	// Verify ConfigMap unchanged
+	configMap2 := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "sshd-config", Namespace: "test-namespace"}, configMap2)
+	assert.NoError(t, err)
+	assert.Equal(t, configMap1.Data["sshd_config"], configMap2.Data["sshd_config"])
+}
+
+func TestWorkMachineReconciler_EnsureSSHAuthorizedKeysConfigMap_ValidKeys(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = machinesv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	validKey1 := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGeXX/b8g3Rjh+tuUZ8xV3PJe48XTZ2N22/0KAviTk3r user1@example.com"
+	validKey2 := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCz08rAfRWJIuG9snsCAgK30YJGrMBQpC1Yj41SbzHBWUvJK9awXsGrHplbZDWUSGbo8U1tMS6NEjtqOWCUX0sH2uTyLZfn5KdNwmHck+QGMC3hhJCw1T4enrISlxFWGt0XtwBP+XnIYPhsLLtA/0QtfGtIPt+fpTm38eRzsHfZu/9Z6Mw8MUZ8wMp+t6e0U8OHGT8AF70Njqj+OLh21UfhtLqoauCrVEYvoMbCK9oFxgy2uBRZ5SYQpunoZ98UON3Wcy2vgsIC8lCCQHopqRVZZbnRDg3N9ZZjG9vlJYCO9Md3JhLyhfaI/1HheJ/0PLKAM0h9P6RS+moqBfh8OEf23p+ZfIZ8xxVTTJ/qRPE1Jez/7x6FsLFv8BXXh/syyFKufowq16eERxtQKkN8JAuxxroG3ePt9plgf72sujJ1pz7UEDi8rRV78MZvmRT2Iq0rLKtoQOFGcQqGfAGiemOHZQaidq9TN+oLRrFDrgNvTJ9LB39AZwijkRroZJu/Ljk= user2@example.com"
+
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-machine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			SSHPublicKeys:   []string{validKey1, validKey2},
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(workMachine).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHAuthorizedKeysConfigMap(context.Background(), workMachine, logger)
+	assert.NoError(t, err)
+
+	// Verify ConfigMap was created with both keys
+	configMap := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-authorized-keys", Namespace: "test-namespace"}, configMap)
+	assert.NoError(t, err)
+
+	authorizedKeys := configMap.Data["authorized_keys"]
+	assert.Contains(t, authorizedKeys, validKey1)
+	assert.Contains(t, authorizedKeys, validKey2)
+	assert.Equal(t, 2, len([]byte(authorizedKeys))-len([]byte(validKey1+"\n"+validKey2))+2) // Verify newline separation
+}
+
+func TestWorkMachineReconciler_EnsureSSHAuthorizedKeysConfigMap_InvalidKeysSkipped(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = machinesv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	validKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGeXX/b8g3Rjh+tuUZ8xV3PJe48XTZ2N22/0KAviTk3r user@example.com"
+	invalidKey1 := "invalid-key-format"
+	invalidKey2 := "ssh-rsa INVALID_BASE64"
+
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-machine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			SSHPublicKeys:   []string{invalidKey1, validKey, invalidKey2},
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(workMachine).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHAuthorizedKeysConfigMap(context.Background(), workMachine, logger)
+	assert.NoError(t, err) // Should not fail, just skip invalid keys
+
+	// Verify ConfigMap contains only the valid key
+	configMap := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-authorized-keys", Namespace: "test-namespace"}, configMap)
+	assert.NoError(t, err)
+
+	authorizedKeys := configMap.Data["authorized_keys"]
+	assert.Contains(t, authorizedKeys, validKey)
+	assert.NotContains(t, authorizedKeys, invalidKey1)
+	assert.NotContains(t, authorizedKeys, invalidKey2)
+}
+
+func TestWorkMachineReconciler_EnsureSSHAuthorizedKeysConfigMap_EmptyKeysSkipped(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = machinesv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	validKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGeXX/b8g3Rjh+tuUZ8xV3PJe48XTZ2N22/0KAviTk3r user@example.com"
+
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-machine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			SSHPublicKeys:   []string{"", "   ", validKey, "\n", "\t"},
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(workMachine).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHAuthorizedKeysConfigMap(context.Background(), workMachine, logger)
+	assert.NoError(t, err)
+
+	// Verify ConfigMap contains only the valid key
+	configMap := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-authorized-keys", Namespace: "test-namespace"}, configMap)
+	assert.NoError(t, err)
+
+	authorizedKeys := configMap.Data["authorized_keys"]
+	assert.Equal(t, validKey, authorizedKeys) // Should be exactly the valid key, no extra whitespace
+}
+
+func TestWorkMachineReconciler_EnsureSSHAuthorizedKeysConfigMap_UpdateExisting(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = machinesv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	oldKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOldKey old@example.com"
+	newKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGeXX/b8g3Rjh+tuUZ8xV3PJe48XTZ2N22/0KAviTk3r new@example.com"
+
+	// Create existing ConfigMap with old key
+	existingConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": oldKey,
+		},
+	}
+
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-machine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			SSHPublicKeys:   []string{newKey},
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingConfigMap, workMachine).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHAuthorizedKeysConfigMap(context.Background(), workMachine, logger)
+	assert.NoError(t, err)
+
+	// Verify ConfigMap was updated with new key
+	configMap := &corev1.ConfigMap{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-authorized-keys", Namespace: "test-namespace"}, configMap)
+	assert.NoError(t, err)
+
+	authorizedKeys := configMap.Data["authorized_keys"]
+	assert.Contains(t, authorizedKeys, newKey)
+	assert.NotContains(t, authorizedKeys, oldKey)
+}
+
+func TestWorkMachineReconciler_EnsureSSHProxySecret_CreateNew(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHProxySecret(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+
+	// Verify Secret was created
+	secret := &corev1.Secret{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-proxy-key", Namespace: "test-namespace"}, secret)
+	assert.NoError(t, err)
+
+	// Verify Secret contains both private and public keys
+	assert.Contains(t, secret.Data, "private-key")
+	assert.Contains(t, secret.Data, "public-key")
+	assert.NotEmpty(t, secret.Data["private-key"])
+	assert.NotEmpty(t, secret.Data["public-key"])
+
+	// Verify public key starts with ssh-ed25519
+	publicKey := string(secret.Data["public-key"])
+	assert.True(t, len(publicKey) > 0)
+	assert.Contains(t, publicKey, "ssh-ed25519")
+}
+
+func TestWorkMachineReconciler_EnsureSSHProxySecret_ReuseExisting(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+
+	existingPrivateKey := []byte("-----BEGIN OPENSSH PRIVATE KEY-----\ntest-key\n-----END OPENSSH PRIVATE KEY-----")
+	existingPublicKey := []byte("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest test@example.com")
+
+	existingSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-proxy-key",
+			Namespace: "test-namespace",
+		},
+		Data: map[string][]byte{
+			"private-key": existingPrivateKey,
+			"public-key":  existingPublicKey,
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensureSSHProxySecret(context.Background(), "test-namespace", logger)
+	assert.NoError(t, err)
+
+	// Verify Secret was NOT regenerated
+	secret := &corev1.Secret{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-proxy-key", Namespace: "test-namespace"}, secret)
+	assert.NoError(t, err)
+
+	assert.Equal(t, existingPrivateKey, secret.Data["private-key"])
+	assert.Equal(t, existingPublicKey, secret.Data["public-key"])
+}
+
+func TestWorkMachineReconciler_EnsurePackageManagerDeployment_SSHEnvVars(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create SSH proxy secret first
+	sshSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-proxy-key",
+			Namespace: "test-namespace",
+		},
+		Data: map[string][]byte{
+			"private-key": []byte("test-private-key"),
+			"public-key":  []byte("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest"),
+		},
+	}
+
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-machine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sshSecret, workMachine).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensurePackageManagerDeployment(context.Background(), workMachine, logger)
+	assert.NoError(t, err)
+
+	// Verify Deployment was created
+	deployment := &appsv1.Deployment{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "workmachine-host-manager", Namespace: "test-namespace"}, deployment)
+	assert.NoError(t, err)
+
+	// Find ssh-server container
+	var sshServerContainer *corev1.Container
+	for i := range deployment.Spec.Template.Spec.Containers {
+		if deployment.Spec.Template.Spec.Containers[i].Name == "ssh-server" {
+			sshServerContainer = &deployment.Spec.Template.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, sshServerContainer, "ssh-server container not found")
+
+	// Verify env vars use constants
+	envMap := make(map[string]string)
+	for _, env := range sshServerContainer.Env {
+		envMap[env.Name] = env.Value
+	}
+
+	assert.Equal(t, SSHUserUID, envMap["PUID"])
+	assert.Equal(t, SSHUserGID, envMap["PGID"])
+	assert.Equal(t, SSHUserName, envMap["USER_NAME"])
+	assert.Equal(t, "false", envMap["PASSWORD_ACCESS"])
+	assert.Equal(t, "true", envMap["TCP_FORWARDING"])
+
+	// Verify sshd-config volume mount
+	var sshdConfigMount *corev1.VolumeMount
+	for i := range sshServerContainer.VolumeMounts {
+		if sshServerContainer.VolumeMounts[i].Name == "sshd-config" {
+			sshdConfigMount = &sshServerContainer.VolumeMounts[i]
+			break
+		}
+	}
+	assert.NotNil(t, sshdConfigMount, "sshd-config volume mount not found")
+	assert.Equal(t, "/etc/ssh/sshd_config", sshdConfigMount.MountPath)
+	assert.Equal(t, "sshd_config", sshdConfigMount.SubPath)
+	assert.True(t, sshdConfigMount.ReadOnly)
+}
