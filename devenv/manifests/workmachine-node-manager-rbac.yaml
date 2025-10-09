@@ -2,18 +2,18 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: package-manager
+  name: workmachine-node-manager
   namespace: wm-user
   labels:
-    app: package-manager
+    app: workmachine-node-manager
     kloudlite.io/package-mgmt: "true"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: package-manager-role
+  name: workmachine-node-manager-role
   labels:
-    app: package-manager
+    app: workmachine-node-manager
     kloudlite.io/package-mgmt: "true"
 rules:
   # PackageRequest permissions
@@ -37,15 +37,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: package-manager-rolebinding
+  name: workmachine-node-manager-rolebinding
   labels:
-    app: package-manager
+    app: workmachine-node-manager
     kloudlite.io/package-mgmt: "true"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: package-manager-role
+  name: workmachine-node-manager-role
 subjects:
   - kind: ServiceAccount
-    name: package-manager
+    name: workmachine-node-manager
     namespace: wm-user

@@ -112,9 +112,9 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	// Ensure RBAC resources exist for package-manager
+	// Ensure RBAC resources exist for workmachine-node-manager
 	if err := r.ensurePackageManagerRBAC(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
-		logger.Error(err, "Failed to ensure package-manager RBAC")
+		logger.Error(err, "Failed to ensure workmachine-node-manager RBAC")
 		return ctrl.Result{}, err
 	}
 
@@ -170,7 +170,7 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Ensure package manager deployment exists (regardless of machine state)
 	if err := r.ensurePackageManagerDeployment(ctx, workMachine, logger); err != nil {
-		logger.Error(err, "Failed to ensure package-manager deployment")
+		logger.Error(err, "Failed to ensure workmachine-node-manager deployment")
 		return ctrl.Result{}, err
 	}
 
@@ -387,12 +387,12 @@ func (r *WorkMachineReconciler) ensureNamespace(ctx context.Context, namespaceNa
 	return nil
 }
 
-// ensurePackageManagerRBAC ensures RBAC resources for package-manager exist in the namespace
+// ensurePackageManagerRBAC ensures RBAC resources for workmachine-node-manager exist in the namespace
 func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, namespace string, logger logr.Logger) error {
 	// Create ServiceAccount
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "package-manager",
+			Name:      "workmachine-node-manager",
 			Namespace: namespace,
 		},
 	}
@@ -406,13 +406,13 @@ func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, na
 		if err := r.Create(ctx, sa); err != nil && !errors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create service account: %w", err)
 		}
-		logger.Info("Created ServiceAccount for package-manager", "namespace", namespace)
+		logger.Info("Created ServiceAccount for workmachine-node-manager", "namespace", namespace)
 	}
 
 	// Create Role with PackageRequest permissions
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "package-manager",
+			Name:      "workmachine-node-manager",
 			Namespace: namespace,
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -439,26 +439,26 @@ func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, na
 		if err := r.Create(ctx, role); err != nil && !errors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create role: %w", err)
 		}
-		logger.Info("Created Role for package-manager", "namespace", namespace)
+		logger.Info("Created Role for workmachine-node-manager", "namespace", namespace)
 	}
 
 	// Create RoleBinding
 	rb := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "package-manager",
+			Name:      "workmachine-node-manager",
 			Namespace: namespace,
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      "package-manager",
+				Name:      "workmachine-node-manager",
 				Namespace: namespace,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "Role",
-			Name:     "package-manager",
+			Name:     "workmachine-node-manager",
 		},
 	}
 
@@ -472,7 +472,7 @@ func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, na
 		if err := r.Create(ctx, rb); err != nil && !errors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create role binding: %w", err)
 		}
-		logger.Info("Created RoleBinding for package-manager", "namespace", namespace)
+		logger.Info("Created RoleBinding for workmachine-node-manager", "namespace", namespace)
 	}
 
 	return nil
@@ -769,7 +769,7 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 		return fmt.Errorf("failed to check workmachine-host-manager deployment: %w", err)
 	}
 
-	// Get SSH public key from secret for package-manager env var
+	// Get SSH public key from secret for workmachine-node-manager env var
 	sshSecret := &corev1.Secret{}
 	if err := r.Get(ctx, client.ObjectKey{Name: "ssh-proxy-key", Namespace: namespace}, sshSecret); err != nil {
 		return fmt.Errorf("failed to get ssh-proxy-key secret: %w", err)
@@ -805,7 +805,7 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 					},
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName: "package-manager",
+					ServiceAccountName: "workmachine-node-manager",
 					InitContainers: []corev1.Container{
 						{
 							Name:            "setup-ssh-key",
@@ -831,8 +831,8 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 					},
 					Containers: []corev1.Container{
 						{
-							Name:            "package-manager",
-							Image:           "kloudlite/package-manager:latest",
+							Name:            "workmachine-node-manager",
+							Image:           "kloudlite/workmachine-node-manager:latest",
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &privileged,

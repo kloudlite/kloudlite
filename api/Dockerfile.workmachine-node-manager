@@ -7,8 +7,8 @@ RUN go mod download
 
 COPY . .
 
-# Build the package-manager binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o package-manager ./cmd/package-manager
+# Build the workmachine-node-manager binary
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o workmachine-node-manager ./cmd/workmachine-node-manager
 
 # Final image
 FROM debian:bookworm-slim
@@ -39,8 +39,8 @@ ENV PATH="/root/.nix-profile/bin:${PATH}"
 # Create nix store directory
 RUN mkdir -p /var/lib/kloudlite/nix-store && chmod 755 /var/lib/kloudlite/nix-store
 
-# Copy the package-manager binary
-COPY --from=builder /workspace/package-manager /usr/local/bin/package-manager
+# Copy the workmachine-node-manager binary
+COPY --from=builder /workspace/workmachine-node-manager /usr/local/bin/workmachine-node-manager
 
-# Run package-manager
-CMD ["/usr/local/bin/package-manager"]
+# Run workmachine-node-manager
+CMD ["/usr/local/bin/workmachine-node-manager"]
