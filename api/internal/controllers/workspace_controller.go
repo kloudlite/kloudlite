@@ -488,62 +488,6 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 	return nil
 }
 
-// ensurePVC creates or ensures the PersistentVolumeClaim exists for the workspace
-func (r *WorkspaceReconciler) ensurePVC(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
-	pvcName := fmt.Sprintf("workspace-%s", workspace.Name)
-
-	// Check if PVC exists
-	pvc := &corev1.PersistentVolumeClaim{}
-	err := r.Get(ctx, client.ObjectKey{Name: pvcName, Namespace: workspace.Namespace}, pvc)
-
-	if apierrors.IsNotFound(err) {
-		// Set default storage size if not specified
-		storageSize := workspace.Spec.StorageSize
-		if storageSize == "" {
-			storageSize = "10Gi"
-		}
-
-		// Create new PVC
-		pvc = &corev1.PersistentVolumeClaim{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      pvcName,
-				Namespace: workspace.Namespace,
-			},
-			Spec: corev1.PersistentVolumeClaimSpec{
-				AccessModes: []corev1.PersistentVolumeAccessMode{
-					corev1.ReadWriteOnce,
-				},
-				Resources: corev1.VolumeResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse(storageSize),
-					},
-				},
-			},
-		}
-
-		// Set storage class if specified
-		if workspace.Spec.StorageClassName != nil {
-			pvc.Spec.StorageClassName = workspace.Spec.StorageClassName
-		}
-
-		// Set owner reference
-		if err := controllerutil.SetControllerReference(workspace, pvc, r.Scheme); err != nil {
-			return fmt.Errorf("failed to set owner reference: %w", err)
-		}
-
-		if err := r.Create(ctx, pvc); err != nil {
-			return fmt.Errorf("failed to create PVC: %w", err)
-		}
-		logger.Info("Created PVC", zap.String("name", pvcName), zap.String("size", storageSize))
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to get PVC: %w", err)
-	}
-
-	// PVC exists
-	logger.Info("PVC already exists", zap.String("name", pvcName))
-	return nil
-}
 
 // syncPackageStatus syncs package installation status from PackageRequest to Workspace
 func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
@@ -572,6 +516,79 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 	return nil
 }
 
+// ensureWorkspaceService ensures a Service is created for the workspace
+func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
+	serviceName := fmt.Sprintf("workspace-%s", workspace.Name)
+
+	// Check if Service exists
+	svc := &corev1.Service{}
+	err := r.Get(ctx, client.ObjectKey{Name: serviceName, Namespace: workspace.Namespace}, svc)
+
+	if apierrors.IsNotFound(err) {
+		// Create new Service
+		svc = &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      serviceName,
+				Namespace: workspace.Namespace,
+				Labels: map[string]string{
+					"app":       "workspace",
+					"workspace": workspace.Name,
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app":       "workspace",
+					"workspace": workspace.Name,
+				},
+				Ports: []corev1.ServicePort{
+					{
+						Name:       "ssh",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       22,
+						TargetPort: intstr.FromInt(22),
+					},
+					{
+						Name:       "code-server",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       8080,
+						TargetPort: intstr.FromInt(8080),
+					},
+					{
+						Name:       "ttyd",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       7681,
+						TargetPort: intstr.FromInt(7681),
+					},
+					{
+						Name:       "vscode-tunnel",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       8000,
+						TargetPort: intstr.FromInt(8000),
+					},
+				},
+				Type: corev1.ServiceTypeClusterIP,
+			},
+		}
+
+		// Set owner reference
+		if err := controllerutil.SetControllerReference(workspace, svc, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference: %w", err)
+		}
+
+		if err := r.Create(ctx, svc); err != nil {
+			return fmt.Errorf("failed to create Service: %w", err)
+		}
+		logger.Info("Created Service", zap.String("name", serviceName))
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to get Service: %w", err)
+	}
+
+	// Service exists, no need to update
+	logger.Info("Service already exists", zap.String("name", serviceName))
+	return nil
+}
+
 // handleActiveWorkspace ensures the workspace pod is running
 func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
 	// Check and suspend idle workspace if auto-stop is enabled
@@ -589,19 +606,19 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		return reconcile.Result{}, err
 	}
 
+	// Ensure Service is created for workspace SSHD
+	if err := r.ensureWorkspaceService(ctx, workspace, logger); err != nil {
+		logger.Error("Failed to ensure Service", zap.Error(err))
+		workspace.Status.Phase = "Failed"
+		workspace.Status.Message = fmt.Sprintf("Failed to create Service: %v", err)
+		r.updateStatusPreservingPackages(ctx, workspace)
+		return reconcile.Result{}, err
+	}
+
 	// Sync package installation status from PackageRequest
 	if err := r.syncPackageStatus(ctx, workspace, logger); err != nil {
 		logger.Warn("Failed to sync package status", zap.Error(err))
 		// Don't fail the reconciliation, just log the warning
-	}
-
-	// Ensure PVC exists
-	if err := r.ensurePVC(ctx, workspace, logger); err != nil {
-		logger.Error("Failed to ensure PVC", zap.Error(err))
-		workspace.Status.Phase = "Failed"
-		workspace.Status.Message = fmt.Sprintf("Failed to create PVC: %v", err)
-		r.updateStatusPreservingPackages(ctx, workspace)
-		return reconcile.Result{}, err
 	}
 
 	// Check if pod already exists
@@ -817,6 +834,23 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 			},
 		},
 		Spec: corev1.PodSpec{
+			InitContainers: []corev1.Container{
+				{
+					Name:  "init-workspace-dir",
+					Image: "alpine:latest",
+					Command: []string{
+						"sh",
+						"-c",
+						fmt.Sprintf("mkdir -p /home/kl/workspaces/%s && chown 1001:1001 /home/kl/workspaces/%s", workspace.Name, workspace.Name),
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "kl-home",
+							MountPath: "/home/kl",
+						},
+					},
+				},
+			},
 			Containers: []corev1.Container{
 				// Comprehensive workspace container with all services
 				{
@@ -847,11 +881,8 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 							Protocol:      corev1.ProtocolTCP,
 						},
 					},
+					WorkingDir: fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name),
 					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "workspace-data",
-							MountPath: workspace.Spec.WorkspacePath,
-						},
 						{
 							Name:      "nix-store",
 							MountPath: "/nix",
@@ -886,14 +917,6 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 				},
 			},
 			Volumes: []corev1.Volume{
-				{
-					Name: "workspace-data",
-					VolumeSource: corev1.VolumeSource{
-						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: fmt.Sprintf("workspace-%s", workspace.Name),
-						},
-					},
-				},
 				{
 					Name: "nix-store",
 					VolumeSource: corev1.VolumeSource{
@@ -960,6 +983,97 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	return reconcile.Result{}, nil
 }
 
+// deleteHostDirectory deletes a directory on the host by creating a temporary pod
+// that mounts the host filesystem and removes the directory
+func (r *WorkspaceReconciler) deleteHostDirectory(ctx context.Context, hostPath string, logger *zap.Logger) error {
+	// Create a privileged pod to delete the directory on the host
+	// We use a Job-like approach with a one-off pod
+	cleanupPodName := fmt.Sprintf("cleanup-%s", strings.ReplaceAll(hostPath, "/", "-"))
+	if len(cleanupPodName) > 63 {
+		// Kubernetes name limit is 63 characters
+		cleanupPodName = cleanupPodName[:63]
+	}
+
+	cleanupPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cleanupPodName,
+			Namespace: "default", // Use default namespace for cleanup pods
+			Labels: map[string]string{
+				"app":  "workspace-cleanup",
+				"type": "temporary",
+			},
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: corev1.RestartPolicyNever,
+			Containers: []corev1.Container{
+				{
+					Name:    "cleanup",
+					Image:   "alpine:latest",
+					Command: []string{"rm", "-rf", hostPath},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "host-home",
+							MountPath: "/home/kl",
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: "host-home",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/home/kl",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	logger.Info("Creating cleanup pod to delete workspace directory",
+		zap.String("pod", cleanupPodName),
+		zap.String("hostPath", hostPath),
+	)
+
+	// Create the cleanup pod
+	if err := r.Create(ctx, cleanupPod); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			logger.Info("Cleanup pod already exists, deleting old one first")
+			if err := r.Delete(ctx, cleanupPod); err != nil && !apierrors.IsNotFound(err) {
+				return fmt.Errorf("failed to delete existing cleanup pod: %w", err)
+			}
+			// Wait a bit and retry
+			time.Sleep(2 * time.Second)
+			if err := r.Create(ctx, cleanupPod); err != nil {
+				return fmt.Errorf("failed to create cleanup pod after retry: %w", err)
+			}
+		} else {
+			return fmt.Errorf("failed to create cleanup pod: %w", err)
+		}
+	}
+
+	// Wait for the pod to complete (with timeout)
+	// We don't need to wait in the reconciliation loop, just log it
+	logger.Info("Cleanup pod created, workspace directory deletion scheduled",
+		zap.String("pod", cleanupPodName),
+		zap.String("hostPath", hostPath),
+	)
+
+	// Schedule cleanup pod deletion after a delay (5 minutes) in a goroutine
+	go func() {
+		time.Sleep(5 * time.Minute)
+		if err := r.Delete(context.Background(), cleanupPod); err != nil && !apierrors.IsNotFound(err) {
+			logger.Warn("Failed to delete cleanup pod",
+				zap.String("pod", cleanupPodName),
+				zap.Error(err),
+			)
+		}
+	}()
+
+	return nil
+}
+
 // handleDeletion cleans up workspace resources when being deleted
 func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
 	if !controllerutil.ContainsFinalizer(workspace, workspaceFinalizer) {
@@ -982,6 +1096,17 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		return reconcile.Result{}, err
 	}
 
+	// Delete the workspace directory on the host
+	workspaceHostPath := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name)
+	if err := r.deleteHostDirectory(ctx, workspaceHostPath, logger); err != nil {
+		logger.Warn("Failed to delete workspace host directory",
+			zap.String("path", workspaceHostPath),
+			zap.Error(err),
+		)
+		// Don't fail the deletion if we can't clean up the directory
+		// This allows workspace deletion to proceed even if cleanup fails
+	}
+
 	// Remove finalizer
 	controllerutil.RemoveFinalizer(workspace, workspaceFinalizer)
 	if err := r.Update(ctx, workspace); err != nil {
@@ -998,7 +1123,6 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&workspacesv1.Workspace{}).
 		Owns(&corev1.Pod{}).
-		Owns(&corev1.PersistentVolumeClaim{}).
 		Owns(&packagesv1.PackageRequest{}).
 		Complete(r)
 }

@@ -10,10 +10,12 @@ services:
       - k3s-data:/var/lib/rancher/k3s
       - k3s-config:/etc/rancher/k3s
       - ../api/test-workspaces:/test-workspaces
+      - kl-workspaces-home:/home/kl
     ports:
       - "6443:6443"
       - "80:80"
       - "443:443"
+      - "30022:30022"
     command:
       - server
       - --node-name
@@ -145,3 +147,4 @@ volumes:
   k3s-data:
   k3s-config:
   webhook-certs:
+  kl-workspaces-home:

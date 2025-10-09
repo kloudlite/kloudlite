@@ -129,7 +129,7 @@ export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceCon
             .map((option) => (
               <div
                 key={option.id}
-                className="bg-card rounded-lg border p-4 hover:border-primary/50 transition-colors"
+                className="bg-card rounded-lg border p-4 hover:border-border/80 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -182,7 +182,7 @@ export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceCon
             .map((option) => (
               <div
                 key={option.id}
-                className="bg-card rounded-lg border p-4 hover:border-primary/50 transition-colors"
+                className="bg-card rounded-lg border p-4 hover:border-border/80 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
