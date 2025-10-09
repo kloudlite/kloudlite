@@ -2,12 +2,17 @@ package controllers
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/pem"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	"golang.org/x/crypto/ssh"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -27,6 +32,46 @@ type WorkMachineReconciler struct {
 }
 
 const WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
+
+// SSH Configuration Constants
+const (
+	// SSHUserUID is the UID for the SSH server user
+	SSHUserUID = "1000"
+	// SSHUserGID is the GID for the SSH server user
+	SSHUserGID = "1000"
+	// SSHUserName is the username for the SSH server
+	SSHUserName = "kloudlite"
+)
+
+// SSH Jump Host Architecture
+//
+// This controller implements a secure SSH jump host (bastion) pattern for accessing workspaces:
+//
+// Authentication Flow:
+// 1. User authenticates to jump host using their public key (from WorkMachine.Spec.SSHPublicKeys)
+// 2. Jump host forwards TCP connection to workspace
+// 3. Workspace authenticates jump host using SSH proxy key pair
+//
+// Jump Host (workmachine-host-manager):
+// - Runs OpenSSH server on port 2222
+// - Authorizes users via ssh-authorized-keys ConfigMap (user keys only)
+// - Has TCP forwarding enabled (AllowTcpForwarding yes)
+// - Does NOT authenticate to workspaces (jump hosts work by TCP forwarding)
+// - Password authentication disabled for security
+//
+// Workspaces:
+// - Run OpenSSH servers that authorize the jump host's SSH proxy public key
+// - Jump host uses SSH proxy private key to authenticate to workspaces
+//
+// Security:
+// - All SSH keys are validated using ssh.ParseAuthorizedKey() before use
+// - Password authentication is disabled (PasswordAuthentication no)
+// - Only public key authentication is allowed
+// - Jump host runs as non-privileged user (UID/GID 1000)
+//
+// ConfigMaps:
+// - ssh-authorized-keys: Contains user public keys for jump host authentication
+// - sshd-config: Contains OpenSSH server configuration with security hardening
 
 // Reconcile handles WorkMachine CR reconciliation
 func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -70,6 +115,24 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Ensure RBAC resources exist for package-manager
 	if err := r.ensurePackageManagerRBAC(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
 		logger.Error(err, "Failed to ensure package-manager RBAC")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure SSH proxy secret exists
+	if err := r.ensureSSHProxySecret(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
+		logger.Error(err, "Failed to ensure SSH proxy secret")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure SSH authorized_keys ConfigMap exists
+	if err := r.ensureSSHAuthorizedKeysConfigMap(ctx, workMachine, logger); err != nil {
+		logger.Error(err, "Failed to ensure SSH authorized_keys ConfigMap")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure sshd_config ConfigMap exists
+	if err := r.ensureSSHDConfigMap(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
+		logger.Error(err, "Failed to ensure sshd_config ConfigMap")
 		return ctrl.Result{}, err
 	}
 
@@ -415,11 +478,287 @@ func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, na
 	return nil
 }
 
-// ensurePackageManagerDeployment ensures the package-manager deployment exists in the WorkMachine's namespace
+// ensureSSHProxySecret ensures the SSH key secret exists for workspace access
+func (r *WorkMachineReconciler) ensureSSHProxySecret(ctx context.Context, namespace string, logger logr.Logger) error {
+	secretName := "ssh-proxy-key"
+	secret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
+
+	if err == nil {
+		// Secret already exists
+		return nil
+	}
+
+	if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to check ssh-proxy-key secret: %w", err)
+	}
+
+	// Generate Ed25519 key pair
+	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("failed to generate Ed25519 key: %w", err)
+	}
+
+	// Convert to SSH format for public key
+	sshPublicKey, err := ssh.NewPublicKey(publicKey)
+	if err != nil {
+		return fmt.Errorf("failed to create SSH public key: %w", err)
+	}
+	publicKeyBytes := ssh.MarshalAuthorizedKey(sshPublicKey)
+
+	// Convert to OpenSSH format for private key
+	pemBlock := &pem.Block{
+		Type:  "OPENSSH PRIVATE KEY",
+		Bytes: marshalED25519PrivateKey(privateKey),
+	}
+	privateKeyBytes := pem.EncodeToMemory(pemBlock)
+
+	// Create secret
+	secret = &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kloudlite.io/ssh-proxy": "true",
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"public-key":  publicKeyBytes,
+			"private-key": privateKeyBytes,
+		},
+	}
+
+	if err := r.Create(ctx, secret); err != nil {
+		return fmt.Errorf("failed to create ssh-proxy-key secret: %w", err)
+	}
+
+	logger.Info("Created SSH proxy key secret", "namespace", namespace)
+	return nil
+}
+
+// marshalED25519PrivateKey marshals Ed25519 private key to OpenSSH format
+func marshalED25519PrivateKey(key ed25519.PrivateKey) []byte {
+	// OpenSSH key format
+	magic := []byte("openssh-key-v1\x00")
+
+	var w sshBuffer
+	w.writeString("none") // cipher name
+	w.writeString("none") // kdf name
+	w.writeString("")     // kdf options
+	w.writeUint32(1)      // number of keys
+
+	// Public key
+	pubKey := key.Public().(ed25519.PublicKey)
+	var pubW sshBuffer
+	pubW.writeString("ssh-ed25519")
+	pubW.writeBytes(pubKey)
+	w.writeBytes(pubW.bytes())
+
+	// Private key
+	var privW sshBuffer
+	privW.writeUint32(0) // check int 1
+	privW.writeUint32(0) // check int 2
+	privW.writeString("ssh-ed25519")
+	privW.writeBytes(pubKey)
+	privW.writeBytes(append(key.Seed(), pubKey...))
+	privW.writeString("") // comment
+
+	// Add padding
+	for i := 0; i < (8 - (len(privW.bytes()) % 8)); i++ {
+		privW.writeByte(byte(i + 1))
+	}
+
+	w.writeBytes(privW.bytes())
+
+	return append(magic, w.bytes()...)
+}
+
+// sshBuffer helper for SSH key encoding
+type sshBuffer struct {
+	buf []byte
+}
+
+func (w *sshBuffer) writeUint32(v uint32) {
+	w.buf = append(w.buf, byte(v>>24), byte(v>>16), byte(v>>8), byte(v))
+}
+
+func (w *sshBuffer) writeString(s string) {
+	w.writeBytes([]byte(s))
+}
+
+func (w *sshBuffer) writeBytes(b []byte) {
+	w.writeUint32(uint32(len(b)))
+	w.buf = append(w.buf, b...)
+}
+
+func (w *sshBuffer) writeByte(b byte) {
+	w.buf = append(w.buf, b)
+}
+
+func (w *sshBuffer) bytes() []byte {
+	return w.buf
+}
+
+// ensureSSHAuthorizedKeysConfigMap ensures the SSH authorized_keys ConfigMap exists
+func (r *WorkMachineReconciler) ensureSSHAuthorizedKeysConfigMap(ctx context.Context, workMachine *machinesv1.WorkMachine, logger logr.Logger) error {
+	namespace := workMachine.Spec.TargetNamespace
+	configMapName := "ssh-authorized-keys"
+
+	// Build authorized_keys content with user keys from WorkMachine spec
+	// Validate each SSH key before adding to authorized_keys
+	var authorizedKeys strings.Builder
+	first := true
+	for i, key := range workMachine.Spec.SSHPublicKeys {
+		trimmedKey := strings.TrimSpace(key)
+		if trimmedKey == "" {
+			continue
+		}
+
+		// Validate SSH key format using golang.org/x/crypto/ssh
+		if _, _, _, _, err := ssh.ParseAuthorizedKey([]byte(trimmedKey)); err != nil {
+			logger.Error(err, "Invalid SSH public key format", "index", i, "key", trimmedKey[:min(50, len(trimmedKey))]+"...")
+			continue // Skip invalid keys but don't fail the entire reconciliation
+		}
+
+		if !first {
+			authorizedKeys.WriteString("\n")
+		}
+		authorizedKeys.WriteString(trimmedKey)
+		first = false
+	}
+
+	// Check if ConfigMap exists
+	configMap := &corev1.ConfigMap{}
+	err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, configMap)
+
+	if err == nil {
+		// ConfigMap exists, update if needed
+		if configMap.Data["authorized_keys"] != authorizedKeys.String() {
+			configMap.Data["authorized_keys"] = authorizedKeys.String()
+			if err := r.Update(ctx, configMap); err != nil {
+				return fmt.Errorf("failed to update ssh-authorized-keys configmap: %w", err)
+			}
+			logger.Info("Updated SSH authorized_keys ConfigMap", "namespace", namespace)
+		}
+		return nil
+	}
+
+	if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to check ssh-authorized-keys configmap: %w", err)
+	}
+
+	// Create ConfigMap with authorized_keys
+	configMap = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kloudlite.io/ssh-config": "true",
+			},
+		},
+		Data: map[string]string{
+			"authorized_keys": authorizedKeys.String(),
+		},
+	}
+
+	if err := r.Create(ctx, configMap); err != nil {
+		return fmt.Errorf("failed to create ssh-authorized-keys configmap: %w", err)
+	}
+
+	logger.Info("Created SSH authorized_keys ConfigMap", "namespace", namespace)
+	return nil
+}
+
+// ensureSSHDConfigMap ensures the sshd_config ConfigMap exists with secure configuration
+// This ConfigMap contains the OpenSSH server configuration for the jump host
+func (r *WorkMachineReconciler) ensureSSHDConfigMap(ctx context.Context, namespace string, logger logr.Logger) error {
+	configMapName := "sshd-config"
+
+	// Define secure sshd_config content
+	sshdConfig := `# OpenSSH Server Configuration for WorkMachine Jump Host
+# This configuration enables secure SSH access with jump host (bastion) functionality
+
+# Network Configuration
+Port 2222
+ListenAddress 0.0.0.0
+
+# Authentication
+PermitRootLogin no
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+
+# SSH Jump Host / Bastion Configuration
+AllowTcpForwarding yes
+GatewayPorts yes
+X11Forwarding no
+
+# Security
+StrictModes yes
+MaxAuthTries 3
+MaxSessions 10
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Environment
+AcceptEnv LANG LC_*
+
+# Subsystems
+Subsystem sftp /usr/lib/ssh/sftp-server
+`
+
+	// Check if ConfigMap exists
+	configMap := &corev1.ConfigMap{}
+	err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, configMap)
+
+	if err == nil {
+		// ConfigMap exists, update if needed
+		if configMap.Data["sshd_config"] != sshdConfig {
+			configMap.Data["sshd_config"] = sshdConfig
+			if err := r.Update(ctx, configMap); err != nil {
+				return fmt.Errorf("failed to update sshd-config configmap: %w", err)
+			}
+			logger.Info("Updated sshd_config ConfigMap", "namespace", namespace)
+		}
+		return nil
+	}
+
+	if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to check sshd-config configmap: %w", err)
+	}
+
+	// Create ConfigMap with sshd_config
+	configMap = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kloudlite.io/ssh-config": "true",
+			},
+		},
+		Data: map[string]string{
+			"sshd_config": sshdConfig,
+		},
+	}
+
+	if err := r.Create(ctx, configMap); err != nil {
+		return fmt.Errorf("failed to create sshd-config configmap: %w", err)
+	}
+
+	logger.Info("Created sshd_config ConfigMap", "namespace", namespace)
+	return nil
+}
+
+// ensurePackageManagerDeployment ensures the workmachine-host-manager deployment exists in the WorkMachine's namespace
 func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Context, workMachine *machinesv1.WorkMachine, logger logr.Logger) error {
 	namespace := workMachine.Spec.TargetNamespace
+	deploymentName := "workmachine-host-manager"
 	deployment := &appsv1.Deployment{}
-	err := r.Get(ctx, client.ObjectKey{Name: "package-manager", Namespace: namespace}, deployment)
+	err := r.Get(ctx, client.ObjectKey{Name: deploymentName, Namespace: namespace}, deployment)
 
 	if err == nil {
 		// Deployment already exists
@@ -427,8 +766,15 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 	}
 
 	if !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to check package-manager deployment: %w", err)
+		return fmt.Errorf("failed to check workmachine-host-manager deployment: %w", err)
 	}
+
+	// Get SSH public key from secret for package-manager env var
+	sshSecret := &corev1.Secret{}
+	if err := r.Get(ctx, client.ObjectKey{Name: "ssh-proxy-key", Namespace: namespace}, sshSecret); err != nil {
+		return fmt.Errorf("failed to get ssh-proxy-key secret: %w", err)
+	}
+	sshPublicKey := string(sshSecret.Data["public-key"])
 
 	// Create the Deployment
 	hostPathDirectoryOrCreate := corev1.HostPathDirectoryOrCreate
@@ -437,10 +783,10 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 
 	deployment = &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "package-manager",
+			Name:      deploymentName,
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app":                       "package-manager",
+				"app":                       "workmachine-host-manager",
 				"kloudlite.io/package-mgmt": "true",
 				"kloudlite.io/workmachine":  workMachine.Name,
 			},
@@ -449,17 +795,40 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": "package-manager",
+					"app": "workmachine-host-manager",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "package-manager",
+						"app": "workmachine-host-manager",
 					},
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: "package-manager",
+					InitContainers: []corev1.Container{
+						{
+							Name:            "setup-ssh-key",
+							Image:           "busybox:latest",
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Command: []string{
+								"sh",
+								"-c",
+								fmt.Sprintf("cp /ssh-key-source/private-key /ssh-key-target/id_ed25519 && chown %s:%s /ssh-key-target/id_ed25519 && chmod 600 /ssh-key-target/id_ed25519", SSHUserUID, SSHUserGID),
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "ssh-proxy-key",
+									MountPath: "/ssh-key-source",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ssh-key-volume",
+									MountPath: "/ssh-key-target",
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:            "package-manager",
@@ -473,11 +842,81 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 									Name:  "NAMESPACE",
 									Value: namespace,
 								},
+								{
+									Name:  "SSH_PROXY_PUBLIC_KEY",
+									Value: sshPublicKey,
+								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "nix-store",
 									MountPath: "/var/lib/kloudlite/nix-store",
+								},
+								{
+									Name:      "workspace-homes",
+									MountPath: "/var/lib/kloudlite/workspace-homes",
+								},
+							},
+						},
+						{
+							Name:            "ssh-server",
+							Image:           "linuxserver/openssh-server:latest",
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "PUID",
+									Value: SSHUserUID,
+								},
+								{
+									Name:  "PGID",
+									Value: SSHUserGID,
+								},
+								{
+									Name:  "PASSWORD_ACCESS",
+									Value: "false",
+								},
+								{
+									Name:  "USER_PASSWORD",
+									Value: "kloudlite123",
+								},
+								{
+									Name:  "USER_NAME",
+									Value: SSHUserName,
+								},
+								{
+									Name:  "SUDO_ACCESS",
+									Value: "false",
+								},
+								{
+									Name:  "TCP_FORWARDING",
+									Value: "true",
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "ssh",
+									ContainerPort: 2222,
+									Protocol:      corev1.ProtocolTCP,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "ssh-key-volume",
+									MountPath: "/config/.ssh/id_ed25519",
+									SubPath:   "id_ed25519",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ssh-authorized-keys",
+									MountPath: "/config/.ssh/authorized_keys",
+									SubPath:   "authorized_keys",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "sshd-config",
+									MountPath: "/etc/ssh/sshd_config",
+									SubPath:   "sshd_config",
+									ReadOnly:  true,
 								},
 							},
 						},
@@ -492,6 +931,49 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 								},
 							},
 						},
+						{
+							Name: "workspace-homes",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/var/lib/kloudlite/workspace-homes",
+									Type: &hostPathDirectoryOrCreate,
+								},
+							},
+						},
+						{
+							Name: "ssh-proxy-key",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "ssh-proxy-key",
+								},
+							},
+						},
+						{
+							Name: "ssh-key-volume",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "ssh-authorized-keys",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "ssh-authorized-keys",
+									},
+								},
+							},
+						},
+						{
+							Name: "sshd-config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "sshd-config",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -499,10 +981,10 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 	}
 
 	if err := r.Create(ctx, deployment); err != nil {
-		return fmt.Errorf("failed to create package-manager deployment: %w", err)
+		return fmt.Errorf("failed to create workmachine-host-manager deployment: %w", err)
 	}
 
-	logger.Info("Created package-manager Deployment", "namespace", namespace)
+	logger.Info("Created workmachine-host-manager Deployment", "namespace", namespace)
 	return nil
 }
 

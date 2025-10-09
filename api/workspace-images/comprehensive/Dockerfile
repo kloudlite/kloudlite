@@ -50,25 +50,11 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 
 USER root
 
-# Configure shells for kl user
-RUN mkdir -p /home/kl/.config/fish && \
-    mkdir -p /home/kl/.config/starship && \
-    chown -R kl:kl /home/kl/.config
-
-# Create starship config
-COPY starship.toml /home/kl/.config/starship.toml
-
-# Configure fish to use starship
-RUN echo 'starship init fish | source' > /home/kl/.config/fish/config.fish && \
-    chown kl:kl /home/kl/.config/fish/config.fish
-
-# Configure zsh to use starship
-RUN echo 'eval "$(starship init zsh)"' > /home/kl/.zshrc && \
-    chown kl:kl /home/kl/.zshrc
-
-# Configure bash to use starship
-RUN echo 'eval "$(starship init bash)"' >> /home/kl/.bashrc && \
-    chown kl:kl /home/kl/.bashrc
+# Create kloudlite config directory with shell initialization scripts
+RUN mkdir -p /etc/kloudlite
+COPY starship.toml /etc/kloudlite/starship.toml
+COPY kl-shell-init.sh /etc/kloudlite/shell-init.sh
+COPY kl-shell-init.fish /etc/kloudlite/shell-init.fish
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d

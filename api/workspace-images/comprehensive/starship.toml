@@ -1,13 +1,10 @@
-# Starship configuration for Kloudlite workspaces
+# Starship configuration for Kloudlite workspaces - Plain Text Symbols preset
 
-format = """
-[┌───────────────────>](bold green)
-[│](bold green) $directory$git_branch$git_status
-[└─>](bold green) $character"""
+format = """$directory$git_branch$git_status$character"""
 
 [character]
-success_symbol = "[➜](bold green)"
-error_symbol = "[➜](bold red)"
+success_symbol = "[>](bold green)"
+error_symbol = "[x](bold red)"
 
 [directory]
 style = "bold cyan"
@@ -15,31 +12,72 @@ truncation_length = 3
 truncate_to_repo = true
 
 [git_branch]
-symbol = " "
+symbol = "git "
 style = "bold purple"
 
 [git_status]
 style = "bold yellow"
-ahead = "⇡${count}"
-diverged = "⇕⇡${ahead_count}⇣${behind_count}"
-behind = "⇣${count}"
+ahead = ">"
+diverged = "<>"
+behind = "<"
+deleted = "x"
 
-[env_var.WORKSPACE_NAME]
-variable = "WORKSPACE_NAME"
-default = ""
-format = " [$env_value](bold blue)"
+[aws]
+symbol = "aws "
 
-[env_var.ENVIRONMENT_NAME]
-variable = "ENVIRONMENT_NAME"
-default = ""
-format = "@[$env_value](bold green)"
+[conda]
+symbol = "conda "
 
-[custom.workspace]
-command = "echo $WORKSPACE_NAME"
-when = "test -n \"$WORKSPACE_NAME\""
-format = " [$output](bold blue)"
+[dart]
+symbol = "dart "
 
-[custom.environment]
-command = "echo $ENVIRONMENT_NAME"
-when = "test -n \"$ENVIRONMENT_NAME\""
-format = "@[$output](bold green)"
+[docker_context]
+symbol = "docker "
+
+[elixir]
+symbol = "elixir "
+
+[elm]
+symbol = "elm "
+
+[golang]
+symbol = "go "
+
+[hg_branch]
+symbol = "hg "
+
+[java]
+symbol = "java "
+
+[julia]
+symbol = "jl "
+
+[nim]
+symbol = "nim "
+
+[nix_shell]
+symbol = "nix "
+
+[nodejs]
+symbol = "nodejs "
+
+[package]
+symbol = "pkg "
+
+[perl]
+symbol = "pl "
+
+[php]
+symbol = "php "
+
+[python]
+symbol = "py "
+
+[ruby]
+symbol = "rb "
+
+[rust]
+symbol = "rs "
+
+[swift]
+symbol = "swift "
