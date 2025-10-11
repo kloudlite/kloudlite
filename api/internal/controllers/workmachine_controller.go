@@ -2,8 +2,12 @@ package controllers
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"strings"
@@ -119,8 +123,14 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// Ensure SSH proxy secret exists
-	if err := r.ensureSSHProxySecret(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
+	if err := r.ensureSSHProxySecret(ctx, workMachine, logger); err != nil {
 		logger.Error(err, "Failed to ensure SSH proxy secret")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure SSH host keys secret exists
+	if err := r.ensureSSHHostKeysSecret(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
+		logger.Error(err, "Failed to ensure SSH host keys secret")
 		return ctrl.Result{}, err
 	}
 
@@ -133,6 +143,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Ensure sshd_config ConfigMap exists
 	if err := r.ensureSSHDConfigMap(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
 		logger.Error(err, "Failed to ensure sshd_config ConfigMap")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure workspace-sshd-config ConfigMap exists
+	if err := r.ensureWorkspaceSSHDConfigMap(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
+		logger.Error(err, "Failed to ensure workspace-sshd-config ConfigMap")
 		return ctrl.Result{}, err
 	}
 
@@ -479,13 +495,30 @@ func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, na
 }
 
 // ensureSSHProxySecret ensures the SSH key secret exists for workspace access
-func (r *WorkMachineReconciler) ensureSSHProxySecret(ctx context.Context, namespace string, logger logr.Logger) error {
+func (r *WorkMachineReconciler) ensureSSHProxySecret(ctx context.Context, workMachine *machinesv1.WorkMachine, logger logr.Logger) error {
 	secretName := "ssh-proxy-key"
+	namespace := workMachine.Spec.TargetNamespace
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
 
+	needsStatusUpdate := false
+
 	if err == nil {
-		// Secret already exists
+		// Secret already exists, update status if needed
+		if publicKeyBytes, ok := secret.Data["public-key"]; ok {
+			publicKeyStr := string(publicKeyBytes)
+			if workMachine.Status.SSHPublicKey != publicKeyStr {
+				workMachine.Status.SSHPublicKey = publicKeyStr
+				needsStatusUpdate = true
+			}
+		}
+
+		if needsStatusUpdate {
+			if err := r.Status().Update(ctx, workMachine); err != nil {
+				return fmt.Errorf("failed to update WorkMachine status with SSH public key: %w", err)
+			}
+		}
+
 		return nil
 	}
 
@@ -534,6 +567,13 @@ func (r *WorkMachineReconciler) ensureSSHProxySecret(ctx context.Context, namesp
 	}
 
 	logger.Info("Created SSH proxy key secret", "namespace", namespace)
+
+	// Update WorkMachine status with the public key
+	workMachine.Status.SSHPublicKey = string(publicKeyBytes)
+	if err := r.Status().Update(ctx, workMachine); err != nil {
+		return fmt.Errorf("failed to update WorkMachine status with SSH public key: %w", err)
+	}
+
 	return nil
 }
 
@@ -598,6 +638,112 @@ func (w *sshBuffer) writeByte(b byte) {
 
 func (w *sshBuffer) bytes() []byte {
 	return w.buf
+}
+
+// ensureSSHHostKeysSecret ensures the SSH host keys secret exists for SSH servers
+// This secret contains RSA, ECDSA, and Ed25519 host keys that are shared across
+// all workspace pods and the host-manager pod to maintain consistent SSH server identity
+func (r *WorkMachineReconciler) ensureSSHHostKeysSecret(ctx context.Context, namespace string, logger logr.Logger) error {
+	secretName := "ssh-host-keys"
+	secret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
+
+	if err == nil {
+		// Secret already exists
+		logger.Info("SSH host keys secret already exists", "namespace", namespace)
+		return nil
+	}
+
+	if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to check ssh-host-keys secret: %w", err)
+	}
+
+	logger.Info("Generating SSH host keys", "namespace", namespace)
+
+	// Generate RSA 2048-bit key
+	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return fmt.Errorf("failed to generate RSA key: %w", err)
+	}
+
+	// Generate ECDSA 256-bit key
+	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return fmt.Errorf("failed to generate ECDSA key: %w", err)
+	}
+
+	// Generate Ed25519 key
+	ed25519Public, ed25519Private, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("failed to generate Ed25519 key: %w", err)
+	}
+
+	// Marshal RSA key
+	rsaPrivateBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(rsaKey),
+	})
+
+	rsaSSHPublicKey, err := ssh.NewPublicKey(&rsaKey.PublicKey)
+	if err != nil {
+		return fmt.Errorf("failed to create RSA SSH public key: %w", err)
+	}
+	rsaPublicBytes := ssh.MarshalAuthorizedKey(rsaSSHPublicKey)
+
+	// Marshal ECDSA key
+	ecdsaPrivateBytes, err := x509.MarshalECPrivateKey(ecdsaKey)
+	if err != nil {
+		return fmt.Errorf("failed to marshal ECDSA private key: %w", err)
+	}
+	ecdsaPrivatePEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "EC PRIVATE KEY",
+		Bytes: ecdsaPrivateBytes,
+	})
+
+	ecdsaSSHPublicKey, err := ssh.NewPublicKey(&ecdsaKey.PublicKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ECDSA SSH public key: %w", err)
+	}
+	ecdsaPublicBytes := ssh.MarshalAuthorizedKey(ecdsaSSHPublicKey)
+
+	// Marshal Ed25519 key (use OpenSSH format)
+	ed25519PrivatePEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "OPENSSH PRIVATE KEY",
+		Bytes: marshalED25519PrivateKey(ed25519Private),
+	})
+
+	ed25519SSHPublicKey, err := ssh.NewPublicKey(ed25519Public)
+	if err != nil {
+		return fmt.Errorf("failed to create Ed25519 SSH public key: %w", err)
+	}
+	ed25519PublicBytes := ssh.MarshalAuthorizedKey(ed25519SSHPublicKey)
+
+	// Create secret with all host keys
+	secret = &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kloudlite.io/ssh-host-keys": "true",
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"ssh_host_rsa_key":         rsaPrivateBytes,
+			"ssh_host_rsa_key.pub":     rsaPublicBytes,
+			"ssh_host_ecdsa_key":       ecdsaPrivatePEM,
+			"ssh_host_ecdsa_key.pub":   ecdsaPublicBytes,
+			"ssh_host_ed25519_key":     ed25519PrivatePEM,
+			"ssh_host_ed25519_key.pub": ed25519PublicBytes,
+		},
+	}
+
+	if err := r.Create(ctx, secret); err != nil {
+		return fmt.Errorf("failed to create ssh-host-keys secret: %w", err)
+	}
+
+	logger.Info("Created SSH host keys secret", "namespace", namespace)
+	return nil
 }
 
 // ensureSSHAuthorizedKeysConfigMap ensures the SSH authorized_keys ConfigMap exists
@@ -753,6 +899,64 @@ Subsystem sftp /usr/lib/ssh/sftp-server
 	return nil
 }
 
+// ensureWorkspaceSSHDConfigMap creates a ConfigMap with SSHD configuration override for workspaces
+// This configures workspaces to use authorized_keys from the mounted ConfigMap location
+func (r *WorkMachineReconciler) ensureWorkspaceSSHDConfigMap(ctx context.Context, namespace string, logger logr.Logger) error {
+	configMapName := "workspace-sshd-config"
+
+	// SSHD drop-in config to override AuthorizedKeysFile location
+	// This will be mounted to /etc/ssh/sshd_config.d/ in workspace containers
+	// StrictModes is disabled to allow ConfigMap-mounted authorized_keys (root-owned directory)
+	sshdConfigOverride := `# Kloudlite Workspace SSH Configuration
+# Override authorized keys location to use mounted ConfigMap
+AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys
+# Disable StrictModes to allow ConfigMap-mounted directories (owned by root)
+StrictModes no
+`
+
+	// Check if ConfigMap exists
+	configMap := &corev1.ConfigMap{}
+	err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, configMap)
+
+	if err == nil {
+		// ConfigMap exists, update if needed
+		if configMap.Data["99-kl-authorized-keys.conf"] != sshdConfigOverride {
+			configMap.Data["99-kl-authorized-keys.conf"] = sshdConfigOverride
+			if err := r.Update(ctx, configMap); err != nil {
+				return fmt.Errorf("failed to update workspace-sshd-config configmap: %w", err)
+			}
+			logger.Info("Updated workspace-sshd-config ConfigMap", "namespace", namespace)
+		}
+		return nil
+	}
+
+	if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to check workspace-sshd-config configmap: %w", err)
+	}
+
+	// Create ConfigMap with SSHD override
+	configMap = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kloudlite.io/ssh-config":       "true",
+				"kloudlite.io/workspace-config": "true",
+			},
+		},
+		Data: map[string]string{
+			"99-kl-authorized-keys.conf": sshdConfigOverride,
+		},
+	}
+
+	if err := r.Create(ctx, configMap); err != nil {
+		return fmt.Errorf("failed to create workspace-sshd-config configmap: %w", err)
+	}
+
+	logger.Info("Created workspace-sshd-config ConfigMap", "namespace", namespace)
+	return nil
+}
+
 // ensurePackageManagerDeployment ensures the workmachine-host-manager deployment exists in the WorkMachine's namespace
 func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Context, workMachine *machinesv1.WorkMachine, logger logr.Logger) error {
 	namespace := workMachine.Spec.TargetNamespace
@@ -768,13 +972,6 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 	if !errors.IsNotFound(err) {
 		return fmt.Errorf("failed to check workmachine-host-manager deployment: %w", err)
 	}
-
-	// Get SSH public key from secret for workmachine-node-manager env var
-	sshSecret := &corev1.Secret{}
-	if err := r.Get(ctx, client.ObjectKey{Name: "ssh-proxy-key", Namespace: namespace}, sshSecret); err != nil {
-		return fmt.Errorf("failed to get ssh-proxy-key secret: %w", err)
-	}
-	sshPublicKey := string(sshSecret.Data["public-key"])
 
 	// Create the Deployment
 	hostPathDirectoryOrCreate := corev1.HostPathDirectoryOrCreate
@@ -841,10 +1038,6 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 								{
 									Name:  "NAMESPACE",
 									Value: namespace,
-								},
-								{
-									Name:  "SSH_PROXY_PUBLIC_KEY",
-									Value: sshPublicKey,
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
@@ -918,6 +1111,42 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 									SubPath:   "sshd_config",
 									ReadOnly:  true,
 								},
+								{
+									Name:      "ssh-host-keys",
+									MountPath: "/etc/ssh/ssh_host_rsa_key",
+									SubPath:   "ssh_host_rsa_key",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ssh-host-keys",
+									MountPath: "/etc/ssh/ssh_host_rsa_key.pub",
+									SubPath:   "ssh_host_rsa_key.pub",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ssh-host-keys",
+									MountPath: "/etc/ssh/ssh_host_ecdsa_key",
+									SubPath:   "ssh_host_ecdsa_key",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ssh-host-keys",
+									MountPath: "/etc/ssh/ssh_host_ecdsa_key.pub",
+									SubPath:   "ssh_host_ecdsa_key.pub",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ssh-host-keys",
+									MountPath: "/etc/ssh/ssh_host_ed25519_key",
+									SubPath:   "ssh_host_ed25519_key",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "ssh-host-keys",
+									MountPath: "/etc/ssh/ssh_host_ed25519_key.pub",
+									SubPath:   "ssh_host_ed25519_key.pub",
+									ReadOnly:  true,
+								},
 							},
 						},
 					},
@@ -971,6 +1200,15 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 									LocalObjectReference: corev1.LocalObjectReference{
 										Name: "sshd-config",
 									},
+								},
+							},
+						},
+						{
+							Name: "ssh-host-keys",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName:  "ssh-host-keys",
+									DefaultMode: func() *int32 { m := int32(0600); return &m }(),
 								},
 							},
 						},
