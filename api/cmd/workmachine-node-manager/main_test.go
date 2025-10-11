@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -37,6 +38,47 @@ func (m *MockCommandExecutor) Execute(script string) ([]byte, error) {
 		return m.ExecuteFunc(script)
 	}
 	return nil, fmt.Errorf("mock error: command failed")
+}
+
+// MockFileSystem implements FileSystem for testing
+type MockFileSystem struct {
+	MkdirAllFunc  func(path string, perm os.FileMode) error
+	ChownFunc     func(name string, uid, gid int) error
+	WriteFileFunc func(name string, data []byte, perm os.FileMode) error
+	RenameFunc    func(oldpath, newpath string) error
+	CallLog       []string
+}
+
+func (m *MockFileSystem) MkdirAll(path string, perm os.FileMode) error {
+	m.CallLog = append(m.CallLog, fmt.Sprintf("MkdirAll(%s, %v)", path, perm))
+	if m.MkdirAllFunc != nil {
+		return m.MkdirAllFunc(path, perm)
+	}
+	return nil
+}
+
+func (m *MockFileSystem) Chown(name string, uid, gid int) error {
+	m.CallLog = append(m.CallLog, fmt.Sprintf("Chown(%s, %d, %d)", name, uid, gid))
+	if m.ChownFunc != nil {
+		return m.ChownFunc(name, uid, gid)
+	}
+	return nil
+}
+
+func (m *MockFileSystem) WriteFile(name string, data []byte, perm os.FileMode) error {
+	m.CallLog = append(m.CallLog, fmt.Sprintf("WriteFile(%s, %d bytes, %v)", name, len(data), perm))
+	if m.WriteFileFunc != nil {
+		return m.WriteFileFunc(name, data, perm)
+	}
+	return nil
+}
+
+func (m *MockFileSystem) Rename(oldpath, newpath string) error {
+	m.CallLog = append(m.CallLog, fmt.Sprintf("Rename(%s, %s)", oldpath, newpath))
+	if m.RenameFunc != nil {
+		return m.RenameFunc(oldpath, newpath)
+	}
+	return nil
 }
 
 func setupTestReconciler(t *testing.T, initObjs ...runtime.Object) *PackageManagerReconciler {
@@ -99,6 +141,9 @@ func TestPackageManagerReconciler_Reconcile_AlreadyReady(t *testing.T) {
 		Status: packagesv1.PackageRequestStatus{
 			Phase:   "Ready",
 			Message: "Already installed",
+			InstalledPackages: []workspacesv1.InstalledPackage{
+				{Name: "git", StorePath: "/nix/store/xyz-git", BinPath: "/nix/profiles/test-profile/bin"},
+			},
 		},
 	}
 
@@ -1135,43 +1180,54 @@ func TestPackageManagerReconciler_InstallPackage_VersionExtractionEdgeCases(t *t
 	}
 }
 
-func TestSetupWorkspaceHome_PathDoesNotExist(t *testing.T) {
-	// Test requires filesystem operations, which will fail in test environment
-	// This test just ensures the function can be called and handles errors
+func TestSetupWorkspaceHome_Success(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{}
 
-	// In test environment, this will likely fail due to permissions
-	// but we're testing the code path and error handling
-	err := setupWorkspaceHome(logger)
+	err := setupWorkspaceHome(logger, mockFS)
 
-	// Expected to fail in test environment (permission denied or path issues)
-	// The test passes if the function handles errors gracefully
-	_ = err // Can be error or nil depending on test environment
+	assert.NoError(t, err)
+	// Verify 4 filesystem calls: 2 MkdirAll + 2 Chown
+	assert.Len(t, mockFS.CallLog, 4)
+	assert.Contains(t, mockFS.CallLog[0], "MkdirAll(/var/lib/kloudlite/workspace-homes/kl")
+	assert.Contains(t, mockFS.CallLog[1], "Chown(/var/lib/kloudlite/workspace-homes/kl, 1001, 1001)")
+	assert.Contains(t, mockFS.CallLog[2], "MkdirAll(/var/lib/kloudlite/workspace-homes/kl/workspaces")
+	assert.Contains(t, mockFS.CallLog[3], "Chown(/var/lib/kloudlite/workspace-homes/kl/workspaces, 1001, 1001)")
 }
 
-// Test that setupWorkspaceHome creates both the home directory and workspaces subdirectory
-func TestSetupWorkspaceHome_CreatesWorkspacesSubdirectory(t *testing.T) {
-	// This test verifies the setupWorkspaceHome function creates:
-	// 1. /var/lib/kloudlite/workspace-homes/kl (main directory)
-	// 2. /var/lib/kloudlite/workspace-homes/kl/workspaces (subdirectory)
-	// Both should be owned by UID 1001, GID 1001 (kl user)
-
-	// Note: In test environment, this will fail due to permissions
-	// but the test documents the expected behavior
+func TestSetupWorkspaceHome_MkdirAllError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{
+		MkdirAllFunc: func(path string, perm os.FileMode) error {
+			return fmt.Errorf("permission denied")
+		},
+	}
 
-	// Calling setupWorkspaceHome should create both directories
-	err := setupWorkspaceHome(logger)
+	err := setupWorkspaceHome(logger, mockFS)
 
-	// Expected behavior (even if it fails in test environment):
-	// - Creates /var/lib/kloudlite/workspace-homes/kl with ownership 1001:1001
-	// - Creates /var/lib/kloudlite/workspace-homes/kl/workspaces with ownership 1001:1001
-	// - Both directories should have 0755 permissions
-
-	// In test environment, expect error due to lack of permissions
-	// The actual implementation will succeed when running with proper permissions
-	_ = err
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to create workspace home directory")
 }
+
+func TestSetupWorkspaceHome_ChownError(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	callCount := 0
+	mockFS := &MockFileSystem{
+		ChownFunc: func(name string, uid, gid int) error {
+			callCount++
+			if callCount == 1 {
+				return fmt.Errorf("chown failed")
+			}
+			return nil
+		},
+	}
+
+	err := setupWorkspaceHome(logger, mockFS)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to set ownership on workspace home directory")
+}
+
 
 // ========================================
 // SSH ConfigMap Controller Tests
@@ -1191,6 +1247,7 @@ func setupTestSSHConfigReconciler(t *testing.T, initObjs ...runtime.Object) *SSH
 	return &SSHConfigReconciler{
 		Client: fakeClient,
 		Logger: logger,
+		FS:     &MockFileSystem{}, // Use mock filesystem by default
 	}
 }
 
@@ -1359,54 +1416,96 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTest3 user3@example.com
 	_ = err
 }
 
-func TestSetupSSHConfigDirectory_Basic(t *testing.T) {
-	// Test requires filesystem operations, which will fail in test environment
-	// This test documents the expected behavior
+func TestSetupSSHConfigDirectory_Success(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{}
 
-	err := setupSSHConfigDirectory(logger)
+	err := setupSSHConfigDirectory(logger, mockFS)
 
-	// Expected behavior (even if it fails in test environment):
-	// - Creates /var/lib/kloudlite/ssh-config with 0755 permissions
-	// - Directory should be accessible by root and readable by all
-
-	// In test environment, expect error due to lack of permissions
-	_ = err
+	assert.NoError(t, err)
+	// Verify 1 filesystem call: MkdirAll
+	assert.Len(t, mockFS.CallLog, 1)
+	assert.Contains(t, mockFS.CallLog[0], "MkdirAll(/var/lib/kloudlite/ssh-config")
+	assert.Contains(t, mockFS.CallLog[0], "0755")
 }
 
-func TestWriteAuthorizedKeys_Basic(t *testing.T) {
-	// Test requires filesystem operations, which will fail in test environment
-	// This test documents the expected behavior and atomic write pattern
+func TestSetupSSHConfigDirectory_Error(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{
+		MkdirAllFunc: func(path string, perm os.FileMode) error {
+			return fmt.Errorf("permission denied")
+		},
+	}
+
+	err := setupSSHConfigDirectory(logger, mockFS)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to create SSH config directory")
+}
+
+func TestWriteAuthorizedKeys_Success(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{}
 
 	content := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... test@example.com\n"
 
-	err := writeAuthorizedKeys(logger, content)
+	err := writeAuthorizedKeys(logger, content, mockFS)
 
-	// Expected behavior (even if it fails in test environment):
-	// - Writes content to /var/lib/kloudlite/ssh-config/authorized_keys.tmp
-	// - Atomically renames .tmp file to authorized_keys (atomic operation)
-	// - File has 0644 permissions (readable by all, writable by owner)
-	// - Atomic rename ensures SSH daemons never see partial content
+	assert.NoError(t, err)
+	// Verify 2 filesystem calls: WriteFile + Rename (atomic write pattern)
+	assert.Len(t, mockFS.CallLog, 2)
+	assert.Contains(t, mockFS.CallLog[0], "WriteFile(/var/lib/kloudlite/ssh-config/authorized_keys.tmp")
+	assert.Contains(t, mockFS.CallLog[0], "0644")
+	assert.Contains(t, mockFS.CallLog[1], "Rename(/var/lib/kloudlite/ssh-config/authorized_keys.tmp, /var/lib/kloudlite/ssh-config/authorized_keys)")
+}
 
-	// In test environment, expect error due to lack of permissions
-	_ = err
+func TestWriteAuthorizedKeys_WriteFileError(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{
+		WriteFileFunc: func(name string, data []byte, perm os.FileMode) error {
+			return fmt.Errorf("disk full")
+		},
+	}
+
+	content := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... test@example.com\n"
+
+	err := writeAuthorizedKeys(logger, content, mockFS)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to write temporary authorized_keys file")
+}
+
+func TestWriteAuthorizedKeys_RenameError(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{
+		RenameFunc: func(oldpath, newpath string) error {
+			return fmt.Errorf("rename failed")
+		},
+	}
+
+	content := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... test@example.com\n"
+
+	err := writeAuthorizedKeys(logger, content, mockFS)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to atomically rename authorized_keys file")
 }
 
 func TestWriteAuthorizedKeys_EmptyContent(t *testing.T) {
-	// Test atomic write with empty content (valid use case - clears all keys)
 	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{}
 
-	err := writeAuthorizedKeys(logger, "")
+	err := writeAuthorizedKeys(logger, "", mockFS)
 
+	assert.NoError(t, err)
 	// Should handle empty content (creates empty file)
-	// In test environment, expect error due to lack of permissions
-	_ = err
+	assert.Len(t, mockFS.CallLog, 2)
+	assert.Contains(t, mockFS.CallLog[0], "0 bytes") // Empty content
 }
 
 func TestWriteAuthorizedKeys_LargeContent(t *testing.T) {
-	// Test atomic write with large content (many SSH keys)
 	logger, _ := zap.NewDevelopment()
+	mockFS := &MockFileSystem{}
 
 	// Simulate 100 SSH keys
 	var content strings.Builder
@@ -1414,11 +1513,13 @@ func TestWriteAuthorizedKeys_LargeContent(t *testing.T) {
 		content.WriteString(fmt.Sprintf("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTest%d user%d@example.com\n", i, i))
 	}
 
-	err := writeAuthorizedKeys(logger, content.String())
+	err := writeAuthorizedKeys(logger, content.String(), mockFS)
 
-	// Should handle large content
-	// In test environment, expect error due to lack of permissions
-	_ = err
+	assert.NoError(t, err)
+	// Verify large content was written
+	assert.Len(t, mockFS.CallLog, 2)
+	// Content length should be > 5000 bytes (100 keys * ~50+ bytes each)
+	assert.Contains(t, mockFS.CallLog[0], "WriteFile")
 }
 
 func TestSSHConfigReconciler_Reconcile_UpdateExistingKeys(t *testing.T) {
@@ -1472,4 +1573,264 @@ func TestSSHConfigReconciler_Reconcile_UpdateExistingKeys(t *testing.T) {
 	// - First reconcile writes user1's key
 	// - Second reconcile overwrites with user2's key (atomic operation)
 	// - SSH daemons immediately see new keys on next auth attempt
+}
+
+func TestSSHConfigReconciler_SetupWithManager(t *testing.T) {
+	reconciler := setupTestSSHConfigReconciler(t)
+
+	// SetupWithManager requires a real manager, test will fail with nil
+	err := reconciler.SetupWithManager(nil)
+	assert.Error(t, err)
+}
+
+// ========================================
+// Additional Edge Case Tests
+// ========================================
+
+func TestPackageManagerReconciler_InstallPackage_WithCommit(t *testing.T) {
+	var installScriptCaptured string
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			if strings.Contains(script, "nix profile install") {
+				installScriptCaptured = script
+				return []byte("installing 'git-2.45.0'"), nil
+			}
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("git-2.45.0  /nix/store/xyz-git-2.45.0"), nil
+			}
+			return nil, fmt.Errorf("unexpected script: %s", script)
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+
+	pkg := workspacesv1.PackageSpec{
+		Name:          "git",
+		NixpkgsCommit: "abc123def456",
+	}
+
+	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
+	assert.NoError(t, err)
+	assert.Equal(t, "git", installedPkg.Name)
+	assert.Contains(t, installScriptCaptured, "github:nixos/nixpkgs/abc123def456#git")
+	assert.Contains(t, installedPkg.Version, "2.45.0")
+	assert.Contains(t, installedPkg.Version, "commit:abc123de") // Short hash (8 chars)
+}
+
+func TestPackageManagerReconciler_Reconcile_InstallFailureUpdatesStatus(t *testing.T) {
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			return nil, fmt.Errorf("nix install failed: network error")
+		},
+	}
+
+	pkgReq := &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: "test-workspace",
+			ProfileName:  "test-profile",
+			Packages: []workspacesv1.PackageSpec{
+				{Name: "python"},
+			},
+		},
+		Status: packagesv1.PackageRequestStatus{
+			Phase: "Pending",
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec, pkgReq)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify status was updated to Failed
+	updatedPkgReq := &packagesv1.PackageRequest{}
+	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
+	assert.NoError(t, err)
+	assert.Equal(t, "Failed", updatedPkgReq.Status.Phase)
+	assert.Len(t, updatedPkgReq.Status.FailedPackages, 1)
+	assert.Equal(t, "python", updatedPkgReq.Status.FailedPackages[0])
+}
+
+func TestPackageManagerReconciler_UninstallPackage_Failure(t *testing.T) {
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			return nil, fmt.Errorf("uninstall failed: package not found")
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+
+	err := reconciler.uninstallPackage("nonexistent", "test-profile")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "nix-env uninstall failed")
+}
+
+func TestSSHConfigReconciler_Reconcile_GetConfigMapError(t *testing.T) {
+	// Create a client that will return an error on Get
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": "test-key",
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(cm).
+		WithInterceptorFuncs(interceptor.Funcs{
+			Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				// Simulate a transient error (not NotFound)
+				return fmt.Errorf("simulated API server error")
+			},
+		}).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &SSHConfigReconciler{
+		Client: fakeClient,
+		Logger: logger,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "simulated API server error")
+	assert.Equal(t, reconcile.Result{}, result)
+}
+
+func TestPackageManagerReconciler_Reconcile_PartialSuccess(t *testing.T) {
+	callCount := 0
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			callCount++
+			// First package (git) succeeds
+			if strings.Contains(script, "git") {
+				if callCount == 1 {
+					return []byte("installing git"), nil
+				}
+				if callCount == 2 {
+					return []byte("git-2.40.0  /nix/store/xyz-git"), nil
+				}
+			}
+			// Second package (vim) fails
+			if strings.Contains(script, "vim") {
+				return nil, fmt.Errorf("vim install failed")
+			}
+			return []byte("success"), nil
+		},
+	}
+
+	pkgReq := &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: "test-workspace",
+			ProfileName:  "test-profile",
+			Packages: []workspacesv1.PackageSpec{
+				{Name: "git"},
+				{Name: "vim"},
+			},
+		},
+		Status: packagesv1.PackageRequestStatus{
+			Phase: "Pending",
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec, pkgReq)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify partial success - git installed, vim failed
+	updatedPkgReq := &packagesv1.PackageRequest{}
+	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
+	assert.NoError(t, err)
+	assert.Equal(t, "Failed", updatedPkgReq.Status.Phase) // Overall failed due to vim
+	assert.Len(t, updatedPkgReq.Status.InstalledPackages, 1)
+	assert.Equal(t, "git", updatedPkgReq.Status.InstalledPackages[0].Name)
+	assert.Len(t, updatedPkgReq.Status.FailedPackages, 1)
+	assert.Equal(t, "vim", updatedPkgReq.Status.FailedPackages[0])
+}
+
+func TestPackageManagerReconciler_Reconcile_UninstallFailure(t *testing.T) {
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			if strings.Contains(script, "-e git") {
+				return nil, fmt.Errorf("uninstall failed: permission denied")
+			}
+			return []byte("success"), nil
+		},
+	}
+
+	pkgReq := &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: "test-workspace",
+			ProfileName:  "test-profile",
+			Packages:     []workspacesv1.PackageSpec{}, // Empty - should trigger uninstall
+		},
+		Status: packagesv1.PackageRequestStatus{
+			Phase: "Pending",
+			InstalledPackages: []workspacesv1.InstalledPackage{
+				{Name: "git", StorePath: "/nix/store/old-git"},
+			},
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec, pkgReq)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Even with uninstall failure, reconciliation should complete
+	updatedPkgReq := &packagesv1.PackageRequest{}
+	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
+	assert.NoError(t, err)
+	// Should be Ready even if uninstall failed (best effort)
+	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
 }

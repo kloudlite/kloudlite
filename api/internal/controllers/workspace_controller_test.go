@@ -252,9 +252,9 @@ func TestWorkspaceReconciler_Reconcile_UpdatePackages(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, updatedPkgReq.Spec.Packages, 2)
 
-	// Status should be reset to Pending
-	assert.Equal(t, "Pending", updatedPkgReq.Status.Phase)
-	assert.Equal(t, "Package list updated, waiting for installation", updatedPkgReq.Status.Message)
+	// Verify the packages were updated (the status remains as-is, the package reconciler will handle it)
+	assert.Equal(t, "git", updatedPkgReq.Spec.Packages[0].Name)
+	assert.Equal(t, "vim", updatedPkgReq.Spec.Packages[1].Name)
 }
 
 func TestWorkspaceReconciler_Reconcile_NoPackagesSkipsPackageRequest(t *testing.T) {
