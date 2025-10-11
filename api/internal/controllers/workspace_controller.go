@@ -990,10 +990,12 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 				{
 					Name: "ssh-authorized-keys",
 					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "ssh-authorized-keys",
-							},
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/kloudlite/ssh-config",
+							Type: func() *corev1.HostPathType {
+								t := corev1.HostPathDirectoryOrCreate
+								return &t
+							}(),
 						},
 					},
 				},

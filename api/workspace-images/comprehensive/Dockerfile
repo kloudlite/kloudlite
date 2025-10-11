@@ -31,7 +31,8 @@ RUN mkdir -p /run/sshd && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
     sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
     echo 'AcceptEnv LANG LC_*' >> /etc/ssh/sshd_config && \
-    echo 'SetEnv TERM=xterm-256color' >> /etc/ssh/sshd_config
+    echo 'SetEnv TERM=xterm-256color' >> /etc/ssh/sshd_config && \
+    echo 'AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys' >> /etc/ssh/sshd_config
 
 # Install code-server
 RUN curl -fsSL https://code-server.dev/install.sh | sh
