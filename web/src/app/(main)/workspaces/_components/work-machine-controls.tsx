@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Play,
   Square,
@@ -12,8 +13,14 @@ import {
   Zap,
   AlertCircle,
   Check,
-  Loader2
+  Loader2,
+  Key,
+  Copy,
+  Trash2,
+  Plus
 } from 'lucide-react'
+import { toast } from 'sonner'
+import { updateMyWorkMachine } from '@/app/actions/work-machine.actions'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -31,6 +38,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -44,6 +59,8 @@ interface WorkMachineControlsProps {
   desiredState: string
   currentType?: string
   availableMachineTypes: any[]
+  sshPublicKey?: string
+  sshAuthorizedKeys?: string[]
   onStart?: () => void
   onStop?: () => void
   onTypeChange?: (typeId: string) => void
@@ -57,6 +74,17 @@ function parseResourceValue(value?: string): number {
   return match ? parseFloat(match[1]) : 0
 }
 
+// Parse SSH key to extract algorithm and email/comment
+function parseSSHKey(key: string): string {
+  const parts = key.trim().split(/\s+/)
+  if (parts.length >= 2) {
+    const algo = parts[0] // e.g., "ssh-rsa", "ssh-ed25519"
+    const comment = parts.length > 2 ? parts[parts.length - 1] : '' // email or comment at the end
+    return comment ? `${algo} ${comment}` : algo
+  }
+  return 'Unknown'
+}
+
 export function WorkMachineControls({
   machineId,
   machineName,
@@ -65,18 +93,25 @@ export function WorkMachineControls({
   desiredState,
   currentType = 'standard',
   availableMachineTypes,
+  sshPublicKey,
+  sshAuthorizedKeys = [],
   onStart,
   onStop,
   onTypeChange,
   isLoading = false
 }: WorkMachineControlsProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedType, setSelectedType] = useState(currentType)
   const [autoStop, setAutoStop] = useState(true)
   const [idleTimeout, setIdleTimeout] = useState('30')
-  const [startupScript, setStartupScript] = useState('')
   const [showTypeChangeWarning, setShowTypeChangeWarning] = useState(false)
   const [isChangingType, setIsChangingType] = useState(false)
+  const [copiedSSHKey, setCopiedSSHKey] = useState(false)
+  const [newSSHKey, setNewSSHKey] = useState('')
+  const [isAddingKey, setIsAddingKey] = useState(false)
+  const [isDeletingKey, setIsDeletingKey] = useState<string | null>(null)
 
   const currentMachineType = availableMachineTypes.find(t => t.id === currentType) || availableMachineTypes[0]
 
@@ -111,6 +146,67 @@ export function WorkMachineControls({
   const saveSettings = () => {
     // Save settings logic here
     setSettingsOpen(false)
+  }
+
+  const handleCopySSHKey = (key: string) => {
+    navigator.clipboard.writeText(key)
+    setCopiedSSHKey(true)
+    toast.success('SSH public key copied to clipboard')
+    setTimeout(() => setCopiedSSHKey(false), 2000)
+  }
+
+  const handleAddSSHKey = async () => {
+    if (!newSSHKey.trim()) {
+      toast.error('Please enter an SSH public key')
+      return
+    }
+
+    // Basic validation for SSH public key format
+    if (!newSSHKey.startsWith('ssh-') && !newSSHKey.startsWith('ecdsa-')) {
+      toast.error('Invalid SSH public key format')
+      return
+    }
+
+    setIsAddingKey(true)
+    try {
+      const updatedKeys = [...sshAuthorizedKeys, newSSHKey.trim()]
+      const result = await updateMyWorkMachine({ sshPublicKeys: updatedKeys })
+
+      if (result.success) {
+        toast.success('SSH key added successfully')
+        setNewSSHKey('')
+        startTransition(() => {
+          router.refresh()
+        })
+      } else {
+        toast.error(result.error || 'Failed to add SSH key')
+      }
+    } catch (error) {
+      toast.error('An error occurred while adding SSH key')
+    } finally {
+      setIsAddingKey(false)
+    }
+  }
+
+  const handleRemoveSSHKey = async (keyToRemove: string) => {
+    setIsDeletingKey(keyToRemove)
+    try {
+      const updatedKeys = sshAuthorizedKeys.filter(k => k !== keyToRemove)
+      const result = await updateMyWorkMachine({ sshPublicKeys: updatedKeys })
+
+      if (result.success) {
+        toast.success('SSH key removed successfully')
+        startTransition(() => {
+          router.refresh()
+        })
+      } else {
+        toast.error(result.error || 'Failed to remove SSH key')
+      }
+    } catch (error) {
+      toast.error('An error occurred while removing SSH key')
+    } finally {
+      setIsDeletingKey(null)
+    }
   }
 
   const isTransitioning = currentState !== desiredState
@@ -217,8 +313,8 @@ export function WorkMachineControls({
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{type.name}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">{type.description}</div>
-                  <div className="flex items-center gap-4 text-xs text-gray-600 mt-2">
+                  <div className="text-xs text-muted-foreground mt-1">{type.description}</div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                     <span className="flex items-center gap-1">
                       <Cpu className="h-3 w-3" />
                       {parseResourceValue(type.cpu)} vCPU
@@ -289,17 +385,18 @@ export function WorkMachineControls({
         </DialogContent>
       </Dialog>
 
-      {/* Settings Dialog */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Work Machine Settings</DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
-              Configure automatic behaviors and startup scripts for {machineName}
-            </DialogDescription>
-          </DialogHeader>
+      {/* Settings Sheet */}
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-xl">
+          <div className="flex h-full flex-col">
+            <SheetHeader>
+              <SheetTitle>Work Machine Settings</SheetTitle>
+              <SheetDescription>
+                Configure automatic behaviors and startup scripts for {machineName}
+              </SheetDescription>
+            </SheetHeader>
 
-          <div className="space-y-8 py-6">
+            <div className="flex-1 space-y-8 overflow-y-auto p-4">
             {/* Auto-stop Settings */}
             <div className="space-y-4">
               <div className="flex items-start justify-between">
@@ -307,7 +404,7 @@ export function WorkMachineControls({
                   <Label htmlFor="auto-stop" className="text-base font-medium">
                     Auto-stop when idle
                   </Label>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Automatically stop the machine after a period of inactivity
                   </p>
                 </div>
@@ -337,55 +434,170 @@ export function WorkMachineControls({
               )}
             </div>
 
-            {/* Startup Script */}
-            <div className="space-y-2">
-              <Label htmlFor="startup-script" className="text-base font-medium">
-                Startup script (optional)
-              </Label>
-              <textarea
-                id="startup-script"
-                className="w-full min-h-[120px] rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none"
-                placeholder="#!/bin/bash
-# Commands to run on machine startup"
-                value={startupScript}
-                onChange={(e) => setStartupScript(e.target.value)}
-              />
-              <p className="text-sm text-gray-600">
-                This script runs automatically when the machine starts
-              </p>
-            </div>
-
             {/* SSH Keys */}
-            <div className="space-y-3">
+            <div className="space-y-4 border-t pt-6">
               <div>
-                <Label className="text-base font-medium">SSH Public Keys</Label>
-                <p className="text-sm text-gray-600 mt-1">
-                  Add SSH keys for direct terminal access
+                <Label className="text-base font-medium">SSH Configuration</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Manage SSH keys for workspace access
                 </p>
               </div>
-              <Button variant="outline" className="w-fit">
-                Manage SSH Keys
-              </Button>
-            </div>
-          </div>
 
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setSettingsOpen(false)}
-              className="px-6"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={saveSettings}
-              className="px-6 bg-gray-900 hover:bg-gray-800"
-            >
-              Save Settings
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {/* SSH Public Key */}
+              {sshPublicKey ? (
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium">WorkMachine SSH Public Key</Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This SSH public key is shared across all workspaces in this WorkMachine. Use it to authorize access to external systems.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-muted px-3 py-2 rounded font-mono break-all border">
+                      {sshPublicKey}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCopySSHKey(sshPublicKey)}
+                      className="flex-shrink-0"
+                    >
+                      {copiedSSHKey ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4 rounded-md border border-dashed">
+                  <p className="text-xs text-muted-foreground">
+                    SSH public key is being generated
+                  </p>
+                </div>
+              )}
+
+              {/* Authorized Keys */}
+              <div className="space-y-3 pt-3">
+                <div className="flex items-start justify-between">
+                  <Label className="text-base font-medium">Authorized Keys</Label>
+                  {sshAuthorizedKeys.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {sshAuthorizedKeys.length} {sshAuthorizedKeys.length === 1 ? 'key' : 'keys'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Add SSH public keys to authorize external access to all workspaces in this WorkMachine
+                </p>
+
+                {/* List of authorized keys */}
+                {sshAuthorizedKeys.length > 0 ? (
+                  <div className="max-h-48 overflow-y-auto space-y-1 rounded-md border">
+                    {sshAuthorizedKeys.map((key, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 transition-colors group"
+                      >
+                        <code className="text-xs font-mono text-muted-foreground">
+                          {parseSSHKey(key)}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            await handleRemoveSSHKey(key)
+                          }}
+                          disabled={isDeletingKey === key}
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {isDeletingKey === key ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 rounded-md border border-dashed">
+                    <p className="text-sm text-muted-foreground">
+                      No authorized keys
+                    </p>
+                  </div>
+                )}
+
+                {/* Add new key */}
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="new-ssh-key" className="text-sm font-medium">
+                    Add New Key
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="new-ssh-key"
+                      type="text"
+                      placeholder="ssh-rsa AAAAB3NzaC1yc2EA... user@example.com"
+                      value={newSSHKey}
+                      onChange={(e) => setNewSSHKey(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddSSHKey()
+                        }
+                      }}
+                      className="flex-1 font-mono text-xs"
+                      disabled={isAddingKey}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleAddSSHKey}
+                      disabled={isAddingKey || !newSSHKey.trim()}
+                      className="flex-shrink-0"
+                    >
+                      {isAddingKey ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Paste the full SSH public key (e.g., ssh-rsa, ssh-ed25519)
+                  </p>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            <SheetFooter className="p-4">
+              <Button
+                variant="outline"
+                onClick={() => setSettingsOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={saveSettings}
+              >
+                Save Settings
+              </Button>
+            </SheetFooter>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   )
 }

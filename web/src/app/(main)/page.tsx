@@ -43,6 +43,8 @@ function transformWorkMachine(wm: WorkMachine) {
     disk: 0, // Will be updated by metrics
     uptime: uptime,
     type: wm.spec.machineType,
+    sshPublicKey: wm.status?.sshPublicKey,
+    sshAuthorizedKeys: wm.spec.sshPublicKeys || [],
   }
 }
 

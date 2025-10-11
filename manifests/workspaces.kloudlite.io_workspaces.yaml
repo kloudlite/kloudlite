@@ -30,6 +30,9 @@ spec:
     - jsonPath: .status.phase
       name: Phase
       type: string
+    - jsonPath: .status.activeConnections
+      name: Connections
+      type: integer
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -304,6 +307,10 @@ spec:
                   AccessURLs contains URLs for accessing different workspace services
                   Keys are service names (code-server, ttyd, jupyter, code-web)
                 type: object
+              activeConnections:
+                description: ActiveConnections is the number of active network connections
+                  in the workspace
+                type: integer
               conditions:
                 description: Conditions represent the latest available observations
                   of workspace state

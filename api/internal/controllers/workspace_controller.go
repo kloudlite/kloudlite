@@ -841,7 +841,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 					Command: []string{
 						"sh",
 						"-c",
-						fmt.Sprintf("mkdir -p /home/kl/workspaces/%s && chown 1001:1001 /home/kl/workspaces/%s", workspace.Name, workspace.Name),
+						fmt.Sprintf("mkdir -p /home/kl/workspaces && chown -R 1001:1001 /home/kl/workspaces && mkdir -p /home/kl/workspaces/%s", workspace.Name),
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -890,6 +890,52 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 						{
 							Name:      "kl-home",
 							MountPath: "/home/kl",
+						},
+						{
+							Name:      "ssh-authorized-keys",
+							MountPath: "/etc/ssh/kl-authorized-keys",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "workspace-sshd-config",
+							MountPath: "/etc/ssh/sshd_config.d",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "ssh-host-keys",
+							MountPath: "/etc/ssh/ssh_host_rsa_key",
+							SubPath:   "ssh_host_rsa_key",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "ssh-host-keys",
+							MountPath: "/etc/ssh/ssh_host_rsa_key.pub",
+							SubPath:   "ssh_host_rsa_key.pub",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "ssh-host-keys",
+							MountPath: "/etc/ssh/ssh_host_ecdsa_key",
+							SubPath:   "ssh_host_ecdsa_key",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "ssh-host-keys",
+							MountPath: "/etc/ssh/ssh_host_ecdsa_key.pub",
+							SubPath:   "ssh_host_ecdsa_key.pub",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "ssh-host-keys",
+							MountPath: "/etc/ssh/ssh_host_ed25519_key",
+							SubPath:   "ssh_host_ed25519_key",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "ssh-host-keys",
+							MountPath: "/etc/ssh/ssh_host_ed25519_key.pub",
+							SubPath:   "ssh_host_ed25519_key.pub",
+							ReadOnly:  true,
 						},
 					},
 					LivenessProbe: &corev1.Probe{
@@ -941,7 +987,35 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 						},
 					},
 				},
-
+				{
+					Name: "ssh-authorized-keys",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "ssh-authorized-keys",
+							},
+						},
+					},
+				},
+				{
+					Name: "workspace-sshd-config",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "workspace-sshd-config",
+							},
+						},
+					},
+				},
+				{
+					Name: "ssh-host-keys",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName:  "ssh-host-keys",
+							DefaultMode: func() *int32 { m := int32(0600); return &m }(),
+						},
+					},
+				},
 			},
 			RestartPolicy: corev1.RestartPolicyAlways,
 		},

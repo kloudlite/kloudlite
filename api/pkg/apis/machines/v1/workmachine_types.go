@@ -206,6 +206,13 @@ type WorkMachineStatus struct {
 	// ObservedGeneration is the generation observed by the controller
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// SSHPublicKey is the WorkMachine's public SSH key for all workspaces
+	// This key is shared across all workspaces in the WorkMachine
+	// Users can copy this key to add to other systems' authorized_keys
+	// The corresponding private key is stored in a Secret
+	// +optional
+	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 }
 
 // WorkMachineCondition represents a condition of the WorkMachine
