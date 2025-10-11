@@ -13,6 +13,7 @@ import (
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -47,8 +48,38 @@ type RealCommandExecutor struct{}
 
 func (r *RealCommandExecutor) Execute(script string) ([]byte, error) {
 	cmd := exec.Command("sh", "-c", script)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("NIX_STATE_DIR=%s", nixStorePath))
+	// Pass through parent environment variables (PATH, etc.)
+	// Don't set NIX_STATE_DIR since we're mounting /nix/store and /nix/var directly
+	cmd.Env = os.Environ()
 	return cmd.CombinedOutput()
+}
+
+// FileSystem defines an interface for filesystem operations
+// This allows for mocking in tests
+type FileSystem interface {
+	MkdirAll(path string, perm os.FileMode) error
+	Chown(name string, uid, gid int) error
+	WriteFile(name string, data []byte, perm os.FileMode) error
+	Rename(oldpath, newpath string) error
+}
+
+// RealFileSystem implements FileSystem using os package
+type RealFileSystem struct{}
+
+func (r *RealFileSystem) MkdirAll(path string, perm os.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+func (r *RealFileSystem) Chown(name string, uid, gid int) error {
+	return os.Chown(name, uid, gid)
+}
+
+func (r *RealFileSystem) WriteFile(name string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(name, data, perm)
+}
+
+func (r *RealFileSystem) Rename(oldpath, newpath string) error {
+	return os.Rename(oldpath, newpath)
 }
 
 type PackageManagerReconciler struct {
@@ -74,10 +105,34 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Skip if already in terminal state (Ready or Failed)
-	if pkgReq.Status.Phase == "Ready" || pkgReq.Status.Phase == "Failed" {
-		logger.Info("PackageRequest already in terminal state", zap2.String("phase", pkgReq.Status.Phase))
+	// Check if packages changed (by comparing spec packages with installed packages)
+	// If packages changed, we need to reconcile even if in terminal state
+	packagesChanged := len(pkgReq.Spec.Packages) != len(pkgReq.Status.InstalledPackages)
+	if !packagesChanged {
+		// Check if any package changed
+		installedMap := make(map[string]bool)
+		for _, installed := range pkgReq.Status.InstalledPackages {
+			installedMap[installed.Name] = true
+		}
+		for _, pkg := range pkgReq.Spec.Packages {
+			if !installedMap[pkg.Name] {
+				packagesChanged = true
+				break
+			}
+		}
+	}
+
+	// Skip if already in terminal state (Ready or Failed) AND packages haven't changed
+	if !packagesChanged && (pkgReq.Status.Phase == "Ready" || pkgReq.Status.Phase == "Failed") {
+		logger.Info("PackageRequest already in terminal state and packages haven't changed",
+			zap2.String("phase", pkgReq.Status.Phase))
 		return reconcile.Result{}, nil
+	}
+
+	if packagesChanged {
+		logger.Info("Package list changed, will reconcile",
+			zap2.Int("spec_packages", len(pkgReq.Spec.Packages)),
+			zap2.Int("installed_packages", len(pkgReq.Status.InstalledPackages)))
 	}
 
 	// Update status to Installing
@@ -155,8 +210,20 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		pkgReq.Status.Message = fmt.Sprintf("Successfully installed %d packages", len(installedPackages))
 	}
 
-	if err := r.Status().Update(ctx, pkgReq); err != nil {
-		logger.Error("Failed to update status", zap2.Error(err))
+	// Retry status update with optimistic concurrency control
+	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
+		latest.Status.InstalledPackages = installedPackages
+		latest.Status.FailedPackages = failedPackages
+		latest.Status.LastUpdated = metav1.Now()
+		if len(failedPackages) > 0 {
+			latest.Status.Phase = "Failed"
+			latest.Status.Message = fmt.Sprintf("Failed to install %d packages", len(failedPackages))
+		} else {
+			latest.Status.Phase = "Ready"
+			latest.Status.Message = fmt.Sprintf("Successfully installed %d packages", len(installedPackages))
+		}
+	}, logger); err != nil {
+		logger.Error("Failed to update status after retries", zap2.Error(err))
 		return reconcile.Result{}, err
 	}
 
@@ -168,20 +235,60 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	return reconcile.Result{}, nil
 }
 
+// updateStatusWithRetry retries status updates with optimistic concurrency control
+// It fetches the latest version before each update attempt
+func (r *PackageManagerReconciler) updateStatusWithRetry(
+	ctx context.Context,
+	namespacedName client.ObjectKey,
+	updateFn func(*packagesv1.PackageRequest),
+	logger *zap2.Logger,
+) error {
+	const maxRetries = 3
+	for i := 0; i < maxRetries; i++ {
+		// Fetch the latest version
+		latest := &packagesv1.PackageRequest{}
+		if err := r.Get(ctx, namespacedName, latest); err != nil {
+			return fmt.Errorf("failed to fetch latest PackageRequest: %w", err)
+		}
+
+		// Apply the update function
+		updateFn(latest)
+
+		// Try to update status
+		if err := r.Status().Update(ctx, latest); err != nil {
+			if apierrors.IsConflict(err) && i < maxRetries-1 {
+				logger.Info("Status update conflict, retrying",
+					zap2.Int("attempt", i+1),
+					zap2.Int("maxRetries", maxRetries))
+				continue
+			}
+			return fmt.Errorf("failed to update status: %w", err)
+		}
+
+		// Success
+		return nil
+	}
+
+	return fmt.Errorf("failed to update status after %d retries", maxRetries)
+}
+
 func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, profileName string) (workspacesv1.InstalledPackage, error) {
 	// Determine package source and install command
-	profilePath := fmt.Sprintf("/nix/var/nix/profiles/per-user/root/%s", profileName)
+	// Store profiles in nix-store so they're accessible via hostPath mount in workspace pods
+	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
 
 	var installScript string
 	var pkgSource string
 
 	// Priority: NixpkgsCommit > Channel > latest unstable
 	if pkg.NixpkgsCommit != "" {
-		// Install from specific nixpkgs commit for exact version control
-		pkgSource = fmt.Sprintf("github:nixos/nixpkgs/%s#%s", pkg.NixpkgsCommit, pkg.Name)
+		// Install from specific nixpkgs commit using nix-env with tarball
+		// We use nix-env instead of nix profile because not all commits have flake.nix
+		nixpkgsTarball := fmt.Sprintf("https://github.com/nixos/nixpkgs/archive/%s.tar.gz", pkg.NixpkgsCommit)
+		pkgAttr := pkg.Name
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix profile install --profile %s '%s'`,
-			profilePath, pkgSource,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -f %s -iA %s`,
+			profilePath, nixpkgsTarball, pkgAttr,
 		)
 		r.Logger.Info("Installing package from nixpkgs commit",
 			zap2.String("package", pkg.Name),
@@ -190,7 +297,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, 
 		// Install from specific channel/release (e.g., nixos-24.05, nixos-23.11, unstable)
 		pkgSource = fmt.Sprintf("nixpkgs/%s#%s", pkg.Channel, pkg.Name)
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix profile install --profile %s '%s'`,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix --extra-experimental-features "nix-command flakes" profile install --profile %s '%s'`,
 			profilePath, pkgSource,
 		)
 		r.Logger.Info("Installing package from channel",
@@ -268,7 +375,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, 
 func (r *PackageManagerReconciler) uninstallPackage(pkgName string, profileName string) error {
 	// Remove package from the profile (doesn't delete from Nix store)
 	// Using nix-env -e only removes the package from the user environment
-	profilePath := fmt.Sprintf("/nix/var/nix/profiles/per-user/root/%s", profileName)
+	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
 	uninstallScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -e %s", profilePath, pkgName)
 
 	output, err := r.CmdExec.Execute(uninstallScript)
@@ -283,17 +390,18 @@ func (r *PackageManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&packagesv1.PackageRequest{}).
 		WithEventFilter(predicate.Funcs{
-			// Only reconcile on Create and when not in terminal state
+			// Reconcile on Create and Update (spec changes)
+			// The Reconcile function itself will check if reconciliation is needed
 			UpdateFunc: func(e event.UpdateEvent) bool {
-				newPR, ok := e.ObjectNew.(*packagesv1.PackageRequest)
-				if !ok {
+				oldPR, okOld := e.ObjectOld.(*packagesv1.PackageRequest)
+				newPR, okNew := e.ObjectNew.(*packagesv1.PackageRequest)
+				if !okOld || !okNew {
 					return false
 				}
-				// Don't reconcile if already in terminal state
-				if newPR.Status.Phase == "Ready" || newPR.Status.Phase == "Failed" {
-					return false
-				}
-				return true
+
+				// Only reconcile if spec changed (not just status)
+				// This prevents infinite loops from status-only updates
+				return oldPR.Generation != newPR.Generation
 			},
 			// Don't reconcile on delete
 			DeleteFunc: func(e event.DeleteEvent) bool {
@@ -303,30 +411,30 @@ func (r *PackageManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func setupWorkspaceHome(logger *zap2.Logger) error {
+func setupWorkspaceHome(logger *zap2.Logger, fs FileSystem) error {
 	logger.Info("Setting up workspace home directory",
 		zap2.String("path", workspaceHomePath),
 		zap2.Int("uid", workspaceUserUID),
 		zap2.Int("gid", workspaceUserGID))
 
 	// Create directory if it doesn't exist
-	if err := os.MkdirAll(workspaceHomePath, 0755); err != nil {
+	if err := fs.MkdirAll(workspaceHomePath, 0755); err != nil {
 		return fmt.Errorf("failed to create workspace home directory: %w", err)
 	}
 
 	// Set ownership to workspace user
-	if err := os.Chown(workspaceHomePath, workspaceUserUID, workspaceUserGID); err != nil {
+	if err := fs.Chown(workspaceHomePath, workspaceUserUID, workspaceUserGID); err != nil {
 		return fmt.Errorf("failed to set ownership on workspace home directory: %w", err)
 	}
 
 	// Create workspaces subdirectory with correct ownership
 	workspacesPath := workspaceHomePath + "/workspaces"
-	if err := os.MkdirAll(workspacesPath, 0755); err != nil {
+	if err := fs.MkdirAll(workspacesPath, 0755); err != nil {
 		return fmt.Errorf("failed to create workspaces subdirectory: %w", err)
 	}
 
 	// Set ownership to workspace user
-	if err := os.Chown(workspacesPath, workspaceUserUID, workspaceUserGID); err != nil {
+	if err := fs.Chown(workspacesPath, workspaceUserUID, workspaceUserGID); err != nil {
 		return fmt.Errorf("failed to set ownership on workspaces subdirectory: %w", err)
 	}
 
@@ -337,11 +445,11 @@ func setupWorkspaceHome(logger *zap2.Logger) error {
 	return nil
 }
 
-func setupSSHConfigDirectory(logger *zap2.Logger) error {
+func setupSSHConfigDirectory(logger *zap2.Logger, fs FileSystem) error {
 	logger.Info("Setting up SSH config directory", zap2.String("path", sshConfigPath))
 
 	// Create directory if it doesn't exist
-	if err := os.MkdirAll(sshConfigPath, 0755); err != nil {
+	if err := fs.MkdirAll(sshConfigPath, 0755); err != nil {
 		return fmt.Errorf("failed to create SSH config directory: %w", err)
 	}
 
@@ -349,17 +457,17 @@ func setupSSHConfigDirectory(logger *zap2.Logger) error {
 	return nil
 }
 
-func writeAuthorizedKeys(logger *zap2.Logger, content string) error {
+func writeAuthorizedKeys(logger *zap2.Logger, content string, fs FileSystem) error {
 	targetPath := filepath.Join(sshConfigPath, authorizedKeysFile)
 	tempPath := targetPath + ".tmp"
 
 	// Write to temporary file first (atomic operation)
-	if err := os.WriteFile(tempPath, []byte(content), 0644); err != nil {
+	if err := fs.WriteFile(tempPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write temporary authorized_keys file: %w", err)
 	}
 
 	// Atomically rename temp file to target (atomic on POSIX systems)
-	if err := os.Rename(tempPath, targetPath); err != nil {
+	if err := fs.Rename(tempPath, targetPath); err != nil {
 		return fmt.Errorf("failed to rename temporary authorized_keys file: %w", err)
 	}
 
@@ -373,6 +481,7 @@ func writeAuthorizedKeys(logger *zap2.Logger, content string) error {
 type SSHConfigReconciler struct {
 	client.Client
 	Logger *zap2.Logger
+	FS     FileSystem
 }
 
 func (r *SSHConfigReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -407,7 +516,7 @@ func (r *SSHConfigReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 	}
 
 	// Write to host filesystem
-	if err := writeAuthorizedKeys(logger, authorizedKeys); err != nil {
+	if err := writeAuthorizedKeys(logger, authorizedKeys, r.FS); err != nil {
 		logger.Error("Failed to write authorized_keys", zap2.Error(err))
 		return reconcile.Result{}, err
 	}
@@ -449,13 +558,16 @@ func main() {
 	}
 	defer zapLogger.Sync()
 
+	// Create filesystem interface for dependency injection
+	fs := &RealFileSystem{}
+
 	// Setup workspace home directory with correct ownership (system-level operation)
-	if err := setupWorkspaceHome(zapLogger); err != nil {
+	if err := setupWorkspaceHome(zapLogger, fs); err != nil {
 		zapLogger.Fatal("Failed to setup workspace home directory", zap2.Error(err))
 	}
 
 	// Setup SSH config directory
-	if err := setupSSHConfigDirectory(zapLogger); err != nil {
+	if err := setupSSHConfigDirectory(zapLogger, fs); err != nil {
 		zapLogger.Fatal("Failed to setup SSH config directory", zap2.Error(err))
 	}
 
@@ -517,6 +629,7 @@ func main() {
 	sshConfigReconciler := &SSHConfigReconciler{
 		Client: mgr.GetClient(),
 		Logger: zapLogger,
+		FS:     fs,
 	}
 
 	if err := sshConfigReconciler.SetupWithManager(mgr); err != nil {

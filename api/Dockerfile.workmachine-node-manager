@@ -36,9 +36,6 @@ RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 # Source nix profile
 ENV PATH="/root/.nix-profile/bin:${PATH}"
 
-# Create nix store directory
-RUN mkdir -p /var/lib/kloudlite/nix-store && chmod 755 /var/lib/kloudlite/nix-store
-
 # Copy the workmachine-node-manager binary
 COPY --from=builder /workspace/workmachine-node-manager /usr/local/bin/workmachine-node-manager
 
