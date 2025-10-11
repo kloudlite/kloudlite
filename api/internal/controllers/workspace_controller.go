@@ -20,7 +20,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
-	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -30,22 +29,9 @@ import (
 const (
 	workspaceFinalizer = "workspaces.kloudlite.io/finalizer"
 
-	// Auto-suspension configuration
-	// Activity threshold: CPU usage below this percentage (1%) is considered idle
-	activityCPUThresholdPercent = 1.0
-	// Network bytes threshold: activity below this per minute is considered idle (10KB/min)
-	activityNetworkBytesPerMinute = 10 * 1024
 	// Default idle timeout if not specified in workspace settings (30 minutes)
 	defaultIdleTimeoutMinutes = 30
 )
-
-// Port mappings for different server types
-var serverPorts = map[string]int32{
-	"ssh":         22,
-	"code-server": 8080,
-	"ttyd":        7681,
-	"vscode-tunnel": 8000,
-}
 
 // WorkspaceReconciler reconciles Workspace objects and manages VS Code server pods
 type WorkspaceReconciler struct {
@@ -54,40 +40,6 @@ type WorkspaceReconciler struct {
 	Logger    *zap.Logger
 	Config    *rest.Config
 	Clientset *kubernetes.Clientset
-}
-
-// getNetworkActivity checks network activity by comparing current and previous network stats
-func (r *WorkspaceReconciler) getNetworkActivity(ctx context.Context, workspace *workspacesv1.Workspace) (int64, error) {
-	podName := fmt.Sprintf("workspace-%s", workspace.Name)
-
-	pod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get pod: %w", err)
-	}
-
-	// Get pod metrics for network stats
-	var podMetrics metricsv1beta1.PodMetrics
-	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, &podMetrics)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return 0, nil
-		}
-		return 0, fmt.Errorf("failed to get pod metrics: %w", err)
-	}
-
-	// Calculate total network bytes (this is a simplified approach)
-	// In reality, we'd track delta from previous check
-	// For now, we'll check if there's any significant memory change as a proxy
-	var totalMemoryUsage int64
-	for _, container := range podMetrics.Containers {
-		memQuantity := container.Usage[corev1.ResourceMemory]
-		totalMemoryUsage += memQuantity.Value()
-	}
-
-	// Store previous values in workspace annotations for comparison
-	// This is a simplified version - in production you'd want a more sophisticated approach
-	return totalMemoryUsage, nil
 }
 
 // hasActiveConnections checks if there are active SSH or web connections to the workspace
@@ -474,14 +426,8 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 			return fmt.Errorf("failed to update PackageRequest: %w", err)
 		}
 
-		// Reset status to Pending to trigger new reconciliation
-		pkgReq.Status.Phase = "Pending"
-		pkgReq.Status.Message = "Package list updated, waiting for installation"
-		pkgReq.Status.LastUpdated = metav1.Now()
-		if err := r.Status().Update(ctx, pkgReq); err != nil {
-			return fmt.Errorf("failed to reset PackageRequest status: %w", err)
-		}
-
+		// PackageManagerReconciler will be triggered by the spec change
+		// and will handle the status update (don't update status here to avoid race conditions)
 		logger.Info("Updated PackageRequest with new packages", zap.String("name", pkgReqName))
 	}
 
@@ -716,47 +662,6 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 }
 
-// getServerImage returns the Docker image for the given server type
-func getServerImage(serverType string) string {
-	imageMap := map[string]string{
-		"code-server": "kloudlite/workspace-code-server:latest",
-		"jupyter":     "kloudlite/workspace-jupyter:latest",
-		"ttyd":        "kloudlite/workspace-ttyd:latest",
-		"code-web":    "kloudlite/workspace-code-web:latest",
-	}
-
-	if image, ok := imageMap[serverType]; ok {
-		return image
-	}
-	// Default to code-server if unknown type
-	return imageMap["code-server"]
-}
-
-// getServerPort returns the port for the given server type
-func getServerPort(serverType string) int32 {
-	if port, ok := serverPorts[serverType]; ok {
-		return port
-	}
-	// Default to code-server port if unknown type
-	return serverPorts["code-server"]
-}
-
-// getServerArgs returns the command arguments for the given server type
-func getServerArgs(serverType string) []string {
-	switch serverType {
-	case "code-server":
-		return []string{"code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080"}
-	case "jupyter":
-		return []string{"jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"}
-	case "ttyd":
-		return []string{"ttyd", "-p", "7681", "bash"}
-	case "code-web":
-		return []string{"code-web"}
-	default:
-		return []string{"code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080"}
-	}
-}
-
 // createWorkspacePod creates a pod with multiple containers for different access methods
 func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspace) (*corev1.Pod, error) {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
@@ -795,11 +700,11 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 		},
 	}
 
-	// Add PATH to include nix binaries from workspace-specific profile
-	profilePath := fmt.Sprintf("/nix/var/nix/profiles/per-user/root/workspace-%s-packages", workspace.Name)
+	// Set PATH for container environment (kubectl exec, running services, etc.)
+	// This is also set in /etc/environment for SSH sessions via PAM
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "PATH",
-		Value: fmt.Sprintf("%s/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", profilePath),
+		Value: fmt.Sprintf("/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
 	})
 
 	// Add startup script from settings if provided
@@ -841,12 +746,27 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 					Command: []string{
 						"sh",
 						"-c",
-						fmt.Sprintf("mkdir -p /home/kl/workspaces && chown -R 1001:1001 /home/kl/workspaces && mkdir -p /home/kl/workspaces/%s", workspace.Name),
+						fmt.Sprintf(`
+# Create workspace directory
+mkdir -p /home/kl/workspaces/%s
+chown -R 1001:1001 /home/kl/workspaces
+
+# Create /etc/environment with PATH for PAM
+# This will be read by PAM on SSH login (both interactive and non-interactive)
+cat > /etc-writable/environment << 'EOF'
+PATH=/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EOF
+chmod 644 /etc-writable/environment
+`, workspace.Name, workspace.Name),
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "kl-home",
 							MountPath: "/home/kl",
+						},
+						{
+							Name:      "etc-environment",
+							MountPath: "/etc-writable",
 						},
 					},
 				},
@@ -885,7 +805,18 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "nix-store",
-							MountPath: "/nix",
+							MountPath: "/nix/store",
+							SubPath:   "store",
+						},
+						{
+							Name:      "nix-store",
+							MountPath: "/nix/var",
+							SubPath:   "var",
+						},
+						{
+							Name:      "nix-store",
+							MountPath: "/nix/profiles",
+							SubPath:   "profiles",
 						},
 						{
 							Name:      "kl-home",
@@ -897,7 +828,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 							ReadOnly:  true,
 						},
 						{
-							Name:      "workspace-sshd-config",
+							Name:      "sshd-config",
 							MountPath: "/etc/ssh/sshd_config.d",
 							ReadOnly:  true,
 						},
@@ -935,6 +866,12 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 							Name:      "ssh-host-keys",
 							MountPath: "/etc/ssh/ssh_host_ed25519_key.pub",
 							SubPath:   "ssh_host_ed25519_key.pub",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "etc-environment",
+							MountPath: "/etc/environment",
+							SubPath:   "environment",
 							ReadOnly:  true,
 						},
 					},
@@ -1000,7 +937,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 					},
 				},
 				{
-					Name: "workspace-sshd-config",
+					Name: "sshd-config",
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
@@ -1015,6 +952,18 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 						Secret: &corev1.SecretVolumeSource{
 							SecretName:  "ssh-host-keys",
 							DefaultMode: func() *int32 { m := int32(0600); return &m }(),
+						},
+					},
+				},
+				{
+					Name: "etc-environment",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/kloudlite/etc-environment",
+							Type: func() *corev1.HostPathType {
+								t := corev1.HostPathDirectoryOrCreate
+								return &t
+							}(),
 						},
 					},
 				},
