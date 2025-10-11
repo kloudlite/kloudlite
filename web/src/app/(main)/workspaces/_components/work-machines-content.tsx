@@ -28,6 +28,7 @@ interface WorkMachine {
   disk: number
   uptime: string
   type: string
+  sshPublicKey?: string
 }
 
 // Helper to get state display info
@@ -220,6 +221,8 @@ export function WorkMachinesContent({
               desiredState={selectedMachine.desiredState}
               currentType={selectedMachine.type}
               availableMachineTypes={availableMachineTypes}
+              sshPublicKey={selectedMachine.sshPublicKey}
+              sshAuthorizedKeys={selectedMachine.sshAuthorizedKeys}
               onStart={handleStart}
               onStop={handleStop}
               onTypeChange={handleTypeChange}

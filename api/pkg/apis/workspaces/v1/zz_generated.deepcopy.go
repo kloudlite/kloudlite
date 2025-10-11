@@ -250,6 +250,13 @@ func (in *WorkspaceStatus) DeepCopyInto(out *WorkspaceStatus) {
 		in, out := &in.StopTime, &out.StopTime
 		*out = (*in).DeepCopy()
 	}
+	if in.AccessURLs != nil {
+		in, out := &in.AccessURLs, &out.AccessURLs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.ResourceUsage != nil {
 		in, out := &in.ResourceUsage, &out.ResourceUsage
 		*out = new(ResourceUsage)

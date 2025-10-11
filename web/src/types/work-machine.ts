@@ -35,6 +35,7 @@ export interface WorkMachineStatus {
   uptime?: string
   podName?: string
   podIP?: string
+  sshPublicKey?: string
 }
 
 // API Response types

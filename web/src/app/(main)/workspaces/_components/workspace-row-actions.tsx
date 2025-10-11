@@ -11,6 +11,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import type { Workspace } from '@/types/workspace'
 import {
   deleteWorkspace,
@@ -26,12 +36,9 @@ interface WorkspaceRowActionsProps {
 export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete workspace "${workspace.metadata.name}"?`)) {
-      return
-    }
-
     setIsDeleting(true)
     try {
       const result = await deleteWorkspace(workspace.metadata.name, workspace.metadata.namespace)
@@ -44,6 +51,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
       alert(error instanceof Error ? error.message : 'Failed to delete workspace')
     } finally {
       setIsDeleting(false)
+      setShowDeleteDialog(false)
     }
   }
 
@@ -69,50 +77,81 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          disabled={isDeleting}
-        >
-          {isDeleting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <MoreHorizontal className="h-4 w-4" />
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MoreHorizontal className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}>
+              Open Workspace
+            </Link>
+          </DropdownMenuItem>
+          {workspace.spec.status !== 'suspended' && (
+            <DropdownMenuItem onClick={() => handleWorkspaceAction('suspend')}>
+              Suspend
+            </DropdownMenuItem>
           )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}>
-            Open Workspace
-          </Link>
-        </DropdownMenuItem>
-        {workspace.spec.status !== 'suspended' && (
-          <DropdownMenuItem onClick={() => handleWorkspaceAction('suspend')}>
-            Suspend
+          {workspace.spec.status === 'suspended' && (
+            <DropdownMenuItem onClick={() => handleWorkspaceAction('activate')}>
+              Activate
+            </DropdownMenuItem>
+          )}
+          {workspace.spec.status !== 'archived' && (
+            <DropdownMenuItem onClick={() => handleWorkspaceAction('archive')}>
+              Archive
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem>Settings</DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-red-600"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            Delete
           </DropdownMenuItem>
-        )}
-        {workspace.spec.status === 'suspended' && (
-          <DropdownMenuItem onClick={() => handleWorkspaceAction('activate')}>
-            Activate
-          </DropdownMenuItem>
-        )}
-        {workspace.spec.status !== 'archived' && (
-          <DropdownMenuItem onClick={() => handleWorkspaceAction('archive')}>
-            Archive
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem>Settings</DropdownMenuItem>
-        <DropdownMenuItem
-          className="text-red-600"
-          onClick={handleDelete}
-        >
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete workspace <strong>{workspace.metadata.name}</strong>?
+              This action cannot be undone. All data associated with this workspace will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
