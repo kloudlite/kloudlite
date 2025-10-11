@@ -315,40 +315,20 @@ func setupWorkspaceHome(logger *zap2.Logger) error {
 		return fmt.Errorf("failed to set ownership on workspace home directory: %w", err)
 	}
 
-	// Setup SSH authorized_keys if SSH_PROXY_PUBLIC_KEY is set
-	sshPublicKey := os.Getenv("SSH_PROXY_PUBLIC_KEY")
-	if sshPublicKey != "" {
-		logger.Info("Setting up SSH authorized_keys")
-
-		sshDir := fmt.Sprintf("%s/.ssh", workspaceHomePath)
-		authorizedKeysPath := fmt.Sprintf("%s/authorized_keys", sshDir)
-
-		// Create .ssh directory
-		if err := os.MkdirAll(sshDir, 0700); err != nil {
-			return fmt.Errorf("failed to create .ssh directory: %w", err)
-		}
-
-		// Write authorized_keys file
-		if err := os.WriteFile(authorizedKeysPath, []byte(sshPublicKey+"\n"), 0600); err != nil {
-			return fmt.Errorf("failed to write authorized_keys: %w", err)
-		}
-
-		// Set ownership of .ssh directory and authorized_keys
-		if err := os.Chown(sshDir, workspaceUserUID, workspaceUserGID); err != nil {
-			return fmt.Errorf("failed to set ownership on .ssh directory: %w", err)
-		}
-
-		if err := os.Chown(authorizedKeysPath, workspaceUserUID, workspaceUserGID); err != nil {
-			return fmt.Errorf("failed to set ownership on authorized_keys: %w", err)
-		}
-
-		logger.Info("Successfully set up SSH authorized_keys", zap2.String("path", authorizedKeysPath))
-	} else {
-		logger.Info("SSH_PROXY_PUBLIC_KEY not set, skipping authorized_keys setup")
+	// Create workspaces subdirectory with correct ownership
+	workspacesPath := workspaceHomePath + "/workspaces"
+	if err := os.MkdirAll(workspacesPath, 0755); err != nil {
+		return fmt.Errorf("failed to create workspaces subdirectory: %w", err)
 	}
 
-	logger.Info("Successfully set up workspace home directory",
-		zap2.String("path", workspaceHomePath))
+	// Set ownership to workspace user
+	if err := os.Chown(workspacesPath, workspaceUserUID, workspaceUserGID); err != nil {
+		return fmt.Errorf("failed to set ownership on workspaces subdirectory: %w", err)
+	}
+
+	logger.Info("Successfully set up workspace home directory with workspaces subdirectory",
+		zap2.String("path", workspaceHomePath),
+		zap2.String("workspacesPath", workspacesPath))
 
 	return nil
 }
