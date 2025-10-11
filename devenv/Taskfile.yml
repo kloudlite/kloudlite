@@ -207,33 +207,22 @@ tasks:
     cmds:
       - echo "Building workspace base image..."
       - docker build -t kloudlite/workspace-base:latest ./base
-      - echo "Building workspace code-server image..."
-      - docker build -t kloudlite/workspace-code-server:latest ./servers/code-server
-      - echo "Building workspace ttyd image..."
-      - docker build -t kloudlite/workspace-ttyd:latest ./servers/ttyd
+      - echo "Building workspace comprehensive image..."
+      - docker build -t kloudlite/workspace-comprehensive:latest ./comprehensive
       - echo "Workspace images built successfully"
 
   workspace:import:
     desc: Import workspace images to k3s
     cmds:
-      - echo "Saving workspace code-server image to tar..."
-      - docker save kloudlite/workspace-code-server:latest -o /tmp/workspace-code-server.tar
-      - echo "Copying code-server to k3s container..."
-      - docker cp /tmp/workspace-code-server.tar k3s-dev:/tmp/workspace-code-server.tar
-      - echo "Importing code-server to k3s..."
-      - docker exec k3s-dev ctr -n k8s.io images import /tmp/workspace-code-server.tar
-      - echo "Cleaning up code-server..."
-      - docker exec k3s-dev rm /tmp/workspace-code-server.tar
-      - rm /tmp/workspace-code-server.tar
-      - echo "Saving workspace ttyd image to tar..."
-      - docker save kloudlite/workspace-ttyd:latest -o /tmp/workspace-ttyd.tar
-      - echo "Copying ttyd to k3s container..."
-      - docker cp /tmp/workspace-ttyd.tar k3s-dev:/tmp/workspace-ttyd.tar
-      - echo "Importing ttyd to k3s..."
-      - docker exec k3s-dev ctr -n k8s.io images import /tmp/workspace-ttyd.tar
-      - echo "Cleaning up ttyd..."
-      - docker exec k3s-dev rm /tmp/workspace-ttyd.tar
-      - rm /tmp/workspace-ttyd.tar
+      - echo "Saving workspace comprehensive image to tar..."
+      - docker save kloudlite/workspace-comprehensive:latest -o /tmp/workspace-comprehensive.tar
+      - echo "Copying to k3s container..."
+      - docker cp /tmp/workspace-comprehensive.tar k3s-dev:/tmp/workspace-comprehensive.tar
+      - echo "Importing to k3s..."
+      - docker exec k3s-dev ctr -n k8s.io images import /tmp/workspace-comprehensive.tar
+      - echo "Cleaning up..."
+      - docker exec k3s-dev rm /tmp/workspace-comprehensive.tar
+      - rm /tmp/workspace-comprehensive.tar
       - echo "Workspace images imported to k3s successfully"
 
   workspace:build-import:
