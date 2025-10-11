@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	zap2 "go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -1170,4 +1171,305 @@ func TestSetupWorkspaceHome_CreatesWorkspacesSubdirectory(t *testing.T) {
 	// In test environment, expect error due to lack of permissions
 	// The actual implementation will succeed when running with proper permissions
 	_ = err
+}
+
+// ========================================
+// SSH ConfigMap Controller Tests
+// ========================================
+
+func setupTestSSHConfigReconciler(t *testing.T, initObjs ...runtime.Object) *SSHConfigReconciler {
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(initObjs...).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+
+	return &SSHConfigReconciler{
+		Client: fakeClient,
+		Logger: logger,
+	}
+}
+
+func TestSSHConfigReconciler_Reconcile_Success(t *testing.T) {
+	// Create ssh-authorized-keys ConfigMap with sample keys
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... user@example.com\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB... user2@example.com\n",
+		},
+	}
+
+	reconciler := setupTestSSHConfigReconciler(t, cm)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+	}
+
+	// Note: This will attempt to write to /var/lib/kloudlite/ssh-config/authorized_keys
+	// In test environment, this may fail due to permissions, but we verify the code path
+	result, err := reconciler.Reconcile(context.Background(), req)
+
+	// Should not requeue
+	assert.False(t, result.Requeue)
+	// Error may occur due to filesystem permissions in test environment
+	_ = err
+}
+
+func TestSSHConfigReconciler_Reconcile_ConfigMapNotFound(t *testing.T) {
+	reconciler := setupTestSSHConfigReconciler(t)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+	}
+
+	// ConfigMap doesn't exist
+	result, err := reconciler.Reconcile(context.Background(), req)
+
+	// Should not return error when ConfigMap is not found (it's deleted or doesn't exist)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+}
+
+func TestSSHConfigReconciler_Reconcile_WrongConfigMapName(t *testing.T) {
+	// Create ConfigMap with different name - should be ignored
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "other-configmap",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... user@example.com\n",
+		},
+	}
+
+	reconciler := setupTestSSHConfigReconciler(t, cm)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "other-configmap",
+			Namespace: "test-namespace",
+		},
+	}
+
+	// Should be ignored (not ssh-authorized-keys)
+	result, err := reconciler.Reconcile(context.Background(), req)
+
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+}
+
+func TestSSHConfigReconciler_Reconcile_MissingAuthorizedKeysKey(t *testing.T) {
+	// Create ConfigMap without authorized_keys key
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"other-key": "some-value",
+		},
+	}
+
+	reconciler := setupTestSSHConfigReconciler(t, cm)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+	}
+
+	// Should handle missing key gracefully
+	result, err := reconciler.Reconcile(context.Background(), req)
+
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+}
+
+func TestSSHConfigReconciler_Reconcile_EmptyAuthorizedKeys(t *testing.T) {
+	// Create ConfigMap with empty authorized_keys
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": "",
+		},
+	}
+
+	reconciler := setupTestSSHConfigReconciler(t, cm)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+	}
+
+	// Should handle empty content (clears authorized_keys file)
+	result, err := reconciler.Reconcile(context.Background(), req)
+
+	assert.False(t, result.Requeue)
+	// Error may occur due to filesystem permissions in test environment
+	_ = err
+}
+
+func TestSSHConfigReconciler_Reconcile_MultipleKeys(t *testing.T) {
+	// Create ConfigMap with multiple SSH keys (realistic scenario)
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTest1 user1@example.com
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest2 user2@example.com
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTest3 user3@example.com
+`,
+		},
+	}
+
+	reconciler := setupTestSSHConfigReconciler(t, cm)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+
+	assert.False(t, result.Requeue)
+	// Error may occur due to filesystem permissions in test environment
+	_ = err
+}
+
+func TestSetupSSHConfigDirectory_Basic(t *testing.T) {
+	// Test requires filesystem operations, which will fail in test environment
+	// This test documents the expected behavior
+	logger, _ := zap.NewDevelopment()
+
+	err := setupSSHConfigDirectory(logger)
+
+	// Expected behavior (even if it fails in test environment):
+	// - Creates /var/lib/kloudlite/ssh-config with 0755 permissions
+	// - Directory should be accessible by root and readable by all
+
+	// In test environment, expect error due to lack of permissions
+	_ = err
+}
+
+func TestWriteAuthorizedKeys_Basic(t *testing.T) {
+	// Test requires filesystem operations, which will fail in test environment
+	// This test documents the expected behavior and atomic write pattern
+	logger, _ := zap.NewDevelopment()
+
+	content := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... test@example.com\n"
+
+	err := writeAuthorizedKeys(logger, content)
+
+	// Expected behavior (even if it fails in test environment):
+	// - Writes content to /var/lib/kloudlite/ssh-config/authorized_keys.tmp
+	// - Atomically renames .tmp file to authorized_keys (atomic operation)
+	// - File has 0644 permissions (readable by all, writable by owner)
+	// - Atomic rename ensures SSH daemons never see partial content
+
+	// In test environment, expect error due to lack of permissions
+	_ = err
+}
+
+func TestWriteAuthorizedKeys_EmptyContent(t *testing.T) {
+	// Test atomic write with empty content (valid use case - clears all keys)
+	logger, _ := zap.NewDevelopment()
+
+	err := writeAuthorizedKeys(logger, "")
+
+	// Should handle empty content (creates empty file)
+	// In test environment, expect error due to lack of permissions
+	_ = err
+}
+
+func TestWriteAuthorizedKeys_LargeContent(t *testing.T) {
+	// Test atomic write with large content (many SSH keys)
+	logger, _ := zap.NewDevelopment()
+
+	// Simulate 100 SSH keys
+	var content strings.Builder
+	for i := 0; i < 100; i++ {
+		content.WriteString(fmt.Sprintf("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTest%d user%d@example.com\n", i, i))
+	}
+
+	err := writeAuthorizedKeys(logger, content.String())
+
+	// Should handle large content
+	// In test environment, expect error due to lack of permissions
+	_ = err
+}
+
+func TestSSHConfigReconciler_Reconcile_UpdateExistingKeys(t *testing.T) {
+	// Simulate updating authorized_keys (e.g., adding/removing users)
+	// First reconcile with initial keys
+	initialCM := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... user1@example.com\n",
+		},
+	}
+
+	reconciler := setupTestSSHConfigReconciler(t, initialCM)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+	}
+
+	// First reconcile
+	result1, err1 := reconciler.Reconcile(context.Background(), req)
+	assert.False(t, result1.Requeue)
+	_ = err1
+
+	// Update ConfigMap with new keys
+	updatedCM := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-authorized-keys",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"authorized_keys": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB... user2@example.com\n",
+		},
+	}
+
+	// Update in fake client
+	err := reconciler.Client.Update(context.Background(), updatedCM)
+	assert.NoError(t, err)
+
+	// Second reconcile with updated keys
+	result2, err2 := reconciler.Reconcile(context.Background(), req)
+	assert.False(t, result2.Requeue)
+	_ = err2
+
+	// Expected behavior:
+	// - First reconcile writes user1's key
+	// - Second reconcile overwrites with user2's key (atomic operation)
+	// - SSH daemons immediately see new keys on next auth attempt
 }

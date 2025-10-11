@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -30,6 +32,8 @@ const (
 	workspaceHomePath   = "/var/lib/kloudlite/workspace-homes/kl"
 	workspaceUserUID    = 1001
 	workspaceUserGID    = 1001
+	sshConfigPath       = "/var/lib/kloudlite/ssh-config"
+	authorizedKeysFile  = "authorized_keys"
 )
 
 // CommandExecutor defines an interface for executing shell commands
@@ -333,6 +337,102 @@ func setupWorkspaceHome(logger *zap2.Logger) error {
 	return nil
 }
 
+func setupSSHConfigDirectory(logger *zap2.Logger) error {
+	logger.Info("Setting up SSH config directory", zap2.String("path", sshConfigPath))
+
+	// Create directory if it doesn't exist
+	if err := os.MkdirAll(sshConfigPath, 0755); err != nil {
+		return fmt.Errorf("failed to create SSH config directory: %w", err)
+	}
+
+	logger.Info("Successfully set up SSH config directory", zap2.String("path", sshConfigPath))
+	return nil
+}
+
+func writeAuthorizedKeys(logger *zap2.Logger, content string) error {
+	targetPath := filepath.Join(sshConfigPath, authorizedKeysFile)
+	tempPath := targetPath + ".tmp"
+
+	// Write to temporary file first (atomic operation)
+	if err := os.WriteFile(tempPath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write temporary authorized_keys file: %w", err)
+	}
+
+	// Atomically rename temp file to target (atomic on POSIX systems)
+	if err := os.Rename(tempPath, targetPath); err != nil {
+		return fmt.Errorf("failed to rename temporary authorized_keys file: %w", err)
+	}
+
+	logger.Info("Successfully wrote authorized_keys file",
+		zap2.String("path", targetPath),
+		zap2.Int("size", len(content)))
+	return nil
+}
+
+// SSHConfigReconciler watches the ssh-authorized-keys ConfigMap and writes it to the host filesystem
+type SSHConfigReconciler struct {
+	client.Client
+	Logger *zap2.Logger
+}
+
+func (r *SSHConfigReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+	// Only reconcile the ssh-authorized-keys ConfigMap
+	if req.Name != "ssh-authorized-keys" {
+		return reconcile.Result{}, nil
+	}
+
+	logger := r.Logger.With(
+		zap2.String("configMap", req.Name),
+		zap2.String("namespace", req.Namespace),
+	)
+
+	logger.Info("Reconciling SSH authorized_keys ConfigMap")
+
+	// Fetch ConfigMap
+	cm := &corev1.ConfigMap{}
+	if err := r.Get(ctx, req.NamespacedName, cm); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			logger.Info("ConfigMap deleted or not found")
+			return reconcile.Result{}, nil
+		}
+		logger.Error("Failed to get ConfigMap", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Get authorized_keys content
+	authorizedKeys, ok := cm.Data["authorized_keys"]
+	if !ok {
+		logger.Warn("ConfigMap does not contain authorized_keys key")
+		return reconcile.Result{}, nil
+	}
+
+	// Write to host filesystem
+	if err := writeAuthorizedKeys(logger, authorizedKeys); err != nil {
+		logger.Error("Failed to write authorized_keys", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Successfully updated authorized_keys file")
+	return reconcile.Result{}, nil
+}
+
+func (r *SSHConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&corev1.ConfigMap{}).
+		WithEventFilter(predicate.Funcs{
+			CreateFunc: func(e event.CreateEvent) bool {
+				return e.Object.GetName() == "ssh-authorized-keys"
+			},
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				return e.ObjectNew.GetName() == "ssh-authorized-keys"
+			},
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				return e.Object.GetName() == "ssh-authorized-keys"
+			},
+		}).
+		Complete(r)
+}
+
 func main() {
 	// Setup logger using controller-runtime's zap logger
 	opts := zap.Options{
@@ -352,6 +452,11 @@ func main() {
 	// Setup workspace home directory with correct ownership (system-level operation)
 	if err := setupWorkspaceHome(zapLogger); err != nil {
 		zapLogger.Fatal("Failed to setup workspace home directory", zap2.Error(err))
+	}
+
+	// Setup SSH config directory
+	if err := setupSSHConfigDirectory(zapLogger); err != nil {
+		zapLogger.Fatal("Failed to setup SSH config directory", zap2.Error(err))
 	}
 
 	// Get namespace from environment
@@ -395,8 +500,8 @@ func main() {
 		zapLogger.Fatal("Failed to create manager", zap2.Error(err))
 	}
 
-	// Setup reconciler
-	reconciler := &PackageManagerReconciler{
+	// Setup package reconciler
+	packageReconciler := &PackageManagerReconciler{
 		Client:    mgr.GetClient(),
 		Scheme:    mgr.GetScheme(),
 		Logger:    zapLogger,
@@ -404,12 +509,23 @@ func main() {
 		CmdExec:   &RealCommandExecutor{},
 	}
 
-	if err := reconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup controller", zap2.Error(err))
+	if err := packageReconciler.SetupWithManager(mgr); err != nil {
+		zapLogger.Fatal("Failed to setup package controller", zap2.Error(err))
 	}
 
+	// Setup SSH config reconciler
+	sshConfigReconciler := &SSHConfigReconciler{
+		Client: mgr.GetClient(),
+		Logger: zapLogger,
+	}
+
+	if err := sshConfigReconciler.SetupWithManager(mgr); err != nil {
+		zapLogger.Fatal("Failed to setup SSH config controller", zap2.Error(err))
+	}
+
+	ctx := ctrl.SetupSignalHandler()
 	zapLogger.Info("Starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		zapLogger.Fatal("Failed to start manager", zap2.Error(err))
 	}
 }

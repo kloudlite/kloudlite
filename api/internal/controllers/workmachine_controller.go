@@ -442,6 +442,11 @@ func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, na
 				Resources: []string{"packagerequests/status"},
 				Verbs:     []string{"get", "update", "patch"},
 			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"configmaps"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
 		},
 	}
 
@@ -1049,6 +1054,10 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 									Name:      "workspace-homes",
 									MountPath: "/var/lib/kloudlite/workspace-homes",
 								},
+								{
+									Name:      "ssh-config",
+									MountPath: "/var/lib/kloudlite/ssh-config",
+								},
 							},
 						},
 						{
@@ -1100,7 +1109,7 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 									ReadOnly:  true,
 								},
 								{
-									Name:      "ssh-authorized-keys",
+									Name:      "ssh-config",
 									MountPath: "/config/.ssh/authorized_keys",
 									SubPath:   "authorized_keys",
 									ReadOnly:  true,
@@ -1170,6 +1179,15 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 							},
 						},
 						{
+							Name: "ssh-config",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/var/lib/kloudlite/ssh-config",
+									Type: &hostPathDirectoryOrCreate,
+								},
+							},
+						},
+						{
 							Name: "ssh-proxy-key",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
@@ -1181,16 +1199,6 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 							Name: "ssh-key-volume",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "ssh-authorized-keys",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "ssh-authorized-keys",
-									},
-								},
 							},
 						},
 						{

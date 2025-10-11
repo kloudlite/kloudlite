@@ -242,3 +242,32 @@ tasks:
       - task: workspace:build
       - task: workspace:import
       - echo "Workspace images ready in k3s"
+
+  workmachine:build:
+    desc: Build workmachine-node-manager Docker image
+    dir: ../api
+    cmds:
+      - echo "Building workmachine-node-manager image..."
+      - docker build -f Dockerfile.workmachine-node-manager -t kloudlite/workmachine-node-manager:latest .
+      - echo "workmachine-node-manager image built successfully"
+
+  workmachine:import:
+    desc: Import workmachine-node-manager image to k3s
+    cmds:
+      - echo "Saving workmachine-node-manager image to tar..."
+      - docker save kloudlite/workmachine-node-manager:latest -o /tmp/workmachine-node-manager.tar
+      - echo "Copying to k3s container..."
+      - docker cp /tmp/workmachine-node-manager.tar k3s-dev:/tmp/workmachine-node-manager.tar
+      - echo "Importing to k3s..."
+      - docker exec k3s-dev ctr -n k8s.io images import /tmp/workmachine-node-manager.tar
+      - echo "Cleaning up..."
+      - docker exec k3s-dev rm /tmp/workmachine-node-manager.tar
+      - rm /tmp/workmachine-node-manager.tar
+      - echo "workmachine-node-manager image imported to k3s successfully"
+
+  workmachine:build-import:
+    desc: Build and import workmachine-node-manager image to k3s
+    cmds:
+      - task: workmachine:build
+      - task: workmachine:import
+      - echo "workmachine-node-manager image ready in k3s"
