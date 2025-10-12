@@ -1048,7 +1048,7 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "nix-store",
-									MountPath: "/var/lib/kloudlite/nix-store",
+									MountPath: "/nix",
 								},
 								{
 									Name:      "workspace-homes",

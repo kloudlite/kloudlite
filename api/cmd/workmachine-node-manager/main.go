@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	nixStorePath        = "/var/lib/kloudlite/nix-store"
+	nixStorePath        = "/nix"
 	workspaceHomePath   = "/var/lib/kloudlite/workspace-homes/kl"
 	workspaceUserUID    = 1001
 	workspaceUserGID    = 1001
@@ -361,12 +361,15 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacesv1.PackageSpec, 
 		}
 	}
 
-	binPath := fmt.Sprintf("%s/bin", profilePath)
+	// BinPath should use the shared mount path at /nix
+	// Both workmachine-host-manager and workspace pods mount the hostPath at /nix
+	// This ensures packages installed by workmachine-host-manager are accessible in workspaces
+	workspaceBinPath := fmt.Sprintf("/nix/profiles/per-user/root/%s/bin", profileName)
 
 	return workspacesv1.InstalledPackage{
 		Name:        pkg.Name,
 		Version:     installedVersion,
-		BinPath:     binPath,
+		BinPath:     workspaceBinPath,
 		StorePath:   storePath,
 		InstalledAt: metav1.Now(),
 	}, nil
