@@ -65,7 +65,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
   const [newPackageVersion, setNewPackageVersion] = useState('')
   const [availableVersions, setAvailableVersions] = useState<string[]>([])
   const [loadingVersions, setLoadingVersions] = useState(false)
-  const [searchResults, setSearchResults] = useState<string[]>([])
+  const [searchResults, setSearchResults] = useState<Array<{ name: string; numVersions: number }>>([])
   const [loadingSearch, setLoadingSearch] = useState(false)
   const [comboboxOpen, setComboboxOpen] = useState(false)
 
@@ -106,9 +106,14 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
       const result = await searchPackages(newPackageName)
       setLoadingSearch(false)
 
-      if (result.success && result.data) {
-        const packageNames = result.data.packages.map(p => p.name)
-        setSearchResults(packageNames.slice(0, 10))
+      if (result.success && result.data?.packages) {
+        const packagesInfo = result.data.packages.map(p => ({
+          name: p.name,
+          numVersions: p.num_versions
+        }))
+        setSearchResults(packagesInfo.slice(0, 15))
+      } else {
+        setSearchResults([])
       }
     }, 300)
 
@@ -127,12 +132,16 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
       const result = await searchPackages(newPackageName)
       setLoadingVersions(false)
 
-      if (result.success && result.data) {
+      if (result.success && result.data?.packages) {
         const pkg = result.data.packages.find(p => p.name === newPackageName)
         if (pkg && pkg.versions.length > 0) {
           const versions = pkg.versions.map(v => v.version)
           setAvailableVersions(versions.slice(0, 50))
+        } else {
+          setAvailableVersions([])
         }
+      } else {
+        setAvailableVersions([])
       }
     }
 
@@ -265,10 +274,15 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
                         variant="outline"
                         role="combobox"
                         aria-expanded={comboboxOpen}
-                        className="w-full justify-between"
+                        className={cn(
+                          "w-full justify-between",
+                          !newPackageName && "text-muted-foreground"
+                        )}
                         disabled={isLoading}
                       >
-                        {newPackageName || "Search packages..."}
+                        <span className="truncate">
+                          {newPackageName || "Search packages..."}
+                        </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
@@ -283,30 +297,46 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
                           <CommandList className="p-2">
                             {loadingSearch && (
                               <div className="py-6 text-center text-sm">
-                                <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                                <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                                <p className="text-xs text-muted-foreground">Searching packages...</p>
+                              </div>
+                            )}
+                            {!loadingSearch && searchResults.length === 0 && newPackageName.length < 2 && (
+                              <div className="py-6 text-center text-sm text-muted-foreground">
+                                <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                <p>Type at least 2 characters to search</p>
+                                <p className="text-xs mt-1">e.g., nodejs, python, git</p>
                               </div>
                             )}
                             {!loadingSearch && searchResults.length === 0 && newPackageName.length >= 2 && (
-                              <CommandEmpty className="py-6">No package found.</CommandEmpty>
+                              <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+                                No packages found matching "{newPackageName}"
+                              </CommandEmpty>
                             )}
                             <CommandGroup>
-                              {searchResults.map((pkgName) => (
+                              {searchResults.map((pkg) => (
                                 <CommandItem
-                                  key={pkgName}
-                                  value={pkgName}
+                                  key={pkg.name}
+                                  value={pkg.name}
                                   onSelect={(value) => {
                                     setNewPackageName(value)
                                     setComboboxOpen(false)
                                   }}
+                                  className="cursor-pointer"
                                 >
                                   <Check
                                     className={cn(
-                                      "mr-2 h-4 w-4",
-                                      newPackageName === pkgName ? "opacity-100" : "opacity-0"
+                                      "mr-2 h-4 w-4 flex-shrink-0",
+                                      newPackageName === pkg.name ? "opacity-100" : "opacity-0"
                                     )}
                                   />
-                                  <Package className="mr-2 h-4 w-4 text-muted-foreground" />
-                                  {pkgName}
+                                  <Package className="mr-2 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                                  <div className="flex-1 flex items-center justify-between min-w-0">
+                                    <span className="font-medium truncate">{pkg.name}</span>
+                                    <span className="ml-2 text-xs text-muted-foreground flex-shrink-0">
+                                      {pkg.numVersions} {pkg.numVersions === 1 ? 'version' : 'versions'}
+                                    </span>
+                                  </div>
                                 </CommandItem>
                               ))}
                             </CommandGroup>
