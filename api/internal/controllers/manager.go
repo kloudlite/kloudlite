@@ -125,9 +125,9 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 
 	// Setup HelmChart controller
 	helmChartReconciler := &helmchart.Reconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "helmchart")),
+		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
+		HelmJobRunnerImage: "ghcr.io/kloudlite/plugin-helm-chart/helm-job-runner:v1.0.0",
 	}
 
 	if err = helmChartReconciler.SetupWithManager(mgr); err != nil {
