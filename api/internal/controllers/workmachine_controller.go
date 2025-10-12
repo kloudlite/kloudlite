@@ -840,6 +840,7 @@ PubkeyAuthentication yes
 PasswordAuthentication no
 PermitEmptyPasswords no
 ChallengeResponseAuthentication no
+AuthorizedKeysFile /var/lib/kloudlite/ssh-config/authorized_keys
 
 # SSH Jump Host / Bastion Configuration
 AllowTcpForwarding yes
@@ -847,7 +848,7 @@ GatewayPorts yes
 X11Forwarding no
 
 # Security
-StrictModes yes
+StrictModes no
 MaxAuthTries 3
 MaxSessions 10
 
@@ -1010,6 +1011,55 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 					ServiceAccountName: "workmachine-node-manager",
 					InitContainers: []corev1.Container{
 						{
+							Name:            "setup-nix",
+							Image:           "kloudlite/workmachine-node-manager:latest",
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: &privileged,
+							},
+							Command: []string{"sh", "-c"},
+							Args: []string{
+								`#!/bin/sh
+set -e
+
+echo "Checking if Nix is already on shared volume..."
+
+# Check if Nix is already on the shared volume
+if [ -f /nix-shared/var/nix/profiles/default/etc/profile.d/nix.sh ]; then
+  echo "Nix already exists on shared volume, skipping copy"
+else
+  echo "Copying Nix from image to shared volume..."
+
+  # Copy the entire /nix directory from this container's image to the shared volume
+  # The kloudlite/workmachine-node-manager image already has Nix installed at /nix
+  # We need to copy it to the hostPath so it's available to other containers
+  if [ -d /nix ]; then
+    # Create target directory structure
+    mkdir -p /nix-shared
+    # Copy everything from /nix to /nix-shared
+    cp -a /nix/* /nix-shared/
+    echo "Nix copied successfully to shared volume"
+  else
+    echo "ERROR: /nix not found in image"
+    exit 1
+  fi
+fi
+
+# Always ensure profile directory exists (idempotent - safe to run multiple times)
+# This is required for nix-env to work properly with user profiles
+echo "Ensuring profile directory exists..."
+mkdir -p /nix-shared/profiles/per-user/root
+echo "Profile directory ready"
+`,
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "nix-store",
+									MountPath: "/nix-shared",
+								},
+							},
+						},
+						{
 							Name:            "setup-ssh-key",
 							Image:           "busybox:latest",
 							ImagePullPolicy: corev1.PullIfNotPresent,
@@ -1110,9 +1160,8 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 								},
 								{
 									Name:      "ssh-config",
-									MountPath: "/config/.ssh/authorized_keys",
-									SubPath:   "authorized_keys",
-									ReadOnly:  true,
+									MountPath: "/var/lib/kloudlite/ssh-config",
+									ReadOnly:  false,
 								},
 								{
 									Name:      "sshd-config",
