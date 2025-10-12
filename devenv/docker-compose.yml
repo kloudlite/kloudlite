@@ -22,7 +22,6 @@ services:
       - master
       - --disable
       - traefik
-      - --disable-helm-controller
       - --tls-san
       - k3s-dev
 
