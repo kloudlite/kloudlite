@@ -1,5 +1,3 @@
-'use client'
-
 import { Network } from 'lucide-react'
 import type { K8sService } from '@/types/service'
 

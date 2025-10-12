@@ -1,7 +1,4 @@
-'use client'
-
-import { File, Upload } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { File } from 'lucide-react'
 import type { FileInfo } from '@/types/environment'
 import { AddFileSheet } from './add-file-sheet'
 import { FilesTable } from './files-table'
@@ -19,13 +16,7 @@ export function FilesList({ environmentId, files }: FilesListProps) {
           <h3 className="text-lg font-medium">File Configs</h3>
           <p className="text-sm text-muted-foreground">Configuration files mounted to containers</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Upload File
-          </Button>
-          <AddFileSheet environmentId={environmentId} />
-        </div>
+        <AddFileSheet environmentId={environmentId} />
       </div>
 
       {files.length === 0 ? (
