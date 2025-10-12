@@ -805,18 +805,7 @@ chmod 644 /etc-writable/environment
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "nix-store",
-							MountPath: "/nix/store",
-							SubPath:   "store",
-						},
-						{
-							Name:      "nix-store",
-							MountPath: "/nix/var",
-							SubPath:   "var",
-						},
-						{
-							Name:      "nix-store",
-							MountPath: "/nix/profiles",
-							SubPath:   "profiles",
+							MountPath: "/nix",
 						},
 						{
 							Name:      "kl-home",

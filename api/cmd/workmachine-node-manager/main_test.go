@@ -667,7 +667,7 @@ func TestPackageManagerReconciler_InstallPackage_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "git", installedPkg.Name)
 	assert.Equal(t, "/nix/store/abc123-git-2.39.0", installedPkg.StorePath)
-	assert.Equal(t, "/nix/var/nix/profiles/per-user/root/test-profile/bin", installedPkg.BinPath)
+	assert.Equal(t, "/nix/profiles/per-user/root/test-profile/bin", installedPkg.BinPath)
 	assert.Equal(t, 2, mockExec.CallCount) // Install + Query
 }
 
@@ -699,7 +699,7 @@ func TestPackageManagerReconciler_InstallPackage_QueryFails(t *testing.T) {
 	// Should still succeed even if query fails
 	assert.NoError(t, err)
 	assert.Equal(t, "nodejs", installedPkg.Name)
-	assert.Equal(t, "/var/lib/kloudlite/nix-store/store", installedPkg.StorePath) // Default path
+	assert.Equal(t, "/nix/store", installedPkg.StorePath) // Default path
 	assert.Equal(t, 2, mockExec.CallCount)
 }
 
@@ -730,7 +730,7 @@ func TestPackageManagerReconciler_InstallPackage_QueryEmptyOutput(t *testing.T) 
 
 	assert.NoError(t, err)
 	assert.Equal(t, "vim", installedPkg.Name)
-	assert.Equal(t, "/var/lib/kloudlite/nix-store/store", installedPkg.StorePath) // Default
+	assert.Equal(t, "/nix/store", installedPkg.StorePath) // Default
 }
 
 func TestPackageManagerReconciler_InstallPackage_QuerySingleField(t *testing.T) {
@@ -760,7 +760,7 @@ func TestPackageManagerReconciler_InstallPackage_QuerySingleField(t *testing.T) 
 
 	assert.NoError(t, err)
 	assert.Equal(t, "curl", installedPkg.Name)
-	assert.Equal(t, "/var/lib/kloudlite/nix-store/store", installedPkg.StorePath) // Default (< 2 parts)
+	assert.Equal(t, "/nix/store", installedPkg.StorePath) // Default (< 2 parts)
 }
 
 func TestPackageManagerReconciler_UninstallPackage_Success(t *testing.T) {
@@ -1784,6 +1784,17 @@ func TestPackageManagerReconciler_Reconcile_PartialSuccess(t *testing.T) {
 	assert.Equal(t, "git", updatedPkgReq.Status.InstalledPackages[0].Name)
 	assert.Len(t, updatedPkgReq.Status.FailedPackages, 1)
 	assert.Equal(t, "vim", updatedPkgReq.Status.FailedPackages[0])
+}
+
+func TestNixStorePathConstant(t *testing.T) {
+	// Verify that nixStorePath constant is set to /nix
+	// This test ensures the path is consistent with the volume mount changes
+	assert.Equal(t, "/nix", nixStorePath, "nixStorePath constant should be /nix")
+
+	// Verify derived paths are correct
+	expectedBinPath := "/nix/profiles/per-user/root/test-profile/bin"
+	actualBinPath := fmt.Sprintf("%s/profiles/per-user/root/test-profile/bin", nixStorePath)
+	assert.Equal(t, expectedBinPath, actualBinPath)
 }
 
 func TestPackageManagerReconciler_Reconcile_UninstallFailure(t *testing.T) {

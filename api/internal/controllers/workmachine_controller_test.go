@@ -1612,3 +1612,80 @@ func TestWorkMachineReconciler_EnsurePackageManagerDeployment_SSHEnvVars(t *test
 	assert.Equal(t, "sshd_config", sshdConfigMount.SubPath)
 	assert.True(t, sshdConfigMount.ReadOnly)
 }
+
+func TestWorkMachineReconciler_EnsurePackageManagerDeployment_NixStoreMountPath(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create SSH proxy secret first
+	sshSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ssh-proxy-key",
+			Namespace: "test-namespace",
+		},
+		Data: map[string][]byte{
+			"private-key": []byte("test-private-key"),
+			"public-key":  []byte("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest"),
+		},
+	}
+
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-machine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sshSecret, workMachine).Build()
+
+	reconciler := &WorkMachineReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+	}
+
+	logger := ctrl.Log.WithName("test")
+	err := reconciler.ensurePackageManagerDeployment(context.Background(), workMachine, logger)
+	assert.NoError(t, err)
+
+	// Verify Deployment was created
+	deployment := &appsv1.Deployment{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "workmachine-host-manager", Namespace: "test-namespace"}, deployment)
+	assert.NoError(t, err)
+
+	// Find workmachine-node-manager container
+	var nodeManagerContainer *corev1.Container
+	for i := range deployment.Spec.Template.Spec.Containers {
+		if deployment.Spec.Template.Spec.Containers[i].Name == "workmachine-node-manager" {
+			nodeManagerContainer = &deployment.Spec.Template.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, nodeManagerContainer, "workmachine-node-manager container not found")
+
+	// Verify nix-store volume mount is at /nix (not /var/lib/kloudlite/nix-store)
+	var nixStoreMount *corev1.VolumeMount
+	for i := range nodeManagerContainer.VolumeMounts {
+		if nodeManagerContainer.VolumeMounts[i].Name == "nix-store" {
+			nixStoreMount = &nodeManagerContainer.VolumeMounts[i]
+			break
+		}
+	}
+	assert.NotNil(t, nixStoreMount, "nix-store volume mount not found")
+	assert.Equal(t, "/nix", nixStoreMount.MountPath, "nix-store should be mounted at /nix")
+
+	// Verify nix-store volume is defined
+	var nixStoreVolume *corev1.Volume
+	for i := range deployment.Spec.Template.Spec.Volumes {
+		if deployment.Spec.Template.Spec.Volumes[i].Name == "nix-store" {
+			nixStoreVolume = &deployment.Spec.Template.Spec.Volumes[i]
+			break
+		}
+	}
+	assert.NotNil(t, nixStoreVolume, "nix-store volume not found")
+	assert.NotNil(t, nixStoreVolume.HostPath, "nix-store should be a hostPath volume")
+	assert.Equal(t, "/var/lib/kloudlite/nix-store", nixStoreVolume.HostPath.Path, "nix-store hostPath should be /var/lib/kloudlite/nix-store")
+}

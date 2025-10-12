@@ -939,3 +939,79 @@ func TestCheckAndSuspendIdleWorkspace_NoLastActivityTime(t *testing.T) {
 	assert.NotNil(t, updatedWorkspace.Status.LastActivityTime)
 	assert.Equal(t, "active", updatedWorkspace.Spec.Status) // Not suspended yet
 }
+
+func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacesv1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+			Packages:    []workspacesv1.PackageSpec{},
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	// Create workspace pod
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find the workspace container
+	var workspaceContainer *corev1.Container
+	for i := range pod.Spec.Containers {
+		if pod.Spec.Containers[i].Name == "workspace" {
+			workspaceContainer = &pod.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, workspaceContainer, "workspace container not found")
+
+	// Verify nix-store volume mount is at /nix (single mount, not three subPath mounts)
+	var nixStoreMount *corev1.VolumeMount
+	for i := range workspaceContainer.VolumeMounts {
+		if workspaceContainer.VolumeMounts[i].Name == "nix-store" {
+			nixStoreMount = &workspaceContainer.VolumeMounts[i]
+			break
+		}
+	}
+	assert.NotNil(t, nixStoreMount, "nix-store volume mount not found")
+	assert.Equal(t, "/nix", nixStoreMount.MountPath, "nix-store should be mounted at /nix")
+	assert.Empty(t, nixStoreMount.SubPath, "nix-store mount should not use subPath")
+
+	// Verify there are no other nix-store mounts with subPaths
+	nixStoreMountCount := 0
+	for i := range workspaceContainer.VolumeMounts {
+		if workspaceContainer.VolumeMounts[i].Name == "nix-store" {
+			nixStoreMountCount++
+		}
+	}
+	assert.Equal(t, 1, nixStoreMountCount, "should only have one nix-store mount")
+
+	// Verify nix-store volume is defined
+	var nixStoreVolume *corev1.Volume
+	for i := range pod.Spec.Volumes {
+		if pod.Spec.Volumes[i].Name == "nix-store" {
+			nixStoreVolume = &pod.Spec.Volumes[i]
+			break
+		}
+	}
+	assert.NotNil(t, nixStoreVolume, "nix-store volume not found")
+	assert.NotNil(t, nixStoreVolume.HostPath, "nix-store should be a hostPath volume")
+	assert.Equal(t, "/var/lib/kloudlite/nix-store", nixStoreVolume.HostPath.Path, "nix-store hostPath should be /var/lib/kloudlite/nix-store")
+}
