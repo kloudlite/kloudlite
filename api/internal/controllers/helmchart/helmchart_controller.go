@@ -292,6 +292,7 @@ func (r *Reconciler) createHelmUninstallJob(check *reconciler.Check[*environment
 // SetupWithManager sets up the controller with the Manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.HelmJobRunnerImage == "" {
+		return fmt.Errorf("HelmJobRunnerImage is required but not set")
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).

@@ -43,6 +43,17 @@ type HelmJobVars struct {
 }
 
 type HelmChartSpec struct {
+	// DisplayName is the human-readable name for the helm chart
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=100
+	DisplayName string `json:"displayName"`
+
+	// Description provides additional information about the helm chart
+	// +kubebuilder:validation:MaxLength=500
+	// +optional
+	Description string `json:"description,omitempty"`
+
 	Chart HelmChartInfo `json:"chart"`
 
 	HelmValues apiextensionsv1.JSON `json:"helmValues,omitempty"`
