@@ -79,6 +79,10 @@ func (r *RealFileSystem) WriteFile(name string, data []byte, perm os.FileMode) e
 }
 
 func (r *RealFileSystem) Rename(oldpath, newpath string) error {
+	// Remove target file if it exists to ensure rename succeeds
+	// On some systems/mounts, os.Rename may fail if target exists
+	// This maintains reasonable atomicity since remove + rename is very fast
+	_ = os.Remove(newpath)
 	return os.Rename(oldpath, newpath)
 }
 
@@ -105,78 +109,118 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Check if packages changed (by comparing spec packages with installed packages)
-	// If packages changed, we need to reconcile even if in terminal state
-	packagesChanged := len(pkgReq.Spec.Packages) != len(pkgReq.Status.InstalledPackages)
-	if !packagesChanged {
-		// Check if any package changed
-		installedMap := make(map[string]bool)
-		for _, installed := range pkgReq.Status.InstalledPackages {
-			installedMap[installed.Name] = true
-		}
-		for _, pkg := range pkgReq.Spec.Packages {
-			if !installedMap[pkg.Name] {
-				packagesChanged = true
-				break
-			}
-		}
-	}
-
-	// Skip if already in terminal state (Ready or Failed) AND packages haven't changed
-	if !packagesChanged && (pkgReq.Status.Phase == "Ready" || pkgReq.Status.Phase == "Failed") {
-		logger.Info("PackageRequest already in terminal state and packages haven't changed",
-			zap2.String("phase", pkgReq.Status.Phase))
-		return reconcile.Result{}, nil
-	}
-
-	if packagesChanged {
-		logger.Info("Package list changed, will reconcile",
-			zap2.Int("spec_packages", len(pkgReq.Spec.Packages)),
-			zap2.Int("installed_packages", len(pkgReq.Status.InstalledPackages)))
-	}
-
-	// Update status to Installing
-	pkgReq.Status.Phase = "Installing"
-	pkgReq.Status.Message = "Installing packages"
-	pkgReq.Status.LastUpdated = metav1.Now()
-	if err := r.Status().Update(ctx, pkgReq); err != nil {
-		logger.Error("Failed to update status to Installing", zap2.Error(err))
-		return reconcile.Result{}, err
-	}
-
 	logger.Info("Using profile", zap2.String("profile", pkgReq.Spec.ProfileName))
 
-	// Detect and remove packages that are no longer in the spec
-	specPackageNames := make(map[string]bool)
-	for _, pkg := range pkgReq.Spec.Packages {
-		specPackageNames[pkg.Name] = true
+	// IMPORTANT: Reconcile based on ACTUAL state, not status
+	// 1. Ensure profile directory exists (idempotent)
+	// 2. Check what packages are ACTUALLY installed (check filesystem)
+	// 3. Install missing packages, remove unwanted packages
+	// 4. Update status to reflect actual state
+
+	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, pkgReq.Spec.ProfileName)
+	profileDir := fmt.Sprintf("%s/profiles/per-user/root", nixStorePath)
+
+	// Ensure profile directory exists (idempotent)
+	logger.Info("Ensuring profile directory exists", zap2.String("profileDir", profileDir))
+	mkdirScript := fmt.Sprintf("mkdir -p %s", profileDir)
+	if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
+		logger.Error("Failed to create profile directory",
+			zap2.String("profileDir", profileDir),
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		// Don't fail reconciliation, continue and let package installation fail if needed
 	}
 
-	for _, installedPkg := range pkgReq.Status.InstalledPackages {
-		if !specPackageNames[installedPkg.Name] {
-			logger.Info("Removing package",
-				zap2.String("package", installedPkg.Name),
-				zap2.String("profile", pkgReq.Spec.ProfileName))
+	// Build map of desired packages
+	desiredPackages := make(map[string]bool)
+	for _, pkg := range pkgReq.Spec.Packages {
+		desiredPackages[pkg.Name] = true
+	}
 
-			if err := r.uninstallPackage(installedPkg.Name, pkgReq.Spec.ProfileName); err != nil {
-				logger.Error("Failed to remove package",
-					zap2.String("package", installedPkg.Name),
-					zap2.String("profile", pkgReq.Spec.ProfileName),
-					zap2.Error(err))
-			} else {
-				logger.Info("Successfully removed package",
-					zap2.String("package", installedPkg.Name),
+	// Remove packages that were previously installed but are no longer in spec
+	// We use status.InstalledPackages as a hint for what might need removal
+	// but we verify actual state before removing
+	for _, prevInstalled := range pkgReq.Status.InstalledPackages {
+		if !desiredPackages[prevInstalled.Name] {
+			// Package was in previous spec but not in current spec
+			// Check if it's actually installed before trying to remove
+			if r.isPackageInstalled(prevInstalled.Name, pkgReq.Spec.ProfileName, logger) {
+				logger.Info("Removing unwanted package",
+					zap2.String("package", prevInstalled.Name),
 					zap2.String("profile", pkgReq.Spec.ProfileName))
+
+				if err := r.uninstallPackage(prevInstalled.Name, pkgReq.Spec.ProfileName); err != nil {
+					logger.Error("Failed to remove package",
+						zap2.String("package", prevInstalled.Name),
+						zap2.String("profile", pkgReq.Spec.ProfileName),
+						zap2.Error(err))
+				} else {
+					logger.Info("Successfully removed package",
+						zap2.String("package", prevInstalled.Name),
+						zap2.String("profile", pkgReq.Spec.ProfileName))
+				}
 			}
 		}
 	}
 
-	// Install packages
+	// Set phase to Installing and clear old failed packages before starting installation
+	// This ensures old failures are cleared when we retry
+	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
+		latest.Status.Phase = "Installing"
+		latest.Status.FailedPackages = []string{} // Clear old failed packages
+		latest.Status.Message = "Installing packages..."
+		latest.Status.LastUpdated = metav1.Now()
+	}, logger); err != nil {
+		logger.Warn("Failed to update status to Installing phase", zap2.Error(err))
+		// Continue with installation even if status update fails
+	}
+
+	// Install missing packages and record installed ones
 	installedPackages := []workspacesv1.InstalledPackage{}
 	failedPackages := []string{}
 
 	for _, pkg := range pkgReq.Spec.Packages {
-		logger.Info("Installing package",
+		// Check actual state: is package really installed on the filesystem?
+		if r.isPackageInstalled(pkg.Name, pkgReq.Spec.ProfileName, logger) {
+			logger.Info("Package already installed, querying info",
+				zap2.String("package", pkg.Name),
+				zap2.String("profile", pkgReq.Spec.ProfileName))
+
+			// Query existing package info
+			queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q --out-path %s", profilePath, pkg.Name)
+			queryOutput, err := r.CmdExec.Execute(queryScript)
+
+			storePath := nixStorePath + "/store"
+			installedVersion := ""
+
+			if err == nil && len(queryOutput) > 0 {
+				parts := strings.Fields(string(queryOutput))
+				if len(parts) >= 1 {
+					pkgWithVersion := parts[0]
+					if strings.HasPrefix(pkgWithVersion, pkg.Name+"-") {
+						installedVersion = strings.TrimPrefix(pkgWithVersion, pkg.Name+"-")
+					} else {
+						installedVersion = pkgWithVersion
+					}
+				}
+				if len(parts) >= 2 {
+					storePath = parts[1]
+				}
+			}
+
+			workspaceBinPath := fmt.Sprintf("/nix/profiles/per-user/root/%s/bin", pkgReq.Spec.ProfileName)
+			installedPackages = append(installedPackages, workspacesv1.InstalledPackage{
+				Name:        pkg.Name,
+				Version:     installedVersion,
+				BinPath:     workspaceBinPath,
+				StorePath:   storePath,
+				InstalledAt: metav1.Now(),
+			})
+			continue
+		}
+
+		// Package not installed in actual filesystem, install it
+		logger.Info("Installing missing package",
 			zap2.String("package", pkg.Name),
 			zap2.String("profile", pkgReq.Spec.ProfileName))
 
@@ -197,20 +241,7 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 			zap2.String("storePath", installedPkg.StorePath))
 	}
 
-	// Update PackageRequest status
-	pkgReq.Status.InstalledPackages = installedPackages
-	pkgReq.Status.FailedPackages = failedPackages
-	pkgReq.Status.LastUpdated = metav1.Now()
-
-	if len(failedPackages) > 0 {
-		pkgReq.Status.Phase = "Failed"
-		pkgReq.Status.Message = fmt.Sprintf("Failed to install %d packages", len(failedPackages))
-	} else {
-		pkgReq.Status.Phase = "Ready"
-		pkgReq.Status.Message = fmt.Sprintf("Successfully installed %d packages", len(installedPackages))
-	}
-
-	// Retry status update with optimistic concurrency control
+	// Update status to reflect actual state
 	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
 		latest.Status.InstalledPackages = installedPackages
 		latest.Status.FailedPackages = failedPackages
@@ -220,7 +251,7 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 			latest.Status.Message = fmt.Sprintf("Failed to install %d packages", len(failedPackages))
 		} else {
 			latest.Status.Phase = "Ready"
-			latest.Status.Message = fmt.Sprintf("Successfully installed %d packages", len(installedPackages))
+			latest.Status.Message = fmt.Sprintf("Successfully reconciled %d packages", len(installedPackages))
 		}
 	}, logger); err != nil {
 		logger.Error("Failed to update status after retries", zap2.Error(err))
@@ -228,11 +259,76 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	}
 
 	logger.Info("PackageRequest reconciliation complete",
-		zap2.String("phase", pkgReq.Status.Phase),
 		zap2.Int("installed", len(installedPackages)),
 		zap2.Int("failed", len(failedPackages)))
 
 	return reconcile.Result{}, nil
+}
+
+// isPackageInstalled checks if a specific package is installed in the profile
+// Returns true if installed, false otherwise
+func (r *PackageManagerReconciler) isPackageInstalled(packageName string, profileName string, logger *zap2.Logger) bool {
+	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
+
+	// Check if profile exists
+	checkScript := fmt.Sprintf("test -d %s", profilePath)
+	if _, err := r.CmdExec.Execute(checkScript); err != nil {
+		return false
+	}
+
+	// Query specific package in the profile
+	// nix-env -q returns exit code 0 and outputs the package if installed, or exits with 0 but empty output if not
+	queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q %s", profilePath, packageName)
+	output, err := r.CmdExec.Execute(queryScript)
+
+	// If query succeeds and returns non-empty output, package is installed
+	if err == nil && len(strings.TrimSpace(string(output))) > 0 {
+		logger.Debug("Package is installed",
+			zap2.String("package", packageName),
+			zap2.String("profile", profileName),
+			zap2.String("output", string(output)))
+		return true
+	}
+
+	return false
+}
+
+// getInstalledPackagesFromProfile lists all packages installed in the profile
+// Used to detect packages that need to be removed
+func (r *PackageManagerReconciler) getInstalledPackagesFromProfile(profileName string, logger *zap2.Logger) []string {
+	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
+
+	// Check if profile exists
+	checkScript := fmt.Sprintf("test -d %s", profilePath)
+	if _, err := r.CmdExec.Execute(checkScript); err != nil {
+		logger.Info("Profile does not exist yet", zap2.String("profile", profileName))
+		return []string{}
+	}
+
+	// Query all installed packages in the profile
+	// nix-env -q lists all packages with their full names (package-version)
+	queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q", profilePath)
+	output, err := r.CmdExec.Execute(queryScript)
+	if err != nil {
+		logger.Warn("Failed to query installed packages from profile",
+			zap2.String("profile", profileName),
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		return []string{}
+	}
+
+	// Parse output - each line is "package-version" (e.g., "nodejs-24.5.0")
+	// We return the full package name as-is for use with nix-env -e
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	packages := []string{}
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			packages = append(packages, line)
+		}
+	}
+
+	return packages
 }
 
 // updateStatusWithRetry retries status updates with optimistic concurrency control

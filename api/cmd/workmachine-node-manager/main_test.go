@@ -582,12 +582,12 @@ func TestPackageManagerReconciler_Reconcile_EmptyPackageList(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
 	assert.Len(t, updatedPkgReq.Status.InstalledPackages, 0)
-	assert.Contains(t, updatedPkgReq.Status.Message, "Successfully installed 0 packages")
+	assert.Contains(t, updatedPkgReq.Status.Message, "Successfully reconciled 0 packages")
 }
 
 func TestPackageManagerReconciler_Reconcile_StatusUpdateFailure(t *testing.T) {
 	// This test covers the error handling when status update fails
-	// We use a read-only client to simulate failure
+	// We use a client without status subresource to simulate failure
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = packagesv1.AddToScheme(scheme)
@@ -610,6 +610,29 @@ func TestPackageManagerReconciler_Reconcile_StatusUpdateFailure(t *testing.T) {
 		},
 	}
 
+	// Create mock executor for mkdir and other commands
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			// Let mkdir succeed
+			if strings.Contains(script, "mkdir -p") {
+				return []byte(""), nil
+			}
+			// Let profile check fail (doesn't exist)
+			if strings.Contains(script, "test -d") {
+				return nil, fmt.Errorf("not found")
+			}
+			// Let install succeed
+			if strings.Contains(script, "nix-env") && strings.Contains(script, "-iA") {
+				return []byte("installing"), nil
+			}
+			// Let query succeed
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("curl-8.0.0  /nix/store/xyz-curl"), nil
+			}
+			return []byte(""), nil
+		},
+	}
+
 	// Create client without status subresource - will fail on status updates
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -622,6 +645,7 @@ func TestPackageManagerReconciler_Reconcile_StatusUpdateFailure(t *testing.T) {
 		Scheme:    scheme,
 		Logger:    logger,
 		Namespace: "test-namespace",
+		CmdExec:   mockExec,
 	}
 
 	req := reconcile.Request{
@@ -1844,4 +1868,408 @@ func TestPackageManagerReconciler_Reconcile_UninstallFailure(t *testing.T) {
 	assert.NoError(t, err)
 	// Should be Ready even if uninstall failed (best effort)
 	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
+}
+
+// ========================================
+// Tests for State-Based Reconciliation Changes
+// ========================================
+
+func TestIsPackageInstalled_ProfileNotExists(t *testing.T) {
+	// Test when profile directory doesn't exist
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			// First call: check if profile directory exists (test -d)
+			if strings.Contains(script, "test -d") {
+				return nil, fmt.Errorf("directory does not exist")
+			}
+			return []byte(""), nil
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+	logger, _ := zap.NewDevelopment()
+
+	isInstalled := reconciler.isPackageInstalled("git", "test-profile", logger)
+
+	assert.False(t, isInstalled, "Package should not be considered installed when profile doesn't exist")
+	assert.Equal(t, 1, mockExec.CallCount, "Should only check profile existence")
+}
+
+func TestIsPackageInstalled_PackageNotInstalled(t *testing.T) {
+	// Test when profile exists but package is not installed
+	callCount := 0
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			callCount++
+			// First call: profile directory exists
+			if callCount == 1 && strings.Contains(script, "test -d") {
+				return []byte(""), nil
+			}
+			// Second call: query package (returns empty = not installed)
+			if callCount == 2 && strings.Contains(script, "nix-env -p") && strings.Contains(script, "-q") {
+				return []byte(""), nil
+			}
+			return nil, fmt.Errorf("unexpected script")
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+	logger, _ := zap.NewDevelopment()
+
+	isInstalled := reconciler.isPackageInstalled("git", "test-profile", logger)
+
+	assert.False(t, isInstalled, "Package should not be installed when query returns empty")
+	assert.Equal(t, 2, mockExec.CallCount, "Should check profile and query package")
+}
+
+func TestIsPackageInstalled_PackageInstalled(t *testing.T) {
+	// Test when package is actually installed
+	callCount := 0
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			callCount++
+			// First call: profile directory exists
+			if callCount == 1 && strings.Contains(script, "test -d") {
+				return []byte(""), nil
+			}
+			// Second call: query package (returns package info = installed)
+			if callCount == 2 && strings.Contains(script, "nix-env -p") && strings.Contains(script, "-q git") {
+				return []byte("git-2.40.0  /nix/store/xyz-git-2.40.0"), nil
+			}
+			return nil, fmt.Errorf("unexpected script")
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+	logger, _ := zap.NewDevelopment()
+
+	isInstalled := reconciler.isPackageInstalled("git", "test-profile", logger)
+
+	assert.True(t, isInstalled, "Package should be installed when query returns package info")
+	assert.Equal(t, 2, mockExec.CallCount, "Should check profile and query package")
+}
+
+func TestIsPackageInstalled_QueryFails(t *testing.T) {
+	// Test when query command fails (not just empty output)
+	callCount := 0
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			callCount++
+			// First call: profile directory exists
+			if callCount == 1 && strings.Contains(script, "test -d") {
+				return []byte(""), nil
+			}
+			// Second call: query fails with error
+			if callCount == 2 {
+				return nil, fmt.Errorf("nix-env query failed: command not found")
+			}
+			return nil, fmt.Errorf("unexpected script")
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec)
+	logger, _ := zap.NewDevelopment()
+
+	isInstalled := reconciler.isPackageInstalled("nodejs", "test-profile", logger)
+
+	assert.False(t, isInstalled, "Package should not be installed when query fails")
+	assert.Equal(t, 2, mockExec.CallCount)
+}
+
+func TestReconcile_ProfileDirectoryCreationIdempotent(t *testing.T) {
+	// Test that profile directory is created idempotently during reconciliation
+	var mkdirCalled bool
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			// Track mkdir call
+			if strings.Contains(script, "mkdir -p") && strings.Contains(script, "profiles/per-user/root") {
+				mkdirCalled = true
+				return []byte(""), nil
+			}
+			// Profile check - doesn't exist yet
+			if strings.Contains(script, "test -d") {
+				return nil, fmt.Errorf("not found")
+			}
+			// Install command
+			if strings.Contains(script, "nix-env") && strings.Contains(script, "-iA") {
+				return []byte("installing"), nil
+			}
+			// Query command
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("git-2.40.0  /nix/store/xyz-git"), nil
+			}
+			return []byte(""), nil
+		},
+	}
+
+	pkgReq := &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: "test-workspace",
+			ProfileName:  "test-profile",
+			Packages: []workspacesv1.PackageSpec{
+				{Name: "git"},
+			},
+		},
+		Status: packagesv1.PackageRequestStatus{
+			Phase: "Pending",
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec, pkgReq)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+	}
+
+	_, _ = reconciler.Reconcile(context.Background(), req)
+
+	assert.True(t, mkdirCalled, "Profile directory should be created during reconciliation")
+}
+
+func TestReconcile_ClearsFailedPackagesOnRetry(t *testing.T) {
+	// Test that failed packages are cleared when retrying installation
+	callCount := 0
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			callCount++
+			// mkdir succeeds
+			if strings.Contains(script, "mkdir -p") {
+				return []byte(""), nil
+			}
+			// Profile check - doesn't exist
+			if strings.Contains(script, "test -d") {
+				return nil, fmt.Errorf("not found")
+			}
+			// Install succeeds
+			if strings.Contains(script, "nix-env") && strings.Contains(script, "-iA") {
+				return []byte("installing"), nil
+			}
+			// Query succeeds
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("nodejs-20.0.0  /nix/store/xyz-nodejs"), nil
+			}
+			return []byte(""), nil
+		},
+	}
+
+	// Create PackageRequest with previous failed packages
+	pkgReq := &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: "test-workspace",
+			ProfileName:  "test-profile",
+			Packages: []workspacesv1.PackageSpec{
+				{Name: "nodejs"},
+			},
+		},
+		Status: packagesv1.PackageRequestStatus{
+			Phase:           "Failed",
+			FailedPackages:  []string{"nodejs", "python"}, // Previous failures
+			Message:         "Installation failed",
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec, pkgReq)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify status was updated and old failed packages were cleared
+	updatedPkgReq := &packagesv1.PackageRequest{}
+	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
+	assert.NoError(t, err)
+
+	// Should be Ready now
+	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
+	// Failed packages should be cleared (empty array)
+	assert.Len(t, updatedPkgReq.Status.FailedPackages, 0, "Failed packages should be cleared on successful retry")
+	// nodejs should be installed
+	assert.Len(t, updatedPkgReq.Status.InstalledPackages, 1)
+	assert.Equal(t, "nodejs", updatedPkgReq.Status.InstalledPackages[0].Name)
+}
+
+func TestReconcile_ChecksActualStateNotStatus(t *testing.T) {
+	// Test that reconciliation checks actual filesystem state, not status
+	callCount := 0
+	queryCallCount := 0
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			callCount++
+			// mkdir succeeds
+			if strings.Contains(script, "mkdir -p") {
+				return []byte(""), nil
+			}
+			// Profile exists
+			if strings.Contains(script, "test -d") {
+				return []byte(""), nil
+			}
+			// Query for package - simulate package IS already installed
+			if strings.Contains(script, "nix-env -p") && strings.Contains(script, "-q git") {
+				queryCallCount++
+				return []byte("git-2.40.0  /nix/store/xyz-git-2.40.0"), nil
+			}
+			// Query --out-path for installed package info
+			if strings.Contains(script, "-q --out-path git") {
+				return []byte("git-2.40.0  /nix/store/xyz-git-2.40.0"), nil
+			}
+			return []byte(""), nil
+		},
+	}
+
+	// Status says Pending, but package is ACTUALLY already installed on filesystem
+	pkgReq := &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: "test-workspace",
+			ProfileName:  "test-profile",
+			Packages: []workspacesv1.PackageSpec{
+				{Name: "git"},
+			},
+		},
+		Status: packagesv1.PackageRequestStatus{
+			Phase:              "Pending",  // Status says pending
+			InstalledPackages:  []workspacesv1.InstalledPackage{}, // Status says not installed
+		},
+	}
+
+	reconciler := setupTestReconcilerWithMock(t, mockExec, pkgReq)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify that isPackageInstalled was called (checking actual state)
+	assert.Greater(t, queryCallCount, 0, "Should have queried actual package state")
+
+	// Verify status was updated to reflect actual state
+	updatedPkgReq := &packagesv1.PackageRequest{}
+	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
+	assert.NoError(t, err)
+	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
+	assert.Len(t, updatedPkgReq.Status.InstalledPackages, 1)
+	assert.Equal(t, "git", updatedPkgReq.Status.InstalledPackages[0].Name)
+}
+
+func TestReconcile_StatusUpdateToInstallingClearsFailedPackages(t *testing.T) {
+	// Test that when phase changes to "Installing", failed packages are cleared
+	var statusUpdateCount int
+	var installingPhaseCleared bool
+
+	callCount := 0
+	mockExec := &MockCommandExecutor{
+		ExecuteFunc: func(script string) ([]byte, error) {
+			callCount++
+			// mkdir succeeds
+			if strings.Contains(script, "mkdir -p") {
+				return []byte(""), nil
+			}
+			// Profile check - doesn't exist yet
+			if strings.Contains(script, "test -d") {
+				return nil, fmt.Errorf("not found")
+			}
+			// Install succeeds
+			if strings.Contains(script, "nix-env") && strings.Contains(script, "-iA") {
+				return []byte("installing"), nil
+			}
+			// Query succeeds
+			if strings.Contains(script, "-q --out-path") {
+				return []byte("curl-8.0.0  /nix/store/xyz-curl"), nil
+			}
+			return []byte(""), nil
+		},
+	}
+
+	pkgReq := &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: "test-workspace",
+			ProfileName:  "test-profile",
+			Packages: []workspacesv1.PackageSpec{
+				{Name: "curl"},
+			},
+		},
+		Status: packagesv1.PackageRequestStatus{
+			Phase:          "Failed",
+			FailedPackages: []string{"curl", "wget"}, // Old failures
+		},
+	}
+
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = packagesv1.AddToScheme(scheme)
+	_ = workspacesv1.AddToScheme(scheme)
+
+	logger, _ := zap.NewDevelopment()
+
+	// Create client with interceptor to track status updates
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(pkgReq).
+		WithStatusSubresource(&packagesv1.PackageRequest{}).
+		WithInterceptorFuncs(interceptor.Funcs{
+			SubResourceUpdate: func(ctx context.Context, client client.Client, subResourceName string, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+				statusUpdateCount++
+				if pr, ok := obj.(*packagesv1.PackageRequest); ok {
+					if pr.Status.Phase == "Installing" && len(pr.Status.FailedPackages) == 0 {
+						installingPhaseCleared = true
+					}
+				}
+				return client.SubResource(subResourceName).Update(ctx, obj, opts...)
+			},
+		}).
+		Build()
+
+	reconciler := &PackageManagerReconciler{
+		Client:    fakeClient,
+		Scheme:    scheme,
+		Logger:    logger,
+		Namespace: "test-namespace",
+		CmdExec:   mockExec,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-pkg-req",
+			Namespace: "test-namespace",
+		},
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify that status was updated to Installing with cleared failed packages
+	assert.True(t, installingPhaseCleared, "Failed packages should be cleared when status changes to Installing")
+	assert.Greater(t, statusUpdateCount, 0, "Status should be updated at least once")
 }
