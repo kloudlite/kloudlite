@@ -1,11 +1,18 @@
 package reconciler
 
+import "strings"
+
 const (
 	AnnotationShouldReconcileKey string = "kloudlite.io/operator.should-reconcile"
 	AnnotationClearStatusKey     string = "kloudlite.io/operator.clear-status"
 	AnnotationResetCheckKey      string = "kloudlite.io/operator.reset-check"
 	AnnotationRestartKey         string = "kloudlite.io/do-restart"
 	// AnnotationDoHelmUpgrade      string = "kloudlite.io/do-helm-upgrade"
+)
+
+const (
+	AnnotationForceReconcileKey   string = "kloudlite.io/operator.force-reconcile"
+	AnnotationForceReconcileValue string = "true"
 )
 
 const (
@@ -38,3 +45,7 @@ const (
 const (
 	ObservabilityAnnotationKey string = "kloudlite.io/observability"
 )
+
+func ObservabilityAnnotationFilter(k, v string) bool {
+	return strings.HasPrefix(k, ObservabilityAnnotationKey)
+}

@@ -1,6 +1,8 @@
 package reconciler
 
 import (
+	"fmt"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -18,10 +20,20 @@ func isBeingDeleted(obj client.Object) bool {
 }
 
 func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, error) {
+	// Validate steps
+	for i, step := range steps {
+		if step.Name == "" {
+			return ctrl.Result{}, fmt.Errorf("step %d has empty name", i)
+		}
+		if step.OnCreate == nil {
+			return ctrl.Result{}, fmt.Errorf("step %s has nil OnCreate function", step.Name)
+		}
+	}
+
 	checkList := make([]CheckDefinition, 0, len(steps))
 	if isBeingDeleted(req.Object) {
 		for i := range steps {
-			checkList = append(checkList, CheckDefinition{Name: "delete/" + steps[i].Name, Title: "Delete " + steps[i].Title})
+			checkList = append(checkList, CheckDefinition{Name: "delete/" + steps[i].Name, Title: "[Delete] " + steps[i].Title})
 		}
 
 		if step := req.EnsureCheckList(checkList); !step.ShouldProceed() {
@@ -42,7 +54,12 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 			}
 		}
 
-		controllerutil.RemoveFinalizer(req.Object, Finalizer)
+		// Remove all finalizers that were added
+		for _, f := range req.Object.GetFinalizers() {
+			if f == Finalizer || f == GenericFinalizer {
+				controllerutil.RemoveFinalizer(req.Object, f)
+			}
+		}
 		if err := req.client.Update(req.Context(), req.Object); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -57,10 +74,6 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureCheckList(checkList); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -69,11 +82,31 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		return step.ReconcilerResponse()
 	}
 
+	forcedReconcile := req.Object.GetAnnotations()[AnnotationForceReconcileKey] == AnnotationForceReconcileValue
+
 	for i := range steps {
-		check := NewRunningCheck(checkList[i].Name, req)
+		checkName := checkList[i].Name
+
+		// Skip if already passed in current generation (resumability)
+		if !forcedReconcile {
+			if existingCheck, exists := req.Object.GetStatus().Checks[checkName]; exists {
+				if existingCheck.State == PassedState && existingCheck.Generation == req.Object.GetGeneration() {
+					req.internalLogger.Info("⏭️  skipping passed check", "check.name", checkName)
+					continue
+				}
+			}
+		}
+
+		check := NewRunningCheck(checkName, req)
 		if result := steps[i].OnCreate(check, req.Object); !result.ShouldProceed() {
 			return result.ReconcilerResponse()
 		}
+	}
+
+	if forcedReconcile {
+		ann := req.Object.GetAnnotations()
+		delete(ann, AnnotationForceReconcileKey)
+		req.Object.SetAnnotations(ann)
 	}
 
 	req.Object.GetStatus().IsReady = true

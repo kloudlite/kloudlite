@@ -5,24 +5,20 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
-	"os"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/nxtcoder17/fastlog"
 
-	// "github.com/nxtcoder17/go.pkgs/log"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 )
 
 type KV struct {
@@ -75,61 +71,18 @@ func NewRequest[T Resource](ctx context.Context, c client.Client, nn types.Names
 		resource.GetStatus().Checks = map[string]CheckResult{}
 	}
 
-	resource.EnsureGVK()
-
-	logger := fastlog.New(fastlog.Options{
-		Writer:        os.Stderr,
-		Format:        fastlog.ConsoleFormat,
-		LogLevel:      slog.LevelInfo,
-		ShowDebugLogs: false,
-		ShowCaller:    true,
-		ShowTimestamp: false,
-		EnableColors:  true,
-	})
-
 	return &Request[T]{
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         logger.Clone(fastlog.Options{SkipCallerFrames: 1}).Slog().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
-		internalLogger: logger.Clone().Slog().With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
+		Logger:         slog.With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
+		internalLogger: slog.With("NN", nn.String(), "gvk", resource.GetObjectKind().GroupVersionKind().String()),
 		KV:             KV{},
 	}, nil
 }
 
 func (r *Request[T]) GetClient() client.Client {
 	return r.client
-}
-
-func (r *Request[T]) EnsureLabelsAndAnnotations() StepResult {
-	labels := r.Object.GetEnsuredLabels()
-	annotations := r.Object.GetEnsuredAnnotations()
-
-	hasAllLabels := fn.MapContains(r.Object.GetLabels(), labels)
-	hasAllAnnotations := fn.MapContains(r.Object.GetAnnotations(), annotations)
-
-	if !hasAllLabels || !hasAllAnnotations {
-		x := r.Object.GetLabels()
-		if x == nil {
-			x = make(map[string]string, len(labels))
-		}
-		maps.Copy(x, labels)
-		r.Object.SetLabels(x)
-
-		y := r.Object.GetAnnotations()
-		if y == nil {
-			y = make(map[string]string, len(annotations))
-		}
-
-		maps.Copy(y, annotations)
-		r.Object.SetAnnotations(y)
-		if err := r.client.Update(r.ctx, r.Object); err != nil {
-			return newStepResult().Err(err)
-		}
-		return newStepResult().RequeueAfter(500 * time.Millisecond)
-	}
-
-	return newStepResult().Continue(true)
 }
 
 func (r *Request[T]) ShouldReconcile() bool {
@@ -162,12 +115,12 @@ func (r *Request[T]) ClearStatusIfAnnotated() StepResult {
 		if _, ok2 := obj.GetStatus().Checks[v]; ok2 {
 			delete(ann, AnnotationResetCheckKey)
 			obj.SetAnnotations(ann)
-			if err := r.client.Update(context.TODO(), obj); err != nil {
+			if err := r.client.Update(r.Context(), obj); err != nil {
 				return newStepResult().Err(err)
 			}
 
 			delete(obj.GetStatus().Checks, v)
-			if err := r.client.Status().Update(context.TODO(), obj); err != nil {
+			if err := r.client.Status().Update(r.Context(), obj); err != nil {
 				return newStepResult().Err(err)
 			}
 			return newStepResult().RequeueAfter(2 * time.Second)
@@ -185,33 +138,11 @@ func (r *Request[T]) ClearStatusIfAnnotated() StepResult {
 		obj.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
 		obj.GetStatus().Checks = nil
 
-		if err := r.client.Status().Update(context.TODO(), obj); err != nil {
+		if err := r.client.Status().Update(r.Context(), obj); err != nil {
 			return newStepResult().Err(err)
 		}
 		return newStepResult().RequeueAfter(1 * time.Second)
 	}
-	return newStepResult().Continue(true)
-}
-
-func (r *Request[T]) RestartIfAnnotated() StepResult {
-	ctx, obj := r.Context(), r.Object
-	ann := obj.GetAnnotations()
-	if v := ann[AnnotationRestartKey]; v == "true" {
-		delete(ann, AnnotationRestartKey)
-		obj.SetAnnotations(ann)
-		if err := r.client.Update(ctx, obj); err != nil {
-			return newStepResult().Err(err)
-		}
-
-		if err := fn.RolloutRestart(r.client, fn.Deployment, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
-			return newStepResult().Err(err)
-		}
-		if err := fn.RolloutRestart(r.client, fn.StatefulSet, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
-			return newStepResult().Err(err)
-		}
-		return newStepResult().RequeueAfter(500 * time.Millisecond)
-	}
-
 	return newStepResult().Continue(true)
 }
 
@@ -309,7 +240,10 @@ func (r *Request[T]) PostReconcile() {
 	if !fn.MapEqual(r.Object.GetAnnotations(), m) {
 		r.Object.SetAnnotations(m)
 		if err := r.client.Update(r.Context(), r.Object); err != nil {
-			r.internalLogger.Info("[reconcile:end] failed to update resource annotations")
+			// Suppress NotFound and Conflict errors - they're expected during deletion/concurrent updates
+			if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
+				r.internalLogger.Info("[reconcile:end] failed to update resource annotations", "error", err.Error())
+			}
 		}
 	}
 

@@ -6,7 +6,6 @@ package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -439,13 +438,7 @@ func (in *HelmChartList) DeepCopyObject() runtime.Object {
 func (in *HelmChartSpec) DeepCopyInto(out *HelmChartSpec) {
 	*out = *in
 	out.Chart = in.Chart
-	if in.HelmValues != nil {
-		in, out := &in.HelmValues, &out.HelmValues
-		*out = make(map[string]apiextensionsv1.JSON, len(*in))
-		for key, val := range *in {
-			(*out)[key] = *val.DeepCopy()
-		}
-	}
+	in.HelmValues.DeepCopyInto(&out.HelmValues)
 	if in.HelmJobVars != nil {
 		in, out := &in.HelmJobVars, &out.HelmJobVars
 		*out = new(HelmJobVars)
@@ -511,11 +504,7 @@ func (in *HelmJobVars) DeepCopyInto(out *HelmJobVars) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Affinity != nil {
-		in, out := &in.Affinity, &out.Affinity
-		*out = new(corev1.Affinity)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Affinity.DeepCopyInto(&out.Affinity)
 	in.Resources.DeepCopyInto(&out.Resources)
 }
 

@@ -8,10 +8,13 @@ spec:
     url: https://charts.bitnami.com/bitnami
     name: nginx
     version: "18.2.4"
-  helmValues: {}
-    # replicaCount: 2
-    # service: |+
-    #   {
-    #     "type": "ClusterIP",
-    #     "port": 80
-    #   }
+  helmValues:
+    replicaCount: 2
+  jobVars:
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "500Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1000Mi"

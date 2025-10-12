@@ -2,14 +2,13 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"runtime"
 	"time"
 
 	"github.com/fatih/color"
-
-	fn "github.com/kloudlite/kloudlite/operator/toolkit/functions"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -36,13 +35,18 @@ type CheckResult struct {
 
 	State CheckState `json:"state,omitempty"`
 
-	StartedAt   *metav1.Time `json:"startedAt,omitempty"`
-	CompletedAt *metav1.Time `json:"completedAt,omitempty"`
+	StartedAt   *metav1.Time `json:"startedAt,omitempty,omitzero"`
+	CompletedAt *metav1.Time `json:"completedAt,omitempty,omitzero"`
 }
 
 func AreChecksEqual(c1 CheckResult, c2 CheckResult) bool {
-	c1.StartedAt = fn.New(fn.DefaultIfNil(c1.StartedAt))
-	c2.StartedAt = fn.New(fn.DefaultIfNil(c1.StartedAt))
+	if c1.StartedAt == nil {
+		c1.StartedAt = &metav1.Time{Time: time.Now()}
+	}
+
+	if c2.StartedAt == nil {
+		c2.StartedAt = &metav1.Time{Time: time.Now()}
+	}
 
 	return c1.Generation == c2.Generation &&
 		c1.State == c2.State &&
@@ -106,7 +110,7 @@ func (c *Check[T]) Errored(err error) StepResult {
 	c.request.Object.GetStatus().Checks[c.name] = c.CheckResult
 	c.request.Object.GetStatus().IsReady = false
 
-	if err2 := c.request.statusUpdate(); err != nil {
+	if err2 := c.request.statusUpdate(); err2 != nil {
 		return c.result().Err(err2)
 	}
 	// FIXME: change `Err(err)` to `Err(nil)`, once failed calls are checked on each of the controllers
@@ -130,7 +134,7 @@ func (c *Check[T]) Failed(err error) StepResult {
 	c.request.Object.GetStatus().Checks[c.name] = c.CheckResult
 	c.request.Object.GetStatus().IsReady = false
 
-	if err2 := c.request.statusUpdate(); err != nil {
+	if err2 := c.request.statusUpdate(); err2 != nil {
 		return c.result().Err(err2)
 	}
 
@@ -144,9 +148,25 @@ func (c *Check[T]) Requeue(duration ...time.Duration) StepResult {
 	return c.result()
 }
 
+func (c *Check[T]) UpdateMsg(msg string) StepResult {
+	defer c.postCheck()
+
+	c.CheckResult.State = RunningState
+	c.CheckResult.Message = msg
+
+	c.request.Object.GetStatus().Checks[c.name] = c.CheckResult
+	c.request.Object.GetStatus().IsReady = false
+
+	if err2 := c.request.statusUpdate(); err2 != nil {
+		return c.result().Err(err2)
+	}
+
+	return c.result().Err(nil)
+}
+
 // Abort aborts current check
 func (c *Check[T]) Abort(msg string) StepResult {
-	return c.Errored(fmt.Errorf(msg))
+	return c.Errored(errors.New(msg))
 }
 
 func (c *Check[T]) Passed() StepResult {

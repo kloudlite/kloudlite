@@ -2,631 +2,300 @@ package helmchart
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log/slog"
+	"slices"
+	"strings"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllers/helmchart/templates"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
-	"go.uber.org/zap"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
+	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/yaml"
 )
 
 const (
 	helmChartFinalizer = "helmcharts.environments.kloudlite.io/finalizer"
 	helmJobImage       = "alpine/helm:latest" // Helm 3 image
+
+	jobServiceAccountName = "helm-job-sa"
 )
 
 // Reconciler reconciles HelmChart objects
 type Reconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Logger *zap.Logger
+
+	HelmJobRunnerImage string
 }
 
 // Reconcile handles HelmChart events
-func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	logger := log.FromContext(ctx).WithValues("helmchart", req.NamespacedName)
-
-	zapLogger := r.Logger.With(
-		zap.String("helmchart", req.Name),
-		zap.String("namespace", req.Namespace),
-	)
-
-	zapLogger.Info("Reconciling HelmChart")
-
-	// Fetch the HelmChart instance
-	helmChart := &environmentsv1.HelmChart{}
-	err := r.Get(ctx, req.NamespacedName, helmChart)
+func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+	req, err := reconciler.NewRequest[*environmentsv1.HelmChart](ctx, r.Client, request.NamespacedName, &environmentsv1.HelmChart{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("HelmChart not found, likely deleted")
-			return reconcile.Result{}, nil
-		}
-		zapLogger.Error("Failed to get HelmChart", zap.Error(err))
-		return reconcile.Result{}, err
+		slog.Error("failed here", "err", err)
+		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Check if helm chart is being deleted
-	if helmChart.DeletionTimestamp != nil {
-		zapLogger.Info("HelmChart is being deleted, starting cleanup")
-		return r.handleDeletion(ctx, helmChart, zapLogger)
-	}
+	req.PreReconcile()
+	defer req.PostReconcile()
 
-	// Add finalizer if not present
-	if !controllerutil.ContainsFinalizer(helmChart, helmChartFinalizer) {
-		zapLogger.Info("Adding finalizer to HelmChart")
-		controllerutil.AddFinalizer(helmChart, helmChartFinalizer)
-		if err := r.Update(ctx, helmChart); err != nil {
-			zapLogger.Error("Failed to add finalizer", zap.Error(err))
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{Requeue: true}, nil
-	}
-
-	// Set release name if not already set
-	releaseName := helmChart.Status.ReleaseName
-	if releaseName == "" {
-		releaseName = fmt.Sprintf("%s-%s", helmChart.Name, helmChart.Namespace)
-		helmChart.Status.ReleaseName = releaseName
-	}
-
-	// Check if installation job already exists and is running
-	existingJob, err := r.getHelmJob(ctx, helmChart, "install")
-	if err == nil && existingJob != nil {
-		// Job exists, check its status
-		return r.checkJobStatus(ctx, helmChart, existingJob, zapLogger)
-	}
-
-	// Install or upgrade the helm chart
-	if err := r.installOrUpgradeHelmChart(ctx, helmChart, zapLogger); err != nil {
-		zapLogger.Error("Failed to install/upgrade helm chart", zap.Error(err))
-		return r.updateStatus(ctx, helmChart, environmentsv1.HelmChartStateFailed, err.Error(), zapLogger)
-	}
-
-	// Requeue to check job status
-	return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
+	return reconciler.ReconcileSteps(req, []reconciler.Step[*environmentsv1.HelmChart]{
+		{
+			Name:     "setup k8s job RBAC",
+			Title:    "Setup Kubernetes RBAC for running helm job",
+			OnCreate: r.createHelmJobRBAC,
+			OnDelete: nil,
+		},
+		{
+			Name:     "setup helm release job",
+			Title:    "Setup Helm Release Job",
+			OnCreate: r.createHelmInstallJob,
+			OnDelete: r.createHelmUninstallJob,
+		},
+		// {
+		// 	Name:     "process exports",
+		// 	Title:    "Process helm chart exports",
+		// 	OnCreate: r.createProcessExports,
+		// 	OnDelete: r.deleteProcessedExports,
+		// },
+	})
 }
 
-// installOrUpgradeHelmChart creates a Kubernetes Job to install or upgrade the helm chart
-func (r *Reconciler) installOrUpgradeHelmChart(ctx context.Context, helmChart *environmentsv1.HelmChart, logger *zap.Logger) error {
-	logger.Info("Installing or upgrading HelmChart")
+type jobOpType string
 
-	// Check if this is an upgrade (chart already installed)
-	isUpgrade := helmChart.Status.State == environmentsv1.HelmChartStateInstalled
+const (
+	InstallOp   jobOpType = "install"
+	UninstallOp jobOpType = "uninstall"
+)
 
-	// Create values ConfigMap
-	valuesConfigMap, err := r.createValuesConfigMap(ctx, helmChart, logger)
+func (r *Reconciler) createHelmJobRBAC(check *reconciler.Check[*environmentsv1.HelmChart], obj *environmentsv1.HelmChart) reconciler.StepResult {
+	jobSvcAcc := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: jobServiceAccountName, Namespace: obj.Namespace}}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, jobSvcAcc, func() error {
+		if jobSvcAcc.Annotations == nil {
+			jobSvcAcc.Annotations = make(map[string]string, 1)
+		}
+		jobSvcAcc.Annotations[reconciler.AnnotationDescriptionKey] = "Service account used by helm charts to run helm release jobs"
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	crb := rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: jobServiceAccountName + "-rb"}}
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, &crb, func() error {
+		if crb.Annotations == nil {
+			crb.Annotations = make(map[string]string, 1)
+		}
+		crb.Annotations[reconciler.AnnotationDescriptionKey] = "Cluster role binding used by helm charts to run helm release jobs"
+
+		crb.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     "cluster-admin",
+		}
+
+		found := false
+		for i := range crb.Subjects {
+			if crb.Subjects[i].Namespace == obj.Namespace && crb.Subjects[i].Name == jobServiceAccountName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			crb.Subjects = append(crb.Subjects, rbacv1.Subject{
+				Kind:      "ServiceAccount",
+				Name:      jobServiceAccountName,
+				Namespace: obj.Namespace,
+			})
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Passed()
+}
+
+func valuesToYaml(values map[string]any) (string, error) {
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+
+	slices.Sort(keys)
+
+	m := make(map[string]any, len(values))
+	for _, k := range keys {
+		m[k] = values[k]
+	}
+
+	slog.Info("values:", "m", m)
+
+	b, err := yaml.Marshal(values)
 	if err != nil {
-		return fmt.Errorf("failed to create values ConfigMap: %w", err)
+		return "", err
 	}
+	return string(b), nil
+}
 
-	// Create Helm job
-	job := r.createHelmJob(helmChart, valuesConfigMap.Name, isUpgrade)
+func (r *Reconciler) runHelmChartJob(check *reconciler.Check[*environmentsv1.HelmChart], obj *environmentsv1.HelmChart, jobSpec []byte, op jobOpType) reconciler.StepResult {
+	jobTypeAnnKey := "kloudlite.io/job.type"
+	jobTypeAnnValue := fmt.Sprintf("%s/%d", op, obj.GetGeneration())
+	name := fmt.Sprintf("%s-helmchart-job", obj.Name)
 
-	// Set controller ownership
-	if err := controllerutil.SetControllerReference(helmChart, job, r.Scheme); err != nil {
-		return fmt.Errorf("failed to set controller reference: %w", err)
-	}
-
-	// Create the job
-	if err := r.Create(ctx, job); err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			logger.Info("Helm job already exists")
-			return nil
+	job := &batchv1.Job{}
+	if err := r.Client.Get(check.Context(), types.NamespacedName{Namespace: obj.Namespace, Name: name}, job); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
 		}
-		return fmt.Errorf("failed to create helm job: %w", err)
-	}
 
-	logger.Info("Created Helm installation job", zap.String("job", job.Name))
-
-	// Update status to installing/upgrading
-	if isUpgrade {
-		helmChart.Status.State = environmentsv1.HelmChartStateUpgrading
-		helmChart.Status.Message = "Upgrading helm chart"
-	} else {
-		helmChart.Status.State = environmentsv1.HelmChartStateInstalling
-		helmChart.Status.Message = "Installing helm chart"
-	}
-
-	if err := r.Status().Update(ctx, helmChart); err != nil {
-		logger.Warn("Failed to update status", zap.Error(err))
-	}
-
-	return nil
-}
-
-// createValuesConfigMap creates a ConfigMap containing the Helm values
-func (r *Reconciler) createValuesConfigMap(ctx context.Context, helmChart *environmentsv1.HelmChart, logger *zap.Logger) (*corev1.ConfigMap, error) {
-	// Convert helmValues map to YAML string
-	valuesYAML := ""
-	for key, value := range helmChart.Spec.HelmValues {
-		// Simple YAML generation - in production, use a proper YAML library
-		valuesYAML += fmt.Sprintf("%s: %s\n", key, string(value.Raw))
-	}
-
-	configMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-helm-values", helmChart.Name),
-			Namespace: helmChart.Namespace,
-			Labels: map[string]string{
-				"kloudlite.io/helm-chart": helmChart.Name,
-				"kloudlite.io/managed-by": "helmchart-controller",
+		job := &batchv1.Job{
+			TypeMeta: metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: obj.Namespace,
+				Labels:    obj.GetLabels(),
+				Annotations: fn.MapMerge(
+					fn.MapFilter(obj.GetAnnotations(), func(k, v string) bool {
+						return strings.HasPrefix(k, reconciler.ObservabilityAnnotationKey)
+					}),
+					map[string]string{jobTypeAnnKey: jobTypeAnnValue},
+				),
+				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
-		},
-		Data: map[string]string{
-			"values.yaml": valuesYAML,
-		},
-	}
-
-	// Set controller ownership
-	if err := controllerutil.SetControllerReference(helmChart, configMap, r.Scheme); err != nil {
-		return nil, err
-	}
-
-	// Try to get existing ConfigMap
-	existing := &corev1.ConfigMap{}
-	err := r.Get(ctx, client.ObjectKeyFromObject(configMap), existing)
-	if err == nil {
-		// Update existing ConfigMap
-		existing.Data = configMap.Data
-		if err := r.Update(ctx, existing); err != nil {
-			return nil, err
 		}
-		logger.Info("Updated values ConfigMap", zap.String("name", existing.Name))
-		return existing, nil
+		if err := yaml.Unmarshal(jobSpec, &job.Spec); err != nil {
+			return check.Failed(err)
+		}
+
+		if err := r.Client.Create(check.Context(), job); err != nil {
+			return check.Failed(err)
+		}
+
+		return check.Abort(fn.JobStatusPending.Message())
 	}
 
-	if !apierrors.IsNotFound(err) {
-		return nil, err
+	jobStatus := fn.ParseJobStatus(job)
+
+	if job.Annotations[jobTypeAnnKey] != jobTypeAnnValue {
+		// we need to wait for this job to finish first
+		if jobStatus == fn.JobStatusSucceeded || jobStatus == fn.JobStatusFailed {
+			if err := r.Delete(check.Context(), job); err != nil {
+				return nil
+			}
+
+			return check.UpdateMsg("cleaning up previous/leftover job from old reconcilations").RequeueAfter(200 * time.Millisecond)
+		}
+
+		return check.Abort("waiting for previous/leftover job from old reconcilation to finish")
 	}
 
-	// Create new ConfigMap
-	if err := r.Create(ctx, configMap); err != nil {
-		return nil, err
+	if jobStatus != fn.JobStatusSucceeded {
+		return check.Abort(jobStatus.Message())
 	}
-
-	logger.Info("Created values ConfigMap", zap.String("name", configMap.Name))
-	return configMap, nil
+	return check.Passed()
 }
 
-// createHelmJob creates a Kubernetes Job that runs helm install/upgrade
-func (r *Reconciler) createHelmJob(helmChart *environmentsv1.HelmChart, valuesConfigMapName string, isUpgrade bool) *batchv1.Job {
-	// Build helm command
-	helmCommand := "helm repo add chart-repo " + helmChart.Spec.Chart.URL + " && "
-
-	// Pre-install hook
-	if helmChart.Spec.PreInstall != "" && !isUpgrade {
-		helmCommand += helmChart.Spec.PreInstall + " && "
+func (r *Reconciler) createHelmInstallJob(check *reconciler.Check[*environmentsv1.HelmChart], obj *environmentsv1.HelmChart) reconciler.StepResult {
+	// Unmarshal helm values into a map
+	helmValues := make(map[string]any)
+	if len(obj.Spec.HelmValues.Raw) > 0 {
+		if err := json.Unmarshal(obj.Spec.HelmValues.Raw, &helmValues); err != nil {
+			return check.Failed(fmt.Errorf("unmarshaling helm values: %w", err))
+		}
 	}
 
-	// Main helm command
-	action := "install"
-	if isUpgrade {
-		action = "upgrade --install"
+	// Add timestamp to trigger upgrade
+	helmValues["kloudlite"] = map[string]any{
+		// INFO: this ensures that whenever this function runs, helm resource is actually upgraded,
+		// i.e. missing helm resources or accidently deleted resources will be recreated
+		"triggered-at": time.Now().Format(time.RFC3339),
 	}
 
-	helmCommand += fmt.Sprintf("helm %s %s chart-repo/%s",
-		action,
-		helmChart.Status.ReleaseName,
-		helmChart.Spec.Chart.Name)
-
-	// Add version if specified
-	if helmChart.Spec.Chart.Version != "" {
-		helmCommand += fmt.Sprintf(" --version %s", helmChart.Spec.Chart.Version)
-	}
-
-	// Add values file
-	helmCommand += " --values /values/values.yaml"
-
-	// Add namespace
-	helmCommand += fmt.Sprintf(" --namespace %s", helmChart.Namespace)
-
-	// Wait for installation
-	helmCommand += " --wait --timeout 10m"
-
-	// Post-install hook
-	if helmChart.Spec.PostInstall != "" && !isUpgrade {
-		helmCommand += " && " + helmChart.Spec.PostInstall
-	}
-
-	// Default job vars
-	jobVars := &environmentsv1.HelmJobVars{}
-	if helmChart.Spec.HelmJobVars != nil {
-		jobVars = helmChart.Spec.HelmJobVars
-	}
-
-	// Set default resources if not specified
-	resources := corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("128Mi"),
-		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("512Mi"),
-		},
-	}
-	if jobVars.Resources.Requests != nil || jobVars.Resources.Limits != nil {
-		resources = jobVars.Resources
-	}
-
-	backoffLimit := int32(3)
-	ttlSecondsAfterFinished := int32(3600) // Clean up after 1 hour
-
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-helm-install-%d", helmChart.Name, time.Now().Unix()),
-			Namespace: helmChart.Namespace,
-			Labels: map[string]string{
-				"kloudlite.io/helm-chart": helmChart.Name,
-				"kloudlite.io/job-type":   "install",
-				"kloudlite.io/managed-by": "helmchart-controller",
-			},
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:            &backoffLimit,
-			TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"kloudlite.io/helm-chart": helmChart.Name,
-						"kloudlite.io/job-type":   "install",
-					},
-				},
-				Spec: corev1.PodSpec{
-					RestartPolicy:      corev1.RestartPolicyNever,
-					NodeSelector:       jobVars.NodeSelector,
-					Tolerations:        jobVars.Tolerations,
-					Affinity:           jobVars.Affinity,
-					ServiceAccountName: "default",
-					Containers: []corev1.Container{
-						{
-							Name:      "helm",
-							Image:     helmJobImage,
-							Command:   []string{"/bin/sh", "-c"},
-							Args:      []string{helmCommand},
-							Resources: resources,
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "values",
-									MountPath: "/values",
-									ReadOnly:  true,
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "values",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: valuesConfigMapName,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return job
-}
-
-// getHelmJob retrieves the helm job for the given chart
-func (r *Reconciler) getHelmJob(ctx context.Context, helmChart *environmentsv1.HelmChart, jobType string) (*batchv1.Job, error) {
-	jobList := &batchv1.JobList{}
-	err := r.List(ctx, jobList,
-		client.InNamespace(helmChart.Namespace),
-		client.MatchingLabels{
-			"kloudlite.io/helm-chart": helmChart.Name,
-			"kloudlite.io/job-type":   jobType,
-		})
+	values, err := valuesToYaml(helmValues)
 	if err != nil {
-		return nil, err
+		return check.Failed(fmt.Errorf("converting helm values to YAML: %w", err))
 	}
 
-	if len(jobList.Items) == 0 {
-		return nil, apierrors.NewNotFound(batchv1.Resource("job"), "helm-job")
+	jobVars := obj.Spec.HelmJobVars
+	if jobVars == nil {
+		jobVars = &environmentsv1.HelmJobVars{}
 	}
 
-	// Return the most recent job
-	mostRecentJob := &jobList.Items[0]
-	for i := range jobList.Items {
-		if jobList.Items[i].CreationTimestamp.After(mostRecentJob.CreationTimestamp.Time) {
-			mostRecentJob = &jobList.Items[i]
-		}
+	b, err := templates.HelmInstallJobTemplate.Render(templates.HelmChartInstallJobSpecParams{
+		PodAnnotations:     fn.MapFilter(obj.GetAnnotations(), reconciler.ObservabilityAnnotationFilter),
+		ReleaseName:        obj.Name,
+		ReleaseNamespace:   obj.Namespace,
+		Image:              r.HelmJobRunnerImage,
+		BackOffLimit:       1,
+		ServiceAccountName: jobServiceAccountName,
+		Tolerations:        jobVars.Tolerations,
+		Affinity:           jobVars.Affinity,
+		NodeSelector:       jobVars.NodeSelector,
+		ChartRepoURL:       obj.Spec.Chart.URL,
+		ChartName:          obj.Spec.Chart.Name,
+		ChartVersion:       obj.Spec.Chart.Version,
+		PreInstall:         obj.Spec.PreInstall,
+		PostInstall:        obj.Spec.PostInstall,
+		HelmValuesYAML:     values,
+	})
+	if err != nil {
+		return check.Failed(err)
 	}
 
-	return mostRecentJob, nil
+	return r.runHelmChartJob(check, obj, b, InstallOp)
 }
 
-// checkJobStatus checks the status of the helm job and updates the HelmChart status
-func (r *Reconciler) checkJobStatus(ctx context.Context, helmChart *environmentsv1.HelmChart, job *batchv1.Job, logger *zap.Logger) (reconcile.Result, error) {
-	// Check if job succeeded
-	if job.Status.Succeeded > 0 {
-		logger.Info("Helm installation job succeeded")
-		return r.updateStatus(ctx, helmChart, environmentsv1.HelmChartStateInstalled,
-			"Helm chart installed successfully", logger)
+func (r *Reconciler) createHelmUninstallJob(check *reconciler.Check[*environmentsv1.HelmChart], obj *environmentsv1.HelmChart) reconciler.StepResult {
+	jobVars := obj.Spec.HelmJobVars
+	if jobVars == nil {
+		jobVars = &environmentsv1.HelmJobVars{}
 	}
 
-	// Check if job failed
-	if job.Status.Failed > 0 {
-		logger.Error("Helm installation job failed",
-			zap.Int32("failed", job.Status.Failed))
-
-		// Get pod logs for debugging
-		message := fmt.Sprintf("Helm installation failed after %d attempts", job.Status.Failed)
-
-		return r.updateStatus(ctx, helmChart, environmentsv1.HelmChartStateFailed, message, logger)
+	b, err := templates.HelmUninstallJobTemplate.Render(templates.HelmChartUninstallJobSpecParams{
+		PodAnnotations:     fn.MapFilter(obj.GetAnnotations(), reconciler.ObservabilityAnnotationFilter),
+		ReleaseName:        obj.Name,
+		ReleaseNamespace:   obj.Namespace,
+		Image:              r.HelmJobRunnerImage,
+		BackOffLimit:       1,
+		ServiceAccountName: jobServiceAccountName,
+		Tolerations:        jobVars.Tolerations,
+		Affinity:           jobVars.Affinity,
+		NodeSelector:       jobVars.NodeSelector,
+		ChartRepoURL:       obj.Spec.Chart.URL,
+		ChartName:          obj.Spec.Chart.Name,
+		ChartVersion:       obj.Spec.Chart.Version,
+		PreUninstall:       obj.Spec.PreUninstall,
+		PostUninstall:      obj.Spec.PostUninstall,
+	})
+	if err != nil {
+		return check.Failed(err)
 	}
 
-	// Job is still running
-	logger.Info("Helm installation job is still running",
-		zap.Int32("active", job.Status.Active))
-
-	// Requeue to check again
-	return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
-}
-
-// handleDeletion handles cleanup when HelmChart is being deleted
-func (r *Reconciler) handleDeletion(ctx context.Context, helmChart *environmentsv1.HelmChart, logger *zap.Logger) (reconcile.Result, error) {
-	logger.Info("Cleaning up HelmChart resources")
-
-	// Update status to uninstalling if not already set
-	if helmChart.Status.State != environmentsv1.HelmChartStateUninstalling &&
-		helmChart.Status.State != environmentsv1.HelmChartStateDeleting {
-		helmChart.Status.State = environmentsv1.HelmChartStateUninstalling
-		helmChart.Status.Message = "Uninstalling helm chart"
-		if err := r.Status().Update(ctx, helmChart); err != nil {
-			logger.Error("Failed to update status to uninstalling", zap.Error(err))
-		}
-	}
-
-	// Check if uninstall job exists
-	uninstallJob, err := r.getHelmJob(ctx, helmChart, "uninstall")
-	if err == nil && uninstallJob != nil {
-		// Check uninstall job status
-		if uninstallJob.Status.Succeeded > 0 {
-			logger.Info("Helm uninstall job succeeded")
-			// Continue to remove finalizer
-		} else if uninstallJob.Status.Failed > 0 {
-			logger.Warn("Helm uninstall job failed, continuing with cleanup")
-			// Continue anyway
-		} else {
-			// Job still running
-			logger.Info("Waiting for helm uninstall job to complete")
-			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
-		}
-	} else {
-		// Create uninstall job
-		if err := r.createUninstallJob(ctx, helmChart, logger); err != nil {
-			logger.Error("Failed to create uninstall job", zap.Error(err))
-			// Continue with cleanup even if uninstall fails
-		} else {
-			// Wait for uninstall to complete
-			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
-		}
-	}
-
-	// Clean up jobs and ConfigMaps
-	if err := r.cleanupResources(ctx, helmChart, logger); err != nil {
-		logger.Error("Failed to cleanup resources", zap.Error(err))
-		// Continue anyway
-	}
-
-	// Remove finalizer
-	logger.Info("Removing finalizer from HelmChart")
-	controllerutil.RemoveFinalizer(helmChart, helmChartFinalizer)
-	if err := r.Update(ctx, helmChart); err != nil {
-		logger.Error("Failed to remove finalizer", zap.Error(err))
-		return reconcile.Result{}, err
-	}
-
-	logger.Info("HelmChart cleanup completed successfully")
-	return reconcile.Result{}, nil
-}
-
-// createUninstallJob creates a job to uninstall the helm release
-func (r *Reconciler) createUninstallJob(ctx context.Context, helmChart *environmentsv1.HelmChart, logger *zap.Logger) error {
-	// Pre-uninstall hook
-	preUninstall := ""
-	if helmChart.Spec.PreUninstall != "" {
-		preUninstall = helmChart.Spec.PreUninstall + " && "
-	}
-
-	// Helm uninstall command
-	helmCommand := fmt.Sprintf("%shelm uninstall %s --namespace %s --wait",
-		preUninstall,
-		helmChart.Status.ReleaseName,
-		helmChart.Namespace)
-
-	// Post-uninstall hook
-	if helmChart.Spec.PostUninstall != "" {
-		helmCommand += " && " + helmChart.Spec.PostUninstall
-	}
-
-	// Default job vars
-	jobVars := &environmentsv1.HelmJobVars{}
-	if helmChart.Spec.HelmJobVars != nil {
-		jobVars = helmChart.Spec.HelmJobVars
-	}
-
-	resources := corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("128Mi"),
-		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("512Mi"),
-		},
-	}
-	if jobVars.Resources.Requests != nil || jobVars.Resources.Limits != nil {
-		resources = jobVars.Resources
-	}
-
-	backoffLimit := int32(3)
-	ttlSecondsAfterFinished := int32(600)
-
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-helm-uninstall-%d", helmChart.Name, time.Now().Unix()),
-			Namespace: helmChart.Namespace,
-			Labels: map[string]string{
-				"kloudlite.io/helm-chart": helmChart.Name,
-				"kloudlite.io/job-type":   "uninstall",
-				"kloudlite.io/managed-by": "helmchart-controller",
-			},
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:            &backoffLimit,
-			TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"kloudlite.io/helm-chart": helmChart.Name,
-						"kloudlite.io/job-type":   "uninstall",
-					},
-				},
-				Spec: corev1.PodSpec{
-					RestartPolicy:      corev1.RestartPolicyNever,
-					NodeSelector:       jobVars.NodeSelector,
-					Tolerations:        jobVars.Tolerations,
-					Affinity:           jobVars.Affinity,
-					ServiceAccountName: "default",
-					Containers: []corev1.Container{
-						{
-							Name:      "helm",
-							Image:     helmJobImage,
-							Command:   []string{"/bin/sh", "-c"},
-							Args:      []string{helmCommand},
-							Resources: resources,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Set controller ownership
-	if err := controllerutil.SetControllerReference(helmChart, job, r.Scheme); err != nil {
-		return err
-	}
-
-	// Create the job
-	if err := r.Create(ctx, job); err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			logger.Info("Helm uninstall job already exists")
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Created Helm uninstall job", zap.String("job", job.Name))
-	return nil
-}
-
-// cleanupResources cleans up Jobs and ConfigMaps created by the controller
-func (r *Reconciler) cleanupResources(ctx context.Context, helmChart *environmentsv1.HelmChart, logger *zap.Logger) error {
-	// Delete jobs
-	jobList := &batchv1.JobList{}
-	if err := r.List(ctx, jobList,
-		client.InNamespace(helmChart.Namespace),
-		client.MatchingLabels{"kloudlite.io/helm-chart": helmChart.Name}); err != nil {
-		return err
-	}
-
-	for _, job := range jobList.Items {
-		if err := r.Delete(ctx, &job); err != nil && !apierrors.IsNotFound(err) {
-			logger.Error("Failed to delete job", zap.String("name", job.Name), zap.Error(err))
-		}
-	}
-
-	// Delete ConfigMaps
-	configMapList := &corev1.ConfigMapList{}
-	if err := r.List(ctx, configMapList,
-		client.InNamespace(helmChart.Namespace),
-		client.MatchingLabels{"kloudlite.io/helm-chart": helmChart.Name}); err != nil {
-		return err
-	}
-
-	for _, cm := range configMapList.Items {
-		if err := r.Delete(ctx, &cm); err != nil && !apierrors.IsNotFound(err) {
-			logger.Error("Failed to delete ConfigMap", zap.String("name", cm.Name), zap.Error(err))
-		}
-	}
-
-	return nil
-}
-
-// updateStatus updates the status of the HelmChart
-func (r *Reconciler) updateStatus(ctx context.Context, helmChart *environmentsv1.HelmChart, state environmentsv1.HelmChartState, message string, logger *zap.Logger) (reconcile.Result, error) {
-	helmChart.Status.State = state
-	helmChart.Status.Message = message
-	helmChart.Status.ObservedGeneration = helmChart.Generation
-
-	now := metav1.Now()
-	if state == environmentsv1.HelmChartStateInstalled {
-		helmChart.Status.LastInstallTime = &now
-		helmChart.Status.InstalledVersion = helmChart.Spec.Chart.Version
-	}
-
-	// Update condition
-	readyCondition := metav1.Condition{
-		Type:               "Ready",
-		Status:             metav1.ConditionFalse,
-		ObservedGeneration: helmChart.Generation,
-		LastTransitionTime: now,
-		Reason:             string(state),
-		Message:            message,
-	}
-
-	if state == environmentsv1.HelmChartStateInstalled {
-		readyCondition.Status = metav1.ConditionTrue
-	}
-
-	// Update or add condition
-	found := false
-	for i, condition := range helmChart.Status.Conditions {
-		if condition.Type == "Ready" {
-			helmChart.Status.Conditions[i] = readyCondition
-			found = true
-			break
-		}
-	}
-	if !found {
-		helmChart.Status.Conditions = append(helmChart.Status.Conditions, readyCondition)
-	}
-
-	if err := r.Status().Update(ctx, helmChart); err != nil {
-		logger.Error("Failed to update status", zap.Error(err))
-		return reconcile.Result{}, err
-	}
-
-	logger.Info("Updated HelmChart status",
-		zap.String("state", string(state)),
-		zap.String("message", message))
-
-	return reconcile.Result{}, nil
+	return r.runHelmChartJob(check, obj, b, UninstallOp)
 }
 
 // SetupWithManager sets up the controller with the Manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if r.HelmJobRunnerImage == "" {
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&environmentsv1.HelmChart{}).
-		Owns(&batchv1.Job{}).      // Watch Jobs owned by HelmChart
-		Owns(&corev1.ConfigMap{}). // Watch ConfigMaps owned by HelmChart
+		Owns(&batchv1.Job{}). // Watch Jobs owned by HelmChart
 		Complete(r)
 }

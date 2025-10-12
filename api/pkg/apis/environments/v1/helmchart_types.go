@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -8,19 +9,24 @@ import (
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced,categories={kloudlite,environments},shortName=comp
+// +kubebuilder:resource:scope=Namespaced,categories={kloudlite,environments},shortName=hc
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
-// +kubebuilder:printcolumn:name="Services",type=integer,JSONPath=`.status.servicesCount`
-// +kubebuilder:printcolumn:name="Running",type=integer,JSONPath=`.status.runningCount`
+// +kubebuilder:printcolumn:name="Installed Version",type=string,JSONPath=`.status.installedVersion`
+// +kubebuilder:printcolumn:name="Release Name",type=string,JSONPath=`.status.releaseName`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// Composition represents a Docker Compose application deployed in an environment
+// HelmChart represents a Helm chart deployment
 type HelmChart struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitzero"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   HelmChartSpec   `json:"spec,omitzero"`
-	Status HelmChartStatus `json:"status,omitzero"`
+	Spec HelmChartSpec `json:"spec"`
+	// Status HelmChartStatus `json:"status,omitempty"`
+	Status reconciler.Status `json:"status,omitempty"`
+}
+
+func (h *HelmChart) GetStatus() *reconciler.Status {
+	return &h.Status
 }
 
 type HelmChartInfo struct {
@@ -32,16 +38,16 @@ type HelmChartInfo struct {
 type HelmJobVars struct {
 	NodeSelector map[string]string           `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration         `json:"tolerations,omitempty"`
-	Affinity     *corev1.Affinity            `json:"affinity,omitempty"`
-	Resources    corev1.ResourceRequirements `json:"resources,omitzero"`
+	Affinity     corev1.Affinity             `json:"affinity,omitempty"`
+	Resources    corev1.ResourceRequirements `json:"resources,omitempty,omitzero"`
 }
 
 type HelmChartSpec struct {
 	Chart HelmChartInfo `json:"chart"`
 
-	HelmValues map[string]apiextensionsv1.JSON `json:"helmValues"`
+	HelmValues apiextensionsv1.JSON `json:"helmValues,omitempty"`
 
-	HelmJobVars *HelmJobVars `json:"jobVars,omitzero"`
+	HelmJobVars *HelmJobVars `json:"jobVars,omitempty"`
 
 	PreInstall  string `json:"preInstall,omitempty"`
 	PostInstall string `json:"postInstall,omitempty"`
