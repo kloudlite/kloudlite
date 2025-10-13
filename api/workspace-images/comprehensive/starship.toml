@@ -1,83 +1,139 @@
-# Starship configuration for Kloudlite workspaces - Plain Text Symbols preset
-
-format = """$directory$git_branch$git_status$character"""
-
-[character]
-success_symbol = "[>](bold green)"
-error_symbol = "[x](bold red)"
-
-[directory]
-style = "bold cyan"
-truncation_length = 3
-truncate_to_repo = true
-
-[git_branch]
-symbol = "git "
-style = "bold purple"
-
-[git_status]
-style = "bold yellow"
-ahead = ">"
-diverged = "<>"
-behind = "<"
-deleted = "x"
-
 [aws]
-symbol = "aws "
+symbol = "  "
+
+[buf]
+symbol = " "
+
+[c]
+symbol = " "
 
 [conda]
-symbol = "conda "
+symbol = " "
 
 [dart]
-symbol = "dart "
+symbol = " "
+
+[directory]
+read_only = " 󰌾"
+
+[container]
+disabled = true
 
 [docker_context]
-symbol = "docker "
+disabled = true
 
 [elixir]
-symbol = "elixir "
+symbol = " "
 
 [elm]
-symbol = "elm "
+symbol = " "
+
+[fossil_branch]
+symbol = " "
+
+[git_branch]
+symbol = " "
 
 [golang]
-symbol = "go "
+symbol = " "
+
+[guix_shell]
+symbol = " "
+
+[haskell]
+symbol = " "
+
+[haxe]
+symbol = " "
 
 [hg_branch]
-symbol = "hg "
+symbol = " "
+
+[hostname]
+ssh_symbol = " "
 
 [java]
-symbol = "java "
+symbol = " "
 
 [julia]
-symbol = "jl "
+symbol = " "
+
+[lua]
+symbol = " "
+
+[memory_usage]
+symbol = "󰍛 "
+
+[meson]
+symbol = "󰔷 "
 
 [nim]
-symbol = "nim "
+symbol = "󰆥 "
 
 [nix_shell]
-symbol = "nix "
+symbol = " "
 
 [nodejs]
-symbol = "nodejs "
+symbol = " "
+
+[os.symbols]
+Alpaquita = " "
+Alpine = " "
+Amazon = " "
+Android = " "
+Arch = " "
+Artix = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌 "
+Illumos = "󰈸 "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = " "
+Mariner = " "
+MidnightBSD = " "
+Mint = " "
+NetBSD = " "
+NixOS = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
+Redhat = " "
+RedHatEnterprise = " "
+Redox = "󰀘 "
+Solus = "󰠳 "
+SUSE = " "
+Ubuntu = " "
+Unknown = " "
+Windows = "󰍲 "
 
 [package]
-symbol = "pkg "
+symbol = "󰏗 "
 
-[perl]
-symbol = "pl "
-
-[php]
-symbol = "php "
+[pijul_channel]
+symbol = " "
 
 [python]
-symbol = "py "
+symbol = " "
+
+[rlang]
+symbol = "󰟔 "
 
 [ruby]
-symbol = "rb "
+symbol = " "
 
 [rust]
-symbol = "rs "
+symbol = " "
 
-[swift]
-symbol = "swift "
+[scala]
+symbol = " "
