@@ -695,6 +695,10 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 			Value: workspace.Name,
 		},
 		{
+			Name:  "WORKSPACE_NAMESPACE",
+			Value: workspace.Namespace,
+		},
+		{
 			Name:  "WORKSPACE_OWNER",
 			Value: workspace.Spec.Owner,
 		},
@@ -751,13 +755,18 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 mkdir -p /home/kl/workspaces/%s
 chown -R 1001:1001 /home/kl/workspaces
 
-# Create /etc/environment with PATH for PAM
+# Create /etc/environment with PATH and Kubernetes service env vars for PAM
 # This will be read by PAM on SSH login (both interactive and non-interactive)
+# The Kubernetes env vars are needed for kl binary to work with in-cluster config
 cat > /etc-writable/environment << 'EOF'
 PATH=/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+KUBERNETES_SERVICE_HOST=10.43.0.1
+KUBERNETES_SERVICE_PORT=443
+WORKSPACE_NAME=%s
+WORKSPACE_NAMESPACE=%s
 EOF
 chmod 644 /etc-writable/environment
-`, workspace.Name, workspace.Name),
+`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace),
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -863,6 +872,12 @@ chmod 644 /etc-writable/environment
 							SubPath:   "environment",
 							ReadOnly:  true,
 						},
+						{
+							Name:      "kloudlite-bin",
+							MountPath: "/usr/local/bin/kl",
+							SubPath:   "kl",
+							ReadOnly:  true,
+						},
 					},
 					LivenessProbe: &corev1.Probe{
 						ProbeHandler: corev1.ProbeHandler{
@@ -951,6 +966,18 @@ chmod 644 /etc-writable/environment
 							Path: "/var/lib/kloudlite/etc-environment",
 							Type: func() *corev1.HostPathType {
 								t := corev1.HostPathDirectoryOrCreate
+								return &t
+							}(),
+						},
+					},
+				},
+				{
+					Name: "kloudlite-bin",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/kloudlite/bin",
+							Type: func() *corev1.HostPathType {
+								t := corev1.HostPathDirectory
 								return &t
 							}(),
 						},
