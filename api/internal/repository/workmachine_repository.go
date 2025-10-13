@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"

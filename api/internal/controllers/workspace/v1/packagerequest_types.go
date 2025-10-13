@@ -1,7 +1,6 @@
 package v1
 
 import (
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -14,7 +13,7 @@ type PackageRequestSpec struct {
 	// Packages list of packages to install
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
-	Packages []workspacesv1.PackageSpec `json:"packages"`
+	Packages []PackageSpec `json:"packages"`
 
 	// ProfileName is the Nix profile name to use
 	// +kubebuilder:validation:Required
@@ -33,7 +32,7 @@ type PackageRequestStatus struct {
 
 	// InstalledPackages list of successfully installed packages
 	// +optional
-	InstalledPackages []workspacesv1.InstalledPackage `json:"installedPackages,omitempty"`
+	InstalledPackages []InstalledPackage `json:"installedPackages,omitempty"`
 
 	// FailedPackages list of packages that failed to install
 	// +optional

@@ -1,10 +1,10 @@
-package controllers
+package environment
 
 import (
 	"context"
 	"time"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -498,7 +498,6 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 	logger.Info("Environment cloning completed successfully")
 	return reconcile.Result{Requeue: true}, nil
 }
-
 
 // SetupWithManager sets up the controller with the Manager
 func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {

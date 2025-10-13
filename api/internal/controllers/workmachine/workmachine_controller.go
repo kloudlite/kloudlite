@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"golang.org/x/crypto/ssh"
 	appsv1 "k8s.io/api/apps/v1"
@@ -250,7 +250,7 @@ func (r *WorkMachineReconciler) handleWorkMachineDeletion(ctx context.Context, w
 	namespaceName := workMachine.Spec.TargetNamespace
 
 	// Check for active Workspaces in the target namespace
-	workspaceList := &workspacesv1.WorkspaceList{}
+	workspaceList := &workspacev1.WorkspaceList{}
 	if err := r.List(ctx, workspaceList, client.InNamespace(namespaceName)); err != nil {
 		if !errors.IsNotFound(err) {
 			logger.Error(err, "Failed to list Workspaces", "namespace", namespaceName)

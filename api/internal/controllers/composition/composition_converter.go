@@ -1,4 +1,4 @@
-package controllers
+package composition
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	composego "github.com/compose-spec/compose-go/v2/types"
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

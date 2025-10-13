@@ -1,4 +1,4 @@
-// Package v1 contains API Schema definitions for the workspaces v1 API group
+// Package workspacesv1 contains API Schema definitions for the workspaces v1 API group
 // +kubebuilder:object:generate=true
 // +groupName=workspaces.kloudlite.io
 package v1
@@ -18,3 +18,7 @@ var (
 	// AddToScheme adds the types in this group-version to the given scheme.
 	AddToScheme = SchemeBuilder.AddToScheme
 )
+
+func init() {
+	SchemeBuilder.Register(&Workspace{}, &WorkspaceList{})
+}

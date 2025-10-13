@@ -1,4 +1,4 @@
-package controllers
+package workspace
 
 import (
 	"bytes"
@@ -7,8 +7,7 @@ import (
 	"strings"
 	"time"
 
-	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -45,7 +44,7 @@ type WorkspaceReconciler struct {
 // hasActiveConnections checks if there are active SSH or web connections to the workspace
 // by examining active TCP connections in the pod
 // Returns: hasConnections bool, connectionCount int, error
-func (r *WorkspaceReconciler) hasActiveConnections(ctx context.Context, workspace *workspacesv1.Workspace) (bool, int, error) {
+func (r *WorkspaceReconciler) hasActiveConnections(ctx context.Context, workspace *workspacev1.Workspace) (bool, int, error) {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 
 	pod := &corev1.Pod{}
@@ -149,7 +148,7 @@ func (r *WorkspaceReconciler) execInPod(ctx context.Context, pod *corev1.Pod, co
 // isWorkspaceIdle checks if a workspace has been idle by checking for active connections
 // A workspace is considered idle ONLY if there are no active connections (SSH, ttyd, vscode, code-server)
 // Returns: isIdle bool, connectionCount int, error
-func (r *WorkspaceReconciler) isWorkspaceIdle(ctx context.Context, workspace *workspacesv1.Workspace) (bool, int, error) {
+func (r *WorkspaceReconciler) isWorkspaceIdle(ctx context.Context, workspace *workspacev1.Workspace) (bool, int, error) {
 	// Check for active connections - this is the ONLY factor that matters
 	hasConnections, connectionCount, err := r.hasActiveConnections(ctx, workspace)
 	if err != nil {
@@ -176,7 +175,7 @@ func (r *WorkspaceReconciler) isWorkspaceIdle(ctx context.Context, workspace *wo
 }
 
 // checkAndSuspendIdleWorkspace checks if a workspace should be auto-suspended and suspends it if needed
-func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
+func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	// Skip if auto-stop is not enabled
 	if workspace.Spec.Settings == nil || !workspace.Spec.Settings.AutoStop {
 		return nil
@@ -207,7 +206,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 		// Workspace is active, update last activity time
 		now := metav1.Now()
 		if workspace.Status.LastActivityTime == nil ||
-		   time.Since(workspace.Status.LastActivityTime.Time) > 30*time.Second {
+			time.Since(workspace.Status.LastActivityTime.Time) > 30*time.Second {
 			workspace.Status.LastActivityTime = &now
 			if err := r.updateStatusPreservingPackages(ctx, workspace); err != nil {
 				logger.Warn("Failed to update last activity time", zap.Error(err))
@@ -248,7 +247,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 		)
 
 		// Fetch the latest version to avoid conflict errors
-		latest := &workspacesv1.Workspace{}
+		latest := &workspacev1.Workspace{}
 		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name, Namespace: workspace.Namespace}, latest); err != nil {
 			return fmt.Errorf("failed to fetch latest workspace: %w", err)
 		}
@@ -263,9 +262,9 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 }
 
 // updateStatusPreservingPackages updates workspace status while preserving package-related fields
-func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context, workspace *workspacesv1.Workspace) error {
+func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context, workspace *workspacev1.Workspace) error {
 	// Refetch to get the latest version for optimistic locking
-	latest := &workspacesv1.Workspace{}
+	latest := &workspacev1.Workspace{}
 	if err := r.Get(ctx, client.ObjectKeyFromObject(workspace), latest); err != nil {
 		return err
 	}
@@ -297,7 +296,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 	logger.Info("Reconciling Workspace")
 
 	// Fetch the Workspace instance
-	workspace := &workspacesv1.Workspace{}
+	workspace := &workspacev1.Workspace{}
 	err := r.Get(ctx, req.NamespacedName, workspace)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -364,7 +363,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 }
 
 // ensurePackageRequest creates or updates PackageRequest for the workspace
-func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
+func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	// Skip if no packages defined
 	if len(workspace.Spec.Packages) == 0 {
 		logger.Info("No packages defined for workspace, skipping PackageRequest creation")
@@ -374,17 +373,17 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
 
 	// Check if PackageRequest exists
-	pkgReq := &packagesv1.PackageRequest{}
+	pkgReq := &workspacev1.PackageRequest{}
 	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: workspace.Namespace}, pkgReq)
 
 	if apierrors.IsNotFound(err) {
 		// Create new PackageRequest
-		pkgReq = &packagesv1.PackageRequest{
+		pkgReq = &workspacev1.PackageRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pkgReqName,
 				Namespace: workspace.Namespace,
 			},
-			Spec: packagesv1.PackageRequestSpec{
+			Spec: workspacev1.PackageRequestSpec{
 				WorkspaceRef: workspace.Name,
 				Packages:     workspace.Spec.Packages,
 				ProfileName:  fmt.Sprintf("workspace-%s-packages", workspace.Name),
@@ -434,9 +433,8 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 	return nil
 }
 
-
 // syncPackageStatus syncs package installation status from PackageRequest to Workspace
-func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
+func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	// Only sync if packages are defined
 	if len(workspace.Spec.Packages) == 0 {
 		return nil
@@ -444,7 +442,7 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 
 	// Get the PackageRequest
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
-	pkgReq := &packagesv1.PackageRequest{}
+	pkgReq := &workspacev1.PackageRequest{}
 	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: workspace.Namespace}, pkgReq)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -463,7 +461,7 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 }
 
 // ensureWorkspaceService ensures a Service is created for the workspace
-func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) error {
+func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	serviceName := fmt.Sprintf("workspace-%s", workspace.Name)
 
 	// Check if Service exists
@@ -536,7 +534,7 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 }
 
 // handleActiveWorkspace ensures the workspace pod is running
-func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
 	// Check and suspend idle workspace if auto-stop is enabled
 	if err := r.checkAndSuspendIdleWorkspace(ctx, workspace, logger); err != nil {
 		logger.Warn("Failed to check idle workspace", zap.Error(err))
@@ -619,7 +617,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 }
 
 // handleSuspendedWorkspace ensures the workspace pod is stopped
-func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
 	// Check if pod exists
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 	pod := &corev1.Pod{}
@@ -663,7 +661,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 }
 
 // createWorkspacePod creates a pod with multiple containers for different access methods
-func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspace) (*corev1.Pod, error) {
+func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspace) (*corev1.Pod, error) {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 
 	// Default resource requirements per container
@@ -940,7 +938,7 @@ chmod 644 /etc-writable/environment
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							SecretName:  "ssh-host-keys",
-							DefaultMode: func() *int32 { m := int32(0600); return &m }(),
+							DefaultMode: func() *int32 { m := int32(0o600); return &m }(),
 						},
 					},
 				},
@@ -969,7 +967,7 @@ chmod 644 /etc-writable/environment
 }
 
 // updateWorkspaceStatus updates the workspace status based on pod state
-func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacesv1.Workspace, pod *corev1.Pod, phase, message string, logger *zap.Logger) (reconcile.Result, error) {
+func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pod *corev1.Pod, phase, message string, logger *zap.Logger) (reconcile.Result, error) {
 	workspace.Status.Phase = phase
 	workspace.Status.Message = message
 	workspace.Status.PodName = pod.Name
@@ -1089,7 +1087,7 @@ func (r *WorkspaceReconciler) deleteHostDirectory(ctx context.Context, hostPath 
 }
 
 // handleDeletion cleans up workspace resources when being deleted
-func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *workspacesv1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
 	if !controllerutil.ContainsFinalizer(workspace, workspaceFinalizer) {
 		return reconcile.Result{}, nil
 	}
@@ -1135,8 +1133,8 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 // SetupWithManager sets up the controller with the Manager
 func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&workspacesv1.Workspace{}).
+		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
-		Owns(&packagesv1.PackageRequest{}).
+		Owns(&workspacev1.PackageRequest{}).
 		Complete(r)
 }

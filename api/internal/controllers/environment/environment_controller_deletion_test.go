@@ -1,10 +1,10 @@
-package controllers
+package environment
 
 import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
