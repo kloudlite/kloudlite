@@ -1,10 +1,7 @@
-package controllers
+package workmachine
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -16,6 +13,7 @@ import (
 	"github.com/go-logr/logr"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"golang.org/x/crypto/ssh"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -119,12 +117,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Ensure RBAC resources exist for workmachine-node-manager
 	if err := r.ensurePackageManagerRBAC(ctx, workMachine.Spec.TargetNamespace, logger); err != nil {
 		logger.Error(err, "Failed to ensure workmachine-node-manager RBAC")
-		return ctrl.Result{}, err
-	}
-
-	// Ensure SSH proxy secret exists
-	if err := r.ensureSSHProxySecret(ctx, workMachine, logger); err != nil {
-		logger.Error(err, "Failed to ensure SSH proxy secret")
 		return ctrl.Result{}, err
 	}
 
@@ -499,126 +491,6 @@ func (r *WorkMachineReconciler) ensurePackageManagerRBAC(ctx context.Context, na
 	return nil
 }
 
-// ensureSSHProxySecret ensures the SSH key secret exists for workspace access
-func (r *WorkMachineReconciler) ensureSSHProxySecret(ctx context.Context, workMachine *machinesv1.WorkMachine, logger logr.Logger) error {
-	secretName := "ssh-proxy-key"
-	namespace := workMachine.Spec.TargetNamespace
-	secret := &corev1.Secret{}
-	err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
-
-	needsStatusUpdate := false
-
-	if err == nil {
-		// Secret already exists, update status if needed
-		if publicKeyBytes, ok := secret.Data["public-key"]; ok {
-			publicKeyStr := string(publicKeyBytes)
-			if workMachine.Status.SSHPublicKey != publicKeyStr {
-				workMachine.Status.SSHPublicKey = publicKeyStr
-				needsStatusUpdate = true
-			}
-		}
-
-		if needsStatusUpdate {
-			if err := r.Status().Update(ctx, workMachine); err != nil {
-				return fmt.Errorf("failed to update WorkMachine status with SSH public key: %w", err)
-			}
-		}
-
-		return nil
-	}
-
-	if !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to check ssh-proxy-key secret: %w", err)
-	}
-
-	// Generate Ed25519 key pair
-	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		return fmt.Errorf("failed to generate Ed25519 key: %w", err)
-	}
-
-	// Convert to SSH format for public key
-	sshPublicKey, err := ssh.NewPublicKey(publicKey)
-	if err != nil {
-		return fmt.Errorf("failed to create SSH public key: %w", err)
-	}
-	publicKeyBytes := ssh.MarshalAuthorizedKey(sshPublicKey)
-
-	// Convert to OpenSSH format for private key
-	pemBlock := &pem.Block{
-		Type:  "OPENSSH PRIVATE KEY",
-		Bytes: marshalED25519PrivateKey(privateKey),
-	}
-	privateKeyBytes := pem.EncodeToMemory(pemBlock)
-
-	// Create secret
-	secret = &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				"kloudlite.io/ssh-proxy": "true",
-			},
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"public-key":  publicKeyBytes,
-			"private-key": privateKeyBytes,
-		},
-	}
-
-	if err := r.Create(ctx, secret); err != nil {
-		return fmt.Errorf("failed to create ssh-proxy-key secret: %w", err)
-	}
-
-	logger.Info("Created SSH proxy key secret", "namespace", namespace)
-
-	// Update WorkMachine status with the public key
-	workMachine.Status.SSHPublicKey = string(publicKeyBytes)
-	if err := r.Status().Update(ctx, workMachine); err != nil {
-		return fmt.Errorf("failed to update WorkMachine status with SSH public key: %w", err)
-	}
-
-	return nil
-}
-
-// marshalED25519PrivateKey marshals Ed25519 private key to OpenSSH format
-func marshalED25519PrivateKey(key ed25519.PrivateKey) []byte {
-	// OpenSSH key format
-	magic := []byte("openssh-key-v1\x00")
-
-	var w sshBuffer
-	w.writeString("none") // cipher name
-	w.writeString("none") // kdf name
-	w.writeString("")     // kdf options
-	w.writeUint32(1)      // number of keys
-
-	// Public key
-	pubKey := key.Public().(ed25519.PublicKey)
-	var pubW sshBuffer
-	pubW.writeString("ssh-ed25519")
-	pubW.writeBytes(pubKey)
-	w.writeBytes(pubW.bytes())
-
-	// Private key
-	var privW sshBuffer
-	privW.writeUint32(0) // check int 1
-	privW.writeUint32(0) // check int 2
-	privW.writeString("ssh-ed25519")
-	privW.writeBytes(pubKey)
-	privW.writeBytes(append(key.Seed(), pubKey...))
-	privW.writeString("") // comment
-
-	// Add padding
-	for i := 0; i < (8 - (len(privW.bytes()) % 8)); i++ {
-		privW.writeByte(byte(i + 1))
-	}
-
-	w.writeBytes(privW.bytes())
-
-	return append(magic, w.bytes()...)
-}
-
 // sshBuffer helper for SSH key encoding
 type sshBuffer struct {
 	buf []byte
@@ -671,18 +543,6 @@ func (r *WorkMachineReconciler) ensureSSHHostKeysSecret(ctx context.Context, nam
 		return fmt.Errorf("failed to generate RSA key: %w", err)
 	}
 
-	// Generate ECDSA 256-bit key
-	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return fmt.Errorf("failed to generate ECDSA key: %w", err)
-	}
-
-	// Generate Ed25519 key
-	ed25519Public, ed25519Private, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		return fmt.Errorf("failed to generate Ed25519 key: %w", err)
-	}
-
 	// Marshal RSA key
 	rsaPrivateBytes := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
@@ -695,34 +555,6 @@ func (r *WorkMachineReconciler) ensureSSHHostKeysSecret(ctx context.Context, nam
 	}
 	rsaPublicBytes := ssh.MarshalAuthorizedKey(rsaSSHPublicKey)
 
-	// Marshal ECDSA key
-	ecdsaPrivateBytes, err := x509.MarshalECPrivateKey(ecdsaKey)
-	if err != nil {
-		return fmt.Errorf("failed to marshal ECDSA private key: %w", err)
-	}
-	ecdsaPrivatePEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "EC PRIVATE KEY",
-		Bytes: ecdsaPrivateBytes,
-	})
-
-	ecdsaSSHPublicKey, err := ssh.NewPublicKey(&ecdsaKey.PublicKey)
-	if err != nil {
-		return fmt.Errorf("failed to create ECDSA SSH public key: %w", err)
-	}
-	ecdsaPublicBytes := ssh.MarshalAuthorizedKey(ecdsaSSHPublicKey)
-
-	// Marshal Ed25519 key (use OpenSSH format)
-	ed25519PrivatePEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "OPENSSH PRIVATE KEY",
-		Bytes: marshalED25519PrivateKey(ed25519Private),
-	})
-
-	ed25519SSHPublicKey, err := ssh.NewPublicKey(ed25519Public)
-	if err != nil {
-		return fmt.Errorf("failed to create Ed25519 SSH public key: %w", err)
-	}
-	ed25519PublicBytes := ssh.MarshalAuthorizedKey(ed25519SSHPublicKey)
-
 	// Create secret with all host keys
 	secret = &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -734,12 +566,8 @@ func (r *WorkMachineReconciler) ensureSSHHostKeysSecret(ctx context.Context, nam
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"ssh_host_rsa_key":         rsaPrivateBytes,
-			"ssh_host_rsa_key.pub":     rsaPublicBytes,
-			"ssh_host_ecdsa_key":       ecdsaPrivatePEM,
-			"ssh_host_ecdsa_key.pub":   ecdsaPublicBytes,
-			"ssh_host_ed25519_key":     ed25519PrivatePEM,
-			"ssh_host_ed25519_key.pub": ed25519PublicBytes,
+			"ssh_host_rsa_key":     rsaPrivateBytes,
+			"ssh_host_rsa_key.pub": rsaPublicBytes,
 		},
 	}
 
@@ -759,7 +587,6 @@ func (r *WorkMachineReconciler) ensureSSHAuthorizedKeysConfigMap(ctx context.Con
 	// Build authorized_keys content with user keys from WorkMachine spec
 	// Validate each SSH key before adding to authorized_keys
 	var authorizedKeys strings.Builder
-	first := true
 	for i, key := range workMachine.Spec.SSHPublicKeys {
 		trimmedKey := strings.TrimSpace(key)
 		if trimmedKey == "" {
@@ -772,49 +599,24 @@ func (r *WorkMachineReconciler) ensureSSHAuthorizedKeysConfigMap(ctx context.Con
 			continue // Skip invalid keys but don't fail the entire reconciliation
 		}
 
-		if !first {
-			authorizedKeys.WriteString("\n")
-		}
 		authorizedKeys.WriteString(trimmedKey)
-		first = false
+		authorizedKeys.WriteString("\n")
 	}
 
-	// Check if ConfigMap exists
-	configMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, configMap)
+	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
 
-	if err == nil {
-		// ConfigMap exists, update if needed
-		if configMap.Data["authorized_keys"] != authorizedKeys.String() {
-			configMap.Data["authorized_keys"] = authorizedKeys.String()
-			if err := r.Update(ctx, configMap); err != nil {
-				return fmt.Errorf("failed to update ssh-authorized-keys configmap: %w", err)
-			}
-			logger.Info("Updated SSH authorized_keys ConfigMap", "namespace", namespace)
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfgMap, func() error {
+		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
+			"kloudlite.io/ssh-config": "true",
+		}))
+		if cfgMap.Data == nil {
+			cfgMap.Data = make(map[string]string, 1)
 		}
+
+		cfgMap.Data["authorized_keys"] = authorizedKeys.String()
 		return nil
-	}
-
-	if !errors.IsNotFound(err) {
+	}); err != nil {
 		return fmt.Errorf("failed to check ssh-authorized-keys configmap: %w", err)
-	}
-
-	// Create ConfigMap with authorized_keys
-	configMap = &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      configMapName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				"kloudlite.io/ssh-config": "true",
-			},
-		},
-		Data: map[string]string{
-			"authorized_keys": authorizedKeys.String(),
-		},
-	}
-
-	if err := r.Create(ctx, configMap); err != nil {
-		return fmt.Errorf("failed to create ssh-authorized-keys configmap: %w", err)
 	}
 
 	logger.Info("Created SSH authorized_keys ConfigMap", "namespace", namespace)
@@ -863,45 +665,23 @@ AcceptEnv LANG LC_*
 Subsystem sftp /usr/lib/ssh/sftp-server
 `
 
-	// Check if ConfigMap exists
-	configMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, configMap)
+	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
 
-	if err == nil {
-		// ConfigMap exists, update if needed
-		if configMap.Data["sshd_config"] != sshdConfig {
-			configMap.Data["sshd_config"] = sshdConfig
-			if err := r.Update(ctx, configMap); err != nil {
-				return fmt.Errorf("failed to update sshd-config configmap: %w", err)
-			}
-			logger.Info("Updated sshd_config ConfigMap", "namespace", namespace)
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfgMap, func() error {
+		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
+			"kloudlite.io/ssh-config": "true",
+		}))
+		if cfgMap.Data == nil {
+			cfgMap.Data = make(map[string]string, 1)
 		}
+
+		cfgMap.Data["sshd_config"] = sshdConfig
 		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to ensure sshd-config configmap: %w", err)
 	}
 
-	if !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to check sshd-config configmap: %w", err)
-	}
-
-	// Create ConfigMap with sshd_config
-	configMap = &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      configMapName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				"kloudlite.io/ssh-config": "true",
-			},
-		},
-		Data: map[string]string{
-			"sshd_config": sshdConfig,
-		},
-	}
-
-	if err := r.Create(ctx, configMap); err != nil {
-		return fmt.Errorf("failed to create sshd-config configmap: %w", err)
-	}
-
-	logger.Info("Created sshd_config ConfigMap", "namespace", namespace)
+	logger.Info("Ensured sshd_config ConfigMap", "namespace", namespace)
 	return nil
 }
 
@@ -920,46 +700,24 @@ AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys
 StrictModes no
 `
 
-	// Check if ConfigMap exists
-	configMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, configMap)
+	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
 
-	if err == nil {
-		// ConfigMap exists, update if needed
-		if configMap.Data["99-kl-authorized-keys.conf"] != sshdConfigOverride {
-			configMap.Data["99-kl-authorized-keys.conf"] = sshdConfigOverride
-			if err := r.Update(ctx, configMap); err != nil {
-				return fmt.Errorf("failed to update workspace-sshd-config configmap: %w", err)
-			}
-			logger.Info("Updated workspace-sshd-config ConfigMap", "namespace", namespace)
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfgMap, func() error {
+		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
+			"kloudlite.io/ssh-config":       "true",
+			"kloudlite.io/workspace-config": "true",
+		}))
+		if cfgMap.Data == nil {
+			cfgMap.Data = make(map[string]string, 1)
 		}
+
+		cfgMap.Data["99-kl-authorized-keys.conf"] = sshdConfigOverride
 		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to ensure workspace-sshd-config configmap: %w", err)
 	}
 
-	if !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to check workspace-sshd-config configmap: %w", err)
-	}
-
-	// Create ConfigMap with SSHD override
-	configMap = &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      configMapName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				"kloudlite.io/ssh-config":       "true",
-				"kloudlite.io/workspace-config": "true",
-			},
-		},
-		Data: map[string]string{
-			"99-kl-authorized-keys.conf": sshdConfigOverride,
-		},
-	}
-
-	if err := r.Create(ctx, configMap); err != nil {
-		return fmt.Errorf("failed to create workspace-sshd-config configmap: %w", err)
-	}
-
-	logger.Info("Created workspace-sshd-config ConfigMap", "namespace", namespace)
+	logger.Info("Ensured workspace-sshd-config ConfigMap", "namespace", namespace)
 	return nil
 }
 
@@ -1265,7 +1023,7 @@ echo "Profile directory ready"
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName:  "ssh-host-keys",
-									DefaultMode: func() *int32 { m := int32(0600); return &m }(),
+									DefaultMode: func() *int32 { m := int32(0o600); return &m }(),
 								},
 							},
 						},
