@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/workspacesv1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

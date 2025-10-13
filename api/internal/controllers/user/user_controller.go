@@ -1,4 +1,4 @@
-package controllers
+package user
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
-	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
+	userv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
@@ -40,7 +40,7 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 	logger.Info("Reconciling User")
 
 	// Fetch the User instance
-	user := &platformv1alpha1.User{}
+	user := &userv1alpha1.User{}
 	err := r.Get(ctx, req.NamespacedName, user)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -145,7 +145,7 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 	// Check if user has 'user' role - only users with 'user' role get WorkMachines
 	hasUserRole := false
 	for _, role := range user.Spec.Roles {
-		if role == platformv1alpha1.RoleUser {
+		if role == userv1alpha1.RoleUser {
 			hasUserRole = true
 			break
 		}
@@ -234,7 +234,7 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 }
 
 // handleUserDeletion handles cleanup when a user is being deleted
-func (r *UserReconciler) handleUserDeletion(ctx context.Context, user *platformv1alpha1.User, logger *zap.Logger) (reconcile.Result, error) {
+func (r *UserReconciler) handleUserDeletion(ctx context.Context, user *userv1alpha1.User, logger *zap.Logger) (reconcile.Result, error) {
 	workMachineName := r.generateWorkMachineName(user)
 
 	// Check if WorkMachine still exists
@@ -283,13 +283,13 @@ func (r *UserReconciler) handleUserDeletion(ctx context.Context, user *platformv
 }
 
 // generateWorkMachineName generates a WorkMachine name from user resource name
-func (r *UserReconciler) generateWorkMachineName(user *platformv1alpha1.User) string {
+func (r *UserReconciler) generateWorkMachineName(user *userv1alpha1.User) string {
 	// Use the User resource name directly
 	return fmt.Sprintf("wm-%s", user.Name)
 }
 
 // buildWorkMachineForUser creates a WorkMachine resource for the user
-func (r *UserReconciler) buildWorkMachineForUser(ctx context.Context, user *platformv1alpha1.User, workMachineName string) (*machinesv1.WorkMachine, error) {
+func (r *UserReconciler) buildWorkMachineForUser(ctx context.Context, user *userv1alpha1.User, workMachineName string) (*machinesv1.WorkMachine, error) {
 	// Use the User resource name for the target namespace
 	targetNamespace := fmt.Sprintf("wm-%s", user.Name)
 
@@ -395,7 +395,7 @@ func isAlphanumeric(b byte) bool {
 }
 
 // rolesToStrings converts RoleType slice to string slice for logging
-func rolesToStrings(roles []platformv1alpha1.RoleType) []string {
+func rolesToStrings(roles []userv1alpha1.RoleType) []string {
 	result := make([]string, len(roles))
 	for i, role := range roles {
 		result[i] = string(role)
@@ -406,7 +406,7 @@ func rolesToStrings(roles []platformv1alpha1.RoleType) []string {
 // SetupWithManager sets up the controller with the Manager
 func (r *UserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&platformv1alpha1.User{}).
+		For(&userv1alpha1.User{}).
 		Owns(&machinesv1.WorkMachine{}). // Watch WorkMachines owned by Users
 		Complete(r)
 }

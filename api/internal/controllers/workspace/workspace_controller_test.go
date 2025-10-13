@@ -1,4 +1,4 @@
-package controllers
+package workspace
 
 import (
 	"context"
@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
-	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -20,7 +19,7 @@ import (
 func TestWorkspaceReconciler_Reconcile_NotFound(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 	k8sClient := testutil.NewFakeClient(scheme).
-		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -45,20 +44,20 @@ func TestWorkspaceReconciler_Reconcile_NotFound(t *testing.T) {
 func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			Owner:       "test@example.com",
-			Packages:    []workspacesv1.PackageSpec{},
+			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -81,7 +80,7 @@ func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	assert.True(t, result.Requeue)
 
 	// Verify finalizer was added
-	updatedWorkspace := &workspacesv1.Workspace{}
+	updatedWorkspace := &workspacev1.Workspace{}
 	err = k8sClient.Get(context.Background(), req.NamespacedName, updatedWorkspace)
 	assert.NoError(t, err)
 	assert.Contains(t, updatedWorkspace.Finalizers, workspaceFinalizer)
@@ -103,17 +102,17 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 		},
 	}
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-workspace",
 			Namespace:  "test-namespace",
 			Finalizers: []string{workspaceFinalizer},
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			Owner:       "test@example.com",
 			Status:      "active",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 				{Name: "curl"},
 			},
@@ -121,7 +120,7 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
-		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -144,7 +143,7 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 	}
 
 	// Verify PackageRequest was created
-	pkgReq := &packagesv1.PackageRequest{}
+	pkgReq := &workspacev1.PackageRequest{}
 	err := k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-workspace-packages",
 		Namespace: "test-namespace",
@@ -173,17 +172,17 @@ func TestWorkspaceReconciler_Reconcile_UpdatePackages(t *testing.T) {
 		},
 	}
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-workspace",
 			Namespace:  "test-namespace",
 			Finalizers: []string{workspaceFinalizer},
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			Owner:       "test@example.com",
 			Status:      "active",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 				{Name: "vim"},
 			},
@@ -191,7 +190,7 @@ func TestWorkspaceReconciler_Reconcile_UpdatePackages(t *testing.T) {
 	}
 
 	// Existing PackageRequest with different packages
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace-packages",
 			Namespace: "test-namespace",
@@ -204,24 +203,24 @@ func TestWorkspaceReconciler_Reconcile_UpdatePackages(t *testing.T) {
 				},
 			},
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "workspace-test-workspace-packages",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase:   "Ready",
 			Message: "Packages installed",
-			InstalledPackages: []workspacesv1.InstalledPackage{
+			InstalledPackages: []workspacev1.InstalledPackage{
 				{Name: "git", BinPath: "/nix/var/nix/profiles/per-user/root/workspace-test-workspace-packages/bin"},
 			},
 		},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine, pkgReq).
-		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -244,7 +243,7 @@ func TestWorkspaceReconciler_Reconcile_UpdatePackages(t *testing.T) {
 	}
 
 	// Verify PackageRequest was updated
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err := k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-workspace-packages",
 		Namespace: "test-namespace",
@@ -273,22 +272,22 @@ func TestWorkspaceReconciler_Reconcile_NoPackagesSkipsPackageRequest(t *testing.
 		},
 	}
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-workspace",
 			Namespace:  "test-namespace",
 			Finalizers: []string{workspaceFinalizer},
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			Owner:       "test@example.com",
 			Status:      "active",
-			Packages:    []workspacesv1.PackageSpec{}, // No packages
+			Packages:    []workspacev1.PackageSpec{}, // No packages
 		},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
-		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -311,7 +310,7 @@ func TestWorkspaceReconciler_Reconcile_NoPackagesSkipsPackageRequest(t *testing.
 	}
 
 	// Verify no PackageRequest was created (since there are no packages)
-	pkgReq := &packagesv1.PackageRequest{}
+	pkgReq := &workspacev1.PackageRequest{}
 	err := k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-workspace-packages",
 		Namespace: "test-namespace",
@@ -335,22 +334,22 @@ func TestWorkspaceReconciler_Reconcile_SuspendedWorkspace(t *testing.T) {
 		},
 	}
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-workspace",
 			Namespace:  "test-namespace",
 			Finalizers: []string{workspaceFinalizer},
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			Owner:       "test@example.com",
 			Status:      "suspended", // Suspended status
-			Packages:    []workspacesv1.PackageSpec{},
+			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
-		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -373,7 +372,7 @@ func TestWorkspaceReconciler_Reconcile_SuspendedWorkspace(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify workspace phase is stopped (suspended workspaces show as Stopped)
-	updatedWorkspace := &workspacesv1.Workspace{}
+	updatedWorkspace := &workspacev1.Workspace{}
 	err = k8sClient.Get(context.Background(), req.NamespacedName, updatedWorkspace)
 	assert.NoError(t, err)
 	assert.Equal(t, "Stopped", updatedWorkspace.Status.Phase)
@@ -392,7 +391,7 @@ func TestHasActiveConnections_PodNotFound(t *testing.T) {
 		Logger: logger,
 	}
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
@@ -409,7 +408,7 @@ func TestHasActiveConnections_PodNotFound(t *testing.T) {
 func TestHasActiveConnections_PodNoPodIP(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
@@ -446,7 +445,7 @@ func TestHasActiveConnections_PodNoPodIP(t *testing.T) {
 func TestHasActiveConnections_PodNotRunning(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
@@ -483,7 +482,7 @@ func TestHasActiveConnections_PodNotRunning(t *testing.T) {
 func TestHasActiveConnections_PodJustStarted(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
@@ -527,7 +526,7 @@ func TestHasActiveConnections_PodJustStarted(t *testing.T) {
 func TestHasActiveConnections_NoContainers(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
@@ -569,7 +568,7 @@ func TestHasActiveConnections_NoContainers(t *testing.T) {
 func TestIsWorkspaceIdle_WithActiveConnections(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
@@ -606,7 +605,7 @@ func TestIsWorkspaceIdle_WithActiveConnections(t *testing.T) {
 func TestIsWorkspaceIdle_NoConnections(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
@@ -643,21 +642,21 @@ func TestIsWorkspaceIdle_NoConnections(t *testing.T) {
 func TestCheckAndSuspendIdleWorkspace_AutoStopNotEnabled(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			Status: "active",
-			Settings: &workspacesv1.WorkspaceSettings{
+			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop: false, // Auto-stop not enabled
 			},
 		},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -671,7 +670,7 @@ func TestCheckAndSuspendIdleWorkspace_AutoStopNotEnabled(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify workspace was not suspended
-	updatedWorkspace := &workspacesv1.Workspace{}
+	updatedWorkspace := &workspacev1.Workspace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      workspace.Name,
 		Namespace: workspace.Namespace,
@@ -683,21 +682,21 @@ func TestCheckAndSuspendIdleWorkspace_AutoStopNotEnabled(t *testing.T) {
 func TestCheckAndSuspendIdleWorkspace_WorkspaceNotActive(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			Status: "suspended", // Already suspended
-			Settings: &workspacesv1.WorkspaceSettings{
+			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop: true,
 			},
 		},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -714,14 +713,14 @@ func TestCheckAndSuspendIdleWorkspace_WorkspaceNotActive(t *testing.T) {
 func TestCheckAndSuspendIdleWorkspace_WithActiveConnections(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			Status: "active",
-			Settings: &workspacesv1.WorkspaceSettings{
+			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop:    true,
 				IdleTimeout: 30,
 			},
@@ -741,7 +740,7 @@ func TestCheckAndSuspendIdleWorkspace_WithActiveConnections(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, pod).
-		WithStatusSubresource(&workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -755,7 +754,7 @@ func TestCheckAndSuspendIdleWorkspace_WithActiveConnections(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify workspace was NOT suspended (has active connections)
-	updatedWorkspace := &workspacesv1.Workspace{}
+	updatedWorkspace := &workspacev1.Workspace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      workspace.Name,
 		Namespace: workspace.Namespace,
@@ -771,19 +770,19 @@ func TestCheckAndSuspendIdleWorkspace_IdleButNoTimeout(t *testing.T) {
 	// Set LastActivityTime to 20 minutes ago (less than 30 min timeout)
 	lastActivityTime := metav1.NewTime(time.Now().Add(-20 * time.Minute))
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			Status: "active",
-			Settings: &workspacesv1.WorkspaceSettings{
+			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop:    true,
 				IdleTimeout: 30, // 30 minutes
 			},
 		},
-		Status: workspacesv1.WorkspaceStatus{
+		Status: workspacev1.WorkspaceStatus{
 			LastActivityTime: &lastActivityTime,
 		},
 	}
@@ -801,7 +800,7 @@ func TestCheckAndSuspendIdleWorkspace_IdleButNoTimeout(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, pod).
-		WithStatusSubresource(&workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -815,7 +814,7 @@ func TestCheckAndSuspendIdleWorkspace_IdleButNoTimeout(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify workspace was NOT suspended (idle time not exceeded)
-	updatedWorkspace := &workspacesv1.Workspace{}
+	updatedWorkspace := &workspacev1.Workspace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      workspace.Name,
 		Namespace: workspace.Namespace,
@@ -830,19 +829,19 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 	// Set LastActivityTime to 31 minutes ago (exceeds 30 min timeout)
 	lastActivityTime := metav1.NewTime(time.Now().Add(-31 * time.Minute))
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			Status: "active",
-			Settings: &workspacesv1.WorkspaceSettings{
+			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop:    true,
 				IdleTimeout: 30, // 30 minutes
 			},
 		},
-		Status: workspacesv1.WorkspaceStatus{
+		Status: workspacev1.WorkspaceStatus{
 			LastActivityTime: &lastActivityTime,
 		},
 	}
@@ -860,7 +859,7 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, pod).
-		WithStatusSubresource(&workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -874,7 +873,7 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify workspace was suspended
-	updatedWorkspace := &workspacesv1.Workspace{}
+	updatedWorkspace := &workspacev1.Workspace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      workspace.Name,
 		Namespace: workspace.Namespace,
@@ -886,19 +885,19 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 func TestCheckAndSuspendIdleWorkspace_NoLastActivityTime(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			Status: "active",
-			Settings: &workspacesv1.WorkspaceSettings{
+			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop:    true,
 				IdleTimeout: 30,
 			},
 		},
-		Status: workspacesv1.WorkspaceStatus{
+		Status: workspacev1.WorkspaceStatus{
 			LastActivityTime: nil, // No activity time set yet
 		},
 	}
@@ -916,7 +915,7 @@ func TestCheckAndSuspendIdleWorkspace_NoLastActivityTime(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, pod).
-		WithStatusSubresource(&workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -930,7 +929,7 @@ func TestCheckAndSuspendIdleWorkspace_NoLastActivityTime(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify LastActivityTime was initialized
-	updatedWorkspace := &workspacesv1.Workspace{}
+	updatedWorkspace := &workspacev1.Workspace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      workspace.Name,
 		Namespace: workspace.Namespace,
@@ -943,21 +942,21 @@ func TestCheckAndSuspendIdleWorkspace_NoLastActivityTime(t *testing.T) {
 func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			Owner:       "test@example.com",
 			Status:      "active",
-			Packages:    []workspacesv1.PackageSpec{},
+			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()

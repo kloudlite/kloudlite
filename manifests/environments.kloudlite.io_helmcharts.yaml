@@ -68,6 +68,16 @@ spec:
                 - name
                 - url
                 type: object
+              description:
+                description: Description provides additional information about the
+                  helm chart
+                maxLength: 500
+                type: string
+              displayName:
+                description: DisplayName is the human-readable name for the helm chart
+                maxLength: 100
+                minLength: 1
+                type: string
               helmValues:
                 x-kubernetes-preserve-unknown-fields: true
               jobVars:
@@ -1104,6 +1114,7 @@ spec:
                 type: string
             required:
             - chart
+            - displayName
             type: object
           status:
             description: Status HelmChartStatus `json:"status,omitempty"`
