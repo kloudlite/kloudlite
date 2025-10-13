@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
@@ -1014,4 +1015,220 @@ func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 	assert.NotNil(t, nixStoreVolume, "nix-store volume not found")
 	assert.NotNil(t, nixStoreVolume.HostPath, "nix-store should be a hostPath volume")
 	assert.Equal(t, "/var/lib/kloudlite/nix-store", nixStoreVolume.HostPath.Path, "nix-store hostPath should be /var/lib/kloudlite/nix-store")
+}
+
+func TestWorkspaceReconciler_CreateWorkspacePod_WithEnvironmentRef(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	// Create environment
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-environment",
+			Namespace: "test-namespace",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "env-sample",
+			Activated:       true,
+		},
+	}
+
+	// Create workspace with environment reference
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacesv1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+			EnvironmentRef: &corev1.ObjectReference{
+				Name: "test-environment",
+			},
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace, environment).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	// Create workspace pod
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find the init container
+	assert.NotEmpty(t, pod.Spec.InitContainers, "should have init containers")
+
+	var initContainer *corev1.Container
+	for i := range pod.Spec.InitContainers {
+		if pod.Spec.InitContainers[i].Name == "init-workspace-dir" {
+			initContainer = &pod.Spec.InitContainers[i]
+			break
+		}
+	}
+	assert.NotNil(t, initContainer, "init-workspace-dir container not found")
+
+	// Verify init container command includes environment DNS configuration
+	assert.NotEmpty(t, initContainer.Command, "init container should have commands")
+	assert.Len(t, initContainer.Command, 3, "should have sh, -c, and script")
+
+	script := initContainer.Command[2]
+	assert.Contains(t, script, "env-sample.svc.cluster.local", "DNS config should include environment namespace")
+	assert.Contains(t, script, "cat > /etc-writable-resolv/resolv.conf", "should create resolv.conf")
+	assert.Contains(t, script, "nameserver 10.43.0.10", "should include nameserver")
+	assert.Contains(t, script, "search env-sample.svc.cluster.local svc.cluster.local cluster.local", "should include search domains with environment first")
+
+	// Verify init container has resolv volume mount
+	var resolvMount *corev1.VolumeMount
+	for i := range initContainer.VolumeMounts {
+		if initContainer.VolumeMounts[i].Name == "etc-resolv" {
+			resolvMount = &initContainer.VolumeMounts[i]
+			break
+		}
+	}
+	assert.NotNil(t, resolvMount, "init container should have etc-resolv mount")
+	assert.Equal(t, "/etc-writable-resolv", resolvMount.MountPath)
+
+	// Verify main container has resolv.conf mounted
+	var workspaceContainer *corev1.Container
+	for i := range pod.Spec.Containers {
+		if pod.Spec.Containers[i].Name == "workspace" {
+			workspaceContainer = &pod.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, workspaceContainer, "workspace container not found")
+
+	var containerResolvMount *corev1.VolumeMount
+	for i := range workspaceContainer.VolumeMounts {
+		if workspaceContainer.VolumeMounts[i].MountPath == "/etc/resolv.conf" {
+			containerResolvMount = &workspaceContainer.VolumeMounts[i]
+			break
+		}
+	}
+	assert.NotNil(t, containerResolvMount, "workspace container should have resolv.conf mount")
+	assert.Equal(t, "etc-resolv", containerResolvMount.Name)
+	assert.Equal(t, "resolv.conf", containerResolvMount.SubPath)
+	assert.False(t, containerResolvMount.ReadOnly, "resolv.conf should be writable")
+}
+
+func TestWorkspaceReconciler_CreateWorkspacePod_WithoutEnvironmentRef(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	// Create workspace without environment reference
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacesv1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	// Create workspace pod
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find the init container
+	var initContainer *corev1.Container
+	for i := range pod.Spec.InitContainers {
+		if pod.Spec.InitContainers[i].Name == "init-workspace-dir" {
+			initContainer = &pod.Spec.InitContainers[i]
+			break
+		}
+	}
+	assert.NotNil(t, initContainer, "init-workspace-dir container not found")
+
+	// Verify init container command uses default DNS configuration (no environment namespace)
+	script := initContainer.Command[2]
+	assert.NotContains(t, script, "env-", "DNS config should not include environment namespace")
+	assert.Contains(t, script, "cat > /etc-writable-resolv/resolv.conf", "should create resolv.conf")
+	assert.Contains(t, script, "search svc.cluster.local cluster.local", "should include default search domains")
+	assert.NotContains(t, script, "env-sample.svc.cluster.local", "should not include any environment namespace")
+}
+
+func TestWorkspaceReconciler_CreateWorkspacePod_WithInactiveEnvironment(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	// Create inactive environment
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-environment",
+			Namespace: "test-namespace",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "env-inactive",
+			Activated:       false, // Not activated
+		},
+	}
+
+	// Create workspace with environment reference
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacesv1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+			EnvironmentRef: &corev1.ObjectReference{
+				Name: "test-environment",
+			},
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace, environment).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacesv1.Workspace{}).
+		Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	// Create workspace pod
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find the init container
+	var initContainer *corev1.Container
+	for i := range pod.Spec.InitContainers {
+		if pod.Spec.InitContainers[i].Name == "init-workspace-dir" {
+			initContainer = &pod.Spec.InitContainers[i]
+			break
+		}
+	}
+	assert.NotNil(t, initContainer, "init-workspace-dir container not found")
+
+	// Verify init container command uses default DNS (environment not activated)
+	script := initContainer.Command[2]
+	assert.NotContains(t, script, "env-inactive", "DNS config should not include inactive environment")
+	assert.Contains(t, script, "search svc.cluster.local cluster.local", "should use default search domains for inactive environment")
 }

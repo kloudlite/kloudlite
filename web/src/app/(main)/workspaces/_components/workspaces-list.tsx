@@ -127,6 +127,9 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Environment
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Packages
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -171,6 +174,26 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
                       {workspace.spec.status || 'active'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {workspace.status?.connectedEnvironment ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground font-medium">
+                          {workspace.status.connectedEnvironment.name}
+                        </span>
+                        {workspace.status.connectedEnvironment.connected ? (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            Connected
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {packageCount > 0 ? (

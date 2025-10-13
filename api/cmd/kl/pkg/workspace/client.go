@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -26,6 +27,11 @@ func New() (*Client, error) {
 	// Register the workspace API types with the scheme
 	if err := workspacesv1.AddToScheme(scheme.Scheme); err != nil {
 		return nil, fmt.Errorf("failed to add workspace types to scheme: %w", err)
+	}
+
+	// Register the environment API types with the scheme
+	if err := environmentsv1.AddToScheme(scheme.Scheme); err != nil {
+		return nil, fmt.Errorf("failed to add environment types to scheme: %w", err)
 	}
 
 	// Get workspace name and namespace from environment variables
