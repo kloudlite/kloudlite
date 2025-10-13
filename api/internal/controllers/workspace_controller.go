@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	"go.uber.org/zap"
@@ -666,6 +667,24 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspace) (*corev1.Pod, error) {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 
+	// Check if workspace has an environment connection and get target namespace
+	var envTargetNamespace string
+	if workspace.Spec.EnvironmentRef != nil {
+		env := &environmentsv1.Environment{}
+		err := r.Get(context.Background(), client.ObjectKey{
+			Name:      workspace.Spec.EnvironmentRef.Name,
+			Namespace: workspace.Namespace,
+		}, env)
+		if err == nil && env.Spec.Activated {
+			envTargetNamespace = env.Spec.TargetNamespace
+			r.Logger.Info("Workspace has environment connection",
+				zap.String("workspace", workspace.Name),
+				zap.String("environment", env.Name),
+				zap.String("targetNamespace", envTargetNamespace),
+			)
+		}
+	}
+
 	// Default resource requirements per container
 	defaultResources := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
@@ -750,7 +769,15 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 					Command: []string{
 						"sh",
 						"-c",
-						fmt.Sprintf(`
+						func() string {
+							// Build search domains based on whether workspace has an environment connection
+							searchDomains := "svc.cluster.local cluster.local"
+							if envTargetNamespace != "" {
+								// Include environment namespace first for priority
+								searchDomains = fmt.Sprintf("%s.svc.cluster.local svc.cluster.local cluster.local", envTargetNamespace)
+							}
+
+							return fmt.Sprintf(`
 # Create workspace directory
 mkdir -p /home/kl/workspaces/%s
 chown -R 1001:1001 /home/kl/workspaces
@@ -766,7 +793,18 @@ WORKSPACE_NAME=%s
 WORKSPACE_NAMESPACE=%s
 EOF
 chmod 644 /etc-writable/environment
-`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace),
+
+# Create /etc/resolv.conf with DNS configuration
+# If workspace is connected to an environment, include that namespace in search domains
+cat > /etc-writable-resolv/resolv.conf << 'EOFR'
+nameserver 10.43.0.10
+search %s
+options ndots:5
+EOFR
+chown 1001:1001 /etc-writable-resolv/resolv.conf
+chmod 666 /etc-writable-resolv/resolv.conf
+`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, searchDomains)
+						}(),
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -776,6 +814,10 @@ chmod 644 /etc-writable/environment
 						{
 							Name:      "etc-environment",
 							MountPath: "/etc-writable",
+						},
+						{
+							Name:      "etc-resolv",
+							MountPath: "/etc-writable-resolv",
 						},
 					},
 				},
@@ -871,6 +913,12 @@ chmod 644 /etc-writable/environment
 							MountPath: "/etc/environment",
 							SubPath:   "environment",
 							ReadOnly:  true,
+						},
+						{
+							Name:      "etc-resolv",
+							MountPath: "/etc/resolv.conf",
+							SubPath:   "resolv.conf",
+							ReadOnly:  false,
 						},
 						{
 							Name:      "kloudlite-bin",
@@ -972,6 +1020,18 @@ chmod 644 /etc-writable/environment
 					},
 				},
 				{
+					Name: "etc-resolv",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/kloudlite/etc-resolv",
+							Type: func() *corev1.HostPathType {
+								t := corev1.HostPathDirectoryOrCreate
+								return &t
+							}(),
+						},
+					},
+				},
+				{
 					Name: "kloudlite-bin",
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
@@ -987,6 +1047,16 @@ chmod 644 /etc-writable/environment
 			RestartPolicy: corev1.RestartPolicyAlways,
 		},
 	}
+
+	// Disable Kubernetes DNS management completely
+	// DNS will be managed manually via /etc/resolv.conf mounted from hostPath
+	// by kl env commands. We provide minimal DNSConfig (required by K8s when dnsPolicy=None),
+	// but since /etc/resolv.conf is mounted from hostPath, this config won't be used.
+	pod.Spec.DNSPolicy = corev1.DNSNone
+	pod.Spec.DNSConfig = &corev1.PodDNSConfig{
+		Nameservers: []string{"10.43.0.10"}, // Required but will be overridden by mounted resolv.conf
+	}
+
 	// Set owner reference
 	if err := controllerutil.SetControllerReference(workspace, pod, r.Scheme); err != nil {
 		return nil, fmt.Errorf("failed to set controller reference: %w", err)
@@ -1014,6 +1084,50 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 
 		// Keep AccessURL for backward compatibility (default to code-server)
 		workspace.Status.AccessURL = accessURLs["code-server"]
+	}
+
+	// Update ConnectedEnvironment status if EnvironmentRef is set
+	if workspace.Spec.EnvironmentRef != nil {
+		env := &environmentsv1.Environment{}
+		err := r.Get(ctx, client.ObjectKey{
+			Name:      workspace.Spec.EnvironmentRef.Name,
+			Namespace: workspace.Namespace,
+		}, env)
+
+		if err == nil && env.Spec.Activated {
+			// Update connected environment status
+			workspace.Status.ConnectedEnvironment = &workspacesv1.ConnectedEnvironmentInfo{
+				Name:            env.Name,
+				TargetNamespace: env.Spec.TargetNamespace,
+				Connected:       true,
+			}
+			logger.Info("Updated ConnectedEnvironment status",
+				zap.String("workspace", workspace.Name),
+				zap.String("environment", env.Name),
+				zap.String("targetNamespace", env.Spec.TargetNamespace),
+			)
+		} else if err != nil {
+			// Environment not found or fetch failed
+			workspace.Status.ConnectedEnvironment = &workspacesv1.ConnectedEnvironmentInfo{
+				Name:      workspace.Spec.EnvironmentRef.Name,
+				Connected: false,
+			}
+			logger.Warn("Failed to fetch environment for status update",
+				zap.String("workspace", workspace.Name),
+				zap.String("environment", workspace.Spec.EnvironmentRef.Name),
+				zap.Error(err),
+			)
+		} else {
+			// Environment exists but not activated
+			workspace.Status.ConnectedEnvironment = &workspacesv1.ConnectedEnvironmentInfo{
+				Name:            env.Name,
+				TargetNamespace: env.Spec.TargetNamespace,
+				Connected:       false,
+			}
+		}
+	} else {
+		// No environment reference, clear connected environment status
+		workspace.Status.ConnectedEnvironment = nil
 	}
 
 	if err := r.updateStatusPreservingPackages(ctx, workspace); err != nil {

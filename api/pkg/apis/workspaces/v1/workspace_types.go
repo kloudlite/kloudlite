@@ -189,6 +189,22 @@ type ResourceQuota struct {
 	GPUs int32 `json:"gpus,omitempty"`
 }
 
+// ConnectedEnvironmentInfo tracks the connected environment details
+type ConnectedEnvironmentInfo struct {
+	// Name of the connected environment
+	Name string `json:"name"`
+
+	// TargetNamespace where environment services are deployed
+	TargetNamespace string `json:"targetNamespace"`
+
+	// Connected indicates if the connection is active
+	Connected bool `json:"connected"`
+
+	// AvailableServices lists services available in the environment
+	// +optional
+	AvailableServices []string `json:"availableServices,omitempty"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	// Phase represents the current phase of the workspace
@@ -259,6 +275,10 @@ type WorkspaceStatus struct {
 	// ActiveConnections is the number of active network connections in the workspace
 	// +optional
 	ActiveConnections int `json:"activeConnections,omitempty"`
+
+	// ConnectedEnvironment tracks the connected environment details
+	// +optional
+	ConnectedEnvironment *ConnectedEnvironmentInfo `json:"connectedEnvironment,omitempty"`
 }
 
 // ResourceUsage tracks current resource consumption
@@ -283,6 +303,7 @@ type ResourceUsage struct {
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.spec.status`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.status.connectedEnvironment.name`
 // +kubebuilder:printcolumn:name="Connections",type=integer,JSONPath=`.status.activeConnections`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 

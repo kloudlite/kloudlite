@@ -5,8 +5,11 @@ import (
 	"os"
 	"testing"
 
+	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -16,6 +19,11 @@ func setupTestClient(t *testing.T, objects ...client.Object) *Client {
 	// Register workspace types
 	if err := workspacesv1.AddToScheme(scheme.Scheme); err != nil {
 		t.Fatalf("Failed to add workspace types to scheme: %v", err)
+	}
+
+	// Register environment types
+	if err := environmentsv1.AddToScheme(scheme.Scheme); err != nil {
+		t.Fatalf("Failed to add environment types to scheme: %v", err)
 	}
 
 	// Create fake client with objects
@@ -320,5 +328,121 @@ func TestClient_GetNamespaceName(t *testing.T) {
 	}
 	if client.Name != "custom-workspace" {
 		t.Errorf("Expected name 'custom-workspace', got %s", client.Name)
+	}
+}
+
+func TestClient_WorkspaceWithEnvironmentRef(t *testing.T) {
+	// Create test environment
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-environment",
+			Namespace: "test-namespace",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "env-test",
+			Activated:       true,
+		},
+	}
+
+	// Create workspace with environment reference
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacesv1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "user@example.com",
+			EnvironmentRef: &corev1.ObjectReference{
+				Name:      "test-environment",
+				Namespace: "test-namespace",
+			},
+		},
+	}
+
+	client := setupTestClient(t, workspace, environment)
+
+	// Test Get
+	result, err := client.Get(context.Background())
+	if err != nil {
+		t.Fatalf("Get failed: %v", err)
+	}
+
+	if result.Spec.EnvironmentRef == nil {
+		t.Fatal("Expected environment ref, got nil")
+	}
+	if result.Spec.EnvironmentRef.Name != "test-environment" {
+		t.Errorf("Expected environment ref 'test-environment', got %s", result.Spec.EnvironmentRef.Name)
+	}
+
+	// Verify environment exists and can be fetched
+	env := &environmentsv1.Environment{}
+	err = client.K8sClient.Get(context.Background(), types.NamespacedName{
+		Name:      result.Spec.EnvironmentRef.Name,
+		Namespace: "test-namespace",
+	}, env)
+	if err != nil {
+		t.Fatalf("Failed to get environment: %v", err)
+	}
+	if env.Spec.TargetNamespace != "env-test" {
+		t.Errorf("Expected target namespace 'env-test', got %s", env.Spec.TargetNamespace)
+	}
+}
+
+func TestClient_UpdateWorkspaceEnvironmentRef(t *testing.T) {
+	// Create test environment
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "production",
+			Namespace: "test-namespace",
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "env-production",
+			Activated:       true,
+		},
+	}
+
+	// Create workspace without environment reference
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacesv1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "user@example.com",
+		},
+	}
+
+	client := setupTestClient(t, workspace, environment)
+
+	// Get workspace
+	ws, err := client.Get(context.Background())
+	if err != nil {
+		t.Fatalf("Get failed: %v", err)
+	}
+
+	// Add environment reference
+	ws.Spec.EnvironmentRef = &corev1.ObjectReference{
+		Name:      "production",
+		Namespace: "test-namespace",
+	}
+
+	// Update workspace
+	err = client.Update(context.Background(), ws)
+	if err != nil {
+		t.Fatalf("Update failed: %v", err)
+	}
+
+	// Verify update
+	updated, err := client.Get(context.Background())
+	if err != nil {
+		t.Fatalf("Get after update failed: %v", err)
+	}
+	if updated.Spec.EnvironmentRef == nil {
+		t.Fatal("Expected environment ref after update, got nil")
+	}
+	if updated.Spec.EnvironmentRef.Name != "production" {
+		t.Errorf("Expected environment ref 'production', got %s", updated.Spec.EnvironmentRef.Name)
 	}
 }
