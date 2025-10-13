@@ -260,3 +260,28 @@ tasks:
       - task: workmachine:build
       - task: workmachine:import
       - echo "workmachine-node-manager image ready in k3s"
+
+  kl:build:
+    desc: Build kl binary for Linux
+    dir: ../api/cmd/kl
+    cmds:
+      - echo "Building kl binary for Linux..."
+      - mkdir -p ../../devenv/bin
+      - GOOS=linux GOARCH=amd64 go build -o ../../../devenv/bin/kl -ldflags="-s -w" .
+      - echo "✓ Binary built at devenv/bin/kl"
+
+  kl:install:
+    desc: Install kl binary to k3s host
+    cmds:
+      - echo "Copying kl binary to k3s container..."
+      - docker exec k3s-dev mkdir -p /kloudlite/bin
+      - docker cp ./bin/kl k3s-dev:/kloudlite/bin/kl
+      - docker exec k3s-dev chmod +x /kloudlite/bin/kl
+      - echo "✓ kl binary installed to k3s at /kloudlite/bin/kl"
+
+  kl:build-install:
+    desc: Build and install kl binary to k3s
+    cmds:
+      - task: kl:build
+      - task: kl:install
+      - echo "kl binary ready in k3s"
