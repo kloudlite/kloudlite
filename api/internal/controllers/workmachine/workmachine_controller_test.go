@@ -1,4 +1,4 @@
-package controllers
+package workmachine
 
 import (
 	"context"
@@ -1248,102 +1248,6 @@ func TestWorkMachineReconciler_EnsureSSHAuthorizedKeysConfigMap_UpdateExisting(t
 	authorizedKeys := configMap.Data["authorized_keys"]
 	assert.Contains(t, authorizedKeys, newKey)
 	assert.NotContains(t, authorizedKeys, oldKey)
-}
-
-func TestWorkMachineReconciler_EnsureSSHProxySecret_CreateNew(t *testing.T) {
-	scheme := runtime.NewScheme()
-	_ = machinesv1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-
-	workMachine := &machinesv1.WorkMachine{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-machine",
-		},
-		Spec: machinesv1.WorkMachineSpec{
-			TargetNamespace: "test-namespace",
-		},
-	}
-
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(workMachine).Build()
-
-	reconciler := &WorkMachineReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-	}
-
-	logger := ctrl.Log.WithName("test")
-	err := reconciler.ensureSSHProxySecret(context.Background(), workMachine, logger)
-	// Status update with fake client may fail - that's expected
-	if err != nil {
-		assert.Contains(t, err.Error(), "not found")
-	}
-
-	// Verify Secret was created (this should succeed even if status update fails)
-	secret := &corev1.Secret{}
-	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-proxy-key", Namespace: "test-namespace"}, secret)
-	assert.NoError(t, err)
-
-	// Verify Secret contains both private and public keys
-	assert.Contains(t, secret.Data, "private-key")
-	assert.Contains(t, secret.Data, "public-key")
-	assert.NotEmpty(t, secret.Data["private-key"])
-	assert.NotEmpty(t, secret.Data["public-key"])
-
-	// Verify public key starts with ssh-ed25519
-	publicKey := string(secret.Data["public-key"])
-	assert.True(t, len(publicKey) > 0)
-	assert.Contains(t, publicKey, "ssh-ed25519")
-}
-
-func TestWorkMachineReconciler_EnsureSSHProxySecret_ReuseExisting(t *testing.T) {
-	scheme := runtime.NewScheme()
-	_ = machinesv1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-
-	existingPrivateKey := []byte("-----BEGIN OPENSSH PRIVATE KEY-----\ntest-key\n-----END OPENSSH PRIVATE KEY-----")
-	existingPublicKey := []byte("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest test@example.com")
-
-	existingSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ssh-proxy-key",
-			Namespace: "test-namespace",
-		},
-		Data: map[string][]byte{
-			"private-key": existingPrivateKey,
-			"public-key":  existingPublicKey,
-		},
-	}
-
-	workMachine := &machinesv1.WorkMachine{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-machine",
-		},
-		Spec: machinesv1.WorkMachineSpec{
-			TargetNamespace: "test-namespace",
-		},
-	}
-
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret, workMachine).Build()
-
-	reconciler := &WorkMachineReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-	}
-
-	logger := ctrl.Log.WithName("test")
-	err := reconciler.ensureSSHProxySecret(context.Background(), workMachine, logger)
-	// Status update with fake client may fail - that's expected
-	if err != nil {
-		assert.Contains(t, err.Error(), "not found")
-	}
-
-	// Verify Secret was NOT regenerated
-	secret := &corev1.Secret{}
-	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-proxy-key", Namespace: "test-namespace"}, secret)
-	assert.NoError(t, err)
-
-	assert.Equal(t, existingPrivateKey, secret.Data["private-key"])
-	assert.Equal(t, existingPublicKey, secret.Data["public-key"])
 }
 
 func TestWorkMachineReconciler_EnsureSSHHostKeysSecret_CreateNew(t *testing.T) {
