@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	fzf "github.com/junegunn/fzf/src"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"

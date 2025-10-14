@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	interceptsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/intercepts/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fzf "github.com/junegunn/fzf/src"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"

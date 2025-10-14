@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/intercepts/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
