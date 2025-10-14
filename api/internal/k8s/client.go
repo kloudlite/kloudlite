@@ -7,7 +7,9 @@ import (
 	"path/filepath"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/intercepts/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,6 +89,12 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 	if err := workspacesv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add workspaces scheme: %w", err)
+	}
+	if err := packagesv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add packages scheme: %w", err)
+	}
+	if err := interceptsv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add intercepts scheme: %w", err)
 	}
 
 	// Create controller-runtime client

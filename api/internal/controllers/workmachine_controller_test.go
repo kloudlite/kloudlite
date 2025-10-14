@@ -1010,7 +1010,7 @@ func TestWorkMachineReconciler_EnsureSSHDConfigMap_CreateNew(t *testing.T) {
 	assert.Contains(t, sshdConfig, "Port 2222")
 	assert.Contains(t, sshdConfig, "LogLevel VERBOSE")
 	assert.Contains(t, sshdConfig, "MaxAuthTries 3")
-	assert.Contains(t, sshdConfig, "StrictModes yes")
+	assert.Contains(t, sshdConfig, "StrictModes no") // No for containerized SSH (permissions can be complex)
 }
 
 func TestWorkMachineReconciler_EnsureSSHDConfigMap_UpdateExisting(t *testing.T) {
@@ -1475,7 +1475,7 @@ func TestWorkMachineReconciler_EnsureWorkspaceSSHDConfigMap_UpdateExisting(t *te
 			Namespace: "test-namespace",
 		},
 		Data: map[string]string{
-			"99-kl-authorized-keys.conf": "Old config\nStrictModes yes\n",
+			"99-kl-authorized-keys.conf": "Old config\nStrictModes no\n",
 		},
 	}
 

@@ -81,12 +81,19 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
+	serviceInterceptHandlers := handlers.NewServiceInterceptHandlers(
+		servicesManager.RepositoryManager.K8sClient,
+		logger,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
 	userWebhook := webhooks.NewUserWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	environmentWebhook := webhooks.NewEnvironmentWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, nil)
 	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	serviceInterceptWebhook := webhooks.NewServiceInterceptWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	// workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, nil) // TODO: fix webhook implementation
 
 	// JWT middleware
@@ -253,6 +260,18 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				services.GET("", serviceHandlers.ListServices)
 			}
 
+			// ServiceIntercept routes (namespaced)
+			serviceIntercepts := protected.Group("/namespaces/:namespace/service-intercepts")
+			{
+				serviceIntercepts.POST("", serviceInterceptHandlers.CreateServiceIntercept)
+				serviceIntercepts.GET("/:name", serviceInterceptHandlers.GetServiceIntercept)
+				serviceIntercepts.PUT("/:name", serviceInterceptHandlers.UpdateServiceIntercept)
+				serviceIntercepts.DELETE("/:name", serviceInterceptHandlers.DeleteServiceIntercept)
+				serviceIntercepts.GET("", serviceInterceptHandlers.ListServiceIntercepts)
+				serviceIntercepts.POST("/:name/activate", serviceInterceptHandlers.ActivateServiceIntercept)
+				serviceIntercepts.POST("/:name/deactivate", serviceInterceptHandlers.DeactivateServiceIntercept)
+			}
+
 			// OAuth Provider routes (protected - for admin management)
 			oauthProviders := protected.Group("/oauth-providers")
 			{
@@ -271,6 +290,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/mutate/environments", environmentWebhook.MutateEnvironment)
 		webhooksGroup.POST("/validate/configmaps", envVarWebhook.ValidateConfigMap)
 		webhooksGroup.POST("/validate/secrets", envVarWebhook.ValidateSecret)
+		webhooksGroup.POST("/validate/serviceintercepts", serviceInterceptWebhook.ValidateServiceIntercept)
+		webhooksGroup.POST("/mutate/serviceintercepts", serviceInterceptWebhook.MutateServiceIntercept)
+		webhooksGroup.POST("/mutate/services", serviceMutationWebhook.MutateService)
+		webhooksGroup.POST("/mutate/pods", podMutationWebhook.MutatePod)
 		// webhooksGroup.POST("/validate/workspaces", workspaceWebhook.ValidateWorkspace) // TODO: fix webhook implementation
 		// webhooksGroup.POST("/mutate/workspaces", workspaceWebhook.MutateWorkspace) // TODO: fix webhook implementation
 	}

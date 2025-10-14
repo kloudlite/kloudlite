@@ -1082,22 +1082,22 @@ func TestWorkspaceReconciler_CreateWorkspacePod_WithEnvironmentRef(t *testing.T)
 
 	script := initContainer.Command[2]
 	assert.Contains(t, script, "env-sample.svc.cluster.local", "DNS config should include environment namespace")
-	assert.Contains(t, script, "cat > /etc-writable-resolv/resolv.conf", "should create resolv.conf")
+	assert.Contains(t, script, "cat > /etc/resolv.conf", "should create resolv.conf")
 	assert.Contains(t, script, "nameserver 10.43.0.10", "should include nameserver")
 	assert.Contains(t, script, "search env-sample.svc.cluster.local svc.cluster.local cluster.local", "should include search domains with environment first")
 
-	// Verify init container has resolv volume mount
-	var resolvMount *corev1.VolumeMount
+	// Verify init container has etc-dir volume mount (shared emptyDir)
+	var etcDirMount *corev1.VolumeMount
 	for i := range initContainer.VolumeMounts {
-		if initContainer.VolumeMounts[i].Name == "etc-resolv" {
-			resolvMount = &initContainer.VolumeMounts[i]
+		if initContainer.VolumeMounts[i].Name == "etc-dir" {
+			etcDirMount = &initContainer.VolumeMounts[i]
 			break
 		}
 	}
-	assert.NotNil(t, resolvMount, "init container should have etc-resolv mount")
-	assert.Equal(t, "/etc-writable-resolv", resolvMount.MountPath)
+	assert.NotNil(t, etcDirMount, "init container should have etc-dir mount")
+	assert.Equal(t, "/etc", etcDirMount.MountPath)
 
-	// Verify main container has resolv.conf mounted
+	// Verify main container has resolv.conf mounted from etc-dir (shared emptyDir)
 	var workspaceContainer *corev1.Container
 	for i := range pod.Spec.Containers {
 		if pod.Spec.Containers[i].Name == "workspace" {
@@ -1115,7 +1115,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_WithEnvironmentRef(t *testing.T)
 		}
 	}
 	assert.NotNil(t, containerResolvMount, "workspace container should have resolv.conf mount")
-	assert.Equal(t, "etc-resolv", containerResolvMount.Name)
+	assert.Equal(t, "etc-dir", containerResolvMount.Name)
 	assert.Equal(t, "resolv.conf", containerResolvMount.SubPath)
 	assert.False(t, containerResolvMount.ReadOnly, "resolv.conf should be writable")
 }
@@ -1165,7 +1165,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_WithoutEnvironmentRef(t *testing
 	// Verify init container command uses default DNS configuration (no environment namespace)
 	script := initContainer.Command[2]
 	assert.NotContains(t, script, "env-", "DNS config should not include environment namespace")
-	assert.Contains(t, script, "cat > /etc-writable-resolv/resolv.conf", "should create resolv.conf")
+	assert.Contains(t, script, "cat > /etc/resolv.conf", "should create resolv.conf")
 	assert.Contains(t, script, "search svc.cluster.local cluster.local", "should include default search domains")
 	assert.NotContains(t, script, "env-sample.svc.cluster.local", "should not include any environment namespace")
 }
