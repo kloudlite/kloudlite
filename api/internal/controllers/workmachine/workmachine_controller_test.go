@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/workspacesv1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -232,7 +232,7 @@ func TestWorkMachineReconciler_HandleDeletion_WithActiveWorkspaces(t *testing.T)
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
@@ -251,12 +251,12 @@ func TestWorkMachineReconciler_HandleDeletion_WithActiveWorkspaces(t *testing.T)
 	}
 
 	// Create an active workspace in the target namespace
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "active-workspace",
 			Namespace: "wm-test-user",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 		},
 	}
@@ -285,7 +285,7 @@ func TestWorkMachineReconciler_HandleDeletion_NoActiveWorkspaces(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
@@ -331,7 +331,7 @@ func TestWorkMachineReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
@@ -731,7 +731,7 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_New
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
@@ -752,12 +752,12 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_New
 		},
 	}
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "active-workspace",
 			Namespace: "wm-test-user",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Active Workspace",
 		},
 	}
@@ -783,7 +783,7 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_Exi
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
@@ -812,12 +812,12 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_BlockedByWorkspaces_Exi
 		},
 	}
 
-	workspace := &workspacesv1.Workspace{
+	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "active-workspace",
 			Namespace: "wm-test-user",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
+		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Active Workspace",
 		},
 	}
@@ -843,7 +843,7 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceBeingDeleted_W
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
@@ -891,7 +891,7 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceBeingDeleted_N
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
@@ -936,7 +936,7 @@ func TestWorkMachineReconciler_HandleWorkMachineDeletion_NamespaceNeedsDeletion(
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 
