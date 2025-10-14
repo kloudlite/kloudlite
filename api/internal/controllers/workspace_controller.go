@@ -147,6 +147,75 @@ func (r *WorkspaceReconciler) execInPod(ctx context.Context, pod *corev1.Pod, co
 	return stdout.String(), nil
 }
 
+// reconcileEnvironmentConnection dynamically updates DNS configuration in running pods
+// when the workspace's environment connection changes
+func (r *WorkspaceReconciler) reconcileEnvironmentConnection(ctx context.Context, workspace *workspacesv1.Workspace, pod *corev1.Pod, logger *zap.Logger) error {
+	// Only reconcile if pod is running
+	if pod.Status.Phase != corev1.PodRunning {
+		return nil
+	}
+
+	// Determine desired state from spec
+	var desiredEnvName, desiredTargetNs string
+	var shouldBeConnected bool
+
+	if workspace.Spec.EnvironmentRef != nil {
+		// Fetch environment to get target namespace
+		env := &environmentsv1.Environment{}
+		err := r.Get(ctx, client.ObjectKey{
+			Name:      workspace.Spec.EnvironmentRef.Name,
+			Namespace: workspace.Namespace,
+		}, env)
+		if err == nil && env.Spec.Activated {
+			desiredEnvName = env.Name
+			desiredTargetNs = env.Spec.TargetNamespace
+			shouldBeConnected = true
+		} else if err != nil {
+			logger.Warn("Failed to fetch environment",
+				zap.String("environment", workspace.Spec.EnvironmentRef.Name),
+				zap.Error(err),
+			)
+		}
+	}
+
+	// Determine current state from status
+	currentConnected := workspace.Status.ConnectedEnvironment != nil &&
+		workspace.Status.ConnectedEnvironment.Connected
+
+	// Always update DNS configuration to ensure it's correct
+	// This is idempotent and ensures DNS is correct even if status was updated but file wasn't
+	if shouldBeConnected {
+		logger.Info("Updating DNS configuration for environment connection",
+			zap.String("environment", desiredEnvName),
+			zap.String("targetNamespace", desiredTargetNs),
+		)
+	} else if workspace.Spec.EnvironmentRef == nil && currentConnected {
+		logger.Info("Resetting DNS configuration: no environment connection")
+	}
+
+	// Build search domains
+	searchDomains := "svc.cluster.local cluster.local"
+	if shouldBeConnected && desiredTargetNs != "" {
+		searchDomains = fmt.Sprintf("%s.svc.cluster.local svc.cluster.local cluster.local", desiredTargetNs)
+	}
+
+	// Update /etc/resolv.conf using execInPod
+	command := []string{"sh", "-c", fmt.Sprintf("cat > /etc/resolv.conf << 'EOF'\nnameserver 10.43.0.10\nsearch %s\noptions ndots:5\nEOF", searchDomains)}
+
+	_, err := r.execInPod(ctx, pod, "workspace", command)
+	if err != nil {
+		logger.Warn("Failed to update DNS configuration", zap.Error(err))
+		return err
+	}
+
+	logger.Info("Successfully updated DNS configuration",
+		zap.String("searchDomains", searchDomains),
+		zap.Bool("connected", shouldBeConnected),
+	)
+
+	return nil
+}
+
 // isWorkspaceIdle checks if a workspace has been idle by checking for active connections
 // A workspace is considered idle ONLY if there are no active connections (SSH, ttyd, vscode, code-server)
 // Returns: isIdle bool, connectionCount int, error
@@ -574,9 +643,111 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
 
 	if err == nil {
-		// Pod exists, update workspace status
+		// Pod exists, check its actual status
 		logger.Info("Workspace pod already exists", zap.String("pod", podName))
-		return r.updateWorkspaceStatus(ctx, workspace, pod, "Running", "Workspace is running", logger)
+
+		// Reconcile environment connection for running pods (happens on every reconciliation)
+		if pod.Status.Phase == corev1.PodRunning {
+			if err := r.reconcileEnvironmentConnection(ctx, workspace, pod, logger); err != nil {
+				logger.Warn("Failed to reconcile environment connection", zap.Error(err))
+				// Don't fail reconciliation on DNS update errors
+			}
+		}
+
+		// Determine actual phase based on pod status
+		var phase, message string
+		switch pod.Status.Phase {
+		case corev1.PodPending:
+			// Check if it's stuck due to mount failures or other issues
+			for _, condition := range pod.Status.Conditions {
+				if condition.Type == corev1.PodScheduled && condition.Status == corev1.ConditionFalse {
+					phase = "Failed"
+					message = fmt.Sprintf("Pod scheduling failed: %s", condition.Message)
+					logger.Warn("Workspace pod scheduling failed", zap.String("reason", condition.Reason), zap.String("message", condition.Message))
+					return r.updateWorkspaceStatus(ctx, workspace, pod, phase, message, logger)
+				}
+			}
+
+			// Check for container status errors
+			for _, containerStatus := range pod.Status.ContainerStatuses {
+				if containerStatus.State.Waiting != nil && containerStatus.State.Waiting.Reason == "CrashLoopBackOff" {
+					phase = "Failed"
+					message = fmt.Sprintf("Container %s is crash looping: %s", containerStatus.Name, containerStatus.State.Waiting.Message)
+					logger.Warn("Workspace container crash looping", zap.String("container", containerStatus.Name))
+					return r.updateWorkspaceStatus(ctx, workspace, pod, phase, message, logger)
+				}
+			}
+
+			// Check init container status
+			for _, initStatus := range pod.Status.InitContainerStatuses {
+				if initStatus.State.Waiting != nil {
+					phase = "Creating"
+					message = fmt.Sprintf("Initializing: %s - %s", initStatus.State.Waiting.Reason, initStatus.State.Waiting.Message)
+					logger.Info("Workspace pod initializing", zap.String("reason", initStatus.State.Waiting.Reason))
+					return r.updateWorkspaceStatus(ctx, workspace, pod, phase, message, logger)
+				}
+				if initStatus.State.Terminated != nil && initStatus.State.Terminated.ExitCode != 0 {
+					phase = "Failed"
+					message = fmt.Sprintf("Init container failed: %s", initStatus.State.Terminated.Reason)
+					logger.Error("Workspace init container failed", zap.String("reason", initStatus.State.Terminated.Reason))
+					return r.updateWorkspaceStatus(ctx, workspace, pod, phase, message, logger)
+				}
+			}
+
+			phase = "Creating"
+			message = "Workspace pod is starting"
+
+		case corev1.PodRunning:
+			// Check if all containers are ready
+			allReady := true
+			for _, containerStatus := range pod.Status.ContainerStatuses {
+				if !containerStatus.Ready {
+					allReady = false
+					if containerStatus.State.Waiting != nil {
+						message = fmt.Sprintf("Container %s not ready: %s", containerStatus.Name, containerStatus.State.Waiting.Reason)
+					} else {
+						message = fmt.Sprintf("Container %s not ready", containerStatus.Name)
+					}
+					break
+				}
+			}
+
+			if allReady {
+				phase = "Running"
+				message = "Workspace is running"
+
+				// Reconcile environment connection (update DNS if needed)
+				if err := r.reconcileEnvironmentConnection(ctx, workspace, pod, logger); err != nil {
+					logger.Warn("Failed to reconcile environment connection", zap.Error(err))
+					// Don't fail reconciliation on DNS update errors
+				}
+			} else {
+				phase = "Creating"
+				if message == "" {
+					message = "Workspace containers are starting"
+				}
+			}
+
+		case corev1.PodSucceeded:
+			phase = "Stopped"
+			message = "Workspace pod has completed"
+
+		case corev1.PodFailed:
+			phase = "Failed"
+			message = fmt.Sprintf("Workspace pod failed: %s", pod.Status.Reason)
+			logger.Error("Workspace pod failed", zap.String("reason", pod.Status.Reason), zap.String("message", pod.Status.Message))
+
+		case corev1.PodUnknown:
+			phase = "Failed"
+			message = "Workspace pod status unknown"
+			logger.Warn("Workspace pod status unknown")
+
+		default:
+			phase = "Pending"
+			message = fmt.Sprintf("Pod in unexpected phase: %s", pod.Status.Phase)
+		}
+
+		return r.updateWorkspaceStatus(ctx, workspace, pod, phase, message, logger)
 	}
 
 	if !apierrors.IsNotFound(err) {
@@ -725,9 +896,10 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacesv1.Workspa
 
 	// Set PATH for container environment (kubectl exec, running services, etc.)
 	// This is also set in /etc/environment for SSH sessions via PAM
+	// Include /kloudlite/bin for kl CLI and other kloudlite tools
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "PATH",
-		Value: fmt.Sprintf("/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
+		Value: fmt.Sprintf("/kloudlite/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
 	})
 
 	// Add startup script from settings if provided
@@ -785,8 +957,9 @@ chown -R 1001:1001 /home/kl/workspaces
 # Create /etc/environment with PATH and Kubernetes service env vars for PAM
 # This will be read by PAM on SSH login (both interactive and non-interactive)
 # The Kubernetes env vars are needed for kl binary to work with in-cluster config
+# Include /kloudlite/bin for kl CLI and other kloudlite tools
 cat > /etc-writable/environment << 'EOF'
-PATH=/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/kloudlite/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 KUBERNETES_SERVICE_HOST=10.43.0.1
 KUBERNETES_SERVICE_PORT=443
 WORKSPACE_NAME=%s
@@ -794,15 +967,14 @@ WORKSPACE_NAMESPACE=%s
 EOF
 chmod 644 /etc-writable/environment
 
-# Create /etc/resolv.conf with DNS configuration
+# Create initial /etc/resolv.conf with DNS configuration
+# This is written to the shared /etc directory (emptyDir volume)
 # If workspace is connected to an environment, include that namespace in search domains
-cat > /etc-writable-resolv/resolv.conf << 'EOFR'
+cat > /etc/resolv.conf << 'EOFR'
 nameserver 10.43.0.10
 search %s
 options ndots:5
 EOFR
-chown 1001:1001 /etc-writable-resolv/resolv.conf
-chmod 666 /etc-writable-resolv/resolv.conf
 `, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, searchDomains)
 						}(),
 					},
@@ -816,8 +988,8 @@ chmod 666 /etc-writable-resolv/resolv.conf
 							MountPath: "/etc-writable",
 						},
 						{
-							Name:      "etc-resolv",
-							MountPath: "/etc-writable-resolv",
+							Name:      "etc-dir",
+							MountPath: "/etc",
 						},
 					},
 				},
@@ -915,15 +1087,14 @@ chmod 666 /etc-writable-resolv/resolv.conf
 							ReadOnly:  true,
 						},
 						{
-							Name:      "etc-resolv",
+							Name:      "etc-dir",
 							MountPath: "/etc/resolv.conf",
 							SubPath:   "resolv.conf",
 							ReadOnly:  false,
 						},
 						{
 							Name:      "kloudlite-bin",
-							MountPath: "/usr/local/bin/kl",
-							SubPath:   "kl",
+							MountPath: "/kloudlite/bin",
 							ReadOnly:  true,
 						},
 					},
@@ -1020,15 +1191,9 @@ chmod 666 /etc-writable-resolv/resolv.conf
 					},
 				},
 				{
-					Name: "etc-resolv",
+					Name: "etc-dir",
 					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/kloudlite/etc-resolv",
-							Type: func() *corev1.HostPathType {
-								t := corev1.HostPathDirectoryOrCreate
-								return &t
-							}(),
-						},
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
 					},
 				},
 				{
@@ -1036,7 +1201,7 @@ chmod 666 /etc-writable-resolv/resolv.conf
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
 							Path: "/kloudlite/bin",
-							Type: func() *corev1.HostPathType {
+							Type: func() *corev1.HostPathType{
 								t := corev1.HostPathDirectory
 								return &t
 							}(),
@@ -1049,12 +1214,14 @@ chmod 666 /etc-writable-resolv/resolv.conf
 	}
 
 	// Disable Kubernetes DNS management completely
-	// DNS will be managed manually via /etc/resolv.conf mounted from hostPath
-	// by kl env commands. We provide minimal DNSConfig (required by K8s when dnsPolicy=None),
-	// but since /etc/resolv.conf is mounted from hostPath, this config won't be used.
+	// DNS will be managed manually:
+	// - Init container creates initial /etc/resolv.conf on emptyDir volume
+	// - Controller updates /etc/resolv.conf via exec when environment connection changes
+	// We provide minimal DNSConfig (required by K8s when dnsPolicy=None),
+	// but /etc/resolv.conf is managed separately.
 	pod.Spec.DNSPolicy = corev1.DNSNone
 	pod.Spec.DNSConfig = &corev1.PodDNSConfig{
-		Nameservers: []string{"10.43.0.10"}, // Required but will be overridden by mounted resolv.conf
+		Nameservers: []string{"10.43.0.10"}, // Required but not used (managed via exec)
 	}
 
 	// Set owner reference

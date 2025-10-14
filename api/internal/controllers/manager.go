@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/helmchart"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/intercepts/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
@@ -38,6 +39,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacesv1.AddToScheme(scheme))
 	utilruntime.Must(packagesv1.AddToScheme(scheme))
+	utilruntime.Must(interceptsv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
 	// Set controller-runtime logger
@@ -132,6 +134,17 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 
 	if err = helmChartReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create HelmChart controller: %w", err)
+	}
+
+	// Setup ServiceIntercept controller
+	serviceInterceptReconciler := &ServiceInterceptReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "serviceintercept")),
+	}
+
+	if err = serviceInterceptReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create ServiceIntercept controller: %w", err)
 	}
 
 	logger.Info("Controllers initialized successfully")

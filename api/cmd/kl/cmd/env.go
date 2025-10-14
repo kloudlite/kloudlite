@@ -5,11 +5,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
-	"github.com/ktr0731/go-fuzzyfinder"
+	fzf "github.com/junegunn/fzf/src"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -128,41 +128,12 @@ func handleEnvConnectInteractive() error {
 		return fmt.Errorf("no environments found")
 	}
 
-	// Use fuzzyfinder to select environment
-	idx, err := fuzzyfinder.Find(
-		envList.Items,
-		func(i int) string {
-			env := envList.Items[i]
-			status := "inactive"
-			if env.Spec.Activated {
-				status = "active"
-			}
-			return fmt.Sprintf("%s (%s) - %s", env.Name, status, env.Spec.TargetNamespace)
-		},
-		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
-			if i == -1 {
-				return ""
-			}
-			env := envList.Items[i]
-			preview := fmt.Sprintf("Name: %s\n", env.Name)
-			preview += fmt.Sprintf("Target Namespace: %s\n", env.Spec.TargetNamespace)
-			preview += fmt.Sprintf("Activated: %t\n", env.Spec.Activated)
-			preview += fmt.Sprintf("Created By: %s\n", env.Spec.CreatedBy)
-			if env.Status.State != "" {
-				preview += fmt.Sprintf("State: %s\n", env.Status.State)
-			}
-			if env.Status.Message != "" {
-				preview += fmt.Sprintf("Message: %s\n", env.Status.Message)
-			}
-			return preview
-		}),
-	)
-
+	// Use native fzf for better control over layout
+	selectedEnv, err := selectEnvironmentWithFzf(envList.Items)
 	if err != nil {
-		return fmt.Errorf("environment selection cancelled")
+		return err
 	}
 
-	selectedEnv := envList.Items[idx]
 	return handleEnvConnect(selectedEnv.Name)
 }
 
@@ -191,9 +162,21 @@ func handleEnvConnect(environmentName string) error {
 		return fmt.Errorf("environment '%s' has no target namespace configured", environmentName)
 	}
 
-	// Update /etc/resolv.conf with the new search domain
-	if err := updateResolvConf(targetNamespace, true); err != nil {
-		return fmt.Errorf("failed to update DNS configuration: %w", err)
+	// Get the current workspace
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get workspace: %w", err)
+	}
+
+	// Update workspace spec with environment reference
+	workspace.Spec.EnvironmentRef = &corev1.ObjectReference{
+		Name:      environmentName,
+		Namespace: WsClient.Namespace,
+	}
+
+	// Update the workspace spec
+	if err := WsClient.Update(ctx, workspace); err != nil {
+		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
 	fmt.Printf("[✓] Connected to environment '%s'\n", environmentName)
@@ -207,34 +190,47 @@ func handleEnvConnect(environmentName string) error {
 }
 
 func handleEnvDisconnect() error {
-	// Remove environment search domains from /etc/resolv.conf
-	if err := updateResolvConf("", false); err != nil {
-		return fmt.Errorf("failed to update DNS configuration: %w", err)
+	if err := InitClient(); err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+
+	// Get the current workspace
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get workspace: %w", err)
+	}
+
+	// Clear the environment reference
+	workspace.Spec.EnvironmentRef = nil
+
+	// Update the workspace spec
+	if err := WsClient.Update(ctx, workspace); err != nil {
+		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
 	fmt.Println("[✓] Disconnected from environment")
-	fmt.Println("Environment search domains removed from DNS configuration")
+	fmt.Println("DNS configuration will be updated by the controller")
 
 	return nil
 }
 
 func handleEnvStatus() error {
-	// Read current DNS configuration from /etc/resolv.conf
-	searchDomains, err := getSearchDomainsFromResolvConf()
+	if err := InitClient(); err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+
+	// Get the current workspace
+	workspace, err := WsClient.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to read DNS configuration: %w", err)
+		return fmt.Errorf("failed to get workspace: %w", err)
 	}
 
-	// Find environment-specific search domains
-	var envDomains []string
-	for _, domain := range searchDomains {
-		// Check if it's an environment namespace (e.g., env-xxx.svc.cluster.local)
-		if strings.HasPrefix(domain, "env-") && strings.Contains(domain, ".svc.cluster.local") {
-			envDomains = append(envDomains, domain)
-		}
-	}
-
-	if len(envDomains) == 0 {
+	// Check if workspace has a connected environment
+	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
 		fmt.Println("Status: Not connected to any environment")
 		fmt.Println()
 		fmt.Println("To connect to an environment, run:")
@@ -243,16 +239,10 @@ func handleEnvStatus() error {
 	}
 
 	fmt.Println("[✓] Connected to environment")
+	fmt.Printf("Environment: %s\n", workspace.Status.ConnectedEnvironment.Name)
+	fmt.Printf("Target Namespace: %s\n", workspace.Status.ConnectedEnvironment.TargetNamespace)
 	fmt.Println()
-	fmt.Println("Active search domains:")
-	for _, domain := range envDomains {
-		fmt.Printf("  - %s\n", domain)
-		// Extract namespace from domain (e.g., env-sample from env-sample.svc.cluster.local)
-		parts := strings.Split(domain, ".")
-		if len(parts) > 0 {
-			fmt.Printf("    → Services in '%s' can be accessed using short names\n", parts[0])
-		}
-	}
+	fmt.Printf("Services in '%s' can be accessed using short names\n", workspace.Status.ConnectedEnvironment.TargetNamespace)
 	fmt.Println()
 	fmt.Println("Example:")
 	fmt.Println("  curl http://api-server:8080")
@@ -260,119 +250,88 @@ func handleEnvStatus() error {
 	return nil
 }
 
-// updateResolvConf modifies /etc/resolv.conf to add or remove environment search domains
-func updateResolvConf(targetNamespace string, add bool) error {
-	resolvConfPath := "/etc/resolv.conf"
+func selectEnvironmentWithFzf(envs []environmentsv1.Environment) (*environmentsv1.Environment, error) {
+	// Create input for fzf
+	envMap := make(map[string]*environmentsv1.Environment)
+	var items []string
 
-	// Read current resolv.conf
-	file, err := os.Open(resolvConfPath)
+	for i := range envs {
+		env := &envs[i]
+		status := "inactive"
+		if env.Spec.Activated {
+			status = "active"
+		}
+		line := fmt.Sprintf("%s (%s) - %s", env.Name, status, env.Spec.TargetNamespace)
+		items = append(items, line)
+		envMap[line] = env
+	}
+
+	// Create temporary file for input
+	tmpfile, err := os.CreateTemp("", "fzf-env-*.txt")
 	if err != nil {
-		return fmt.Errorf("failed to open %s: %w", resolvConfPath, err)
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer file.Close()
+	defer os.Remove(tmpfile.Name())
 
-	var lines []string
-	var searchLine string
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "search ") {
-			searchLine = line
-		} else {
-			lines = append(lines, line)
-		}
+	// Write items to temp file
+	writer := bufio.NewWriter(tmpfile)
+	for _, item := range items {
+		fmt.Fprintln(writer, item)
 	}
+	writer.Flush()
+	tmpfile.Close()
 
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to read %s: %w", resolvConfPath, err)
-	}
-
-	// Parse existing search domains
-	var searchDomains []string
-	if searchLine != "" {
-		parts := strings.Fields(searchLine)
-		if len(parts) > 1 {
-			searchDomains = parts[1:] // Skip "search" keyword
-		}
-	}
-
-	// Remove any existing environment search domains
-	var filteredDomains []string
-	for _, domain := range searchDomains {
-		// Keep non-environment domains
-		if !strings.HasPrefix(domain, "env-") || !strings.Contains(domain, ".svc.cluster.local") {
-			filteredDomains = append(filteredDomains, domain)
-		}
-	}
-
-	// Add new environment domain if requested
-	if add && targetNamespace != "" {
-		newDomain := fmt.Sprintf("%s.svc.cluster.local", targetNamespace)
-		// Add at the beginning for priority
-		filteredDomains = append([]string{newDomain}, filteredDomains...)
-	}
-
-	// Build new search line
-	if len(filteredDomains) > 0 {
-		searchLine = "search " + strings.Join(filteredDomains, " ")
-	} else {
-		searchLine = ""
-	}
-
-	// Write updated resolv.conf directly (can't use temp file + rename for mounted files)
-	// Open with O_WRONLY|O_TRUNC to truncate and write
-	f, err := os.OpenFile(resolvConfPath, os.O_WRONLY|os.O_TRUNC, 0666)
+	// Open temp file for reading
+	inputFile, err := os.Open(tmpfile.Name())
 	if err != nil {
-		return fmt.Errorf("failed to open %s for writing: %w", resolvConfPath, err)
+		return nil, fmt.Errorf("failed to open temp file: %w", err)
 	}
-	defer f.Close()
+	defer inputFile.Close()
 
-	writer := bufio.NewWriter(f)
-
-	// Write search line first
-	if searchLine != "" {
-		if _, err := writer.WriteString(searchLine + "\n"); err != nil {
-			return fmt.Errorf("failed to write search line: %w", err)
+	// Save original stdin and replace it temporarily
+	oldStdin := os.Stdin
+	os.Stdin = inputFile
+	defer func() {
+		os.Stdin = oldStdin
+		// Recover from any panics in fzf
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "Error in fzf: %v\n", r)
 		}
+	}()
+
+	// Parse fzf options with embedded fzf
+	opts, err := fzf.ParseOptions(true, []string{
+		"--height=40%",
+		"--layout=reverse",
+		"--border",
+		"--prompt=Select environment: ",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse fzf options: %w", err)
 	}
 
-	// Write other lines
-	for _, line := range lines {
-		if _, err := writer.WriteString(line + "\n"); err != nil {
-			return fmt.Errorf("failed to write line: %w", err)
-		}
+	// Printer function to capture output
+	var selected string
+	opts.Printer = func(s string) {
+		selected = s
 	}
 
-	if err := writer.Flush(); err != nil {
-		return fmt.Errorf("failed to flush writer: %w", err)
+	// Run fzf
+	exitCode, err := fzf.Run(opts)
+
+	if exitCode != fzf.ExitOk || err != nil {
+		return nil, fmt.Errorf("environment selection cancelled")
 	}
 
-	return nil
+	if selected == "" {
+		return nil, fmt.Errorf("no environment selected")
+	}
+
+	env, ok := envMap[selected]
+	if !ok {
+		return nil, fmt.Errorf("invalid environment selected")
+	}
+
+	return env, nil
 }
 
-// getSearchDomainsFromResolvConf reads search domains from /etc/resolv.conf
-func getSearchDomainsFromResolvConf() ([]string, error) {
-	file, err := os.Open("/etc/resolv.conf")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open /etc/resolv.conf: %w", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "search ") {
-			parts := strings.Fields(line)
-			if len(parts) > 1 {
-				return parts[1:], nil // Return domains, skipping "search" keyword
-			}
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to read /etc/resolv.conf: %w", err)
-	}
-
-	return []string{}, nil
-}
