@@ -4,13 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/helmchart"
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/intercepts/v1"
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
-	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
-	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/user"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/workspace"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -37,8 +42,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	utilruntime.Must(platformv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(machinesv1.AddToScheme(scheme))
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
-	utilruntime.Must(workspacesv1.AddToScheme(scheme))
-	utilruntime.Must(packagesv1.AddToScheme(scheme))
+	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(interceptsv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
@@ -65,7 +69,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	// Health checks disabled to avoid port conflicts
 
 	// Setup User controller
-	userReconciler := &UserReconciler{
+	userReconciler := &user.UserReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Logger: logger.With(zap.String("controller", "user")),
@@ -76,7 +80,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	}
 
 	// Setup Environment controller
-	environmentReconciler := &EnvironmentReconciler{
+	environmentReconciler := &environment.EnvironmentReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Logger: logger.With(zap.String("controller", "environment")),
@@ -87,7 +91,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	}
 
 	// Setup WorkMachine controller
-	workMachineReconciler := &WorkMachineReconciler{
+	workMachineReconciler := &workmachine.WorkMachineReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}
@@ -97,7 +101,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	}
 
 	// Setup Composition controller
-	compositionReconciler := &CompositionReconciler{
+	compositionReconciler := &composition.CompositionReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Logger: logger.With(zap.String("controller", "composition")),
@@ -113,7 +117,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 		return nil, fmt.Errorf("unable to create kubernetes clientset: %w", err)
 	}
 
-	workspaceReconciler := &WorkspaceReconciler{
+	workspaceReconciler := &workspace.WorkspaceReconciler{
 		Client:    mgr.GetClient(),
 		Scheme:    mgr.GetScheme(),
 		Logger:    logger.With(zap.String("controller", "workspace")),
@@ -137,7 +141,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	}
 
 	// Setup ServiceIntercept controller
-	serviceInterceptReconciler := &ServiceInterceptReconciler{
+	serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Logger: logger.With(zap.String("controller", "serviceintercept")),

@@ -9,7 +9,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/cmd/kl/pkg/devbox"
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/spf13/cobra"
 )
 

@@ -7,8 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	zap2 "go.uber.org/zap"
@@ -84,13 +83,12 @@ func (m *MockFileSystem) Rename(oldpath, newpath string) error {
 func setupTestReconciler(t *testing.T, initObjs ...runtime.Object) *PackageManagerReconciler {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = packagesv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithRuntimeObjects(initObjs...).
-		WithStatusSubresource(&packagesv1.PackageRequest{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -126,22 +124,22 @@ func TestPackageManagerReconciler_Reconcile_NotFound(t *testing.T) {
 }
 
 func TestPackageManagerReconciler_Reconcile_AlreadyReady(t *testing.T) {
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase:   "Ready",
 			Message: "Already installed",
-			InstalledPackages: []workspacesv1.InstalledPackage{
+			InstalledPackages: []workspacev1.InstalledPackage{
 				{Name: "git", StorePath: "/nix/store/xyz-git", BinPath: "/nix/profiles/test-profile/bin"},
 			},
 		},
@@ -161,26 +159,26 @@ func TestPackageManagerReconciler_Reconcile_AlreadyReady(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify status unchanged
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
 }
 
 func TestPackageManagerReconciler_Reconcile_AlreadyFailed(t *testing.T) {
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "invalid-package"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase:   "Failed",
 			Message: "Installation failed",
 		},
@@ -201,19 +199,19 @@ func TestPackageManagerReconciler_Reconcile_AlreadyFailed(t *testing.T) {
 }
 
 func TestPackageManagerReconciler_Reconcile_UpdateToInstalling(t *testing.T) {
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "curl"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -232,7 +230,7 @@ func TestPackageManagerReconciler_Reconcile_UpdateToInstalling(t *testing.T) {
 	_, err := reconciler.Reconcile(context.Background(), req)
 
 	// Get updated status
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	getErr := reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, getErr)
 
@@ -245,21 +243,21 @@ func TestPackageManagerReconciler_Reconcile_UpdateToInstalling(t *testing.T) {
 }
 
 func TestPackageManagerReconciler_Reconcile_RemovePackage(t *testing.T) {
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"}, // Only git now, vim was removed
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
-			InstalledPackages: []workspacesv1.InstalledPackage{
+			InstalledPackages: []workspacev1.InstalledPackage{
 				{Name: "git", BinPath: "/nix/profiles/test/bin"},
 				{Name: "vim", BinPath: "/nix/profiles/test/bin"}, // This should be removed
 			},
@@ -279,28 +277,28 @@ func TestPackageManagerReconciler_Reconcile_RemovePackage(t *testing.T) {
 	_, _ = reconciler.Reconcile(context.Background(), req)
 
 	// Verify status was updated (even though installation will fail in test env)
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err := reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.NotEqual(t, "Pending", updatedPkgReq.Status.Phase)
 }
 
 func TestPackageManagerReconciler_Reconcile_MultiplePackages(t *testing.T) {
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 				{Name: "curl"},
 				{Name: "vim"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -318,7 +316,7 @@ func TestPackageManagerReconciler_Reconcile_MultiplePackages(t *testing.T) {
 	_, _ = reconciler.Reconcile(context.Background(), req)
 
 	// Verify status was updated
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err := reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 
@@ -328,19 +326,19 @@ func TestPackageManagerReconciler_Reconcile_MultiplePackages(t *testing.T) {
 }
 
 func TestPackageManagerReconciler_Reconcile_PackageWithChannel(t *testing.T) {
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "nodejs_22", Channel: "nixos-24.05"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -358,7 +356,7 @@ func TestPackageManagerReconciler_Reconcile_PackageWithChannel(t *testing.T) {
 	_, _ = reconciler.Reconcile(context.Background(), req)
 
 	// Verify status was updated
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err := reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.NotEqual(t, "Pending", updatedPkgReq.Status.Phase)
@@ -375,22 +373,22 @@ func TestPackageManagerReconciler_SetupWithManager(t *testing.T) {
 func TestPackageManagerReconciler_UpdateEventFilter_Ready(t *testing.T) {
 	reconciler := setupTestReconciler(t)
 
-	readyPkgReq := &packagesv1.PackageRequest{
+	readyPkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg",
 			Namespace: "test-namespace",
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Ready",
 		},
 	}
 
-	pendingPkgReq := &packagesv1.PackageRequest{
+	pendingPkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg",
 			Namespace: "test-namespace",
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -427,12 +425,12 @@ func TestPackageManagerReconciler_UpdateEventFilter_Ready(t *testing.T) {
 }
 
 func TestPackageManagerReconciler_UpdateEventFilter_Failed(t *testing.T) {
-	failedPkgReq := &packagesv1.PackageRequest{
+	failedPkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg",
 			Namespace: "test-namespace",
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Failed",
 		},
 	}
@@ -453,12 +451,12 @@ func TestPackageManagerReconciler_UpdateEventFilter_Failed(t *testing.T) {
 }
 
 func TestPackageManagerReconciler_UpdateEventFilter_Pending(t *testing.T) {
-	pendingPkgReq := &packagesv1.PackageRequest{
+	pendingPkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg",
 			Namespace: "test-namespace",
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -475,7 +473,7 @@ func TestPackageManagerReconciler_UpdateEventFilter_Pending(t *testing.T) {
 	// When Pending, should process and update status
 	_, _ = reconciler.Reconcile(context.Background(), req)
 
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err := reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 
@@ -507,7 +505,7 @@ func TestPackageManagerReconciler_InstallPackage(t *testing.T) {
 	reconciler := setupTestReconciler(t)
 
 	// Test installPackage directly - will fail in test env but exercises code paths
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name: "testpkg",
 		// No channel/commit = uses latest
 	}
@@ -523,7 +521,7 @@ func TestPackageManagerReconciler_InstallPackageWithChannel(t *testing.T) {
 	reconciler := setupTestReconciler(t)
 
 	// Test installPackage with channel
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name:    "nodejs_22",
 		Channel: "nixos-24.05",
 	}
@@ -547,17 +545,17 @@ func TestPackageManagerReconciler_UninstallPackage(t *testing.T) {
 }
 
 func TestPackageManagerReconciler_Reconcile_EmptyPackageList(t *testing.T) {
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages:     []workspacesv1.PackageSpec{}, // Empty package list
+			Packages:     []workspacev1.PackageSpec{}, // Empty package list
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -577,7 +575,7 @@ func TestPackageManagerReconciler_Reconcile_EmptyPackageList(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify status was updated to Ready with 0 packages
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
@@ -590,22 +588,22 @@ func TestPackageManagerReconciler_Reconcile_StatusUpdateFailure(t *testing.T) {
 	// We use a client without status subresource to simulate failure
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = packagesv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "curl"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -681,7 +679,7 @@ func TestPackageManagerReconciler_InstallPackage_Success(t *testing.T) {
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name: "git",
 		// No channel/commit = uses latest
 	}
@@ -714,7 +712,7 @@ func TestPackageManagerReconciler_InstallPackage_QueryFails(t *testing.T) {
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name: "nodejs",
 	}
 
@@ -746,7 +744,7 @@ func TestPackageManagerReconciler_InstallPackage_QueryEmptyOutput(t *testing.T) 
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name: "vim",
 	}
 
@@ -776,7 +774,7 @@ func TestPackageManagerReconciler_InstallPackage_QuerySingleField(t *testing.T) 
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name: "curl",
 	}
 
@@ -819,19 +817,19 @@ func TestPackageManagerReconciler_Reconcile_Success_WithMock(t *testing.T) {
 		},
 	}
 
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -850,7 +848,7 @@ func TestPackageManagerReconciler_Reconcile_Success_WithMock(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify status was updated to Ready
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
@@ -879,21 +877,21 @@ func TestPackageManagerReconciler_Reconcile_PackageRemoval(t *testing.T) {
 	}
 
 	// Create PackageRequest with an installed package that should be removed
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "vim"}, // Only vim in spec
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
-			InstalledPackages: []workspacesv1.InstalledPackage{
+			InstalledPackages: []workspacev1.InstalledPackage{
 				{
 					Name:      "git", // git was installed before but not in spec anymore
 					StorePath: "/nix/store/old-git",
@@ -916,7 +914,7 @@ func TestPackageManagerReconciler_Reconcile_PackageRemoval(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify git was removed and vim was installed
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
@@ -938,27 +936,27 @@ func TestPackageManagerReconciler_Reconcile_FinalStatusUpdateFails(t *testing.T)
 	}
 
 	// Create PackageRequest
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
 
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = packagesv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 
 	logger := zap2.NewNop()
 
@@ -966,11 +964,11 @@ func TestPackageManagerReconciler_Reconcile_FinalStatusUpdateFails(t *testing.T)
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithRuntimeObjects(pkgReq).
-		WithStatusSubresource(&packagesv1.PackageRequest{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}).
 		WithInterceptorFuncs(interceptor.Funcs{
 			SubResourceUpdate: func(ctx context.Context, client client.Client, subResourceName string, obj client.Object, opts ...client.SubResourceUpdateOption) error {
 				// Fail the final status update (not the first one)
-				if pr, ok := obj.(*packagesv1.PackageRequest); ok {
+				if pr, ok := obj.(*workspacev1.PackageRequest); ok {
 					if pr.Status.Phase == "Ready" || pr.Status.Phase == "Failed" {
 						return fmt.Errorf("simulated final status update failure")
 					}
@@ -1023,7 +1021,7 @@ func TestPackageManagerReconciler_InstallPackage_ChannelScriptGeneration(t *test
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name:    "nodejs_22",
 		Channel: "nixos-24.05",
 	}
@@ -1056,9 +1054,9 @@ func TestPackageManagerReconciler_InstallPackage_CommitScriptGeneration(t *testi
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
-		Name:           "nodejs_20",
-		NixpkgsCommit:  "abc123def456789",
+	pkg := workspacev1.PackageSpec{
+		Name:          "nodejs_20",
+		NixpkgsCommit: "abc123def456789",
 	}
 
 	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
@@ -1089,7 +1087,7 @@ func TestPackageManagerReconciler_InstallPackage_NoVersionUsesNixEnv(t *testing.
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name: "git",
 		// No version specified
 	}
@@ -1121,7 +1119,7 @@ func TestPackageManagerReconciler_InstallPackage_VersionExtractionWithChannel(t 
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name:    "vim",
 		Channel: "nixos-24.05",
 	}
@@ -1188,7 +1186,7 @@ func TestPackageManagerReconciler_InstallPackage_VersionExtractionEdgeCases(t *t
 
 			reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-			pkg := workspacesv1.PackageSpec{
+			pkg := workspacev1.PackageSpec{
 				Name:    tt.packageName,
 				Channel: "nixos-24.05",
 			}
@@ -1251,7 +1249,6 @@ func TestSetupWorkspaceHome_ChownError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to set ownership on workspace home directory")
 }
-
 
 // ========================================
 // SSH ConfigMap Controller Tests
@@ -1628,7 +1625,7 @@ func TestPackageManagerReconciler_InstallPackage_WithCommit(t *testing.T) {
 
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
-	pkg := workspacesv1.PackageSpec{
+	pkg := workspacev1.PackageSpec{
 		Name:          "git",
 		NixpkgsCommit: "abc123def456",
 	}
@@ -1648,19 +1645,19 @@ func TestPackageManagerReconciler_Reconcile_InstallFailureUpdatesStatus(t *testi
 		},
 	}
 
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "python"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -1679,7 +1676,7 @@ func TestPackageManagerReconciler_Reconcile_InstallFailureUpdatesStatus(t *testi
 	assert.False(t, result.Requeue)
 
 	// Verify status was updated to Failed
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.Equal(t, "Failed", updatedPkgReq.Status.Phase)
@@ -1768,20 +1765,20 @@ func TestPackageManagerReconciler_Reconcile_PartialSuccess(t *testing.T) {
 		},
 	}
 
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 				{Name: "vim"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -1800,7 +1797,7 @@ func TestPackageManagerReconciler_Reconcile_PartialSuccess(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify partial success - git installed, vim failed
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.Equal(t, "Failed", updatedPkgReq.Status.Phase) // Overall failed due to vim
@@ -1831,19 +1828,19 @@ func TestPackageManagerReconciler_Reconcile_UninstallFailure(t *testing.T) {
 		},
 	}
 
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages:     []workspacesv1.PackageSpec{}, // Empty - should trigger uninstall
+			Packages:     []workspacev1.PackageSpec{}, // Empty - should trigger uninstall
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
-			InstalledPackages: []workspacesv1.InstalledPackage{
+			InstalledPackages: []workspacev1.InstalledPackage{
 				{Name: "git", StorePath: "/nix/store/old-git"},
 			},
 		},
@@ -1863,7 +1860,7 @@ func TestPackageManagerReconciler_Reconcile_UninstallFailure(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Even with uninstall failure, reconciliation should complete
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	// Should be Ready even if uninstall failed (best effort)
@@ -2002,19 +1999,19 @@ func TestReconcile_ProfileDirectoryCreationIdempotent(t *testing.T) {
 		},
 	}
 
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase: "Pending",
 		},
 	}
@@ -2060,22 +2057,22 @@ func TestReconcile_ClearsFailedPackagesOnRetry(t *testing.T) {
 	}
 
 	// Create PackageRequest with previous failed packages
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "nodejs"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
-			Phase:           "Failed",
-			FailedPackages:  []string{"nodejs", "python"}, // Previous failures
-			Message:         "Installation failed",
+		Status: workspacev1.PackageRequestStatus{
+			Phase:          "Failed",
+			FailedPackages: []string{"nodejs", "python"}, // Previous failures
+			Message:        "Installation failed",
 		},
 	}
 
@@ -2093,7 +2090,7 @@ func TestReconcile_ClearsFailedPackagesOnRetry(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify status was updated and old failed packages were cleared
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 
@@ -2135,21 +2132,21 @@ func TestReconcile_ChecksActualStateNotStatus(t *testing.T) {
 	}
 
 	// Status says Pending, but package is ACTUALLY already installed on filesystem
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
-			Phase:              "Pending",  // Status says pending
-			InstalledPackages:  []workspacesv1.InstalledPackage{}, // Status says not installed
+		Status: workspacev1.PackageRequestStatus{
+			Phase:             "Pending",                        // Status says pending
+			InstalledPackages: []workspacev1.InstalledPackage{}, // Status says not installed
 		},
 	}
 
@@ -2170,7 +2167,7 @@ func TestReconcile_ChecksActualStateNotStatus(t *testing.T) {
 	assert.Greater(t, queryCallCount, 0, "Should have queried actual package state")
 
 	// Verify status was updated to reflect actual state
-	updatedPkgReq := &packagesv1.PackageRequest{}
+	updatedPkgReq := &workspacev1.PackageRequest{}
 	err = reconciler.Get(context.Background(), req.NamespacedName, updatedPkgReq)
 	assert.NoError(t, err)
 	assert.Equal(t, "Ready", updatedPkgReq.Status.Phase)
@@ -2207,19 +2204,19 @@ func TestReconcile_StatusUpdateToInstallingClearsFailedPackages(t *testing.T) {
 		},
 	}
 
-	pkgReq := &packagesv1.PackageRequest{
+	pkgReq := &workspacev1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pkg-req",
 			Namespace: "test-namespace",
 		},
-		Spec: packagesv1.PackageRequestSpec{
+		Spec: workspacev1.PackageRequestSpec{
 			WorkspaceRef: "test-workspace",
 			ProfileName:  "test-profile",
-			Packages: []workspacesv1.PackageSpec{
+			Packages: []workspacev1.PackageSpec{
 				{Name: "curl"},
 			},
 		},
-		Status: packagesv1.PackageRequestStatus{
+		Status: workspacev1.PackageRequestStatus{
 			Phase:          "Failed",
 			FailedPackages: []string{"curl", "wget"}, // Old failures
 		},
@@ -2227,8 +2224,8 @@ func TestReconcile_StatusUpdateToInstallingClearsFailedPackages(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = packagesv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
+	_ = workspacev1.AddToScheme(scheme)
 
 	logger, _ := zap.NewDevelopment()
 
@@ -2236,11 +2233,11 @@ func TestReconcile_StatusUpdateToInstallingClearsFailedPackages(t *testing.T) {
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithRuntimeObjects(pkgReq).
-		WithStatusSubresource(&packagesv1.PackageRequest{}).
+		WithStatusSubresource(&workspacev1.PackageRequest{}).
 		WithInterceptorFuncs(interceptor.Funcs{
 			SubResourceUpdate: func(ctx context.Context, client client.Client, subResourceName string, obj client.Object, opts ...client.SubResourceUpdateOption) error {
 				statusUpdateCount++
-				if pr, ok := obj.(*packagesv1.PackageRequest); ok {
+				if pr, ok := obj.(*workspacev1.PackageRequest); ok {
 					if pr.Status.Phase == "Installing" && len(pr.Status.FailedPackages) == 0 {
 						installingPhaseCleared = true
 					}
