@@ -45,9 +45,17 @@ export function CreateCompositionSheet({ namespace, user }: CreateCompositionShe
   const [yamlExtension, setYamlExtension] = useState<any>(null)
 
   useEffect(() => {
-    import('@codemirror/lang-yaml').then((mod) => {
-      setYamlExtension(mod.yaml())
-    })
+    import('@codemirror/lang-yaml')
+      .then((mod) => {
+        if (mod && mod.yaml) {
+          setYamlExtension(mod.yaml())
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load YAML extension:', err)
+        // Fallback: set a placeholder so CodeMirror still renders
+        setYamlExtension([])
+      })
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
