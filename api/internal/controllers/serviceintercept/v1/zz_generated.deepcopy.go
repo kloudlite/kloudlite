@@ -124,10 +124,6 @@ func (in *ServiceInterceptStatus) DeepCopyInto(out *ServiceInterceptStatus) {
 		in, out := &in.InterceptStartTime, &out.InterceptStartTime
 		*out = (*in).DeepCopy()
 	}
-	if in.InterceptEndTime != nil {
-		in, out := &in.InterceptEndTime, &out.InterceptEndTime
-		*out = (*in).DeepCopy()
-	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
 		*out = make([]metav1.Condition, len(*in))

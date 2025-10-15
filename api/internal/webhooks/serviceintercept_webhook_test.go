@@ -74,7 +74,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_Success(t *testing.T) 
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -140,7 +140,6 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_MissingWorkspaceName(t
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status:       "active",
 			WorkspaceRef: corev1.ObjectReference{}, // Empty workspace ref
 			ServiceRef: corev1.ObjectReference{
 				Name: "test-service",
@@ -202,7 +201,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_WorkspaceNotFound(t *t
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "nonexistent-workspace",
 				Namespace: "test-ns",
@@ -278,7 +277,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_WorkspaceNotRunning(t 
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "stopped-workspace",
 				Namespace: "test-ns",
@@ -354,7 +353,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_ServiceNotFound(t *tes
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -448,7 +447,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_InvalidServicePort(t *
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -536,7 +535,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_NoPortMappings(t *test
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -619,7 +618,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_InvalidPortNumbers(t *
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -706,7 +705,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_DuplicateActiveInterce
 			},
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name: "other-workspace",
 			},
@@ -730,7 +729,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_DuplicateActiveInterce
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -777,94 +776,6 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_DuplicateActiveInterce
 	assert.Contains(t, response.Response.Result.Message, "already being intercepted")
 }
 
-func TestServiceInterceptWebhook_ValidateServiceIntercept_InvalidStatus(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	scheme := runtime.NewScheme()
-	_ = interceptsv1.AddToScheme(scheme)
-	_ = workspacesv1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-
-	workspace := &workspacesv1.Workspace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-workspace",
-			Namespace: "test-ns",
-		},
-		Status: workspacesv1.WorkspaceStatus{
-			Phase: "Running",
-		},
-	}
-
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-service",
-			Namespace: "test-ns",
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{Port: 80},
-			},
-		},
-	}
-
-	k8sClient := fakeclient.NewClientBuilder().WithScheme(scheme).WithObjects(workspace, service).Build()
-
-	zapLogger, _ := zap.NewDevelopment()
-	webhook := NewServiceInterceptWebhook(logger.NewZapLogger(zapLogger), k8sClient)
-
-	intercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-intercept",
-			Namespace: "test-ns",
-		},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "invalid-status", // Invalid
-			WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
-				},
-			},
-		},
-	}
-
-	interceptBytes, _ := json.Marshal(intercept)
-	admissionReview := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UID:       "test-uid",
-			Operation: admissionv1.Create,
-			Namespace: "test-ns",
-			Object: runtime.RawExtension{
-				Raw: interceptBytes,
-			},
-		},
-	}
-
-	body, _ := json.Marshal(admissionReview)
-	req, _ := http.NewRequest("POST", "/validate", bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
-
-	router := gin.New()
-	router.POST("/validate", webhook.ValidateServiceIntercept)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var response admissionv1.AdmissionReview
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.False(t, response.Response.Allowed)
-	assert.Contains(t, response.Response.Result.Message, "must be either 'active' or 'inactive'")
-}
-
 func TestServiceInterceptWebhook_MutateServiceIntercept_AddsLabelsAndFinalizer(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -883,7 +794,7 @@ func TestServiceInterceptWebhook_MutateServiceIntercept_AddsLabelsAndFinalizer(t
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "workspace-ns",

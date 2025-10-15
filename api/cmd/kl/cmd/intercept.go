@@ -158,7 +158,7 @@ func handleInterceptStartInteractive() error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
+	if workspace.Status.ConnectedEnvironment == nil {
 		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
 	}
 
@@ -201,7 +201,7 @@ func handleInterceptStart(serviceName string) error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
+	if workspace.Status.ConnectedEnvironment == nil {
 		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
 	}
 
@@ -286,7 +286,6 @@ func handleInterceptStartWithService(service corev1.Service, workspace *workspac
 				Namespace: targetNamespace,
 			},
 			PortMappings: portMappings,
-			Status:       "active",
 		},
 	}
 
@@ -319,7 +318,7 @@ func handleInterceptStopInteractive() error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
+	if workspace.Status.ConnectedEnvironment == nil {
 		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
 	}
 
@@ -376,7 +375,7 @@ func handleInterceptStop(serviceName string) error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
+	if workspace.Status.ConnectedEnvironment == nil {
 		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
 	}
 
@@ -423,7 +422,7 @@ func handleInterceptList() error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
+	if workspace.Status.ConnectedEnvironment == nil {
 		fmt.Println("Workspace is not connected to any environment")
 		return nil
 	}
@@ -453,17 +452,13 @@ func handleInterceptList() error {
 
 	fmt.Printf("Active service intercepts (%d):\n\n", len(interceptList.Items))
 	for _, intercept := range interceptList.Items {
-		status := "inactive"
 		phase := intercept.Status.Phase
 		if phase == "" {
 			phase = "Creating"
 		}
-		if intercept.Spec.Status == "active" && intercept.Status.Phase == "Active" {
-			status = "active"
-		}
 
 		fmt.Printf("  Service: %s\n", intercept.Spec.ServiceRef.Name)
-		fmt.Printf("  Status: %s (%s)\n", status, phase)
+		fmt.Printf("  Phase: %s\n", phase)
 		fmt.Printf("  Port mappings:\n")
 		for _, mapping := range intercept.Spec.PortMappings {
 			fmt.Printf("    %d → %d (%s)\n", mapping.ServicePort, mapping.WorkspacePort, mapping.Protocol)
@@ -491,7 +486,7 @@ func handleInterceptStatus(serviceName string) error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
+	if workspace.Status.ConnectedEnvironment == nil {
 		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
 	}
 
@@ -548,8 +543,7 @@ func printInterceptStatus(intercept *interceptsv1.ServiceIntercept) {
 	fmt.Printf("Service: %s\n", intercept.Spec.ServiceRef.Name)
 	fmt.Printf("Workspace: %s\n", intercept.Spec.WorkspaceRef.Name)
 	fmt.Printf("Namespace: %s\n", intercept.Namespace)
-	fmt.Printf("Desired Status: %s\n", intercept.Spec.Status)
-	fmt.Printf("Current Phase: %s\n", intercept.Status.Phase)
+	fmt.Printf("Phase: %s\n", intercept.Status.Phase)
 	if intercept.Status.Message != "" {
 		fmt.Printf("Message: %s\n", intercept.Status.Message)
 	}
@@ -574,9 +568,6 @@ func printInterceptStatus(intercept *interceptsv1.ServiceIntercept) {
 
 	if intercept.Status.InterceptStartTime != nil {
 		fmt.Printf("\nStart Time: %s\n", intercept.Status.InterceptStartTime.Format("2006-01-02 15:04:05"))
-	}
-	if intercept.Status.InterceptEndTime != nil {
-		fmt.Printf("End Time: %s\n", intercept.Status.InterceptEndTime.Format("2006-01-02 15:04:05"))
 	}
 }
 
@@ -676,9 +667,9 @@ func selectInterceptWithFzf(intercepts []interceptsv1.ServiceIntercept) (*interc
 
 	for i := range intercepts {
 		intercept := &intercepts[i]
-		status := "inactive"
-		if intercept.Spec.Status == "active" && intercept.Status.Phase == "Active" {
-			status = "active"
+		phase := intercept.Status.Phase
+		if phase == "" {
+			phase = "Creating"
 		}
 
 		portStr := ""
@@ -690,7 +681,7 @@ func selectInterceptWithFzf(intercepts []interceptsv1.ServiceIntercept) (*interc
 			portStr = strings.Join(ports, ", ")
 		}
 
-		line := fmt.Sprintf("%s (%s) - %s", intercept.Spec.ServiceRef.Name, status, portStr)
+		line := fmt.Sprintf("%s (%s) - %s", intercept.Spec.ServiceRef.Name, phase, portStr)
 		items = append(items, line)
 		interceptMap[line] = intercept
 	}

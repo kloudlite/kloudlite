@@ -87,7 +87,7 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 	var activeIntercept *interceptsv1.ServiceIntercept
 	for i := range interceptList.Items {
 		intercept := &interceptList.Items[i]
-		if intercept.DeletionTimestamp == nil && intercept.Spec.Status == "active" && intercept.Status.Phase == "Active" {
+		if intercept.DeletionTimestamp == nil && intercept.Status.Phase == "Active" {
 			activeIntercept = intercept
 			break
 		}
@@ -100,90 +100,18 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 		}
 	}
 
-	// Create patches to redirect traffic to workspace pod
-	var patches []patchOperation
+	// With SOCAT-based interception, the SOCAT pod already has the original service selector labels
+	// copied from the service. The service doesn't need modification - it will naturally route
+	// to the SOCAT pod using its existing selector.
+	//
+	// We DO NOT modify the service selector because:
+	// 1. SOCAT pod has the original service selector labels (copied in controller)
+	// 2. Service continues to work with its original selector
+	// 3. Traffic flows: Service -> SOCAT pod (via original labels) -> Workspace (via headless service)
+	w.logger.Info(fmt.Sprintf("Service '%s' is being intercepted via SOCAT pod with matching labels, no modification needed",
+		service.Name))
 
-	// Get the workspace pod to find its labels
-	workspacePodName := activeIntercept.Status.WorkspacePodName
-	if workspacePodName == "" {
-		// If we don't have the pod name yet, allow without interception
-		return &admissionv1.AdmissionResponse{
-			Allowed: true,
-		}
-	}
-
-	// Modify the service selector to point to the workspace pod
-	// We'll use a specific label that the workspace pod has
-	newSelector := map[string]string{
-		"workspaces.kloudlite.io/workspace-name": activeIntercept.Spec.WorkspaceRef.Name,
-	}
-
-	// Add patch to replace the selector
-	patches = append(patches, patchOperation{
-		Op:    "replace",
-		Path:  "/spec/selector",
-		Value: newSelector,
-	})
-
-	// Add annotation to track that this service is intercepted
-	if service.Annotations == nil {
-		patches = append(patches, patchOperation{
-			Op:    "add",
-			Path:  "/metadata/annotations",
-			Value: make(map[string]string),
-		})
-	}
-
-	escapedKey := "intercepts.kloudlite.io~1intercepted-by"
-	patches = append(patches, patchOperation{
-		Op:    "add",
-		Path:  fmt.Sprintf("/metadata/annotations/%s", escapedKey),
-		Value: activeIntercept.Name,
-	})
-
-	// Update service ports to map to workspace ports
-	if len(activeIntercept.Spec.PortMappings) > 0 {
-		var newPorts []corev1.ServicePort
-		for _, mapping := range activeIntercept.Spec.PortMappings {
-			// Find the corresponding service port
-			for _, svcPort := range service.Spec.Ports {
-				if svcPort.Port == mapping.ServicePort {
-					// Create a new port that targets the workspace port
-					newPort := svcPort.DeepCopy()
-					newPort.TargetPort.IntVal = mapping.WorkspacePort
-					if mapping.Protocol != "" {
-						newPort.Protocol = mapping.Protocol
-					}
-					newPorts = append(newPorts, *newPort)
-				}
-			}
-		}
-
-		if len(newPorts) > 0 {
-			patches = append(patches, patchOperation{
-				Op:    "replace",
-				Path:  "/spec/ports",
-				Value: newPorts,
-			})
-		}
-	}
-
-	w.logger.Info(fmt.Sprintf("Intercepting service '%s' in namespace '%s' with workspace '%s'",
-		service.Name, service.Namespace, activeIntercept.Spec.WorkspaceRef.Name))
-
-	// Create patch response
-	patchBytes, err := json.Marshal(patches)
-	if err != nil {
-		w.logger.Error("Failed to marshal patches: " + err.Error())
-		return &admissionv1.AdmissionResponse{
-			Allowed: true, // Allow without interception on error
-		}
-	}
-
-	patchType := admissionv1.PatchTypeJSONPatch
 	return &admissionv1.AdmissionResponse{
-		Allowed:   true,
-		Patch:     patchBytes,
-		PatchType: &patchType,
+		Allowed: true,
 	}
 }

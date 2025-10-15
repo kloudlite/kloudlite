@@ -169,29 +169,35 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 			}
 		}
 
-		// Check if another ServiceIntercept is already intercepting this service (only for CREATE and active intercepts)
-		if req.Operation == admissionv1.Create && intercept.Spec.Status == "active" {
-			existingIntercepts := &interceptsv1.ServiceInterceptList{}
-			err := w.client.List(context.TODO(), existingIntercepts,
-				client.InNamespace(serviceNamespace),
-				client.MatchingLabels{
-					"intercepts.kloudlite.io/service-name": intercept.Spec.ServiceRef.Name,
-				})
+		// Check if another ServiceIntercept is already intercepting this service
+		existingIntercepts := &interceptsv1.ServiceInterceptList{}
+		err = w.client.List(context.TODO(), existingIntercepts,
+			client.InNamespace(serviceNamespace),
+			client.MatchingLabels{
+				"intercepts.kloudlite.io/service-name": intercept.Spec.ServiceRef.Name,
+			})
 
-			if err != nil {
-				w.logger.Error("Failed to check for existing intercepts: " + err.Error())
-				allowed = false
-				messages = append(messages, "Failed to validate service intercept uniqueness")
-			} else {
-				// Check if any existing intercept is active
-				for _, existing := range existingIntercepts.Items {
-					if existing.Spec.Status == "active" && existing.Status.Phase == "Active" {
-						allowed = false
-						messages = append(messages, fmt.Sprintf("Service '%s' is already being intercepted by workspace '%s'",
-							intercept.Spec.ServiceRef.Name, existing.Spec.WorkspaceRef.Name))
-						break
-					}
+		if err != nil {
+			w.logger.Error("Failed to check for existing intercepts: " + err.Error())
+			allowed = false
+			messages = append(messages, "Failed to validate service intercept uniqueness")
+		} else {
+			// Check if any existing intercept (other than this one) exists
+			for _, existing := range existingIntercepts.Items {
+				// Skip checking against itself (for UPDATE operations)
+				if existing.Name == intercept.Name && existing.Namespace == req.Namespace {
+					continue
 				}
+
+				// Skip intercepts that are being deleted
+				if existing.DeletionTimestamp != nil {
+					continue
+				}
+
+				allowed = false
+				messages = append(messages, fmt.Sprintf("Service '%s' is already being intercepted by workspace '%s' (intercept: %s)",
+					intercept.Spec.ServiceRef.Name, existing.Spec.WorkspaceRef.Name, existing.Name))
+				break
 			}
 		}
 	}
@@ -211,12 +217,6 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 				messages = append(messages, fmt.Sprintf("Invalid workspace port %d at index %d", mapping.WorkspacePort, i))
 			}
 		}
-	}
-
-	// Validate status
-	if intercept.Spec.Status != "active" && intercept.Spec.Status != "inactive" {
-		allowed = false
-		messages = append(messages, "Status must be either 'active' or 'inactive'")
 	}
 
 	// Build response

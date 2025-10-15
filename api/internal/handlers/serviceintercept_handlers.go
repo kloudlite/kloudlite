@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -331,27 +330,14 @@ func (h *ServiceInterceptHandlers) ActivateServiceIntercept(c *gin.Context) {
 		return
 	}
 
-	// Set status to active
-	intercept.Spec.Status = "active"
-
-	if err := h.k8sClient.Update(context.TODO(), intercept); err != nil {
-		h.logger.Error("Failed to activate service intercept",
-			zap.String("name", name),
-			zap.String("namespace", namespace),
-			zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to activate service intercept",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	h.logger.Info("ServiceIntercept activated successfully",
+	// Intercepts are always active when they exist
+	// No action needed - just return the current state
+	h.logger.Info("ServiceIntercept is already active (intercepts are always active)",
 		zap.String("name", name),
 		zap.String("namespace", namespace))
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":          "ServiceIntercept activated successfully",
+		"message":          "ServiceIntercept is active",
 		"serviceIntercept": intercept,
 	})
 }
@@ -392,11 +378,9 @@ func (h *ServiceInterceptHandlers) DeactivateServiceIntercept(c *gin.Context) {
 		return
 	}
 
-	// Set status to inactive
-	intercept.Spec.Status = "inactive"
-
-	if err := h.k8sClient.Update(context.TODO(), intercept); err != nil {
-		h.logger.Error("Failed to deactivate service intercept",
+	// Deactivation now means deletion (intercepts are always active when they exist)
+	if err := h.k8sClient.Delete(c.Request.Context(), intercept); err != nil {
+		h.logger.Error("Failed to deactivate (delete) service intercept",
 			zap.String("name", name),
 			zap.String("namespace", namespace),
 			zap.Error(err))
@@ -407,12 +391,13 @@ func (h *ServiceInterceptHandlers) DeactivateServiceIntercept(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("ServiceIntercept deactivated successfully",
+	h.logger.Info("ServiceIntercept deactivated (deleted) successfully",
 		zap.String("name", name),
 		zap.String("namespace", namespace))
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":          "ServiceIntercept deactivated successfully",
-		"serviceIntercept": intercept,
+		"message":   "ServiceIntercept deactivated successfully",
+		"name":      name,
+		"namespace": namespace,
 	})
 }

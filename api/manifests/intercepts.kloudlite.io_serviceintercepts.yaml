@@ -24,9 +24,6 @@ spec:
     - jsonPath: .spec.serviceRef.name
       name: Service
       type: string
-    - jsonPath: .spec.status
-      name: Status
-      type: string
     - jsonPath: .status.phase
       name: Phase
       type: string
@@ -134,13 +131,6 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
-              status:
-                default: active
-                description: Status indicates whether the intercept is active or inactive
-                enum:
-                - active
-                - inactive
-                type: string
               workspaceRef:
                 description: WorkspaceRef references the workspace pod that will intercept
                   traffic
@@ -188,15 +178,14 @@ spec:
             required:
             - portMappings
             - serviceRef
-            - status
             - workspaceRef
             type: object
           status:
             description: ServiceInterceptStatus defines the observed state of ServiceIntercept
             properties:
               affectedPodNames:
-                description: AffectedPodNames lists pods that have been modified with
-                  node selector
+                description: AffectedPodNames lists pods that have been deleted/affected
+                  by the intercept
                 items:
                   type: string
                 type: array
@@ -258,10 +247,6 @@ spec:
                   - type
                   type: object
                 type: array
-              interceptEndTime:
-                description: InterceptEndTime when the intercept was deactivated
-                format: date-time
-                type: string
               interceptStartTime:
                 description: InterceptStartTime when the intercept was activated
                 format: date-time
@@ -274,15 +259,21 @@ spec:
                 additionalProperties:
                   type: string
                 description: OriginalServiceSelector stores the original service selector
-                  for restoration
+                  to identify pods to delete
                 type: object
               phase:
                 description: Phase represents the current phase of the service intercept
                 enum:
                 - Creating
                 - Active
-                - Inactive
                 - Failed
+                type: string
+              socatPodName:
+                description: SOCATPodName is the name of the SOCAT forwarding pod
+                type: string
+              workspaceHeadlessServiceName:
+                description: WorkspaceHeadlessServiceName is the name of the headless
+                  service for the workspace
                 type: string
               workspacePodIP:
                 description: WorkspacePodIP is the IP address of the workspace pod

@@ -92,7 +92,7 @@ func TestPodMutationWebhook_MutatePod_SkipWorkspacePods(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 		},
 		Status: interceptsv1.ServiceInterceptStatus{
 			Phase: "Active",
@@ -170,7 +170,7 @@ func TestPodMutationWebhook_MutatePod_HoldMatchingPod(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 			ServiceRef: corev1.ObjectReference{
 				Name:      "test-service",
 				Namespace: "test-namespace",
@@ -278,7 +278,6 @@ func TestPodMutationWebhook_MutatePod_SkipInactiveIntercept(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "inactive", // Inactive
 		},
 		Status: interceptsv1.ServiceInterceptStatus{
 			Phase: "Inactive",
@@ -357,7 +356,7 @@ func TestPodMutationWebhook_MutatePod_SkipDeletedIntercept(t *testing.T) {
 			Finalizers:        []string{"intercepts.kloudlite.io/finalizer"}, // Required for deletion
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 		},
 		Status: interceptsv1.ServiceInterceptStatus{
 			Phase: "Active",
@@ -456,7 +455,7 @@ func TestPodMutationWebhook_MutatePod_WithExistingNodeSelector(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
+			
 		},
 		Status: interceptsv1.ServiceInterceptStatus{
 			Phase: "Active",
