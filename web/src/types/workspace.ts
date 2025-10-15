@@ -74,6 +74,13 @@ export interface InstalledPackage {
   installedAt?: string
 }
 
+export interface ConnectedEnvironmentInfo {
+  name: string
+  targetNamespace: string
+  connected: boolean
+  availableServices?: string[]
+}
+
 export interface WorkspaceStatus {
   phase?: string
   message?: string
@@ -102,6 +109,8 @@ export interface WorkspaceStatus {
   startTime?: string
   stopTime?: string
   totalRuntime?: number
+  connectedEnvironment?: ConnectedEnvironmentInfo
+  activeConnections?: number
 }
 
 // Request/Response types

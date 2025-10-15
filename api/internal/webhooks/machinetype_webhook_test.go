@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

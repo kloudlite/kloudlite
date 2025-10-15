@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { ServicesList } from '../../_components/services-list'
 import { serviceService } from '@/lib/services/service.service'
 import { environmentService } from '@/lib/services/environment.service'
+import { serviceInterceptService } from '@/lib/services/serviceintercept.service'
 
 interface PageProps {
   params: {
@@ -26,7 +27,7 @@ export default async function ServicesPage({ params }: PageProps) {
     namespace = environment.spec.targetNamespace
   } catch (error) {
     console.error('Failed to fetch environment:', error)
-    return <ServicesList services={[]} namespace={environmentName} />
+    return <ServicesList services={[]} namespace={environmentName} serviceIntercepts={[]} />
   }
 
   // Fetch services from API using the target namespace
@@ -39,5 +40,15 @@ export default async function ServicesPage({ params }: PageProps) {
     services = []
   }
 
-  return <ServicesList services={services} namespace={namespace} />
+  // Fetch service intercepts from API
+  let serviceIntercepts = []
+  try {
+    const response = await serviceInterceptService.listServiceIntercepts(namespace)
+    serviceIntercepts = response.serviceIntercepts || []
+  } catch (error) {
+    console.error('Failed to fetch service intercepts:', error)
+    serviceIntercepts = []
+  }
+
+  return <ServicesList services={services} namespace={namespace} serviceIntercepts={serviceIntercepts} />
 }

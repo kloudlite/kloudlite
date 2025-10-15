@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
