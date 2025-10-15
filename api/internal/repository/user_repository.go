@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

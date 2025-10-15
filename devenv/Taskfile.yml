@@ -160,7 +160,7 @@ tasks:
     dir: ../api
     cmds:
       - echo "Generating code..."
-      - go generate ./...
+      - go generate ./internal/controllers/...
 
   api:install-tools:
     desc: Install code generation tools (controller-gen)
@@ -175,7 +175,7 @@ tasks:
     dir: ../api
     cmds:
       - echo "Generating deepcopy code..."
-      - controller-gen object paths="./pkg/apis/..."
+      - controller-gen object paths="./internal/controllers/..."
       - echo "Deepcopy code generated successfully"
 
   api:generate-crds:
@@ -183,7 +183,7 @@ tasks:
     dir: ../api
     cmds:
       - echo "Generating CRD manifests..."
-      - controller-gen crd paths="./pkg/apis/..." output:crd:artifacts:config=../manifests
+      - controller-gen crd paths="./internal/controllers/..." output:crd:artifacts:config=../manifests
       - echo "CRD manifests generated in manifests/"
 
   api:generate-all:

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/helmchart/templates"
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	batchv1 "k8s.io/api/batch/v1"

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -86,7 +86,6 @@ func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*U
 		}
 		return []byte(s.jwtSecret), nil
 	})
-
 	if err != nil {
 		s.logger.Warn("JWT token validation failed", zap.Error(err))
 		return nil, fmt.Errorf("invalid token: %w", err)

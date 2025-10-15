@@ -30,6 +30,9 @@ spec:
     - jsonPath: .status.phase
       name: Phase
       type: string
+    - jsonPath: .status.connectedEnvironment.name
+      name: Environment
+      type: string
     - jsonPath: .status.activeConnections
       name: Connections
       type: integer
@@ -369,6 +372,26 @@ spec:
                   - type
                   type: object
                 type: array
+              connectedEnvironment:
+                description: ConnectedEnvironment tracks the connected environment
+                  details
+                properties:
+                  availableServices:
+                    description: AvailableServices lists services available in the
+                      environment
+                    items:
+                      type: string
+                    type: array
+                  name:
+                    description: Name of the connected environment
+                    type: string
+                  targetNamespace:
+                    description: TargetNamespace where environment services are deployed
+                    type: string
+                required:
+                - name
+                - targetNamespace
+                type: object
               failedPackages:
                 description: FailedPackages list of packages that failed to install
                 items:

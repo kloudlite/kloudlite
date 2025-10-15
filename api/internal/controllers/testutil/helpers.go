@@ -1,10 +1,10 @@
 package testutil
 
 import (
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
-	packagesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/packages/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -18,8 +18,8 @@ import (
 func NewTestScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
 	_ = environmentsv1.AddToScheme(scheme)
+	_ = interceptsv1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
-	_ = packagesv1.AddToScheme(scheme)
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)

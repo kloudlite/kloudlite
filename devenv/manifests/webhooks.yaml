@@ -74,6 +74,21 @@ webhooks:
   objectSelector:
     matchLabels:
       kloudlite.io/config-type: "envvars"
+- name: serviceintercepts.intercepts.kloudlite.io
+  clientConfig:
+    service:
+      name: nginx
+      namespace: default
+      path: /webhooks/validate/serviceintercepts
+    caBundle: ${CA_BUNDLE}
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["intercepts.kloudlite.io"]
+    apiVersions: ["v1"]
+    resources: ["serviceintercepts"]
+  admissionReviewVersions: ["v1"]
+  sideEffects: None
+  failurePolicy: Fail
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
@@ -106,5 +121,47 @@ webhooks:
     apiGroups: ["environments.kloudlite.io"]
     apiVersions: ["v1"]
     resources: ["environments"]
+  admissionReviewVersions: ["v1"]
+  sideEffects: None
+- name: serviceintercepts.intercepts.kloudlite.io
+  clientConfig:
+    service:
+      name: nginx
+      namespace: default
+      path: /webhooks/mutate/serviceintercepts
+    caBundle: ${CA_BUNDLE}
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["intercepts.kloudlite.io"]
+    apiVersions: ["v1"]
+    resources: ["serviceintercepts"]
+  admissionReviewVersions: ["v1"]
+  sideEffects: None
+- name: services.core.intercept
+  clientConfig:
+    service:
+      name: nginx
+      namespace: default
+      path: /webhooks/mutate/services
+    caBundle: ${CA_BUNDLE}
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["services"]
+  admissionReviewVersions: ["v1"]
+  sideEffects: None
+- name: pods.core.intercept
+  clientConfig:
+    service:
+      name: nginx
+      namespace: default
+      path: /webhooks/mutate/pods
+    caBundle: ${CA_BUNDLE}
+  rules:
+  - operations: ["CREATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
   admissionReviewVersions: ["v1"]
   sideEffects: None

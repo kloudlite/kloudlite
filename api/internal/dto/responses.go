@@ -1,10 +1,10 @@
 package dto
 
 import (
-	environmentsv1 "github.com/kloudlite/kloudlite/api/pkg/apis/environments/v1"
-	machinesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/machines/v1"
-	platformv1alpha1 "github.com/kloudlite/kloudlite/api/pkg/apis/platform/v1alpha1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/pkg/apis/workspaces/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	userv1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -97,13 +97,13 @@ type ServiceListResponse struct {
 // User Responses
 
 type UserResponse struct {
-	Message string                 `json:"message"`
-	User    *platformv1alpha1.User `json:"user"`
+	Message string       `json:"message"`
+	User    *userv1.User `json:"user"`
 }
 
 type UserListResponse struct {
-	Users []platformv1alpha1.User `json:"users"`
-	Count int                     `json:"count"`
+	Users []userv1.User `json:"users"`
+	Count int           `json:"count"`
 }
 
 // MachineType Responses
