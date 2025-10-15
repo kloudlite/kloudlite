@@ -6,6 +6,7 @@ interface PageProps {
   }
 }
 
-export default function ResourcesPage({ params }: PageProps) {
-  redirect(`/environments/${params.id}/resources/helmcharts`)
+export default async function ResourcesPage({ params }: PageProps) {
+  const { id } = await params
+  redirect(`/environments/${id}/resources/helmcharts`)
 }

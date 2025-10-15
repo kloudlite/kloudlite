@@ -17,8 +17,9 @@ export default async function CompositionsPage({ params }: PageProps) {
     redirect('/auth/signin')
   }
 
+  const { id } = await params
   const currentUser = session.user?.email || 'test-user'
-  const environmentName = params.id
+  const environmentName = id
 
   // First, fetch the environment to get its target namespace
   let namespace = ''

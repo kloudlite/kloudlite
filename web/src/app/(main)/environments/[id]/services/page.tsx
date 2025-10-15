@@ -18,7 +18,8 @@ export default async function ServicesPage({ params }: PageProps) {
     redirect('/auth/signin')
   }
 
-  const environmentName = params.id
+  const { id } = await params
+  const environmentName = id
 
   // Fetch the environment to get its target namespace
   let namespace = ''
