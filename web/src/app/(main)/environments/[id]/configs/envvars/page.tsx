@@ -22,11 +22,12 @@ function EnvVarsError({ error }: { error: string }) {
 }
 
 export default async function EnvVarsPage({ params }: PageProps) {
+  const { id } = await params
   try {
-    const result = await getEnvVars(params.id)
+    const result = await getEnvVars(id)
     const envVars = result.envVars || []
 
-    return <EnvVarsList environmentId={params.id} envVars={envVars} />
+    return <EnvVarsList environmentId={id} envVars={envVars} />
   } catch (error) {
     return <EnvVarsError error={error instanceof Error ? error.message : 'Failed to load environment variables'} />
   }
