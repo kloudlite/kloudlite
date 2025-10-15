@@ -67,9 +67,16 @@ func (w *PodMutationWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		}
 	}
 
-	// Skip workspace pods (don't intercept the interceptor!)
+	// Skip workspace pods and SOCAT pods (don't intercept the interceptor!)
 	if pod.Labels != nil {
 		if _, isWorkspace := pod.Labels["workspaces.kloudlite.io/workspace-name"]; isWorkspace {
+			return &admissionv1.AdmissionResponse{
+				Allowed: true,
+			}
+		}
+
+		// Skip SOCAT intercept pods
+		if _, isIntercept := pod.Labels["intercepts.kloudlite.io/intercept"]; isIntercept {
 			return &admissionv1.AdmissionResponse{
 				Allowed: true,
 			}
@@ -94,8 +101,8 @@ func (w *PodMutationWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	for i := range interceptList.Items {
 		intercept := &interceptList.Items[i]
 
-		// Only consider active intercepts that are not being deleted
-		if intercept.DeletionTimestamp != nil || intercept.Spec.Status != "active" || intercept.Status.Phase != "Active" {
+		// Only consider intercepts that are not being deleted and are active
+		if intercept.DeletionTimestamp != nil || intercept.Status.Phase != "Active" {
 			continue
 		}
 

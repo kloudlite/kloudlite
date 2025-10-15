@@ -462,6 +462,72 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 	return nil
 }
 
+// updateDNSConfigInRunningPod updates /etc/resolv.conf in a running workspace pod
+// when the environment connection changes
+func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
+	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+
+	// Get the pod
+	pod := &corev1.Pod{}
+	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	if err != nil {
+		return fmt.Errorf("failed to get pod: %w", err)
+	}
+
+	// Only update if pod is running
+	if pod.Status.Phase != corev1.PodRunning {
+		logger.Info("Skipping DNS update - pod is not running",
+			zap.String("phase", string(pod.Status.Phase)))
+		return nil
+	}
+
+	// Build search domains based on environment connection
+	var searchDomains string
+	if workspace.Spec.EnvironmentRef != nil {
+		env := &environmentv1.Environment{}
+		err := r.Get(ctx, client.ObjectKey{
+			Name:      workspace.Spec.EnvironmentRef.Name,
+			Namespace: workspace.Namespace,
+		}, env)
+		if err == nil && env.Spec.Activated {
+			// Include environment namespace in search domains
+			searchDomains = fmt.Sprintf("%s.svc.cluster.local svc.cluster.local cluster.local",
+				env.Spec.TargetNamespace)
+			logger.Info("Environment connection detected for DNS update",
+				zap.String("environment", env.Name),
+				zap.String("targetNamespace", env.Spec.TargetNamespace))
+		} else {
+			// Environment not found or not activated
+			searchDomains = "svc.cluster.local cluster.local"
+			logger.Info("Environment reference exists but not active for DNS update")
+		}
+	} else {
+		// No environment connection
+		searchDomains = "svc.cluster.local cluster.local"
+		logger.Info("No environment connection for DNS update")
+	}
+
+	// Build new resolv.conf content
+	resolvConf := fmt.Sprintf(`nameserver 10.43.0.10
+search %s
+options ndots:5
+`, searchDomains)
+
+	// Exec into pod and update /etc/resolv.conf
+	// Note: /etc/resolv.conf is mounted from EmptyDir with ReadOnly: false, so it's writable
+	command := []string{"sh", "-c", fmt.Sprintf("cat > /etc/resolv.conf << 'EOFR'\n%sEOFR\n", resolvConf)}
+	_, err = r.execInPod(ctx, pod, "workspace", command)
+	if err != nil {
+		return fmt.Errorf("failed to update DNS config: %w", err)
+	}
+
+	logger.Info("Successfully updated DNS configuration in running pod",
+		zap.String("workspace", workspace.Name),
+		zap.String("searchDomains", searchDomains))
+
+	return nil
+}
+
 // ensureWorkspaceService ensures a Service is created for the workspace
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	serviceName := fmt.Sprintf("workspace-%s", workspace.Name)
@@ -535,6 +601,58 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 	return nil
 }
 
+// ensureWorkspaceHeadlessService ensures a headless Service is created for the workspace
+// This headless service is used by service intercepts to route traffic to workspace pods
+func (r *WorkspaceReconciler) ensureWorkspaceHeadlessService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
+	headlessServiceName := fmt.Sprintf("workspace-%s-headless", workspace.Name)
+
+	// Check if headless Service exists
+	headlessSvc := &corev1.Service{}
+	err := r.Get(ctx, client.ObjectKey{Name: headlessServiceName, Namespace: workspace.Namespace}, headlessSvc)
+
+	if apierrors.IsNotFound(err) {
+		// Create new headless Service
+		headlessSvc = &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      headlessServiceName,
+				Namespace: workspace.Namespace,
+				Labels: map[string]string{
+					"app":                           "workspace",
+					"workspace":                     workspace.Name,
+					"workspaces.kloudlite.io/workspace": workspace.Name,
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Type:      corev1.ServiceTypeClusterIP,
+				ClusterIP: "None", // Headless service - DNS returns pod IP directly
+				Selector: map[string]string{
+					"workspaces.kloudlite.io/workspace-name": workspace.Name,
+				},
+				// No ports needed - SOCAT connects directly to pod IP:port via DNS
+				// The port is specified in the SOCAT command, not resolved through the service
+				Ports: []corev1.ServicePort{},
+			},
+		}
+
+		// Set owner reference
+		if err := controllerutil.SetControllerReference(workspace, headlessSvc, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference: %w", err)
+		}
+
+		if err := r.Create(ctx, headlessSvc); err != nil {
+			return fmt.Errorf("failed to create headless Service: %w", err)
+		}
+		logger.Info("Created headless Service for workspace", zap.String("name", headlessServiceName))
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to get headless Service: %w", err)
+	}
+
+	// Headless service exists, no need to update
+	logger.Info("Headless service already exists", zap.String("name", headlessServiceName))
+	return nil
+}
+
 // handleActiveWorkspace ensures the workspace pod is running
 func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
 	// Check and suspend idle workspace if auto-stop is enabled
@@ -561,6 +679,15 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		return reconcile.Result{}, err
 	}
 
+	// Ensure headless Service is created for service intercepts
+	if err := r.ensureWorkspaceHeadlessService(ctx, workspace, logger); err != nil {
+		logger.Error("Failed to ensure headless Service", zap.Error(err))
+		workspace.Status.Phase = "Failed"
+		workspace.Status.Message = fmt.Sprintf("Failed to create headless Service: %v", err)
+		r.updateStatusPreservingPackages(ctx, workspace)
+		return reconcile.Result{}, err
+	}
+
 	// Sync package installation status from PackageRequest
 	if err := r.syncPackageStatus(ctx, workspace, logger); err != nil {
 		logger.Warn("Failed to sync package status", zap.Error(err))
@@ -573,7 +700,36 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
 
 	if err == nil {
-		// Pod exists, update workspace status
+		// Pod exists
+
+		// Check if environment connection changed
+		envChanged := false
+		if workspace.Spec.EnvironmentRef != nil {
+			// Workspace has environment reference
+			if workspace.Status.ConnectedEnvironment == nil ||
+				workspace.Status.ConnectedEnvironment.Name != workspace.Spec.EnvironmentRef.Name {
+				envChanged = true
+				logger.Info("Environment connection changed - will update DNS",
+					zap.String("newEnvironment", workspace.Spec.EnvironmentRef.Name))
+			}
+		} else {
+			// Workspace has no environment reference
+			if workspace.Status.ConnectedEnvironment != nil {
+				envChanged = true
+				logger.Info("Environment disconnected - will update DNS")
+			}
+		}
+
+		// Update DNS if environment changed and pod is running
+		if envChanged && pod.Status.Phase == corev1.PodRunning {
+			if err := r.updateDNSConfigInRunningPod(ctx, workspace, logger); err != nil {
+				logger.Warn("Failed to update DNS config in running pod", zap.Error(err))
+				// Don't fail reconciliation, just log the warning
+				// The DNS will be correct on next pod restart
+			}
+		}
+
+		// Update workspace status
 		logger.Info("Workspace pod already exists", zap.String("pod", podName))
 		return r.updateWorkspaceStatus(ctx, workspace, pod, "Running", "Workspace is running", logger)
 	}
@@ -726,7 +882,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	// This is also set in /etc/environment for SSH sessions via PAM
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "PATH",
-		Value: fmt.Sprintf("/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
+		Value: fmt.Sprintf("/kloudlite/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
 	})
 
 	// Add startup script from settings if provided
@@ -752,8 +908,9 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 			Name:      podName,
 			Namespace: workspace.Namespace,
 			Labels: map[string]string{
-				"app":       "workspace",
-				"workspace": workspace.Name,
+				"app":                                    "workspace",
+				"workspace":                              workspace.Name,
+				"workspaces.kloudlite.io/workspace-name": workspace.Name,
 			},
 			Annotations: map[string]string{
 				"kloudlite.io/workspace-display-name": workspace.Spec.DisplayName,
@@ -785,7 +942,7 @@ chown -R 1001:1001 /home/kl/workspaces
 # This will be read by PAM on SSH login (both interactive and non-interactive)
 # The Kubernetes env vars are needed for kl binary to work with in-cluster config
 cat > /etc-writable/environment << 'EOF'
-PATH=/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/kloudlite/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 KUBERNETES_SERVICE_HOST=10.43.0.1
 KUBERNETES_SERVICE_PORT=443
 WORKSPACE_NAME=%s
@@ -921,8 +1078,7 @@ chmod 666 /etc-writable-resolv/resolv.conf
 						},
 						{
 							Name:      "kloudlite-bin",
-							MountPath: "/usr/local/bin/kl",
-							SubPath:   "kl",
+							MountPath: "/kloudlite/bin",
 							ReadOnly:  true,
 						},
 					},
@@ -1021,13 +1177,7 @@ chmod 666 /etc-writable-resolv/resolv.conf
 				{
 					Name: "etc-resolv",
 					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/kloudlite/etc-resolv",
-							Type: func() *corev1.HostPathType {
-								t := corev1.HostPathDirectoryOrCreate
-								return &t
-							}(),
-						},
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
 					},
 				},
 				{
@@ -1048,9 +1198,9 @@ chmod 666 /etc-writable-resolv/resolv.conf
 	}
 
 	// Disable Kubernetes DNS management completely
-	// DNS will be managed manually via /etc/resolv.conf mounted from hostPath
-	// by kl env commands. We provide minimal DNSConfig (required by K8s when dnsPolicy=None),
-	// but since /etc/resolv.conf is mounted from hostPath, this config won't be used.
+	// DNS will be managed manually via /etc/resolv.conf written by init container to EmptyDir
+	// and configured based on workspace's environment connection. We provide minimal DNSConfig
+	// (required by K8s when dnsPolicy=None), but since /etc/resolv.conf is mounted from EmptyDir, this config won't be used.
 	pod.Spec.DNSPolicy = corev1.DNSNone
 	pod.Spec.DNSConfig = &corev1.PodDNSConfig{
 		Nameservers: []string{"10.43.0.10"}, // Required but will be overridden by mounted resolv.conf
@@ -1098,7 +1248,6 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			workspace.Status.ConnectedEnvironment = &workspacev1.ConnectedEnvironmentInfo{
 				Name:            env.Name,
 				TargetNamespace: env.Spec.TargetNamespace,
-				Connected:       true,
 			}
 			logger.Info("Updated ConnectedEnvironment status",
 				zap.String("workspace", workspace.Name),
@@ -1106,23 +1255,20 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 				zap.String("targetNamespace", env.Spec.TargetNamespace),
 			)
 		} else if err != nil {
-			// Environment not found or fetch failed
-			workspace.Status.ConnectedEnvironment = &workspacev1.ConnectedEnvironmentInfo{
-				Name:      workspace.Spec.EnvironmentRef.Name,
-				Connected: false,
-			}
+			// Environment not found or fetch failed - set to nil
+			workspace.Status.ConnectedEnvironment = nil
 			logger.Warn("Failed to fetch environment for status update",
 				zap.String("workspace", workspace.Name),
 				zap.String("environment", workspace.Spec.EnvironmentRef.Name),
 				zap.Error(err),
 			)
 		} else {
-			// Environment exists but not activated
-			workspace.Status.ConnectedEnvironment = &workspacev1.ConnectedEnvironmentInfo{
-				Name:            env.Name,
-				TargetNamespace: env.Spec.TargetNamespace,
-				Connected:       false,
-			}
+			// Environment exists but not activated - set to nil
+			workspace.Status.ConnectedEnvironment = nil
+			logger.Info("Environment exists but not activated",
+				zap.String("workspace", workspace.Name),
+				zap.String("environment", env.Name),
+			)
 		}
 	} else {
 		// No environment reference, clear connected environment status

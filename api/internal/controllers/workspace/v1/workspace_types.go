@@ -190,15 +190,13 @@ type ResourceQuota struct {
 }
 
 // ConnectedEnvironmentInfo tracks the connected environment details
+// If this struct exists in status, it means the workspace is connected to the environment
 type ConnectedEnvironmentInfo struct {
 	// Name of the connected environment
 	Name string `json:"name"`
 
 	// TargetNamespace where environment services are deployed
 	TargetNamespace string `json:"targetNamespace"`
-
-	// Connected indicates if the connection is active
-	Connected bool `json:"connected"`
 
 	// AvailableServices lists services available in the environment
 	// +optional

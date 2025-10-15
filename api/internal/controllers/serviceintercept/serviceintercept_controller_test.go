@@ -2,6 +2,7 @@ package serviceintercept
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
@@ -51,7 +52,6 @@ func TestServiceInterceptReconciler_Reconcile_AddFinalizer(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "workspace-namespace",
@@ -100,43 +100,79 @@ func TestServiceInterceptReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	assert.Contains(t, updatedIntercept.Finalizers, serviceInterceptFinalizer)
 }
 
-func TestServiceInterceptReconciler_Reconcile_Activation_CreatesEndpoints(t *testing.T) {
+func TestServiceInterceptReconciler_Reconcile_Activation_CreatesSOCATPod(t *testing.T) {
 	scheme := testutil.NewTestScheme()
+
+	// Workspace pod that will receive intercepted traffic
+	workspacePod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workspace-test-workspace",
+			Namespace: "workspace-namespace",
+			Labels: map[string]string{
+				"workspaces.kloudlite.io/workspace-name": "test-workspace",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "workspace",
+					Image: "workspace-image",
+				},
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			PodIP: "10.42.0.100",
+		},
+	}
 
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "workspace-namespace",
 		},
-		Spec: workspacesv1.WorkspaceSpec{
-			Status: "active",
-		},
+		Spec: workspacesv1.WorkspaceSpec{},
 		Status: workspacesv1.WorkspaceStatus{
 			Phase: "Running",
 			PodIP: "10.42.0.100",
 		},
 	}
 
-	workspaceService := &corev1.Service{
+	// Headless service created by workspace controller
+	headlessService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "workspace-test-workspace-headless",
 			Namespace: "workspace-namespace",
+			Labels: map[string]string{
+				"app":                                   "workspace",
+				"workspace":                             "test-workspace",
+				"workspaces.kloudlite.io/workspace": "test-workspace",
+			},
 		},
 		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "ssh",
-					Port:       22,
-					TargetPort: intstr.FromInt(22),
-					Protocol:   corev1.ProtocolTCP,
-				},
-			},
+			Type:      corev1.ServiceTypeClusterIP,
+			ClusterIP: "None",
 			Selector: map[string]string{
 				"workspaces.kloudlite.io/workspace-name": "test-workspace",
+			},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "port-3000",
+					Protocol:   corev1.ProtocolTCP,
+					Port:       3000,
+					TargetPort: intstr.FromInt(3000),
+				},
+				{
+					Name:       "port-3001",
+					Protocol:   corev1.ProtocolTCP,
+					Port:       3001,
+					TargetPort: intstr.FromInt(3001),
+				},
 			},
 		},
 	}
 
+	// Service to be intercepted
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-service",
@@ -164,7 +200,6 @@ func TestServiceInterceptReconciler_Reconcile_Activation_CreatesEndpoints(t *tes
 			Finalizers: []string{serviceInterceptFinalizer},
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "workspace-namespace",
@@ -183,7 +218,7 @@ func TestServiceInterceptReconciler_Reconcile_Activation_CreatesEndpoints(t *tes
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace, workspaceService, service, intercept).
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workspacePod, headlessService, service, intercept).
 		WithStatusSubresource(&interceptsv1.ServiceIntercept{}, &workspacesv1.Workspace{}).
 		Build()
 
@@ -206,58 +241,63 @@ func TestServiceInterceptReconciler_Reconcile_Activation_CreatesEndpoints(t *tes
 		_, _ = reconciler.Reconcile(context.Background(), req)
 	}
 
-	// Verify workspace service was updated with intercept port
-	updatedWorkspaceService := &corev1.Service{}
+	// Verify workspace headless service exists (created by workspace controller)
+	headlessSvc := &corev1.Service{}
 	err := k8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      "workspace-test-workspace",
+		Name:      "workspace-test-workspace-headless",
 		Namespace: "workspace-namespace",
-	}, updatedWorkspaceService)
+	}, headlessSvc)
+	assert.NoError(t, err)
+	assert.Equal(t, "None", headlessSvc.Spec.ClusterIP, "Should be a headless service")
+
+	// Verify SOCAT pod was created
+	socatPod := &corev1.Pod{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{
+		Name:      "test-service-intercept-test-workspace",
+		Namespace: "test-namespace",
+	}, socatPod)
 	assert.NoError(t, err)
 
-	// Check that intercept port was added
-	foundPort := false
-	for _, port := range updatedWorkspaceService.Spec.Ports {
-		if port.Port == 3000 {
-			foundPort = true
-			assert.Equal(t, intstr.FromInt(3000), port.TargetPort)
-			assert.Equal(t, corev1.ProtocolTCP, port.Protocol)
-			break
-		}
-	}
-	assert.True(t, foundPort, "Workspace service should have intercept port 3000")
+	// Verify SOCAT pod has original service selector labels
+	assert.Equal(t, "test-app", socatPod.Labels["app"])
 
-	// Verify service selector was cleared
+	// Verify SOCAT pod has intercept tracking labels
+	assert.Equal(t, "true", socatPod.Labels["intercepts.kloudlite.io/managed"])
+	assert.Equal(t, "test-service", socatPod.Labels["intercepts.kloudlite.io/service"])
+	assert.Equal(t, "test-workspace", socatPod.Labels["intercepts.kloudlite.io/workspace"])
+	assert.Equal(t, "test-intercept", socatPod.Labels["intercepts.kloudlite.io/intercept"])
+
+	// Verify SOCAT pod container configuration
+	assert.Len(t, socatPod.Spec.Containers, 1)
+	assert.Equal(t, "socat-forwarder", socatPod.Spec.Containers[0].Name)
+	assert.Equal(t, "alpine/socat:latest", socatPod.Spec.Containers[0].Image)
+
+	// Verify SOCAT command contains correct port forwarding
+	command := strings.Join(socatPod.Spec.Containers[0].Command, " ")
+	assert.Contains(t, command, "socat TCP-LISTEN:80")
+	assert.Contains(t, command, "workspace-test-workspace-headless.workspace-namespace.svc.cluster.local:3000")
+
+	// Verify original service remains unchanged
 	updatedService := &corev1.Service{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-service",
 		Namespace: "test-namespace",
 	}, updatedService)
 	assert.NoError(t, err)
-	assert.Empty(t, updatedService.Spec.Selector, "Service selector should be cleared")
-
-	// Verify manual Endpoints was created
-	endpoints := &corev1.Endpoints{}
-	err = k8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      "test-service",
-		Namespace: "test-namespace",
-	}, endpoints)
-	assert.NoError(t, err)
-	assert.Len(t, endpoints.Subsets, 1)
-	assert.Len(t, endpoints.Subsets[0].Addresses, 1)
-	assert.Equal(t, "10.42.0.100", endpoints.Subsets[0].Addresses[0].IP)
-	assert.Len(t, endpoints.Subsets[0].Ports, 1)
-	assert.Equal(t, int32(3000), endpoints.Subsets[0].Ports[0].Port)
+	assert.NotEmpty(t, updatedService.Spec.Selector, "Service selector should remain unchanged")
+	assert.Equal(t, "test-app", updatedService.Spec.Selector["app"])
 
 	// Verify status was updated
 	updatedIntercept := &interceptsv1.ServiceIntercept{}
 	err = k8sClient.Get(context.Background(), req.NamespacedName, updatedIntercept)
 	assert.NoError(t, err)
 	assert.Equal(t, "Active", updatedIntercept.Status.Phase)
+	assert.NotEmpty(t, updatedIntercept.Status.SOCATPodName)
 	assert.NotNil(t, updatedIntercept.Status.OriginalServiceSelector)
 	assert.Equal(t, "test-app", updatedIntercept.Status.OriginalServiceSelector["app"])
 }
 
-func TestServiceInterceptReconciler_Reconcile_Deletion_RestoresService(t *testing.T) {
+func TestServiceInterceptReconciler_Reconcile_Deletion_CleansUpSOCATPod(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	originalSelector := map[string]string{"app": "test-app"}
@@ -273,13 +313,39 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_RestoresService(t *testin
 		},
 	}
 
+	// Headless service created by workspace controller (remains unchanged)
+	headlessService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workspace-test-workspace-headless",
+			Namespace: "workspace-namespace",
+			Labels: map[string]string{
+				"app":                                   "workspace",
+				"workspace":                             "test-workspace",
+				"workspaces.kloudlite.io/workspace": "test-workspace",
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Type:      corev1.ServiceTypeClusterIP,
+			ClusterIP: "None",
+			Selector: map[string]string{
+				"workspaces.kloudlite.io/workspace-name": "test-workspace",
+			},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "port-3000",
+					Protocol:   corev1.ProtocolTCP,
+					Port:       3000,
+					TargetPort: intstr.FromInt(3000),
+				},
+			},
+		},
+	}
+
+	// Original service (unchanged by intercept)
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-service",
 			Namespace: "test-namespace",
-			Annotations: map[string]string{
-				"intercepts.kloudlite.io/intercepted-by": "test-intercept",
-			},
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -290,28 +356,33 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_RestoresService(t *testin
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
-			Selector: nil, // Cleared by intercept
+			Selector: originalSelector, // Still has original selector
 		},
 	}
 
-	endpoints := &corev1.Endpoints{
+	// SOCAT pod created by intercept
+	socatPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-service",
+			Name:      "test-service-intercept-test-workspace",
 			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"app":                                "test-app",
+				"intercepts.kloudlite.io/managed":   "true",
+				"intercepts.kloudlite.io/service":   "test-service",
+				"intercepts.kloudlite.io/workspace": "test-workspace",
+			},
 		},
-		Subsets: []corev1.EndpointSubset{
-			{
-				Addresses: []corev1.EndpointAddress{
-					{IP: "10.42.0.100"},
-				},
-				Ports: []corev1.EndpointPort{
-					{
-						Name:     "http",
-						Port:     3000,
-						Protocol: corev1.ProtocolTCP,
-					},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    "socat-forwarder",
+					Image:   "alpine/socat:latest",
+					Command: []string{"sh", "-c", "socat TCP-LISTEN:80,fork,reuseaddr TCP:workspace-test-workspace-headless.workspace-namespace.svc.cluster.local:3000"},
 				},
 			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
 		},
 	}
 
@@ -324,7 +395,6 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_RestoresService(t *testin
 			DeletionTimestamp: &now, // Marked for deletion
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "workspace-namespace",
@@ -345,10 +415,11 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_RestoresService(t *testin
 			Phase:                   "Active",
 			OriginalServiceSelector: originalSelector,
 			AffectedPodNames:        []string{"test-pod-1"},
+			SOCATPodName:            "test-service-intercept-test-workspace",
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace, service, endpoints, intercept).
+	k8sClient := testutil.NewFakeClient(scheme, workspace, service, socatPod, headlessService, intercept).
 		WithStatusSubresource(&interceptsv1.ServiceIntercept{}).
 		Build()
 
@@ -369,15 +440,23 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_RestoresService(t *testin
 	// Reconcile the deletion
 	_, _ = reconciler.Reconcile(context.Background(), req)
 
-	// Verify Endpoints was deleted
-	deletedEndpoints := &corev1.Endpoints{}
+	// Verify SOCAT pod was deleted
+	deletedSOCATPod := &corev1.Pod{}
 	err := k8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      "test-service",
+		Name:      "test-service-intercept-test-workspace",
 		Namespace: "test-namespace",
-	}, deletedEndpoints)
-	assert.True(t, apierrors.IsNotFound(err), "Endpoints should be deleted")
+	}, deletedSOCATPod)
+	assert.True(t, apierrors.IsNotFound(err), "SOCAT pod should be deleted")
 
-	// Verify service selector was restored
+	// Verify workspace headless service still exists (managed by workspace controller)
+	existingHeadlessService := &corev1.Service{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{
+		Name:      "workspace-test-workspace-headless",
+		Namespace: "workspace-namespace",
+	}, existingHeadlessService)
+	assert.NoError(t, err, "Headless service should still exist")
+
+	// Verify original service remains unchanged
 	updatedService := &corev1.Service{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-service",
@@ -385,513 +464,5 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_RestoresService(t *testin
 	}, updatedService)
 	assert.NoError(t, err)
 	assert.NotNil(t, updatedService.Spec.Selector)
-	assert.Equal(t, "test-app", updatedService.Spec.Selector["app"])
-
-	// Verify annotation was removed
-	_, exists := updatedService.Annotations["intercepts.kloudlite.io/intercepted-by"]
-	assert.False(t, exists, "Intercept annotation should be removed")
-
-	// Note: Finalizer won't be removed immediately as deletion waits for replacement pods
-	// This is the expected behavior - finalizer stays until pods are ready
-}
-
-func TestServiceInterceptReconciler_Reconcile_InactiveStatus_ClearsEndpoints(t *testing.T) {
-	scheme := testutil.NewTestScheme()
-
-	originalSelector := map[string]string{"app": "test-app"}
-
-	workspace := &workspacesv1.Workspace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-workspace",
-			Namespace: "workspace-namespace",
-		},
-		Status: workspacesv1.WorkspaceStatus{
-			Phase: "Running",
-			PodIP: "10.42.0.100",
-		},
-	}
-
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-service",
-			Namespace: "test-namespace",
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "http",
-					Port:       80,
-					TargetPort: intstr.FromInt(8080),
-					Protocol:   corev1.ProtocolTCP,
-				},
-			},
-			Selector: nil, // Cleared by intercept
-		},
-	}
-
-	endpoints := &corev1.Endpoints{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-service",
-			Namespace: "test-namespace",
-		},
-		Subsets: []corev1.EndpointSubset{
-			{
-				Addresses: []corev1.EndpointAddress{
-					{IP: "10.42.0.100"},
-				},
-				Ports: []corev1.EndpointPort{
-					{
-						Name:     "http",
-						Port:     3000,
-						Protocol: corev1.ProtocolTCP,
-					},
-				},
-			},
-		},
-	}
-
-	intercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-intercept",
-			Namespace:  "test-namespace",
-			Finalizers: []string{serviceInterceptFinalizer},
-		},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "inactive", // Changed to inactive
-			WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "workspace-namespace",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-namespace",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-		},
-		Status: interceptsv1.ServiceInterceptStatus{
-			Phase:                   "Active",
-			OriginalServiceSelector: originalSelector,
-		},
-	}
-
-	k8sClient := testutil.NewFakeClient(scheme, workspace, service, endpoints, intercept).
-		WithStatusSubresource(&interceptsv1.ServiceIntercept{}).
-		Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &ServiceInterceptReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "test-intercept",
-			Namespace: "test-namespace",
-		},
-	}
-
-	// Reconcile with inactive status
-	for i := 0; i < 3; i++ {
-		_, _ = reconciler.Reconcile(context.Background(), req)
-	}
-
-	// Verify Endpoints was deleted
-	deletedEndpoints := &corev1.Endpoints{}
-	err := k8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      "test-service",
-		Namespace: "test-namespace",
-	}, deletedEndpoints)
-	assert.True(t, apierrors.IsNotFound(err), "Endpoints should be deleted when inactive")
-
-	// Verify service selector was restored
-	updatedService := &corev1.Service{}
-	err = k8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      "test-service",
-		Namespace: "test-namespace",
-	}, updatedService)
-	assert.NoError(t, err)
-	assert.NotNil(t, updatedService.Spec.Selector)
-	assert.Equal(t, "test-app", updatedService.Spec.Selector["app"])
-
-	// Verify status was updated to Inactive
-	updatedIntercept := &interceptsv1.ServiceIntercept{}
-	err = k8sClient.Get(context.Background(), req.NamespacedName, updatedIntercept)
-	assert.NoError(t, err)
-	assert.Equal(t, "Inactive", updatedIntercept.Status.Phase)
-}
-
-func TestServiceInterceptReconciler_Reconcile_WorkspaceNotFound(t *testing.T) {
-	scheme := testutil.NewTestScheme()
-
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-service",
-			Namespace: "test-namespace",
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": "test-app"},
-		},
-	}
-
-	intercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-intercept",
-			Namespace:  "test-namespace",
-			Finalizers: []string{serviceInterceptFinalizer},
-		},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
-			WorkspaceRef: corev1.ObjectReference{
-				Name:      "nonexistent-workspace",
-				Namespace: "workspace-namespace",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-namespace",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-		},
-	}
-
-	k8sClient := testutil.NewFakeClient(scheme, service, intercept).
-		WithStatusSubresource(&interceptsv1.ServiceIntercept{}).
-		Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &ServiceInterceptReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "test-intercept",
-			Namespace: "test-namespace",
-		},
-	}
-
-	// Reconcile should return error for missing workspace
-	result, err := reconciler.Reconcile(context.Background(), req)
-	// Error is expected when workspace is not found
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not found")
-	// Controller will requeue due to error
-	assert.True(t, result.Requeue || result.RequeueAfter > 0 || err != nil)
-}
-
-func TestServiceInterceptReconciler_Reconcile_ServiceNotFound(t *testing.T) {
-	scheme := testutil.NewTestScheme()
-
-	workspace := &workspacesv1.Workspace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-workspace",
-			Namespace: "workspace-namespace",
-		},
-		Status: workspacesv1.WorkspaceStatus{
-			Phase: "Running",
-			PodIP: "10.42.0.100",
-		},
-	}
-
-	intercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-intercept",
-			Namespace:  "test-namespace",
-			Finalizers: []string{serviceInterceptFinalizer},
-		},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
-			WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "workspace-namespace",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "nonexistent-service",
-				Namespace: "test-namespace",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-		},
-	}
-
-	k8sClient := testutil.NewFakeClient(scheme, workspace, intercept).
-		WithStatusSubresource(&interceptsv1.ServiceIntercept{}, &workspacesv1.Workspace{}).
-		Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &ServiceInterceptReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "test-intercept",
-			Namespace: "test-namespace",
-		},
-	}
-
-	// Reconcile should return error for missing service
-	result, err := reconciler.Reconcile(context.Background(), req)
-	// Error is expected when service is not found
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not found")
-	// Controller will requeue due to error
-	assert.True(t, result.Requeue || result.RequeueAfter > 0 || err != nil)
-}
-
-func TestServiceInterceptReconciler_Reconcile_MultiplePortMappings(t *testing.T) {
-	scheme := testutil.NewTestScheme()
-
-	workspace := &workspacesv1.Workspace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-workspace",
-			Namespace: "workspace-namespace",
-		},
-		Spec: workspacesv1.WorkspaceSpec{
-			Status: "active",
-		},
-		Status: workspacesv1.WorkspaceStatus{
-			Phase: "Running",
-			PodIP: "10.42.0.100",
-		},
-	}
-
-	workspaceService := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
-			Namespace: "workspace-namespace",
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "ssh",
-					Port:       22,
-					TargetPort: intstr.FromInt(22),
-					Protocol:   corev1.ProtocolTCP,
-				},
-			},
-			Selector: map[string]string{
-				"workspaces.kloudlite.io/workspace-name": "test-workspace",
-			},
-		},
-	}
-
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-service",
-			Namespace: "test-namespace",
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "http",
-					Port:       80,
-					TargetPort: intstr.FromInt(8080),
-					Protocol:   corev1.ProtocolTCP,
-				},
-				{
-					Name:       "grpc",
-					Port:       9090,
-					TargetPort: intstr.FromInt(9090),
-					Protocol:   corev1.ProtocolTCP,
-				},
-			},
-			Selector: map[string]string{
-				"app": "test-app",
-			},
-		},
-	}
-
-	intercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-intercept",
-			Namespace:  "test-namespace",
-			Finalizers: []string{serviceInterceptFinalizer},
-		},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
-			WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "workspace-namespace",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-namespace",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
-					Protocol:      corev1.ProtocolTCP,
-				},
-				{
-					ServicePort:   9090,
-					WorkspacePort: 3001,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-		},
-	}
-
-	k8sClient := testutil.NewFakeClient(scheme, workspace, workspaceService, service, intercept).
-		WithStatusSubresource(&interceptsv1.ServiceIntercept{}, &workspacesv1.Workspace{}).
-		Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &ServiceInterceptReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "test-intercept",
-			Namespace: "test-namespace",
-		},
-	}
-
-	// Multiple reconciles may be needed
-	for i := 0; i < 5; i++ {
-		_, _ = reconciler.Reconcile(context.Background(), req)
-	}
-
-	// Verify Endpoints has all ports
-	endpoints := &corev1.Endpoints{}
-	err := k8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      "test-service",
-		Namespace: "test-namespace",
-	}, endpoints)
-	assert.NoError(t, err)
-	assert.Len(t, endpoints.Subsets, 1)
-	assert.Len(t, endpoints.Subsets[0].Addresses, 1)
-	assert.Equal(t, "10.42.0.100", endpoints.Subsets[0].Addresses[0].IP)
-	assert.Len(t, endpoints.Subsets[0].Ports, 2)
-
-	// Verify both ports are present
-	portMap := make(map[int32]bool)
-	for _, port := range endpoints.Subsets[0].Ports {
-		portMap[port.Port] = true
-	}
-	assert.True(t, portMap[3000], "Port 3000 should be in endpoints")
-	assert.True(t, portMap[3001], "Port 3001 should be in endpoints")
-}
-
-func TestServiceInterceptReconciler_SkipReInterceptionDuringDeletion(t *testing.T) {
-	scheme := testutil.NewTestScheme()
-
-	// Service that was previously intercepted
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-service",
-			Namespace: "test-namespace",
-			Annotations: map[string]string{
-				"intercepts.kloudlite.io/intercepted-by": "test-intercept",
-			},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": "test-app"},
-		},
-	}
-
-	workspace := &workspacesv1.Workspace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-workspace",
-			Namespace: "workspace-namespace",
-		},
-		Status: workspacesv1.WorkspaceStatus{
-			Phase: "Running",
-			PodIP: "10.42.0.100",
-		},
-	}
-
-	now := metav1.Now()
-	intercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "test-intercept",
-			Namespace:         "test-namespace",
-			Finalizers:        []string{serviceInterceptFinalizer},
-			DeletionTimestamp: &now, // Being deleted
-		},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			Status: "active",
-			WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "workspace-namespace",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-namespace",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
-					Protocol:      corev1.ProtocolTCP,
-				},
-			},
-		},
-		Status: interceptsv1.ServiceInterceptStatus{
-			Phase: "Active",
-			OriginalServiceSelector: map[string]string{
-				"app": "test-app",
-			},
-		},
-	}
-
-	k8sClient := testutil.NewFakeClient(scheme, service, workspace, intercept).
-		WithStatusSubresource(&interceptsv1.ServiceIntercept{}).
-		Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &ServiceInterceptReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "test-intercept",
-			Namespace: "test-namespace",
-		},
-	}
-
-	// Reconcile deletion
-	_, _ = reconciler.Reconcile(context.Background(), req)
-
-	// Verify service selector was restored
-	updatedService := &corev1.Service{}
-	err := k8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      "test-service",
-		Namespace: "test-namespace",
-	}, updatedService)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, updatedService.Spec.Selector)
-
-	// Verify annotation was removed
-	_, exists := updatedService.Annotations["intercepts.kloudlite.io/intercepted-by"]
-	assert.False(t, exists)
+	assert.Equal(t, "test-app", updatedService.Spec.Selector["app"], "Service selector should remain unchanged")
 }

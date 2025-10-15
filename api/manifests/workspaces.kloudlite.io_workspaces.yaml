@@ -382,9 +382,6 @@ spec:
                     items:
                       type: string
                     type: array
-                  connected:
-                    description: Connected indicates if the connection is active
-                    type: boolean
                   name:
                     description: Name of the connected environment
                     type: string
@@ -392,7 +389,6 @@ spec:
                     description: TargetNamespace where environment services are deployed
                     type: string
                 required:
-                - connected
                 - name
                 - targetNamespace
                 type: object

@@ -230,7 +230,7 @@ func handleEnvStatus() error {
 	}
 
 	// Check if workspace has a connected environment
-	if workspace.Status.ConnectedEnvironment == nil || !workspace.Status.ConnectedEnvironment.Connected {
+	if workspace.Status.ConnectedEnvironment == nil {
 		fmt.Println("Status: Not connected to any environment")
 		fmt.Println()
 		fmt.Println("To connect to an environment, run:")

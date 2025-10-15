@@ -40,28 +40,23 @@ type ServiceInterceptSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
 	PortMappings []PortMapping `json:"portMappings"`
-
-	// Status indicates whether the intercept is active or inactive
-	// +kubebuilder:validation:Enum=active;inactive
-	// +kubebuilder:default=active
-	Status string `json:"status"`
 }
 
 // ServiceInterceptStatus defines the observed state of ServiceIntercept
 type ServiceInterceptStatus struct {
 	// Phase represents the current phase of the service intercept
-	// +kubebuilder:validation:Enum=Creating;Active;Inactive;Failed
+	// +kubebuilder:validation:Enum=Creating;Active;Failed
 	Phase string `json:"phase,omitempty"`
 
 	// Message provides additional information about the current state
 	// +optional
 	Message string `json:"message,omitempty"`
 
-	// OriginalServiceSelector stores the original service selector for restoration
+	// OriginalServiceSelector stores the original service selector to identify pods to delete
 	// +optional
 	OriginalServiceSelector map[string]string `json:"originalServiceSelector,omitempty"`
 
-	// AffectedPodNames lists pods that have been modified with node selector
+	// AffectedPodNames lists pods that have been deleted/affected by the intercept
 	// +optional
 	AffectedPodNames []string `json:"affectedPodNames,omitempty"`
 
@@ -73,13 +68,17 @@ type ServiceInterceptStatus struct {
 	// +optional
 	WorkspacePodName string `json:"workspacePodName,omitempty"`
 
+	// SOCATPodName is the name of the SOCAT forwarding pod
+	// +optional
+	SOCATPodName string `json:"socatPodName,omitempty"`
+
+	// WorkspaceHeadlessServiceName is the name of the headless service for the workspace
+	// +optional
+	WorkspaceHeadlessServiceName string `json:"workspaceHeadlessServiceName,omitempty"`
+
 	// InterceptStartTime when the intercept was activated
 	// +optional
 	InterceptStartTime *metav1.Time `json:"interceptStartTime,omitempty"`
-
-	// InterceptEndTime when the intercept was deactivated
-	// +optional
-	InterceptEndTime *metav1.Time `json:"interceptEndTime,omitempty"`
 
 	// Conditions represent the latest available observations of service intercept state
 	// +optional
@@ -91,7 +90,6 @@ type ServiceInterceptStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={kloudlite,intercepts}
 // +kubebuilder:printcolumn:name="Workspace",type=string,JSONPath=`.spec.workspaceRef.name`
 // +kubebuilder:printcolumn:name="Service",type=string,JSONPath=`.spec.serviceRef.name`
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.spec.status`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
