@@ -87,6 +87,8 @@ type ServiceInfo struct {
 	ClusterIP string            `json:"clusterIP"`
 	Ports     []ServicePort     `json:"ports"`
 	Selector  map[string]string `json:"selector,omitempty"`
+	Replicas  int32             `json:"replicas"`
+	Image     string            `json:"image,omitempty"`
 }
 
 type ServiceListResponse struct {
