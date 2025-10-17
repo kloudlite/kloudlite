@@ -271,22 +271,9 @@ func (w *WorkMachineWebhook) validateWorkMachine(machine *machinesv1.WorkMachine
 		return fmt.Errorf("owner %s not found", ownedBy)
 	}
 
-	// On CREATE, check if user already has a machine
-	if operation == admissionv1.Create {
-		machineList := &machinesv1.WorkMachineList{}
-		if err := w.k8sClient.List(ctx, machineList); err != nil {
-			return fmt.Errorf("failed to list machines: %v", err)
-		}
-
-		for _, existingMachine := range machineList.Items {
-			// Check if the owner matches (could be email or username)
-			if existingMachine.Spec.OwnedBy == ownedBy ||
-			   existingMachine.Spec.OwnedBy == foundUser.Name ||
-			   existingMachine.Spec.OwnedBy == foundUser.Spec.Email {
-				return fmt.Errorf("user %s already has a work machine: %s", ownedBy, existingMachine.Name)
-			}
-		}
-	}
+	// Note: The "one workmachine per user" constraint is an application-level
+	// business rule enforced in handlers, not a resource validation concern.
+	// Webhooks validate resource fields; handlers enforce business logic.
 
 	// Validate machine type exists and is active
 	machineType := &machinesv1.MachineType{}
