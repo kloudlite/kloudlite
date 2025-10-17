@@ -53,10 +53,8 @@ func ParseComposeFile(composeContent string, projectName string, envData *Enviro
 		return nil, fmt.Errorf("parsed project is nil")
 	}
 
-	// Validate that we have at least one service
-	if len(project.Services) == 0 {
-		return nil, fmt.Errorf("no services found in compose file")
-	}
+	// Allow empty services - user can add services later
+	// No validation required here
 
 	// Post-process to inject /files/ volume mounts that were filtered out during parsing
 	// The compose parser filters out bind mounts with non-existent source paths
