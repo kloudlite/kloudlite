@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -59,7 +58,7 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		return
 	}
 
-	// Find user by email from JWT token
+	// Validate user exists by email from JWT token
 	userList := &platformv1alpha1.UserList{}
 	if err := h.k8sClient.List(c.Request.Context(), userList); err != nil {
 		h.logger.Error("Failed to list users", zap.Error(err))
@@ -69,17 +68,15 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		return
 	}
 
-	var actualUserName string
-	found := false
+	userFound := false
 	for _, u := range userList.Items {
 		if u.Spec.Email == userEmail {
-			actualUserName = u.Name
-			found = true
+			userFound = true
 			break
 		}
 	}
 
-	if !found {
+	if !userFound {
 		h.logger.Error("User not found by email", zap.String("email", userEmail))
 		c.JSON(http.StatusForbidden, gin.H{
 			"error":   "User not authorized",
@@ -97,21 +94,8 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	}
 
 	// Set the CreatedBy field with the user email from JWT token
+	// The webhook will handle adding ownership labels and metadata
 	env.Spec.CreatedBy = userEmail
-
-	// Initialize labels if not present
-	if env.Spec.Labels == nil {
-		env.Spec.Labels = make(map[string]string)
-	}
-
-	// Add ownership labels
-	env.Spec.Labels["kloudlite.io/owned-by"] = actualUserName
-
-	// Add email label (base64 encoded to comply with Kubernetes label requirements)
-	if userEmail != "" {
-		encodedEmail := base64.URLEncoding.EncodeToString([]byte(userEmail))
-		env.Spec.Labels["kloudlite.io/owner-email"] = encodedEmail
-	}
 
 	// Create the environment (cluster-scoped)
 	if err := h.envRepo.Create(c.Request.Context(), env); err != nil {
