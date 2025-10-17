@@ -2,16 +2,17 @@ package user
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"strings"
 	"time"
 
 	userv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
+	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,6 +30,11 @@ type UserReconciler struct {
 }
 
 const UserFinalizerName = "user.platform.kloudlite.io/cleanup"
+
+// updateUserStatus updates the User status with retry logic
+func (r *UserReconciler) updateUserStatus(ctx context.Context, user *userv1alpha1.User, updateFunc func() error, logger *zap.Logger) error {
+	return statusutil.UpdateStatusWithRetry(ctx, r.Client, user, updateFunc, logger)
+}
 
 // Reconcile handles User events and ensures each user has a WorkMachine
 func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -58,19 +64,72 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 		return r.handleUserDeletion(ctx, user, logger)
 	}
 
+	// Handle password updates with change detection
 	if user.Spec.PasswordString != "" {
-		b, err := bcrypt.GenerateFromPassword([]byte(user.Spec.PasswordString), bcrypt.DefaultCost)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
+		// Calculate hash of the new password string for comparison
+		newPasswordHash := sha256.Sum256([]byte(user.Spec.PasswordString))
+		newPasswordHashStr := base64.StdEncoding.EncodeToString(newPasswordHash[:])
 
-		user.Spec.Password = base64.StdEncoding.EncodeToString(b)
-		user.Spec.PasswordString = ""
-		if err := r.Update(ctx, user); err != nil {
-			logger.Error("failed to update user", zap.Error(err))
-			return reconcile.Result{}, err
+		// Only update if password has actually changed
+		if user.Status.PasswordHash != newPasswordHashStr {
+			logger.Info("Updating user password")
+
+			b, err := bcrypt.GenerateFromPassword([]byte(user.Spec.PasswordString), bcrypt.DefaultCost)
+			if err != nil {
+				logger.Error("Failed to hash password", zap.Error(err))
+				return ctrl.Result{}, err
+			}
+
+			user.Spec.Password = base64.StdEncoding.EncodeToString(b)
+			user.Spec.PasswordString = ""
+
+			// Update status to track the password hash
+			user.Status.PasswordHash = newPasswordHashStr
+
+			// Initialize status if needed
+			if user.Status.Conditions == nil {
+				user.Status.Conditions = []metav1.Condition{}
+			}
+
+			// Add or update password condition
+			now := metav1.Now()
+			passwordCondition := metav1.Condition{
+				Type:               "PasswordSet",
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: now,
+				Reason:             "PasswordUpdated",
+				Message:            "User password has been successfully updated",
+			}
+
+			// Update existing condition or add new one
+			conditionUpdated := false
+			for i, condition := range user.Status.Conditions {
+				if condition.Type == "PasswordSet" {
+					user.Status.Conditions[i] = passwordCondition
+					conditionUpdated = true
+					break
+				}
+			}
+			if !conditionUpdated {
+				user.Status.Conditions = append(user.Status.Conditions, passwordCondition)
+			}
+
+			if err := r.Update(ctx, user); err != nil {
+				logger.Error("Failed to update user with new password", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			logger.Info("Successfully updated user password")
+			return reconcile.Result{Requeue: true}, nil
+		} else {
+			// Password hasn't changed, just clear the PasswordString field
+			user.Spec.PasswordString = ""
+			if err := r.Update(ctx, user); err != nil {
+				logger.Error("Failed to clear PasswordString field", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
 		}
-		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Add finalizer if not present
@@ -102,37 +161,73 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 				zap.String("expectedOwner", user.Spec.Email))
 		}
 
-		// Handle user activation/deactivation - update WorkMachine state
-		updated := false
+		// Check user activation status and update user status accordingly
 		isUserActive := user.Spec.Active != nil && *user.Spec.Active
 
-		if isUserActive {
-			// User is active - ensure WorkMachine is not disabled
-			if existingWorkMachine.Spec.DesiredState == machinesv1.MachineStateDisabled {
-				logger.Info("User activated - enabling WorkMachine", zap.String("workMachine", workMachineName))
-				existingWorkMachine.Spec.DesiredState = machinesv1.MachineStateStopped
-				updated = true
-			}
-		} else {
-			// User is inactive - disable WorkMachine
-			if existingWorkMachine.Spec.DesiredState != machinesv1.MachineStateDisabled {
-				logger.Info("User deactivated - disabling WorkMachine", zap.String("workMachine", workMachineName))
-				existingWorkMachine.Spec.DesiredState = machinesv1.MachineStateDisabled
-				updated = true
+		// Update user status based on activation
+		needsStatusUpdate := false
+		if user.Status.Phase == "" ||
+		   (isUserActive && user.Status.Phase != "active") ||
+		   (!isUserActive && user.Status.Phase != "inactive") {
+			needsStatusUpdate = true
+		}
+
+		if needsStatusUpdate {
+			// Capture isUserActive for use in updateFunc
+			active := isUserActive
+
+			if err := r.updateUserStatus(ctx, user, func() error {
+				if user.Status.Conditions == nil {
+					user.Status.Conditions = []metav1.Condition{}
+				}
+
+				// Update phase
+				if active {
+					user.Status.Phase = "active"
+				} else {
+					user.Status.Phase = "inactive"
+				}
+
+				// Add/update activation condition
+				now := metav1.Now()
+				activationCondition := metav1.Condition{
+					Type:               "Active",
+					Status:             metav1.ConditionTrue,
+					LastTransitionTime: now,
+					Reason:             "UserStatusUpdated",
+					Message:            fmt.Sprintf("User is %s", user.Status.Phase),
+				}
+				if !active {
+					activationCondition.Status = metav1.ConditionFalse
+					activationCondition.Reason = "UserDeactivated"
+					activationCondition.Message = "User has been deactivated"
+				}
+
+				// Update existing condition or add new one
+				conditionUpdated := false
+				for i, condition := range user.Status.Conditions {
+					if condition.Type == "Active" {
+						user.Status.Conditions[i] = activationCondition
+						conditionUpdated = true
+						break
+					}
+				}
+				if !conditionUpdated {
+					user.Status.Conditions = append(user.Status.Conditions, activationCondition)
+				}
+
+				return nil
+			}, logger); err != nil {
+				logger.Warn("Failed to update user status", zap.Error(err))
+			} else {
+				logger.Info("Updated user status based on activation",
+					zap.String("phase", user.Status.Phase),
+					zap.Bool("userActive", active))
 			}
 		}
 
-		// Update WorkMachine if needed
-		if updated {
-			if err := r.Update(ctx, existingWorkMachine); err != nil {
-				logger.Error("Failed to update WorkMachine state", zap.Error(err))
-				return reconcile.Result{}, err
-			}
-			logger.Info("Updated WorkMachine state based on user activation status",
-				zap.String("workMachine", workMachineName),
-				zap.Bool("userActive", isUserActive),
-				zap.String("desiredState", string(existingWorkMachine.Spec.DesiredState)))
-		}
+		// Note: WorkMachine state management is now handled by the WorkMachine controller
+		// based on the user's activation status and other conditions
 
 		return reconcile.Result{}, nil
 	}
@@ -161,33 +256,8 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 	// Create WorkMachine for the user
 	logger.Info("Creating WorkMachine for user", zap.String("workMachine", workMachineName))
 
-	// Create namespace for the WorkMachine first
-	namespace := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: workMachineName,
-			Labels: map[string]string{
-				"kloudlite.io/workmachine": workMachineName,
-				"kloudlite.io/user":        user.Name,
-			},
-			Annotations: map[string]string{
-				"kloudlite.io/owner-email": user.Spec.Email,
-			},
-		},
-	}
-
-	// Create the namespace if it doesn't exist
-	if err := r.Create(ctx, namespace); err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			logger.Error("Failed to create namespace for WorkMachine", zap.Error(err))
-			return reconcile.Result{}, err
-		}
-		logger.Info("Namespace already exists", zap.String("namespace", workMachineName))
-	} else {
-		logger.Info("Created namespace for WorkMachine", zap.String("namespace", workMachineName))
-	}
-
-	// Note: RBAC for workspace management is handled by ClusterRoleBinding
-	// No need to create namespace-specific RBAC resources
+	// Note: Namespace creation is now handled by the WorkMachine controller
+	// This removes the tight coupling between User and WorkMachine namespace management
 
 	workMachine, err := r.buildWorkMachineForUser(ctx, user, workMachineName)
 	if err != nil {
@@ -218,16 +288,55 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 		zap.String("workMachine", workMachineName),
 		zap.String("targetNamespace", workMachine.Spec.TargetNamespace))
 
-	// Update user metadata to indicate WorkMachine has been created
-	if user.Spec.Metadata == nil {
-		user.Spec.Metadata = make(map[string]string)
-	}
-	user.Spec.Metadata["workmachine-name"] = workMachineName
-	user.Spec.Metadata["workmachine-created"] = "true"
+	// Update user status to track WorkMachine information
+	// Capture variables for use in updateFunc
+	wmName := workMachineName
+	isUserActive := user.Spec.Active != nil && *user.Spec.Active
 
-	if err := r.Update(ctx, user); err != nil {
-		logger.Warn("Failed to update user metadata", zap.Error(err))
-		// Don't fail the reconciliation for metadata update failures
+	if err := r.updateUserStatus(ctx, user, func() error {
+		// Initialize status if needed
+		if user.Status.Conditions == nil {
+			user.Status.Conditions = []metav1.Condition{}
+		}
+
+		// Add WorkMachineReady condition
+		now := metav1.Now()
+		workMachineCondition := metav1.Condition{
+			Type:               "WorkMachineReady",
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: now,
+			Reason:             "WorkMachineCreated",
+			Message:            fmt.Sprintf("WorkMachine %s has been successfully created", wmName),
+		}
+
+		// Update existing condition or add new one
+		conditionUpdated := false
+		for i, condition := range user.Status.Conditions {
+			if condition.Type == "WorkMachineReady" {
+				user.Status.Conditions[i] = workMachineCondition
+				conditionUpdated = true
+				break
+			}
+		}
+		if !conditionUpdated {
+			user.Status.Conditions = append(user.Status.Conditions, workMachineCondition)
+		}
+
+		// Set user phase based on activity status
+		if isUserActive {
+			user.Status.Phase = "active"
+		} else {
+			user.Status.Phase = "inactive"
+		}
+
+		if user.Status.CreatedAt == nil {
+			user.Status.CreatedAt = &now
+		}
+
+		return nil
+	}, logger); err != nil {
+		logger.Warn("Failed to update user status", zap.Error(err))
+		// Don't fail the reconciliation for status update failures
 	}
 
 	return reconcile.Result{}, nil
@@ -319,7 +428,7 @@ func (r *UserReconciler) buildWorkMachineForUser(ctx context.Context, user *user
 		ObjectMeta: metav1.ObjectMeta{
 			Name: workMachineName,
 			Labels: map[string]string{
-				"kloudlite.io/user-email": sanitizeForLabel(user.Spec.Email),
+				"kloudlite.io/user-email": utils.SanitizeForLabel(user.Spec.Email),
 				"kloudlite.io/user-name":  user.Name,
 				"kloudlite.io/managed":    "true",
 				"kloudlite.io/created-by": "user-controller",
@@ -338,61 +447,6 @@ func (r *UserReconciler) buildWorkMachineForUser(ctx context.Context, user *user
 	}, nil
 }
 
-// extractUsernameFromEmail extracts the username part from an email
-func extractUsernameFromEmail(email string) string {
-	username := email
-	if idx := strings.Index(username, "@"); idx > 0 {
-		username = username[:idx]
-	}
-	// Replace dots and special characters with hyphens for valid k8s names
-	username = strings.ReplaceAll(username, ".", "-")
-	username = strings.ReplaceAll(username, "_", "-")
-	username = strings.ReplaceAll(username, "+", "-")
-	username = strings.ToLower(username)
-
-	// Ensure the username starts with a letter or number
-	if len(username) > 0 && !isAlphanumeric(username[0]) {
-		username = "u-" + username
-	}
-
-	// Limit length to ensure the full name stays within k8s limits
-	if len(username) > 50 {
-		username = username[:50]
-	}
-
-	// Trim trailing hyphens
-	username = strings.TrimRight(username, "-")
-
-	return username
-}
-
-// sanitizeForLabel sanitizes a string to be used as a label value
-func sanitizeForLabel(value string) string {
-	// Replace special characters with hyphens for label value
-	sanitized := strings.ReplaceAll(value, "@", "-at-")
-	sanitized = strings.ReplaceAll(sanitized, ".", "-dot-")
-	sanitized = strings.ReplaceAll(sanitized, "_", "-")
-	sanitized = strings.ReplaceAll(sanitized, "+", "-plus-")
-	sanitized = strings.ToLower(sanitized)
-
-	// Ensure it starts and ends with alphanumeric
-	sanitized = strings.Trim(sanitized, "-")
-
-	// Limit length to 63 characters (Kubernetes label value limit)
-	if len(sanitized) > 63 {
-		sanitized = sanitized[:63]
-	}
-
-	// Ensure it ends with alphanumeric
-	sanitized = strings.TrimRight(sanitized, "-")
-
-	return sanitized
-}
-
-// isAlphanumeric checks if a byte is alphanumeric
-func isAlphanumeric(b byte) bool {
-	return (b >= 'a' && b <= 'z') || (b >= '0' && b <= '9')
-}
 
 // rolesToStrings converts RoleType slice to string slice for logging
 func rolesToStrings(roles []userv1alpha1.RoleType) []string {
@@ -407,6 +461,6 @@ func rolesToStrings(roles []userv1alpha1.RoleType) []string {
 func (r *UserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&userv1alpha1.User{}).
-		Owns(&machinesv1.WorkMachine{}). // Watch WorkMachines owned by Users
+		Owns(&machinesv1.WorkMachine{}). // Watch WorkMachines owned by Users for garbage collection
 		Complete(r)
 }

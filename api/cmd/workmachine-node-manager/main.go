@@ -28,12 +28,13 @@ import (
 )
 
 const (
-	nixStorePath       = "/nix"
-	workspaceHomePath  = "/var/lib/kloudlite/workspace-homes/kl"
-	workspaceUserUID   = 1001
-	workspaceUserGID   = 1001
-	sshConfigPath      = "/var/lib/kloudlite/ssh-config"
-	authorizedKeysFile = "authorized_keys"
+	nixStorePath         = "/nix"
+	workspaceHomePath    = "/var/lib/kloudlite/workspace-homes/kl"
+	workspaceUserUID     = 1001
+	workspaceUserGID     = 1001
+	sshConfigPath        = "/var/lib/kloudlite/ssh-config"
+	authorizedKeysFile   = "authorized_keys"
+	packageRequestFinalizer = "workspaces.kloudlite.io/package-cleanup"
 )
 
 // CommandExecutor defines an interface for executing shell commands
@@ -106,6 +107,58 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	if err := r.Get(ctx, req.NamespacedName, pkgReq); err != nil {
 		logger.Error("Failed to get PackageRequest", zap2.Error(err))
 		return reconcile.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Check if the PackageRequest is being deleted
+	if pkgReq.DeletionTimestamp != nil {
+		// Object is being deleted
+		if containsString(pkgReq.Finalizers, packageRequestFinalizer) {
+			// Our finalizer is present, perform cleanup
+			logger.Info("PackageRequest is being deleted, cleaning up packages", zap2.String("profile", pkgReq.Spec.ProfileName))
+
+			// Get all installed packages from the profile and remove them
+			installedPkgs := r.getInstalledPackagesFromProfile(pkgReq.Spec.ProfileName, logger)
+			for _, pkgName := range installedPkgs {
+				logger.Info("Removing package from profile",
+					zap2.String("package", pkgName),
+					zap2.String("profile", pkgReq.Spec.ProfileName))
+
+				if err := r.uninstallPackage(pkgName, pkgReq.Spec.ProfileName); err != nil {
+					logger.Error("Failed to remove package during cleanup",
+						zap2.String("package", pkgName),
+						zap2.String("profile", pkgReq.Spec.ProfileName),
+						zap2.Error(err))
+					// Continue with other packages even if one fails
+				} else {
+					logger.Info("Successfully removed package",
+						zap2.String("package", pkgName),
+						zap2.String("profile", pkgReq.Spec.ProfileName))
+				}
+			}
+
+			// Remove our finalizer
+			pkgReq.Finalizers = removeString(pkgReq.Finalizers, packageRequestFinalizer)
+			if err := r.Update(ctx, pkgReq); err != nil {
+				logger.Error("Failed to remove finalizer", zap2.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			logger.Info("Cleanup complete, finalizer removed")
+		}
+		// Stop reconciliation as the object is being deleted
+		return reconcile.Result{}, nil
+	}
+
+	// Add finalizer if it doesn't exist
+	if !containsString(pkgReq.Finalizers, packageRequestFinalizer) {
+		logger.Info("Adding finalizer to PackageRequest")
+		pkgReq.Finalizers = append(pkgReq.Finalizers, packageRequestFinalizer)
+		if err := r.Update(ctx, pkgReq); err != nil {
+			logger.Error("Failed to add finalizer", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
+		// Requeue to continue reconciliation with finalizer in place
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	logger.Info("Using profile", zap2.String("profile", pkgReq.Spec.ProfileName))
@@ -484,6 +537,27 @@ func (r *PackageManagerReconciler) uninstallPackage(pkgName string, profileName 
 	return nil
 }
 
+// containsString checks if a string is present in a slice
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+// removeString removes a string from a slice
+func removeString(slice []string, s string) []string {
+	result := []string{}
+	for _, item := range slice {
+		if item != s {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
 func (r *PackageManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&workspacev1.PackageRequest{}).
@@ -501,9 +575,9 @@ func (r *PackageManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				// This prevents infinite loops from status-only updates
 				return oldPR.Generation != newPR.Generation
 			},
-			// Don't reconcile on delete
+			// Reconcile on delete to clean up packages
 			DeleteFunc: func(e event.DeleteEvent) bool {
-				return false
+				return true
 			},
 		}).
 		Complete(r)
@@ -683,9 +757,12 @@ func main() {
 
 	// Setup scheme
 	scheme := runtime.NewScheme()
-	_ = clientgoscheme.AddToScheme(scheme)
-	_ = workspacev1.AddToScheme(scheme)
-	_ = workspacev1.AddToScheme(scheme)
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		zapLogger.Fatal("Failed to add client-go scheme", zap2.Error(err))
+	}
+	if err := workspacev1.AddToScheme(scheme); err != nil {
+		zapLogger.Fatal("Failed to add workspace v1 scheme", zap2.Error(err))
+	}
 
 	// Get in-cluster config
 	config, err := rest.InClusterConfig()

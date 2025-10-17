@@ -2,9 +2,12 @@ package environment
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
+	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,6 +29,89 @@ type EnvironmentReconciler struct {
 	Scheme *runtime.Scheme
 	Logger *zap.Logger
 }
+
+// applyLabelsAndAnnotations applies labels and annotations from environment spec to namespace
+func (r *EnvironmentReconciler) applyLabelsAndAnnotations(namespace *corev1.Namespace, environment *environmentsv1.Environment) {
+	// Initialize maps if nil
+	if namespace.Labels == nil {
+		namespace.Labels = make(map[string]string)
+	}
+	if namespace.Annotations == nil {
+		namespace.Annotations = make(map[string]string)
+	}
+
+	// Add standard environment label
+	namespace.Labels["kloudlite.io/environment"] = environment.Name
+
+	// Add created-by annotation (emails contain invalid label characters)
+	namespace.Annotations["kloudlite.io/created-by"] = environment.Spec.CreatedBy
+
+	// Add custom labels from environment spec (move to annotations for invalid characters)
+	if environment.Spec.Labels != nil {
+		for k, v := range environment.Spec.Labels {
+			if utils.IsValidLabel(k) && utils.IsValidLabel(v) {
+				namespace.Labels[k] = v
+			} else {
+				// Move invalid labels to annotations
+				namespace.Annotations[k] = v
+			}
+		}
+	}
+
+	// Add custom annotations from environment spec
+	if environment.Spec.Annotations != nil {
+		for k, v := range environment.Spec.Annotations {
+			namespace.Annotations[k] = v
+		}
+	}
+}
+
+// updateEnvironmentStatus safely updates environment status with retry logic
+func (r *EnvironmentReconciler) updateEnvironmentStatus(ctx context.Context, environment *environmentsv1.Environment, state environmentsv1.EnvironmentState, message string, logger *zap.Logger) error {
+	return statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		environment.Status.State = state
+		environment.Status.Message = message
+
+		now := metav1.Now()
+		if state == environmentsv1.EnvironmentStateActive {
+			environment.Status.LastActivatedTime = &now
+		} else if state == environmentsv1.EnvironmentStateInactive {
+			environment.Status.LastDeactivatedTime = &now
+		}
+
+		return nil
+	}, logger)
+}
+
+// addOrUpdateCondition adds or updates a condition in the environment status
+func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1.Environment, conditionType environmentsv1.EnvironmentConditionType, status metav1.ConditionStatus, reason, message string) {
+	if environment.Status.Conditions == nil {
+		environment.Status.Conditions = []environmentsv1.EnvironmentCondition{}
+	}
+
+	now := metav1.Now()
+	newCondition := environmentsv1.EnvironmentCondition{
+		Type:               conditionType,
+		Status:             status,
+		LastTransitionTime: &now,
+		Reason:             reason,
+		Message:            message,
+	}
+
+	// Find and update existing condition or add new one
+	found := false
+	for i, condition := range environment.Status.Conditions {
+		if condition.Type == conditionType {
+			environment.Status.Conditions[i] = newCondition
+			found = true
+			break
+		}
+	}
+	if !found {
+		environment.Status.Conditions = append(environment.Status.Conditions, newCondition)
+	}
+}
+
 
 // Reconcile handles Environment events and ensures namespace exists
 func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -81,36 +167,8 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		logger.Info("Namespace already exists for environment",
 			zap.String("namespace", environment.Spec.TargetNamespace))
 
-		// Update namespace labels if needed
-		if namespace.Labels == nil {
-			namespace.Labels = make(map[string]string)
-		}
-
-		// Add environment labels
-		namespace.Labels["kloudlite.io/environment"] = environment.Name
-
-		// Update namespace annotations if needed
-		if namespace.Annotations == nil {
-			namespace.Annotations = make(map[string]string)
-		}
-
-		// Add createdBy to annotations (emails contain invalid label characters)
-		namespace.Annotations["kloudlite.io/created-by"] = environment.Spec.CreatedBy
-
-		// Add any custom labels from the environment spec to annotations
-		// (they may contain invalid label characters like @, =, etc.)
-		if environment.Spec.Labels != nil {
-			for k, v := range environment.Spec.Labels {
-				namespace.Annotations[k] = v
-			}
-		}
-
-		// Add any custom annotations from the environment spec
-		if environment.Spec.Annotations != nil {
-			for k, v := range environment.Spec.Annotations {
-				namespace.Annotations[k] = v
-			}
-		}
+		// Apply labels and annotations using helper function
+		r.applyLabelsAndAnnotations(namespace, environment)
 
 		// Update the namespace
 		if err := r.Update(ctx, namespace); err != nil {
@@ -125,19 +183,13 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		}
 
 		if environment.Status.State != desiredState {
-			environment.Status.State = desiredState
+			message := "Environment is inactive"
 			if desiredState == environmentsv1.EnvironmentStateActive {
-				environment.Status.Message = "Environment is active"
-				now := metav1.Now()
-				environment.Status.LastActivatedTime = &now
-			} else {
-				environment.Status.Message = "Environment is inactive"
-				now := metav1.Now()
-				environment.Status.LastDeactivatedTime = &now
+				message = "Environment is active"
 			}
 
-			if err := r.Status().Update(ctx, environment); err != nil {
-				logger.Warn("Failed to update environment status", zap.Error(err))
+			if err := r.updateEnvironmentStatus(ctx, environment, desiredState, message, logger); err != nil {
+				logger.Error("Failed to update environment status after retries", zap.Error(err))
 			}
 		}
 
@@ -167,21 +219,8 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		},
 	}
 
-	// Add custom labels from environment spec (skip invalid label values)
-	if environment.Spec.Labels != nil {
-		for k, v := range environment.Spec.Labels {
-			// Only add valid label values (no @, =, etc.)
-			// Labels with emails or special chars should go to annotations
-			namespace.Annotations[k] = v
-		}
-	}
-
-	// Add custom annotations from environment spec
-	if environment.Spec.Annotations != nil {
-		for k, v := range environment.Spec.Annotations {
-			namespace.Annotations[k] = v
-		}
-	}
+	// Apply labels and annotations using helper function
+	r.applyLabelsAndAnnotations(namespace, environment)
 
 	// Set Environment as the owner of the Namespace using OwnerReferences
 	// Note: This might not work for namespace as it's cluster-scoped
@@ -207,43 +246,24 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	logger.Info("Successfully created namespace for environment",
 		zap.String("namespace", environment.Spec.TargetNamespace))
 
+
 	// Update environment status to indicate namespace has been created
-	environment.Status.State = environmentsv1.EnvironmentStateInactive
+	desiredState := environmentsv1.EnvironmentStateInactive
 	if environment.Spec.Activated {
-		environment.Status.State = environmentsv1.EnvironmentStateActive
-	}
-	environment.Status.Message = "Namespace created successfully"
-
-	// Add condition for namespace creation
-	condition := environmentsv1.EnvironmentCondition{
-		Type:               environmentsv1.EnvironmentConditionNamespaceCreated,
-		Status:             metav1.ConditionTrue,
-		LastTransitionTime: &metav1.Time{Time: time.Now()},
-		Reason:             "NamespaceCreated",
-		Message:            "Namespace has been created successfully",
+		desiredState = environmentsv1.EnvironmentStateActive
 	}
 
-	// Initialize conditions if nil
-	if environment.Status.Conditions == nil {
-		environment.Status.Conditions = []environmentsv1.EnvironmentCondition{}
-	}
+	// Update status with retry logic
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		environment.Status.State = desiredState
+		environment.Status.Message = "Namespace created successfully"
 
-	// Add or update the condition
-	found := false
-	for i, c := range environment.Status.Conditions {
-		if c.Type == environmentsv1.EnvironmentConditionNamespaceCreated {
-			environment.Status.Conditions[i] = condition
-			found = true
-			break
-		}
-	}
-	if !found {
-		environment.Status.Conditions = append(environment.Status.Conditions, condition)
-	}
+		// Add condition for namespace creation
+		r.addOrUpdateCondition(environment, environmentsv1.EnvironmentConditionNamespaceCreated, metav1.ConditionTrue, "NamespaceCreated", "Namespace has been created successfully")
 
-	// Update the environment status
-	if err := r.Status().Update(ctx, environment); err != nil {
-		logger.Warn("Failed to update environment status", zap.Error(err))
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update environment status after retries", zap.Error(err))
 		// Don't fail the reconciliation for status update failures
 	}
 
@@ -254,11 +274,8 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
 	// Update status to show deletion in progress
 	if environment.Status.State != environmentsv1.EnvironmentStateDeleting {
-		environment.Status.State = environmentsv1.EnvironmentStateDeleting
-		environment.Status.Message = "Deleting environment and cleaning up resources"
-
-		if err := r.Status().Update(ctx, environment); err != nil {
-			logger.Warn("Failed to update environment status to deleting", zap.Error(err))
+		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateDeleting, "Deleting environment and cleaning up resources", logger); err != nil {
+			logger.Error("Failed to update environment status to deleting after retries", zap.Error(err))
 			// Continue with deletion even if status update fails
 		}
 	}
@@ -308,21 +325,35 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
 	sourceName := environment.Spec.CloneFrom
 
-	// Fetch the source environment
+	logger.Info("Starting environment cloning process",
+		zap.String("target", environment.Name),
+		zap.String("source", sourceName))
+
+	// Validate source environment exists and is accessible
 	sourceEnv := &environmentsv1.Environment{}
 	err := r.Get(ctx, client.ObjectKey{Name: sourceName}, sourceEnv)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Error("Source environment not found", zap.String("source", sourceName))
-			environment.Status.State = environmentsv1.EnvironmentStateError
-			environment.Status.Message = "Source environment not found: " + sourceName
-			if err := r.Status().Update(ctx, environment); err != nil {
-				logger.Warn("Failed to update environment status", zap.Error(err))
+			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError, "Source environment not found: "+sourceName, logger); err != nil {
+				logger.Error("Failed to update environment status after retries", zap.Error(err))
 			}
-			return reconcile.Result{}, err
+			return reconcile.Result{}, fmt.Errorf("source environment '%s' not found", sourceName)
 		}
 		logger.Error("Failed to get source environment", zap.Error(err))
-		return reconcile.Result{}, err
+		return reconcile.Result{}, fmt.Errorf("failed to access source environment '%s': %w", sourceName, err)
+	}
+
+	// Validate source environment state
+	if sourceEnv.Status.State == environmentsv1.EnvironmentStateDeleting || sourceEnv.Status.State == environmentsv1.EnvironmentStateError {
+		logger.Error("Source environment is not in a clonable state",
+			zap.String("source", sourceName),
+			zap.String("sourceState", string(sourceEnv.Status.State)))
+		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
+			fmt.Sprintf("Source environment '%s' is in %s state and cannot be cloned", sourceName, sourceEnv.Status.State), logger); err != nil {
+			logger.Error("Failed to update environment status after retries", zap.Error(err))
+		}
+		return reconcile.Result{}, fmt.Errorf("source environment '%s' is in %s state", sourceName, sourceEnv.Status.State)
 	}
 
 	sourceNamespace := sourceEnv.Spec.TargetNamespace
@@ -354,22 +385,43 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			},
 		}
 
+		// Apply labels and annotations using helper function
+		r.applyLabelsAndAnnotations(namespace, environment)
+
+		// Add cloning-specific annotations
+		if namespace.Annotations == nil {
+			namespace.Annotations = make(map[string]string)
+		}
+		namespace.Annotations["kloudlite.io/cloned-from"] = sourceName
+		namespace.Annotations["kloudlite.io/creation-reason"] = "auto-created-for-cloned-environment"
+
 		if err := r.Create(ctx, namespace); err != nil && !apierrors.IsAlreadyExists(err) {
-			logger.Error("Failed to create namespace", zap.Error(err))
+			logger.Error("Failed to create namespace for cloned environment", zap.Error(err))
+			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
+				fmt.Sprintf("Failed to create namespace: %v", err), logger); err != nil {
+				logger.Error("Failed to update environment status after retries", zap.Error(err))
+			}
 			return reconcile.Result{RequeueAfter: 30 * time.Second}, err
 		}
+		logger.Info("Successfully created namespace for cloned environment", zap.String("namespace", targetNamespace))
 	}
 
 	// Clone ConfigMaps with label "kloudlite.io/resource-type: environment-config"
+	logger.Info("Cloning ConfigMaps from source environment")
 	configMapList := &corev1.ConfigMapList{}
 	err = r.List(ctx, configMapList,
 		client.InNamespace(sourceNamespace),
 		client.MatchingLabels{"kloudlite.io/resource-type": "environment-config"})
 	if err != nil {
 		logger.Error("Failed to list source configmaps", zap.Error(err))
-		return reconcile.Result{}, err
+		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
+			fmt.Sprintf("Failed to list ConfigMaps from source environment '%s': %v", sourceName, err), logger); err != nil {
+			logger.Error("Failed to update environment status after retries", zap.Error(err))
+		}
+		return reconcile.Result{}, fmt.Errorf("failed to list source ConfigMaps: %w", err)
 	}
 
+	clonedConfigMaps := 0
 	for _, srcCM := range configMapList.Items {
 		newCM := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -390,21 +442,30 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			logger.Error("Failed to clone configmap",
 				zap.String("name", srcCM.Name),
 				zap.Error(err))
-			return reconcile.Result{}, err
+			// Continue with other resources instead of failing completely
+			continue
 		}
-		logger.Info("Cloned configmap", zap.String("name", srcCM.Name))
+		clonedConfigMaps++
+		logger.Debug("Cloned configmap", zap.String("name", srcCM.Name))
 	}
+	logger.Info("ConfigMap cloning completed", zap.Int("cloned", clonedConfigMaps), zap.Int("total", len(configMapList.Items)))
 
 	// Clone Secrets with label "kloudlite.io/resource-type: environment-config"
+	logger.Info("Cloning Secrets from source environment")
 	secretList := &corev1.SecretList{}
 	err = r.List(ctx, secretList,
 		client.InNamespace(sourceNamespace),
 		client.MatchingLabels{"kloudlite.io/resource-type": "environment-config"})
 	if err != nil {
 		logger.Error("Failed to list source secrets", zap.Error(err))
-		return reconcile.Result{}, err
+		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
+			fmt.Sprintf("Failed to list Secrets from source environment '%s': %v", sourceName, err), logger); err != nil {
+			logger.Error("Failed to update environment status after retries", zap.Error(err))
+		}
+		return reconcile.Result{}, fmt.Errorf("failed to list source Secrets: %w", err)
 	}
 
+	clonedSecrets := 0
 	for _, srcSecret := range secretList.Items {
 		newSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -426,19 +487,28 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			logger.Error("Failed to clone secret",
 				zap.String("name", srcSecret.Name),
 				zap.Error(err))
-			return reconcile.Result{}, err
+			// Continue with other resources instead of failing completely
+			continue
 		}
-		logger.Info("Cloned secret", zap.String("name", srcSecret.Name))
+		clonedSecrets++
+		logger.Debug("Cloned secret", zap.String("name", srcSecret.Name))
 	}
+	logger.Info("Secret cloning completed", zap.Int("cloned", clonedSecrets), zap.Int("total", len(secretList.Items)))
 
 	// Clone Compositions
+	logger.Info("Cloning Compositions from source environment")
 	compositionList := &environmentsv1.CompositionList{}
 	err = r.List(ctx, compositionList, client.InNamespace(sourceNamespace))
 	if err != nil {
 		logger.Error("Failed to list source compositions", zap.Error(err))
-		return reconcile.Result{}, err
+		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
+			fmt.Sprintf("Failed to list Compositions from source environment '%s': %v", sourceName, err), logger); err != nil {
+			logger.Error("Failed to update environment status after retries", zap.Error(err))
+		}
+		return reconcile.Result{}, fmt.Errorf("failed to list source Compositions: %w", err)
 	}
 
+	clonedCompositions := 0
 	for _, srcComp := range compositionList.Items {
 		newComp := &environmentsv1.Composition{
 			ObjectMeta: metav1.ObjectMeta{
@@ -450,42 +520,51 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			Spec: srcComp.Spec,
 		}
 
+		// Update the environment label
+		if newComp.Labels == nil {
+			newComp.Labels = make(map[string]string)
+		}
+		newComp.Labels["kloudlite.io/environment"] = environment.Name
+
 		if err := r.Create(ctx, newComp); err != nil && !apierrors.IsAlreadyExists(err) {
 			logger.Error("Failed to clone composition",
 				zap.String("name", srcComp.Name),
 				zap.Error(err))
-			return reconcile.Result{}, err
+			// Continue with other resources instead of failing completely
+			continue
 		}
-		logger.Info("Cloned composition", zap.String("name", srcComp.Name))
+		clonedCompositions++
+		logger.Debug("Cloned composition", zap.String("name", srcComp.Name))
+	}
+	logger.Info("Composition cloning completed", zap.Int("cloned", clonedCompositions), zap.Int("total", len(compositionList.Items)))
+
+	// Prepare cloning completion message with statistics
+	totalResources := len(configMapList.Items) + len(secretList.Items) + len(compositionList.Items)
+	clonedResources := clonedConfigMaps + clonedSecrets + clonedCompositions
+
+	successMessage := fmt.Sprintf("Successfully cloned %d/%d resources from %s (ConfigMaps: %d, Secrets: %d, Compositions: %d)",
+		clonedResources, totalResources, sourceName, clonedConfigMaps, clonedSecrets, clonedCompositions)
+
+	if clonedResources == 0 {
+		successMessage = fmt.Sprintf("No clonable resources found in %s", sourceName)
 	}
 
 	// Update status to indicate cloning is complete
-	environment.Status.State = environmentsv1.EnvironmentStateInactive
+	desiredState := environmentsv1.EnvironmentStateInactive
 	if environment.Spec.Activated {
-		environment.Status.State = environmentsv1.EnvironmentStateActive
-	}
-	environment.Status.Message = "Successfully cloned from " + sourceName
-
-	// Add condition for successful cloning
-	condition := environmentsv1.EnvironmentCondition{
-		Type:               environmentsv1.EnvironmentConditionCloned,
-		Status:             metav1.ConditionTrue,
-		LastTransitionTime: &metav1.Time{Time: time.Now()},
-		Reason:             "CloningSuccessful",
-		Message:            "Resources successfully cloned from " + sourceName,
+		desiredState = environmentsv1.EnvironmentStateActive
 	}
 
-	// Initialize conditions if nil
-	if environment.Status.Conditions == nil {
-		environment.Status.Conditions = []environmentsv1.EnvironmentCondition{}
+	if err := r.updateEnvironmentStatus(ctx, environment, desiredState, successMessage, logger); err != nil {
+		logger.Error("Failed to update environment status after cloning, even after retries", zap.Error(err))
 	}
 
-	// Add the condition
-	environment.Status.Conditions = append(environment.Status.Conditions, condition)
-
-	// Update the environment status
-	if err := r.Status().Update(ctx, environment); err != nil {
-		logger.Warn("Failed to update environment status", zap.Error(err))
+	// Update status with condition for successful cloning
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		r.addOrUpdateCondition(environment, environmentsv1.EnvironmentConditionCloned, metav1.ConditionTrue, "CloningSuccessful", successMessage)
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update environment conditions after retries", zap.Error(err))
 	}
 
 	// Clear the CloneFrom field to mark cloning as complete
@@ -495,7 +574,11 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("Environment cloning completed successfully")
+	logger.Info("Environment cloning completed successfully",
+		zap.String("source", sourceName),
+		zap.Int("clonedResources", clonedResources),
+		zap.Int("totalResources", totalResources))
+
 	return reconcile.Result{Requeue: true}, nil
 }
 
