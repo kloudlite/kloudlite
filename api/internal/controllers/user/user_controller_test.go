@@ -6,6 +6,7 @@ import (
 
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -226,11 +227,17 @@ func TestUserReconciler_Reconcile_UserDeactivation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
-	// Verify WorkMachine state changed to Disabled
+	// Verify User status is updated to inactive (not WorkMachine state)
+	updatedUser := &platformv1alpha1.User{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-user"}, updatedUser)
+	assert.NoError(t, err)
+	assert.Equal(t, "inactive", updatedUser.Status.Phase)
+
+	// Verify WorkMachine state is unchanged (User controller no longer manages WorkMachine state)
 	workMachine := &machinesv1.WorkMachine{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "wm-test-user"}, workMachine)
 	assert.NoError(t, err)
-	assert.Equal(t, machinesv1.MachineStateDisabled, workMachine.Spec.DesiredState)
+	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.DesiredState)
 }
 
 func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
@@ -284,11 +291,17 @@ func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
-	// Verify WorkMachine state changed from Disabled to Stopped
+	// Verify User status is updated to active (not WorkMachine state)
+	updatedUser := &platformv1alpha1.User{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-user"}, updatedUser)
+	assert.NoError(t, err)
+	assert.Equal(t, "active", updatedUser.Status.Phase)
+
+	// Verify WorkMachine state is unchanged (User controller no longer manages WorkMachine state)
 	workMachine := &machinesv1.WorkMachine{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "wm-test-user"}, workMachine)
 	assert.NoError(t, err)
-	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.DesiredState)
+	assert.Equal(t, machinesv1.MachineStateDisabled, workMachine.Spec.DesiredState)
 }
 
 func TestUserReconciler_HandleUserDeletion(t *testing.T) {
@@ -584,7 +597,69 @@ func TestUserReconciler_BuildWorkMachineForUser_InactiveUser(t *testing.T) {
 	assert.Equal(t, machinesv1.MachineStateDisabled, workMachine.Spec.DesiredState)
 }
 
-func TestExtractUsernameFromEmail(t *testing.T) {
+func TestUserReconciler_Reconcile_PasswordUpdate(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = platformv1alpha1.AddToScheme(scheme)
+	_ = machinesv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
+
+	active := true
+	user := &platformv1alpha1.User{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-user",
+			Finalizers: []string{UserFinalizerName},
+		},
+		Spec: platformv1alpha1.UserSpec{
+			Email:         "test@example.com",
+			PasswordString: "newpassword123",
+			Active:        &active,
+		},
+	}
+
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(user).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &UserReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test-user",
+		},
+	}
+
+	// First reconcile - should process password
+	result, err := reconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.True(t, result.Requeue) // Should requeue after password update
+
+	// Verify password was processed
+	updatedUser := &platformv1alpha1.User{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-user"}, updatedUser)
+	assert.NoError(t, err)
+	assert.Empty(t, updatedUser.Spec.PasswordString, "PasswordString should be cleared")
+	assert.NotEmpty(t, updatedUser.Spec.Password, "Password should be set")
+	assert.NotEmpty(t, updatedUser.Status.PasswordHash, "PasswordHash should be set")
+
+	// Check for PasswordSet condition
+	foundPasswordCondition := false
+	for _, condition := range updatedUser.Status.Conditions {
+		if condition.Type == "PasswordSet" {
+			assert.Equal(t, metav1.ConditionTrue, condition.Status)
+			assert.Equal(t, "PasswordUpdated", condition.Reason)
+			foundPasswordCondition = true
+			break
+		}
+	}
+	assert.True(t, foundPasswordCondition, "PasswordSet condition should be present")
+}
+
+func TestUtils_ExtractUsernameFromEmail(t *testing.T) {
 	tests := []struct {
 		name     string
 		email    string
@@ -601,13 +676,13 @@ func TestExtractUsernameFromEmail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractUsernameFromEmail(tt.email)
+			result := utils.ExtractUsernameFromEmail(tt.email)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestSanitizeForLabel(t *testing.T) {
+func TestUtils_SanitizeForLabel(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -623,32 +698,9 @@ func TestSanitizeForLabel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sanitizeForLabel(tt.input)
+			result := utils.SanitizeForLabel(tt.input)
 			assert.Equal(t, tt.expected, result)
 			assert.LessOrEqual(t, len(result), 63, "Label value should not exceed 63 characters")
-		})
-	}
-}
-
-func TestIsAlphanumeric(t *testing.T) {
-	tests := []struct {
-		char     byte
-		expected bool
-	}{
-		{'a', true},
-		{'z', true},
-		{'0', true},
-		{'9', true},
-		{'A', false},
-		{'-', false},
-		{'_', false},
-		{'.', false},
-	}
-
-	for _, tt := range tests {
-		t.Run(string(tt.char), func(t *testing.T) {
-			result := isAlphanumeric(tt.char)
-			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
@@ -710,7 +762,7 @@ func TestUserReconciler_Reconcile_WorkMachineOwnedByDifferentUser(t *testing.T) 
 	assert.Equal(t, "different@example.com", retrievedMachine.Spec.OwnedBy)
 }
 
-func TestUserReconciler_Reconcile_UpdateWorkMachineStateFailure(t *testing.T) {
+func TestUserReconciler_Reconcile_UserStatusConditions(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
@@ -728,21 +780,19 @@ func TestUserReconciler_Reconcile_UpdateWorkMachineStateFailure(t *testing.T) {
 		},
 	}
 
-	// WorkMachine in disabled state (user is active, so update needed)
-	workMachine := &machinesv1.WorkMachine{
+	existingWorkMachine := &machinesv1.WorkMachine{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            "wm-test-user",
-			ResourceVersion: "1",
+			Name: "wm-test-user",
 		},
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateDisabled,
+			DesiredState:    machinesv1.MachineStateStopped,
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(user, workMachine).Build()
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(user, existingWorkMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &UserReconciler{
@@ -758,11 +808,25 @@ func TestUserReconciler_Reconcile_UpdateWorkMachineStateFailure(t *testing.T) {
 	}
 
 	result, err := reconciler.Reconcile(context.Background(), req)
-	// Fake client may delete object during update
-	if err != nil {
-		assert.Contains(t, err.Error(), "not found")
-	} else {
-		// Update should have succeeded
-		_ = result
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	// Verify User status conditions are properly set
+	updatedUser := &platformv1alpha1.User{}
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-user"}, updatedUser)
+	assert.NoError(t, err)
+	assert.Equal(t, "active", updatedUser.Status.Phase)
+	assert.NotNil(t, updatedUser.Status.Conditions)
+
+	// Check for Active condition
+	foundActiveCondition := false
+	for _, condition := range updatedUser.Status.Conditions {
+		if condition.Type == "Active" {
+			assert.Equal(t, metav1.ConditionTrue, condition.Status)
+			assert.Equal(t, "UserStatusUpdated", condition.Reason)
+			foundActiveCondition = true
+			break
+		}
 	}
+	assert.True(t, foundActiveCondition, "Active condition should be present")
 }
