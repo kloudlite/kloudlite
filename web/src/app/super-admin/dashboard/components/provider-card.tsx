@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,17 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
     clientSecret: provider.clientSecret || '',
   })
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current)
+        messageTimeoutRef.current = null
+      }
+    }
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -46,7 +57,12 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
         setMessage({ type: 'success', text: 'Saved successfully' })
         setIsEditing(false)
         router.refresh() // Refresh server-side data
-        setTimeout(() => setMessage(null), 3000)
+
+        // Clear existing timeout before setting new one
+        if (messageTimeoutRef.current) {
+          clearTimeout(messageTimeoutRef.current)
+        }
+        messageTimeoutRef.current = setTimeout(() => setMessage(null), 3000)
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to save' })
       }
@@ -82,7 +98,12 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
         setFormData(prev => ({ ...prev, enabled: checked }))
         setMessage({ type: 'success', text: 'Updated successfully' })
         router.refresh() // Refresh server-side data
-        setTimeout(() => setMessage(null), 3000)
+
+        // Clear existing timeout before setting new one
+        if (messageTimeoutRef.current) {
+          clearTimeout(messageTimeoutRef.current)
+        }
+        messageTimeoutRef.current = setTimeout(() => setMessage(null), 3000)
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to update' })
       }

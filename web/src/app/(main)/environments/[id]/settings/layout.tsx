@@ -7,11 +7,12 @@ interface LayoutProps {
   }
 }
 
-export default function SettingsLayout({ children, params }: LayoutProps) {
+export default async function SettingsLayout({ children, params }: LayoutProps) {
+  const { id } = await params
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="flex gap-6">
-        <SettingsSectionNav environmentId={params.id} />
+        <SettingsSectionNav environmentId={id} />
         <div className="flex-1">
           {children}
         </div>

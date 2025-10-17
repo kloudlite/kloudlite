@@ -1,15 +1,25 @@
-import { Network, Wifi } from 'lucide-react'
+'use client'
+
+import { Network, Wifi, Pencil } from 'lucide-react'
+import { useState } from 'react'
 import type { K8sService } from '@/types/service'
 import type { ServiceIntercept } from '@/types/serviceintercept'
+import type { Composition } from '@/types/composition'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { CompositionEditor } from './composition-editor'
 
 interface ServicesListProps {
   services: K8sService[]
   namespace: string
   serviceIntercepts: ServiceIntercept[]
+  composition: Composition | null
+  user: string
 }
 
-export function ServicesList({ services, namespace, serviceIntercepts }: ServicesListProps) {
+export function ServicesList({ services, namespace, serviceIntercepts, composition, user }: ServicesListProps) {
+  const [open, setOpen] = useState(false)
+
   // Helper function to find active intercept for a service
   const getActiveIntercept = (serviceName: string) => {
     return serviceIntercepts.find(
@@ -22,11 +32,20 @@ export function ServicesList({ services, namespace, serviceIntercepts }: Service
   if (services.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div>
-          <h3 className="text-lg font-medium">Services</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Kubernetes services in namespace: {namespace}
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium">Services</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kubernetes services in namespace: {namespace}
+            </p>
+          </div>
+          <CompositionEditor
+            composition={composition}
+            namespace={namespace}
+            user={user}
+            open={open}
+            onOpenChange={setOpen}
+          />
         </div>
         <div className="mt-8 text-center py-12 bg-muted/50 rounded-lg border">
           <Network className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -41,11 +60,20 @@ export function ServicesList({ services, namespace, serviceIntercepts }: Service
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-4">
-        <h3 className="text-lg font-medium">Services</h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          Kubernetes services in namespace: {namespace}
-        </p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium">Services</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kubernetes services in namespace: {namespace}
+          </p>
+        </div>
+        <CompositionEditor
+          composition={composition}
+          namespace={namespace}
+          user={user}
+          open={open}
+          onOpenChange={setOpen}
+        />
       </div>
 
       <div className="bg-card rounded-lg border">
@@ -73,12 +101,18 @@ export function ServicesList({ services, namespace, serviceIntercepts }: Service
             <tbody className="divide-y">
               {services.map((service) => {
                 const activeIntercept = getActiveIntercept(service.name)
+                const isHeadless = service.clusterIP === 'None'
                 return (
                   <tr key={`${service.namespace}-${service.name}`} className="hover:bg-muted/50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Network className="h-5 w-5 text-muted-foreground mr-3" />
+                      <div className="flex items-center gap-2">
+                        <Network className="h-5 w-5 text-muted-foreground" />
                         <span className="text-sm font-medium">{service.name}</span>
+                        {isHeadless && (
+                          <Badge variant="outline" className="text-xs">
+                            Headless
+                          </Badge>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -87,20 +121,30 @@ export function ServicesList({ services, namespace, serviceIntercepts }: Service
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-mono">{service.clusterIP}</span>
+                      <span className="text-sm font-mono">
+                        {isHeadless ? (
+                          <span className="text-muted-foreground italic">None (Headless)</span>
+                        ) : (
+                          service.clusterIP
+                        )}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        {service.ports.map((port, idx) => (
-                          <div key={idx} className="text-sm">
-                            {port.port}
-                            {port.targetPort && port.targetPort !== String(port.port) && (
-                              <span className="text-muted-foreground"> → {port.targetPort}</span>
-                            )}
-                            <span className="text-muted-foreground ml-1">/{port.protocol}</span>
-                          </div>
-                        ))}
-                      </div>
+                      {service.ports.length > 0 ? (
+                        <div className="space-y-1">
+                          {service.ports.map((port, idx) => (
+                            <div key={idx} className="text-sm">
+                              {port.port}
+                              {port.targetPort && port.targetPort !== String(port.port) && (
+                                <span className="text-muted-foreground"> → {port.targetPort}</span>
+                              )}
+                              <span className="text-muted-foreground ml-1">/{port.protocol}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">No ports exposed</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {activeIntercept ? (

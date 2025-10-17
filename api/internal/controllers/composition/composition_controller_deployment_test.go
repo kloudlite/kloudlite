@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -16,14 +16,14 @@ import (
 func TestCompositionReconciler_DeployComposition_Success(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Finalizers: []string{compositionFinalizer},
 			Generation: 1,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 			ComposeContent: `version: '3.8'
 services:
@@ -32,7 +32,7 @@ services:
     ports:
       - "80:80"`,
 		},
-		Status: environmentsv1.CompositionStatus{
+		Status: compositionsv1.CompositionStatus{
 			ObservedGeneration: 0,
 		},
 	}
@@ -56,12 +56,12 @@ services:
 func TestCompositionReconciler_DeployComposition_ParseError(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `invalid yaml content [[[`,
 		},
@@ -84,12 +84,12 @@ func TestCompositionReconciler_DeployComposition_ParseError(t *testing.T) {
 func TestCompositionReconciler_DeployComposition_EmptyContent(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: "",
 		},
@@ -112,12 +112,12 @@ func TestCompositionReconciler_DeployComposition_EmptyContent(t *testing.T) {
 func TestCompositionReconciler_DeployComposition_ConversionError(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 			ComposeContent: `version: '3.8'
 services:
@@ -146,24 +146,24 @@ func TestCompositionReconciler_DeployComposition_WithInactiveEnvironment(t *test
 	scheme := testutil.NewTestScheme()
 
 	// Create inactive environment
-	environment := &environmentsv1.Environment{
+	environment := &compositionsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-env",
 		},
-		Spec: environmentsv1.EnvironmentSpec{
+		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
 			CreatedBy:       "admin@example.com",
 			Activated:       false, // Inactive
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Finalizers: []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 			ComposeContent: `version: '3.8'
 services:
@@ -204,24 +204,24 @@ func TestCompositionReconciler_DeployComposition_WithActiveEnvironment(t *testin
 	scheme := testutil.NewTestScheme()
 
 	// Create active environment
-	environment := &environmentsv1.Environment{
+	environment := &compositionsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-env",
 		},
-		Spec: environmentsv1.EnvironmentSpec{
+		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
 			CreatedBy:       "admin@example.com",
 			Activated:       true, // Active
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Finalizers: []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 			ComposeContent: `version: '3.8'
 services:

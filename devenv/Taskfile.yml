@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  KUBECONFIG: "{{.TASKFILE_DIR}}/k3s-config/k3s.yaml"
+  KUBECONFIG: "{{.ROOT_DIR}}/devenv/k3s-config/k3s.yaml"
 
 tasks:
   k3s:up:
@@ -38,7 +38,7 @@ tasks:
       - echo "Starting API server..."
       - go run cmd/server/main.go
     env:
-      KUBERNETES_KUBECONFIG_PATH: "{{.TASKFILE_DIR}}/k3s-config/k3s.yaml"
+      KUBECONFIG: "{{.TASKFILE_DIR}}/k3s-config/k3s.yaml"
       JWT_SECRET: "hello"
 
   web:dev:

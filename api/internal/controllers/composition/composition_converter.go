@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	composego "github.com/compose-spec/compose-go/v2/types"
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -37,7 +37,7 @@ type EnvironmentData struct {
 // ConvertComposeToK8s converts a docker-compose project to Kubernetes resources
 func ConvertComposeToK8s(
 	project *composego.Project,
-	composition *environmentsv1.Composition,
+	composition *compositionsv1.Composition,
 	namespace string,
 	envData *EnvironmentData,
 ) (*ComposeResources, error) {
@@ -80,17 +80,15 @@ func ConvertComposeToK8s(
 		}
 		resources.Deployments = append(resources.Deployments, deployment)
 
-		// Create Service (if ports are exposed)
-		if len(service.Ports) > 0 {
-			k8sService := convertServiceToK8sService(
-				serviceName,
-				service,
-				composition,
-				namespace,
-				commonLabels,
-			)
-			resources.Services = append(resources.Services, k8sService)
-		}
+		// Always create a Service (headless if no ports are exposed)
+		k8sService := convertServiceToK8sService(
+			serviceName,
+			service,
+			composition,
+			namespace,
+			commonLabels,
+		)
+		resources.Services = append(resources.Services, k8sService)
 	}
 
 	return resources, nil
@@ -100,7 +98,7 @@ func ConvertComposeToK8s(
 func convertServiceToDeployment(
 	serviceName string,
 	service composego.ServiceConfig,
-	composition *environmentsv1.Composition,
+	composition *compositionsv1.Composition,
 	namespace string,
 	commonLabels map[string]string,
 	envData *EnvironmentData,
@@ -249,7 +247,7 @@ func convertServiceToDeployment(
 					Name: vol.Source,
 					VolumeSource: corev1.VolumeSource{
 						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: fmt.Sprintf("%s-%s", composition.Name, vol.Source),
+							ClaimName: vol.Source,
 						},
 					},
 				})
@@ -262,7 +260,7 @@ func convertServiceToDeployment(
 	// Create deployment
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", composition.Name, serviceName),
+			Name:      serviceName,
 			Namespace: namespace,
 			Labels:    labels,
 		},
@@ -287,10 +285,11 @@ func convertServiceToDeployment(
 }
 
 // convertServiceToK8sService converts docker-compose service ports to Kubernetes Service
+// Creates a headless service (ClusterIP: None) if no ports are exposed
 func convertServiceToK8sService(
 	serviceName string,
 	service composego.ServiceConfig,
-	composition *environmentsv1.Composition,
+	composition *compositionsv1.Composition,
 	namespace string,
 	commonLabels map[string]string,
 ) *corev1.Service {
@@ -320,16 +319,26 @@ func convertServiceToK8sService(
 		ports = append(ports, servicePort)
 	}
 
+	// Determine service type and ClusterIP based on whether ports are exposed
+	serviceType := corev1.ServiceTypeClusterIP
+	clusterIP := "" // Default: Kubernetes assigns an IP
+
+	// If no ports are exposed, create a headless service for DNS resolution
+	if len(ports) == 0 {
+		clusterIP = "None"
+	}
+
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", composition.Name, serviceName),
+			Name:      serviceName,
 			Namespace: namespace,
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: labels,
-			Ports:    ports,
-			Type:     corev1.ServiceTypeClusterIP,
+			Selector:  labels,
+			Ports:     ports,
+			Type:      serviceType,
+			ClusterIP: clusterIP,
 		},
 	}
 }
@@ -338,7 +347,7 @@ func convertServiceToK8sService(
 func convertVolumeToPVC(
 	volumeName string,
 	volume composego.VolumeConfig,
-	composition *environmentsv1.Composition,
+	composition *compositionsv1.Composition,
 	namespace string,
 	commonLabels map[string]string,
 ) *corev1.PersistentVolumeClaim {
@@ -355,7 +364,7 @@ func convertVolumeToPVC(
 
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", composition.Name, volumeName),
+			Name:      volumeName,
 			Namespace: namespace,
 			Labels:    labels,
 		},

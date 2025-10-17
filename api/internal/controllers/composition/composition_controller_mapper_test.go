@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -15,14 +15,14 @@ import (
 func TestCompositionReconciler_FindCompositionsForConfigMap(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition1 := &environmentsv1.Composition{
+	composition1 := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp1",
 			Namespace: "test-namespace",
 		},
 	}
 
-	composition2 := &environmentsv1.Composition{
+	composition2 := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp2",
 			Namespace: "test-namespace",
@@ -59,7 +59,7 @@ func TestCompositionReconciler_FindCompositionsForConfigMap(t *testing.T) {
 func TestCompositionReconciler_FindCompositionsForConfigMap_WrongName(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp1",
 			Namespace: "test-namespace",
@@ -92,14 +92,14 @@ func TestCompositionReconciler_FindCompositionsForConfigMap_WrongName(t *testing
 func TestCompositionReconciler_FindCompositionsForSecret(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition1 := &environmentsv1.Composition{
+	composition1 := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp1",
 			Namespace: "test-namespace",
 		},
 	}
 
-	composition2 := &environmentsv1.Composition{
+	composition2 := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp2",
 			Namespace: "test-namespace",
@@ -136,7 +136,7 @@ func TestCompositionReconciler_FindCompositionsForSecret(t *testing.T) {
 func TestCompositionReconciler_FindCompositionsForSecret_WrongName(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp1",
 			Namespace: "test-namespace",
@@ -169,25 +169,25 @@ func TestCompositionReconciler_FindCompositionsForSecret_WrongName(t *testing.T)
 func TestCompositionReconciler_FindCompositionsForEnvironment(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition1 := &environmentsv1.Composition{
+	composition1 := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp1",
 			Namespace: "test-namespace",
 		},
 	}
 
-	composition2 := &environmentsv1.Composition{
+	composition2 := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "comp2",
 			Namespace: "test-namespace",
 		},
 	}
 
-	environment := &environmentsv1.Environment{
+	environment := &compositionsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-env",
 		},
-		Spec: environmentsv1.EnvironmentSpec{
+		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
 			CreatedBy:       "admin@example.com",
 			Activated:       true,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -15,11 +15,11 @@ import (
 func TestCompositionReconciler_GetEnvironmentForNamespace(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	environment := &environmentsv1.Environment{
+	environment := &compositionsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-env",
 		},
-		Spec: environmentsv1.EnvironmentSpec{
+		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
 			CreatedBy:       "admin@example.com",
 			Activated:       true,

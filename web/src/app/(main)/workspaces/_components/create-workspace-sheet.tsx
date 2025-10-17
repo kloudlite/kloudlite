@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Loader2, Package, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -55,6 +55,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
   const [loadingVersions, setLoadingVersions] = useState(false)
   const [searchResults, setSearchResults] = useState<string[]>([])
   const [loadingSearch, setLoadingSearch] = useState(false)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Search for packages as user types
   useEffect(() => {
@@ -100,6 +101,16 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
 
     loadVersions()
   }, [newPackageName])
+
+  // Clean up polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [])
 
   const addPackage = async () => {
     if (!newPackageName.trim()) {
@@ -186,15 +197,22 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         setDescription('')
         setPackages([])
 
+        // Immediately refresh and then poll for a few seconds to catch state changes
         router.refresh()
 
-        // Poll for updates
+        // Clear any existing interval before starting a new one
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+        }
+
+        // Poll every second for 10 seconds to catch the workspace state updates
         let pollCount = 0
-        const pollInterval = setInterval(() => {
+        pollIntervalRef.current = setInterval(() => {
           router.refresh()
           pollCount++
-          if (pollCount >= 10) {
-            clearInterval(pollInterval)
+          if (pollCount >= 10 && pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current)
+            pollIntervalRef.current = null
           }
         }, 1000)
       } else {

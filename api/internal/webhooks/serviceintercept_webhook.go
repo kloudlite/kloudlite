@@ -95,6 +95,14 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 		}
 	}
 
+	// Skip validation if the ServiceIntercept is being deleted
+	// This allows finalizer removal even if the service/workspace no longer exists
+	if intercept.DeletionTimestamp != nil {
+		return &admissionv1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
+
 	// Validate the ServiceIntercept
 	allowed := true
 	var messages []string
@@ -149,11 +157,12 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 			messages = append(messages, fmt.Sprintf("Service '%s' not found in namespace '%s'",
 				intercept.Spec.ServiceRef.Name, serviceNamespace))
 		} else {
-			// Validate port mappings match service ports
+			// Validate port mappings
 			if len(intercept.Spec.PortMappings) == 0 {
 				allowed = false
 				messages = append(messages, "At least one port mapping is required")
-			} else {
+			} else if len(service.Spec.Ports) > 0 {
+				// For services with defined ports, validate that port mappings match service ports
 				servicePortMap := make(map[int32]bool)
 				for _, port := range service.Spec.Ports {
 					servicePortMap[port.Port] = true
@@ -167,6 +176,8 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 					}
 				}
 			}
+			// For portless services (headless services with no spec.ports), skip port validation
+			// and trust the user-provided port mappings
 		}
 
 		// Check if another ServiceIntercept is already intercepting this service

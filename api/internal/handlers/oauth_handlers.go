@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	corev1 "k8s.io/api/core/v1"
@@ -11,11 +13,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// OAuthProvider is the internal representation with secrets (never exposed via API)
 type OAuthProvider struct {
 	Type         string `json:"type"`
 	Enabled      bool   `json:"enabled"`
 	ClientID     string `json:"clientId"`
-	ClientSecret string `json:"clientSecret"`
+	ClientSecret string `json:"clientSecret"` // NEVER return this in API responses
+}
+
+// OAuthProviderResponse is the safe API response without secrets
+type OAuthProviderResponse struct {
+	Type     string `json:"type"`
+	Enabled  bool   `json:"enabled"`
+	ClientID string `json:"clientId"` // Safe to expose
+	// ClientSecret is intentionally omitted for security
 }
 
 type OAuthHandlers struct {
@@ -48,9 +59,12 @@ func (h *OAuthHandlers) GetOAuthProviders(c *gin.Context) {
 		Namespace: h.namespace,
 	}, configMap)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			// Create default empty providers
-			providers := map[string]OAuthProvider{
+		// Handle TLS/certificate errors gracefully for development environments
+		if isTLSError(err) {
+			fmt.Printf("TLS error when getting OAuth providers (development mode): %v\n", err)
+		} else if errors.IsNotFound(err) {
+			// Create default empty providers (without secrets)
+			providers := map[string]OAuthProviderResponse{
 				"google": {
 					Type:    "google",
 					Enabled: false,
@@ -66,25 +80,32 @@ func (h *OAuthHandlers) GetOAuthProviders(c *gin.Context) {
 			}
 			c.JSON(http.StatusOK, providers)
 			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
 	}
 
-	// Parse providers from ConfigMap
-	providers := make(map[string]OAuthProvider)
+	// Parse providers from ConfigMap and convert to safe response type
+	providers := make(map[string]OAuthProviderResponse)
 	for providerType, data := range configMap.Data {
 		var provider OAuthProvider
 		if err := json.Unmarshal([]byte(data), &provider); err != nil {
 			continue
 		}
-		providers[providerType] = provider
+		// Convert to response type WITHOUT secrets
+		providers[providerType] = OAuthProviderResponse{
+			Type:     provider.Type,
+			Enabled:  provider.Enabled,
+			ClientID: provider.ClientID,
+			// ClientSecret is intentionally excluded
+		}
 	}
 
 	// Ensure all provider types exist
 	for _, providerType := range []string{"google", "github", "microsoft"} {
 		if _, exists := providers[providerType]; !exists {
-			providers[providerType] = OAuthProvider{
+			providers[providerType] = OAuthProviderResponse{
 				Type:    providerType,
 				Enabled: false,
 			}
@@ -129,7 +150,11 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 		Namespace: h.namespace,
 	}, configMap)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if isTLSError(err) {
+			fmt.Printf("TLS error when getting OAuth providers config for update (development mode): %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "TLS certificate error in development mode"})
+			return
+		} else if errors.IsNotFound(err) {
 			// Create new ConfigMap
 			configMap = &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
@@ -159,10 +184,19 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 
 	// Save ConfigMap
 	if err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{Name: oauthConfigMapName, Namespace: h.namespace}, &corev1.ConfigMap{}); err != nil {
-		if errors.IsNotFound(err) {
+		if isTLSError(err) {
+			fmt.Printf("TLS error when checking OAuth providers config existence (development mode): %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "TLS certificate error in development mode"})
+			return
+		} else if errors.IsNotFound(err) {
 			// Create
 			if err := h.k8sClient.Create(c.Request.Context(), configMap); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				if isTLSError(err) {
+					fmt.Printf("TLS error when creating OAuth providers config (development mode): %v\n", err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "TLS certificate error in development mode"})
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				}
 				return
 			}
 		} else {
@@ -172,7 +206,12 @@ func (h *OAuthHandlers) UpdateOAuthProvider(c *gin.Context) {
 	} else {
 		// Update
 		if err := h.k8sClient.Update(c.Request.Context(), configMap); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			if isTLSError(err) {
+				fmt.Printf("TLS error when updating OAuth providers config (development mode): %v\n", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "TLS certificate error in development mode"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
 			return
 		}
 	}
@@ -189,26 +228,31 @@ func (h *OAuthHandlers) GetPublicOAuthProviders(c *gin.Context) {
 		Namespace: h.namespace,
 	}, configMap)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			// Return default disabled providers
-			providers := map[string]PublicOAuthProvider{
-				"google": {
-					Type:    "google",
-					Enabled: false,
-				},
-				"github": {
-					Type:    "github",
-					Enabled: false,
-				},
-				"microsoft": {
-					Type:    "microsoft",
-					Enabled: false,
-				},
-			}
-			c.JSON(http.StatusOK, providers)
-			return
+		// Handle TLS/certificate errors gracefully for development environments
+		if isTLSError(err) {
+			// Log at debug level for development environments
+			fmt.Printf("TLS error when getting OAuth providers (development mode): %v\n", err)
+		} else {
+			// Log actual errors at error level
+			fmt.Printf("Error getting OAuth providers ConfigMap: %v\n", err)
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+		// Return default disabled providers to ensure signin page works
+		providers := map[string]PublicOAuthProvider{
+			"google": {
+				Type:    "google",
+				Enabled: false,
+			},
+			"github": {
+				Type:    "github",
+				Enabled: false,
+			},
+			"microsoft": {
+				Type:    "microsoft",
+				Enabled: false,
+			},
+		}
+		c.JSON(http.StatusOK, providers)
 		return
 	}
 
@@ -237,4 +281,30 @@ func (h *OAuthHandlers) GetPublicOAuthProviders(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, providers)
+}
+
+// isTLSError checks if the error is related to TLS certificate verification
+func isTLSError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+	tlsErrorStrings := []string{
+		"tls: failed to verify certificate",
+		"x509: certificate signed by unknown authority",
+		"certificate not trusted",
+		"certificate has expired",
+		"certificate is not yet valid",
+		"tls handshake error",
+		"certificate authority",
+	}
+
+	for _, tlsStr := range tlsErrorStrings {
+		if strings.Contains(errStr, tlsStr) {
+			return true
+		}
+	}
+
+	return false
 }

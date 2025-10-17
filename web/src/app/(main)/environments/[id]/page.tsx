@@ -6,7 +6,8 @@ interface PageProps {
   }
 }
 
-export default function EnvironmentDetailPage({ params }: PageProps) {
-  // Redirect to resources tab by default
-  redirect(`/environments/${params.id}/resources`)
+export default async function EnvironmentDetailPage({ params }: PageProps) {
+  // Redirect to services tab by default
+  const { id } = await params
+  redirect(`/environments/${id}/services`)
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -19,14 +19,14 @@ func TestCompositionReconciler_HandleDeletion(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-composition",
 			Namespace:         "test-namespace",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `version: '3.8'`,
 		},
@@ -88,14 +88,14 @@ func TestCompositionReconciler_HandleDeletion_WithResources(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-composition",
 			Namespace:         "test-namespace",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 		},
 	}
@@ -187,18 +187,18 @@ func TestCompositionReconciler_HandleDeletion_StatusUpdateFails(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-composition",
 			Namespace:         "test-namespace",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 		},
-		Status: environmentsv1.CompositionStatus{
-			State: environmentsv1.CompositionStateRunning, // Not deleting yet
+		Status: compositionsv1.CompositionStatus{
+			State: compositionsv1.CompositionStateRunning, // Not deleting yet
 		},
 	}
 
@@ -225,14 +225,14 @@ func TestCompositionReconciler_HandleDeletion_ResourcesAlreadyBeingDeleted(t *te
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-composition",
 			Namespace:         "test-namespace",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 		},
 	}
@@ -297,14 +297,14 @@ func TestCompositionReconciler_HandleDeletion_ConfigMapAndSecretDeletion(t *test
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-composition",
 			Namespace:         "test-namespace",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 		},
 	}
@@ -350,14 +350,14 @@ func TestCompositionReconciler_HandleDeletion_PVCDeletion(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-composition",
 			Namespace:         "test-namespace",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 		},
 	}
@@ -394,14 +394,14 @@ func TestCompositionReconciler_HandleDeletion_NoResources(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-composition",
 			Namespace:         "test-namespace",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{compositionFinalizer},
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 		},
 	}
@@ -423,7 +423,7 @@ func TestCompositionReconciler_HandleDeletion_NoResources(t *testing.T) {
 	assert.False(t, result.Requeue)
 
 	// Verify finalizer was removed
-	updatedComp := &environmentsv1.Composition{}
+	updatedComp := &compositionsv1.Composition{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-composition",
 		Namespace: "test-namespace",

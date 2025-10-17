@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -38,8 +39,10 @@ func NewUserRepository(k8sClient client.Client) UserRepository {
 
 // GetByEmail retrieves a user by email address
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*platformv1alpha1.User, error) {
-	// Use field selector to find user by email (cluster-scoped, no namespace)
-	users, err := r.List(ctx, WithFieldSelector("spec.email="+email))
+	// Use label selector to find user by email (cluster-scoped, no namespace)
+	// Convert email to sanitized label format: user@kloudlite.io -> user-at-kloudlite-dot-io
+	emailLabel := utils.SanitizeForLabel(email)
+	users, err := r.List(ctx, WithLabelSelector("kloudlite.io/user-email="+emailLabel))
 	if err != nil {
 		return nil, err
 	}
