@@ -55,6 +55,120 @@ spec:
           spec:
             description: WorkMachineSpec defines the desired state of WorkMachine
             properties:
+              autoShutdown:
+                description: |-
+                  AutoShutdown configures automatic instance shutdown when idle
+                  Only applicable for cloud providers (AWS, GCP, Azure)
+                properties:
+                  checkIntervalMinutes:
+                    default: 5
+                    description: CheckIntervalMinutes is how often to check workspace
+                      activity
+                    format: int32
+                    maximum: 60
+                    minimum: 1
+                    type: integer
+                  enabled:
+                    default: true
+                    description: Enabled determines if auto-shutdown is active
+                    type: boolean
+                  idleThresholdMinutes:
+                    default: 30
+                    description: |-
+                      IdleThresholdMinutes is how long to wait after all workspaces are suspended
+                      before shutting down the WorkMachine EC2 instance
+                    format: int32
+                    maximum: 1440
+                    minimum: 5
+                    type: integer
+                required:
+                - checkIntervalMinutes
+                - enabled
+                - idleThresholdMinutes
+                type: object
+              aws:
+                description: AWSProvider contains AWS-specific configuration
+                properties:
+                  ami:
+                    description: AMI is the Amazon Machine Image ID to use for the
+                      instance
+                    type: string
+                  availabilityZone:
+                    description: AvailabilityZone is the specific AZ within the region
+                    type: string
+                  domainName:
+                    description: |-
+                      DomainName is the base domain for WorkMachine DNS records
+                      (e.g., "workmachines.example.com" → "<machine-name>.workmachines.example.com")
+                    type: string
+                  iamInstanceProfileRole:
+                    description: IAMInstanceProfileRole is the IAM role name to attach
+                      to the instance
+                    type: string
+                  instanceType:
+                    description: InstanceType is the EC2 instance type (e.g., m5.large,
+                      t3.medium)
+                    type: string
+                  k3sServerURL:
+                    description: K3sServerURL is the URL of the K3s server to join
+                    type: string
+                  k3sTokenSecret:
+                    description: K3sTokenSecret is the name of the Secret containing
+                      the K3s join token
+                    type: string
+                  region:
+                    description: Region is the AWS region where the instance will
+                      be created
+                    type: string
+                  rootVolumeSize:
+                    default: 50
+                    description: RootVolumeSize is the size of the root EBS volume
+                      in GB
+                    maximum: 1000
+                    minimum: 20
+                    type: integer
+                  rootVolumeType:
+                    default: gp3
+                    description: RootVolumeType is the EBS volume type (gp3, gp2,
+                      io1, io2)
+                    enum:
+                    - gp3
+                    - gp2
+                    - io1
+                    - io2
+                    type: string
+                  route53HostedZoneID:
+                    description: Route53HostedZoneID is the ID of the Route53 hosted
+                      zone for DNS records
+                    type: string
+                  securityGroupIDs:
+                    description: |-
+                      SecurityGroupIDs are additional security group IDs to attach
+                      (WorkMachine controller will create a dedicated SG automatically)
+                    items:
+                      type: string
+                    type: array
+                  subnetID:
+                    description: SubnetID is the ID of the subnet where the instance
+                      will be created
+                    type: string
+                  vpcID:
+                    description: VPCID is the ID of the VPC where the instance will
+                      be created
+                    type: string
+                required:
+                - ami
+                - domainName
+                - instanceType
+                - k3sServerURL
+                - k3sTokenSecret
+                - region
+                - rootVolumeSize
+                - rootVolumeType
+                - route53HostedZoneID
+                - subnetID
+                - vpcID
+                type: object
               desiredState:
                 default: stopped
                 description: DesiredState indicates whether the machine should be
@@ -63,6 +177,11 @@ spec:
                 - running
                 - stopped
                 - disabled
+                type: string
+              displayName:
+                description: DisplayName is the human-readable name for the work machine
+                maxLength: 100
+                minLength: 1
                 type: string
               machineType:
                 description: MachineType references the MachineType to use for this
@@ -79,6 +198,10 @@ spec:
                 description: OwnedBy is the username/email of the user who owns this
                   machine
                 type: string
+              provider:
+                description: Provider specifies the cloud provider (aws, gcp, azure,
+                  or empty for k8s deployment)
+                type: string
               sshPublicKeys:
                 description: SSHPublicKeys for SSH access to the VM
                 items:
@@ -91,6 +214,7 @@ spec:
                 type: string
             required:
             - desiredState
+            - displayName
             - machineType
             - ownedBy
             - targetNamespace
@@ -101,6 +225,11 @@ spec:
               accessURL:
                 description: AccessURL for accessing the machine (IDE, SSH, etc.)
                 type: string
+              activeWorkspaceCount:
+                description: ActiveWorkspaceCount is the number of active (non-suspended)
+                  workspaces
+                format: int32
+                type: integer
               allocatedResources:
                 description: Resources actually allocated to the machine
                 properties:
@@ -117,38 +246,65 @@ spec:
                 - cpu
                 - memory
                 type: object
-              conditions:
-                description: Conditions represent the latest available observations
+              availabilityZone:
+                description: AvailabilityZone is the AWS AZ where the instance is
+                  running
+                type: string
+              checkList:
                 items:
-                  description: WorkMachineCondition represents a condition of the
-                    WorkMachine
                   properties:
-                    lastTransitionTime:
-                      description: LastTransitionTime is the last time the condition
-                        changed
-                      format: date-time
+                    description:
                       type: string
-                    message:
-                      description: Message is a human-readable message about the last
-                        transition
+                    name:
                       type: string
-                    reason:
-                      description: Reason is a unique, one-word, CamelCase reason
-                        for the condition's last transition
-                      type: string
-                    status:
-                      description: Status of the condition (True, False, Unknown)
-                      type: string
-                    type:
-                      description: Type of condition
+                    title:
                       type: string
                   required:
-                  - status
-                  - type
+                  - name
+                  - title
                   type: object
                 type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    completedAt:
+                      format: date-time
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                  type: object
+                type: object
+              instanceID:
+                description: InstanceID is the EC2 instance ID (only for AWS provider)
+                type: string
+              isReady:
+                type: boolean
+              k3sJoinStatus:
+                description: K3sJoinStatus indicates whether the K3s agent successfully
+                  joined the cluster
+                type: string
               lastActivityAt:
                 description: LastActivityAt timestamp of last user activity (for auto-stop)
+                format: date-time
+                type: string
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              lastWorkspaceActivity:
+                description: |-
+                  LastWorkspaceActivity is the last time any workspace was active on this WorkMachine
+                  Used for auto-shutdown logic
                 format: date-time
                 type: string
               message:
@@ -158,16 +314,27 @@ spec:
               nodeName:
                 description: NodeName where the pod is running
                 type: string
-              observedGeneration:
-                description: ObservedGeneration is the generation observed by the
-                  controller
-                format: int64
-                type: integer
               podIP:
                 description: PodIP is the IP address of the pod
                 type: string
               podName:
                 description: PodName is the name of the pod running this machine
+                type: string
+              privateIP:
+                description: PrivateIP is the private IP address of the EC2 instance
+                type: string
+              publicIP:
+                description: PublicIP is the public IP address of the EC2 instance
+                type: string
+              region:
+                description: Region is the AWS region where the instance is running
+                type: string
+              route53RecordSet:
+                description: Route53RecordSet is the DNS record for this WorkMachine
+                type: string
+              securityGroupID:
+                description: SecurityGroupID is the ID of the dedicated security group
+                  for this WorkMachine
                 type: string
               sshPublicKey:
                 description: |-

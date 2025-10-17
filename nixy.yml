@@ -1,6 +1,10 @@
 nixpkgs: 554be6495561ff07b6c724047bdd7e0716aa7b46
 env:
-  KUBECONFIG: "$PWD/devenv/k3s-config/k3s.yaml"
+  # KUBECONFIG: "$PWD/devenv/k3s-config/k3s.yaml"
+  KUBECONFIG: "$PWD/.secrets/kl-aws.yml"
+mounts:
+  - source: /home/nxtcoder17/.config/simple.nvim
+    dest: "/tmp/simple.nvim"
 packages:
   - go
   - nodejs
