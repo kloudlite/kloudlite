@@ -68,8 +68,10 @@ func (r *WorkMachineReconciler) updateWorkMachineStatus(ctx context.Context, wor
 // - Runs OpenSSH server on port 2222
 // - Authorizes users via ssh-authorized-keys ConfigMap (user keys only)
 // - Has TCP forwarding enabled (AllowTcpForwarding yes)
+// - Does NOT provide shell access (PermitTTY no, ForceCommand denies shells)
 // - Does NOT authenticate to workspaces (jump hosts work by TCP forwarding)
 // - Password authentication disabled for security
+// - Works like GitHub's SSH: authenticates users but only allows port forwarding
 //
 // Workspaces:
 // - Run OpenSSH servers that authorize the jump host's SSH proxy public key
@@ -672,6 +674,12 @@ AuthorizedKeysFile /var/lib/kloudlite/ssh-config/authorized_keys
 AllowTcpForwarding yes
 GatewayPorts yes
 X11Forwarding no
+
+# Deny shell access - only allow port forwarding (like GitHub)
+PermitTTY no
+AllowAgentForwarding no
+PermitOpen any
+ForceCommand /bin/echo "You've successfully authenticated, but Kloudlite does not provide shell access. Use port forwarding to access workspaces."
 
 # Security
 StrictModes no

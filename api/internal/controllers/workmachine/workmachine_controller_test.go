@@ -1011,6 +1011,13 @@ func TestWorkMachineReconciler_EnsureSSHDConfigMap_CreateNew(t *testing.T) {
 	assert.Contains(t, sshdConfig, "LogLevel VERBOSE")
 	assert.Contains(t, sshdConfig, "MaxAuthTries 3")
 	assert.Contains(t, sshdConfig, "StrictModes no") // No for containerized SSH (permissions can be complex)
+
+	// Verify shell access denial settings (GitHub-style SSH)
+	assert.Contains(t, sshdConfig, "PermitTTY no")
+	assert.Contains(t, sshdConfig, "AllowAgentForwarding no")
+	assert.Contains(t, sshdConfig, "PermitOpen any")
+	assert.Contains(t, sshdConfig, "ForceCommand")
+	assert.Contains(t, sshdConfig, "You've successfully authenticated, but Kloudlite does not provide shell access")
 }
 
 func TestWorkMachineReconciler_EnsureSSHDConfigMap_UpdateExisting(t *testing.T) {
