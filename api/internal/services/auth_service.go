@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -111,6 +112,10 @@ func (s *authService) VerifyPassword(ctx context.Context, email, password string
 	user, err := s.userService.GetUserByEmail(ctx, email)
 	if err != nil {
 		s.logger.Warn("User not found for authentication", zap.String("email", email), zap.Error(err))
+		// Check if this is a connection/TLS error
+		if isConnectionError(err) {
+			return nil, fmt.Errorf("failed to connect to authentication service: %w", err)
+		}
 		return nil, fmt.Errorf("authentication failed: %w", err)
 	}
 
@@ -142,6 +147,55 @@ func (s *authService) VerifyPassword(ctx context.Context, email, password string
 
 	s.logger.Info("User authenticated successfully", zap.String("email", email))
 	return user, nil
+}
+
+// isConnectionError checks if the error is related to connection/TLS issues
+func isConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+	connectionErrorStrings := []string{
+		"tls: failed to verify certificate",
+		"x509: certificate signed by unknown authority",
+		"certificate not trusted",
+		"certificate has expired",
+		"certificate is not yet valid",
+		"tls handshake error",
+		"certificate authority",
+		"failed to get server groups",
+		"connection refused",
+		"no such host",
+		"timeout",
+		"network is unreachable",
+		"connection reset by peer",
+	}
+
+	for _, connStr := range connectionErrorStrings {
+		if contains(errStr, connStr) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// contains checks if a string contains a substring (case-insensitive)
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) &&
+		   (s == substr ||
+		    len(s) > len(substr) &&
+		    (s[:len(substr)] == substr ||
+		     s[len(s)-len(substr):] == substr ||
+		     containsSubstring(s, substr)))
+}
+
+// containsSubstring checks if a string contains a substring
+func containsSubstring(s, substr string) bool {
+	s = strings.ToLower(s)
+	substr = strings.ToLower(substr)
+	return strings.Contains(s, substr)
 }
 
 // Helper function to convert roles to strings for logging

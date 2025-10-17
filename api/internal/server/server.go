@@ -15,13 +15,15 @@ import (
 )
 
 type Server struct {
-	httpServer        *http.Server
-	logger            *zap.Logger
-	config            *config.Config
-	k8sClient         *k8s.Client
-	repositoryManager *repository.Manager
-	servicesManager   *services.Manager
-	controllerManager *controllers.Manager
+	httpServer          *http.Server
+	logger              *zap.Logger
+	config              *config.Config
+	k8sClient           *k8s.Client
+	repositoryManager   *repository.Manager
+	servicesManager     *services.Manager
+	controllerManager   *controllers.Manager
+	controllerCtx       context.Context
+	controllerCtxCancel context.CancelFunc
 }
 
 func New(cfg *config.Config, logger *zap.Logger) *Server {
@@ -66,27 +68,47 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 	// Setup router with dependencies
 	router := setupRouter(cfg, logger, servicesManager)
 
+	// Create cancellable context for controller manager
+	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
+
 	return &Server{
 		httpServer: &http.Server{
 			Addr:    ":" + cfg.Port,
 			Handler: router,
 		},
-		logger:            logger,
-		config:            cfg,
-		k8sClient:         k8sClient,
-		repositoryManager: repoManager,
-		servicesManager:   servicesManager,
-		controllerManager: controllerManager,
+		logger:              logger,
+		config:              cfg,
+		k8sClient:           k8sClient,
+		repositoryManager:   repoManager,
+		servicesManager:     servicesManager,
+		controllerManager:   controllerManager,
+		controllerCtx:       controllerCtx,
+		controllerCtxCancel: controllerCtxCancel,
 	}
 }
 
 func (s *Server) Start() error {
 	s.logger.Info("Starting server", zap.String("port", s.config.Port))
 
-	// Start controller manager in goroutine
+	// Start controller manager in goroutine with panic recovery
 	go func() {
-		if err := s.controllerManager.Start(context.Background()); err != nil {
-			s.logger.Error("Controller manager stopped with error", zap.Error(err))
+		defer func() {
+			if r := recover(); r != nil {
+				s.logger.Error("Controller manager panicked",
+					zap.Any("panic", r),
+					zap.Stack("stack"))
+				// Optionally: could restart controller manager here
+			}
+		}()
+
+		s.logger.Info("Starting controller manager")
+		if err := s.controllerManager.Start(s.controllerCtx); err != nil {
+			// Only log error if it's not due to context cancellation
+			if s.controllerCtx.Err() == nil {
+				s.logger.Error("Controller manager stopped with error", zap.Error(err))
+			} else {
+				s.logger.Info("Controller manager stopped gracefully")
+			}
 		}
 	}()
 
@@ -100,7 +122,11 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down server...")
 
-	// Graceful shutdown with timeout
+	// Stop controller manager first
+	s.logger.Info("Stopping controller manager...")
+	s.controllerCtxCancel()
+
+	// Graceful shutdown with timeout for HTTP server
 	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

@@ -3,8 +3,10 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
@@ -57,7 +59,12 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("failed to get REST config: %w", err)
 	}
 
-	// Create standard Kubernetes clientset
+	// Optimize REST config for better performance
+	config.QPS = 50.0                           // Increased QPS for higher throughput
+	config.Burst = 100                          // Increased burst capacity
+	config.Timeout = 30 * time.Second           // Reasonable timeout
+
+	// Create standard Kubernetes clientset with optimized transport
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes clientset: %w", err)
@@ -93,9 +100,27 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("failed to add intercepts scheme: %w", err)
 	}
 
-	// Create controller-runtime client
+	// Create controller-runtime client with optimized settings
+	// Get the default transport from the REST config which includes TLS settings
+	transport, err := rest.TransportFor(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create transport: %w", err)
+	}
+
+	// Apply connection pooling optimizations to the transport
+	if httpTransport, ok := transport.(*http.Transport); ok {
+		httpTransport.MaxIdleConns = 100              // Maximum number of idle connections
+		httpTransport.MaxIdleConnsPerHost = 10        // Maximum idle connections per host
+		httpTransport.IdleConnTimeout = 90 * time.Second // How long to keep idle connections
+	}
+
 	runtimeClient, err := client.New(config, client.Options{
 		Scheme: scheme,
+		// HTTP client with the transport that includes TLS config
+		HTTPClient: &http.Client{
+			Transport: transport,
+			Timeout:   30 * time.Second,
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller-runtime client: %w", err)
