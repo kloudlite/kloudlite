@@ -16,7 +16,7 @@ export function FilesList({ environmentId, files }: FilesListProps) {
           <h3 className="text-lg font-medium">File Configs</h3>
           <p className="text-sm text-muted-foreground">Configuration files mounted to containers</p>
         </div>
-        <AddFileSheet environmentId={environmentId} />
+        {files.length > 0 && <AddFileSheet environmentId={environmentId} />}
       </div>
 
       {files.length === 0 ? (

@@ -54,6 +54,8 @@ RUN mkdir -p /etc/kloudlite
 COPY starship.toml /etc/kloudlite/starship.toml
 COPY kl-shell-init.sh /etc/kloudlite/shell-init.sh
 COPY kl-shell-init.fish /etc/kloudlite/shell-init.fish
+COPY kloudlite-context.sh /etc/kloudlite/kloudlite-context.sh
+RUN chmod +x /etc/kloudlite/kloudlite-context.sh
 
 # Disable Ubuntu's default MOTD scripts and install custom Kloudlite MOTD
 RUN chmod -x /etc/update-motd.d/* && \

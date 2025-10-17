@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileCode2, Package, Settings, Key } from 'lucide-react'
+import { FileCode2, Settings, Key } from 'lucide-react'
 
 interface TabItem {
   id: string
@@ -19,12 +19,6 @@ export function EnvironmentNav({ environmentId }: EnvironmentNavProps) {
   const pathname = usePathname()
 
   const tabs: TabItem[] = [
-    {
-      id: 'resources',
-      label: 'Resources',
-      icon: <Package className="h-4 w-4" />,
-      href: `/environments/${environmentId}/resources`
-    },
     {
       id: 'services',
       label: 'Services',

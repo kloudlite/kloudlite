@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -14,13 +14,13 @@ import (
 func TestCompositionReconciler_UpdateStatus_Running(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Generation: 1,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `version: '3.8'`,
 		},
@@ -37,14 +37,14 @@ func TestCompositionReconciler_UpdateStatus_Running(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, environmentsv1.CompositionStateRunning, "Success", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateRunning, "Success", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
 	} else {
 		assert.False(t, result.Requeue)
 	}
-	assert.Equal(t, environmentsv1.CompositionStateRunning, composition.Status.State)
+	assert.Equal(t, compositionsv1.CompositionStateRunning, composition.Status.State)
 	assert.Equal(t, "Success", composition.Status.Message)
 	assert.Equal(t, int64(1), composition.Status.ObservedGeneration)
 	assert.NotNil(t, composition.Status.LastDeployedTime)
@@ -53,13 +53,13 @@ func TestCompositionReconciler_UpdateStatus_Running(t *testing.T) {
 func TestCompositionReconciler_UpdateStatus_Failed(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Generation: 2,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `version: '3.8'`,
 		},
@@ -76,14 +76,14 @@ func TestCompositionReconciler_UpdateStatus_Failed(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, environmentsv1.CompositionStateFailed, "Parse error", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateFailed, "Parse error", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
 	} else {
 		assert.False(t, result.Requeue)
 	}
-	assert.Equal(t, environmentsv1.CompositionStateFailed, composition.Status.State)
+	assert.Equal(t, compositionsv1.CompositionStateFailed, composition.Status.State)
 	assert.Equal(t, "Parse error", composition.Status.Message)
 	assert.Len(t, composition.Status.Conditions, 1)
 	assert.Equal(t, "Ready", composition.Status.Conditions[0].Type)
@@ -93,13 +93,13 @@ func TestCompositionReconciler_UpdateStatus_Failed(t *testing.T) {
 func TestCompositionReconciler_UpdateStatus_Deploying(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Generation: 1,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `version: '3.8'`,
 		},
@@ -116,27 +116,27 @@ func TestCompositionReconciler_UpdateStatus_Deploying(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, environmentsv1.CompositionStateDeploying, "Deploying", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateDeploying, "Deploying", logger)
 	assert.NoError(t, err)
 	assert.Greater(t, result.RequeueAfter.Seconds(), float64(0))
-	assert.Equal(t, environmentsv1.CompositionStateDeploying, composition.Status.State)
+	assert.Equal(t, compositionsv1.CompositionStateDeploying, composition.Status.State)
 }
 
 func TestCompositionReconciler_UpdateStatus_UpdateExistingCondition(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	oldTime := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Generation: 2,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `version: '3.8'`,
 		},
-		Status: environmentsv1.CompositionStatus{
+		Status: compositionsv1.CompositionStatus{
 			Conditions: []metav1.Condition{
 				{
 					Type:               "Ready",
@@ -161,7 +161,7 @@ func TestCompositionReconciler_UpdateStatus_UpdateExistingCondition(t *testing.T
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, environmentsv1.CompositionStateFailed, "New error message", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateFailed, "New error message", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
@@ -181,17 +181,17 @@ func TestCompositionReconciler_UpdateStatus_MultipleConditions(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	now := metav1.Now()
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Generation: 1,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `version: '3.8'`,
 		},
-		Status: environmentsv1.CompositionStatus{
+		Status: compositionsv1.CompositionStatus{
 			Conditions: []metav1.Condition{
 				{
 					Type:               "OtherCondition",
@@ -224,7 +224,7 @@ func TestCompositionReconciler_UpdateStatus_MultipleConditions(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, environmentsv1.CompositionStateRunning, "Now running", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateRunning, "Now running", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
@@ -244,17 +244,17 @@ func TestCompositionReconciler_UpdateStatus_MultipleConditions(t *testing.T) {
 func TestCompositionReconciler_UpdateStatus_AddConditionWhenNoneExist(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Generation: 1,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName:    "Test Composition",
 			ComposeContent: `version: '3.8'`,
 		},
-		Status: environmentsv1.CompositionStatus{
+		Status: compositionsv1.CompositionStatus{
 			Conditions: []metav1.Condition{}, // Empty conditions
 		},
 	}
@@ -270,7 +270,7 @@ func TestCompositionReconciler_UpdateStatus_AddConditionWhenNoneExist(t *testing
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, environmentsv1.CompositionStateRunning, "First status", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateRunning, "First status", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")

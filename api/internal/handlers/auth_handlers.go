@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kloudlite/kloudlite/api/internal/dto"
@@ -55,8 +57,12 @@ type UserInfo struct {
 func (h *AuthHandlers) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Warn("Invalid login request", zap.Error(err))
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid request payload"})
+		h.logger.Warn("Invalid login request",
+			zap.Error(err),
+			zap.String("error_details", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error: fmt.Sprintf("Invalid request payload: %v", err),
+		})
 		return
 	}
 
@@ -66,7 +72,34 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 	user, err := h.authService.VerifyPassword(c.Request.Context(), req.Email, req.Password)
 	if err != nil {
 		h.logger.Warn("Login failed", zap.String("email", req.Email), zap.Error(err))
-		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid credentials"})
+
+		// Check if this is a connection error
+		if isConnectionError(err) {
+			c.JSON(http.StatusServiceUnavailable, dto.ErrorResponse{Error: "Authentication service temporarily unavailable - please try again later"})
+			return
+		}
+
+		// Check for specific error messages
+		errMsg := err.Error()
+		if contains(errMsg, "failed to connect to authentication service") {
+			c.JSON(http.StatusServiceUnavailable, dto.ErrorResponse{Error: "Authentication service temporarily unavailable - please try again later"})
+			return
+		}
+		if contains(errMsg, "authentication failed: no password set") {
+			c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "Account not properly configured - please contact administrator"})
+			return
+		}
+		if contains(errMsg, "authentication failed: invalid password") {
+			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid credentials"})
+			return
+		}
+		if contains(errMsg, "user account is inactive") {
+			c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "User account is inactive"})
+			return
+		}
+
+		// Default authentication error
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Authentication failed"})
 		return
 	}
 
@@ -187,4 +220,41 @@ func (h *AuthHandlers) ValidateToken(c *gin.Context) {
 			"roles": claims.Roles,
 		},
 	})
+}
+
+// isConnectionError checks if the error is related to connection/TLS issues
+func isConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+	connectionErrorStrings := []string{
+		"tls: failed to verify certificate",
+		"x509: certificate signed by unknown authority",
+		"certificate not trusted",
+		"certificate has expired",
+		"certificate is not yet valid",
+		"tls handshake error",
+		"certificate authority",
+		"failed to get server groups",
+		"connection refused",
+		"no such host",
+		"timeout",
+		"network is unreachable",
+		"connection reset by peer",
+	}
+
+	for _, connStr := range connectionErrorStrings {
+		if strings.Contains(strings.ToLower(errStr), strings.ToLower(connStr)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// contains checks if a string contains a substring (case-insensitive)
+func contains(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }

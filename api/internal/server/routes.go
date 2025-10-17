@@ -72,12 +72,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
-	helmChartHandlers := handlers.NewHelmChartHandlers(
-		servicesManager.RepositoryManager.HelmCharts,
-		servicesManager.RepositoryManager.K8sClient,
-		logger,
-	)
-	serviceHandlers := handlers.NewServiceHandlers(
+		serviceHandlers := handlers.NewServiceHandlers(
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
@@ -243,17 +238,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				compositions.GET("/:name/status", compositionHandlers.GetCompositionStatus)
 			}
 
-			// HelmChart routes (namespaced)
-			helmCharts := protected.Group("/namespaces/:namespace/helmcharts")
-			{
-				helmCharts.POST("", helmChartHandlers.CreateHelmChart)
-				helmCharts.GET("/:name", helmChartHandlers.GetHelmChart)
-				helmCharts.PUT("/:name", helmChartHandlers.UpdateHelmChart)
-				helmCharts.DELETE("/:name", helmChartHandlers.DeleteHelmChart)
-				helmCharts.GET("", helmChartHandlers.ListHelmCharts)
-				helmCharts.GET("/:name/status", helmChartHandlers.GetHelmChartStatus)
-			}
-
+			
 			// Service routes (namespaced, read-only)
 			services := protected.Group("/namespaces/:namespace/services")
 			{

@@ -22,11 +22,12 @@ function FilesError({ error }: { error: string }) {
 }
 
 export default async function FilesPage({ params }: FilesPageProps) {
+  const { id } = await params
   try {
-    const result = await listFiles(params.id)
+    const result = await listFiles(id)
     const files = result.files || []
 
-    return <FilesList environmentId={params.id} files={files} />
+    return <FilesList environmentId={id} files={files} />
   } catch (error) {
     return <FilesError error={error instanceof Error ? error.message : 'Failed to load files'} />
   }

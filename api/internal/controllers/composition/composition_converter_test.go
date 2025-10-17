@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	composego "github.com/compose-spec/compose-go/v2/types"
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +23,7 @@ func TestConvertServiceToDeployment_WithFilesVolumes(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -76,7 +76,7 @@ func TestConvertServiceToDeployment_WithFilesVolumes_DotInFilename(t *testing.T)
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -121,7 +121,7 @@ func TestConvertServiceToDeployment_WithFilesVolumes_MissingConfigFile(t *testin
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -163,7 +163,7 @@ func TestConvertServiceToDeployment_MixedVolumes(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -204,7 +204,7 @@ func TestConvertServiceToDeployment_MixedVolumes(t *testing.T) {
 
 	assert.NotNil(t, pvcVolume)
 	assert.Equal(t, "data", pvcVolume.Name)
-	assert.Equal(t, "test-comp-data", pvcVolume.PersistentVolumeClaim.ClaimName)
+	assert.Equal(t, "data", pvcVolume.PersistentVolumeClaim.ClaimName)
 
 	// Check volume mounts
 	assert.Equal(t, 2, len(deployment.Spec.Template.Spec.Containers[0].VolumeMounts))
@@ -228,7 +228,7 @@ func TestConvertComposeToK8s_WithFilesVolumes(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -278,7 +278,7 @@ func TestConvertCPU(t *testing.T) {
 }
 
 func TestConvertVolumeToPVC(t *testing.T) {
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -297,7 +297,7 @@ func TestConvertVolumeToPVC(t *testing.T) {
 	pvc := convertVolumeToPVC("data", volume, composition, "test-ns", commonLabels)
 
 	// Verify PVC metadata
-	assert.Equal(t, "test-comp-data", pvc.Name)
+	assert.Equal(t, "data", pvc.Name)
 	assert.Equal(t, "test-ns", pvc.Namespace)
 
 	// Verify labels
@@ -328,7 +328,7 @@ func TestConvertServiceToDeployment_WithResourceLimits(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -372,13 +372,13 @@ func TestConvertServiceToDeployment_WithResourceOverrides(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
 		},
-		Spec: environmentsv1.CompositionSpec{
-			ResourceOverrides: map[string]environmentsv1.ServiceResourceOverride{
+		Spec: compositionsv1.CompositionSpec{
+			ResourceOverrides: map[string]compositionsv1.ServiceResourceOverride{
 				"app": {
 					CPU:    "2",
 					Memory: "2Gi",
@@ -419,7 +419,7 @@ func TestConvertServiceToDeployment_WithReplicas(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -454,13 +454,13 @@ func TestConvertServiceToDeployment_WithReplicasOverride(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
 		},
-		Spec: environmentsv1.CompositionSpec{
-			ResourceOverrides: map[string]environmentsv1.ServiceResourceOverride{
+		Spec: compositionsv1.CompositionSpec{
+			ResourceOverrides: map[string]compositionsv1.ServiceResourceOverride{
 				"app": {
 					Replicas: &overrideReplicas,
 				},
@@ -494,12 +494,12 @@ func TestConvertServiceToDeployment_WithCompositionEnvVars(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			EnvVars: map[string]string{
 				"GLOBAL_VAR": "global-value",
 				"REGION":     "us-west-2",
@@ -542,7 +542,7 @@ func TestConvertServiceToDeployment_WithCommandAndEntrypoint(t *testing.T) {
 		Entrypoint: []string{"/bin/custom-entrypoint.sh"},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -589,7 +589,7 @@ func TestConvertComposeToK8s_WithNamedVolumes(t *testing.T) {
 		},
 	}
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-comp",
 			Namespace: "test-ns",
@@ -609,7 +609,7 @@ func TestConvertComposeToK8s_WithNamedVolumes(t *testing.T) {
 	// Should have 1 PVC
 	assert.Equal(t, 1, len(resources.PVCs))
 	pvc := resources.PVCs[0]
-	assert.Equal(t, "test-comp-pgdata", pvc.Name)
+	assert.Equal(t, "pgdata", pvc.Name)
 	assert.Equal(t, "test-ns", pvc.Namespace)
 
 	// Should have 1 deployment with volume mount
@@ -620,7 +620,7 @@ func TestConvertComposeToK8s_WithNamedVolumes(t *testing.T) {
 	volume := deployment.Spec.Template.Spec.Volumes[0]
 	assert.Equal(t, "pgdata", volume.Name)
 	assert.NotNil(t, volume.PersistentVolumeClaim)
-	assert.Equal(t, "test-comp-pgdata", volume.PersistentVolumeClaim.ClaimName)
+	assert.Equal(t, "pgdata", volume.PersistentVolumeClaim.ClaimName)
 
 	// Verify volume mount
 	container := deployment.Spec.Template.Spec.Containers[0]

@@ -13,7 +13,9 @@ import (
 	"github.com/go-logr/logr"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -45,6 +47,14 @@ const (
 	SSHUserName = "kloudlite"
 )
 
+// updateWorkMachineStatus updates the WorkMachine status with retry logic
+func (r *WorkMachineReconciler) updateWorkMachineStatus(ctx context.Context, workMachine *machinesv1.WorkMachine, updateFunc func() error, logger logr.Logger) error {
+	// Use a no-op zap logger since we already have logr for this controller
+	// The retry logic is more important than the specific logger implementation
+	zapLogger := zap.NewNop()
+	return statusutil.UpdateStatusWithRetry(ctx, r.Client, workMachine, updateFunc, zapLogger)
+}
+
 // SSH Jump Host Architecture
 //
 // This controller implements a secure SSH jump host (bastion) pattern for accessing workspaces:
@@ -58,8 +68,10 @@ const (
 // - Runs OpenSSH server on port 2222
 // - Authorizes users via ssh-authorized-keys ConfigMap (user keys only)
 // - Has TCP forwarding enabled (AllowTcpForwarding yes)
+// - Does NOT provide shell access (PermitTTY no, ForceCommand denies shells)
 // - Does NOT authenticate to workspaces (jump hosts work by TCP forwarding)
 // - Password authentication disabled for security
+// - Works like GitHub's SSH: authenticates users but only allows port forwarding
 //
 // Workspaces:
 // - Run OpenSSH servers that authorize the jump host's SSH proxy public key
@@ -158,13 +170,16 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Initialize status if it doesn't exist
 	if workMachine.Status.State == "" {
 		// First time - set current state to desired state
-		workMachine.Status.State = workMachine.Spec.DesiredState
-		now := metav1.Now()
-		if workMachine.Spec.DesiredState == machinesv1.MachineStateRunning {
-			workMachine.Status.StartedAt = &now
-		}
+		desiredState := workMachine.Spec.DesiredState
 
-		if err := r.Status().Update(ctx, workMachine); err != nil {
+		if err := r.updateWorkMachineStatus(ctx, workMachine, func() error {
+			workMachine.Status.State = desiredState
+			now := metav1.Now()
+			if desiredState == machinesv1.MachineStateRunning {
+				workMachine.Status.StartedAt = &now
+			}
+			return nil
+		}, logger); err != nil {
 			logger.Error(err, "Failed to initialize WorkMachine status")
 			return ctrl.Result{}, err
 		}
@@ -194,8 +209,10 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	case machinesv1.MachineStateStopped:
 		if desiredState == machinesv1.MachineStateRunning {
 			// Transition to starting
-			workMachine.Status.State = machinesv1.MachineStateStarting
-			if err := r.Status().Update(ctx, workMachine); err != nil {
+			if err := r.updateWorkMachineStatus(ctx, workMachine, func() error {
+				workMachine.Status.State = machinesv1.MachineStateStarting
+				return nil
+			}, logger); err != nil {
 				logger.Error(err, "Failed to update status to starting")
 				return ctrl.Result{}, err
 			}
@@ -206,10 +223,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	case machinesv1.MachineStateStarting:
 		// Transition to running
-		workMachine.Status.State = machinesv1.MachineStateRunning
-		now := metav1.Now()
-		workMachine.Status.StartedAt = &now
-		if err := r.Status().Update(ctx, workMachine); err != nil {
+		if err := r.updateWorkMachineStatus(ctx, workMachine, func() error {
+			workMachine.Status.State = machinesv1.MachineStateRunning
+			now := metav1.Now()
+			workMachine.Status.StartedAt = &now
+			return nil
+		}, logger); err != nil {
 			logger.Error(err, "Failed to update status to running")
 			return ctrl.Result{}, err
 		}
@@ -219,8 +238,10 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	case machinesv1.MachineStateRunning:
 		if desiredState == machinesv1.MachineStateStopped {
 			// Transition to stopping
-			workMachine.Status.State = machinesv1.MachineStateStopping
-			if err := r.Status().Update(ctx, workMachine); err != nil {
+			if err := r.updateWorkMachineStatus(ctx, workMachine, func() error {
+				workMachine.Status.State = machinesv1.MachineStateStopping
+				return nil
+			}, logger); err != nil {
 				logger.Error(err, "Failed to update status to stopping")
 				return ctrl.Result{}, err
 			}
@@ -231,10 +252,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	case machinesv1.MachineStateStopping:
 		// Transition to stopped
-		workMachine.Status.State = machinesv1.MachineStateStopped
-		now := metav1.Now()
-		workMachine.Status.StoppedAt = &now
-		if err := r.Status().Update(ctx, workMachine); err != nil {
+		if err := r.updateWorkMachineStatus(ctx, workMachine, func() error {
+			workMachine.Status.State = machinesv1.MachineStateStopped
+			now := metav1.Now()
+			workMachine.Status.StoppedAt = &now
+			return nil
+		}, logger); err != nil {
 			logger.Error(err, "Failed to update status to stopped")
 			return ctrl.Result{}, err
 		}
@@ -296,7 +319,10 @@ func (r *WorkMachineReconciler) handleWorkMachineDeletion(ctx context.Context, w
 			})
 		}
 
-		if err := r.Status().Update(ctx, workMachine); err != nil {
+		if err := r.updateWorkMachineStatus(ctx, workMachine, func() error {
+			// Status fields already updated above
+			return nil
+		}, logger); err != nil {
 			logger.Error(err, "Failed to update status with DeletionBlocked condition")
 			return ctrl.Result{}, err
 		}
@@ -649,6 +675,12 @@ AllowTcpForwarding yes
 GatewayPorts yes
 X11Forwarding no
 
+# Deny shell access - only allow port forwarding (like GitHub)
+PermitTTY no
+AllowAgentForwarding no
+PermitOpen any
+ForceCommand /bin/echo "You've successfully authenticated, but Kloudlite does not provide shell access. Use port forwarding to access workspaces."
+
 # Security
 StrictModes no
 MaxAuthTries 3
@@ -766,6 +798,15 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 					},
 				},
 				Spec: corev1.PodSpec{
+					HostNetwork:        true,
+					DNSPolicy:          corev1.DNSNone,
+					DNSConfig: &corev1.PodDNSConfig{
+						Nameservers: []string{"10.43.0.10"},
+						Searches:    []string{namespace + ".svc.cluster.local", "svc.cluster.local", "cluster.local"},
+						Options: []corev1.PodDNSConfigOption{
+							{Name: "ndots", Value: func() *string { v := "5"; return &v }()},
+						},
+					},
 					ServiceAccountName: "workmachine-node-manager",
 					InitContainers: []corev1.Container{
 						{

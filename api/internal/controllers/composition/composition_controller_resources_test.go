@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -18,7 +18,7 @@ import (
 func TestCompositionReconciler_ApplyResource_Create(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
@@ -80,7 +80,7 @@ func TestCompositionReconciler_ApplyResource_Create(t *testing.T) {
 func TestCompositionReconciler_ApplyResource_Update(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
@@ -147,7 +147,7 @@ func TestCompositionReconciler_ApplyResource_Update(t *testing.T) {
 func TestCompositionReconciler_ApplyResource_SkipPVCUpdate(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
@@ -226,7 +226,7 @@ func TestCompositionReconciler_ApplyResource_SkipPVCUpdate(t *testing.T) {
 func TestCompositionReconciler_CleanupRemovedResources_FirstDeployment(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
@@ -249,14 +249,14 @@ func TestCompositionReconciler_CleanupRemovedResources_FirstDeployment(t *testin
 func TestCompositionReconciler_CleanupRemovedResources_RemoveDeployment(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
 		},
 	}
 
-	oldDeployedResources := &environmentsv1.DeployedResources{
+	oldDeployedResources := &compositionsv1.DeployedResources{
 		Deployments: []string{"old-dep", "keep-dep"},
 		Services:    []string{"old-svc"},
 	}
@@ -324,14 +324,14 @@ func TestCompositionReconciler_CleanupRemovedResources_RemoveDeployment(t *testi
 func TestCompositionReconciler_CleanupRemovedResources_DeleteError(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
 		},
 	}
 
-	oldDeployedResources := &environmentsv1.DeployedResources{
+	oldDeployedResources := &compositionsv1.DeployedResources{
 		Deployments: []string{"old-deployment"},
 		Services:    []string{"old-service"},
 	}

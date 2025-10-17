@@ -4,6 +4,7 @@ import { ServicesList } from '../../_components/services-list'
 import { serviceService } from '@/lib/services/service.service'
 import { environmentService } from '@/lib/services/environment.service'
 import { serviceInterceptService } from '@/lib/services/serviceintercept.service'
+import { compositionService } from '@/lib/services/composition.service'
 
 interface PageProps {
   params: {
@@ -18,7 +19,9 @@ export default async function ServicesPage({ params }: PageProps) {
     redirect('/auth/signin')
   }
 
-  const environmentName = params.id
+  const { id } = await params
+  const currentUser = session.user?.email || 'test-user'
+  const environmentName = id
 
   // Fetch the environment to get its target namespace
   let namespace = ''
@@ -27,7 +30,11 @@ export default async function ServicesPage({ params }: PageProps) {
     namespace = environment.spec.targetNamespace
   } catch (error) {
     console.error('Failed to fetch environment:', error)
-    return <ServicesList services={[]} namespace={environmentName} serviceIntercepts={[]} />
+    return (
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <ServicesList services={[]} namespace={environmentName} serviceIntercepts={[]} />
+      </div>
+    )
   }
 
   // Fetch services from API using the target namespace
@@ -50,5 +57,22 @@ export default async function ServicesPage({ params }: PageProps) {
     serviceIntercepts = []
   }
 
-  return <ServicesList services={services} namespace={namespace} serviceIntercepts={serviceIntercepts} />
+  // Fetch the main composition
+  let composition = null
+  try {
+    composition = await compositionService.getComposition(namespace, 'main-composition')
+  } catch (error) {
+    // Composition doesn't exist yet, that's okay
+    console.log('Main composition not found, will be created on first save')
+  }
+
+  return (
+    <ServicesList
+      services={services}
+      namespace={namespace}
+      serviceIntercepts={serviceIntercepts}
+      composition={composition}
+      user={currentUser}
+    />
+  )
 }

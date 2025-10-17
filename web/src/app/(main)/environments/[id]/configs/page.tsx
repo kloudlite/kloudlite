@@ -6,6 +6,7 @@ interface PageProps {
   }
 }
 
-export default function ConfigsPage({ params }: PageProps) {
-  redirect(`/environments/${params.id}/configs/envvars`)
+export default async function ConfigsPage({ params }: PageProps) {
+  const { id } = await params
+  redirect(`/environments/${id}/configs/envvars`)
 }

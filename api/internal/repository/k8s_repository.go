@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -126,21 +127,26 @@ func (r *K8sClusterRepository[T, L]) List(ctx context.Context, opts ...ListOptio
 		opt(options)
 	}
 
-	// Build client list options (no namespace for cluster-scoped)
-	listOpts := &client.ListOptions{}
+	// Build client list options using helper function
+	metav1ListOpts := buildListOptions(options)
 
-	if options.LabelSelector != "" {
-		if selector, err := metav1.ParseToLabelSelector(options.LabelSelector); err == nil {
+	// Convert to client.ListOptions
+	listOpts := &client.ListOptions{}
+	if metav1ListOpts.LabelSelector != "" {
+		if selector, err := metav1.ParseToLabelSelector(metav1ListOpts.LabelSelector); err == nil {
 			listOpts.LabelSelector, _ = metav1.LabelSelectorAsSelector(selector)
 		}
 	}
-
-	if options.Limit > 0 {
-		listOpts.Limit = options.Limit
+	if metav1ListOpts.FieldSelector != "" {
+		if fieldSelector, err := fields.ParseSelector(metav1ListOpts.FieldSelector); err == nil {
+			listOpts.FieldSelector = fieldSelector
+		}
 	}
-
-	if options.Continue != "" {
-		listOpts.Continue = options.Continue
+	if metav1ListOpts.Limit > 0 {
+		listOpts.Limit = metav1ListOpts.Limit
+	}
+	if metav1ListOpts.Continue != "" {
+		listOpts.Continue = metav1ListOpts.Continue
 	}
 
 	if err := r.client.List(ctx, list, listOpts); err != nil {
@@ -277,23 +283,28 @@ func (r *K8sNamespacedRepository[T, L]) List(ctx context.Context, namespace stri
 		opt(options)
 	}
 
-	// Build client list options
+	// Build client list options using helper function
+	metav1ListOpts := buildListOptions(options)
+
+	// Convert to client.ListOptions
 	listOpts := &client.ListOptions{
 		Namespace: namespace,
 	}
-
-	if options.LabelSelector != "" {
-		if selector, err := metav1.ParseToLabelSelector(options.LabelSelector); err == nil {
+	if metav1ListOpts.LabelSelector != "" {
+		if selector, err := metav1.ParseToLabelSelector(metav1ListOpts.LabelSelector); err == nil {
 			listOpts.LabelSelector, _ = metav1.LabelSelectorAsSelector(selector)
 		}
 	}
-
-	if options.Limit > 0 {
-		listOpts.Limit = options.Limit
+	if metav1ListOpts.FieldSelector != "" {
+		if fieldSelector, err := fields.ParseSelector(metav1ListOpts.FieldSelector); err == nil {
+			listOpts.FieldSelector = fieldSelector
+		}
 	}
-
-	if options.Continue != "" {
-		listOpts.Continue = options.Continue
+	if metav1ListOpts.Limit > 0 {
+		listOpts.Limit = metav1ListOpts.Limit
+	}
+	if metav1ListOpts.Continue != "" {
+		listOpts.Continue = metav1ListOpts.Continue
 	}
 
 	if err := r.client.List(ctx, list, listOpts); err != nil {

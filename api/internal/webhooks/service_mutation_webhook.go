@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
@@ -76,6 +77,13 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 		})
 
 	if err != nil {
+		// Handle TLS/certificate errors gracefully for development environments
+		if isTLSError(err) {
+			w.logger.Warn("TLS error when checking ServiceIntercepts (development mode), allowing service to proceed: " + err.Error())
+			return &admissionv1.AdmissionResponse{
+				Allowed: true,
+			}
+		}
 		w.logger.Error("Failed to list ServiceIntercepts: " + err.Error())
 		// Allow the service to proceed without interception on error
 		return &admissionv1.AdmissionResponse{
@@ -114,4 +122,30 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 	return &admissionv1.AdmissionResponse{
 		Allowed: true,
 	}
+}
+
+// isTLSError checks if the error is related to TLS certificate verification
+func isTLSError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+	tlsErrorStrings := []string{
+		"tls: failed to verify certificate",
+		"x509: certificate signed by unknown authority",
+		"certificate not trusted",
+		"certificate has expired",
+		"certificate is not yet valid",
+		"tls handshake error",
+		"certificate authority",
+	}
+
+	for _, tlsStr := range tlsErrorStrings {
+		if strings.Contains(errStr, tlsStr) {
+			return true
+		}
+	}
+
+	return false
 }

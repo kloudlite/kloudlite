@@ -32,7 +32,7 @@ type AuthConfig struct {
 
 type KubernetesConfig struct {
 	// Kubeconfig file path (optional, will auto-detect if not provided)
-	KubeconfigPath string `envconfig:"KUBECONFIG_PATH" default:""`
+	KubeconfigPath string `envconfig:"KUBECONFIG" default:""`
 
 	// Kubernetes context to use (optional, uses current context if not provided)
 	Context string `envconfig:"CONTEXT" default:""`
