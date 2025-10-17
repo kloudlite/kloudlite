@@ -916,3 +916,102 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_InvalidJSON(t *testing
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+func TestServiceInterceptWebhook_ValidateServiceIntercept_PortlessHeadlessService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	scheme := runtime.NewScheme()
+	_ = interceptsv1.AddToScheme(scheme)
+	_ = workspacesv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	// Create running workspace
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-ns",
+		},
+		Status: workspacesv1.WorkspaceStatus{
+			Phase: "Running",
+		},
+	}
+
+	// Create portless headless service (clusterIP: None, no ports defined)
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "portless-headless-service",
+			Namespace: "test-ns",
+		},
+		Spec: corev1.ServiceSpec{
+			ClusterIP: "None", // Headless service
+			Ports:     []corev1.ServicePort{}, // No ports defined
+			Selector: map[string]string{
+				"app": "test",
+			},
+		},
+	}
+
+	k8sClient := fakeclient.NewClientBuilder().WithScheme(scheme).WithObjects(workspace, service).Build()
+
+	zapLogger, _ := zap.NewDevelopment()
+	webhook := NewServiceInterceptWebhook(logger.NewZapLogger(zapLogger), k8sClient)
+
+	intercept := &interceptsv1.ServiceIntercept{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-intercept",
+			Namespace: "test-ns",
+		},
+		Spec: interceptsv1.ServiceInterceptSpec{
+			WorkspaceRef: corev1.ObjectReference{
+				Name:      "test-workspace",
+				Namespace: "test-ns",
+			},
+			ServiceRef: corev1.ObjectReference{
+				Name:      "portless-headless-service",
+				Namespace: "test-ns",
+			},
+			PortMappings: []interceptsv1.PortMapping{
+				{
+					ServicePort:   80,
+					WorkspacePort: 3000,
+					Protocol:      corev1.ProtocolTCP,
+				},
+				{
+					ServicePort:   443,
+					WorkspacePort: 3001,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+		},
+	}
+
+	interceptBytes, _ := json.Marshal(intercept)
+	admissionReview := admissionv1.AdmissionReview{
+		Request: &admissionv1.AdmissionRequest{
+			UID:       "test-uid",
+			Operation: admissionv1.Create,
+			Namespace: "test-ns",
+			Object: runtime.RawExtension{
+				Raw: interceptBytes,
+			},
+		},
+	}
+
+	body, _ := json.Marshal(admissionReview)
+	req, _ := http.NewRequest("POST", "/validate", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+
+	router := gin.New()
+	router.POST("/validate", webhook.ValidateServiceIntercept)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response admissionv1.AdmissionReview
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	
+	// For portless services, the webhook should allow user-provided port mappings
+	// without validating against service.Spec.Ports
+	assert.True(t, response.Response.Allowed, "Portless headless services should allow user-provided port mappings")
+}

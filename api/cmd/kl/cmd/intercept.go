@@ -242,32 +242,109 @@ func handleInterceptStartWithService(service corev1.Service, workspace *workspac
 	}
 
 	// Prompt for port mappings
-	fmt.Printf("\nService '%s' has %d port(s):\n", service.Name, len(service.Spec.Ports))
-	portMappings := make([]interceptsv1.PortMapping, 0, len(service.Spec.Ports))
-
+	var portMappings []interceptsv1.PortMapping
 	reader := bufio.NewReader(os.Stdin)
-	for _, port := range service.Spec.Ports {
-		fmt.Printf("  Port %d/%s -> Workspace port [%d]: ", port.Port, port.Protocol, port.Port)
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			return fmt.Errorf("failed to read input: %w", err)
-		}
 
-		input = strings.TrimSpace(input)
-		workspacePort := port.Port
-		if input != "" {
-			parsedPort, err := strconv.Atoi(input)
+	if len(service.Spec.Ports) > 0 {
+		// Service has defined ports
+		fmt.Printf("\nService '%s' has %d port(s):\n", service.Name, len(service.Spec.Ports))
+		portMappings = make([]interceptsv1.PortMapping, 0, len(service.Spec.Ports))
+
+		for _, port := range service.Spec.Ports {
+			fmt.Printf("\n  Service port: %d/%s\n", port.Port, port.Protocol)
+			fmt.Printf("  Workspace port [%d]: ", port.Port)
+			input, err := reader.ReadString('\n')
 			if err != nil {
-				return fmt.Errorf("invalid port number: %s", input)
+				return fmt.Errorf("failed to read input: %w", err)
 			}
-			workspacePort = int32(parsedPort)
-		}
 
-		portMappings = append(portMappings, interceptsv1.PortMapping{
-			ServicePort:   port.Port,
-			WorkspacePort: workspacePort,
-			Protocol:      port.Protocol,
-		})
+			input = strings.TrimSpace(input)
+			workspacePort := port.Port
+			if input != "" {
+				parsedPort, err := strconv.Atoi(input)
+				if err != nil {
+					return fmt.Errorf("invalid port number: %s", input)
+				}
+				workspacePort = int32(parsedPort)
+			}
+
+			portMappings = append(portMappings, interceptsv1.PortMapping{
+				ServicePort:   port.Port,
+				WorkspacePort: workspacePort,
+				Protocol:      port.Protocol,
+			})
+		}
+	} else {
+		// Portless service (e.g., headless service) - ask user to manually configure ports
+		fmt.Printf("\nService '%s' is a portless service (headless service).\n", service.Name)
+		fmt.Println("You need to manually specify port mappings.")
+		fmt.Println("Enter port mappings (press Enter with empty service port to finish):\n")
+
+		portMappings = make([]interceptsv1.PortMapping, 0)
+
+		for {
+			fmt.Print("  Service port (or press Enter to finish): ")
+			servicePortInput, err := reader.ReadString('\n')
+			if err != nil {
+				return fmt.Errorf("failed to read input: %w", err)
+			}
+
+			servicePortInput = strings.TrimSpace(servicePortInput)
+			if servicePortInput == "" {
+				if len(portMappings) == 0 {
+					return fmt.Errorf("at least one port mapping is required")
+				}
+				break
+			}
+
+			servicePort, err := strconv.Atoi(servicePortInput)
+			if err != nil || servicePort < 1 || servicePort > 65535 {
+				fmt.Println("  Invalid port number. Please enter a number between 1 and 65535.")
+				continue
+			}
+
+			fmt.Print("  Workspace port: ")
+			workspacePortInput, err := reader.ReadString('\n')
+			if err != nil {
+				return fmt.Errorf("failed to read input: %w", err)
+			}
+
+			workspacePortInput = strings.TrimSpace(workspacePortInput)
+			if workspacePortInput == "" {
+				fmt.Println("  Workspace port is required.")
+				continue
+			}
+
+			workspacePort, err := strconv.Atoi(workspacePortInput)
+			if err != nil || workspacePort < 1 || workspacePort > 65535 {
+				fmt.Println("  Invalid port number. Please enter a number between 1 and 65535.")
+				continue
+			}
+
+			fmt.Print("  Protocol (TCP/UDP) [TCP]: ")
+			protocolInput, err := reader.ReadString('\n')
+			if err != nil {
+				return fmt.Errorf("failed to read input: %w", err)
+			}
+
+			protocol := strings.ToUpper(strings.TrimSpace(protocolInput))
+			if protocol == "" {
+				protocol = "TCP"
+			}
+
+			if protocol != "TCP" && protocol != "UDP" && protocol != "SCTP" {
+				fmt.Println("  Invalid protocol. Using TCP as default.")
+				protocol = "TCP"
+			}
+
+			portMappings = append(portMappings, interceptsv1.PortMapping{
+				ServicePort:   int32(servicePort),
+				WorkspacePort: int32(workspacePort),
+				Protocol:      corev1.Protocol(protocol),
+			})
+
+			fmt.Printf("  ✓ Added mapping: %d (service) → %d (workspace) [%s]\n\n", servicePort, workspacePort, protocol)
+		}
 	}
 
 	// Create ServiceIntercept resource

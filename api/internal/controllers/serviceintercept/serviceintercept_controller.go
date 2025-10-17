@@ -8,6 +8,7 @@ import (
 
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -88,17 +89,25 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 
 	if err != nil {
 		logger.Error("Failed to get workspace", zap.Error(err))
-		intercept.Status.Phase = "Failed"
-		intercept.Status.Message = fmt.Sprintf("Workspace '%s' not found", intercept.Spec.WorkspaceRef.Name)
-		r.Status().Update(ctx, intercept)
+		if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+			intercept.Status.Phase = "Failed"
+			intercept.Status.Message = fmt.Sprintf("Workspace '%s' not found", intercept.Spec.WorkspaceRef.Name)
+			return nil
+		}, logger); statusErr != nil {
+			logger.Error("Failed to update status after workspace error", zap.Error(statusErr))
+		}
 		return reconcile.Result{RequeueAfter: 30 * time.Second}, err
 	}
 
 	if workspace.Status.Phase != "Running" {
 		logger.Warn("Workspace is not running", zap.String("phase", workspace.Status.Phase))
-		intercept.Status.Phase = "Failed"
-		intercept.Status.Message = fmt.Sprintf("Workspace is not running (phase: %s)", workspace.Status.Phase)
-		r.Status().Update(ctx, intercept)
+		if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+			intercept.Status.Phase = "Failed"
+			intercept.Status.Message = fmt.Sprintf("Workspace is not running (phase: %s)", workspace.Status.Phase)
+			return nil
+		}, logger); statusErr != nil {
+			logger.Error("Failed to update status after workspace phase check", zap.Error(statusErr))
+		}
 		return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
@@ -116,9 +125,13 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 
 	if err != nil {
 		logger.Error("Failed to get service", zap.Error(err))
-		intercept.Status.Phase = "Failed"
-		intercept.Status.Message = fmt.Sprintf("Service '%s' not found", intercept.Spec.ServiceRef.Name)
-		r.Status().Update(ctx, intercept)
+		if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+			intercept.Status.Phase = "Failed"
+			intercept.Status.Message = fmt.Sprintf("Service '%s' not found", intercept.Spec.ServiceRef.Name)
+			return nil
+		}, logger); statusErr != nil {
+			logger.Error("Failed to update status after service error", zap.Error(statusErr))
+		}
 		return reconcile.Result{RequeueAfter: 30 * time.Second}, err
 	}
 
@@ -175,9 +188,13 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 
 	if err != nil {
 		logger.Error("Failed to get workspace headless service", zap.Error(err))
-		intercept.Status.Phase = "Failed"
-		intercept.Status.Message = fmt.Sprintf("Workspace headless service not found: %v", err)
-		r.Status().Update(ctx, intercept)
+		if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+			intercept.Status.Phase = "Failed"
+			intercept.Status.Message = fmt.Sprintf("Workspace headless service not found: %v", err)
+			return nil
+		}, logger); statusErr != nil {
+			logger.Error("Failed to update status after headless service error", zap.Error(statusErr))
+		}
 		return reconcile.Result{RequeueAfter: 10 * time.Second}, err
 	}
 
@@ -201,6 +218,9 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 
 	socatCommand := strings.Join(socatCommands, "\n")
 
+	// Set short termination grace period for faster cleanup
+	terminationGracePeriod := int64(5)
+
 	// Build pod with original service selector labels (so service routes to this pod)
 	socatPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -215,9 +235,17 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 					Image: "alpine/socat:latest",
 					Command: []string{"sh", "-c", socatCommand},
 					Ports: []corev1.ContainerPort{},
+					Lifecycle: &corev1.Lifecycle{
+						PreStop: &corev1.LifecycleHandler{
+							Exec: &corev1.ExecAction{
+								Command: []string{"sh", "-c", "killall socat"},
+							},
+						},
+					},
 				},
 			},
-			RestartPolicy: corev1.RestartPolicyAlways,
+			RestartPolicy:                 corev1.RestartPolicyAlways,
+			TerminationGracePeriodSeconds: &terminationGracePeriod,
 		},
 	}
 
@@ -261,9 +289,13 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 		if apierrors.IsNotFound(err) {
 			if err := r.Create(ctx, socatPod); err != nil {
 				logger.Error("Failed to create SOCAT pod", zap.Error(err))
-				intercept.Status.Phase = "Failed"
-				intercept.Status.Message = fmt.Sprintf("Failed to create SOCAT pod: %v", err)
-				r.Status().Update(ctx, intercept)
+				if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+					intercept.Status.Phase = "Failed"
+					intercept.Status.Message = fmt.Sprintf("Failed to create SOCAT pod: %v", err)
+					return nil
+				}, logger); statusErr != nil {
+					logger.Error("Failed to update status after SOCAT pod creation error", zap.Error(statusErr))
+				}
 				return reconcile.Result{RequeueAfter: 10 * time.Second}, err
 			}
 			logger.Info("Created SOCAT forwarding pod",
@@ -318,16 +350,18 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 	logger.Info("Successfully activated service intercept with SOCAT")
 
 	// Step 8: Update status to Active
-	if intercept.Status.Phase != "Active" {
-		intercept.Status.Phase = "Active"
-		intercept.Status.Message = fmt.Sprintf("Service '%s' is being intercepted by workspace '%s' via SOCAT pod '%s'",
-			service.Name, workspace.Name, socatPodName)
-		now := metav1.Now()
-		intercept.Status.InterceptStartTime = &now
-	}
-
-	if err := r.Status().Update(ctx, intercept); err != nil {
-		logger.Warn("Failed to update status", zap.Error(err))
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+		if intercept.Status.Phase != "Active" {
+			intercept.Status.Phase = "Active"
+			intercept.Status.Message = fmt.Sprintf("Service '%s' is being intercepted by workspace '%s' via SOCAT pod '%s'",
+				service.Name, workspace.Name, socatPodName)
+			now := metav1.Now()
+			intercept.Status.InterceptStartTime = &now
+		}
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update status to Active", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, err
 	}
 
 	return reconcile.Result{}, nil
@@ -354,15 +388,50 @@ func (r *ServiceInterceptReconciler) handleDeletion(ctx context.Context, interce
 		}, socatPod)
 
 		if err == nil {
+			// Check if pod is already terminating
+			if socatPod.DeletionTimestamp != nil {
+				// Pod is already being deleted
+				deletionTime := socatPod.DeletionTimestamp.Time
+				timeSinceDeletion := time.Since(deletionTime)
+
+				// If pod has been terminating for more than 30 seconds, force delete it
+				if timeSinceDeletion > 30*time.Second {
+					logger.Warn("SOCAT pod stuck in terminating state, force deleting",
+						zap.String("pod", intercept.Status.SOCATPodName),
+						zap.Duration("terminating_for", timeSinceDeletion))
+
+					// Force delete by setting grace period to 0
+					gracePeriod := int64(0)
+					deleteOptions := client.DeleteOptions{
+						GracePeriodSeconds: &gracePeriod,
+					}
+					if err := r.Delete(ctx, socatPod, &deleteOptions); err != nil && !apierrors.IsNotFound(err) {
+						logger.Error("Failed to force delete SOCAT pod", zap.Error(err))
+						return reconcile.Result{RequeueAfter: 2 * time.Second}, err
+					}
+					logger.Info("Force deleted SOCAT pod")
+				} else {
+					// Still waiting for graceful termination
+					logger.Info("Waiting for SOCAT pod to terminate",
+						zap.String("pod", intercept.Status.SOCATPodName),
+						zap.Duration("terminating_for", timeSinceDeletion))
+				}
+				return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+			}
+
+			// Pod exists and not terminating yet, initiate deletion
 			if err := r.Delete(ctx, socatPod); err != nil && !apierrors.IsNotFound(err) {
 				logger.Error("Failed to delete SOCAT pod", zap.Error(err))
 				return reconcile.Result{RequeueAfter: 5 * time.Second}, err
 			}
-			logger.Info("Deleted SOCAT pod", zap.String("pod", intercept.Status.SOCATPodName))
+			logger.Info("Initiated deletion of SOCAT pod", zap.String("pod", intercept.Status.SOCATPodName))
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 		} else if !apierrors.IsNotFound(err) {
 			logger.Error("Failed to get SOCAT pod during deletion", zap.Error(err))
 			return reconcile.Result{RequeueAfter: 5 * time.Second}, err
 		}
+		// Pod not found, already deleted
+		logger.Info("SOCAT pod already deleted", zap.String("pod", intercept.Status.SOCATPodName))
 	}
 
 	// Step 2: Workspace headless service is managed by workspace controller - don't delete it
@@ -372,7 +441,18 @@ func (r *ServiceInterceptReconciler) handleDeletion(ctx context.Context, interce
 	// Original pods will automatically be recreated by their controllers (Deployment, StatefulSet, etc.)
 
 	// Step 4: Wait for replacement pods to be Running before completing deletion
-	if intercept.Status.OriginalServiceSelector != nil {
+	// BUT: Skip this check if the namespace is being deleted (Terminating state)
+	namespace := &corev1.Namespace{}
+	err := r.Get(ctx, client.ObjectKey{Name: serviceNamespace}, namespace)
+
+	namespaceTerminating := false
+	if err == nil && namespace.DeletionTimestamp != nil {
+		namespaceTerminating = true
+		logger.Info("Namespace is being deleted, skipping wait for replacement pods",
+			zap.String("namespace", serviceNamespace))
+	}
+
+	if !namespaceTerminating && intercept.Status.OriginalServiceSelector != nil {
 		podList := &corev1.PodList{}
 		err := r.List(ctx, podList,
 			client.InNamespace(serviceNamespace),
@@ -450,6 +530,8 @@ func (r *ServiceInterceptReconciler) handleDeletion(ctx context.Context, interce
 			logger.Error("Failed to list pods during deletion", zap.Error(err))
 			// Continue with deletion even if we can't verify pods
 		}
+	} else if namespaceTerminating {
+		logger.Info("Skipping pod replacement check since namespace is terminating")
 	}
 
 	// Remove finalizer
