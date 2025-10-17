@@ -12,6 +12,8 @@ export interface K8sService {
   clusterIP: string
   ports: ServicePort[]
   selector?: Record<string, string>
+  replicas: number
+  image?: string
 }
 
 export interface ListServicesResponse {
