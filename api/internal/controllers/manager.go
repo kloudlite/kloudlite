@@ -7,7 +7,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/helmchart"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/user"
@@ -129,17 +128,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
 	}
 
-	// Setup HelmChart controller
-	helmChartReconciler := &helmchart.Reconciler{
-		Client:             mgr.GetClient(),
-		Scheme:             mgr.GetScheme(),
-		HelmJobRunnerImage: "ghcr.io/kloudlite/plugin-helm-chart/helm-job-runner:v1.0.0",
-	}
-
-	if err = helmChartReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create HelmChart controller: %w", err)
-	}
-
+	
 	// Setup ServiceIntercept controller
 	serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
 		Client: mgr.GetClient(),
