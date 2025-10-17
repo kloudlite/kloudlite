@@ -18,5 +18,5 @@ type Manager struct {
 	EnvironmentWebhook    *webhooks.EnvironmentWebhook
 	MachineTypeWebhook    *webhooks.MachineTypeWebhook
 	WorkMachineWebhook    *webhooks.WorkMachineWebhook
-	// WorkspaceWebhook      *webhooks.WorkspaceWebhook // TODO: fix webhook implementation
+	WorkspaceWebhook      *webhooks.WorkspaceWebhook
 }
