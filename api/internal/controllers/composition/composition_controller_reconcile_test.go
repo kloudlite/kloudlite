@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -42,12 +42,12 @@ func TestCompositionReconciler_Reconcile_CompositionNotFound(t *testing.T) {
 func TestCompositionReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 			ComposeContent: `version: '3.8'
 services:
@@ -81,7 +81,7 @@ services:
 	assert.True(t, result.Requeue)
 
 	// Verify finalizer was added
-	updatedComp := &environmentsv1.Composition{}
+	updatedComp := &compositionsv1.Composition{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-composition",
 		Namespace: "test-namespace",
@@ -95,21 +95,21 @@ func TestCompositionReconciler_Reconcile_ReconcileOnConfigMapChange(t *testing.T
 	// This allows ConfigMap/Secret changes to trigger redeployment
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-composition",
 			Namespace:  "test-namespace",
 			Finalizers: []string{compositionFinalizer},
 			Generation: 1,
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 			ComposeContent: `version: '3.8'
 services:
   web:
     image: nginx:latest`,
 		},
-		Status: environmentsv1.CompositionStatus{
+		Status: compositionsv1.CompositionStatus{
 			ObservedGeneration: 1, // Same as current generation - deployment should still happen
 		},
 	}
@@ -174,13 +174,13 @@ func TestCompositionReconciler_Reconcile_GetCompositionError(t *testing.T) {
 func TestCompositionReconciler_Reconcile_AddFinalizerUpdateError(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
-	composition := &environmentsv1.Composition{
+	composition := &compositionsv1.Composition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-composition",
 			Namespace: "test-namespace",
 			// No finalizer initially
 		},
-		Spec: environmentsv1.CompositionSpec{
+		Spec: compositionsv1.CompositionSpec{
 			DisplayName: "Test Composition",
 			ComposeContent: `version: '3.8'
 services:
