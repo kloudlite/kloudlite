@@ -180,13 +180,7 @@ func (h *MachineTypeHandlers) UpdateMachineType(c *gin.Context) {
 	_ = existing.DeepCopy()
 	existing.Spec = req.Spec
 
-	// Apply defaults via webhook
-	if err := h.manager.MachineTypeWebhook.Default(ctx, existing); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
+	// Note: Defaults and validation are handled by admission webhooks
 
 	// Update the resource
 	if err := h.manager.MachineTypeRepository.Update(ctx, existing); err != nil {

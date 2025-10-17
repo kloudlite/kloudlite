@@ -102,10 +102,7 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	// Ensure the owner is set to the authenticated user
 	workspace.Spec.Owner = userEmail
 
-	// Set default values if not provided
-	if workspace.Spec.Status == "" {
-		workspace.Spec.Status = "active"
-	}
+	// Note: Default values are set by the admission webhook
 
 	// Create the workspace
 	err = h.wsRepo.Create(c.Request.Context(), workspace)
