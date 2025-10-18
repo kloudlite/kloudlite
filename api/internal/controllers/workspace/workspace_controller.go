@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +15,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -115,5 +117,28 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
 		Owns(&workspacev1.PackageRequest{}).
+		Watches(
+			&interceptsv1.ServiceIntercept{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+				// Extract workspace name and namespace from labels
+				labels := obj.GetLabels()
+				workspaceName := labels["workspaces.kloudlite.io/workspace-name"]
+				workspaceNamespace := labels["workspaces.kloudlite.io/workspace-namespace"]
+
+				if workspaceName == "" || workspaceNamespace == "" {
+					return nil
+				}
+
+				// Trigger reconciliation for the workspace
+				return []reconcile.Request{
+					{
+						NamespacedName: client.ObjectKey{
+							Name:      workspaceName,
+							Namespace: workspaceNamespace,
+						},
+					},
+				}
+			}),
+		).
 		Complete(r)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
@@ -17,20 +18,24 @@ import (
 
 // updateStatusPreservingPackages updates workspace status while preserving package-related fields
 func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	// Preserve package-related fields from the current workspace object
-	// (these may have been updated by syncPackageStatus)
+	// Preserve package-related fields, ConnectedEnvironment, and ActiveIntercepts from the current workspace object
+	// (these may have been updated by syncPackageStatus or updateWorkspaceStatus)
 	installedPackages := workspace.Status.InstalledPackages
 	failedPackages := workspace.Status.FailedPackages
 	packageMessage := workspace.Status.PackageInstallationMessage
+	connectedEnvironment := workspace.Status.ConnectedEnvironment
+	activeIntercepts := workspace.Status.ActiveIntercepts
 
 	return statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
 		// Copy all status fields
 		// Note: workspace is automatically refetched by UpdateStatusWithRetry
 
-		// Ensure package fields are preserved
+		// Ensure package fields, ConnectedEnvironment, and ActiveIntercepts are preserved
 		workspace.Status.InstalledPackages = installedPackages
 		workspace.Status.FailedPackages = failedPackages
 		workspace.Status.PackageInstallationMessage = packageMessage
+		workspace.Status.ConnectedEnvironment = connectedEnvironment
+		workspace.Status.ActiveIntercepts = activeIntercepts
 
 		return nil
 	}, logger)
@@ -57,11 +62,11 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		workspace.Status.AccessURL = accessURLs["code-server"]
 	}
 
-	// Update ConnectedEnvironment status if EnvironmentRef is set
-	if workspace.Spec.EnvironmentRef != nil {
+	// Update ConnectedEnvironment status if EnvironmentConnection is set
+	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name:      workspace.Spec.EnvironmentRef.Name,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 			Namespace: workspace.Namespace,
 		}, env)
 
@@ -81,7 +86,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			workspace.Status.ConnectedEnvironment = nil
 			logger.Warn("Failed to fetch environment for status update",
 				zap.String("workspace", workspace.Name),
-				zap.String("environment", workspace.Spec.EnvironmentRef.Name),
+				zap.String("environment", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name),
 				zap.Error(err),
 			)
 		} else {
@@ -93,9 +98,12 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			)
 		}
 	} else {
-		// No environment reference, clear connected environment status
+		// No environment connection, clear connected environment status
 		workspace.Status.ConnectedEnvironment = nil
 	}
+
+	// Update ActiveIntercepts status
+	workspace.Status.ActiveIntercepts = r.collectActiveIntercepts(ctx, workspace, logger)
 
 	if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
 		logger.Error("Failed to update workspace status after retries", zap.Error(err))
@@ -103,6 +111,67 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	}
 
 	return reconcile.Result{}, nil
+}
+
+// collectActiveIntercepts collects the status of all active service intercepts for this workspace
+func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) []workspacev1.InterceptStatus {
+	var activeIntercepts []workspacev1.InterceptStatus
+
+	// Only collect intercepts if workspace has an environment connection
+	if workspace.Spec.EnvironmentConnection == nil {
+		return activeIntercepts
+	}
+
+	// Get environment to find target namespace
+	env := &environmentv1.Environment{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+		Namespace: workspace.Namespace,
+	}, env)
+
+	if err != nil {
+		logger.Warn("Failed to fetch environment for intercept status collection",
+			zap.String("workspace", workspace.Name),
+			zap.String("environment", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name),
+			zap.Error(err),
+		)
+		return activeIntercepts
+	}
+
+	// List all ServiceIntercepts for this workspace in the environment namespace
+	interceptList := &interceptsv1.ServiceInterceptList{}
+	err = r.List(ctx, interceptList,
+		client.InNamespace(env.Spec.TargetNamespace),
+		client.MatchingLabels{
+			"workspaces.kloudlite.io/workspace-name":      workspace.Name,
+			"workspaces.kloudlite.io/workspace-namespace": workspace.Namespace,
+		})
+
+	if err != nil {
+		logger.Error("Failed to list service intercepts for status",
+			zap.String("workspace", workspace.Name),
+			zap.String("targetNamespace", env.Spec.TargetNamespace),
+			zap.Error(err),
+		)
+		return activeIntercepts
+	}
+
+	// Collect status from each intercept
+	for _, intercept := range interceptList.Items {
+		interceptStatus := workspacev1.InterceptStatus{
+			ServiceName: intercept.Spec.ServiceRef.Name,
+			Phase:       intercept.Status.Phase,
+			Message:     intercept.Status.Message,
+		}
+		activeIntercepts = append(activeIntercepts, interceptStatus)
+	}
+
+	logger.Info("Collected active intercept statuses",
+		zap.String("workspace", workspace.Name),
+		zap.Int("count", len(activeIntercepts)),
+	)
+
+	return activeIntercepts
 }
 
 // applyLabelsAndAnnotations applies standard labels and annotations to workspace resources

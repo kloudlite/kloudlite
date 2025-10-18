@@ -83,7 +83,47 @@ func (w *ServiceInterceptWebhook) MutateServiceIntercept(c *gin.Context) {
 }
 
 func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
-	// Parse the ServiceIntercept object
+	// Handle DELETE operations - for DELETE, the object is in OldObject
+	if req.Operation == admissionv1.Delete {
+		var intercept interceptsv1.ServiceIntercept
+		if err := json.Unmarshal(req.OldObject.Raw, &intercept); err != nil {
+			w.logger.Error("Failed to unmarshal ServiceIntercept object for delete: " + err.Error())
+			// Allow deletion to proceed even if we can't parse the object
+			return &admissionv1.AdmissionResponse{
+				Allowed: true,
+			}
+		}
+
+		// Check if this ServiceIntercept is managed by a workspace
+		workspaceName := intercept.Labels["workspaces.kloudlite.io/workspace-name"]
+		workspaceNamespace := intercept.Labels["workspaces.kloudlite.io/workspace-namespace"]
+
+		if workspaceName != "" && workspaceNamespace != "" {
+			// Check if the deletion is coming from the workspace controller (service account)
+			// Service accounts have username format: system:serviceaccount:<namespace>:<name>
+			isController := strings.HasPrefix(req.UserInfo.Username, "system:serviceaccount:")
+
+			if !isController {
+				// This is a manual deletion attempt - prevent it
+				return &admissionv1.AdmissionResponse{
+					Allowed: false,
+					Result: &metav1.Status{
+						Message: fmt.Sprintf("Cannot delete ServiceIntercept '%s' directly - it is managed by workspace '%s/%s'. To remove this intercept, update the workspace's environmentConnection.intercepts field instead.",
+							intercept.Name, workspaceNamespace, workspaceName),
+					},
+				}
+			}
+
+			// Allow deletion by the controller
+		}
+
+		// Allow deletion of non-workspace-managed intercepts or controller-initiated deletions
+		return &admissionv1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
+
+	// Parse the ServiceIntercept object for CREATE/UPDATE operations
 	var intercept interceptsv1.ServiceIntercept
 	if err := json.Unmarshal(req.Object.Raw, &intercept); err != nil {
 		w.logger.Error("Failed to unmarshal ServiceIntercept object: " + err.Error())
@@ -95,7 +135,7 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 		}
 	}
 
-	// Skip validation if the ServiceIntercept is being deleted
+	// Skip validation if the ServiceIntercept is being deleted (for finalizer updates)
 	// This allows finalizer removal even if the service/workspace no longer exists
 	if intercept.DeletionTimestamp != nil {
 		return &admissionv1.AdmissionResponse{
