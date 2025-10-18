@@ -169,10 +169,10 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 						TargetPort: intstr.FromInt(7681),
 					},
 					{
-						Name:       "vscode-tunnel",
+						Name:       "claude-ttyd",
 						Protocol:   corev1.ProtocolTCP,
-						Port:       8000,
-						TargetPort: intstr.FromInt(8000),
+						Port:       7682,
+						TargetPort: intstr.FromInt(7682),
 					},
 				},
 				Type: corev1.ServiceTypeClusterIP,

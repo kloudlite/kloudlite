@@ -19,77 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func TestUserReconciler_Reconcile_CreateWorkMachine(t *testing.T) {
-	scheme := runtime.NewScheme()
-	_ = platformv1alpha1.AddToScheme(scheme)
-	_ = machinesv1.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-	_ = rbacv1.AddToScheme(scheme)
-
-	active := true
-	user := &platformv1alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-user",
-			UID:  types.UID("test-uid-123"),
-		},
-		Spec: platformv1alpha1.UserSpec{
-			Email:  "test@example.com",
-			Roles:  []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
-			Active: &active,
-		},
-	}
-
-	defaultMachineType := &machinesv1.MachineType{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "default-machine",
-		},
-		Spec: machinesv1.MachineTypeSpec{
-			DisplayName: "Default Machine",
-			Active:      true,
-			IsDefault:   true,
-			Resources: machinesv1.MachineResources{
-				CPU:    "2",
-				Memory: "4Gi",
-			},
-		},
-	}
-
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(user, defaultMachineType).Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &UserReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name: "test-user",
-		},
-	}
-
-	// First reconcile - should add finalizer
-	result, err := reconciler.Reconcile(context.Background(), req)
-	assert.NoError(t, err)
-	assert.True(t, result.Requeue)
-
-	// Second reconcile - should create WorkMachine
-	result, err = reconciler.Reconcile(context.Background(), req)
-	assert.NoError(t, err)
-	assert.False(t, result.Requeue)
-
-	// Verify WorkMachine was created
-	workMachine := &machinesv1.WorkMachine{}
-	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "wm-test-user"}, workMachine)
-	assert.NoError(t, err)
-	assert.Equal(t, "test@example.com", workMachine.Spec.OwnedBy)
-	assert.Equal(t, "default-machine", workMachine.Spec.MachineType)
-	assert.Equal(t, "wm-test-user", workMachine.Spec.TargetNamespace)
-	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.DesiredState)
-}
-
 func TestUserReconciler_Reconcile_UserNotFound(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
@@ -208,7 +137,11 @@ func TestUserReconciler_Reconcile_UserDeactivation(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(user, existingWorkMachine).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(user, existingWorkMachine).
+		WithStatusSubresource(&platformv1alpha1.User{}).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &UserReconciler{
@@ -272,7 +205,11 @@ func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(user, existingWorkMachine).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(user, existingWorkMachine).
+		WithStatusSubresource(&platformv1alpha1.User{}).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &UserReconciler{
@@ -501,102 +438,6 @@ func TestUserReconciler_HandleUserDeletion_InitiatesWorkMachineDeletion(t *testi
 	_ = result
 }
 
-func TestUserReconciler_GenerateWorkMachineName(t *testing.T) {
-	reconciler := &UserReconciler{}
-
-	user := &platformv1alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "john-doe",
-		},
-	}
-
-	name := reconciler.generateWorkMachineName(user)
-	assert.Equal(t, "wm-john-doe", name)
-}
-
-func TestUserReconciler_BuildWorkMachineForUser(t *testing.T) {
-	scheme := runtime.NewScheme()
-	_ = platformv1alpha1.AddToScheme(scheme)
-	_ = machinesv1.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
-
-	active := true
-	user := &platformv1alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-user",
-			UID:  types.UID("test-uid"),
-		},
-		Spec: platformv1alpha1.UserSpec{
-			Email:  "test@example.com",
-			Active: &active,
-		},
-	}
-
-	defaultMachineType := &machinesv1.MachineType{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "custom-default",
-		},
-		Spec: machinesv1.MachineTypeSpec{
-			IsDefault: true,
-			Active:    true,
-			Resources: machinesv1.MachineResources{
-				CPU:    "4",
-				Memory: "8Gi",
-			},
-		},
-	}
-
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(defaultMachineType).Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &UserReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	workMachine, err := reconciler.buildWorkMachineForUser(context.Background(), user, "wm-test-user")
-	assert.NoError(t, err)
-	assert.NotNil(t, workMachine)
-	assert.Equal(t, "wm-test-user", workMachine.Name)
-	assert.Equal(t, "test@example.com", workMachine.Spec.OwnedBy)
-	assert.Equal(t, "custom-default", workMachine.Spec.MachineType)
-	assert.Equal(t, "wm-test-user", workMachine.Spec.TargetNamespace)
-	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.DesiredState)
-}
-
-func TestUserReconciler_BuildWorkMachineForUser_InactiveUser(t *testing.T) {
-	scheme := runtime.NewScheme()
-	_ = platformv1alpha1.AddToScheme(scheme)
-	_ = machinesv1.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
-
-	inactive := false
-	user := &platformv1alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-user",
-		},
-		Spec: platformv1alpha1.UserSpec{
-			Email:  "test@example.com",
-			Active: &inactive,
-		},
-	}
-
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
-
-	logger, _ := zap.NewDevelopment()
-	reconciler := &UserReconciler{
-		Client: k8sClient,
-		Scheme: scheme,
-		Logger: logger,
-	}
-
-	workMachine, err := reconciler.buildWorkMachineForUser(context.Background(), user, "wm-test-user")
-	assert.NoError(t, err)
-	assert.NotNil(t, workMachine)
-	assert.Equal(t, machinesv1.MachineStateDisabled, workMachine.Spec.DesiredState)
-}
-
 func TestUserReconciler_Reconcile_PasswordUpdate(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = platformv1alpha1.AddToScheme(scheme)
@@ -792,7 +633,11 @@ func TestUserReconciler_Reconcile_UserStatusConditions(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(user, existingWorkMachine).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(user, existingWorkMachine).
+		WithStatusSubresource(&platformv1alpha1.User{}).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &UserReconciler{

@@ -132,6 +132,20 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	// Create patches for mutations
 	var patches []map[string]interface{}
 
+	// Generate targetNamespace if not provided
+	if env.Spec.TargetNamespace == "" {
+		// Generate namespace name as env-{environment-name}
+		targetNamespace := fmt.Sprintf("env-%s", env.Name)
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/targetNamespace",
+			"value": targetNamespace,
+		})
+		// Update the env object for subsequent checks
+		env.Spec.TargetNamespace = targetNamespace
+		w.logger.Info(fmt.Sprintf("Generated targetNamespace: %s for environment: %s", targetNamespace, env.Name))
+	}
+
 	// Add default labels if not present
 	if env.Spec.Labels == nil {
 		patches = append(patches, map[string]interface{}{
@@ -307,17 +321,27 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		return fmt.Errorf("invalid target namespace: %w", err)
 	}
 
-	// Check if namespace already exists and is not managed by another environment
+	// Check if namespace already exists - reject if it does
 	if operation == admissionv1.Create {
 		ctx := context.Background()
 		ns := &corev1.Namespace{}
 		err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.TargetNamespace}, ns)
 		if err == nil {
-			// Namespace exists, check if it's managed by another environment
+			// Namespace exists - this is not allowed for new environments
+			// The mutation webhook will have set/generated targetNamespace, and controller will create it
 			if ns.Labels != nil {
-				if existingEnv, ok := ns.Labels["kloudlite.io/environment"]; ok && existingEnv != env.Name {
-					return fmt.Errorf("namespace %s is already managed by environment %s", env.Spec.TargetNamespace, existingEnv)
+				if existingEnv, ok := ns.Labels["kloudlite.io/environment"]; ok {
+					if existingEnv != env.Name {
+						return fmt.Errorf("namespace %s is already managed by environment %s", env.Spec.TargetNamespace, existingEnv)
+					}
+					// Same environment name - this might be a recreation, allow it
+				} else {
+					// Namespace exists but not managed by any environment
+					return fmt.Errorf("namespace %s already exists and is not managed by Kloudlite", env.Spec.TargetNamespace)
 				}
+			} else {
+				// Namespace exists without labels - not managed by Kloudlite
+				return fmt.Errorf("namespace %s already exists and is not managed by Kloudlite", env.Spec.TargetNamespace)
 			}
 		}
 	}

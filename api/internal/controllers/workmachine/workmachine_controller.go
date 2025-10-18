@@ -613,6 +613,7 @@ func (r *WorkMachineReconciler) ensureSSHAuthorizedKeysConfigMap(ctx context.Con
 	// Build authorized_keys content with user keys from WorkMachine spec
 	// Validate each SSH key before adding to authorized_keys
 	var authorizedKeys strings.Builder
+	validKeyCount := 0
 	for i, key := range workMachine.Spec.SSHPublicKeys {
 		trimmedKey := strings.TrimSpace(key)
 		if trimmedKey == "" {
@@ -625,8 +626,11 @@ func (r *WorkMachineReconciler) ensureSSHAuthorizedKeysConfigMap(ctx context.Con
 			continue // Skip invalid keys but don't fail the entire reconciliation
 		}
 
+		if validKeyCount > 0 {
+			authorizedKeys.WriteString("\n")
+		}
 		authorizedKeys.WriteString(trimmedKey)
-		authorizedKeys.WriteString("\n")
+		validKeyCount++
 	}
 
 	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
@@ -808,6 +812,7 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 						},
 					},
 					ServiceAccountName: "workmachine-node-manager",
+					NodeSelector:       workMachine.Spec.NodeSelector,
 					InitContainers: []corev1.Container{
 						{
 							Name:            "setup-nix",
@@ -978,30 +983,6 @@ echo "Profile directory ready"
 									Name:      "ssh-host-keys",
 									MountPath: "/etc/ssh/ssh_host_rsa_key.pub",
 									SubPath:   "ssh_host_rsa_key.pub",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "ssh-host-keys",
-									MountPath: "/etc/ssh/ssh_host_ecdsa_key",
-									SubPath:   "ssh_host_ecdsa_key",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "ssh-host-keys",
-									MountPath: "/etc/ssh/ssh_host_ecdsa_key.pub",
-									SubPath:   "ssh_host_ecdsa_key.pub",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "ssh-host-keys",
-									MountPath: "/etc/ssh/ssh_host_ed25519_key",
-									SubPath:   "ssh_host_ed25519_key",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "ssh-host-keys",
-									MountPath: "/etc/ssh/ssh_host_ed25519_key.pub",
-									SubPath:   "ssh_host_ed25519_key.pub",
 									ReadOnly:  true,
 								},
 							},

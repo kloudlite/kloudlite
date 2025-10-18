@@ -598,3 +598,246 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 	assert.Contains(t, commandStr, "PATH=/kloudlite/bin", "init container should set PATH in /etc/environment with /kloudlite/bin")
 	assert.Contains(t, commandStr, "/nix/profiles/per-user/root/workspace-", "PATH should include nix profiles path")
 }
+
+func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+			ResourceQuota: &workspacev1.ResourceQuota{
+				CPU:    "2",
+				Memory: "4Gi",
+			},
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find workspace container
+	var workspaceContainer *corev1.Container
+	for i := range pod.Spec.Containers {
+		if pod.Spec.Containers[i].Name == "workspace" {
+			workspaceContainer = &pod.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, workspaceContainer)
+
+	// Verify custom resource limits applied
+	assert.Equal(t, "2", workspaceContainer.Resources.Limits.Cpu().String())
+	assert.Equal(t, "4Gi", workspaceContainer.Resources.Limits.Memory().String())
+}
+
+func TestWorkspaceReconciler_CreateWorkspacePod_CustomEnvironmentVariables(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+			Settings: &workspacev1.WorkspaceSettings{
+				EnvironmentVariables: map[string]string{
+					"CUSTOM_VAR": "custom-value",
+					"API_KEY":    "secret-key",
+				},
+			},
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find workspace container
+	var workspaceContainer *corev1.Container
+	for i := range pod.Spec.Containers {
+		if pod.Spec.Containers[i].Name == "workspace" {
+			workspaceContainer = &pod.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, workspaceContainer)
+
+	// Verify custom environment variables are set
+	envVars := make(map[string]string)
+	for _, env := range workspaceContainer.Env {
+		envVars[env.Name] = env.Value
+	}
+
+	assert.Equal(t, "custom-value", envVars["CUSTOM_VAR"])
+	assert.Equal(t, "secret-key", envVars["API_KEY"])
+}
+
+func TestWorkspaceReconciler_CreateWorkspacePod_StartupScript(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	startupScript := "#!/bin/bash\necho 'Starting workspace'"
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+			Settings: &workspacev1.WorkspaceSettings{
+				StartupScript: startupScript,
+			},
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find workspace container
+	var workspaceContainer *corev1.Container
+	for i := range pod.Spec.Containers {
+		if pod.Spec.Containers[i].Name == "workspace" {
+			workspaceContainer = &pod.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, workspaceContainer)
+
+	// Verify startup script environment variable is set
+	var startupScriptEnv *corev1.EnvVar
+	for i := range workspaceContainer.Env {
+		if workspaceContainer.Env[i].Name == "STARTUP_SCRIPT" {
+			startupScriptEnv = &workspaceContainer.Env[i]
+			break
+		}
+	}
+
+	assert.NotNil(t, startupScriptEnv)
+	assert.Equal(t, startupScript, startupScriptEnv.Value)
+}
+
+func TestWorkspaceReconciler_CreateWorkspacePod_SSHHostKeys(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Find workspace container
+	var workspaceContainer *corev1.Container
+	for i := range pod.Spec.Containers {
+		if pod.Spec.Containers[i].Name == "workspace" {
+			workspaceContainer = &pod.Spec.Containers[i]
+			break
+		}
+	}
+	assert.NotNil(t, workspaceContainer)
+
+	// Verify SSH host key mounts
+	sshKeyMounts := []string{}
+	for _, mount := range workspaceContainer.VolumeMounts {
+		if mount.Name == "ssh-host-keys" {
+			sshKeyMounts = append(sshKeyMounts, mount.MountPath)
+		}
+	}
+
+	// Should have RSA, ECDSA, and Ed25519 keys mounted
+	assert.Contains(t, sshKeyMounts, "/etc/ssh/ssh_host_rsa_key")
+	assert.Contains(t, sshKeyMounts, "/etc/ssh/ssh_host_rsa_key.pub")
+}
+
+func TestWorkspaceReconciler_CreateWorkspacePod_DNSConfiguration(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			DisplayName: "Test Workspace",
+			Owner:       "test@example.com",
+			Status:      "active",
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	pod, err := reconciler.createWorkspacePod(workspace)
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	// Verify DNS policy is set to None (manual management)
+	assert.Equal(t, corev1.DNSNone, pod.Spec.DNSPolicy)
+
+	// Verify minimal DNS config is present
+	assert.NotNil(t, pod.Spec.DNSConfig)
+	assert.Contains(t, pod.Spec.DNSConfig.Nameservers, "10.43.0.10")
+}

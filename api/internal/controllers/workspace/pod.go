@@ -7,6 +7,7 @@ import (
 	"time"
 
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
@@ -285,9 +286,54 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 	return nil
 }
 
+// getWorkMachineNodeSelector retrieves the nodeSelector from the user's WorkMachine
+// Returns nil if WorkMachine doesn't exist or has no nodeSelector configured
+func (r *WorkspaceReconciler) getWorkMachineNodeSelector(ctx context.Context, owner string) (map[string]string, error) {
+	// Sanitize owner to generate WorkMachine name (same logic as webhook)
+	// Replace @ with -at- and . with -
+	sanitizedOwner := strings.ReplaceAll(owner, "@", "-at-")
+	sanitizedOwner = strings.ReplaceAll(sanitizedOwner, ".", "-")
+	workMachineName := fmt.Sprintf("wm-%s", sanitizedOwner)
+
+	// WorkMachine is cluster-scoped, so we don't need a namespace
+	workMachine := &machinesv1.WorkMachine{}
+	err := r.Get(ctx, client.ObjectKey{Name: workMachineName}, workMachine)
+	if err != nil {
+		// WorkMachine doesn't exist or error fetching it
+		r.Logger.Info("WorkMachine not found for owner",
+			zap.String("owner", owner),
+			zap.String("workMachineName", workMachineName),
+			zap.Error(err),
+		)
+		return nil, nil // Return nil selector, not an error (WorkMachine might not exist yet)
+	}
+
+	// Return the nodeSelector from WorkMachine (may be nil if not set)
+	if len(workMachine.Spec.NodeSelector) > 0 {
+		r.Logger.Info("Found nodeSelector from WorkMachine",
+			zap.String("owner", owner),
+			zap.String("workMachineName", workMachineName),
+			zap.Any("nodeSelector", workMachine.Spec.NodeSelector),
+		)
+	}
+
+	return workMachine.Spec.NodeSelector, nil
+}
+
 // createWorkspacePod creates a pod with multiple containers for different access methods
 func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspace) (*corev1.Pod, error) {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+
+	// Get nodeSelector from the user's WorkMachine to ensure workspace runs on the same node
+	// This is important for shared Nix store access via hostPath volumes
+	nodeSelector, err := r.getWorkMachineNodeSelector(context.Background(), workspace.Spec.Owner)
+	if err != nil {
+		r.Logger.Warn("Failed to get WorkMachine nodeSelector, proceeding without it",
+			zap.String("workspace", workspace.Name),
+			zap.String("owner", workspace.Spec.Owner),
+			zap.Error(err),
+		)
+	}
 
 	// Check if workspace has an environment connection and get target namespace
 	var envTargetNamespace string
@@ -347,9 +393,11 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 
 	// Set PATH for container environment (kubectl exec, running services, etc.)
 	// This is also set in /etc/environment for SSH sessions via PAM
+	// /kloudlite/bin has highest priority for kl binary and system tools
+	// Include /home/kl/.local/bin for user-installed npm packages like Claude Code
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "PATH",
-		Value: fmt.Sprintf("/kloudlite/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
+		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
 	})
 
 	// Add startup script from settings if provided
@@ -405,11 +453,24 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 mkdir -p /home/kl/workspaces/%s
 chown -R 1001:1001 /home/kl/workspaces
 
+# Install Claude Code in user scope if not already installed
+# This allows users to update it themselves without rebuilding the container
+if [ ! -d "/home/kl/.local/lib/node_modules/@anthropic-ai/claude-code" ]; then
+  echo "Installing Claude Code in user scope..."
+  mkdir -p /home/kl/.local/lib/node_modules
+  mkdir -p /home/kl/.local/bin
+  # We'll use the container's npm to install in user scope on first run
+  # This will be done by supervisord init script instead, skipping here
+fi
+chown -R 1001:1001 /home/kl/.local
+
 # Create /etc/environment with PATH and Kubernetes service env vars for PAM
 # This will be read by PAM on SSH login (both interactive and non-interactive)
 # The Kubernetes env vars are needed for kl binary to work with in-cluster config
+# /kloudlite/bin has highest priority for kl binary and system tools
+# Include user's local bin in PATH for user-installed npm packages like Claude Code
 cat > /etc-writable/environment << 'EOF'
-PATH=/kloudlite/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 KUBERNETES_SERVICE_HOST=10.43.0.1
 KUBERNETES_SERVICE_PORT=443
 WORKSPACE_NAME=%s
@@ -470,8 +531,13 @@ chmod 666 /etc-writable-resolv/resolv.conf
 							Protocol:      corev1.ProtocolTCP,
 						},
 						{
-							Name:          "vscode-tunnel",
-							ContainerPort: 8000,
+							Name:          "claude-ttyd",
+							ContainerPort: 7682,
+							Protocol:      corev1.ProtocolTCP,
+						},
+						{
+							Name:          "opencode-ttyd",
+							ContainerPort: 7683,
 							Protocol:      corev1.ProtocolTCP,
 						},
 					},
@@ -671,6 +737,16 @@ chmod 666 /etc-writable-resolv/resolv.conf
 	pod.Spec.DNSPolicy = corev1.DNSNone
 	pod.Spec.DNSConfig = &corev1.PodDNSConfig{
 		Nameservers: []string{"10.43.0.10"}, // Required but will be overridden by mounted resolv.conf
+	}
+
+	// Apply nodeSelector from WorkMachine to ensure workspace runs on the same node
+	// This is critical for shared Nix store access via hostPath volumes
+	if len(nodeSelector) > 0 {
+		pod.Spec.NodeSelector = nodeSelector
+		r.Logger.Info("Applied nodeSelector to workspace pod",
+			zap.String("workspace", workspace.Name),
+			zap.Any("nodeSelector", nodeSelector),
+		)
 	}
 
 	// Set owner reference
