@@ -81,7 +81,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	userWebhook := webhooks.NewUserWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	environmentWebhook := webhooks.NewEnvironmentWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, nil)
 	machineTypeWebhook := webhooks.NewMachineTypeGinWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
-	workMachineWebhook := webhooks.NewWorkMachineWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	workMachineWebhook := webhooks.NewWorkMachineWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, cfg)
 	workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	compositionWebhook := webhooks.NewCompositionWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)

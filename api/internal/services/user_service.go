@@ -56,10 +56,12 @@ func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.Use
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Create WorkMachine for the user
-	if err := s.createWorkMachineForUser(ctx, user); err != nil {
-		// Log error but don't fail user creation
-		fmt.Printf("Warning: Failed to create WorkMachine for user %s: %v\n", user.Spec.Email, err)
+	// Create WorkMachine only if user has 'user' role
+	if s.hasUserRole(user) {
+		if err := s.createWorkMachineForUser(ctx, user); err != nil {
+			// Log error but don't fail user creation
+			fmt.Printf("Warning: Failed to create WorkMachine for user %s: %v\n", user.Spec.Email, err)
+		}
 	}
 
 	return user, nil
@@ -118,6 +120,10 @@ func (s *userService) UpdateUser(ctx context.Context, user *platformv1alpha1.Use
 		return nil, fmt.Errorf("failed to get user for update: %w", err)
 	}
 
+	// Check if 'user' role changed
+	hadUserRole := s.hasUserRole(existing)
+	hasUserRole := s.hasUserRole(user)
+
 	// Update the spec while preserving metadata
 	existing.Spec = user.Spec
 
@@ -127,6 +133,19 @@ func (s *userService) UpdateUser(ctx context.Context, user *platformv1alpha1.Use
 			return nil, fmt.Errorf("user has been modified by another process, please retry")
 		}
 		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	// Handle WorkMachine based on role changes
+	if !hadUserRole && hasUserRole {
+		// Role added: create WorkMachine
+		if err := s.createWorkMachineForUser(ctx, existing); err != nil {
+			fmt.Printf("Warning: Failed to create WorkMachine for user %s: %v\n", existing.Spec.Email, err)
+		}
+	} else if hadUserRole && !hasUserRole {
+		// Role removed: delete WorkMachine
+		if err := s.deleteWorkMachineForUser(ctx, existing); err != nil {
+			fmt.Printf("Warning: Failed to delete WorkMachine for user %s: %v\n", existing.Spec.Email, err)
+		}
 	}
 
 	return existing, nil
@@ -243,6 +262,53 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 			return nil
 		}
 		return fmt.Errorf("failed to create WorkMachine: %w", err)
+	}
+
+	return nil
+}
+
+// hasUserRole checks if a user has the 'user' role
+func (s *userService) hasUserRole(user *platformv1alpha1.User) bool {
+	for _, role := range user.Spec.Roles {
+		if role == platformv1alpha1.RoleUser {
+			return true
+		}
+	}
+	return false
+}
+
+// deleteWorkMachineForUser deletes the WorkMachine for a user
+func (s *userService) deleteWorkMachineForUser(ctx context.Context, user *platformv1alpha1.User) error {
+	// Extract username from email (part before @)
+	username := user.Spec.Email
+	if idx := strings.Index(username, "@"); idx > 0 {
+		username = username[:idx]
+	}
+	// Replace dots and special characters with hyphens for valid k8s names
+	username = strings.ReplaceAll(username, ".", "-")
+	username = strings.ReplaceAll(username, "_", "-")
+	username = strings.ToLower(username)
+
+	// Create WorkMachine name
+	workMachineName := fmt.Sprintf("wm-%s", username)
+
+	// Check if WorkMachine exists
+	existing, err := s.workMachineRepo.Get(ctx, workMachineName)
+	if err != nil {
+		if repository.IsNotFound(err) {
+			// WorkMachine doesn't exist, nothing to delete
+			return nil
+		}
+		return fmt.Errorf("failed to get WorkMachine: %w", err)
+	}
+
+	// Delete the WorkMachine
+	if err := s.workMachineRepo.Delete(ctx, existing.Name); err != nil {
+		if repository.IsNotFound(err) {
+			// WorkMachine already deleted, that's fine
+			return nil
+		}
+		return fmt.Errorf("failed to delete WorkMachine: %w", err)
 	}
 
 	return nil
