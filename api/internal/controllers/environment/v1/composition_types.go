@@ -132,6 +132,11 @@ type CompositionStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
+	// EnvironmentActivated tracks whether the environment was activated when this composition was last reconciled
+	// This is used to detect when environment activation state changes and trigger reconciliation
+	// +optional
+	EnvironmentActivated bool `json:"environmentActivated,omitempty"`
+
 	// DeployedResources tracks the Kubernetes resources created for this composition
 	// +optional
 	DeployedResources *DeployedResources `json:"deployedResources,omitempty"`
