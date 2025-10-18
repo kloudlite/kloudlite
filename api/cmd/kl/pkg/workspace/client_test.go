@@ -353,10 +353,12 @@ func TestClient_WorkspaceWithEnvironmentRef(t *testing.T) {
 		Spec: workspacesv1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			Owner:       "user@example.com",
-			EnvironmentRef: &corev1.ObjectReference{
+			EnvironmentConnection: &workspacesv1.EnvironmentConnectionSpec{
+			EnvironmentRef: corev1.ObjectReference{
 				Name:      "test-environment",
 				Namespace: "test-namespace",
 			},
+		},
 		},
 	}
 
@@ -368,17 +370,17 @@ func TestClient_WorkspaceWithEnvironmentRef(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if result.Spec.EnvironmentRef == nil {
+	if result.Spec.EnvironmentConnection == nil {
 		t.Fatal("Expected environment ref, got nil")
 	}
-	if result.Spec.EnvironmentRef.Name != "test-environment" {
-		t.Errorf("Expected environment ref 'test-environment', got %s", result.Spec.EnvironmentRef.Name)
+	if result.Spec.EnvironmentConnection.EnvironmentRef.Name != "test-environment" {
+		t.Errorf("Expected environment ref 'test-environment', got %s", result.Spec.EnvironmentConnection.EnvironmentRef.Name)
 	}
 
 	// Verify environment exists and can be fetched
 	env := &environmentsv1.Environment{}
 	err = client.K8sClient.Get(context.Background(), types.NamespacedName{
-		Name:      result.Spec.EnvironmentRef.Name,
+		Name:      result.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		Namespace: "test-namespace",
 	}, env)
 	if err != nil {
@@ -423,9 +425,11 @@ func TestClient_UpdateWorkspaceEnvironmentRef(t *testing.T) {
 	}
 
 	// Add environment reference
-	ws.Spec.EnvironmentRef = &corev1.ObjectReference{
-		Name:      "production",
-		Namespace: "test-namespace",
+	ws.Spec.EnvironmentConnection = &workspacesv1.EnvironmentConnectionSpec{
+		EnvironmentRef: corev1.ObjectReference{
+			Name:      "production",
+			Namespace: "test-namespace",
+		},
 	}
 
 	// Update workspace
@@ -439,10 +443,10 @@ func TestClient_UpdateWorkspaceEnvironmentRef(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get after update failed: %v", err)
 	}
-	if updated.Spec.EnvironmentRef == nil {
+	if updated.Spec.EnvironmentConnection == nil {
 		t.Fatal("Expected environment ref after update, got nil")
 	}
-	if updated.Spec.EnvironmentRef.Name != "production" {
-		t.Errorf("Expected environment ref 'production', got %s", updated.Spec.EnvironmentRef.Name)
+	if updated.Spec.EnvironmentConnection.EnvironmentRef.Name != "production" {
+		t.Errorf("Expected environment ref 'production', got %s", updated.Spec.EnvironmentConnection.EnvironmentRef.Name)
 	}
 }
