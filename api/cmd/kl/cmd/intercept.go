@@ -7,10 +7,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	fzf "github.com/junegunn/fzf/src"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
-	fzf "github.com/junegunn/fzf/src"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -362,12 +363,20 @@ func handleInterceptStartWithService(service corev1.Service, workspace *workspac
 	}
 
 	fmt.Printf("\n[✓] Service intercept added to workspace spec\n")
-	fmt.Printf("Service '%s' will be intercepted by workspace '%s'\n\n", service.Name, workspace.Name)
+
+	// Wait for the intercept to become active
+	if err := waitForInterceptSync(service.Name, targetNamespace, "start"); err != nil {
+		return fmt.Errorf("service intercept activation failed: %w", err)
+	}
+
+	fmt.Println()
+	fmt.Printf("[✓] Service intercept is now active\n")
+	fmt.Printf("Service '%s' is being intercepted by workspace '%s'\n\n", service.Name, workspace.Name)
 	fmt.Println("Port mappings:")
 	for _, mapping := range portMappings {
 		fmt.Printf("  %d (service) → %d (workspace)\n", mapping.ServicePort, mapping.WorkspacePort)
 	}
-	fmt.Printf("\nTraffic to %s.%s.svc.cluster.local will now be routed to your workspace.\n", service.Name, targetNamespace)
+	fmt.Printf("\nTraffic to %s.%s.svc.cluster.local is now routed to your workspace.\n", service.Name, targetNamespace)
 
 	return nil
 }
@@ -436,6 +445,9 @@ func handleInterceptStop(serviceName string) error {
 		return fmt.Errorf("no active intercept found for service '%s'", serviceName)
 	}
 
+	// Get target namespace before updating
+	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
+
 	// Update workspace spec
 	workspace.Spec.EnvironmentConnection.Intercepts = newIntercepts
 
@@ -444,8 +456,16 @@ func handleInterceptStop(serviceName string) error {
 	}
 
 	fmt.Printf("[✓] Service intercept removed from workspace spec\n")
+
+	// Wait for the intercept to be deleted
+	if err := waitForInterceptSync(serviceName, targetNamespace, "stop"); err != nil {
+		return fmt.Errorf("service intercept deletion failed: %w", err)
+	}
+
+	fmt.Println()
+	fmt.Printf("[✓] Service intercept has been removed\n")
 	fmt.Printf("Service '%s' is no longer being intercepted\n", serviceName)
-	fmt.Println("Normal traffic routing will be restored")
+	fmt.Println("Normal traffic routing has been restored")
 
 	return nil
 }
@@ -624,6 +644,82 @@ func printInterceptStatus(intercept *interceptsv1.ServiceIntercept) {
 
 	if intercept.Status.InterceptStartTime != nil {
 		fmt.Printf("\nStart Time: %s\n", intercept.Status.InterceptStartTime.Format("2006-01-02 15:04:05"))
+	}
+}
+
+// waitForInterceptSync waits for the ServiceIntercept CR to sync to the desired state
+func waitForInterceptSync(serviceName, targetNamespace, action string) error {
+	ctx := context.Background()
+	timeout := time.After(30 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	if action == "start" {
+		fmt.Print("Waiting for service intercept to become active")
+	} else {
+		fmt.Print("Waiting for service intercept to be removed")
+	}
+
+	// Get current workspace to construct the intercept name
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get workspace: %w", err)
+	}
+
+	interceptName := fmt.Sprintf("%s-%s", serviceName, workspace.Name)
+
+	for {
+		select {
+		case <-timeout:
+			fmt.Println(" timeout!")
+			return fmt.Errorf("timeout waiting for intercept sync after 30 seconds")
+		case <-ticker.C:
+			// Show progress
+			fmt.Print(".")
+
+			intercept := &interceptsv1.ServiceIntercept{}
+			err := WsClient.K8sClient.Get(ctx, types.NamespacedName{
+				Name:      interceptName,
+				Namespace: targetNamespace,
+			}, intercept)
+
+			if action == "start" {
+				// Wait for intercept to exist and become Active
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						continue // Keep waiting for creation
+					}
+					// Other errors - continue retrying
+					continue
+				}
+
+				// Check if intercept is active
+				if intercept.Status.Phase == "Active" {
+					fmt.Println(" done!")
+					return nil
+				}
+
+				// Check if intercept failed
+				if intercept.Status.Phase == "Failed" {
+					fmt.Println(" failed!")
+					message := intercept.Status.Message
+					if message == "" {
+						message = "unknown error"
+					}
+					return fmt.Errorf("service intercept failed: %s", message)
+				}
+
+				// Still creating, keep waiting
+			} else {
+				// action == "stop" - wait for intercept to be deleted
+				if apierrors.IsNotFound(err) {
+					fmt.Println(" done!")
+					return nil
+				}
+
+				// Intercept still exists, keep waiting
+			}
+		}
 	}
 }
 
