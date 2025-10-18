@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -226,10 +227,10 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 
 	// Build search domains based on environment connection with validation
 	var domains []string
-	if workspace.Spec.EnvironmentRef != nil {
+	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name:      workspace.Spec.EnvironmentRef.Name,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 			Namespace: workspace.Namespace,
 		}, env)
 		if err == nil && env.Spec.Activated {
@@ -286,6 +287,72 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 	return nil
 }
 
+// updateKloudliteContextFile writes the Kloudlite context state to a file in the running pod
+// This file is used by kloudlite-context.sh for fast prompt rendering without API calls
+func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
+	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+
+	// Get the pod
+	pod := &corev1.Pod{}
+	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	if err != nil {
+		return fmt.Errorf("failed to get pod: %w", err)
+	}
+
+	// Only update if pod is running
+	if pod.Status.Phase != corev1.PodRunning {
+		logger.Info("Skipping context file update - pod is not running",
+			zap.String("phase", string(pod.Status.Phase)))
+		return nil
+	}
+
+	// Get environment name from spec
+	envName := ""
+	if workspace.Spec.EnvironmentConnection != nil {
+		// Fetch environment to validate it exists and is activated
+		env := &environmentv1.Environment{}
+		err := r.Get(ctx, client.ObjectKey{
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+			Namespace: workspace.Namespace,
+		}, env)
+		if err == nil && env.Spec.Activated {
+			envName = env.Name
+		}
+	}
+
+	// Get active service intercepts from workspace status
+	// The status is populated by the collectActiveIntercepts function during status updates
+	intercepts := []string{}
+	for _, interceptStatus := range workspace.Status.ActiveIntercepts {
+		intercepts = append(intercepts, interceptStatus.ServiceName)
+	}
+
+	// Build JSON content
+	contextData := map[string]interface{}{
+		"environment": envName,
+		"intercepts":  intercepts,
+	}
+
+	jsonBytes, err := json.Marshal(contextData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal context data: %w", err)
+	}
+
+	// Write to /tmp/kloudlite-context.json in the pod
+	command := []string{"sh", "-c", fmt.Sprintf("cat > /tmp/kloudlite-context.json << 'EOF'\n%s\nEOF\n", string(jsonBytes))}
+	_, err = r.execInPod(ctx, pod, "workspace", command)
+	if err != nil {
+		return fmt.Errorf("failed to write context file: %w", err)
+	}
+
+	logger.Info("Successfully updated Kloudlite context file in running pod",
+		zap.String("workspace", workspace.Name),
+		zap.String("environment", envName),
+		zap.Strings("intercepts", intercepts))
+
+	return nil
+}
+
 // getWorkMachineNodeSelector retrieves the nodeSelector from the user's WorkMachine
 // Returns nil if WorkMachine doesn't exist or has no nodeSelector configured
 func (r *WorkspaceReconciler) getWorkMachineNodeSelector(ctx context.Context, owner string) (map[string]string, error) {
@@ -337,10 +404,10 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 
 	// Check if workspace has an environment connection and get target namespace
 	var envTargetNamespace string
-	if workspace.Spec.EnvironmentRef != nil {
+	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(context.Background(), client.ObjectKey{
-			Name:      workspace.Spec.EnvironmentRef.Name,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 			Namespace: workspace.Namespace,
 		}, env)
 		if err == nil && env.Spec.Activated {
@@ -443,10 +510,19 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 						func() string {
 							// Build search domains based on whether workspace has an environment connection
 							searchDomains := "svc.cluster.local cluster.local"
+							envName := ""
 							if envTargetNamespace != "" {
 								// Include environment namespace first for priority
 								searchDomains = fmt.Sprintf("%s.svc.cluster.local svc.cluster.local cluster.local", envTargetNamespace)
+								// Get environment name from EnvironmentConnection
+								if workspace.Spec.EnvironmentConnection != nil {
+									envName = workspace.Spec.EnvironmentConnection.EnvironmentRef.Name
+								}
 							}
+
+							// Build initial Kloudlite context JSON
+							// Intercepts will be empty on pod creation (added later via controller updates)
+							contextJSON := fmt.Sprintf(`{"environment":"%s","intercepts":[]}`, envName)
 
 							return fmt.Sprintf(`
 # Create workspace directory
@@ -487,7 +563,14 @@ options ndots:5
 EOFR
 chown 1001:1001 /etc-writable-resolv/resolv.conf
 chmod 666 /etc-writable-resolv/resolv.conf
-`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, searchDomains)
+
+# Create initial Kloudlite context file for Starship prompt
+# This will be updated by the controller when environment connection or intercepts change
+cat > /tmp-writable/kloudlite-context.json << 'EOFC'
+%s
+EOFC
+chmod 644 /tmp-writable/kloudlite-context.json
+`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, searchDomains, contextJSON)
 						}(),
 					},
 					VolumeMounts: []corev1.VolumeMount{
@@ -502,6 +585,10 @@ chmod 666 /etc-writable-resolv/resolv.conf
 						{
 							Name:      "etc-resolv",
 							MountPath: "/etc-writable-resolv",
+						},
+						{
+							Name:      "tmp-context",
+							MountPath: "/tmp-writable",
 						},
 					},
 				},
@@ -614,6 +701,10 @@ chmod 666 /etc-writable-resolv/resolv.conf
 							MountPath: "/kloudlite/bin",
 							ReadOnly:  true,
 						},
+						{
+							Name:      "tmp-context",
+							MountPath: "/tmp",
+						},
 					},
 					LivenessProbe: &corev1.Probe{
 						ProbeHandler: corev1.ProbeHandler{
@@ -709,6 +800,12 @@ chmod 666 /etc-writable-resolv/resolv.conf
 				},
 				{
 					Name: "etc-resolv",
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+				{
+					Name: "tmp-context",
 					VolumeSource: corev1.VolumeSource{
 						EmptyDir: &corev1.EmptyDirVolumeSource{},
 					},
