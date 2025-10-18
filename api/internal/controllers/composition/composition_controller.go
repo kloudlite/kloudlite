@@ -65,21 +65,44 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Check if composition is already in running state and no changes needed
-	if composition.Status.State == compositionsv1.CompositionStateRunning &&
-	   composition.Status.ObservedGeneration == composition.Generation {
+	// Get the environment to check activation state
+	environment, err := r.getEnvironmentForNamespace(ctx, composition.Namespace, zapLogger)
+	if err != nil {
+		zapLogger.Error("Failed to get environment for activation check", zap.Error(err))
+		// Continue with deployment even if we can't get environment
+	}
+
+	// Check if we need to reconcile:
+	// 1. Always reconcile if composition spec changed (ObservedGeneration != Generation)
+	// 2. Always reconcile if environment activation state changed
+	// 3. Skip reconciliation only if already running, up to date, AND activation state matches
+	needsReconciliation := composition.Status.ObservedGeneration != composition.Generation ||
+		composition.Status.State != compositionsv1.CompositionStateRunning
+
+	// Also check if environment activation state changed (stored in status vs current)
+	if environment != nil && !needsReconciliation {
+		// If activation state changed, we need to reconcile
+		if composition.Status.EnvironmentActivated != environment.Spec.Activated {
+			needsReconciliation = true
+			zapLogger.Info("Environment activation state changed, triggering reconciliation",
+				zap.Bool("previousActivated", composition.Status.EnvironmentActivated),
+				zap.Bool("currentActivated", environment.Spec.Activated))
+		}
+	}
+
+	if !needsReconciliation {
 		zapLogger.Debug("Composition already running and up to date, skipping reconciliation")
 		return reconcile.Result{}, nil
 	}
 
-	// Deploy the composition (reconcile on Composition changes OR env-config/env-secret changes)
+	// Deploy the composition (reconcile on Composition changes OR env-config/env-secret changes OR environment activation changes)
 	if err := r.deployComposition(ctx, composition, zapLogger); err != nil {
 		zapLogger.Error("Failed to deploy composition", zap.Error(err))
-		return r.updateStatus(ctx, composition, compositionsv1.CompositionStateFailed, err.Error(), zapLogger)
+		return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateFailed, err.Error(), zapLogger)
 	}
 
 	// Update status to running
-	return r.updateStatus(ctx, composition, compositionsv1.CompositionStateRunning, "Composition deployed successfully", zapLogger)
+	return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateRunning, "Composition deployed successfully", zapLogger)
 }
 
 

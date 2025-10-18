@@ -37,7 +37,7 @@ func TestCompositionReconciler_UpdateStatus_Running(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateRunning, "Success", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, nil, compositionsv1.CompositionStateRunning, "Success", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
@@ -76,7 +76,7 @@ func TestCompositionReconciler_UpdateStatus_Failed(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateFailed, "Parse error", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, nil, compositionsv1.CompositionStateFailed, "Parse error", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
@@ -116,7 +116,7 @@ func TestCompositionReconciler_UpdateStatus_Deploying(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateDeploying, "Deploying", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, nil, compositionsv1.CompositionStateDeploying, "Deploying", logger)
 	assert.NoError(t, err)
 	assert.Greater(t, result.RequeueAfter.Seconds(), float64(0))
 	assert.Equal(t, compositionsv1.CompositionStateDeploying, composition.Status.State)
@@ -161,7 +161,7 @@ func TestCompositionReconciler_UpdateStatus_UpdateExistingCondition(t *testing.T
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateFailed, "New error message", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, nil, compositionsv1.CompositionStateFailed, "New error message", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
@@ -224,7 +224,7 @@ func TestCompositionReconciler_UpdateStatus_MultipleConditions(t *testing.T) {
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateRunning, "Now running", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, nil, compositionsv1.CompositionStateRunning, "Now running", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
@@ -270,7 +270,7 @@ func TestCompositionReconciler_UpdateStatus_AddConditionWhenNoneExist(t *testing
 		Logger: logger,
 	}
 
-	result, err := reconciler.updateStatus(context.Background(), composition, compositionsv1.CompositionStateRunning, "First status", logger)
+	result, err := reconciler.updateStatus(context.Background(), composition, nil, compositionsv1.CompositionStateRunning, "First status", logger)
 	// Fake client may delete object during status update
 	if err != nil {
 		assert.Contains(t, err.Error(), "not found")
