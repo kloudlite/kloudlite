@@ -48,6 +48,11 @@ type WorkMachineSpec struct {
 	// SSHPublicKeys for SSH access to the VM
 	// +optional
 	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
+
+	// NodeSelector constrains this WorkMachine and all its workspaces to specific nodes
+	// All workspaces and environments created by this user will inherit this nodeSelector
+	// +optional
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // MachineConfiguration defines configuration options for the WorkMachine

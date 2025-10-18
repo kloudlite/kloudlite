@@ -28,7 +28,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	router.GET("/health", handlers.HealthCheck)
 	router.GET("/ready", handlers.ReadinessCheck)
 
-	// Create manager that combines repositories and webhooks
+	// Create manager that combines repositories
 	manager := &managers.Manager{
 		K8sClient:             servicesManager.RepositoryManager.K8sClient,
 		UserRepository:        servicesManager.RepositoryManager.Users,
@@ -36,11 +36,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		MachineTypeRepository: servicesManager.RepositoryManager.MachineTypes,
 		WorkMachineRepository: servicesManager.RepositoryManager.WorkMachines,
 		WorkspaceRepository:   servicesManager.RepositoryManager.Workspaces,
-		UserWebhook:           webhooks.NewUserWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient),
-		EnvironmentWebhook:    webhooks.NewEnvironmentWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient, nil),
-		MachineTypeWebhook:    webhooks.NewMachineTypeWebhook(servicesManager.RepositoryManager.K8sClient),
-		WorkMachineWebhook:    webhooks.NewWorkMachineWebhook(servicesManager.RepositoryManager.K8sClient),
-		// WorkspaceWebhook:     webhooks.NewWorkspaceWebhook(pkglogger.NewZapLogger(logger), servicesManager.RepositoryManager.K8sClient, nil), // TODO: fix webhook implementation
 	}
 
 	// API handlers with services
@@ -85,11 +80,14 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	appLogger := pkglogger.NewZapLogger(logger)
 	userWebhook := webhooks.NewUserWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	environmentWebhook := webhooks.NewEnvironmentWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, nil)
+	machineTypeWebhook := webhooks.NewMachineTypeGinWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	workMachineWebhook := webhooks.NewWorkMachineWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, cfg)
+	workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	compositionWebhook := webhooks.NewCompositionWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	serviceInterceptWebhook := webhooks.NewServiceInterceptWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
-	// workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, nil) // TODO: fix webhook implementation
 
 	// JWT middleware
 	jwtMiddleware := middleware.JWTMiddleware(servicesManager.Auth, logger, cfg.Auth.SkipAuthentication)
@@ -273,14 +271,20 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/mutate/users", userWebhook.MutateUser)
 		webhooksGroup.POST("/validate/environments", environmentWebhook.ValidateEnvironment)
 		webhooksGroup.POST("/mutate/environments", environmentWebhook.MutateEnvironment)
+		webhooksGroup.POST("/validate/machinetypes", machineTypeWebhook.ValidateMachineType)
+		webhooksGroup.POST("/mutate/machinetypes", machineTypeWebhook.MutateMachineType)
+		webhooksGroup.POST("/validate/workmachines", workMachineWebhook.ValidateWorkMachine)
+		webhooksGroup.POST("/mutate/workmachines", workMachineWebhook.MutateWorkMachine)
+		webhooksGroup.POST("/validate/workspaces", workspaceWebhook.ValidateWorkspace)
+		webhooksGroup.POST("/mutate/workspaces", workspaceWebhook.MutateWorkspace)
+		webhooksGroup.POST("/validate/compositions", compositionWebhook.ValidateComposition)
+		webhooksGroup.POST("/mutate/compositions", compositionWebhook.MutateComposition)
 		webhooksGroup.POST("/validate/configmaps", envVarWebhook.ValidateConfigMap)
 		webhooksGroup.POST("/validate/secrets", envVarWebhook.ValidateSecret)
 		webhooksGroup.POST("/validate/serviceintercepts", serviceInterceptWebhook.ValidateServiceIntercept)
 		webhooksGroup.POST("/mutate/serviceintercepts", serviceInterceptWebhook.MutateServiceIntercept)
 		webhooksGroup.POST("/mutate/services", serviceMutationWebhook.MutateService)
 		webhooksGroup.POST("/mutate/pods", podMutationWebhook.MutatePod)
-		// webhooksGroup.POST("/validate/workspaces", workspaceWebhook.ValidateWorkspace) // TODO: fix webhook implementation
-		// webhooksGroup.POST("/mutate/workspaces", workspaceWebhook.MutateWorkspace) // TODO: fix webhook implementation
 	}
 
 	return router

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	serviceinterceptv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
@@ -112,6 +114,92 @@ func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1
 	}
 }
 
+// handleEnvironmentDeactivation disconnects workspaces and removes service intercepts when environment is deactivated
+func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	logger.Info("Handling environment deactivation cleanup",
+		zap.String("environment", environment.Name),
+		zap.String("targetNamespace", environment.Spec.TargetNamespace))
+
+	disconnectedWorkspaces := 0
+	deletedIntercepts := 0
+
+	// 1. Find and disconnect all workspaces connected to this environment
+	logger.Info("Finding workspaces connected to this environment")
+	workspaceList := &workspacev1.WorkspaceList{}
+	if err := r.List(ctx, workspaceList, client.InNamespace("")); err != nil {
+		logger.Error("Failed to list workspaces", zap.Error(err))
+		return fmt.Errorf("failed to list workspaces: %w", err)
+	}
+
+	for i := range workspaceList.Items {
+		workspace := &workspaceList.Items[i]
+
+		// Check if this workspace is connected to the environment being deactivated
+		if workspace.Status.ConnectedEnvironment != nil && workspace.Status.ConnectedEnvironment.Name == environment.Name {
+			logger.Info("Disconnecting workspace from environment",
+				zap.String("workspace", workspace.Name),
+				zap.String("namespace", workspace.Namespace),
+				zap.String("environment", environment.Name))
+
+			// Clear the connected environment from workspace status
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
+				workspace.Status.ConnectedEnvironment = nil
+				return nil
+			}, logger); err != nil {
+				logger.Error("Failed to disconnect workspace",
+					zap.String("workspace", workspace.Name),
+					zap.Error(err))
+				// Continue with other workspaces instead of failing
+				continue
+			}
+
+			disconnectedWorkspaces++
+			logger.Info("Successfully disconnected workspace",
+				zap.String("workspace", workspace.Name),
+				zap.String("environment", environment.Name))
+		}
+	}
+
+	// 2. Find and delete all service intercepts in this environment's namespace
+	logger.Info("Finding service intercepts in environment namespace",
+		zap.String("targetNamespace", environment.Spec.TargetNamespace))
+
+	serviceInterceptList := &serviceinterceptv1.ServiceInterceptList{}
+	if err := r.List(ctx, serviceInterceptList, client.InNamespace(environment.Spec.TargetNamespace)); err != nil {
+		logger.Error("Failed to list service intercepts", zap.Error(err))
+		return fmt.Errorf("failed to list service intercepts: %w", err)
+	}
+
+	for i := range serviceInterceptList.Items {
+		intercept := &serviceInterceptList.Items[i]
+
+		logger.Info("Deleting service intercept",
+			zap.String("intercept", intercept.Name),
+			zap.String("namespace", intercept.Namespace),
+			zap.String("service", intercept.Spec.ServiceRef.Name))
+
+		if err := r.Delete(ctx, intercept); err != nil {
+			if !apierrors.IsNotFound(err) {
+				logger.Error("Failed to delete service intercept",
+					zap.String("intercept", intercept.Name),
+					zap.Error(err))
+				// Continue with other intercepts instead of failing
+				continue
+			}
+		}
+
+		deletedIntercepts++
+		logger.Info("Successfully deleted service intercept",
+			zap.String("intercept", intercept.Name))
+	}
+
+	logger.Info("Environment deactivation cleanup completed",
+		zap.String("environment", environment.Name),
+		zap.Int("disconnectedWorkspaces", disconnectedWorkspaces),
+		zap.Int("deletedServiceIntercepts", deletedIntercepts))
+
+	return nil
+}
 
 // Reconcile handles Environment events and ensures namespace exists
 func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -158,6 +246,11 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		return r.handleCloning(ctx, environment, logger)
 	}
 
+	// Note: TargetNamespace is always set by the mutation webhook.
+	// The webhook generates it as "env-{name}" if not provided by the user.
+	// The webhook also validates that the namespace doesn't already exist.
+	// Controller's responsibility is to create the actual Kubernetes namespace resource.
+
 	// Check if namespace already exists
 	namespace := &corev1.Namespace{}
 	err = r.Get(ctx, client.ObjectKey{Name: environment.Spec.TargetNamespace}, namespace)
@@ -180,6 +273,19 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		desiredState := environmentsv1.EnvironmentStateInactive
 		if environment.Spec.Activated {
 			desiredState = environmentsv1.EnvironmentStateActive
+		}
+
+		// Detect deactivation transition (from active to inactive)
+		wasActive := environment.Status.State == environmentsv1.EnvironmentStateActive
+		willBeInactive := desiredState == environmentsv1.EnvironmentStateInactive
+
+		if wasActive && willBeInactive {
+			// Environment is being deactivated - disconnect workspaces and remove service intercepts
+			logger.Info("Environment is being deactivated, cleaning up connections")
+			if err := r.handleEnvironmentDeactivation(ctx, environment, logger); err != nil {
+				logger.Error("Failed to complete environment deactivation cleanup", zap.Error(err))
+				// Continue with status update even if cleanup partially fails
+			}
 		}
 
 		if environment.Status.State != desiredState {
@@ -363,6 +469,9 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		zap.String("source", sourceName),
 		zap.String("sourceNamespace", sourceNamespace),
 		zap.String("targetNamespace", targetNamespace))
+
+	// Note: TargetNamespace is always set by the mutation webhook for the cloned environment.
+	// Controller creates the actual Kubernetes namespace resource if it doesn't exist.
 
 	// Create target namespace if it doesn't exist
 	namespace := &corev1.Namespace{}
