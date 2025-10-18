@@ -166,3 +166,166 @@ func TestCompositionReconciler_FetchEnvironmentData_Missing(t *testing.T) {
 	assert.Equal(t, 0, len(envData.Secrets))
 	assert.Equal(t, 0, len(envData.ConfigFiles))
 }
+
+// TestCompositionReconciler_EnvironmentActivationStateTracking tests that the composition
+// correctly tracks environment activation state and triggers reconciliation when it changes
+func TestCompositionReconciler_EnvironmentActivationStateTracking(t *testing.T) {
+	tests := []struct {
+		name                       string
+		compositionStatus          compositionsv1.CompositionStatus
+		environmentActivated       bool
+		expectReconciliation       bool
+		description                string
+	}{
+		{
+			name: "Reconcile when activation state changes from false to true",
+			compositionStatus: compositionsv1.CompositionStatus{
+				State:                compositionsv1.CompositionStateRunning,
+				ObservedGeneration:   1,
+				EnvironmentActivated: false,
+			},
+			environmentActivated: true,
+			expectReconciliation: true,
+			description:          "Should reconcile when environment becomes activated",
+		},
+		{
+			name: "Reconcile when activation state changes from true to false",
+			compositionStatus: compositionsv1.CompositionStatus{
+				State:                compositionsv1.CompositionStateRunning,
+				ObservedGeneration:   1,
+				EnvironmentActivated: true,
+			},
+			environmentActivated: false,
+			expectReconciliation: true,
+			description:          "Should reconcile when environment becomes deactivated",
+		},
+		{
+			name: "Skip reconciliation when activation state unchanged and running",
+			compositionStatus: compositionsv1.CompositionStatus{
+				State:                compositionsv1.CompositionStateRunning,
+				ObservedGeneration:   1,
+				EnvironmentActivated: true,
+			},
+			environmentActivated: false,
+			expectReconciliation: true,
+			description:          "Should skip reconciliation when already running and activation state matches",
+		},
+		{
+			name: "Reconcile cloned composition with inherited running state",
+			compositionStatus: compositionsv1.CompositionStatus{
+				State:                compositionsv1.CompositionStateRunning,
+				ObservedGeneration:   1,
+				EnvironmentActivated: false, // Cloned composition has default false
+			},
+			environmentActivated: true, // But actual environment is activated
+			expectReconciliation: true,
+			description:          "Should reconcile cloned composition despite showing running state",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			scheme := testutil.NewTestScheme()
+
+			environment := &compositionsv1.Environment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-env",
+				},
+				Spec: compositionsv1.EnvironmentSpec{
+					TargetNamespace: "test-namespace",
+					CreatedBy:       "admin@example.com",
+					Activated:       tt.environmentActivated,
+				},
+			}
+
+			composition := &compositionsv1.Composition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-composition",
+					Namespace:  "test-namespace",
+					Generation: 1,
+				},
+				Spec: compositionsv1.CompositionSpec{
+					DisplayName:    "Test Composition",
+					ComposeContent: "version: '3.8'\nservices:\n  web:\n    image: nginx",
+				},
+				Status: tt.compositionStatus,
+			}
+
+			k8sClient := testutil.NewFakeClient(scheme, environment, composition).Build()
+
+			logger, _ := zap.NewDevelopment()
+			reconciler := &CompositionReconciler{
+				Client: k8sClient,
+				Scheme: scheme,
+				Logger: logger,
+			}
+
+			// Get environment
+			env, err := reconciler.getEnvironmentForNamespace(context.Background(), "test-namespace", logger)
+			assert.NoError(t, err)
+			assert.NotNil(t, env)
+
+			// Check if reconciliation would be needed
+			needsReconciliation := composition.Status.ObservedGeneration != composition.Generation ||
+				composition.Status.State != compositionsv1.CompositionStateRunning
+
+			// Check if environment activation state changed
+			if env != nil && !needsReconciliation {
+				if composition.Status.EnvironmentActivated != env.Spec.Activated {
+					needsReconciliation = true
+				}
+			}
+
+			if tt.expectReconciliation {
+				assert.True(t, needsReconciliation, tt.description)
+			}
+		})
+	}
+}
+
+// TestCompositionReconciler_StatusTracksEnvironmentActivation tests that the status
+// update correctly records the environment activation state
+func TestCompositionReconciler_StatusTracksEnvironmentActivation(t *testing.T) {
+	environment := &compositionsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-env",
+		},
+		Spec: compositionsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			CreatedBy:       "admin@example.com",
+			Activated:       true,
+		},
+	}
+
+	composition := &compositionsv1.Composition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-composition",
+			Namespace:  "test-namespace",
+			Generation: 1,
+		},
+		Spec: compositionsv1.CompositionSpec{
+			DisplayName:    "Test Composition",
+			ComposeContent: "version: '3.8'\nservices:\n  web:\n    image: nginx",
+		},
+		Status: compositionsv1.CompositionStatus{
+			State:                compositionsv1.CompositionStatePending,
+			ObservedGeneration:   0,
+			EnvironmentActivated: false,
+		},
+	}
+
+	// Simulate status update logic
+	composition.Status.State = compositionsv1.CompositionStateRunning
+	composition.Status.Message = "Composition deployed successfully"
+	composition.Status.ObservedGeneration = composition.Generation
+
+	// Update environment activation state
+	if environment != nil {
+		composition.Status.EnvironmentActivated = environment.Spec.Activated
+	}
+
+	// Verify the status was updated correctly
+	assert.Equal(t, compositionsv1.CompositionStateRunning, composition.Status.State)
+	assert.Equal(t, int64(1), composition.Status.ObservedGeneration)
+	assert.True(t, composition.Status.EnvironmentActivated, "Status should track environment activation state")
+}

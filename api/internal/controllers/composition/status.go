@@ -14,7 +14,7 @@ import (
 )
 
 // updateStatusWithRetry updates the status of the Composition with retry logic for conflicts
-func (r *CompositionReconciler) updateStatusWithRetry(ctx context.Context, composition *compositionsv1.Composition, state compositionsv1.CompositionState, message string, logger *zap.Logger) (reconcile.Result, error) {
+func (r *CompositionReconciler) updateStatusWithRetry(ctx context.Context, composition *compositionsv1.Composition, environment *compositionsv1.Environment, state compositionsv1.CompositionState, message string, logger *zap.Logger) (reconcile.Result, error) {
 	backoff := wait.Backoff{
 		Steps:    5,
 		Duration: 10 * time.Millisecond,
@@ -38,6 +38,11 @@ func (r *CompositionReconciler) updateStatusWithRetry(ctx context.Context, compo
 				composition.Status.State = state
 				composition.Status.Message = message
 				composition.Status.ObservedGeneration = composition.Generation
+
+				// Update environment activation state
+				if environment != nil {
+					composition.Status.EnvironmentActivated = environment.Spec.Activated
+				}
 
 				now := metav1.Now()
 				if state == compositionsv1.CompositionStateRunning {
@@ -94,10 +99,15 @@ func (r *CompositionReconciler) updateStatusWithRetry(ctx context.Context, compo
 }
 
 // updateStatus updates the status of the Composition (legacy method for compatibility)
-func (r *CompositionReconciler) updateStatus(ctx context.Context, composition *compositionsv1.Composition, state compositionsv1.CompositionState, message string, logger *zap.Logger) (reconcile.Result, error) {
+func (r *CompositionReconciler) updateStatus(ctx context.Context, composition *compositionsv1.Composition, environment *compositionsv1.Environment, state compositionsv1.CompositionState, message string, logger *zap.Logger) (reconcile.Result, error) {
 	composition.Status.State = state
 	composition.Status.Message = message
 	composition.Status.ObservedGeneration = composition.Generation
+
+	// Update environment activation state
+	if environment != nil {
+		composition.Status.EnvironmentActivated = environment.Spec.Activated
+	}
 
 	now := metav1.Now()
 	if state == compositionsv1.CompositionStateRunning {
@@ -122,7 +132,7 @@ func (r *CompositionReconciler) updateStatus(ctx context.Context, composition *c
 	// Update or add condition
 	r.setCondition(composition, readyCondition)
 
-	return r.updateStatusWithRetry(ctx, composition, state, message, logger)
+	return r.updateStatusWithRetry(ctx, composition, environment, state, message, logger)
 }
 
 // setCondition updates or adds a condition to the composition status
