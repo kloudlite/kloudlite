@@ -1,29 +1,25 @@
 #!/bin/sh
 # kloudlite-context.sh - Display Kloudlite workspace context for Starship
+# Reads from cached state file for fast performance without API calls
 
 # Exit if not in a Kloudlite workspace
 [ -z "$WORKSPACE_NAME" ] && exit 0
 [ -z "$WORKSPACE_NAMESPACE" ] && exit 0
 
-# Use kubectl with in-cluster config
-KUBECTL="kubectl"
+# Path to cached context file (written by workspace controller)
+CONTEXT_FILE="/tmp/kloudlite-context.json"
 
-# Get connected environment
-ENV_NAME=""
-if ENV_INFO=$(${KUBECTL} get workspace "$WORKSPACE_NAME" -n "$WORKSPACE_NAMESPACE" -o jsonpath='{.status.connectedEnvironment.name}' 2>/dev/null); then
-    if [ -n "$ENV_INFO" ]; then
-        ENV_NAME="$ENV_INFO"
-    fi
+# Check if context file exists
+if [ ! -f "$CONTEXT_FILE" ]; then
+    exit 0
 fi
 
-# Get intercepted services
-INTERCEPTS=""
-if INTERCEPT_LIST=$(${KUBECTL} get serviceintercept -n "$WORKSPACE_NAMESPACE" -l "workspaces.kloudlite.io/workspace=$WORKSPACE_NAME" -o jsonpath='{range .items[*]}{.spec.serviceName}{","}{end}' 2>/dev/null); then
-    if [ -n "$INTERCEPT_LIST" ]; then
-        # Remove trailing comma
-        INTERCEPTS=$(echo "$INTERCEPT_LIST" | sed 's/,$//')
-    fi
-fi
+# Read and parse JSON (using awk/grep since jq may not be available)
+# Extract environment name
+ENV_NAME=$(grep -o '"environment":"[^"]*"' "$CONTEXT_FILE" 2>/dev/null | cut -d'"' -f4)
+
+# Extract intercepts array and convert to space-separated list
+INTERCEPTS=$(grep -o '"intercepts":\[[^]]*\]' "$CONTEXT_FILE" 2>/dev/null | sed 's/"intercepts":\[//;s/\]//;s/"//g;s/,/ /g')
 
 # Format output
 OUTPUT=""
@@ -33,12 +29,12 @@ if [ -n "$ENV_NAME" ]; then
 fi
 
 if [ -n "$INTERCEPTS" ]; then
-    # Convert comma-separated to space-separated
-    INTERCEPT_NAMES=$(echo "$INTERCEPTS" | tr ',' ' ')
+    # Format intercepts list: convert spaces to commas and wrap in parentheses
+    FORMATTED_INTERCEPTS=$(echo "$INTERCEPTS" | sed 's/ /, /g')
     if [ -n "$OUTPUT" ]; then
-        OUTPUT="$OUTPUT | intercepts:$INTERCEPT_NAMES"
+        OUTPUT="$OUTPUT | intercepts:($FORMATTED_INTERCEPTS)"
     else
-        OUTPUT="intercepts:$INTERCEPT_NAMES"
+        OUTPUT="intercepts:($FORMATTED_INTERCEPTS)"
     fi
 fi
 

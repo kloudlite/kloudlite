@@ -206,16 +206,16 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 
 		// Check if environment connection changed
 		envChanged := false
-		if workspace.Spec.EnvironmentRef != nil {
-			// Workspace has environment reference
+		if workspace.Spec.EnvironmentConnection != nil {
+			// Workspace has environment connection
 			if workspace.Status.ConnectedEnvironment == nil ||
-				workspace.Status.ConnectedEnvironment.Name != workspace.Spec.EnvironmentRef.Name {
+				workspace.Status.ConnectedEnvironment.Name != workspace.Spec.EnvironmentConnection.EnvironmentRef.Name {
 				envChanged = true
 				logger.Info("Environment connection changed - will update DNS",
-					zap.String("newEnvironment", workspace.Spec.EnvironmentRef.Name))
+					zap.String("newEnvironment", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name))
 			}
 		} else {
-			// Workspace has no environment reference
+			// Workspace has no environment connection
 			if workspace.Status.ConnectedEnvironment != nil {
 				envChanged = true
 				logger.Info("Environment disconnected - will update DNS")
@@ -228,6 +228,36 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 				logger.Warn("Failed to update DNS config in running pod", zap.Error(err))
 				// Don't fail reconciliation, just log the warning
 				// The DNS will be correct on next pod restart
+			}
+		}
+
+		// Always update Kloudlite context file when pod is running to ensure consistency
+		// This is lightweight (just a pod exec with cat) and ensures the file stays in sync
+		// even if it got out of sync somehow (e.g., from before a controller restart)
+		if pod.Status.Phase == corev1.PodRunning {
+			if err := r.updateKloudliteContextFile(ctx, workspace, logger); err != nil {
+				logger.Warn("Failed to update Kloudlite context file", zap.Error(err))
+				// Don't fail reconciliation, just log the warning
+			}
+		}
+
+		// Reconcile service intercepts based on environment connection
+		if workspace.Spec.EnvironmentConnection != nil && workspace.Status.ConnectedEnvironment != nil {
+			// Environment is connected, reconcile intercepts
+			env, err := r.validateEnvironmentConnection(ctx, workspace)
+			if err == nil && env != nil {
+				if err := r.reconcileServiceIntercepts(ctx, workspace, env, logger); err != nil {
+					logger.Warn("Failed to reconcile service intercepts", zap.Error(err))
+					// Don't fail reconciliation, just log warning
+				}
+			} else if err != nil {
+				logger.Warn("Environment validation failed, skipping intercept reconciliation", zap.Error(err))
+			}
+		} else {
+			// Environment is disconnected, cleanup all intercepts
+			if err := r.cleanupServiceIntercepts(ctx, workspace, logger); err != nil {
+				logger.Warn("Failed to cleanup service intercepts", zap.Error(err))
+				// Don't fail reconciliation, just log warning
 			}
 		}
 

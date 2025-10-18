@@ -68,6 +68,13 @@ spec:
                 description: MachineType references the MachineType to use for this
                   machine
                 type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                description: |-
+                  NodeSelector constrains this WorkMachine and all its workspaces to specific nodes
+                  All workspaces and environments created by this user will inherit this nodeSelector
+                type: object
               ownedBy:
                 description: OwnedBy is the username/email of the user who owns this
                   machine

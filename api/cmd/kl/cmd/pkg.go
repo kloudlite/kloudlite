@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -8,7 +9,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kl/pkg/devbox"
-	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
+	fzf "github.com/junegunn/fzf/src"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/spf13/cobra"
 )
@@ -366,7 +367,7 @@ func searchPackagesDynamic() (*devbox.PackageSearchResult, error) {
 	}
 
 	// Search for packages
-	fmt.Printf(" Searching for '%s'...\n", query)
+	fmt.Printf("Searching for '%s'...\n", query)
 	resp, err := devbox.SearchPackages(query)
 	if err != nil {
 		return nil, err
@@ -376,50 +377,155 @@ func searchPackagesDynamic() (*devbox.PackageSearchResult, error) {
 		return nil, fmt.Errorf("no packages found")
 	}
 
-	// Use fuzzyfinder to select from results
-	idx, err := fuzzyfinder.Find(
-		resp.Packages,
-		func(i int) string {
-			return fmt.Sprintf("%s (%d versions)", resp.Packages[i].Name, resp.Packages[i].NumVersions)
-		},
-		fuzzyfinder.WithPromptString(fmt.Sprintf("Select package (%d results): ", len(resp.Packages))),
-		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
-			if i < 0 || i >= len(resp.Packages) {
-				return ""
-			}
-			pkg := resp.Packages[i]
-			preview := fmt.Sprintf("Package: %s\n", pkg.Name)
-			preview += fmt.Sprintf("Versions: %d available\n", pkg.NumVersions)
-			if len(pkg.Versions) > 0 {
-				preview += "\nLatest versions:\n"
-				for j := 0; j < 5 && j < len(pkg.Versions); j++ {
-					preview += fmt.Sprintf("  - %s\n", pkg.Versions[j].Version)
-				}
-			}
-			return preview
-		}),
-	)
+	// Create input for fzf
+	pkgMap := make(map[string]*devbox.PackageSearchResult)
+	var items []string
 
+	for i := range resp.Packages {
+		pkg := &resp.Packages[i]
+		line := fmt.Sprintf("%s (%d versions)", pkg.Name, pkg.NumVersions)
+		items = append(items, line)
+		pkgMap[line] = pkg
+	}
+
+	// Create temporary file for input
+	tmpfile, err := os.CreateTemp("", "fzf-pkg-*.txt")
 	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	// Write items to temp file
+	writer := bufio.NewWriter(tmpfile)
+	for _, item := range items {
+		fmt.Fprintln(writer, item)
+	}
+	writer.Flush()
+	tmpfile.Close()
+
+	// Open temp file for reading
+	inputFile, err := os.Open(tmpfile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to open temp file: %w", err)
+	}
+	defer inputFile.Close()
+
+	// Save original stdin and replace it temporarily
+	oldStdin := os.Stdin
+	os.Stdin = inputFile
+	defer func() {
+		os.Stdin = oldStdin
+		// Recover from any panics in fzf
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "Error in fzf: %v\n", r)
+		}
+	}()
+
+	// Parse fzf options with embedded fzf
+	opts, err := fzf.ParseOptions(true, []string{
+		"--height=40%",
+		"--layout=reverse",
+		"--border",
+		fmt.Sprintf("--prompt=Select package (%d results): ", len(resp.Packages)),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse fzf options: %w", err)
+	}
+
+	// Printer function to capture output
+	var selected string
+	opts.Printer = func(s string) {
+		selected = s
+	}
+
+	// Run fzf
+	exitCode, err := fzf.Run(opts)
+
+	if exitCode != fzf.ExitOk || err != nil {
 		return nil, fmt.Errorf("selection cancelled")
 	}
 
-	return &resp.Packages[idx], nil
+	if selected == "" {
+		return nil, fmt.Errorf("no package selected")
+	}
+
+	pkg, ok := pkgMap[selected]
+	if !ok {
+		return nil, fmt.Errorf("invalid package selected")
+	}
+
+	return pkg, nil
 }
 
 func selectVersionWithFzf(versions []devbox.PackageVersion, pkgName string) (string, error) {
-	idx, err := fuzzyfinder.Find(
-		versions,
-		func(i int) string {
-			return versions[i].Version
-		},
-		fuzzyfinder.WithPromptString(fmt.Sprintf("Select version for %s: ", pkgName)),
-	)
+	// Create input for fzf
+	var items []string
+	for _, v := range versions {
+		items = append(items, v.Version)
+	}
+
+	// Create temporary file for input
+	tmpfile, err := os.CreateTemp("", "fzf-version-*.txt")
 	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	// Write items to temp file
+	writer := bufio.NewWriter(tmpfile)
+	for _, item := range items {
+		fmt.Fprintln(writer, item)
+	}
+	writer.Flush()
+	tmpfile.Close()
+
+	// Open temp file for reading
+	inputFile, err := os.Open(tmpfile.Name())
+	if err != nil {
+		return "", fmt.Errorf("failed to open temp file: %w", err)
+	}
+	defer inputFile.Close()
+
+	// Save original stdin and replace it temporarily
+	oldStdin := os.Stdin
+	os.Stdin = inputFile
+	defer func() {
+		os.Stdin = oldStdin
+		// Recover from any panics in fzf
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "Error in fzf: %v\n", r)
+		}
+	}()
+
+	// Parse fzf options with embedded fzf
+	opts, err := fzf.ParseOptions(true, []string{
+		"--height=40%",
+		"--layout=reverse",
+		"--border",
+		fmt.Sprintf("--prompt=Select version for %s: ", pkgName),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to parse fzf options: %w", err)
+	}
+
+	// Printer function to capture output
+	var selected string
+	opts.Printer = func(s string) {
+		selected = s
+	}
+
+	// Run fzf
+	exitCode, err := fzf.Run(opts)
+
+	if exitCode != fzf.ExitOk || err != nil {
 		return "", fmt.Errorf("selection cancelled")
 	}
 
-	return versions[idx].Version, nil
+	if selected == "" {
+		return "", fmt.Errorf("no version selected")
+	}
+
+	return selected, nil
 }
 
 func waitForPackageInstallation(ctx context.Context, packageName string) error {

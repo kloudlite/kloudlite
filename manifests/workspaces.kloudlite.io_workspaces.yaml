@@ -74,50 +74,111 @@ spec:
                 maxLength: 100
                 minLength: 1
                 type: string
-              environmentRef:
-                description: EnvironmentRef references the default environment for
-                  this workspace
+              environmentConnection:
+                description: |-
+                  EnvironmentConnection defines the environment to connect to and associated intercepts
+                  When set to nil, workspace is disconnected and all intercepts are removed
                 properties:
-                  apiVersion:
-                    description: API version of the referent.
-                    type: string
-                  fieldPath:
+                  environmentRef:
+                    description: EnvironmentRef references the environment to connect
+                      to
+                    properties:
+                      apiVersion:
+                        description: API version of the referent.
+                        type: string
+                      fieldPath:
+                        description: |-
+                          If referring to a piece of an object instead of an entire object, this string
+                          should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                          For example, if the object reference is to a container within a pod, this would take on a value like:
+                          "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                          the event) or if no container name is specified "spec.containers[2]" (container with
+                          index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                          referencing a part of an object.
+                        type: string
+                      kind:
+                        description: |-
+                          Kind of the referent.
+                          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                        type: string
+                      name:
+                        description: |-
+                          Name of the referent.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                      namespace:
+                        description: |-
+                          Namespace of the referent.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                        type: string
+                      resourceVersion:
+                        description: |-
+                          Specific resourceVersion to which this reference is made, if any.
+                          More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                        type: string
+                      uid:
+                        description: |-
+                          UID of the referent.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  intercepts:
                     description: |-
-                      If referring to a piece of an object instead of an entire object, this string
-                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within a pod, this would take on a value like:
-                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]" (container with
-                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
-                      referencing a part of an object.
-                    type: string
-                  kind:
-                    description: |-
-                      Kind of the referent.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-                    type: string
-                  name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    type: string
-                  namespace:
-                    description: |-
-                      Namespace of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
-                    type: string
-                  resourceVersion:
-                    description: |-
-                      Specific resourceVersion to which this reference is made, if any.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-                    type: string
-                  uid:
-                    description: |-
-                      UID of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
-                    type: string
+                      Intercepts defines services to intercept in this environment
+                      When environment is disconnected, all intercepts are automatically removed
+                    items:
+                      description: InterceptSpec defines a service to intercept when
+                        connected to an environment
+                      properties:
+                        portMappings:
+                          description: PortMappings defines how service ports map
+                            to workspace ports
+                          items:
+                            description: PortMapping defines mapping between service
+                              and workspace ports
+                            properties:
+                              protocol:
+                                default: TCP
+                                description: Protocol is the protocol used (TCP/UDP)
+                                enum:
+                                - TCP
+                                - UDP
+                                - SCTP
+                                type: string
+                              servicePort:
+                                description: ServicePort is the port exposed by the
+                                  service
+                                format: int32
+                                maximum: 65535
+                                minimum: 1
+                                type: integer
+                              workspacePort:
+                                description: WorkspacePort is the port in the workspace
+                                  pod
+                                format: int32
+                                maximum: 65535
+                                minimum: 1
+                                type: integer
+                            required:
+                            - servicePort
+                            - workspacePort
+                            type: object
+                          minItems: 1
+                          type: array
+                        serviceName:
+                          description: ServiceName in the connected environment to
+                            intercept
+                          minLength: 1
+                          type: string
+                      required:
+                      - portMappings
+                      - serviceName
+                      type: object
+                    type: array
+                required:
+                - environmentRef
                 type: object
-                x-kubernetes-map-type: atomic
               machineTypeRef:
                 description: MachineTypeRef references the default machine type for
                   this workspace
@@ -314,6 +375,28 @@ spec:
                 description: ActiveConnections is the number of active network connections
                   in the workspace
                 type: integer
+              activeIntercepts:
+                description: ActiveIntercepts tracks the status of active service
+                  intercepts
+                items:
+                  description: InterceptStatus tracks the status of an active service
+                    intercept
+                  properties:
+                    message:
+                      description: Message provides additional information about the
+                        intercept status
+                      type: string
+                    phase:
+                      description: Phase of the intercept (Pending, Active, Failed,
+                        etc.)
+                      type: string
+                    serviceName:
+                      description: ServiceName being intercepted
+                      type: string
+                  required:
+                  - serviceName
+                  type: object
+                type: array
               conditions:
                 description: Conditions represent the latest available observations
                   of workspace state
@@ -382,9 +465,6 @@ spec:
                     items:
                       type: string
                     type: array
-                  connected:
-                    description: Connected indicates if the connection is active
-                    type: boolean
                   name:
                     description: Name of the connected environment
                     type: string
@@ -392,7 +472,6 @@ spec:
                     description: TargetNamespace where environment services are deployed
                     type: string
                 required:
-                - connected
                 - name
                 - targetNamespace
                 type: object
