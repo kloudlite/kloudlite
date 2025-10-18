@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	"github.com/kloudlite/kloudlite/api/internal/config"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,12 +22,14 @@ import (
 type WorkMachineWebhook struct {
 	logger    logger.Logger
 	k8sClient client.Client
+	config    *config.Config
 }
 
-func NewWorkMachineWebhook(logger logger.Logger, k8sClient client.Client) *WorkMachineWebhook {
+func NewWorkMachineWebhook(logger logger.Logger, k8sClient client.Client, cfg *config.Config) *WorkMachineWebhook {
 	return &WorkMachineWebhook{
 		logger:    logger,
 		k8sClient: k8sClient,
+		config:    cfg,
 	}
 }
 
@@ -213,6 +216,20 @@ func (w *WorkMachineWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		"value": machine.Spec.MachineType,
 	}
 	patches = append(patches, machineTypeLabelPatch)
+
+	// Set default nodeSelector based on WorkMachine name if not provided
+	// This ensures each WorkMachine (and its workspaces/environments) targets specific nodes
+	if len(machine.Spec.NodeSelector) == 0 {
+		defaultNodeSelector := map[string]string{
+			"kloudlite.io/workmachine": machine.Name,
+		}
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/nodeSelector",
+			"value": defaultNodeSelector,
+		})
+		w.logger.Info(fmt.Sprintf("Applied default nodeSelector to WorkMachine %s: %v", machine.Name, defaultNodeSelector))
+	}
 
 	// Convert patches to JSON
 	patchBytes, err := json.Marshal(patches)
