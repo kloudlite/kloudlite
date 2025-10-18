@@ -58,12 +58,13 @@ func (r *WorkspaceReconciler) validateCommandForExec(command []string) error {
 
 		// Allow specific safe patterns for DNS and connection checking
 		allowedPatterns := []string{
-			"awk '$4 == \"01\"'", // connection counting
-			"/proc/net/tcp",     // network stats
-			"/proc/net/tcp6",    // IPv6 network stats
-			"wc -l",            // line counting
-			"cat >",            // file writing for DNS config
-			"/etc/resolv.conf", // DNS config file
+			"awk '$4 == \"01\"'",          // connection counting
+			"/proc/net/tcp",               // network stats
+			"/proc/net/tcp6",              // IPv6 network stats
+			"wc -l",                       // line counting
+			"cat >",                       // file writing for DNS config
+			"/etc/resolv.conf",            // DNS config file
+			"/tmp/kloudlite-context.json", // Kloudlite context file for Starship prompt
 		}
 
 		isAllowed := false
@@ -135,21 +136,21 @@ func (r *WorkspaceReconciler) validateHostPath(hostPath string, workspaceName st
 
 // validateEnvironmentConnection validates environment reference and returns environment details
 func (r *WorkspaceReconciler) validateEnvironmentConnection(ctx context.Context, workspace *workspacev1.Workspace) (*environmentv1.Environment, error) {
-	if workspace.Spec.EnvironmentRef == nil {
-		return nil, nil // No environment reference is valid
+	if workspace.Spec.EnvironmentConnection == nil {
+		return nil, nil // No environment connection is valid
 	}
 
 	env := &environmentv1.Environment{}
 	err := r.Get(ctx, client.ObjectKey{
-		Name:      workspace.Spec.EnvironmentRef.Name,
+		Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		Namespace: workspace.Namespace,
 	}, env)
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, fmt.Errorf("environment '%s' not found", workspace.Spec.EnvironmentRef.Name)
+			return nil, fmt.Errorf("environment '%s' not found", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name)
 		}
-		return nil, fmt.Errorf("failed to get environment '%s': %w", workspace.Spec.EnvironmentRef.Name, err)
+		return nil, fmt.Errorf("failed to get environment '%s': %w", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name, err)
 	}
 
 	if !env.Spec.Activated {

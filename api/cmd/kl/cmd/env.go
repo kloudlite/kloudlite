@@ -3,14 +3,18 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fzf "github.com/junegunn/fzf/src"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var envCmd = &cobra.Command{
@@ -117,10 +121,13 @@ func handleEnvConnectInteractive() error {
 
 	ctx := context.Background()
 
-	// List all environments
+	// List all environments in the current namespace
 	fmt.Println("Loading environments...")
 	envList := &environmentsv1.EnvironmentList{}
-	if err := WsClient.K8sClient.List(ctx, envList); err != nil {
+	listOpts := []client.ListOption{
+		client.InNamespace(WsClient.Namespace),
+	}
+	if err := WsClient.K8sClient.List(ctx, envList, listOpts...); err != nil {
 		return fmt.Errorf("failed to list environments: %w", err)
 	}
 
@@ -168,10 +175,12 @@ func handleEnvConnect(environmentName string) error {
 		return fmt.Errorf("failed to get workspace: %w", err)
 	}
 
-	// Update workspace spec with environment reference
-	workspace.Spec.EnvironmentRef = &corev1.ObjectReference{
-		Name:      environmentName,
-		Namespace: WsClient.Namespace,
+	// Update workspace spec with environment connection
+	workspace.Spec.EnvironmentConnection = &workspacev1.EnvironmentConnectionSpec{
+		EnvironmentRef: corev1.ObjectReference{
+			Name:      environmentName,
+			Namespace: WsClient.Namespace,
+		},
 	}
 
 	// Update the workspace spec
@@ -179,6 +188,12 @@ func handleEnvConnect(environmentName string) error {
 		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
+	// Wait for the environment connection to sync
+	if err := waitForEnvironmentSync(environmentName, targetNamespace); err != nil {
+		return fmt.Errorf("environment connection update failed: %w", err)
+	}
+
+	fmt.Println()
 	fmt.Printf("[✓] Connected to environment '%s'\n", environmentName)
 	fmt.Printf("Target Namespace: %s\n", targetNamespace)
 	fmt.Println()
@@ -202,16 +217,22 @@ func handleEnvDisconnect() error {
 		return fmt.Errorf("failed to get workspace: %w", err)
 	}
 
-	// Clear the environment reference
-	workspace.Spec.EnvironmentRef = nil
+	// Clear the environment connection (this also removes all intercepts)
+	workspace.Spec.EnvironmentConnection = nil
 
 	// Update the workspace spec
 	if err := WsClient.Update(ctx, workspace); err != nil {
 		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
+	// Wait for the disconnection to sync (pass empty strings for disconnect)
+	if err := waitForEnvironmentSync("", ""); err != nil {
+		return fmt.Errorf("environment disconnection failed: %w", err)
+	}
+
+	fmt.Println()
 	fmt.Println("[✓] Disconnected from environment")
-	fmt.Println("DNS configuration will be updated by the controller")
+	fmt.Println("DNS configuration has been updated")
 
 	return nil
 }
@@ -247,7 +268,74 @@ func handleEnvStatus() error {
 	fmt.Println("Example:")
 	fmt.Println("  curl http://api-server:8080")
 
+	// Read intercepts from context file (maintained by controller)
+	fmt.Println()
+	type ContextData struct {
+		Environment string   `json:"environment"`
+		Intercepts  []string `json:"intercepts"`
+	}
+
+	contextFile := "/tmp/kloudlite-context.json"
+	contextBytes, err := os.ReadFile(contextFile)
+	if err == nil {
+		var contextData ContextData
+		if err := json.Unmarshal(contextBytes, &contextData); err == nil && len(contextData.Intercepts) > 0 {
+			fmt.Println("Active Service Intercepts:")
+			for _, serviceName := range contextData.Intercepts {
+				fmt.Printf("  - %s\n", serviceName)
+			}
+		} else {
+			fmt.Println("No active service intercepts")
+		}
+	} else {
+		fmt.Println("No active service intercepts")
+	}
+
 	return nil
+}
+
+// waitForEnvironmentSync waits for the workspace status to reflect the desired environment connection
+func waitForEnvironmentSync(environmentName, targetNamespace string) error {
+	ctx := context.Background()
+	timeout := time.After(30 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	fmt.Print("Waiting for environment connection to sync")
+
+	for {
+		select {
+		case <-timeout:
+			fmt.Println(" timeout!")
+			return fmt.Errorf("timeout waiting for environment sync after 30 seconds")
+		case <-ticker.C:
+			// Show progress
+			fmt.Print(".")
+
+			// Get current workspace status
+			workspace, err := WsClient.Get(ctx)
+			if err != nil {
+				continue // Retry on transient errors
+			}
+
+			// Check if sync is complete
+			if environmentName == "" {
+				// Disconnecting - wait for ConnectedEnvironment to be nil
+				if workspace.Status.ConnectedEnvironment == nil {
+					fmt.Println(" done!")
+					return nil
+				}
+			} else {
+				// Connecting - wait for ConnectedEnvironment to match desired environment
+				if workspace.Status.ConnectedEnvironment != nil &&
+					workspace.Status.ConnectedEnvironment.Name == environmentName &&
+					workspace.Status.ConnectedEnvironment.TargetNamespace == targetNamespace {
+					fmt.Println(" done!")
+					return nil
+				}
+			}
+		}
+	}
 }
 
 func selectEnvironmentWithFzf(envs []environmentsv1.Environment) (*environmentsv1.Environment, error) {

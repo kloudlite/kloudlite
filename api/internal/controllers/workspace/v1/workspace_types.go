@@ -1,9 +1,35 @@
 package v1
 
 import (
+	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// InterceptSpec defines a service to intercept when connected to an environment
+type InterceptSpec struct {
+	// ServiceName in the connected environment to intercept
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	ServiceName string `json:"serviceName"`
+
+	// PortMappings defines how service ports map to workspace ports
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	PortMappings []interceptsv1.PortMapping `json:"portMappings"`
+}
+
+// EnvironmentConnectionSpec defines the environment connection and associated intercepts
+type EnvironmentConnectionSpec struct {
+	// EnvironmentRef references the environment to connect to
+	// +kubebuilder:validation:Required
+	EnvironmentRef corev1.ObjectReference `json:"environmentRef"`
+
+	// Intercepts defines services to intercept in this environment
+	// When environment is disconnected, all intercepts are automatically removed
+	// +optional
+	Intercepts []InterceptSpec `json:"intercepts,omitempty"`
+}
 
 // PackageSpec defines a Nix package to install
 type PackageSpec struct {
@@ -64,9 +90,10 @@ type WorkspaceSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	Owner string `json:"owner"`
 
-	// EnvironmentRef references the default environment for this workspace
+	// EnvironmentConnection defines the environment to connect to and associated intercepts
+	// When set to nil, workspace is disconnected and all intercepts are removed
 	// +optional
-	EnvironmentRef *corev1.ObjectReference `json:"environmentRef,omitempty"`
+	EnvironmentConnection *EnvironmentConnectionSpec `json:"environmentConnection,omitempty"`
 
 	// MachineTypeRef references the default machine type for this workspace
 	// +optional
@@ -203,6 +230,20 @@ type ConnectedEnvironmentInfo struct {
 	AvailableServices []string `json:"availableServices,omitempty"`
 }
 
+// InterceptStatus tracks the status of an active service intercept
+type InterceptStatus struct {
+	// ServiceName being intercepted
+	ServiceName string `json:"serviceName"`
+
+	// Phase of the intercept (Pending, Active, Failed, etc.)
+	// +optional
+	Phase string `json:"phase,omitempty"`
+
+	// Message provides additional information about the intercept status
+	// +optional
+	Message string `json:"message,omitempty"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	// Phase represents the current phase of the workspace
@@ -277,6 +318,10 @@ type WorkspaceStatus struct {
 	// ConnectedEnvironment tracks the connected environment details
 	// +optional
 	ConnectedEnvironment *ConnectedEnvironmentInfo `json:"connectedEnvironment,omitempty"`
+
+	// ActiveIntercepts tracks the status of active service intercepts
+	// +optional
+	ActiveIntercepts []InterceptStatus `json:"activeIntercepts,omitempty"`
 }
 
 // ResourceUsage tracks current resource consumption

@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -228,17 +227,16 @@ func handleInterceptStart(serviceName string) error {
 func handleInterceptStartWithService(service corev1.Service, workspace *workspacesv1.Workspace, targetNamespace string) error {
 	ctx := context.Background()
 
-	// Check if intercept already exists
-	interceptName := fmt.Sprintf("%s-%s", service.Name, workspace.Name)
-	existingIntercept := &interceptsv1.ServiceIntercept{}
-	err := WsClient.K8sClient.Get(ctx, types.NamespacedName{
-		Name:      interceptName,
-		Namespace: targetNamespace,
-	}, existingIntercept)
-	if err == nil {
-		return fmt.Errorf("service '%s' is already being intercepted by this workspace", service.Name)
-	} else if !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to check existing intercept: %w", err)
+	// Check if environment connection exists
+	if workspace.Spec.EnvironmentConnection == nil {
+		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
+	}
+
+	// Check if intercept already exists in workspace spec
+	for _, intercept := range workspace.Spec.EnvironmentConnection.Intercepts {
+		if intercept.ServiceName == service.Name {
+			return fmt.Errorf("service '%s' is already being intercepted by this workspace", service.Name)
+		}
 	}
 
 	// Prompt for port mappings
@@ -278,7 +276,7 @@ func handleInterceptStartWithService(service corev1.Service, workspace *workspac
 		// Portless service (e.g., headless service) - ask user to manually configure ports
 		fmt.Printf("\nService '%s' is a portless service (headless service).\n", service.Name)
 		fmt.Println("You need to manually specify port mappings.")
-		fmt.Println("Enter port mappings (press Enter with empty service port to finish):\n")
+		fmt.Println("Enter port mappings (press Enter with empty service port to finish):")
 
 		portMappings = make([]interceptsv1.PortMapping, 0)
 
@@ -347,31 +345,24 @@ func handleInterceptStartWithService(service corev1.Service, workspace *workspac
 		}
 	}
 
-	// Create ServiceIntercept resource
-	intercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      interceptName,
-			Namespace: targetNamespace,
-		},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			WorkspaceRef: corev1.ObjectReference{
-				Name:      workspace.Name,
-				Namespace: workspace.Namespace,
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      service.Name,
-				Namespace: targetNamespace,
-			},
-			PortMappings: portMappings,
-		},
+	// Add intercept to workspace spec
+	interceptSpec := workspacesv1.InterceptSpec{
+		ServiceName:  service.Name,
+		PortMappings: portMappings,
 	}
 
-	if err := WsClient.K8sClient.Create(ctx, intercept); err != nil {
-		return fmt.Errorf("failed to create service intercept: %w", err)
+	if workspace.Spec.EnvironmentConnection.Intercepts == nil {
+		workspace.Spec.EnvironmentConnection.Intercepts = []workspacesv1.InterceptSpec{}
+	}
+	workspace.Spec.EnvironmentConnection.Intercepts = append(workspace.Spec.EnvironmentConnection.Intercepts, interceptSpec)
+
+	// Update workspace
+	if err := WsClient.Update(ctx, workspace); err != nil {
+		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
-	fmt.Printf("\n[✓] Service intercept created successfully\n")
-	fmt.Printf("Service '%s' is now being intercepted by workspace '%s'\n\n", service.Name, workspace.Name)
+	fmt.Printf("\n[✓] Service intercept added to workspace spec\n")
+	fmt.Printf("Service '%s' will be intercepted by workspace '%s'\n\n", service.Name, workspace.Name)
 	fmt.Println("Port mappings:")
 	for _, mapping := range portMappings {
 		fmt.Printf("  %d (service) → %d (workspace)\n", mapping.ServicePort, mapping.WorkspacePort)
@@ -395,47 +386,21 @@ func handleInterceptStopInteractive() error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil {
+	if workspace.Spec.EnvironmentConnection == nil {
 		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
 	}
 
-	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
-	if targetNamespace == "" {
-		return fmt.Errorf("workspace has no connected environment namespace")
-	}
-
-	// List all intercepts for this workspace
-	fmt.Println("Loading active intercepts...")
-	interceptList := &interceptsv1.ServiceInterceptList{}
-	if err := WsClient.K8sClient.List(ctx, interceptList,
-		client.InNamespace(targetNamespace),
-		client.MatchingLabels{
-			"intercepts.kloudlite.io/workspace-name": workspace.Name,
-		},
-	); err != nil {
-		return fmt.Errorf("failed to list service intercepts: %w", err)
-	}
-
-	if len(interceptList.Items) == 0 {
+	if len(workspace.Spec.EnvironmentConnection.Intercepts) == 0 {
 		return fmt.Errorf("no active service intercepts found")
 	}
 
-	// Use embedded fzf to select intercept
-	selectedIntercept, err := selectInterceptWithFzf(interceptList.Items)
+	// Use embedded fzf to select intercept from workspace spec
+	selectedServiceName, err := selectInterceptFromWorkspaceSpec(workspace.Spec.EnvironmentConnection.Intercepts)
 	if err != nil {
 		return err
 	}
 
-	// Delete the selected intercept
-	if err := WsClient.K8sClient.Delete(ctx, selectedIntercept); err != nil {
-		return fmt.Errorf("failed to delete service intercept: %w", err)
-	}
-
-	fmt.Printf("[✓] Service intercept stopped\n")
-	fmt.Printf("Service '%s' is no longer being intercepted\n", selectedIntercept.Spec.ServiceRef.Name)
-	fmt.Println("Normal traffic routing has been restored")
-
-	return nil
+	return handleInterceptStop(selectedServiceName)
 }
 
 func handleInterceptStop(serviceName string) error {
@@ -452,35 +417,35 @@ func handleInterceptStop(serviceName string) error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil {
+	if workspace.Spec.EnvironmentConnection == nil {
 		return fmt.Errorf("workspace is not connected to any environment. Connect using 'kl env connect' first")
 	}
 
-	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
-	if targetNamespace == "" {
-		return fmt.Errorf("workspace has no connected environment namespace")
-	}
-
-	// Find and delete the intercept
-	interceptName := fmt.Sprintf("%s-%s", serviceName, workspace.Name)
-	intercept := &interceptsv1.ServiceIntercept{}
-	if err := WsClient.K8sClient.Get(ctx, types.NamespacedName{
-		Name:      interceptName,
-		Namespace: targetNamespace,
-	}, intercept); err != nil {
-		if apierrors.IsNotFound(err) {
-			return fmt.Errorf("no active intercept found for service '%s'", serviceName)
+	// Find and remove the intercept from workspace spec
+	found := false
+	newIntercepts := []workspacesv1.InterceptSpec{}
+	for _, intercept := range workspace.Spec.EnvironmentConnection.Intercepts {
+		if intercept.ServiceName == serviceName {
+			found = true
+			continue // Skip this intercept (remove it)
 		}
-		return fmt.Errorf("failed to get service intercept: %w", err)
+		newIntercepts = append(newIntercepts, intercept)
 	}
 
-	if err := WsClient.K8sClient.Delete(ctx, intercept); err != nil {
-		return fmt.Errorf("failed to delete service intercept: %w", err)
+	if !found {
+		return fmt.Errorf("no active intercept found for service '%s'", serviceName)
 	}
 
-	fmt.Printf("[✓] Service intercept stopped\n")
+	// Update workspace spec
+	workspace.Spec.EnvironmentConnection.Intercepts = newIntercepts
+
+	if err := WsClient.Update(ctx, workspace); err != nil {
+		return fmt.Errorf("failed to update workspace: %w", err)
+	}
+
+	fmt.Printf("[✓] Service intercept removed from workspace spec\n")
 	fmt.Printf("Service '%s' is no longer being intercepted\n", serviceName)
-	fmt.Println("Normal traffic routing has been restored")
+	fmt.Println("Normal traffic routing will be restored")
 
 	return nil
 }
@@ -499,49 +464,63 @@ func handleInterceptList() error {
 	}
 
 	// Check if workspace is connected to an environment
-	if workspace.Status.ConnectedEnvironment == nil {
+	if workspace.Spec.EnvironmentConnection == nil {
 		fmt.Println("Workspace is not connected to any environment")
 		return nil
 	}
 
-	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
-	if targetNamespace == "" {
-		return fmt.Errorf("workspace has no connected environment namespace")
-	}
-
-	// List all intercepts in the target namespace for this workspace
-	interceptList := &interceptsv1.ServiceInterceptList{}
-	if err := WsClient.K8sClient.List(ctx, interceptList,
-		client.InNamespace(targetNamespace),
-		client.MatchingLabels{
-			"intercepts.kloudlite.io/workspace-name": workspace.Name,
-		},
-	); err != nil {
-		return fmt.Errorf("failed to list service intercepts: %w", err)
-	}
-
-	if len(interceptList.Items) == 0 {
-		fmt.Println("No active service intercepts")
+	if len(workspace.Spec.EnvironmentConnection.Intercepts) == 0 {
+		fmt.Println("No service intercepts configured")
 		fmt.Println("\nTo start intercepting a service, run:")
 		fmt.Println("  kl intercept start")
 		return nil
 	}
 
-	fmt.Printf("Active service intercepts (%d):\n\n", len(interceptList.Items))
-	for _, intercept := range interceptList.Items {
-		phase := intercept.Status.Phase
-		if phase == "" {
-			phase = "Creating"
+	// Get target namespace from status
+	targetNamespace := ""
+	if workspace.Status.ConnectedEnvironment != nil {
+		targetNamespace = workspace.Status.ConnectedEnvironment.TargetNamespace
+	}
+
+	// List all ServiceIntercept CRs to get status
+	interceptCRs := make(map[string]*interceptsv1.ServiceIntercept)
+	if targetNamespace != "" {
+		interceptList := &interceptsv1.ServiceInterceptList{}
+		if err := WsClient.K8sClient.List(ctx, interceptList,
+			client.InNamespace(targetNamespace),
+			client.MatchingLabels{
+				"workspaces.kloudlite.io/workspace-name":      workspace.Name,
+				"workspaces.kloudlite.io/workspace-namespace": workspace.Namespace,
+			},
+		); err == nil {
+			for i := range interceptList.Items {
+				cr := &interceptList.Items[i]
+				interceptCRs[cr.Spec.ServiceRef.Name] = cr
+			}
+		}
+	}
+
+	fmt.Printf("Service intercepts (%d):\n\n", len(workspace.Spec.EnvironmentConnection.Intercepts))
+	for _, interceptSpec := range workspace.Spec.EnvironmentConnection.Intercepts {
+		phase := "Pending"
+		message := ""
+
+		// Get status from ServiceIntercept CR if it exists
+		if cr, exists := interceptCRs[interceptSpec.ServiceName]; exists {
+			if cr.Status.Phase != "" {
+				phase = string(cr.Status.Phase)
+			}
+			message = cr.Status.Message
 		}
 
-		fmt.Printf("  Service: %s\n", intercept.Spec.ServiceRef.Name)
+		fmt.Printf("  Service: %s\n", interceptSpec.ServiceName)
 		fmt.Printf("  Phase: %s\n", phase)
 		fmt.Printf("  Port mappings:\n")
-		for _, mapping := range intercept.Spec.PortMappings {
+		for _, mapping := range interceptSpec.PortMappings {
 			fmt.Printf("    %d → %d (%s)\n", mapping.ServicePort, mapping.WorkspacePort, mapping.Protocol)
 		}
-		if intercept.Status.Message != "" {
-			fmt.Printf("  Message: %s\n", intercept.Status.Message)
+		if message != "" {
+			fmt.Printf("  Message: %s\n", message)
 		}
 		fmt.Println()
 	}
@@ -830,4 +809,93 @@ func selectInterceptWithFzf(intercepts []interceptsv1.ServiceIntercept) (*interc
 	}
 
 	return intercept, nil
+}
+
+func selectInterceptFromWorkspaceSpec(intercepts []workspacesv1.InterceptSpec) (string, error) {
+	// Create input for fzf
+	serviceMap := make(map[string]string)
+	var items []string
+
+	for _, interceptSpec := range intercepts {
+		portStr := ""
+		if len(interceptSpec.PortMappings) > 0 {
+			ports := make([]string, len(interceptSpec.PortMappings))
+			for j, mapping := range interceptSpec.PortMappings {
+				ports[j] = fmt.Sprintf("%d→%d", mapping.ServicePort, mapping.WorkspacePort)
+			}
+			portStr = strings.Join(ports, ", ")
+		}
+
+		line := fmt.Sprintf("%s - %s", interceptSpec.ServiceName, portStr)
+		items = append(items, line)
+		serviceMap[line] = interceptSpec.ServiceName
+	}
+
+	// Create temporary file for input
+	tmpfile, err := os.CreateTemp("", "fzf-intercept-*.txt")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	// Write items to temp file
+	writer := bufio.NewWriter(tmpfile)
+	for _, item := range items {
+		fmt.Fprintln(writer, item)
+	}
+	writer.Flush()
+	tmpfile.Close()
+
+	// Open temp file for reading
+	inputFile, err := os.Open(tmpfile.Name())
+	if err != nil {
+		return "", fmt.Errorf("failed to open temp file: %w", err)
+	}
+	defer inputFile.Close()
+
+	// Save original stdin and replace it temporarily
+	oldStdin := os.Stdin
+	os.Stdin = inputFile
+	defer func() {
+		os.Stdin = oldStdin
+		// Recover from any panics in fzf
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "Error in fzf: %v\n", r)
+		}
+	}()
+
+	// Parse fzf options with embedded fzf
+	opts, err := fzf.ParseOptions(true, []string{
+		"--height=40%",
+		"--layout=reverse",
+		"--border",
+		"--prompt=Select intercept to stop: ",
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to parse fzf options: %w", err)
+	}
+
+	// Printer function to capture output
+	var selected string
+	opts.Printer = func(s string) {
+		selected = s
+	}
+
+	// Run fzf
+	exitCode, err := fzf.Run(opts)
+
+	if exitCode != fzf.ExitOk || err != nil {
+		return "", fmt.Errorf("intercept selection cancelled")
+	}
+
+	if selected == "" {
+		return "", fmt.Errorf("no intercept selected")
+	}
+
+	serviceName, ok := serviceMap[selected]
+	if !ok {
+		return "", fmt.Errorf("invalid intercept selected")
+	}
+
+	return serviceName, nil
 }
