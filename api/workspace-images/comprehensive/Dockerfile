@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     gnupg \
+    unzip \
+    fontconfig \
     && rm -rf /var/lib/apt/lists/*
 
 # Create kl user with home directory and fish as default shell
@@ -41,8 +43,14 @@ RUN curl -fsSL https://code-server.dev/install.sh | sh
 RUN curl -fsSL https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.aarch64 -o /usr/local/bin/ttyd && \
     chmod +x /usr/local/bin/ttyd
 
-# Install Claude Code via npm
-RUN npm install -g @anthropic-ai/claude-code
+# Install Nerd Fonts (JetBrainsMono and FiraCode)
+RUN mkdir -p /usr/share/fonts/truetype/nerd-fonts && \
+    curl -fsSL https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip -o /tmp/JetBrainsMono.zip && \
+    curl -fsSL https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/FiraCode.zip -o /tmp/FiraCode.zip && \
+    unzip -qo /tmp/JetBrainsMono.zip -d /usr/share/fonts/truetype/nerd-fonts/ && \
+    unzip -qo /tmp/FiraCode.zip -d /usr/share/fonts/truetype/nerd-fonts/ && \
+    rm -f /tmp/JetBrainsMono.zip /tmp/FiraCode.zip && \
+    fc-cache -f -v
 
 # Install starship prompt
 RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
@@ -86,7 +94,7 @@ RUN mkdir -p /etc/supervisor/conf.d
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose all required ports
-EXPOSE 22 8080 7681 8000
+EXPOSE 22 8080 7681 7682
 
 # Start supervisor to manage all services
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
