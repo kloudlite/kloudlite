@@ -29,7 +29,9 @@ func TestEnvironmentReconciler_Reconcile_CreateNamespace(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, env).Build()
+	k8sClient := testutil.NewFakeClient(scheme, env).
+		WithStatusSubresource(&environmentsv1.Environment{}).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &EnvironmentReconciler{
@@ -153,7 +155,9 @@ func TestEnvironmentReconciler_Reconcile_WithCustomLabelsAndAnnotations(t *testi
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, env).Build()
+	k8sClient := testutil.NewFakeClient(scheme, env).
+		WithStatusSubresource(&environmentsv1.Environment{}).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &EnvironmentReconciler{
@@ -176,7 +180,7 @@ func TestEnvironmentReconciler_Reconcile_WithCustomLabelsAndAnnotations(t *testi
 	namespace := &corev1.Namespace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-namespace"}, namespace)
 	assert.NoError(t, err)
-	assert.Equal(t, "label-value", namespace.Annotations["custom-label"])
+	assert.Equal(t, "label-value", namespace.Labels["custom-label"])
 	assert.Equal(t, "annotation-value", namespace.Annotations["custom-annotation"])
 }
 
@@ -203,7 +207,9 @@ func TestEnvironmentReconciler_Reconcile_CustomLabelsAndAnnotations(t *testing.T
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, env).Build()
+	k8sClient := testutil.NewFakeClient(scheme, env).
+		WithStatusSubresource(&environmentsv1.Environment{}).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &EnvironmentReconciler{
@@ -222,12 +228,12 @@ func TestEnvironmentReconciler_Reconcile_CustomLabelsAndAnnotations(t *testing.T
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
-	// Verify namespace has custom labels in annotations
+	// Verify namespace has custom labels and annotations
 	namespace := &corev1.Namespace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-namespace"}, namespace)
 	assert.NoError(t, err)
-	assert.Equal(t, "platform", namespace.Annotations["team"])
-	assert.Equal(t, "main", namespace.Annotations["project"])
+	assert.Equal(t, "platform", namespace.Labels["team"])
+	assert.Equal(t, "main", namespace.Labels["project"])
 	assert.Equal(t, "Test environment", namespace.Annotations["description"])
 	assert.Equal(t, "team@example.com", namespace.Annotations["owner"])
 }
@@ -297,7 +303,9 @@ func TestEnvironmentReconciler_Reconcile_AddFinalizerError(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, env).Build()
+	k8sClient := testutil.NewFakeClient(scheme, env).
+		WithStatusSubresource(&environmentsv1.Environment{}).
+		Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &EnvironmentReconciler{

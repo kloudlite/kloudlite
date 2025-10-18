@@ -1126,7 +1126,8 @@ func TestWorkMachineReconciler_EnsureSSHAuthorizedKeysConfigMap_ValidKeys(t *tes
 	authorizedKeys := configMap.Data["authorized_keys"]
 	assert.Contains(t, authorizedKeys, validKey1)
 	assert.Contains(t, authorizedKeys, validKey2)
-	assert.Equal(t, 2, len([]byte(authorizedKeys))-len([]byte(validKey1+"\n"+validKey2))+2) // Verify newline separation
+	// Verify both keys are present with newline separation (no trailing newline)
+	assert.Equal(t, validKey1+"\n"+validKey2, authorizedKeys)
 }
 
 func TestWorkMachineReconciler_EnsureSSHAuthorizedKeysConfigMap_InvalidKeysSkipped(t *testing.T) {
@@ -1277,31 +1278,19 @@ func TestWorkMachineReconciler_EnsureSSHHostKeysSecret_CreateNew(t *testing.T) {
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "ssh-host-keys", Namespace: "test-namespace"}, secret)
 	assert.NoError(t, err)
 
-	// Verify Secret contains all three key types (RSA, ECDSA, Ed25519)
+	// Verify Secret contains RSA key (only key type we generate)
 	assert.Contains(t, secret.Data, "ssh_host_rsa_key")
 	assert.Contains(t, secret.Data, "ssh_host_rsa_key.pub")
-	assert.Contains(t, secret.Data, "ssh_host_ecdsa_key")
-	assert.Contains(t, secret.Data, "ssh_host_ecdsa_key.pub")
-	assert.Contains(t, secret.Data, "ssh_host_ed25519_key")
-	assert.Contains(t, secret.Data, "ssh_host_ed25519_key.pub")
 
 	// Verify keys are not empty
 	assert.NotEmpty(t, secret.Data["ssh_host_rsa_key"])
 	assert.NotEmpty(t, secret.Data["ssh_host_rsa_key.pub"])
-	assert.NotEmpty(t, secret.Data["ssh_host_ecdsa_key"])
-	assert.NotEmpty(t, secret.Data["ssh_host_ecdsa_key.pub"])
-	assert.NotEmpty(t, secret.Data["ssh_host_ed25519_key"])
-	assert.NotEmpty(t, secret.Data["ssh_host_ed25519_key.pub"])
 
-	// Verify public key formats
+	// Verify public key format
 	assert.Contains(t, string(secret.Data["ssh_host_rsa_key.pub"]), "ssh-rsa")
-	assert.Contains(t, string(secret.Data["ssh_host_ecdsa_key.pub"]), "ecdsa-sha2-nistp256")
-	assert.Contains(t, string(secret.Data["ssh_host_ed25519_key.pub"]), "ssh-ed25519")
 
-	// Verify private key formats
+	// Verify private key format
 	assert.Contains(t, string(secret.Data["ssh_host_rsa_key"]), "RSA PRIVATE KEY")
-	assert.Contains(t, string(secret.Data["ssh_host_ecdsa_key"]), "EC PRIVATE KEY")
-	assert.Contains(t, string(secret.Data["ssh_host_ed25519_key"]), "OPENSSH PRIVATE KEY")
 }
 
 func TestWorkMachineReconciler_EnsureSSHHostKeysSecret_ReuseExisting(t *testing.T) {

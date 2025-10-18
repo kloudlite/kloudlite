@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -80,6 +82,10 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 		zap.Int("services", len(resources.Services)),
 		zap.Int("pvcs", len(resources.PVCs)))
 
+	// Get nodeSelector from the environment creator's WorkMachine
+	// This ensures all environment deployments run on the same node as the user's WorkMachine
+	nodeSelector := r.getWorkMachineNodeSelector(ctx, environment, logger)
+
 	// Apply PVCs first
 	for _, pvc := range resources.PVCs {
 		if err := r.applyResource(ctx, pvc, composition, logger); err != nil {
@@ -90,6 +96,13 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	// Apply Deployments (scale to 0 if environment is inactive)
 	deployedDeployments := make([]string, 0)
 	for _, deployment := range resources.Deployments {
+		// Apply nodeSelector from WorkMachine to ensure deployment runs on the same node
+		if len(nodeSelector) > 0 {
+			deployment.Spec.Template.Spec.NodeSelector = nodeSelector
+			logger.Info("Applied nodeSelector to deployment",
+				zap.String("deployment", deployment.Name),
+				zap.Any("nodeSelector", nodeSelector))
+		}
 		// If environment is not activated, scale deployment to 0 replicas
 		if !environmentActivated {
 			if deployment.Spec.Replicas != nil && *deployment.Spec.Replicas > 0 {
@@ -256,4 +269,43 @@ func getPVCNames(pvcs []*corev1.PersistentVolumeClaim) []string {
 		names[i] = pvc.Name
 	}
 	return names
+}
+
+// getWorkMachineNodeSelector retrieves the nodeSelector from the environment creator's WorkMachine
+// Returns nil if environment is nil, has no creator, or WorkMachine doesn't exist
+func (r *CompositionReconciler) getWorkMachineNodeSelector(ctx context.Context, environment *compositionsv1.Environment, logger *zap.Logger) map[string]string {
+	if environment == nil || environment.Spec.CreatedBy == "" {
+		return nil
+	}
+
+	// Sanitize creator email/username to generate WorkMachine name (same logic as webhook)
+	// Replace @ with -at- and . with -
+	sanitizedCreator := strings.ReplaceAll(environment.Spec.CreatedBy, "@", "-at-")
+	sanitizedCreator = strings.ReplaceAll(sanitizedCreator, ".", "-")
+	workMachineName := fmt.Sprintf("wm-%s", sanitizedCreator)
+
+	// WorkMachine is cluster-scoped, so we don't need a namespace
+	workMachine := &machinesv1.WorkMachine{}
+	err := r.Get(ctx, client.ObjectKey{Name: workMachineName}, workMachine)
+	if err != nil {
+		// WorkMachine doesn't exist or error fetching it - this is normal if user doesn't have one yet
+		logger.Info("WorkMachine not found for environment creator",
+			zap.String("creator", environment.Spec.CreatedBy),
+			zap.String("workMachineName", workMachineName),
+			zap.Error(err),
+		)
+		return nil
+	}
+
+	// Return the nodeSelector from WorkMachine (may be nil if not set)
+	if len(workMachine.Spec.NodeSelector) > 0 {
+		logger.Info("Found nodeSelector from WorkMachine for environment",
+			zap.String("environment", environment.Name),
+			zap.String("creator", environment.Spec.CreatedBy),
+			zap.String("workMachineName", workMachineName),
+			zap.Any("nodeSelector", workMachine.Spec.NodeSelector),
+		)
+	}
+
+	return workMachine.Spec.NodeSelector
 }
