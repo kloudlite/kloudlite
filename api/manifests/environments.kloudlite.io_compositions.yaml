@@ -247,6 +247,11 @@ spec:
                   type: string
                 description: Endpoints contains access URLs for exposed services
                 type: object
+              environmentActivated:
+                description: |-
+                  EnvironmentActivated tracks whether the environment was activated when this composition was last reconciled
+                  This is used to detect when environment activation state changes and trigger reconciliation
+                type: boolean
               lastDeployedTime:
                 description: LastDeployedTime is when the composition was last deployed
                 format: date-time
