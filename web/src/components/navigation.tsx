@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor } from 'lucide-react'
+import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Key } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
 import { ThemeSwitcher } from './theme-switcher'
 
@@ -83,6 +83,13 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
                   <p className="text-xs text-muted-foreground">{email}</p>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/connection-tokens" className="cursor-pointer">
+                  <Key className="mr-2 h-4 w-4" />
+                  Connection Tokens
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               {(isAdmin || isSuperAdmin) && (
                 <>

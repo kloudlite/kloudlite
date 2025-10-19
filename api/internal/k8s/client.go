@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -98,6 +99,9 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 	if err := interceptsv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add intercepts scheme: %w", err)
+	}
+	if err := connectiontokenv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add connectiontoken scheme: %w", err)
 	}
 
 	// Create controller-runtime client with optimized settings
