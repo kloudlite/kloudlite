@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -25,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Copy, Trash2, Key, Eye, EyeOff, Check } from 'lucide-react'
+import { Plus, Copy, Trash2, Eye, EyeOff, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { createConnectionToken, deleteConnectionToken } from '@/app/actions/connection-token.actions'
 import type { ConnectionToken } from '@/lib/services/connection-token.service'
@@ -106,251 +105,225 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Token
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Connection Token</DialogTitle>
-              <DialogDescription>
-                Create a new token to access Kloudlite workspaces from external tools like VS Code, CLI, etc.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="token-name">Token Name</Label>
-                <Input
-                  id="token-name"
-                  placeholder="e.g., VS Code Extension, CI/CD Pipeline"
-                  value={newTokenName}
-                  onChange={(e) => setNewTokenName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newTokenName.trim()) {
-                      handleCreateToken()
-                    }
-                  }}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Give your token a descriptive name to remember where it's used
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleCreateToken} disabled={!newTokenName.trim() || isCreating}>
-                {isCreating ? 'Creating...' : 'Create Token'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Token Display Dialog */}
-        <Dialog open={showTokenDialogOpen} onOpenChange={setShowTokenDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Token Created Successfully!</DialogTitle>
-              <DialogDescription>
-                Make sure to copy your token now. You won't be able to see it again!
-                This token contains the server URL and can be used directly in VS Code or other tools.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-2">
-                <Input
-                  readOnly
-                  value={newlyCreatedJWT || ''}
-                  className="font-mono text-sm"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => newlyCreatedJWT && handleCopyToken(newlyCreatedJWT)}
-                >
-                  {copiedToken === newlyCreatedJWT ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => {
-                setShowTokenDialogOpen(false)
-                setNewlyCreatedJWT(null)
-              }}>
-                Done
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {/* Filter and Actions */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">
+          {tokens.length} {tokens.length === 1 ? 'token' : 'tokens'}
+        </span>
+        <Button size="sm" className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4" />
+          New Token
+        </Button>
       </div>
 
-      <div className="bg-card rounded-lg border border-border">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            Active Tokens
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Tokens allow external applications to authenticate with your Kloudlite account
-          </p>
-        </div>
-        <div className="p-6">
-          {tokens.length === 0 ? (
-            <div className="text-center py-12">
-              <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No tokens yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first connection token to start using external tools
+      {/* Create Token Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Connection Token</DialogTitle>
+            <DialogDescription>
+              Create a new token to access Kloudlite workspaces from external tools like VS Code, CLI, etc.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="token-name">Token Name</Label>
+              <Input
+                id="token-name"
+                placeholder="e.g., VS Code Extension, CI/CD Pipeline"
+                value={newTokenName}
+                onChange={(e) => setNewTokenName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newTokenName.trim()) {
+                    handleCreateToken()
+                  }
+                }}
+              />
+              <p className="text-sm text-muted-foreground">
+                Give your token a descriptive name to remember where it's used
               </p>
             </div>
-          ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-4 font-medium text-sm text-foreground">Name</th>
-                  <th className="text-left p-4 font-medium text-sm text-foreground">Token</th>
-                  <th className="text-left p-4 font-medium text-sm text-foreground">Created</th>
-                  <th className="text-left p-4 font-medium text-sm text-foreground">Last Used</th>
-                  <th className="text-right p-4 font-medium text-sm text-foreground">Actions</th>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCreateToken} disabled={!newTokenName.trim() || isCreating}>
+              {isCreating ? 'Creating...' : 'Create Token'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Token Display Dialog */}
+      <Dialog open={showTokenDialogOpen} onOpenChange={setShowTokenDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Token Created Successfully!</DialogTitle>
+            <DialogDescription>
+              Make sure to copy your token now. You won't be able to see it again!
+              This token contains the server URL and can be used directly in VS Code or other tools.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={newlyCreatedJWT || ''}
+                className="font-mono text-sm"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => newlyCreatedJWT && handleCopyToken(newlyCreatedJWT)}
+              >
+                {copiedToken === newlyCreatedJWT ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => {
+              setShowTokenDialogOpen(false)
+              setNewlyCreatedJWT(null)
+            }}>
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Table */}
+      <div className="bg-card rounded-lg border overflow-hidden">
+        <table className="min-w-full">
+          <thead className="bg-muted/50 border-b">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Token
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Created
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Last Used
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {tokens.map((token) => {
+              const displayToken = token.status?.token || 'Hidden'
+              const isVisible = visibleTokens.has(token.metadata.name)
+
+              return (
+                <tr key={token.metadata.name} className="hover:bg-muted/50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm font-semibold">{token.spec.displayName}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                        {isVisible ? displayToken : maskToken(displayToken)}
+                      </code>
+                      {displayToken !== 'Hidden' && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => toggleTokenVisibility(token.metadata.name)}
+                          >
+                            {isVisible ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleCopyToken(displayToken)}
+                          >
+                            {copiedToken === displayToken ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                    {token.metadata.creationTimestamp
+                      ? new Date(token.metadata.creationTimestamp).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                    {token.status?.lastUsed
+                      ? new Date(token.status.lastUsed).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      : 'Never'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={deletingToken === token.metadata.name}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Token?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the token "{token.spec.displayName}".
+                            Applications using this token will no longer be able to access your workspaces.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteToken(token.metadata.name)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {tokens.map((token) => {
-                  const displayToken = token.status?.token || 'Hidden'
-                  const isVisible = visibleTokens.has(token.metadata.name)
-
-                  return (
-                    <tr key={token.metadata.name} className="border-b border-border hover:bg-accent/50">
-                      <td className="p-4">
-                        <span className="font-medium text-foreground">{token.spec.displayName}</span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                            {isVisible ? displayToken : maskToken(displayToken)}
-                          </code>
-                          {displayToken !== 'Hidden' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => toggleTokenVisibility(token.metadata.name)}
-                              >
-                                {isVisible ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleCopyToken(displayToken)}
-                              >
-                                {copiedToken === displayToken ? (
-                                  <Check className="h-4 w-4" />
-                                ) : (
-                                  <Copy className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className="text-sm text-muted-foreground">
-                          {token.metadata.creationTimestamp
-                            ? new Date(token.metadata.creationTimestamp).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })
-                            : 'N/A'}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <span className="text-sm text-muted-foreground">
-                          {token.status?.lastUsed
-                            ? new Date(token.status.lastUsed).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })
-                            : 'Never'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              disabled={deletingToken === token.metadata.name}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Token?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the token "{token.spec.displayName}".
-                                Applications using this token will no longer be able to access your workspaces.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteToken(token.metadata.name)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
 
-      <div className="bg-card rounded-lg border border-border">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-card-foreground">Security Best Practices</h2>
+      {tokens.length === 0 && (
+        <div className="bg-card rounded-lg border text-center py-12">
+          <p className="text-sm text-muted-foreground">
+            No connection tokens found. Create one to start using external tools.
+          </p>
         </div>
-        <div className="p-6 space-y-3 text-sm text-muted-foreground">
-          <div className="flex gap-2">
-            <span className="font-semibold text-foreground">•</span>
-            <p>Treat tokens like passwords - never share them publicly or commit them to version control</p>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-semibold text-foreground">•</span>
-            <p>Create separate tokens for different applications or use cases</p>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-semibold text-foreground">•</span>
-            <p>Delete tokens that are no longer needed or may have been compromised</p>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-semibold text-foreground">•</span>
-            <p>Regularly review and rotate your tokens for enhanced security</p>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
