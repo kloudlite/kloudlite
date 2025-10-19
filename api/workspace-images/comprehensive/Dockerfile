@@ -83,7 +83,7 @@ RUN mkdir -p /etc/supervisor/conf.d
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose all required ports
-EXPOSE 22 8080 7681 7682
+EXPOSE 22 8080 7681 7682 7683 7684
 
 # Start supervisor to manage all services
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
