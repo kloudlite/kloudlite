@@ -3,11 +3,12 @@ FROM kloudlite/workspace-base:latest
 USER root
 
 # Install system dependencies including shells first
-# Removed: python3-pip (users can install via Nix), zsh (keeping bash + fish only)
 RUN apt-get update && apt-get install -y \
     openssh-server \
     python3 \
     supervisor \
+    bash \
+    zsh \
     fish \
     curl \
     ca-certificates \
@@ -16,8 +17,8 @@ RUN apt-get update && apt-get install -y \
     fontconfig \
     && rm -rf /var/lib/apt/lists/*
 
-# Create kl user with home directory and fish as default shell
-RUN useradd -m -s /usr/bin/fish -u 1001 kl && \
+# Create kl user with home directory and bash as default shell
+RUN useradd -m -s /bin/bash -u 1001 kl && \
     echo "kl ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     mkdir -p /workspace && \
     chown -R kl:kl /workspace
@@ -61,9 +62,11 @@ USER root
 RUN mkdir -p /etc/kloudlite
 COPY starship.toml /etc/kloudlite/starship.toml
 COPY kl-shell-init.sh /etc/kloudlite/shell-init.sh
+COPY kl-shell-init.zsh /etc/kloudlite/shell-init.zsh
 COPY kl-shell-init.fish /etc/kloudlite/shell-init.fish
 COPY kloudlite-context.sh /etc/kloudlite/kloudlite-context.sh
-RUN chmod +x /etc/kloudlite/kloudlite-context.sh
+COPY init-shell-configs.sh /etc/kloudlite/init-shell-configs.sh
+RUN chmod +x /etc/kloudlite/kloudlite-context.sh /etc/kloudlite/init-shell-configs.sh
 
 # Disable Ubuntu's default MOTD scripts and install custom Kloudlite MOTD
 RUN chmod -x /etc/update-motd.d/* && \
@@ -71,23 +74,9 @@ RUN chmod -x /etc/update-motd.d/* && \
 COPY kloudlite-motd.sh /etc/update-motd.d/00-kloudlite-motd
 RUN chmod +x /etc/update-motd.d/00-kloudlite-motd
 
-# Configure fish shell for kl user with starship
-RUN mkdir -p /home/kl/.config/fish && \
-    echo 'source /etc/kloudlite/shell-init.fish' > /home/kl/.config/fish/config.fish && \
-    ln -sf /etc/kloudlite/starship.toml /home/kl/.config/starship.toml && \
-    chown -R kl:kl /home/kl/.config
-
-# Fix TERM for SSH sessions - set it before fish starts
-RUN echo '# Fix TERM for SSH login' >> /home/kl/.bashrc && \
-    echo 'case "$TERM" in' >> /home/kl/.bashrc && \
-    echo '  xterm-kitty|xterm-256color|screen-256color)' >> /home/kl/.bashrc && \
-    echo '    export TERM=xterm-256color' >> /home/kl/.bashrc && \
-    echo '    ;;' >> /home/kl/.bashrc && \
-    echo '  xterm*)' >> /home/kl/.bashrc && \
-    echo '    export TERM=xterm' >> /home/kl/.bashrc && \
-    echo '    ;;' >> /home/kl/.bashrc && \
-    echo 'esac' >> /home/kl/.bashrc && \
-    chown kl:kl /home/kl/.bashrc
+# Note: Shell configurations (.bashrc, .zshrc, config.fish) are managed by
+# /etc/kloudlite/init-shell-configs.sh which runs on container startup via supervisord
+# This allows configurations to persist even when home directory is mounted from host
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d
