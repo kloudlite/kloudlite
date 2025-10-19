@@ -3,6 +3,13 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Terminal,
   ExternalLink,
   Copy,
@@ -40,33 +47,33 @@ interface AccessMethod {
 
 export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceConnectOptionsProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
+  const [sshDialogOpen, setSshDialogOpen] = useState(false)
 
   // Extract access URLs from workspace status
   const codeServerUrl = workspace.status?.accessUrls?.['code-server'] || workspace.status?.accessUrl
   const ttydUrl = workspace.status?.accessUrls?.['ttyd']
-  const sshPort = workspace.status?.accessUrls?.['ssh'] || '2222'
   const workspaceName = workspace.metadata?.name || 'workspace'
 
-  // SSH connection with jump host
-  const jumpHost = `kloudlite@localhost:${sshPort}`
-  const targetHost = `kl@${workspaceName}`
+  // SSH connection with jump host (port 2222 is the SSH gateway on localhost)
+  const jumpHost = `kloudlite@localhost:2222`
+  const targetHost = `workspace-${workspaceName}`
   const workspaceDir = `/home/kl/workspaces/${workspaceName}`
-  const sshCommand = `ssh -J ${jumpHost} ${targetHost}`
+  const sshCommand = `ssh -J ${jumpHost} kl@${targetHost} -t "cd ${workspaceDir} && exec \\$SHELL"`
 
   // SSH config for manual setup
   const sshConfig = `Host ${workspaceName}
-  HostName ${workspaceName}
+  HostName workspace-${workspaceName}
   User kl
-  ProxyJump kloudlite@localhost:${sshPort}
+  ProxyJump kloudlite@localhost:2222
   StrictHostKeyChecking no
   UserKnownHostsFile /dev/null`
 
   // SSH commands for IDEs (include jump host in the command)
   const sshJumpFlag = `-o "ProxyJump=${jumpHost}"`
-  const vscodeCommand = `code --folder-uri "vscode-remote://ssh-remote+${targetHost}${workspaceDir}" --remote-ssh-command "ssh ${sshJumpFlag}"`
-  const cursorCommand = `cursor --folder-uri "vscode-remote://ssh-remote+${targetHost}${workspaceDir}"`
-  const zedCommand = `ssh ${sshJumpFlag} ${targetHost} -t "cd ${workspaceDir} && zed ."`
-  const intellijCommand = `ssh ${sshJumpFlag} ${targetHost} -t "cd ${workspaceDir} && idea ."`
+  const vscodeCommand = `code --folder-uri "vscode-remote://ssh-remote+kl@${targetHost}${workspaceDir}" --remote-ssh-command "ssh ${sshJumpFlag}"`
+  const cursorCommand = `cursor --folder-uri "vscode-remote://ssh-remote+kl@${targetHost}${workspaceDir}"`
+  const zedCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && zed ."`
+  const intellijCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && idea ."`
 
   // VS Code extension deep link
   const vsCodeExtensionUrl = workspace.metadata.namespace
@@ -166,6 +173,15 @@ export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceCon
       category: 'Web Terminal & AI Assistants'
     },
     {
+      id: 'codex',
+      name: 'Codex',
+      description: 'AI coding assistant',
+      icon: <Sparkles className="h-4 w-4 flex-shrink-0" />,
+      available: !!ttydUrl,
+      url: ttydUrl,
+      category: 'Web Terminal & AI Assistants'
+    },
+    {
       id: 'ssh',
       name: 'SSH Terminal',
       description: 'Direct terminal access',
@@ -194,42 +210,84 @@ export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceCon
   const handleConnect = (method: AccessMethod) => {
     if (method.url) {
       window.open(method.url, '_blank')
+    } else if (method.id === 'ssh') {
+      setSshDialogOpen(true)
     } else if (method.command) {
       handleCopyCommand(method.command, method.id)
     }
   }
 
   return (
-    <div className="bg-card rounded-lg border p-6">
-      <h3 className="text-sm font-medium mb-4">Connect to Workspace</h3>
+    <>
+      <div className="bg-card rounded-lg border p-6">
+        <h3 className="text-sm font-medium mb-4">Connect to Workspace</h3>
 
-      <div className="space-y-6">
-        {Object.entries(groupedMethods).map(([category, methods]) => (
-          <div key={category}>
-            <h4 className="text-xs font-medium text-muted-foreground mb-3">{category}</h4>
-            <div className="flex flex-wrap gap-2">
-              {methods.map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => handleConnect(method)}
-                  disabled={!method.available || method.comingSoon}
-                  className={`inline-flex items-center gap-2 h-8 px-3 rounded-full border transition-all ${
-                    !method.available || method.comingSoon
-                      ? 'opacity-50 cursor-not-allowed bg-muted/30'
-                      : 'hover:bg-muted/50 hover:border-primary/50'
-                  }`}
-                >
-                  {method.icon}
-                  <span className="text-sm font-medium whitespace-nowrap leading-none">{method.name}</span>
-                  {method.comingSoon && (
-                    <span className="text-[10px] text-muted-foreground leading-none">Soon</span>
-                  )}
-                </button>
-              ))}
+        <div className="space-y-6">
+          {Object.entries(groupedMethods).map(([category, methods]) => (
+            <div key={category}>
+              <h4 className="text-xs font-medium text-muted-foreground mb-3">{category}</h4>
+              <div className="flex flex-wrap gap-2">
+                {methods.map((method) => (
+                  <button
+                    key={method.id}
+                    onClick={() => handleConnect(method)}
+                    disabled={!method.available || method.comingSoon}
+                    className={`inline-flex items-center gap-2 h-8 px-3 rounded-full border transition-all ${
+                      !method.available || method.comingSoon
+                        ? 'opacity-50 cursor-not-allowed bg-muted/30'
+                        : 'hover:bg-muted/50 hover:border-primary/50'
+                    }`}
+                  >
+                    {method.icon}
+                    <span className="text-sm font-medium whitespace-nowrap leading-none">{method.name}</span>
+                    {method.comingSoon && (
+                      <span className="text-[10px] text-muted-foreground leading-none">Soon</span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+
+      {/* SSH Connection Dialog */}
+      <Dialog open={sshDialogOpen} onOpenChange={setSshDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>SSH Connection</DialogTitle>
+            <DialogDescription>
+              Use this command to connect to your workspace via SSH
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-muted rounded-md p-4">
+              <code className="text-sm font-mono break-all">{sshCommand}</code>
+            </div>
+
+            <Button
+              onClick={() => {
+                handleCopyCommand(sshCommand, 'ssh')
+                setTimeout(() => setSshDialogOpen(false), 1000)
+              }}
+              className="w-full gap-2"
+            >
+              {copiedCommand === 'ssh' ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copy Command
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

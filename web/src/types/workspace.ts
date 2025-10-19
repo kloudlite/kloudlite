@@ -77,7 +77,6 @@ export interface InstalledPackage {
 export interface ConnectedEnvironmentInfo {
   name: string
   targetNamespace: string
-  connected: boolean
   availableServices?: string[]
 }
 
