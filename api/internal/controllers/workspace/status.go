@@ -70,8 +70,8 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			Namespace: workspace.Namespace,
 		}, env)
 
-		if err == nil && env.Spec.Activated {
-			// Update connected environment status
+		if err == nil && env.Status.State == environmentv1.EnvironmentStateActive {
+			// Update connected environment status - only if environment is active
 			workspace.Status.ConnectedEnvironment = &workspacev1.ConnectedEnvironmentInfo{
 				Name:            env.Name,
 				TargetNamespace: env.Spec.TargetNamespace,
