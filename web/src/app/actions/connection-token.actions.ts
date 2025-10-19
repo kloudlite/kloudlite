@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { env } from '@/lib/env'
 import { connectionTokenService } from '@/lib/services/connection-token.service'
 import type { CreateConnectionTokenRequest } from '@/lib/services/connection-token.service'
 
@@ -23,9 +24,13 @@ export async function listConnectionTokens() {
 /**
  * Server action to create a connection token
  */
-export async function createConnectionToken(data: CreateConnectionTokenRequest) {
+export async function createConnectionToken(data: Omit<CreateConnectionTokenRequest, 'webUrl'>) {
   try {
-    const result = await connectionTokenService.createToken(data)
+    // Get the webUrl from environment variables
+    const result = await connectionTokenService.createToken({
+      ...data,
+      webUrl: env.webUrl
+    })
     revalidatePath('/connection-tokens')
     return { success: true, data: result }
   } catch (error: any) {

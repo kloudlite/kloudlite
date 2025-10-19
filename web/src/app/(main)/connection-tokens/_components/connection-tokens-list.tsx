@@ -49,11 +49,16 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
     if (!newTokenName.trim()) return
 
     setIsCreating(true)
-    const result = await createConnectionToken({ displayName: newTokenName.trim() })
+    const result = await createConnectionToken({
+      displayName: newTokenName.trim()
+    })
     setIsCreating(false)
 
     if (result.success && result.data) {
       setTokens([...tokens, result.data.token])
+
+      // The JWT token now contains the web URL embedded by the backend
+      // Just show the JWT token directly
       setNewlyCreatedJWT(result.data.jwt)
       setNewTokenName('')
       setCreateDialogOpen(false)
@@ -100,8 +105,8 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
   }
 
   return (
-    <>
-      <div className="flex justify-end mb-4">
+    <div className="space-y-4">
+      <div className="flex justify-end">
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -150,6 +155,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
               <DialogTitle>Token Created Successfully!</DialogTitle>
               <DialogDescription>
                 Make sure to copy your token now. You won't be able to see it again!
+                This token contains the server URL and can be used directly in VS Code or other tools.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -184,17 +190,17 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <div className="bg-card rounded-lg border border-border">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
             <Key className="h-5 w-5" />
             Active Tokens
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Tokens allow external applications to authenticate with your Kloudlite account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="p-6">
           {tokens.length === 0 ? (
             <div className="text-center py-12">
               <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -204,25 +210,27 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
               </p>
             </div>
           ) : (
-            <table className="min-w-full">
-              <thead className="bg-muted/50 border-b">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Token</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Last Used</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 font-medium text-sm text-foreground">Name</th>
+                  <th className="text-left p-4 font-medium text-sm text-foreground">Token</th>
+                  <th className="text-left p-4 font-medium text-sm text-foreground">Created</th>
+                  <th className="text-left p-4 font-medium text-sm text-foreground">Last Used</th>
+                  <th className="text-right p-4 font-medium text-sm text-foreground">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody>
                 {tokens.map((token) => {
                   const displayToken = token.status?.token || 'Hidden'
                   const isVisible = visibleTokens.has(token.metadata.name)
 
                   return (
-                    <tr key={token.metadata.name} className="hover:bg-muted/50">
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">{token.spec.displayName}</td>
-                      <td className="px-6 py-4">
+                    <tr key={token.metadata.name} className="border-b border-border hover:bg-accent/50">
+                      <td className="p-4">
+                        <span className="font-medium text-foreground">{token.spec.displayName}</span>
+                      </td>
+                      <td className="p-4">
                         <div className="flex items-center gap-2">
                           <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
                             {isVisible ? displayToken : maskToken(displayToken)}
@@ -257,25 +265,29 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {token.metadata.creationTimestamp
-                          ? new Date(token.metadata.creationTimestamp).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })
-                          : 'N/A'}
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {token.metadata.creationTimestamp
+                            ? new Date(token.metadata.creationTimestamp).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })
+                            : 'N/A'}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {token.status?.lastUsed
-                          ? new Date(token.status.lastUsed).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })
-                          : 'Never'}
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {token.status?.lastUsed
+                            ? new Date(token.status.lastUsed).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })
+                            : 'Never'}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="p-4 text-right">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -313,14 +325,14 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
               </tbody>
             </table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Security Best Practices</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
+      <div className="bg-card rounded-lg border border-border">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-card-foreground">Security Best Practices</h2>
+        </div>
+        <div className="p-6 space-y-3 text-sm text-muted-foreground">
           <div className="flex gap-2">
             <span className="font-semibold text-foreground">•</span>
             <p>Treat tokens like passwords - never share them publicly or commit them to version control</p>
@@ -337,8 +349,8 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
             <span className="font-semibold text-foreground">•</span>
             <p>Regularly review and rotate your tokens for enhanced security</p>
           </div>
-        </CardContent>
-      </Card>
-    </>
+        </div>
+      </div>
+    </div>
   )
 }

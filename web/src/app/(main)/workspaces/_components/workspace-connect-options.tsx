@@ -68,6 +68,11 @@ export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceCon
   const zedCommand = `ssh ${sshJumpFlag} ${targetHost} -t "cd ${workspaceDir} && zed ."`
   const intellijCommand = `ssh ${sshJumpFlag} ${targetHost} -t "cd ${workspaceDir} && idea ."`
 
+  // VS Code extension deep link
+  const vsCodeExtensionUrl = workspace.metadata.namespace
+    ? `vscode://kloudlite.kloudlite-workspace/connect?workspace=${workspaceName}&namespace=${workspace.metadata.namespace}`
+    : ''
+
   const accessMethods: AccessMethod[] = [
     {
       id: 'ssh-config',
@@ -77,6 +82,15 @@ export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceCon
       available: !!workspaceName,
       command: sshConfig,
       category: 'Setup'
+    },
+    {
+      id: 'vscode-extension',
+      name: 'VS Code Extension',
+      description: 'Open in VS Code app',
+      icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
+      available: !!vsCodeExtensionUrl,
+      url: vsCodeExtensionUrl,
+      category: 'Desktop IDEs'
     },
     {
       id: 'vscode',

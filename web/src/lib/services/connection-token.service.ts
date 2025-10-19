@@ -27,6 +27,7 @@ export interface ConnectionToken {
 
 export interface CreateConnectionTokenRequest {
   displayName: string
+  webUrl?: string
 }
 
 export interface ConnectionTokenResponse {
