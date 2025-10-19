@@ -17,7 +17,8 @@ if [ -n "$WORKSPACE_NAME" ]; then
 fi
 
 # Show available tools
-echo "  Shell: fish (with starship prompt)"
+echo "  Shell: bash (with starship prompt)"
+echo "  Shells available: bash, zsh, fish (all with starship)"
 echo "  Tools: code-server (port 8080), ttyd (port 7681)"
 echo ""
 echo "  Get started:"
