@@ -116,7 +116,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
           )}
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem
-            className="text-red-600"
+            className="text-destructive focus:text-destructive"
             onClick={() => setShowDeleteDialog(true)}
           >
             Delete
@@ -138,7 +138,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? (
                 <>

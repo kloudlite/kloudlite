@@ -16,95 +16,82 @@ export class KloudliteWorkspacesProvider implements vscode.TreeDataProvider<Work
   }
 
   async getChildren(element?: WorkspaceItem): Promise<WorkspaceItem[]> {
-    if (!element) {
-      // Root level - show workspaces
-      try {
-        const workspaces = await this.api.listWorkspaces();
-        return workspaces.map(ws => new WorkspaceItem(
+    // Only show root level - no children
+    if (element) {
+      return [];
+    }
+
+    // Root level - check authentication first
+    if (!this.api.isAuthenticated()) {
+      // Show authentication prompt
+      const authItem = new WorkspaceItem(
+        'Add Connection Token',
+        'Click to authenticate',
+        {} as Workspace,
+        vscode.TreeItemCollapsibleState.None
+      );
+      authItem.command = {
+        command: 'kloudlite.setConnectionToken',
+        title: 'Add Connection Token'
+      };
+      authItem.iconPath = new vscode.ThemeIcon('key', new vscode.ThemeColor('terminal.ansiYellow'));
+      authItem.contextValue = 'auth-prompt';
+      return [authItem];
+    }
+
+    // Show workspaces in flat list
+    try {
+      const workspaces = await this.api.listWorkspaces();
+      if (workspaces.length === 0) {
+        const emptyItem = new WorkspaceItem(
+          'No workspaces found',
+          'Create a workspace in the web dashboard',
+          {} as Workspace,
+          vscode.TreeItemCollapsibleState.None
+        );
+        emptyItem.iconPath = new vscode.ThemeIcon('info');
+        emptyItem.contextValue = 'empty';
+        return [emptyItem];
+      }
+
+      // Create flat list with connect on click
+      return workspaces.map(ws => {
+        const item = new WorkspaceItem(
           ws.metadata.name,
           ws.status?.phase || 'Unknown',
           ws,
-          vscode.TreeItemCollapsibleState.Collapsed
-        ));
-      } catch (error) {
-        vscode.window.showErrorMessage(`Failed to load workspaces: ${error}`);
-        return [];
-      }
-    } else {
-      // Child level - show workspace details
-      return this.getWorkspaceDetails(element.workspace);
-    }
-  }
+          vscode.TreeItemCollapsibleState.None // No children, flat list
+        );
 
-  private getWorkspaceDetails(workspace: Workspace): WorkspaceItem[] {
-    const items: WorkspaceItem[] = [];
+        // Add click command to connect - pass the workspace object
+        item.command = {
+          command: 'kloudlite.connectWorkspace',
+          title: 'Connect to Workspace',
+          arguments: [ws]
+        };
 
-    // Status
-    items.push(new WorkspaceItem(
-      `Status: ${workspace.status?.phase || 'Unknown'}`,
-      '',
-      workspace,
-      vscode.TreeItemCollapsibleState.None
-    ));
-
-    // Access URLs
-    if (workspace.status?.accessUrls) {
-      const urls = workspace.status.accessUrls;
-      if (urls['code-server']) {
-        const item = new WorkspaceItem(
-          'VS Code Web',
-          urls['code-server'],
-          workspace,
+        return item;
+      });
+    } catch (error) {
+      // If authentication error, show auth prompt
+      if (error instanceof Error && error.message.includes('401')) {
+        const authItem = new WorkspaceItem(
+          'Authentication Required',
+          'Click to add connection token',
+          {} as Workspace,
           vscode.TreeItemCollapsibleState.None
         );
-        item.command = {
-          command: 'vscode.open',
-          title: 'Open in Browser',
-          arguments: [vscode.Uri.parse(urls['code-server'])]
+        authItem.command = {
+          command: 'kloudlite.setConnectionToken',
+          title: 'Add Connection Token'
         };
-        items.push(item);
+        authItem.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('terminal.ansiRed'));
+        authItem.contextValue = 'auth-error';
+        return [authItem];
       }
-
-      if (urls['ttyd']) {
-        const item = new WorkspaceItem(
-          'Web Terminal',
-          urls['ttyd'],
-          workspace,
-          vscode.TreeItemCollapsibleState.None
-        );
-        item.command = {
-          command: 'vscode.open',
-          title: 'Open in Browser',
-          arguments: [vscode.Uri.parse(urls['ttyd'])]
-        };
-        items.push(item);
-      }
-
-      if (urls['ssh']) {
-        items.push(new WorkspaceItem(
-          'SSH Port',
-          urls['ssh'],
-          workspace,
-          vscode.TreeItemCollapsibleState.None
-        ));
-      }
+      vscode.window.showErrorMessage(`Failed to load workspaces: ${error}`);
+      return [];
     }
-
-    // Connect action
-    const connectItem = new WorkspaceItem(
-      'Connect via SSH',
-      'Click to connect',
-      workspace,
-      vscode.TreeItemCollapsibleState.None
-    );
-    connectItem.command = {
-      command: 'kloudlite.connectWorkspace',
-      title: 'Connect to Workspace',
-      arguments: [workspace]
-    };
-    items.push(connectItem);
-
-    return items;
   }
 }
 

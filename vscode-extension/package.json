@@ -1,9 +1,28 @@
 {
   "name": "kloudlite-workspace",
   "displayName": "Kloudlite Workspace",
-  "description": "Connect to Kloudlite workspaces directly from VS Code",
-  "version": "0.1.0",
+  "description": "Connect to Kloudlite cloud development workspaces directly from VS Code with one-click SSH access",
+  "version": "0.1.20",
   "publisher": "kloudlite",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kloudlite/kloudlite.git"
+  },
+  "homepage": "https://kloudlite.io",
+  "bugs": {
+    "url": "https://github.com/kloudlite/kloudlite/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "kloudlite",
+    "workspace",
+    "development",
+    "cloud",
+    "remote",
+    "ssh",
+    "kubernetes"
+  ],
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -11,15 +30,25 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:kloudlite.connectWorkspace",
-    "onCommand:kloudlite.listWorkspaces"
+    "onStartupFinished",
+    "onUri"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
+        "command": "kloudlite.setConnectionToken",
+        "title": "Kloudlite: Set Connection Token",
+        "icon": "$(key)"
+      },
+      {
+        "command": "kloudlite.disconnect",
+        "title": "Kloudlite: Disconnect"
+      },
+      {
         "command": "kloudlite.connectWorkspace",
-        "title": "Kloudlite: Connect to Workspace"
+        "title": "Kloudlite: Connect to Workspace",
+        "icon": "$(plug)"
       },
       {
         "command": "kloudlite.listWorkspaces",
@@ -27,7 +56,13 @@
       },
       {
         "command": "kloudlite.refreshWorkspaces",
-        "title": "Kloudlite: Refresh Workspaces"
+        "title": "Kloudlite: Refresh Workspaces",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "kloudlite.showWelcome",
+        "title": "Kloudlite: Show Welcome Page",
+        "icon": "$(home)"
       }
     ],
     "viewsContainers": {
@@ -53,14 +88,48 @@
         "kloudlite.apiUrl": {
           "type": "string",
           "default": "http://localhost:3000",
-          "description": "Kloudlite API URL"
+          "description": "Kloudlite Web Server URL"
         },
-        "kloudlite.sshPort": {
-          "type": "number",
-          "default": 2222,
-          "description": "SSH jump host port"
+        "kloudlite.connectionToken": {
+          "type": "string",
+          "default": "",
+          "description": "Connection token for authenticating with Kloudlite API (managed by extension)"
         }
       }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "kloudlite.setConnectionToken",
+          "when": "view == kloudliteWorkspaces",
+          "group": "navigation"
+        },
+        {
+          "command": "kloudlite.refreshWorkspaces",
+          "when": "view == kloudliteWorkspaces",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "kloudlite.setConnectionToken"
+        },
+        {
+          "command": "kloudlite.disconnect"
+        },
+        {
+          "command": "kloudlite.connectWorkspace"
+        },
+        {
+          "command": "kloudlite.listWorkspaces"
+        },
+        {
+          "command": "kloudlite.refreshWorkspaces"
+        },
+        {
+          "command": "kloudlite.showWelcome"
+        }
+      ]
     }
   },
   "scripts": {
@@ -77,9 +146,11 @@
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.45.0",
+    "sharp": "^0.34.4",
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "jwt-decode": "^4.0.0"
   }
 }
