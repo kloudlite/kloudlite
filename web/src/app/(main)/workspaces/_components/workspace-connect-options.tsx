@@ -3,13 +3,29 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Terminal,
-  Code2,
-  Globe,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Sparkles,
+  Globe,
+  Zap
 } from 'lucide-react'
+import {
+  SiIntellijidea,
+  SiAnthropic,
+  SiZedindustries
+} from 'react-icons/si'
+import { VscVscode } from 'react-icons/vsc'
+import { CursorIcon } from '@/components/icons/cursor-icon'
+import { OpenCodeIcon } from '@/components/icons/opencode-icon'
 import type { Workspace } from '@/types/workspace'
 
 interface WorkspaceConnectOptionsProps {
@@ -17,244 +33,261 @@ interface WorkspaceConnectOptionsProps {
   workspace: Workspace
 }
 
-interface ConnectOption {
+interface AccessMethod {
   id: string
   name: string
   description: string
   icon: React.ReactNode
-  type: 'desktop' | 'web' | 'terminal'
-  available: boolean
   command?: string
   url?: string
+  available: boolean
+  comingSoon?: boolean
+  category: string
 }
 
 export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceConnectOptionsProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
+  const [sshDialogOpen, setSshDialogOpen] = useState(false)
 
   // Extract access URLs from workspace status
   const codeServerUrl = workspace.status?.accessUrls?.['code-server'] || workspace.status?.accessUrl
   const ttydUrl = workspace.status?.accessUrls?.['ttyd']
-  const sshPort = workspace.status?.accessUrls?.['ssh']
+  const workspaceName = workspace.metadata?.name || 'workspace'
 
-  const connectOptions: ConnectOption[] = [
+  // SSH connection with jump host (port 2222 is the SSH gateway on localhost)
+  const jumpHost = `kloudlite@localhost:2222`
+  const targetHost = `workspace-${workspaceName}`
+  const workspaceDir = `/home/kl/workspaces/${workspaceName}`
+  const sshCommand = `ssh -J ${jumpHost} kl@${targetHost} -t "cd ${workspaceDir} && exec \\$SHELL"`
+
+  // SSH config for manual setup
+  const sshConfig = `Host ${workspaceName}
+  HostName workspace-${workspaceName}
+  User kl
+  ProxyJump kloudlite@localhost:2222
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null`
+
+  // SSH commands for IDEs (include jump host in the command)
+  const sshJumpFlag = `-o "ProxyJump=${jumpHost}"`
+  const vscodeCommand = `code --folder-uri "vscode-remote://ssh-remote+kl@${targetHost}${workspaceDir}" --remote-ssh-command "ssh ${sshJumpFlag}"`
+  const cursorCommand = `cursor --folder-uri "vscode-remote://ssh-remote+kl@${targetHost}${workspaceDir}"`
+  const zedCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && zed ."`
+  const intellijCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && idea ."`
+
+  // VS Code extension deep link
+  const vsCodeExtensionUrl = workspace.metadata.namespace
+    ? `vscode://kloudlite.kloudlite-workspace/connect?workspace=${workspaceName}&namespace=${workspace.metadata.namespace}`
+    : ''
+
+  const accessMethods: AccessMethod[] = [
     {
-      id: 'code-server',
-      name: 'code-server',
-      description: 'Browser-based VS Code instance running in the workspace',
-      icon: <Globe className="h-5 w-5" />,
-      type: 'web',
-      available: !!codeServerUrl,
-      url: codeServerUrl
+      id: 'ssh-config',
+      name: 'SSH Config',
+      description: 'Copy to ~/.ssh/config (required for IDEs)',
+      icon: <Copy className="h-4 w-4 flex-shrink-0" />,
+      available: !!workspaceName,
+      command: sshConfig,
+      category: 'Setup'
     },
     {
-      id: 'terminal',
-      name: 'Web Terminal (ttyd)',
-      description: 'Terminal access in your browser with Fish shell',
-      icon: <Globe className="h-5 w-5" />,
-      type: 'web',
+      id: 'vscode-extension',
+      name: 'VS Code Extension',
+      description: 'Open in VS Code app',
+      icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
+      available: !!vsCodeExtensionUrl,
+      url: vsCodeExtensionUrl,
+      category: 'Desktop IDEs'
+    },
+    {
+      id: 'vscode',
+      name: 'VS Code',
+      description: 'Remote development via SSH',
+      icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
+      available: !!workspaceName,
+      command: vscodeCommand,
+      category: 'Desktop IDEs'
+    },
+    {
+      id: 'cursor',
+      name: 'Cursor',
+      description: 'AI-powered editor via SSH',
+      icon: <CursorIcon className="h-4 w-4 flex-shrink-0" />,
+      available: !!workspaceName,
+      command: cursorCommand,
+      category: 'Desktop IDEs'
+    },
+    {
+      id: 'intellij',
+      name: 'IntelliJ IDEA',
+      description: 'JetBrains IDE via SSH',
+      icon: <SiIntellijidea className="h-4 w-4 flex-shrink-0" />,
+      available: !!workspaceName,
+      command: intellijCommand,
+      category: 'Desktop IDEs'
+    },
+    {
+      id: 'zed',
+      name: 'Zed',
+      description: 'Fast collaborative editor',
+      icon: <SiZedindustries className="h-4 w-4 flex-shrink-0" />,
+      available: !!workspaceName,
+      command: zedCommand,
+      category: 'Desktop IDEs'
+    },
+    {
+      id: 'code-server',
+      name: 'VS Code Web',
+      description: 'Full IDE in your browser',
+      icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
+      available: !!codeServerUrl,
+      url: codeServerUrl,
+      category: 'Web-Based IDEs'
+    },
+    {
+      id: 'ttyd-terminal',
+      name: 'Web Terminal',
+      description: 'Browser-based terminal',
+      icon: <Terminal className="h-4 w-4 flex-shrink-0" />,
       available: !!ttydUrl,
-      url: ttydUrl
+      url: ttydUrl,
+      category: 'Web Terminal & AI Assistants'
+    },
+    {
+      id: 'claude-code-web',
+      name: 'Claude Code',
+      description: 'AI coding assistant',
+      icon: <SiAnthropic className="h-4 w-4 flex-shrink-0" />,
+      available: !!ttydUrl,
+      url: ttydUrl,
+      category: 'Web Terminal & AI Assistants'
+    },
+    {
+      id: 'opencode',
+      name: 'OpenCode',
+      description: 'AI coding assistant',
+      icon: <OpenCodeIcon className="h-4 w-4 flex-shrink-0" />,
+      available: !!ttydUrl,
+      url: ttydUrl,
+      comingSoon: true,
+      category: 'Web Terminal & AI Assistants'
+    },
+    {
+      id: 'codex',
+      name: 'Codex',
+      description: 'AI coding assistant',
+      icon: <Sparkles className="h-4 w-4 flex-shrink-0" />,
+      available: !!ttydUrl,
+      url: ttydUrl,
+      category: 'Web Terminal & AI Assistants'
     },
     {
       id: 'ssh',
-      name: 'SSH',
-      description: 'Connect via SSH terminal',
-      icon: <Terminal className="h-5 w-5" />,
-      type: 'terminal',
-      available: !!workspace.status?.podIP,
-      command: sshPort
-        ? `ssh -p ${sshPort} kl@${workspace.status?.podIP || 'workspace'}`
-        : `ssh kl@${workspace.status?.podIP || 'workspace'}`
-    },
-    {
-      id: 'vscode-desktop',
-      name: 'VS Code Desktop',
-      description: 'Connect with Visual Studio Code via SSH Remote',
-      icon: <Code2 className="h-5 w-5" />,
-      type: 'desktop',
-      available: !!workspace.status?.podIP,
-      command: `code --remote ssh-remote+kl@${workspace.status?.podIP || 'workspace'} /workspace`
-    },
-    {
-      id: 'claude-code',
-      name: 'Claude Code',
-      description: 'Connect with Claude Code AI assistant via SSH',
-      icon: <Code2 className="h-5 w-5" />,
-      type: 'desktop',
-      available: !!workspace.status?.podIP,
-      command: `claude-code --ssh kl@${workspace.status?.podIP || 'workspace'}`
-    },
-    {
-      id: 'cursor-desktop',
-      name: 'Cursor Desktop',
-      description: 'Connect with Cursor IDE via SSH Remote',
-      icon: <Code2 className="h-5 w-5" />,
-      type: 'desktop',
-      available: !!workspace.status?.podIP,
-      command: `cursor --remote ssh-remote+kl@${workspace.status?.podIP || 'workspace'} /workspace`
+      name: 'SSH Terminal',
+      description: 'Direct terminal access',
+      icon: <Terminal className="h-4 w-4 flex-shrink-0" />,
+      available: !!workspaceName,
+      command: sshCommand,
+      category: 'Direct Access'
     }
   ]
 
-  const handleCopyCommand = (command: string, optionId: string) => {
+  // Group methods by category
+  const groupedMethods = accessMethods.reduce((acc, method) => {
+    if (!acc[method.category]) {
+      acc[method.category] = []
+    }
+    acc[method.category].push(method)
+    return acc
+  }, {} as Record<string, AccessMethod[]>)
+
+  const handleCopyCommand = (command: string, methodId: string) => {
     navigator.clipboard.writeText(command)
-    setCopiedCommand(optionId)
+    setCopiedCommand(methodId)
     setTimeout(() => setCopiedCommand(null), 2000)
   }
 
-  const handleConnect = (option: ConnectOption) => {
-    if (option.type === 'web' && option.url) {
-      // For web-based options with URLs, open in new tab
-      window.open(option.url, '_blank')
-    } else if (option.command) {
-      // For desktop/terminal options, copy command
-      handleCopyCommand(option.command, option.id)
+  const handleConnect = (method: AccessMethod) => {
+    if (method.url) {
+      window.open(method.url, '_blank')
+    } else if (method.id === 'ssh') {
+      setSshDialogOpen(true)
+    } else if (method.command) {
+      handleCopyCommand(method.command, method.id)
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-medium">Connect to Workspace</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Choose your preferred development environment to connect to this workspace
-        </p>
-      </div>
+    <>
+      <div className="bg-card rounded-lg border p-6">
+        <h3 className="text-sm font-medium mb-4">Connect to Workspace</h3>
 
-      {/* Desktop Applications */}
-      <div>
-        <h3 className="text-sm font-medium mb-3">Desktop Applications</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {connectOptions
-            .filter(option => option.type === 'desktop')
-            .map((option) => (
-              <div
-                key={option.id}
-                className="bg-card rounded-lg border p-4 hover:border-border/80 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                    {option.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium">{option.name}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
-                    {option.command && (
-                      <div className="mt-2">
-                        <button
-                          onClick={() => handleCopyCommand(option.command!, option.id)}
-                          className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                        >
-                          {copiedCommand === option.id ? (
-                            <>
-                              <Check className="h-3 w-3" />
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3 w-3" />
-                              Copy command
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleConnect(option)}
-                    disabled={!option.available}
+        <div className="space-y-6">
+          {Object.entries(groupedMethods).map(([category, methods]) => (
+            <div key={category}>
+              <h4 className="text-xs font-medium text-muted-foreground mb-3">{category}</h4>
+              <div className="flex flex-wrap gap-2">
+                {methods.map((method) => (
+                  <button
+                    key={method.id}
+                    onClick={() => handleConnect(method)}
+                    disabled={!method.available || method.comingSoon}
+                    className={`inline-flex items-center gap-2 h-8 px-3 rounded-full border transition-all ${
+                      !method.available || method.comingSoon
+                        ? 'opacity-50 cursor-not-allowed bg-muted/30'
+                        : 'hover:bg-muted/50 hover:border-primary/50'
+                    }`}
                   >
-                    Connect
-                  </Button>
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
-
-      {/* Web Applications */}
-      <div>
-        <h3 className="text-sm font-medium mb-3">Web Applications</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {connectOptions
-            .filter(option => option.type === 'web')
-            .map((option) => (
-              <div
-                key={option.id}
-                className="bg-card rounded-lg border p-4 hover:border-border/80 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                    {option.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium">{option.name}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleConnect(option)}
-                    disabled={!option.available}
-                    className="gap-1"
-                  >
-                    Open
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
-
-      {/* Terminal */}
-      <div>
-        <h3 className="text-sm font-medium mb-3">Terminal</h3>
-        <div className="grid gap-3">
-          {connectOptions
-            .filter(option => option.type === 'terminal')
-            .map((option) => (
-              <div
-                key={option.id}
-                className="bg-card rounded-lg border p-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                    {option.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium">{option.name}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
-                    {option.command && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                          {option.command}
-                        </code>
-                        <button
-                          onClick={() => handleCopyCommand(option.command!, option.id)}
-                          className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                        >
-                          {copiedCommand === option.id ? (
-                            <>
-                              <Check className="h-3 w-3" />
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3 w-3" />
-                              Copy
-                            </>
-                          )}
-                        </button>
-                      </div>
+                    {method.icon}
+                    <span className="text-sm font-medium whitespace-nowrap leading-none">{method.name}</span>
+                    {method.comingSoon && (
+                      <span className="text-[10px] text-muted-foreground leading-none">Soon</span>
                     )}
-                  </div>
-                </div>
+                  </button>
+                ))}
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       </div>
-    </div>
+
+      {/* SSH Connection Dialog */}
+      <Dialog open={sshDialogOpen} onOpenChange={setSshDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>SSH Connection</DialogTitle>
+            <DialogDescription>
+              Use this command to connect to your workspace via SSH
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-muted rounded-md p-4">
+              <code className="text-sm font-mono break-all">{sshCommand}</code>
+            </div>
+
+            <Button
+              onClick={() => {
+                handleCopyCommand(sshCommand, 'ssh')
+                setTimeout(() => setSshDialogOpen(false), 1000)
+              }}
+              className="w-full gap-2"
+            >
+              {copiedCommand === 'ssh' ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copy Command
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

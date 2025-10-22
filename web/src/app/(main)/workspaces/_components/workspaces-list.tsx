@@ -15,7 +15,7 @@ interface WorkspacesListProps {
 }
 
 export function WorkspacesList({ workspaces, currentUser, isAdmin = false, namespace = 'default' }: WorkspacesListProps) {
-  const [scopeFilter, setScope] = useState<'all' | 'mine'>('mine')
+  const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active' | 'suspended' | 'archived'>('all')
 
   let filteredWorkspaces = workspaces
@@ -177,20 +177,9 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {workspace.status?.connectedEnvironment ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-foreground font-medium">
-                          {workspace.status.connectedEnvironment.name}
-                        </span>
-                        {workspace.status.connectedEnvironment.connected ? (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                            Connected
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
+                      <span className="text-foreground font-medium">
+                        {workspace.status.connectedEnvironment.name}
+                      </span>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}

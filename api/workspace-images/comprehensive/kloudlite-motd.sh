@@ -17,11 +17,14 @@ if [ -n "$WORKSPACE_NAME" ]; then
 fi
 
 # Show available tools
-echo "  Shell: fish (with starship prompt)"
+echo "  Shell: bash (with starship prompt)"
+echo "  Shells available: bash, zsh, fish (all with starship)"
 echo "  Tools: code-server (port 8080), ttyd (port 7681)"
 echo ""
 echo "  Get started:"
 echo "    • Run 'claude' to start Claude Code"
+echo "    • Run 'opencode' to start OpenCode"
+echo "    • Run 'codex' to start Codex"
 echo "    • Your workspace directory: /workspace"
 echo "    • Shared files: /home/kl/workspaces"
 echo ""

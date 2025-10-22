@@ -627,6 +627,11 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							ContainerPort: 7683,
 							Protocol:      corev1.ProtocolTCP,
 						},
+						{
+							Name:          "codex-ttyd",
+							ContainerPort: 7684,
+							Protocol:      corev1.ProtocolTCP,
+						},
 					},
 					WorkingDir: fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name),
 					VolumeMounts: []corev1.VolumeMount{

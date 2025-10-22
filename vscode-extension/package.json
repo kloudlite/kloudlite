@@ -1,0 +1,156 @@
+{
+  "name": "kloudlite-workspace",
+  "displayName": "Kloudlite Workspace",
+  "description": "Connect to Kloudlite cloud development workspaces directly from VS Code with one-click SSH access",
+  "version": "0.1.20",
+  "publisher": "kloudlite",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kloudlite/kloudlite.git"
+  },
+  "homepage": "https://kloudlite.io",
+  "bugs": {
+    "url": "https://github.com/kloudlite/kloudlite/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "kloudlite",
+    "workspace",
+    "development",
+    "cloud",
+    "remote",
+    "ssh",
+    "kubernetes"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onUri"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "kloudlite.setConnectionToken",
+        "title": "Kloudlite: Set Connection Token",
+        "icon": "$(key)"
+      },
+      {
+        "command": "kloudlite.disconnect",
+        "title": "Kloudlite: Disconnect"
+      },
+      {
+        "command": "kloudlite.connectWorkspace",
+        "title": "Kloudlite: Connect to Workspace",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "kloudlite.listWorkspaces",
+        "title": "Kloudlite: List Workspaces"
+      },
+      {
+        "command": "kloudlite.refreshWorkspaces",
+        "title": "Kloudlite: Refresh Workspaces",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "kloudlite.showWelcome",
+        "title": "Kloudlite: Show Welcome Page",
+        "icon": "$(home)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kloudlite",
+          "title": "Kloudlite",
+          "icon": "resources/kloudlite-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "kloudlite": [
+        {
+          "id": "kloudliteWorkspaces",
+          "name": "Workspaces"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Kloudlite",
+      "properties": {
+        "kloudlite.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Kloudlite Web Server URL"
+        },
+        "kloudlite.connectionToken": {
+          "type": "string",
+          "default": "",
+          "description": "Connection token for authenticating with Kloudlite API (managed by extension)"
+        }
+      }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "kloudlite.setConnectionToken",
+          "when": "view == kloudliteWorkspaces",
+          "group": "navigation"
+        },
+        {
+          "command": "kloudlite.refreshWorkspaces",
+          "when": "view == kloudliteWorkspaces",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "kloudlite.setConnectionToken"
+        },
+        {
+          "command": "kloudlite.disconnect"
+        },
+        {
+          "command": "kloudlite.connectWorkspace"
+        },
+        {
+          "command": "kloudlite.listWorkspaces"
+        },
+        {
+          "command": "kloudlite.refreshWorkspaces"
+        },
+        {
+          "command": "kloudlite.showWelcome"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "sharp": "^0.34.4",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "jwt-decode": "^4.0.0"
+  }
+}

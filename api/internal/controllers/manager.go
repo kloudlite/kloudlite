@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
+	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
@@ -43,6 +44,7 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(interceptsv1.AddToScheme(scheme))
+	utilruntime.Must(connectiontokenv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
 	// Set controller-runtime logger
