@@ -1,0 +1,85 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getUserByInstallationKey, markInstallationComplete, saveUserRegistration } from '@/lib/registration/storage-service'
+
+/**
+ * Verify installation key (POST method)
+ * Used by installation script to verify the key and get user info
+ * Also used by deployment to poll for configuration (every 10 minutes)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { installationKey, markComplete } = body
+
+    if (!installationKey) {
+      return NextResponse.json(
+        { error: 'Installation key is required' },
+        { status: 400 }
+      )
+    }
+
+    // Look up user by installation key
+    const user = await getUserByInstallationKey(installationKey)
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Invalid installation key' },
+        { status: 404 }
+      )
+    }
+
+    // Generate secret key on first verification (if not exists)
+    if (!user.secretKey) {
+      console.log('First deployment verification for:', user.email)
+      console.log('Generating secret key for installation key:', installationKey)
+
+      user.secretKey = crypto.randomUUID()
+      user.hasCompletedInstallation = true // Mark as complete when secret is generated
+
+      console.log('Secret key generated and installation marked as complete')
+    }
+
+    // Optionally mark installation as complete (legacy support)
+    if (markComplete && !user.hasCompletedInstallation) {
+      await markInstallationComplete(user.email)
+      user.hasCompletedInstallation = true
+    }
+
+    // Update last health check timestamp (deployment is polling)
+    user.lastHealthCheck = new Date().toISOString()
+    await saveUserRegistration(user)
+
+    // Return user info including secretKey for bearer token auth
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        userId: user.userId,
+        email: user.email,
+        name: user.name,
+        provider: user.provider,
+        registeredAt: user.registeredAt,
+        hasCompletedInstallation: user.hasCompletedInstallation,
+        subdomain: user.subdomain,
+        domainConfigured: !!user.subdomain,
+        url: user.subdomain ? `https://${user.subdomain}.kloudlite.io` : null,
+        deploymentReady: user.deploymentReady || false,
+        ipRecords: user.ipRecords || [],
+        secretKey: user.secretKey, // Include secret key for bearer token authentication
+        lastHealthCheck: user.lastHealthCheck,
+      },
+    })
+
+    // Disable all caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+
+    return response
+  } catch (error) {
+    console.error('Verification error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
