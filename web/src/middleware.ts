@@ -63,8 +63,12 @@ async function handleRegistrationMode(
       // Get registration session cookie
       const sessionCookie = req.cookies.get('registration_session')
 
+      console.log(`[Middleware] Checking registration path: ${pathname}`)
+      console.log(`[Middleware] Session cookie found: ${!!sessionCookie}`)
+
       if (!sessionCookie) {
         // No session, redirect to register page
+        console.log('[Middleware] No session cookie, redirecting to /register')
         return NextResponse.redirect(new URL('/register', req.url))
       }
 
@@ -80,13 +84,21 @@ async function handleRegistrationMode(
       }
 
       // Get user status directly from storage (DO NOT call verify-key as it generates secret)
-      const { getUserByEmail } = await import('@/lib/registration/storage-service')
+      const { getUserByEmail } = await import('@/lib/registration/supabase-storage-service')
       const user = await getUserByEmail(email)
+
+      console.log(`[Middleware] User found: ${!!user}`)
+      console.log(`[Middleware] User email: ${email}`)
 
       if (!user) {
         // User not found
+        console.log('[Middleware] User not found in storage, redirecting to /register')
         return NextResponse.redirect(new URL('/register', req.url))
       }
+
+      console.log(`[Middleware] User hasCompletedInstallation: ${user.hasCompletedInstallation}`)
+      console.log(`[Middleware] User subdomain: ${user.subdomain}`)
+      console.log(`[Middleware] User reservedAt: ${user.reservedAt}`)
 
       // Determine correct page based on state
       if (!user.hasCompletedInstallation) {
@@ -95,7 +107,22 @@ async function handleRegistrationMode(
           return NextResponse.redirect(new URL('/register/install', req.url))
         }
       } else if (!user.subdomain) {
-        // Installation complete but no subdomain - should be on domain page
+        // Installation complete but no subdomain
+
+        // Check if user just reserved a domain (within last 30 seconds)
+        // This handles Cloudflare KV eventual consistency - the subdomain might be reserved
+        // but the KV read hasn't seen the write yet
+        const justReserved = user.reservedAt &&
+          (Date.now() - new Date(user.reservedAt).getTime()) < 30000
+
+        if (justReserved && pathname === '/register/complete') {
+          // Allow access to complete page if reservation was very recent
+          // The page will handle fetching the subdomain when it loads
+          console.log('[Middleware] Recent reservation detected, allowing access to complete page')
+          return NextResponse.next()
+        }
+
+        // Otherwise, should be on domain page
         if (pathname !== '/register/domain') {
           return NextResponse.redirect(new URL('/register/domain', req.url))
         }
@@ -108,7 +135,10 @@ async function handleRegistrationMode(
 
       return NextResponse.next()
     } catch (error) {
-      console.error('Registration middleware error:', error)
+      console.error('Registration middleware error for path:', pathname)
+      console.error('Error details:', error)
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
       return NextResponse.redirect(new URL('/register', req.url))
     }
   }
