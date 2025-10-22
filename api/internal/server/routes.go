@@ -75,6 +75,14 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
+	connectionTokenHandlers := handlers.NewConnectionTokenHandlers(
+		servicesManager.RepositoryManager.K8sClient,
+		logger,
+		cfg.Auth.JWTSecret,
+		cfg.ConnectionToken.SSHJumpHost,
+		cfg.ConnectionToken.APIURL,
+		cfg.ConnectionToken.SSHPort,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
@@ -261,7 +269,18 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				oauthProviders.GET("", oauthHandlers.GetOAuthProviders)
 				oauthProviders.PUT("/:type", oauthHandlers.UpdateOAuthProvider)
 			}
+
+			// Connection Token routes (protected)
+			connectionTokens := protected.Group("/connection-tokens")
+			{
+				connectionTokens.POST("", connectionTokenHandlers.CreateConnectionToken)
+				connectionTokens.GET("", connectionTokenHandlers.ListConnectionTokens)
+				connectionTokens.DELETE("/:name", connectionTokenHandlers.DeleteConnectionToken)
+			}
 		}
+
+		// Connection Token validation endpoint (public - used by VS Code extension)
+		v1.POST("/connection-tokens/validate", connectionTokenHandlers.ValidateConnectionToken)
 	}
 
 	// Webhook endpoints (for Kubernetes admission controllers)

@@ -17,6 +17,9 @@ type Config struct {
 
 	// Kubernetes configuration
 	Kubernetes KubernetesConfig `envconfig:"KUBERNETES"`
+
+	// Connection Token configuration
+	ConnectionToken ConnectionTokenConfig `envconfig:"CONNECTION_TOKEN"`
 }
 
 type AuthConfig struct {
@@ -48,6 +51,17 @@ type KubernetesConfig struct {
 
 	// Connection timeout in seconds
 	TimeoutSeconds int `envconfig:"TIMEOUT_SECONDS" default:"30"`
+}
+
+type ConnectionTokenConfig struct {
+	// SSH Jump Host for workspace connections
+	SSHJumpHost string `envconfig:"SSH_JUMP_HOST" default:"localhost"`
+
+	// SSH Port for jump host
+	SSHPort int `envconfig:"SSH_PORT" default:"2222"`
+
+	// API URL for Kloudlite API
+	APIURL string `envconfig:"API_URL" default:"http://localhost:8080"`
 }
 
 func Load() (*Config, error) {

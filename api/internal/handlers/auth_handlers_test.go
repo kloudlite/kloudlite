@@ -160,7 +160,7 @@ func TestLogin(t *testing.T) {
 	t.Run("should reject login with invalid credentials", func(t *testing.T) {
 		authService := &mockAuthService{
 			verifyPasswordFunc: func(ctx context.Context, email, password string) (*platformv1alpha1.User, error) {
-				return nil, errors.New("invalid credentials")
+				return nil, errors.New("authentication failed: invalid password")
 			},
 		}
 		userService := &mockUserService{}

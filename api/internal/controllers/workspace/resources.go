@@ -174,6 +174,18 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 						Port:       7682,
 						TargetPort: intstr.FromInt(7682),
 					},
+					{
+						Name:       "opencode-ttyd",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       7683,
+						TargetPort: intstr.FromInt(7683),
+					},
+					{
+						Name:       "codex-ttyd",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       7684,
+						TargetPort: intstr.FromInt(7684),
+					},
 				},
 				Type: corev1.ServiceTypeClusterIP,
 			},
