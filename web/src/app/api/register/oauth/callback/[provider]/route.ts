@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { SignJWT } from 'jose'
-import { saveUserRegistration, getUserByEmail, type UserRegistration } from '@/lib/registration/storage-service'
+import { saveUserRegistration, getUserByEmail, type UserRegistration, updateHealthCheck } from '@/lib/registration/supabase-storage-service'
 
 // Registration mode OAuth configuration - uses REGISTRATION_ prefixed env vars
 const OAUTH_CONFIGS = {
@@ -123,19 +123,29 @@ export async function GET(
     console.log('Existing user found:', email, 'with installation key:', existingUser.installationKey)
     console.log('Reusing existing installation. No new keys will be generated.')
 
-    // Update user information that might have changed
-    existingUser.name = name // Update name in case it changed in OAuth provider
-    existingUser.lastHealthCheck = new Date().toISOString() // Track last login
+    // Add provider to array if not already present
+    const currentProvider = provider as 'github' | 'google' | 'azure-ad'
+    if (!existingUser.providers.includes(currentProvider)) {
+      existingUser.providers = [...existingUser.providers, currentProvider]
+      console.log('Adding new provider:', currentProvider)
 
-    // Save updated user information back to storage
-    try {
-      await saveUserRegistration(existingUser)
-      console.log('Updated user information for:', email)
-    } catch (error) {
-      console.error('Failed to update user registration:', error)
+      try {
+        await saveUserRegistration(existingUser)
+        console.log('Updated providers array for:', email)
+      } catch (error) {
+        console.error('Failed to update providers:', error)
+      }
     }
 
-    userRegistration = existingUser
+    // Atomically update health check timestamp
+    try {
+      const updatedUser = await updateHealthCheck(email)
+      userRegistration = { ...updatedUser, providers: existingUser.providers }
+      console.log('Updated health check for:', email)
+    } catch (error) {
+      console.error('Failed to update health check:', error)
+      userRegistration = existingUser
+    }
   } else {
     // New user - generate installation key ONLY (secret key generated on first deployment verification)
     console.log('New user registration:', email)
@@ -147,7 +157,7 @@ export async function GET(
       userId,
       email,
       name,
-      provider: provider as 'github' | 'google' | 'azure-ad',
+      providers: [provider as 'github' | 'google' | 'azure-ad'],
       registeredAt: new Date().toISOString(),
       installationKey,
       hasCompletedInstallation: false, // Will be set to true when deployment verifies and gets secret
@@ -166,7 +176,8 @@ export async function GET(
   // Create a JWT session token with user data
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
   const token = await new SignJWT({
-    provider: userRegistration.provider,
+    provider: provider, // Current provider used for login
+    providers: userRegistration.providers, // All providers user has used
     email: userRegistration.email,
     name: userRegistration.name,
     image: userData.avatar_url || userData.picture,
