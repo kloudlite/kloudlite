@@ -11,6 +11,8 @@ import {
   updateDnsRecords,
 } from '@/lib/registration/cloudflare-dns'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 /**
  * Configure IP for deployment
  * Called by the installed deployment to send individual IP configurations

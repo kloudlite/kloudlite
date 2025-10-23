@@ -6,6 +6,8 @@ import {
 } from '@/lib/registration/supabase-storage-service'
 import { generateCertificate, generateHostnames } from '@/lib/registration/cloudflare-certificates'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 const CLOUDFLARE_DNS_DOMAIN = process.env.CLOUDFLARE_DNS_DOMAIN!
 
 /**

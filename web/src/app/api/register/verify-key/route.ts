@@ -5,6 +5,8 @@ import {
   updateHealthCheck,
 } from '@/lib/registration/supabase-storage-service'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 /**
  * Verify installation key (POST method)
  * Used by installation script to verify the key and get user info

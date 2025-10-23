@@ -8,6 +8,8 @@ import {
   updateHealthCheck,
 } from '@/lib/registration/supabase-storage-service'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 // Registration mode OAuth configuration - uses REGISTRATION_ prefixed env vars
 const OAUTH_CONFIGS = {
   github: {

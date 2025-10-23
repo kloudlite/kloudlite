@@ -9,6 +9,8 @@ import {
 import { deleteDnsRecords } from '@/lib/registration/cloudflare-dns'
 import { revokeCertificate } from '@/lib/registration/cloudflare-certificates'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 /**
  * Uninstall deployment
  * Called by the deployment or user to completely remove installation and cleanup DNS
