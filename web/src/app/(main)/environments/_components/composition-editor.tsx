@@ -44,7 +44,7 @@ export function CompositionEditor({ composition, namespace, user, open, onOpenCh
   const [composeContent, setComposeContent] = useState(
     composition?.spec.composeContent || defaultComposeContent
   )
-  const [yamlExtension, setYamlExtension] = useState<any>(null)
+  const [yamlExtension, setYamlExtension] = useState<unknown>(null)
 
   useEffect(() => {
     import('@codemirror/lang-yaml').then((mod) => {

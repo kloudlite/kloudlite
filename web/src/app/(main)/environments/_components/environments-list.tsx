@@ -95,9 +95,9 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
           description: result.error || 'An error occurred',
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to activate environment', {
-        description: error.message || 'An error occurred',
+        description: error instanceof Error ? error.message : 'An error occurred',
       })
     }
   }
@@ -117,9 +117,9 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
           description: result.error || 'An error occurred',
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to deactivate environment', {
-        description: error.message || 'An error occurred',
+        description: error instanceof Error ? error.message : 'An error occurred',
       })
     }
   }
