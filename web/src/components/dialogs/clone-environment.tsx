@@ -150,7 +150,7 @@ export function CloneEnvironmentDialog({
               Clone Environment
             </DialogTitle>
             <DialogDescription>
-              Create a copy of "{sourceEnvironment.name}" with all its resources including environment variables, secrets, configuration files, and compositions.
+              Create a copy of &quot;{sourceEnvironment.name}&quot; with all its resources including environment variables, secrets, configuration files, and compositions.
             </DialogDescription>
           </DialogHeader>
 
@@ -166,7 +166,7 @@ export function CloneEnvironmentDialog({
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Must be lowercase alphanumeric or "-", max 63 characters
+                Must be lowercase alphanumeric or &quot;-&quot;, max 63 characters
               </p>
             </div>
 
@@ -193,7 +193,7 @@ export function CloneEnvironmentDialog({
                       disabled={loading}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Leave empty to auto-generate as "env-{'{name}'}".
+                      Leave empty to auto-generate as &quot;env-{'{name}'}&quot;.
                       The Kubernetes namespace that will be created for this environment.
                     </p>
                   </div>

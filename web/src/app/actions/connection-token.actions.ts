@@ -12,11 +12,12 @@ export async function listConnectionTokens() {
   try {
     const result = await connectionTokenService.listTokens()
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('List connection tokens error:', error)
+  } catch (err) {
+    console.error('List connection tokens error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to list connection tokens',
+      error: error.message,
     }
   }
 }
@@ -33,11 +34,12 @@ export async function createConnectionToken(data: Omit<CreateConnectionTokenRequ
     })
     revalidatePath('/connection-tokens')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Create connection token error:', error)
+  } catch (err) {
+    console.error('Create connection token error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to create connection token',
+      error: error.message,
     }
   }
 }
@@ -50,11 +52,12 @@ export async function deleteConnectionToken(name: string) {
     await connectionTokenService.deleteToken(name)
     revalidatePath('/connection-tokens')
     return { success: true }
-  } catch (error: any) {
-    console.error('Delete connection token error:', error)
+  } catch (err) {
+    console.error('Delete connection token error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to delete connection token',
+      error: error.message,
     }
   }
 }

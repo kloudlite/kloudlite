@@ -257,7 +257,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                         <DropdownMenuItem onClick={() => {
                           setEditingConfig(config)
                           setIsActive(config.active !== false)
-                          setSelectedCategory((config.category || 'general') as any)
+                          setSelectedCategory(config.category || 'general')
                           setIsAddConfigOpen(true)
                         }}>
                           <Edit className="mr-2 h-4 w-4" />
@@ -324,7 +324,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
           setSelectedCategory('general') // Reset to default
         } else if (editingConfig) {
           setIsActive(editingConfig.active !== false)
-          setSelectedCategory((editingConfig.category || 'general') as any)
+          setSelectedCategory(editingConfig.category || 'general')
         }
       }}>
         <DialogContent className="max-w-2xl">

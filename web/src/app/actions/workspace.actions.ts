@@ -23,11 +23,12 @@ export async function listWorkspaces(
   try {
     const result = await workspaceService.list(namespace, params)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('List workspaces error:', error)
+  } catch (err) {
+    console.error('List workspaces error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to list workspaces',
+      error: error.message,
     }
   }
 }
@@ -39,11 +40,12 @@ export async function getWorkspace(name: string, namespace: string = 'default') 
   try {
     const result = await workspaceService.get(name, namespace)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Get workspace error:', error)
+  } catch (err) {
+    console.error('Get workspace error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to get workspace',
+      error: error.message,
     }
   }
 }
@@ -59,11 +61,12 @@ export async function createWorkspace(
     const result = await workspaceService.create(data, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Create workspace error:', error)
+  } catch (err) {
+    console.error('Create workspace error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to create workspace',
+      error: error.message,
     }
   }
 }
@@ -80,11 +83,12 @@ export async function updateWorkspace(
     const result = await workspaceService.update(name, data, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Update workspace error:', error)
+  } catch (err) {
+    console.error('Update workspace error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to update workspace',
+      error: error.message,
     }
   }
 }
@@ -97,11 +101,12 @@ export async function deleteWorkspace(name: string, namespace: string = 'default
     await workspaceService.delete(name, namespace)
     revalidatePath('/workspaces')
     return { success: true }
-  } catch (error: any) {
-    console.error('Delete workspace error:', error)
+  } catch (err) {
+    console.error('Delete workspace error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to delete workspace',
+      error: error.message,
     }
   }
 }
@@ -114,11 +119,12 @@ export async function suspendWorkspace(name: string, namespace: string = 'defaul
     const result = await workspaceService.suspend(name, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Suspend workspace error:', error)
+  } catch (err) {
+    console.error('Suspend workspace error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to suspend workspace',
+      error: error.message,
     }
   }
 }
@@ -131,11 +137,12 @@ export async function activateWorkspace(name: string, namespace: string = 'defau
     const result = await workspaceService.activate(name, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Activate workspace error:', error)
+  } catch (err) {
+    console.error('Activate workspace error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to activate workspace',
+      error: error.message,
     }
   }
 }
@@ -148,11 +155,12 @@ export async function archiveWorkspace(name: string, namespace: string = 'defaul
     const result = await workspaceService.archive(name, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Archive workspace error:', error)
+  } catch (err) {
+    console.error('Archive workspace error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to archive workspace',
+      error: error.message,
     }
   }
 }
@@ -193,11 +201,12 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
 
     const data = await response.json()
     return { success: true, data }
-  } catch (error: any) {
-    console.error('Get workspace metrics error:', error)
+  } catch (err) {
+    console.error('Get workspace metrics error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to get workspace metrics',
+      error: error.message,
     }
   }
 }
@@ -238,11 +247,12 @@ export async function getNodeMetrics(nodeName: string = 'master') {
 
     const data = await response.json()
     return { success: true, data }
-  } catch (error: any) {
-    console.error('Get node metrics error:', error)
+  } catch (err) {
+    console.error('Get node metrics error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to get node metrics',
+      error: error.message,
     }
   }
 }
