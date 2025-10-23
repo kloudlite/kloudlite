@@ -4,8 +4,12 @@ function validateEnv() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
   const webUrl = process.env.NEXT_PUBLIC_WEB_URL
 
-  // In production, fail fast if critical env vars are missing
-  if (process.env.NODE_ENV === 'production' && !apiUrl) {
+  // Check if we're in build phase (next build) vs runtime
+  // During build, Next.js sets NODE_ENV=production but we don't have runtime env vars
+  const isBuildTime = typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build'
+
+  // In production runtime (not build), fail fast if critical env vars are missing
+  if (process.env.NODE_ENV === 'production' && !isBuildTime && !apiUrl) {
     throw new Error(
       'CRITICAL: NEXT_PUBLIC_API_URL environment variable is not set. ' +
       'The application cannot function without this configuration. ' +
@@ -13,7 +17,7 @@ function validateEnv() {
     )
   }
 
-  if (process.env.NODE_ENV === 'production' && !webUrl) {
+  if (process.env.NODE_ENV === 'production' && !isBuildTime && !webUrl) {
     throw new Error(
       'CRITICAL: NEXT_PUBLIC_WEB_URL environment variable is not set. ' +
       'The application cannot function without this configuration. ' +
@@ -21,17 +25,21 @@ function validateEnv() {
     )
   }
 
-  // In development, warn but allow localhost fallback
-  if (process.env.NODE_ENV === 'development' && !apiUrl) {
-    console.warn(
-      '⚠️  NEXT_PUBLIC_API_URL is not set. Falling back to http://localhost:8080'
-    )
+  // In development or build time, warn but allow localhost fallback
+  if ((process.env.NODE_ENV === 'development' || isBuildTime) && !apiUrl) {
+    if (!isBuildTime) {
+      console.warn(
+        '⚠️  NEXT_PUBLIC_API_URL is not set. Falling back to http://localhost:8080'
+      )
+    }
   }
 
-  if (process.env.NODE_ENV === 'development' && !webUrl) {
-    console.warn(
-      '⚠️  NEXT_PUBLIC_WEB_URL is not set. Falling back to http://localhost:3000'
-    )
+  if ((process.env.NODE_ENV === 'development' || isBuildTime) && !webUrl) {
+    if (!isBuildTime) {
+      console.warn(
+        '⚠️  NEXT_PUBLIC_WEB_URL is not set. Falling back to http://localhost:3000'
+      )
+    }
   }
 
   return {
