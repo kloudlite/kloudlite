@@ -380,7 +380,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
               {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-                <Select value={selectedCategory} onValueChange={(value: any) => setSelectedCategory(value)}>
+                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as typeof selectedCategory)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>

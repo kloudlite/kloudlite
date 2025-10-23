@@ -13,7 +13,8 @@ export class WorkMachineService {
   async getMyWorkMachine(): Promise<WorkMachine | null> {
     try {
       return await apiClient.get<WorkMachine>(`${this.baseUrl}/my`)
-    } catch (error: any) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
       if (error.message?.includes('404')) {
         return null
       }

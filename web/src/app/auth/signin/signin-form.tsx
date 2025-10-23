@@ -49,7 +49,8 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
         router.push('/')
         router.refresh()
       }
-    } catch (err: any) {
+    } catch (err) {
+      console.error('Sign in error:', err)
       setError('An error occurred. Please try again.')
       setLoading(false)
     }

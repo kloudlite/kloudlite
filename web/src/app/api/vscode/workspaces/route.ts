@@ -46,10 +46,11 @@ export async function GET(request: NextRequest) {
       workspaces: data.items || []
     })
 
-  } catch (error: any) {
-    console.error('VS Code API error:', error)
+  } catch (err) {
+    console.error('VS Code API error:', err)
+    const error = err instanceof Error ? err : new Error('Internal server error')
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error.message },
       { status: 500 }
     )
   }
