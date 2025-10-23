@@ -1,4 +1,4 @@
-name: Build and Push Web Docker Images
+name: Build, Push and Deploy Web
 
 on:
   push:
@@ -232,3 +232,39 @@ jobs:
       - name: Run Prettier check
         run: pnpm run format:check
         continue-on-error: true
+
+  deploy-azure:
+    name: Deploy to Azure (registration)
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update Container App
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web/registration:${IMAGE_TAG}"
+
+          echo "Deploying image: $IMAGE"
+
+          az containerapp update \
+            --name ca-kloudlite-registration \
+            --resource-group rg-kloudlite-registration \
+            --image $IMAGE \
+            --query "properties.provisioningState" -o tsv
+
+      - name: Deployment Summary
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+
+          echo "### Azure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container App**: ca-kloudlite-registration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Public URL**: https://onboard.kloudlite.io" >> $GITHUB_STEP_SUMMARY
