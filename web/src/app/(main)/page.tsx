@@ -4,8 +4,25 @@ import { getMyWorkMachine, listAllWorkMachines } from '@/app/actions/work-machin
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import type { WorkMachine } from '@/types/work-machine'
 
+// Type for transformed work machine display format
+interface TransformedWorkMachine {
+  id: string
+  owner: string
+  name: string
+  currentState: string
+  desiredState: string
+  status: 'active' | 'stopped' | 'idle'
+  cpu: number
+  memory: number
+  disk: number
+  uptime: string
+  type: string
+  sshPublicKey?: string
+  sshAuthorizedKeys: string[]
+}
+
 // Helper to map work machine CR to display format
-function transformWorkMachine(wm: WorkMachine) {
+function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
   const desiredState = wm.spec.desiredState
 
   // Use status.state if it exists, otherwise use desiredState
@@ -75,7 +92,7 @@ export default async function WorkMachinesPage() {
     : []
 
   // Fetch real work machine data from CRs
-  let workMachines: any[] = []
+  let workMachines: TransformedWorkMachine[] = []
 
   if (isAdmin) {
     // Admin sees all work machines
@@ -93,8 +110,8 @@ export default async function WorkMachinesPage() {
 
   // TODO: Fetch pinned resources from actual CRs
   // For now, using empty arrays until workspace/environment CRs are implemented
-  const pinnedWorkspaces: any[] = []
-  const pinnedEnvironments: any[] = []
+  const pinnedWorkspaces: never[] = []
+  const pinnedEnvironments: never[] = []
 
   return (
     <WorkMachinesContent

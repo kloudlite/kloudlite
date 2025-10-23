@@ -23,8 +23,6 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout
-
     const fetchMetrics = async () => {
       try {
         const result = await getWorkspaceMetrics(workspaceName, namespace)
@@ -44,12 +42,10 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
     fetchMetrics()
 
     // Poll every 3 seconds
-    intervalId = setInterval(fetchMetrics, 3000)
+    const intervalId = setInterval(fetchMetrics, 3000)
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
+      clearInterval(intervalId)
     }
   }, [workspaceName, namespace])
 
