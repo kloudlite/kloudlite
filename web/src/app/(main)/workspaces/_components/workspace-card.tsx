@@ -29,18 +29,16 @@ interface WorkspaceCardProps {
 
 export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
   return (
-    <Link href={`/workspaces/${workspace.id}`} className="block group">
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all cursor-pointer h-full">
+    <Link href={`/workspaces/${workspace.id}`} className="group block">
+      <div className="h-full cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-gray-300 hover:shadow-md">
         {/* Card Header */}
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="border-b border-gray-100 px-6 py-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-lg font-medium text-gray-900 transition-colors group-hover:text-blue-600">
                 {workspace.name}
               </h3>
-              <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                {workspace.description}
-              </p>
+              <p className="mt-1 line-clamp-1 text-sm text-gray-500">{workspace.description}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -58,13 +56,8 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
                 <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                   Open in Editor
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                  View Logs
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>View Logs</DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600" onClick={(e) => e.stopPropagation()}>
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -75,11 +68,11 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
         {/* Card Body */}
         <div className="px-6 py-4">
           {/* Tech Stack */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="inline-flex items-center rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
               {workspace.language}
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+            <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
               {workspace.framework}
             </span>
           </div>
@@ -104,17 +97,19 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
           </div>
 
           {/* Environment */}
-          <div className="pt-3 mt-3 border-t border-gray-100">
+          <div className="mt-3 border-t border-gray-100 pt-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Connected to</p>
-                <p className="text-sm font-medium text-gray-900 mt-0.5">{workspace.environment}</p>
+                <p className="mt-0.5 text-sm font-medium text-gray-900">{workspace.environment}</p>
               </div>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                workspace.status === 'active'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                  workspace.status === 'active'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
                 {workspace.status}
               </span>
             </div>

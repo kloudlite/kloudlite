@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, deleteIpRecords, deleteDomainReservation, resetUserInstallation, deleteCertificates } from '@/lib/registration/supabase-storage-service'
+import {
+  getUserByInstallationKey,
+  deleteIpRecords,
+  deleteDomainReservation,
+  resetUserInstallation,
+  deleteCertificates,
+} from '@/lib/registration/supabase-storage-service'
 import { deleteDnsRecords } from '@/lib/registration/cloudflare-dns'
 import { revokeCertificate } from '@/lib/registration/cloudflare-certificates'
 
@@ -21,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -31,28 +37,19 @@ export async function POST(request: NextRequest) {
     const { installationKey } = body
 
     if (!installationKey) {
-      return NextResponse.json(
-        { error: 'Installation key is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
     }
 
     // Look up user by installation key
     const user = await getUserByInstallationKey(installationKey)
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid installation key' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Verify secret key matches
     if (user.secretKey !== secretKey) {
-      return NextResponse.json(
-        { error: 'Invalid secret key' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
     console.log(`Starting uninstall for user: ${user.email}`)
@@ -122,9 +119,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Uninstall error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

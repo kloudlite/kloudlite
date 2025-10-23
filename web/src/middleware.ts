@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith('/api/register/') && APP_MODE !== 'registration') {
     return NextResponse.json(
       { error: 'Registration API routes are only available in registration mode' },
-      { status: 403 }
+      { status: 403 },
     )
   }
 
@@ -37,10 +37,7 @@ export async function middleware(req: NextRequest) {
  * Registration mode middleware
  * Handles registration flow authentication
  */
-async function handleRegistrationMode(
-  req: NextRequest,
-  pathname: string
-): Promise<NextResponse> {
+async function handleRegistrationMode(req: NextRequest, pathname: string): Promise<NextResponse> {
   // Skip middleware for API routes, OAuth callbacks, signout, and public assets
   if (
     pathname.startsWith('/api/') ||
@@ -112,8 +109,8 @@ async function handleRegistrationMode(
         // Check if user just reserved a domain (within last 30 seconds)
         // This handles Cloudflare KV eventual consistency - the subdomain might be reserved
         // but the KV read hasn't seen the write yet
-        const justReserved = user.reservedAt &&
-          (Date.now() - new Date(user.reservedAt).getTime()) < 30000
+        const justReserved =
+          user.reservedAt && Date.now() - new Date(user.reservedAt).getTime() < 30000
 
         if (justReserved && pathname === '/register/complete') {
           // Allow access to complete page if reservation was very recent
@@ -150,10 +147,7 @@ async function handleRegistrationMode(
  * Dashboard mode middleware
  * Handles main application authentication and role-based access
  */
-async function handleDashboardMode(
-  req: NextRequest,
-  pathname: string
-): Promise<NextResponse> {
+async function handleDashboardMode(req: NextRequest, pathname: string): Promise<NextResponse> {
   const session = await auth()
 
   // Skip auth checks for auth pages and public assets
@@ -174,8 +168,7 @@ async function handleDashboardMode(
   // Get user roles
   const userRoles = session?.user?.roles || []
   const hasUserRole = userRoles.includes('user')
-  const hasAdminRole =
-    userRoles.includes('admin') || userRoles.includes('super-admin')
+  const hasAdminRole = userRoles.includes('admin') || userRoles.includes('super-admin')
 
   // Role-based routing logic
   if (pathname.startsWith('/admin')) {
@@ -201,10 +194,7 @@ async function handleDashboardMode(
  * Website mode middleware
  * Handles public website routing
  */
-async function handleWebsiteMode(
-  _req: NextRequest,
-  _pathname: string
-): Promise<NextResponse> {
+async function handleWebsiteMode(_req: NextRequest, _pathname: string): Promise<NextResponse> {
   // Website is public, no authentication required
   return NextResponse.next()
 }

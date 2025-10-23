@@ -80,12 +80,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            disabled={isDeleting}
-          >
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isDeleting}>
             {isDeleting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -130,7 +125,8 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
             <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete workspace <strong>{workspace.metadata.name}</strong>?
-              This action cannot be undone. All data associated with this workspace will be permanently deleted.
+              This action cannot be undone. All data associated with this workspace will be
+              permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

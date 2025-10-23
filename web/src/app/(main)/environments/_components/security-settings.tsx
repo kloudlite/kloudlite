@@ -7,7 +7,7 @@ export function SecuritySettings() {
     <div className="space-y-4">
       <div className="mb-4">
         <h3 className="text-lg font-medium">Security</h3>
-        <p className="text-sm text-muted-foreground">Security policies and encryption settings</p>
+        <p className="text-muted-foreground text-sm">Security policies and encryption settings</p>
       </div>
       <div className="bg-card rounded-lg border p-6">
         <div className="space-y-4">

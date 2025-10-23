@@ -102,7 +102,7 @@ export function CloneEnvironmentDialog({
         targetNamespace,
         true, // cloneEnvVars - always true, controller handles all resources
         true, // cloneFiles - always true, controller handles all resources
-        currentUser
+        currentUser,
       )
 
       if (result.success) {
@@ -151,7 +151,8 @@ export function CloneEnvironmentDialog({
               Clone Environment
             </DialogTitle>
             <DialogDescription>
-              Create a copy of &quot;{sourceEnvironment.name}&quot; with all its resources including environment variables, secrets, configuration files, and compositions.
+              Create a copy of &quot;{sourceEnvironment.name}&quot; with all its resources including
+              environment variables, secrets, configuration files, and compositions.
             </DialogDescription>
           </DialogHeader>
 
@@ -166,7 +167,7 @@ export function CloneEnvironmentDialog({
                 disabled={loading}
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Must be lowercase alphanumeric or &quot;-&quot;, max 63 characters
               </p>
             </div>
@@ -176,9 +177,13 @@ export function CloneEnvironmentDialog({
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
               >
-                {showAdvanced ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {showAdvanced ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
                 Advanced Options
               </button>
 
@@ -190,12 +195,14 @@ export function CloneEnvironmentDialog({
                       id="namespace"
                       placeholder={`env-${formData.name || 'environment-name'}`}
                       value={formData.targetNamespace}
-                      onChange={(e) => setFormData({ ...formData, targetNamespace: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, targetNamespace: e.target.value })
+                      }
                       disabled={loading}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Leave empty to auto-generate as &quot;env-{'{name}'}&quot;.
-                      The Kubernetes namespace that will be created for this environment.
+                    <p className="text-muted-foreground text-xs">
+                      Leave empty to auto-generate as &quot;env-{'{name}'}&quot;. The Kubernetes
+                      namespace that will be created for this environment.
                     </p>
                   </div>
                 </div>

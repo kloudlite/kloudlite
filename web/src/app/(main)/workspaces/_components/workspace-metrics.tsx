@@ -52,9 +52,11 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
   if (error) {
     return (
       <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-sm font-medium mb-4">Resource Usage</h3>
-        <p className="text-sm text-muted-foreground">Metrics unavailable</p>
-        <p className="text-xs text-muted-foreground mt-1">Real-time metrics will be available once the backend endpoint is configured</p>
+        <h3 className="mb-4 text-sm font-medium">Resource Usage</h3>
+        <p className="text-muted-foreground text-sm">Metrics unavailable</p>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Real-time metrics will be available once the backend endpoint is configured
+        </p>
       </div>
     )
   }
@@ -62,15 +64,15 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
   if (!metrics) {
     return (
       <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-sm font-medium mb-4">Resource Usage</h3>
+        <h3 className="mb-4 text-sm font-medium">Resource Usage</h3>
         <div className="space-y-4">
           <div className="animate-pulse">
-            <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
-            <div className="h-2 bg-muted rounded"></div>
+            <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
+            <div className="bg-muted h-2 rounded"></div>
           </div>
           <div className="animate-pulse">
-            <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
-            <div className="h-2 bg-muted rounded"></div>
+            <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
+            <div className="bg-muted h-2 rounded"></div>
           </div>
         </div>
       </div>
@@ -79,28 +81,24 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
 
   return (
     <div className="bg-card rounded-lg border p-6">
-      <h3 className="text-sm font-medium mb-4">Resource Usage</h3>
+      <h3 className="mb-4 text-sm font-medium">Resource Usage</h3>
       <div className="space-y-3">
         {/* CPU */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-muted-foreground" />
+            <Cpu className="text-muted-foreground h-4 w-4" />
             <span className="text-sm font-medium">CPU</span>
           </div>
-          <span className="text-sm font-mono">
-            {(metrics.cpu.usage / 1000).toFixed(3)} vCPU
-          </span>
+          <span className="font-mono text-sm">{(metrics.cpu.usage / 1000).toFixed(3)} vCPU</span>
         </div>
 
         {/* Memory */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MemoryStick className="h-4 w-4 text-muted-foreground" />
+            <MemoryStick className="text-muted-foreground h-4 w-4" />
             <span className="text-sm font-medium">Memory</span>
           </div>
-          <span className="text-sm font-mono">
-            {formatBytes(metrics.memory.usage)}
-          </span>
+          <span className="font-mono text-sm">{formatBytes(metrics.memory.usage)}</span>
         </div>
       </div>
     </div>

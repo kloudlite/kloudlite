@@ -9,10 +9,7 @@ export class ApiClient {
     this.baseUrl = env.apiUrl
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
 
     // Get authentication session (only works in server components/actions)
@@ -112,10 +109,7 @@ export class UnauthenticatedApiClient {
     this.baseUrl = env.apiUrl
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
 
     const config: RequestInit = {

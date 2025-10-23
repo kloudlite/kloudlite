@@ -13,7 +13,10 @@ export class WorkspaceService {
   private baseUrl = '/api/v1'
 
   // List workspaces in a namespace
-  async list(namespace: string = 'default', params?: WorkspaceListParams): Promise<WorkspaceListResponse> {
+  async list(
+    namespace: string = 'default',
+    params?: WorkspaceListParams,
+  ): Promise<WorkspaceListResponse> {
     const queryParams = new URLSearchParams()
     if (params?.owner) queryParams.append('owner', params.owner)
     if (params?.workMachine) queryParams.append('workMachine', params.workMachine)
@@ -37,8 +40,15 @@ export class WorkspaceService {
   }
 
   // Update an existing workspace
-  async update(name: string, data: WorkspaceUpdateRequest, namespace: string = 'default'): Promise<Workspace> {
-    return apiClient.put<Workspace>(`${this.baseUrl}/namespaces/${namespace}/workspaces/${name}`, data)
+  async update(
+    name: string,
+    data: WorkspaceUpdateRequest,
+    namespace: string = 'default',
+  ): Promise<Workspace> {
+    return apiClient.put<Workspace>(
+      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}`,
+      data,
+    )
   }
 
   // Delete a workspace
@@ -49,26 +59,26 @@ export class WorkspaceService {
   // Workspace actions
   async suspend(name: string, namespace: string = 'default'): Promise<WorkspaceActionResponse> {
     return apiClient.post<WorkspaceActionResponse>(
-      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/suspend`
+      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/suspend`,
     )
   }
 
   async activate(name: string, namespace: string = 'default'): Promise<WorkspaceActionResponse> {
     return apiClient.post<WorkspaceActionResponse>(
-      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/activate`
+      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/activate`,
     )
   }
 
   async archive(name: string, namespace: string = 'default'): Promise<WorkspaceActionResponse> {
     return apiClient.post<WorkspaceActionResponse>(
-      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/archive`
+      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/archive`,
     )
   }
 
   // Get real-time metrics for a workspace
   async getMetrics(name: string, namespace: string = 'default'): Promise<WorkspaceMetrics> {
     return apiClient.get<WorkspaceMetrics>(
-      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/metrics`
+      `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/metrics`,
     )
   }
 }

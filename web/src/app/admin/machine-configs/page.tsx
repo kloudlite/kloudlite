@@ -9,7 +9,7 @@ function parseResourceValue(value?: string | number): number {
   if (typeof value === 'number') return value
   if (!value) return 0
 
-  const match = value.match(/^(\d+(?:\.\d+)?)/);
+  const match = value.match(/^(\d+(?:\.\d+)?)/)
   if (match) {
     return parseFloat(match[1])
   }
@@ -23,10 +23,14 @@ function transformMachineTypes(machineTypes: MachineType[]) {
     name: mt.spec.displayName || mt.metadata.name,
     cpu: parseResourceValue(mt.spec.resources?.cpu || mt.spec.cpu),
     memory: parseResourceValue(mt.spec.resources?.memory || mt.spec.memory),
-    gpu: mt.spec.resources?.gpu ? parseResourceValue(mt.spec.resources.gpu) : mt.spec.gpu ? parseResourceValue(mt.spec.gpu) : undefined,
+    gpu: mt.spec.resources?.gpu
+      ? parseResourceValue(mt.spec.resources.gpu)
+      : mt.spec.gpu
+        ? parseResourceValue(mt.spec.gpu)
+        : undefined,
     description: mt.spec.description || '',
     category: mt.spec.category || 'general',
-    active: mt.spec.active !== false
+    active: mt.spec.active !== false,
   }))
 }
 
@@ -49,18 +53,16 @@ export default async function MachineConfigsPage() {
   // Fetch machine types from the API
   const result = await listMachineTypes()
 
-  const machineTypes = result.success && result.data
-    ? result.data.items || []
-    : []
+  const machineTypes = result.success && result.data ? result.data.items || [] : []
 
   const transformedConfigs = transformMachineTypes(machineTypes)
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Machine Configurations</h1>
-        <p className="text-sm text-gray-600 mt-1.5">
+        <p className="mt-1.5 text-sm text-gray-600">
           Define machine types and resource allocations
         </p>
       </div>

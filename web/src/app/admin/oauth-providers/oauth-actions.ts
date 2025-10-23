@@ -14,7 +14,7 @@ export async function getOAuthProviders(): Promise<Record<string, OAuthProvider>
 
 export async function updateOAuthProvider(
   type: string,
-  provider: OAuthProvider
+  provider: OAuthProvider,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const result = await oauthProviderService.updateOAuthProvider(type, provider)

@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { connectionTokenService, type ConnectionToken } from '@/lib/services/connection-token.service'
+import {
+  connectionTokenService,
+  type ConnectionToken,
+} from '@/lib/services/connection-token.service'
 import { ConnectionTokensList } from './_components/connection-tokens-list'
 
 export default async function ConnectionTokensPage() {
@@ -28,14 +31,14 @@ export default async function ConnectionTokensPage() {
       <div className="mb-8">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold">Connection Tokens</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-muted-foreground mt-1.5 text-sm">
             Manage API tokens for accessing Kloudlite workspaces from external applications
           </p>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+          <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-200">

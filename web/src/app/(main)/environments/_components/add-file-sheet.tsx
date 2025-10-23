@@ -62,7 +62,7 @@ export function AddFileSheet({ environmentId }: AddFileSheetProps) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Add File
         </Button>
       </SheetTrigger>
@@ -70,9 +70,7 @@ export function AddFileSheet({ environmentId }: AddFileSheetProps) {
         <form onSubmit={handleSubmit} className="flex h-full flex-col">
           <SheetHeader>
             <SheetTitle>Add File</SheetTitle>
-            <SheetDescription>
-              Add a new configuration file
-            </SheetDescription>
+            <SheetDescription>Add a new configuration file</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-4 overflow-y-auto p-4">

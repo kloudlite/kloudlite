@@ -86,8 +86,10 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
     return (
       <div className="grid gap-4 md:grid-cols-3">
         <div className="bg-card rounded-lg border p-6">
-          <p className="text-sm text-muted-foreground">Metrics unavailable</p>
-          <p className="text-xs text-muted-foreground mt-1">Real-time metrics will be available once the node is ready</p>
+          <p className="text-muted-foreground text-sm">Metrics unavailable</p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Real-time metrics will be available once the node is ready
+          </p>
         </div>
       </div>
     )
@@ -98,20 +100,20 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
       <div className="grid gap-4 md:grid-cols-3">
         <div className="bg-card rounded-lg border p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
-            <div className="h-2 bg-muted rounded"></div>
+            <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
+            <div className="bg-muted h-2 rounded"></div>
           </div>
         </div>
         <div className="bg-card rounded-lg border p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
-            <div className="h-2 bg-muted rounded"></div>
+            <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
+            <div className="bg-muted h-2 rounded"></div>
           </div>
         </div>
         <div className="bg-card rounded-lg border p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
-            <div className="h-2 bg-muted rounded"></div>
+            <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
+            <div className="bg-muted h-2 rounded"></div>
           </div>
         </div>
       </div>
@@ -122,14 +124,14 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
     <div className="grid gap-4 md:grid-cols-2">
       {/* CPU Usage */}
       <div className="bg-card rounded-lg border p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <div className="rounded-lg bg-blue-50 p-2 dark:bg-blue-900/30">
               <Cpu className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <h3 className="text-sm font-semibold">CPU Usage</h3>
-              <p className="text-xs text-muted-foreground">Processing power</p>
+              <p className="text-muted-foreground text-xs">Processing power</p>
             </div>
           </div>
           <span className={`text-2xl font-medium ${getUsageTextColor(cpuPercent)}`}>
@@ -137,13 +139,13 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
           </span>
         </div>
         <div className="space-y-2">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="bg-muted h-2 overflow-hidden rounded-full">
             <div
               className={`h-full ${getUsageColor(cpuPercent)} transition-all duration-300`}
               style={{ width: `${cpuPercent}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex justify-between text-xs">
             <span>0%</span>
             <span>100%</span>
           </div>
@@ -155,14 +157,14 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
 
       {/* Memory Usage */}
       <div className="bg-card rounded-lg border p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+            <div className="rounded-lg bg-purple-50 p-2 dark:bg-purple-900/30">
               <MemoryStick className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
               <h3 className="text-sm font-semibold">Memory Usage</h3>
-              <p className="text-xs text-muted-foreground">RAM utilization</p>
+              <p className="text-muted-foreground text-xs">RAM utilization</p>
             </div>
           </div>
           <span className={`text-2xl font-medium ${getUsageTextColor(memoryPercent)}`}>
@@ -170,13 +172,13 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
           </span>
         </div>
         <div className="space-y-2">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="bg-muted h-2 overflow-hidden rounded-full">
             <div
               className={`h-full ${getUsageColor(memoryPercent)} transition-all duration-300`}
               style={{ width: `${memoryPercent}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex justify-between text-xs">
             <span>0%</span>
             <span>100%</span>
           </div>

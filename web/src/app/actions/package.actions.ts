@@ -58,7 +58,9 @@ export interface ResolveResponse {
 /**
  * Search for Nix packages using Devbox API
  */
-export async function searchPackages(query: string): Promise<{ success: boolean; data?: SearchResponse; error?: string }> {
+export async function searchPackages(
+  query: string,
+): Promise<{ success: boolean; data?: SearchResponse; error?: string }> {
   try {
     if (!query.trim()) {
       return { success: false, error: 'Query is required' }
@@ -82,7 +84,7 @@ export async function searchPackages(query: string): Promise<{ success: boolean;
     return { success: true, data }
   } catch (err) {
     console.error('Package search error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return { success: false, error: error.message }
   }
 }
@@ -92,7 +94,7 @@ export async function searchPackages(query: string): Promise<{ success: boolean;
  */
 export async function resolvePackageVersion(
   name: string,
-  version: string
+  version: string,
 ): Promise<{ success: boolean; data?: ResolveResponse; error?: string }> {
   try {
     if (!name.trim() || !version.trim()) {
@@ -121,7 +123,7 @@ export async function resolvePackageVersion(
     return { success: true, data }
   } catch (err) {
     console.error('Package resolve error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return { success: false, error: error.message }
   }
 }
@@ -129,7 +131,9 @@ export async function resolvePackageVersion(
 /**
  * Get available versions for a package
  */
-export async function getPackageVersions(packageName: string): Promise<{ success: boolean; versions?: string[]; error?: string }> {
+export async function getPackageVersions(
+  packageName: string,
+): Promise<{ success: boolean; versions?: string[]; error?: string }> {
   const result = await searchPackages(packageName)
 
   if (!result.success || !result.data) {
@@ -137,12 +141,12 @@ export async function getPackageVersions(packageName: string): Promise<{ success
   }
 
   // Find exact package match
-  const pkg = result.data.packages.find(p => p.name === packageName)
+  const pkg = result.data.packages.find((p) => p.name === packageName)
   if (!pkg) {
     return { success: false, error: `Package ${packageName} not found` }
   }
 
   // Extract version strings
-  const versions = pkg.versions.map(v => v.version)
+  const versions = pkg.versions.map((v) => v.version)
   return { success: true, versions }
 }

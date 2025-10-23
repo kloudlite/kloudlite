@@ -11,7 +11,7 @@ import {
   deleteDomainReservation,
   resetUserInstallation,
   type UserRegistration,
-  type IPRecord
+  type IPRecord,
 } from './supabase-storage-service'
 
 // Type for Supabase query response
@@ -22,16 +22,18 @@ interface SupabaseResponse<T> {
 }
 
 // Type for callback functions in mock chains
-type PromiseCallback<T> = (value: SupabaseResponse<T>) => SupabaseResponse<T> | PromiseLike<SupabaseResponse<T>>
+type PromiseCallback<T> = (
+  value: SupabaseResponse<T>,
+) => SupabaseResponse<T> | PromiseLike<SupabaseResponse<T>>
 
 // Create a mockSupabase object that we'll configure in each test
 const mockSupabaseClient = {
-  from: vi.fn()
+  from: vi.fn(),
 }
 
 // Mock the Supabase module
 vi.mock('./supabase', () => ({
-  supabase: mockSupabaseClient
+  supabase: mockSupabaseClient,
 }))
 
 describe('Supabase Storage Service', () => {
@@ -51,7 +53,7 @@ describe('Supabase Storage Service', () => {
     mockSingle = vi.fn().mockResolvedValue({ data: null, error: null })
     mockEq = vi.fn().mockReturnValue({
       single: mockSingle,
-      then: <T>(fn: PromiseCallback<T>) => mockSingle.then(fn) // Make eq() thenable for direct resolution
+      then: <T>(fn: PromiseCallback<T>) => mockSingle.then(fn), // Make eq() thenable for direct resolution
     })
     mockSelect = vi.fn().mockImplementation((columns?: string, options?: { head?: boolean }) => {
       if (options?.head) {
@@ -62,19 +64,19 @@ describe('Supabase Storage Service', () => {
     mockUpsert = vi.fn().mockResolvedValue({ error: null })
     mockUpdate = vi.fn().mockReturnValue({
       eq: mockEq,
-      then: <T>(fn: PromiseCallback<T>) => Promise.resolve({ error: null }).then(fn) // Make update() thenable
+      then: <T>(fn: PromiseCallback<T>) => Promise.resolve({ error: null }).then(fn), // Make update() thenable
     })
     mockInsert = vi.fn().mockReturnValue({ select: mockSelect })
     mockDelete = vi.fn().mockReturnValue({
       eq: mockEq,
-      then: <T>(fn: PromiseCallback<T>) => Promise.resolve({ error: null }).then(fn) // Make delete() thenable
+      then: <T>(fn: PromiseCallback<T>) => Promise.resolve({ error: null }).then(fn), // Make delete() thenable
     })
     mockFrom = vi.fn().mockReturnValue({
       select: mockSelect,
       upsert: mockUpsert,
       update: mockUpdate,
       insert: mockInsert,
-      delete: mockDelete
+      delete: mockDelete,
     })
 
     const { supabase } = await import('./supabase')
@@ -95,7 +97,7 @@ describe('Supabase Storage Service', () => {
         subdomain: 'test',
         reserved_at: '2025-01-01T00:00:00Z',
         deployment_ready: true,
-        last_health_check: '2025-01-01T00:00:00Z'
+        last_health_check: '2025-01-01T00:00:00Z',
       }
 
       mockSingle.mockResolvedValueOnce({ data: mockUser, error: null })
@@ -116,14 +118,14 @@ describe('Supabase Storage Service', () => {
         reservedAt: '2025-01-01T00:00:00Z',
         deploymentReady: true,
         lastHealthCheck: '2025-01-01T00:00:00Z',
-        ipRecords: []
+        ipRecords: [],
       })
     })
 
     it('should return null when user not found', async () => {
       mockSingle.mockResolvedValueOnce({
         data: null,
-        error: { code: 'PGRST116' }
+        error: { code: 'PGRST116' },
       })
 
       const result = await getUserByEmail('nonexistent@example.com')
@@ -138,7 +140,7 @@ describe('Supabase Storage Service', () => {
         providers: ['github'],
         registered_at: '2025-01-01T00:00:00Z',
         installation_key: 'key-123',
-        has_completed_installation: false
+        has_completed_installation: false,
       }
 
       const mockIpRecords = [
@@ -146,15 +148,15 @@ describe('Supabase Storage Service', () => {
           type: 'installation',
           ip: '1.2.3.4',
           configured_at: '2025-01-01T00:00:00Z',
-          dns_record_ids: ['dns-1']
+          dns_record_ids: ['dns-1'],
         },
         {
           type: 'workmachine',
           ip: '1.2.3.5',
           work_machine_name: 'dev1',
           configured_at: '2025-01-01T00:00:00Z',
-          dns_record_ids: ['dns-2', 'dns-3']
-        }
+          dns_record_ids: ['dns-2', 'dns-3'],
+        },
       ]
 
       mockSingle.mockResolvedValueOnce({ data: mockUser, error: null })
@@ -167,14 +169,14 @@ describe('Supabase Storage Service', () => {
         type: 'installation',
         ip: '1.2.3.4',
         configuredAt: '2025-01-01T00:00:00Z',
-        dnsRecordIds: ['dns-1']
+        dnsRecordIds: ['dns-1'],
       })
       expect(result?.ipRecords[1]).toEqual({
         type: 'workmachine',
         ip: '1.2.3.5',
         workMachineName: 'dev1',
         configuredAt: '2025-01-01T00:00:00Z',
-        dnsRecordIds: ['dns-2', 'dns-3']
+        dnsRecordIds: ['dns-2', 'dns-3'],
       })
     })
   })
@@ -190,7 +192,7 @@ describe('Supabase Storage Service', () => {
         providers: ['github'],
         registeredAt: '2025-01-01T00:00:00Z',
         installationKey: 'key-123',
-        hasCompletedInstallation: false
+        hasCompletedInstallation: false,
       }
 
       await expect(saveUserRegistration(registration)).resolves.toBeUndefined()
@@ -208,13 +210,13 @@ describe('Supabase Storage Service', () => {
         subdomain: null,
         reserved_at: null,
         deployment_ready: null,
-        last_health_check: null
+        last_health_check: null,
       })
     })
 
     it('should throw error when save fails', async () => {
       mockUpsert.mockResolvedValueOnce({
-        error: { message: 'Database error' }
+        error: { message: 'Database error' },
       })
 
       const registration: UserRegistration = {
@@ -224,12 +226,12 @@ describe('Supabase Storage Service', () => {
         providers: ['github'],
         registeredAt: '2025-01-01T00:00:00Z',
         installationKey: 'key-123',
-        hasCompletedInstallation: false
+        hasCompletedInstallation: false,
       }
 
-      await expect(saveUserRegistration(registration))
-        .rejects
-        .toThrow('Failed to save user registration: Database error')
+      await expect(saveUserRegistration(registration)).rejects.toThrow(
+        'Failed to save user registration: Database error',
+      )
     })
   })
 
@@ -243,7 +245,7 @@ describe('Supabase Storage Service', () => {
         registered_at: '2025-01-01T00:00:00Z',
         installation_key: 'key-123',
         secret_key: 'new-secret',
-        has_completed_installation: true
+        has_completed_installation: true,
       }
 
       mockUpdate.mockResolvedValueOnce({ error: null })
@@ -256,7 +258,7 @@ describe('Supabase Storage Service', () => {
       expect(result.secretKey).toBe('new-secret')
       expect(mockUpdate).toHaveBeenCalledWith({
         has_completed_installation: true,
-        secret_key: 'new-secret'
+        secret_key: 'new-secret',
       })
     })
 
@@ -268,7 +270,7 @@ describe('Supabase Storage Service', () => {
         providers: ['github'],
         registered_at: '2025-01-01T00:00:00Z',
         installation_key: 'key-123',
-        has_completed_installation: true
+        has_completed_installation: true,
       }
 
       mockUpdate.mockResolvedValueOnce({ error: null })
@@ -279,7 +281,7 @@ describe('Supabase Storage Service', () => {
 
       expect(result.hasCompletedInstallation).toBe(true)
       expect(mockUpdate).toHaveBeenCalledWith({
-        has_completed_installation: true
+        has_completed_installation: true,
       })
     })
   })
@@ -290,29 +292,32 @@ describe('Supabase Storage Service', () => {
         type: 'installation',
         ip: '1.2.3.4',
         configuredAt: '2025-01-01T00:00:00Z',
-        dnsRecordIds: ['dns-1']
+        dnsRecordIds: ['dns-1'],
       }
 
       mockUpsert.mockResolvedValueOnce({ error: null })
       mockSelect.mockResolvedValueOnce({
         data: null,
         error: null,
-        count: 1
+        count: 1,
       })
 
       const count = await addOrUpdateIpRecord('test@example.com', ipRecord)
 
       expect(count).toBe(1)
-      expect(mockUpsert).toHaveBeenCalledWith({
-        user_email: 'test@example.com',
-        type: 'installation',
-        ip: '1.2.3.4',
-        work_machine_name: null,
-        configured_at: '2025-01-01T00:00:00Z',
-        dns_record_ids: ['dns-1']
-      }, {
-        onConflict: 'user_email,type,work_machine_name'
-      })
+      expect(mockUpsert).toHaveBeenCalledWith(
+        {
+          user_email: 'test@example.com',
+          type: 'installation',
+          ip: '1.2.3.4',
+          work_machine_name: null,
+          configured_at: '2025-01-01T00:00:00Z',
+          dns_record_ids: ['dns-1'],
+        },
+        {
+          onConflict: 'user_email,type,work_machine_name',
+        },
+      )
     })
 
     it('should update existing IP record (upsert)', async () => {
@@ -321,45 +326,48 @@ describe('Supabase Storage Service', () => {
         ip: '1.2.3.5',
         workMachineName: 'dev1',
         configuredAt: '2025-01-01T00:00:00Z',
-        dnsRecordIds: ['dns-2', 'dns-3']
+        dnsRecordIds: ['dns-2', 'dns-3'],
       }
 
       mockUpsert.mockResolvedValueOnce({ error: null })
       mockSelect.mockResolvedValueOnce({
         data: null,
         error: null,
-        count: 2
+        count: 2,
       })
 
       const count = await addOrUpdateIpRecord('test@example.com', ipRecord)
 
       expect(count).toBe(2)
-      expect(mockUpsert).toHaveBeenCalledWith({
-        user_email: 'test@example.com',
-        type: 'workmachine',
-        ip: '1.2.3.5',
-        work_machine_name: 'dev1',
-        configured_at: '2025-01-01T00:00:00Z',
-        dns_record_ids: ['dns-2', 'dns-3']
-      }, {
-        onConflict: 'user_email,type,work_machine_name'
-      })
+      expect(mockUpsert).toHaveBeenCalledWith(
+        {
+          user_email: 'test@example.com',
+          type: 'workmachine',
+          ip: '1.2.3.5',
+          work_machine_name: 'dev1',
+          configured_at: '2025-01-01T00:00:00Z',
+          dns_record_ids: ['dns-2', 'dns-3'],
+        },
+        {
+          onConflict: 'user_email,type,work_machine_name',
+        },
+      )
     })
 
     it('should throw error when upsert fails', async () => {
       const ipRecord: IPRecord = {
         type: 'installation',
         ip: '1.2.3.4',
-        configuredAt: '2025-01-01T00:00:00Z'
+        configuredAt: '2025-01-01T00:00:00Z',
       }
 
       mockUpsert.mockResolvedValueOnce({
-        error: { message: 'Constraint violation' }
+        error: { message: 'Constraint violation' },
       })
 
-      await expect(addOrUpdateIpRecord('test@example.com', ipRecord))
-        .rejects
-        .toThrow('Failed to add IP record: Constraint violation')
+      await expect(addOrUpdateIpRecord('test@example.com', ipRecord)).rejects.toThrow(
+        'Failed to add IP record: Constraint violation',
+      )
     })
   })
 
@@ -372,7 +380,7 @@ describe('Supabase Storage Service', () => {
     it('should return false when subdomain is taken', async () => {
       mockSingle.mockResolvedValueOnce({
         data: { subdomain: 'test' },
-        error: null
+        error: null,
       })
 
       const result = await isSubdomainAvailable('test')
@@ -382,7 +390,7 @@ describe('Supabase Storage Service', () => {
     it('should return true when subdomain is available', async () => {
       mockSingle.mockResolvedValueOnce({
         data: null,
-        error: { code: 'PGRST116' }
+        error: { code: 'PGRST116' },
       })
 
       const result = await isSubdomainAvailable('myapp')
@@ -398,7 +406,7 @@ describe('Supabase Storage Service', () => {
         user_email: 'test@example.com',
         user_name: 'Test User',
         reserved_at: '2025-01-01T00:00:00Z',
-        status: 'reserved'
+        status: 'reserved',
       }
 
       mockSingle.mockResolvedValueOnce({ data: mockReservation, error: null })
@@ -415,12 +423,12 @@ describe('Supabase Storage Service', () => {
     it('should throw error when subdomain already reserved', async () => {
       mockSingle.mockResolvedValueOnce({
         data: null,
-        error: { code: '23505', message: 'Unique constraint violation' }
+        error: { code: '23505', message: 'Unique constraint violation' },
       })
 
-      await expect(reserveSubdomain('taken', 'github-123', 'test@example.com', 'Test User'))
-        .rejects
-        .toThrow('Subdomain is already reserved')
+      await expect(
+        reserveSubdomain('taken', 'github-123', 'test@example.com', 'Test User'),
+      ).rejects.toThrow('Subdomain is already reserved')
     })
   })
 
@@ -429,7 +437,7 @@ describe('Supabase Storage Service', () => {
       const mockIpRecords = [
         { dns_record_ids: ['dns-1'] },
         { dns_record_ids: ['dns-2', 'dns-3'] },
-        { dns_record_ids: null }
+        { dns_record_ids: null },
       ]
 
       mockSelect.mockResolvedValueOnce({ data: mockIpRecords, error: null })
@@ -460,12 +468,12 @@ describe('Supabase Storage Service', () => {
 
     it('should throw error when delete fails', async () => {
       mockDelete.mockResolvedValueOnce({
-        error: { message: 'Delete failed' }
+        error: { message: 'Delete failed' },
       })
 
-      await expect(deleteDomainReservation('test@example.com'))
-        .rejects
-        .toThrow('Failed to delete domain reservation: Delete failed')
+      await expect(deleteDomainReservation('test@example.com')).rejects.toThrow(
+        'Failed to delete domain reservation: Delete failed',
+      )
     })
   })
 
@@ -481,18 +489,18 @@ describe('Supabase Storage Service', () => {
         secret_key: null,
         has_completed_installation: false,
         deployment_ready: false,
-        last_health_check: null
+        last_health_check: null,
       })
     })
 
     it('should throw error when reset fails', async () => {
       mockUpdate.mockResolvedValueOnce({
-        error: { message: 'Update failed' }
+        error: { message: 'Update failed' },
       })
 
-      await expect(resetUserInstallation('test@example.com'))
-        .rejects
-        .toThrow('Failed to reset installation: Update failed')
+      await expect(resetUserInstallation('test@example.com')).rejects.toThrow(
+        'Failed to reset installation: Update failed',
+      )
     })
   })
 })

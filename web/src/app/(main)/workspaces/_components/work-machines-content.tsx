@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation'
 import { WorkMachineMetrics } from './work-machine-metrics'
 import { PinnedResources } from '../../environments/_components/pinned-resources'
 import { WorkMachineControls } from './work-machine-controls'
-import { updateMyWorkMachine, startMyWorkMachine, stopMyWorkMachine } from '@/app/actions/work-machine.actions'
+import {
+  updateMyWorkMachine,
+  startMyWorkMachine,
+  stopMyWorkMachine,
+} from '@/app/actions/work-machine.actions'
 import { toast } from 'sonner'
 import { Server, Loader2, ArrowRight } from 'lucide-react'
 
@@ -80,7 +84,7 @@ export function WorkMachinesContent({
   isAdmin: _isAdmin,
   availableMachineTypes,
   pinnedWorkspaces,
-  pinnedEnvironments
+  pinnedEnvironments,
 }: WorkMachinesContentProps) {
   const router = useRouter()
   const [_isPending, startTransition] = useTransition()
@@ -88,7 +92,7 @@ export function WorkMachinesContent({
   const [selectedMachineId, _setSelectedMachineId] = useState(workMachines[0]?.id)
   const [isLoading, setIsLoading] = useState(false)
 
-  const selectedMachine = workMachines.find(m => m.id === selectedMachineId) || workMachines[0]
+  const selectedMachine = workMachines.find((m) => m.id === selectedMachineId) || workMachines[0]
 
   // Sync local state with prop changes when page refreshes
   useEffect(() => {
@@ -120,15 +124,15 @@ export function WorkMachinesContent({
         <div className="mx-auto max-w-7xl px-6 py-8">
           <div className="mb-8">
             <h1 className="text-2xl font-semibold">Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1.5">
+            <p className="text-muted-foreground mt-1.5 text-sm">
               Monitor and manage your development environment
             </p>
           </div>
 
           <div className="bg-card border p-12 text-center">
-            <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-base font-semibold mb-2">No work machine found</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <Server className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+            <h3 className="mb-2 text-base font-semibold">No work machine found</h3>
+            <p className="text-muted-foreground mb-4 text-sm">
               Your work machine is being created. Please refresh the page in a moment.
             </p>
           </div>
@@ -200,21 +204,21 @@ export function WorkMachinesContent({
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-muted-foreground mt-1.5 text-sm">
             Monitor and manage your development environment
           </p>
         </div>
 
         {/* Machine Info Card */}
-        <div className="bg-card border p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-card mb-6 border p-6">
+          <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-primary flex items-center justify-center">
-                <Server className="h-5 w-5 text-primary-foreground" />
+              <div className="bg-primary flex h-10 w-10 items-center justify-center">
+                <Server className="text-primary-foreground h-5 w-5" />
               </div>
               <div>
                 <h2 className="text-base font-semibold">{selectedMachine.name}</h2>
-                <p className="text-xs text-muted-foreground">{selectedMachine.type}</p>
+                <p className="text-muted-foreground text-xs">{selectedMachine.type}</p>
               </div>
             </div>
 
@@ -237,58 +241,83 @@ export function WorkMachinesContent({
           </div>
 
           {/* Machine Stats */}
-          <div className="grid grid-cols-4 gap-6 pt-6 border-t">
+          <div className="grid grid-cols-4 gap-6 border-t pt-6">
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
-              <div className="flex items-center gap-2 mt-2">
-                {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).isTransitioning && (
+              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                Status
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+                  .isTransitioning && (
                   <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
                 )}
-                <p className={`text-sm font-medium ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}>
-                  {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).label}
+                <p
+                  className={`text-sm font-medium ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}
+                >
+                  {
+                    getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+                      .label
+                  }
                 </p>
-                {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).isTransitioning && (
+                {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+                  .isTransitioning && (
                   <>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).desiredLabel}
+                    <ArrowRight className="text-muted-foreground h-3 w-3" />
+                    <span className="text-muted-foreground text-sm font-medium">
+                      {
+                        getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+                          .desiredLabel
+                      }
                     </span>
                   </>
                 )}
               </div>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Uptime</p>
-              <p className="text-sm font-medium mt-2">{selectedMachine.uptime}</p>
+              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                Uptime
+              </p>
+              <p className="mt-2 text-sm font-medium">{selectedMachine.uptime}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Owner</p>
-              <p className="text-sm font-medium mt-2">{selectedMachine.owner.split('@')[0]}</p>
+              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                Owner
+              </p>
+              <p className="mt-2 text-sm font-medium">{selectedMachine.owner.split('@')[0]}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</p>
-              <p className="text-sm font-medium mt-2">{selectedMachine.type}</p>
+              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                Type
+              </p>
+              <p className="mt-2 text-sm font-medium">{selectedMachine.type}</p>
             </div>
           </div>
         </div>
 
         {/* Transitioning State Banner */}
-        {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).isTransitioning && (
-          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
+        {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+          .isTransitioning && (
+          <div className="mb-6 border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <div className="flex items-center gap-3">
               <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
               <div>
                 <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
                   Machine is transitioning from{' '}
                   <span className="font-semibold">
-                    {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).label}
-                  </span>
-                  {' '}to{' '}
+                    {
+                      getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+                        .label
+                    }
+                  </span>{' '}
+                  to{' '}
                   <span className="font-semibold">
-                    {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).desiredLabel}
+                    {
+                      getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+                        .desiredLabel
+                    }
                   </span>
                 </p>
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
                   This may take a few moments. The page will refresh automatically when complete.
                 </p>
               </div>
@@ -297,27 +326,27 @@ export function WorkMachinesContent({
         )}
 
         {/* Stopped State Message */}
-        {selectedMachine.currentState === 'stopped' && !getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).isTransitioning && (
-          <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 text-center">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              Machine is stopped. CPU and Memory are not consuming resources, but disk storage is preserved.
-            </p>
-          </div>
-        )}
+        {selectedMachine.currentState === 'stopped' &&
+          !getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
+            .isTransitioning && (
+            <div className="mb-6 border border-yellow-200 bg-yellow-50 p-4 text-center dark:border-yellow-800 dark:bg-yellow-900/20">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                Machine is stopped. CPU and Memory are not consuming resources, but disk storage is
+                preserved.
+              </p>
+            </div>
+          )}
 
         {/* Metrics Section - Always show, but CPU/Memory are 0 when stopped */}
         <div className="mb-6">
-          <h2 className="text-base font-semibold mb-4">Resource Usage</h2>
+          <h2 className="mb-4 text-base font-semibold">Resource Usage</h2>
           <WorkMachineMetrics />
         </div>
 
         {/* Pinned Resources Section */}
         <div>
-          <h2 className="text-base font-semibold mb-4">Quick Access</h2>
-          <PinnedResources
-            workspaces={pinnedWorkspaces}
-            environments={pinnedEnvironments}
-          />
+          <h2 className="mb-4 text-base font-semibold">Quick Access</h2>
+          <PinnedResources workspaces={pinnedWorkspaces} environments={pinnedEnvironments} />
         </div>
       </div>
     </main>

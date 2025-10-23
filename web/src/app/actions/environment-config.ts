@@ -26,7 +26,7 @@ export async function getConfig(environmentName: string): Promise<GetConfigRespo
 
 export async function setConfig(
   environmentName: string,
-  data: ConfigData
+  data: ConfigData,
 ): Promise<SetConfigResponse> {
   return environmentService.setConfig(environmentName, data)
 }
@@ -42,7 +42,7 @@ export async function getSecret(environmentName: string): Promise<GetSecretRespo
 
 export async function setSecret(
   environmentName: string,
-  data: SecretData
+  data: SecretData,
 ): Promise<SetSecretResponse> {
   return environmentService.setSecret(environmentName, data)
 }
@@ -60,7 +60,7 @@ export async function createEnvVar(
   environmentName: string,
   key: string,
   value: string,
-  type: 'config' | 'secret'
+  type: 'config' | 'secret',
 ): Promise<SetEnvVarResponse> {
   return environmentService.createEnvVar(environmentName, key, value, type)
 }
@@ -69,14 +69,14 @@ export async function setEnvVar(
   environmentName: string,
   key: string,
   value: string,
-  type: 'config' | 'secret'
+  type: 'config' | 'secret',
 ): Promise<SetEnvVarResponse> {
   return environmentService.setEnvVar(environmentName, key, value, type)
 }
 
 export async function deleteEnvVar(
   environmentName: string,
-  key: string
+  key: string,
 ): Promise<DeleteEnvVarResponse> {
   return environmentService.deleteEnvVar(environmentName, key)
 }
@@ -86,24 +86,21 @@ export async function listFiles(environmentName: string): Promise<ListFilesRespo
   return environmentService.listFiles(environmentName)
 }
 
-export async function getFile(
-  environmentName: string,
-  filename: string
-): Promise<GetFileResponse> {
+export async function getFile(environmentName: string, filename: string): Promise<GetFileResponse> {
   return environmentService.getFile(environmentName, filename)
 }
 
 export async function setFile(
   environmentName: string,
   filename: string,
-  content: string
+  content: string,
 ): Promise<SetFileResponse> {
   return environmentService.setFile(environmentName, filename, content)
 }
 
 export async function deleteFile(
   environmentName: string,
-  filename: string
+  filename: string,
 ): Promise<DeleteFileResponse> {
   return environmentService.deleteFile(environmentName, filename)
 }

@@ -36,7 +36,7 @@ interface DnsRecord {
 export async function createDnsRecord(
   name: string,
   ip: string,
-  proxied: boolean = false
+  proxied: boolean = false,
 ): Promise<string | null> {
   try {
     console.log(`Creating DNS A record: ${name} → ${ip}`)
@@ -44,7 +44,7 @@ export async function createDnsRecord(
     const response = await fetch(DNS_API_BASE, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -89,7 +89,7 @@ export async function updateDnsRecord(
   recordId: string,
   name: string,
   ip: string,
-  proxied: boolean = false
+  proxied: boolean = false,
 ): Promise<boolean> {
   try {
     console.log(`Updating DNS A record ${recordId}: ${name} → ${ip}`)
@@ -97,7 +97,7 @@ export async function updateDnsRecord(
     const response = await fetch(`${DNS_API_BASE}/${recordId}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -142,7 +142,7 @@ export async function deleteDnsRecord(recordId: string): Promise<boolean> {
     const response = await fetch(`${DNS_API_BASE}/${recordId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
     })
 
@@ -173,7 +173,7 @@ export async function getDnsRecord(name: string): Promise<DnsRecord | null> {
 
     const response = await fetch(url.toString(), {
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
     })
 
@@ -202,7 +202,7 @@ export async function getDnsRecord(name: string): Promise<DnsRecord | null> {
  */
 export async function createInstallationDnsRecords(
   subdomain: string,
-  ip: string
+  ip: string,
 ): Promise<string[]> {
   const recordIds: string[] = []
 
@@ -227,7 +227,7 @@ export async function createInstallationDnsRecords(
 export async function createWorkmachineDnsRecords(
   workMachineName: string,
   subdomain: string,
-  ip: string
+  ip: string,
 ): Promise<string[]> {
   const recordIds: string[] = []
 
@@ -260,7 +260,7 @@ export async function createWorkmachineDnsRecords(
 export async function updateDnsRecords(
   recordIds: string[],
   name: string,
-  ip: string
+  ip: string,
 ): Promise<boolean> {
   let allSucceeded = true
 

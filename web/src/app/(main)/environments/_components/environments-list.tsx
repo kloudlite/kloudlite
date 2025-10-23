@@ -4,7 +4,16 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Plus, MoreHorizontal, ExternalLink, Power, PowerOff, Edit, Loader2, Copy } from 'lucide-react'
+import {
+  Plus,
+  MoreHorizontal,
+  ExternalLink,
+  Power,
+  PowerOff,
+  Edit,
+  Loader2,
+  Copy,
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +34,10 @@ interface EnvironmentsListProps {
   currentUser: string
 }
 
-export function EnvironmentsList({ environments: initialEnvironments, currentUser }: EnvironmentsListProps) {
+export function EnvironmentsList({
+  environments: initialEnvironments,
+  currentUser,
+}: EnvironmentsListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -33,7 +45,9 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
-  const [cloneSourceEnvironment, setCloneSourceEnvironment] = useState<EnvironmentUIModel | null>(null)
+  const [cloneSourceEnvironment, setCloneSourceEnvironment] = useState<EnvironmentUIModel | null>(
+    null,
+  )
   const [deleteEnvironmentName, setDeleteEnvironmentName] = useState<string | null>(null)
   const [, startTransition] = useTransition()
   const [environments, setEnvironments] = useState<EnvironmentUIModel[]>(initialEnvironments)
@@ -44,7 +58,8 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
     const pollInterval = setInterval(() => {
       // Check if any environment is in a transitional state
       const hasTransitionalEnv = environments.some(
-        env => env.status === 'deleting' || env.status === 'activating' || env.status === 'deactivating'
+        (env) =>
+          env.status === 'deleting' || env.status === 'activating' || env.status === 'deactivating',
       )
 
       if (hasTransitionalEnv) {
@@ -64,12 +79,12 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
 
   // Apply scope filter
   if (scopeFilter === 'mine') {
-    filteredEnvironments = filteredEnvironments.filter(env => env.owner === currentUser)
+    filteredEnvironments = filteredEnvironments.filter((env) => env.owner === currentUser)
   }
 
   // Apply status filter
   if (statusFilter === 'active') {
-    filteredEnvironments = filteredEnvironments.filter(env => env.status === 'active')
+    filteredEnvironments = filteredEnvironments.filter((env) => env.status === 'active')
   }
 
   const handleActivate = async (envName: string) => {
@@ -164,10 +179,10 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Scope Filter */}
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
             <button
               onClick={() => setScope('all')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 scopeFilter === 'all'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -177,7 +192,7 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
             </button>
             <button
               onClick={() => setScope('mine')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 scopeFilter === 'mine'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -188,10 +203,10 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
           </div>
 
           {/* Status Filter */}
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
             <button
               onClick={() => setStatus('all')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'all'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -201,7 +216,7 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
             </button>
             <button
               onClick={() => setStatus('active')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'active'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -211,8 +226,9 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
             </button>
           </div>
 
-          <span className="text-sm text-muted-foreground">
-            {filteredEnvironments.length} {filteredEnvironments.length === 1 ? 'environment' : 'environments'}
+          <span className="text-muted-foreground text-sm">
+            {filteredEnvironments.length}{' '}
+            {filteredEnvironments.length === 1 ? 'environment' : 'environments'}
           </span>
         </div>
         <Button size="sm" className="gap-2" onClick={() => setCreateDialogOpen(true)}>
@@ -222,20 +238,20 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-lg border overflow-hidden">
+      <div className="bg-card overflow-hidden rounded-lg border">
         <table className="min-w-full">
           <thead className="bg-muted/50 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Owner
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                 Actions
               </th>
             </tr>
@@ -246,34 +262,36 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     href={`/environments/${env.id}`}
-                    className="text-sm font-semibold hover:text-primary flex items-center gap-1"
+                    className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                   >
                     {env.name}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {env.owner.split('@')[0]}
-                </td>
+                <td className="px-6 py-4 text-sm whitespace-nowrap">{env.owner.split('@')[0]}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                    env.status === 'active'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : env.status === 'deleting'
-                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                      : env.status === 'activating' || env.status === 'deactivating'
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'bg-secondary text-secondary-foreground'
-                  }`}>
-                    {(env.status === 'deleting' || env.status === 'activating' || env.status === 'deactivating') && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      env.status === 'active'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : env.status === 'deleting'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                          : env.status === 'activating' || env.status === 'deactivating'
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                            : 'bg-secondary text-secondary-foreground'
+                    }`}
+                  >
+                    {(env.status === 'deleting' ||
+                      env.status === 'activating' ||
+                      env.status === 'deactivating') && (
                       <Loader2 className="h-3 w-3 animate-spin" />
                     )}
                     {env.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                   {env.status === 'deleting' ? (
-                    <span className="text-xs text-muted-foreground">Deleting...</span>
+                    <span className="text-muted-foreground text-xs">Deleting...</span>
                   ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -283,14 +301,10 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/environments/${env.id}`}>
-                            View Details
-                          </Link>
+                          <Link href={`/environments/${env.id}`}>View Details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleEditClick(env)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
+                        <DropdownMenuItem onClick={() => handleEditClick(env)}>
+                          <Edit className="mr-2 h-4 w-4" />
                           Edit Settings
                         </DropdownMenuItem>
                         {env.status === 'active' ? (
@@ -298,7 +312,7 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
                             onClick={() => handleDeactivate(env.name)}
                             className="text-orange-600"
                           >
-                            <PowerOff className="h-4 w-4 mr-2" />
+                            <PowerOff className="mr-2 h-4 w-4" />
                             Deactivate
                           </DropdownMenuItem>
                         ) : (
@@ -306,12 +320,12 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
                             onClick={() => handleActivate(env.name)}
                             className="text-green-600"
                           >
-                            <Power className="h-4 w-4 mr-2" />
+                            <Power className="mr-2 h-4 w-4" />
                             Activate
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => handleCloneClick(env)}>
-                          <Copy className="h-4 w-4 mr-2" />
+                          <Copy className="mr-2 h-4 w-4" />
                           Clone Environment
                         </DropdownMenuItem>
                         <DropdownMenuItem>Export Config</DropdownMenuItem>
@@ -333,15 +347,15 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
       </div>
 
       {filteredEnvironments.length === 0 && (
-        <div className="bg-card rounded-lg border text-center py-12">
-          <p className="text-sm text-muted-foreground">
+        <div className="bg-card rounded-lg border py-12 text-center">
+          <p className="text-muted-foreground text-sm">
             {scopeFilter === 'mine' && statusFilter === 'active'
               ? "You don't have any active environments"
               : scopeFilter === 'mine'
-              ? "You don't have any environments yet"
-              : statusFilter === 'active'
-              ? "No active environments found"
-              : "No environments found"}
+                ? "You don't have any environments yet"
+                : statusFilter === 'active'
+                  ? 'No active environments found'
+                  : 'No environments found'}
           </p>
         </div>
       )}

@@ -11,16 +11,13 @@ import type {
 /**
  * Server action to list workspaces
  */
-export async function listWorkspaces(
-  namespace: string = 'default',
-  params?: WorkspaceListParams
-) {
+export async function listWorkspaces(namespace: string = 'default', params?: WorkspaceListParams) {
   try {
     const result = await workspaceService.list(namespace, params)
     return { success: true, data: result }
   } catch (err) {
     console.error('List workspaces error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -37,7 +34,7 @@ export async function getWorkspace(name: string, namespace: string = 'default') 
     return { success: true, data: result }
   } catch (err) {
     console.error('Get workspace error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -48,17 +45,14 @@ export async function getWorkspace(name: string, namespace: string = 'default') 
 /**
  * Server action to create a workspace
  */
-export async function createWorkspace(
-  namespace: string,
-  data: WorkspaceCreateRequest
-) {
+export async function createWorkspace(namespace: string, data: WorkspaceCreateRequest) {
   try {
     const result = await workspaceService.create(data, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
     console.error('Create workspace error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -72,7 +66,7 @@ export async function createWorkspace(
 export async function updateWorkspace(
   name: string,
   namespace: string,
-  data: WorkspaceUpdateRequest
+  data: WorkspaceUpdateRequest,
 ) {
   try {
     const result = await workspaceService.update(name, data, namespace)
@@ -80,7 +74,7 @@ export async function updateWorkspace(
     return { success: true, data: result }
   } catch (err) {
     console.error('Update workspace error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -98,7 +92,7 @@ export async function deleteWorkspace(name: string, namespace: string = 'default
     return { success: true }
   } catch (err) {
     console.error('Delete workspace error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -116,7 +110,7 @@ export async function suspendWorkspace(name: string, namespace: string = 'defaul
     return { success: true, data: result }
   } catch (err) {
     console.error('Suspend workspace error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -134,7 +128,7 @@ export async function activateWorkspace(name: string, namespace: string = 'defau
     return { success: true, data: result }
   } catch (err) {
     console.error('Activate workspace error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -152,7 +146,7 @@ export async function archiveWorkspace(name: string, namespace: string = 'defaul
     return { success: true, data: result }
   } catch (err) {
     console.error('Archive workspace error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -180,7 +174,7 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
     const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${name}/metrics`
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${session.user.backendToken}`,
+        Authorization: `Bearer ${session.user.backendToken}`,
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
@@ -198,7 +192,7 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
     return { success: true, data }
   } catch (err) {
     console.error('Get workspace metrics error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -226,7 +220,7 @@ export async function getNodeMetrics(nodeName: string = 'master') {
     const url = `${env.apiUrl}/api/v1/nodes/${nodeName}/metrics`
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${session.user.backendToken}`,
+        Authorization: `Bearer ${session.user.backendToken}`,
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
@@ -244,7 +238,7 @@ export async function getNodeMetrics(nodeName: string = 'master') {
     return { success: true, data }
   } catch (err) {
     console.error('Get node metrics error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,

@@ -158,7 +158,7 @@ export interface DeleteSecretResponse {
 // EnvVars types (unified configs + secrets)
 export interface EnvVar {
   key: string
-  value: string  // Empty for secrets (security)
+  value: string // Empty for secrets (security)
   type: 'config' | 'secret'
 }
 
@@ -271,6 +271,6 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     workspaces: [],
     lastDeployed: env.status?.lastActivatedTime
       ? new Date(env.status.lastActivatedTime).toLocaleString()
-      : 'Never'
+      : 'Never',
   }
 }

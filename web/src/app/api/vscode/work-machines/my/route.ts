@@ -6,10 +6,7 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('authorization')
 
     if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authorization header required' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
     }
 
     // Proxy to backend
@@ -17,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(backendUrl, {
       headers: {
-        'Authorization': authHeader,
+        Authorization: authHeader,
         'Content-Type': 'application/json',
       },
     })
@@ -26,20 +23,16 @@ export async function GET(request: NextRequest) {
       const errorText = await response.text()
       return NextResponse.json(
         { error: errorText || 'Failed to get work machine' },
-        { status: response.status }
+        { status: response.status },
       )
     }
 
     const data = await response.json()
     return NextResponse.json(data)
-
   } catch (err) {
     console.error('Work machine API error:', err)
     const error = err instanceof Error ? err : new Error('Internal server error')
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
@@ -48,10 +41,7 @@ export async function PUT(request: NextRequest) {
     const authHeader = request.headers.get('authorization')
 
     if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authorization header required' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -62,7 +52,7 @@ export async function PUT(request: NextRequest) {
     const response = await fetch(backendUrl, {
       method: 'PUT',
       headers: {
-        'Authorization': authHeader,
+        Authorization: authHeader,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -72,19 +62,15 @@ export async function PUT(request: NextRequest) {
       const errorText = await response.text()
       return NextResponse.json(
         { error: errorText || 'Failed to update work machine' },
-        { status: response.status }
+        { status: response.status },
       )
     }
 
     const data = await response.json()
     return NextResponse.json(data)
-
   } catch (err) {
     console.error('Work machine API error:', err)
     const error = err instanceof Error ? err : new Error('Internal server error')
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

@@ -10,6 +10,6 @@ export function getThemeFromCookie(): Theme {
   if (typeof document === 'undefined') return 'light'
 
   const cookies = document.cookie.split('; ')
-  const themeCookie = cookies.find(cookie => cookie.startsWith(`${THEME_COOKIE_NAME}=`))
+  const themeCookie = cookies.find((cookie) => cookie.startsWith(`${THEME_COOKIE_NAME}=`))
   return (themeCookie?.split('=')[1] as Theme) || 'light'
 }

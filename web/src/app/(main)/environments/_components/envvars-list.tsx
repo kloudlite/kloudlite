@@ -16,17 +16,17 @@ export function EnvVarsList({ environmentId, envVars }: EnvVarsListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium">Envvars</h3>
-          <p className="text-sm text-muted-foreground">Configuration and secret envvars</p>
+          <p className="text-muted-foreground text-sm">Configuration and secret envvars</p>
         </div>
         <AddEnvVarSheet environmentId={environmentId} onSuccess={() => router.refresh()} />
       </div>
 
       {envVars.length === 0 ? (
-        <div className="text-center py-12 bg-muted/50 rounded-lg border">
-          <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <div className="bg-muted/50 rounded-lg border py-12 text-center">
+          <Key className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
           <p className="text-muted-foreground">No envvars</p>
           <div className="mt-4">
             <AddEnvVarSheet environmentId={environmentId} onSuccess={() => router.refresh()} />

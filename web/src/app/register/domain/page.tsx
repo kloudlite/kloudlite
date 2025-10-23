@@ -36,7 +36,7 @@ const subdomainSchema = z.object({
     .max(63, 'Subdomain must be less than 63 characters')
     .regex(
       /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/,
-      'Subdomain must start and end with alphanumeric characters and can only contain lowercase letters, numbers, and hyphens'
+      'Subdomain must start and end with alphanumeric characters and can only contain lowercase letters, numbers, and hyphens',
     ),
 })
 
@@ -130,8 +130,8 @@ export default function DomainPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="size-8 animate-spin text-primary" />
+      <div className="bg-background flex min-h-screen items-center justify-center">
+        <Loader2 className="text-primary size-8 animate-spin" />
       </div>
     )
   }
@@ -141,14 +141,12 @@ export default function DomainPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center p-8">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <KloudliteLogo className="mx-auto mb-6" />
-          <h1 className="text-2xl font-medium text-foreground mb-2">
-            Choose Your Domain
-          </h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-foreground mb-2 text-2xl font-medium">Choose Your Domain</h1>
+          <p className="text-muted-foreground text-sm">
             Select a subdomain for your Kloudlite workspace
           </p>
         </div>
@@ -156,9 +154,7 @@ export default function DomainPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Workspace Domain</CardTitle>
-            <CardDescription>
-              Your team will access Kloudlite at this domain
-            </CardDescription>
+            <CardDescription>Your team will access Kloudlite at this domain</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -175,34 +171,35 @@ export default function DomainPage() {
                             placeholder="your-company"
                             {...field}
                             disabled={saving}
-                            className="h-10 px-3 text-sm pr-10"
+                            className="h-10 px-3 pr-10 text-sm"
                             onChange={(e) => {
                               field.onChange(e)
                               checkSubdomainAvailability(e.target.value)
                             }}
                           />
                           {checkingSubdomain && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                            <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                              <Loader2 className="text-muted-foreground size-4 animate-spin" />
                             </div>
                           )}
                           {!checkingSubdomain && subdomainAvailable === true && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="absolute top-1/2 right-3 -translate-y-1/2">
                               <CheckCircle2 className="size-4 text-green-600" />
                             </div>
                           )}
                           {!checkingSubdomain && subdomainAvailable === false && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <AlertCircle className="size-4 text-destructive" />
+                            <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                              <AlertCircle className="text-destructive size-4" />
                             </div>
                           )}
                         </div>
                       </FormControl>
                       <FormDescription className="text-xs">
-                        Your workspace will be available at {field.value || 'your-subdomain'}.kloudlite.io
+                        Your workspace will be available at {field.value || 'your-subdomain'}
+                        .kloudlite.io
                       </FormDescription>
                       {!checkingSubdomain && subdomainAvailable === false && (
-                        <p className="text-sm text-destructive">This subdomain is already taken</p>
+                        <p className="text-destructive text-sm">This subdomain is already taken</p>
                       )}
                       <FormMessage />
                     </FormItem>
@@ -216,7 +213,7 @@ export default function DomainPage() {
                 >
                   {saving ? (
                     <>
-                      <Loader2 className="size-4 animate-spin mr-2" />
+                      <Loader2 className="mr-2 size-4 animate-spin" />
                       Reserving domain...
                     </>
                   ) : (

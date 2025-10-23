@@ -22,7 +22,7 @@ const OAUTH_CONFIGS = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ provider: string }> }
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   const { provider: providerParam } = await params
   const provider = providerParam as keyof typeof OAUTH_CONFIGS

@@ -29,31 +29,29 @@ interface EnvironmentCardProps {
 
 export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
   return (
-    <Link href={`/environments/${env.id}`} className="block group">
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all cursor-pointer">
+    <Link href={`/environments/${env.id}`} className="group block">
+      <div className="cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-gray-300 hover:shadow-md">
         {/* Card Header */}
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="border-b border-gray-100 px-6 py-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-lg font-medium text-gray-900 transition-colors group-hover:text-blue-600">
                   {env.name}
                 </h3>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                  env.status === 'active'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-600'
-                }`}>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    env.status === 'active'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
                   {env.status}
                 </span>
               </div>
-              <div className="flex flex-col gap-0.5 mt-1">
-                <p className="text-sm text-gray-500">
-                  Owned by {env.owner.split('@')[0]}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Last deployed {env.lastDeployed}
-                </p>
+              <div className="mt-1 flex flex-col gap-0.5">
+                <p className="text-sm text-gray-500">Owned by {env.owner.split('@')[0]}</p>
+                <p className="text-sm text-gray-500">Last deployed {env.lastDeployed}</p>
               </div>
             </div>
             <DropdownMenu>
@@ -75,10 +73,7 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
                 <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                   Export Config
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <DropdownMenuItem className="text-red-600" onClick={(e) => e.stopPropagation()}>
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -89,7 +84,7 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
         {/* Card Body */}
         <div className="px-6 py-4">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="mb-4 grid grid-cols-3 gap-4">
             <div className="flex items-center gap-2">
               <Box className="h-4 w-4 text-gray-400" />
               <div>
@@ -114,8 +109,8 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
           </div>
 
           {/* Connected Workspaces */}
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-2">
+          <div className="border-t border-gray-100 pt-4">
+            <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-medium text-gray-500">Connected Workspaces</p>
               {env.workspaces.length > 0 && (
                 <span className="text-xs text-gray-400">{env.workspaces.length}</span>
@@ -123,8 +118,11 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
             </div>
             {env.workspaces.length > 0 ? (
               <div className="flex flex-wrap gap-1">
-                {env.workspaces.map(workspace => (
-                  <span key={workspace} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">
+                {env.workspaces.map((workspace) => (
+                  <span
+                    key={workspace}
+                    className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                  >
                     {workspace}
                   </span>
                 ))}
@@ -135,10 +133,8 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
           </div>
 
           {/* Footer */}
-          <div className="pt-3 mt-3 border-t border-gray-100">
-            <span className="text-xs text-gray-500">
-              Created {env.created}
-            </span>
+          <div className="mt-3 border-t border-gray-100 pt-3">
+            <span className="text-xs text-gray-500">Created {env.created}</span>
           </div>
         </div>
       </div>

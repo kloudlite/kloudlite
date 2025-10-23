@@ -9,48 +9,53 @@ interface EnvVarsTableProps {
 
 export function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
   return (
-    <div className="bg-card rounded-lg border overflow-hidden">
+    <div className="bg-card overflow-hidden rounded-lg border">
       <table className="min-w-full">
         <thead className="bg-muted/50 border-b">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Key</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Value</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+            <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              Key
+            </th>
+            <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              Value
+            </th>
+            <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              Type
+            </th>
+            <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y">
           {envVars.map((envVar) => (
             <tr key={envVar.key} className="hover:bg-muted/50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                 <div className="flex items-center gap-2">
-                  <Key className="h-4 w-4 text-muted-foreground" />
+                  <Key className="text-muted-foreground h-4 w-4" />
                   {envVar.key}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+              <td className="px-6 py-4 font-mono text-sm whitespace-nowrap">
                 {envVar.type === 'secret' ? (
                   <span className="text-muted-foreground">••••••••</span>
                 ) : (
-                  <span className="max-w-xs truncate block">{envVar.value}</span>
+                  <span className="block max-w-xs truncate">{envVar.value}</span>
                 )}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
+              <td className="px-6 py-4 text-sm whitespace-nowrap">
                 {envVar.type === 'config' ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                     Config
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                  <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
                     Secret
                   </span>
                 )}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-1">
-                <EnvVarActions
-                  envVar={envVar}
-                  environmentId={environmentId}
-                />
+              <td className="space-x-1 px-6 py-4 text-right text-sm whitespace-nowrap">
+                <EnvVarActions envVar={envVar} environmentId={environmentId} />
               </td>
             </tr>
           ))}

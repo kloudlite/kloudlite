@@ -16,11 +16,7 @@ import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { isSystemReady, SystemSetupPage } from '@/lib/system-check'
 
 // Admin layout - middleware ensures only users with admin/super-admin roles (and no 'user' role) can access this
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
 
   // Session and role access is guaranteed by middleware

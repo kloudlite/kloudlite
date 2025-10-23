@@ -17,20 +17,12 @@ import {
   CheckCircle,
   XCircle,
   Terminal,
-  FolderOpen
+  FolderOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WorkMachineMetrics } from '../../(main)/workspaces/_components/work-machine-metrics'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import {
-  Alert,
-  AlertDescription,
-} from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface Workspace {
   id: string
@@ -88,7 +80,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
   const handleRestart = async () => {
     setIsRestarting(true)
     // Simulate restart
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    await new Promise((resolve) => setTimeout(resolve, 3000))
     setIsRestarting(false)
   }
 
@@ -110,12 +102,8 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/administration')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <Button variant="ghost" size="sm" onClick={() => router.push('/administration')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Machines
           </Button>
         </div>
@@ -136,11 +124,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                 <RefreshCw className={`h-4 w-4 ${isRestarting ? 'animate-spin' : ''}`} />
                 Restart
               </Button>
-              <Button
-                onClick={handleStop}
-                variant="destructive"
-                className="gap-2"
-              >
+              <Button onClick={handleStop} variant="destructive" className="gap-2">
                 <Square className="h-4 w-4" />
                 Stop Machine
               </Button>
@@ -154,17 +138,17 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
       </div>
 
       {/* Machine Info */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-start justify-between mb-6">
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <div className="mb-6 flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <Server className="h-10 w-10 text-gray-400 mt-1" />
+            <Server className="mt-1 h-10 w-10 text-gray-400" />
             <div>
-              <h1 className="text-2xl font-semibold flex items-center gap-2">
+              <h1 className="flex items-center gap-2 text-2xl font-semibold">
                 {machine.name}
                 {getStatusIcon(machine.status)}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">Owner: {machine.owner}</p>
-              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-600">Owner: {machine.owner}</p>
+              <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
                   <Activity className="h-4 w-4" />
                   Type: {machine.type}
@@ -185,9 +169,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
       {/* Tabs */}
       <Tabs defaultValue="workspaces" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="workspaces">
-            Workspaces ({machine.workspaces.length})
-          </TabsTrigger>
+          <TabsTrigger value="workspaces">Workspaces ({machine.workspaces.length})</TabsTrigger>
           <TabsTrigger value="environments">
             Environments ({machine.environments.length})
           </TabsTrigger>
@@ -195,13 +177,13 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
         </TabsList>
 
         <TabsContent value="workspaces">
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-medium">Active Workspaces</h2>
             </div>
             <div className="divide-y divide-gray-200">
               {machine.workspaces.map((workspace) => (
-                <div key={workspace.id} className="px-6 py-4 flex items-center justify-between">
+                <div key={workspace.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-4">
                     <FolderOpen className="h-5 w-5 text-gray-400" />
                     <div>
@@ -220,11 +202,13 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                         {workspace.resources.memory}%
                       </span>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      workspace.status === 'running'
-                        ? 'bg-green-50 text-green-600'
-                        : 'bg-gray-50 text-gray-600'
-                    }`}>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                        workspace.status === 'running'
+                          ? 'bg-green-50 text-green-600'
+                          : 'bg-gray-50 text-gray-600'
+                      }`}
+                    >
                       {workspace.status}
                     </span>
                     <Button variant="ghost" size="sm">
@@ -234,22 +218,20 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                 </div>
               ))}
               {machine.workspaces.length === 0 && (
-                <div className="px-6 py-12 text-center text-gray-500">
-                  No active workspaces
-                </div>
+                <div className="px-6 py-12 text-center text-gray-500">No active workspaces</div>
               )}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="environments">
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-medium">Active Environments</h2>
             </div>
             <div className="divide-y divide-gray-200">
               {machine.environments.map((environment) => (
-                <div key={environment.id} className="px-6 py-4 flex items-center justify-between">
+                <div key={environment.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-4">
                     <Server className="h-5 w-5 text-gray-400" />
                     <div>
@@ -267,28 +249,28 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                         {environment.resources.memory}%
                       </span>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      environment.status === 'running'
-                        ? 'bg-green-50 text-green-600'
-                        : 'bg-gray-50 text-gray-600'
-                    }`}>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                        environment.status === 'running'
+                          ? 'bg-green-50 text-green-600'
+                          : 'bg-gray-50 text-gray-600'
+                      }`}
+                    >
                       {environment.status}
                     </span>
                   </div>
                 </div>
               ))}
               {machine.environments.length === 0 && (
-                <div className="px-6 py-12 text-center text-gray-500">
-                  No active environments
-                </div>
+                <div className="px-6 py-12 text-center text-gray-500">No active environments</div>
               )}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="activity">
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-medium">Activity Log</h2>
             </div>
             <div className="divide-y divide-gray-200">
@@ -296,8 +278,8 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                 <div key={index} className="px-6 py-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-medium text-sm">{log.action}</p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm font-medium">{log.action}</p>
+                      <p className="mt-1 text-sm text-gray-500">
                         by {log.user === 'system' ? 'System' : log.user}
                       </p>
                     </div>
@@ -317,7 +299,8 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            This machine is experiencing high resource usage. Consider upgrading to a higher tier or optimizing resource consumption.
+            This machine is experiencing high resource usage. Consider upgrading to a higher tier or
+            optimizing resource consumption.
           </AlertDescription>
         </Alert>
       ) : null}

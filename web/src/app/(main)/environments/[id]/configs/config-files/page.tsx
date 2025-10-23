@@ -11,7 +11,7 @@ interface FilesPageProps {
 // Error component
 function FilesError({ error }: { error: string }) {
   return (
-    <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
       <div className="flex items-center gap-2 text-red-800">
         <AlertCircle className="h-5 w-5" />
         <span className="font-medium">Error loading files</span>

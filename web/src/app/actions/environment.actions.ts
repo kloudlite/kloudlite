@@ -2,10 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { environmentService } from '@/lib/services/environment.service'
-import type {
-  EnvironmentCreateRequest,
-  EnvironmentUpdateRequest
-} from '@/types/environment'
+import type { EnvironmentCreateRequest, EnvironmentUpdateRequest } from '@/types/environment'
 
 /**
  * Server action to create an environment
@@ -17,10 +14,10 @@ export async function createEnvironment(data: EnvironmentCreateRequest) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Create environment error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -36,10 +33,10 @@ export async function updateEnvironment(name: string, data: EnvironmentUpdateReq
     return { success: true, data: result }
   } catch (err) {
     console.error('Update environment error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -54,10 +51,10 @@ export async function deleteEnvironment(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Delete environment error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -73,10 +70,10 @@ export async function activateEnvironment(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Activate environment error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -92,10 +89,10 @@ export async function deactivateEnvironment(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Deactivate environment error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -109,10 +106,10 @@ export async function getEnvironmentStatus(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Get environment status error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -126,7 +123,7 @@ export async function cloneEnvironment(
   targetNamespace: string,
   cloneEnvVars: boolean,
   cloneFiles: boolean,
-  currentUser: string
+  currentUser: string,
 ) {
   try {
     const result = await environmentService.cloneEnvironment(
@@ -135,16 +132,16 @@ export async function cloneEnvironment(
       targetNamespace,
       cloneEnvVars,
       cloneFiles,
-      currentUser
+      currentUser,
     )
     revalidatePath('/environments')
     return { success: true, data: result }
   } catch (err) {
     console.error('Clone environment error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }

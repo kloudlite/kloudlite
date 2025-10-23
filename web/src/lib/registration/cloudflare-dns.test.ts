@@ -8,7 +8,7 @@ import {
   createInstallationDnsRecords,
   createWorkmachineDnsRecords,
   updateDnsRecords,
-  deleteDnsRecords
+  deleteDnsRecords,
 } from './cloudflare-dns'
 
 // Mock global fetch
@@ -31,13 +31,13 @@ describe('Cloudflare DNS Service', () => {
           name: 'test.test.dev',
           content: '1.2.3.4',
           proxied: false,
-          ttl: 120
-        }
+          ttl: 120,
+        },
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       })
 
       const recordId = await createDnsRecord('test.test.dev', '1.2.3.4')
@@ -48,18 +48,18 @@ describe('Cloudflare DNS Service', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'Authorization': expect.stringContaining('Bearer'),
-            'Content-Type': 'application/json'
+            Authorization: expect.stringContaining('Bearer'),
+            'Content-Type': 'application/json',
           }),
-          body: expect.stringContaining('"type":"A"')
-        })
+          body: expect.stringContaining('"type":"A"'),
+        }),
       )
     })
 
     it('should return null when API call fails', async () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
-        text: async () => 'API Error'
+        text: async () => 'API Error',
       })
 
       const recordId = await createDnsRecord('test.test.dev', '1.2.3.4')
@@ -72,12 +72,12 @@ describe('Cloudflare DNS Service', () => {
         success: false,
         errors: [{ code: 1004, message: 'DNS validation failed' }],
         messages: [],
-        result: null
+        result: null,
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       })
 
       const recordId = await createDnsRecord('invalid.test.dev', '1.2.3.4')
@@ -96,13 +96,13 @@ describe('Cloudflare DNS Service', () => {
           name: 'cdn.test.dev',
           content: '1.2.3.4',
           proxied: true,
-          ttl: 120
-        }
+          ttl: 120,
+        },
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       })
 
       const recordId = await createDnsRecord('cdn.test.dev', '1.2.3.4', true)
@@ -123,13 +123,13 @@ describe('Cloudflare DNS Service', () => {
           name: 'test.test.dev',
           content: '5.6.7.8',
           proxied: false,
-          ttl: 120
-        }
+          ttl: 120,
+        },
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       })
 
       const success = await updateDnsRecord('dns-record-123', 'test.test.dev', '5.6.7.8')
@@ -138,15 +138,15 @@ describe('Cloudflare DNS Service', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/dns_records/dns-record-123'),
         expect.objectContaining({
-          method: 'PATCH'
-        })
+          method: 'PATCH',
+        }),
       )
     })
 
     it('should return false when update fails', async () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
-        text: async () => 'Update failed'
+        text: async () => 'Update failed',
       })
 
       const success = await updateDnsRecord('dns-record-123', 'test.test.dev', '5.6.7.8')
@@ -159,7 +159,7 @@ describe('Cloudflare DNS Service', () => {
     it('should delete DNS record successfully', async () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        text: async () => 'Success'
+        text: async () => 'Success',
       })
 
       const success = await deleteDnsRecord('dns-record-123')
@@ -168,8 +168,8 @@ describe('Cloudflare DNS Service', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/dns_records/dns-record-123'),
         expect.objectContaining({
-          method: 'DELETE'
-        })
+          method: 'DELETE',
+        }),
       )
     })
 
@@ -177,7 +177,7 @@ describe('Cloudflare DNS Service', () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         status: 404,
-        text: async () => 'Not found'
+        text: async () => 'Not found',
       })
 
       const success = await deleteDnsRecord('dns-record-123')
@@ -189,7 +189,7 @@ describe('Cloudflare DNS Service', () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         status: 500,
-        text: async () => 'Server error'
+        text: async () => 'Server error',
       })
 
       const success = await deleteDnsRecord('dns-record-123')
@@ -204,19 +204,21 @@ describe('Cloudflare DNS Service', () => {
         success: true,
         errors: [],
         messages: [],
-        result: [{
-          id: 'dns-record-123',
-          type: 'A',
-          name: 'test.test.dev',
-          content: '1.2.3.4',
-          proxied: false,
-          ttl: 120
-        }]
+        result: [
+          {
+            id: 'dns-record-123',
+            type: 'A',
+            name: 'test.test.dev',
+            content: '1.2.3.4',
+            proxied: false,
+            ttl: 120,
+          },
+        ],
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       })
 
       const record = await getDnsRecord('test.test.dev')
@@ -227,7 +229,7 @@ describe('Cloudflare DNS Service', () => {
         name: 'test.test.dev',
         content: '1.2.3.4',
         proxied: false,
-        ttl: 120
+        ttl: 120,
       })
     })
 
@@ -236,12 +238,12 @@ describe('Cloudflare DNS Service', () => {
         success: true,
         errors: [],
         messages: [],
-        result: []
+        result: [],
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       })
 
       const record = await getDnsRecord('nonexistent.test.dev')
@@ -262,13 +264,13 @@ describe('Cloudflare DNS Service', () => {
           name: 'myapp.test.dev',
           content: '1.2.3.4',
           proxied: false,
-          ttl: 120
-        }
+          ttl: 120,
+        },
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       })
 
       const recordIds = await createInstallationDnsRecords('myapp', '1.2.3.4')
@@ -280,7 +282,7 @@ describe('Cloudflare DNS Service', () => {
     it('should return empty array if creation fails', async () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
-        text: async () => 'Failed'
+        text: async () => 'Failed',
       })
 
       const recordIds = await createInstallationDnsRecords('myapp', '1.2.3.4')
@@ -301,8 +303,8 @@ describe('Cloudflare DNS Service', () => {
           name: 'dev1.myapp.test.dev',
           content: '1.2.3.5',
           proxied: false,
-          ttl: 120
-        }
+          ttl: 120,
+        },
       }
 
       const wildcardMockResponse = {
@@ -315,17 +317,17 @@ describe('Cloudflare DNS Service', () => {
           name: '*.dev1.myapp.test.dev',
           content: '1.2.3.5',
           proxied: false,
-          ttl: 120
-        }
+          ttl: 120,
+        },
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => exactMockResponse
+        json: async () => exactMockResponse,
       })
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => wildcardMockResponse
+        json: async () => wildcardMockResponse,
       })
 
       const recordIds = await createWorkmachineDnsRecords('dev1', 'myapp', '1.2.3.5')
@@ -345,17 +347,17 @@ describe('Cloudflare DNS Service', () => {
           name: 'dev1.myapp.test.dev',
           content: '1.2.3.5',
           proxied: false,
-          ttl: 120
-        }
+          ttl: 120,
+        },
       }
 
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => exactMockResponse
+        json: async () => exactMockResponse,
       })
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
-        text: async () => 'Failed'
+        text: async () => 'Failed',
       })
 
       const recordIds = await createWorkmachineDnsRecords('dev1', 'myapp', '1.2.3.5')
@@ -373,15 +375,11 @@ describe('Cloudflare DNS Service', () => {
           success: true,
           errors: [],
           messages: [],
-          result: {}
-        })
+          result: {},
+        }),
       })
 
-      const success = await updateDnsRecords(
-        ['dns-1', 'dns-2'],
-        'test.test.dev',
-        '5.6.7.8'
-      )
+      const success = await updateDnsRecords(['dns-1', 'dns-2'], 'test.test.dev', '5.6.7.8')
 
       expect(success).toBe(true)
       expect(global.fetch).toHaveBeenCalledTimes(2)
@@ -394,19 +392,15 @@ describe('Cloudflare DNS Service', () => {
           success: true,
           errors: [],
           messages: [],
-          result: {}
-        })
+          result: {},
+        }),
       })
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
-        text: async () => 'Failed'
+        text: async () => 'Failed',
       })
 
-      const success = await updateDnsRecords(
-        ['dns-1', 'dns-2'],
-        'test.test.dev',
-        '5.6.7.8'
-      )
+      const success = await updateDnsRecords(['dns-1', 'dns-2'], 'test.test.dev', '5.6.7.8')
 
       expect(success).toBe(false)
     })
@@ -416,7 +410,7 @@ describe('Cloudflare DNS Service', () => {
     it('should delete multiple DNS records successfully', async () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
-        text: async () => 'Success'
+        text: async () => 'Success',
       })
 
       const success = await deleteDnsRecords(['dns-1', 'dns-2', 'dns-3'])
@@ -428,12 +422,12 @@ describe('Cloudflare DNS Service', () => {
     it('should return false if any deletion fails', async () => {
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        text: async () => 'Success'
+        text: async () => 'Success',
       })
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         status: 500,
-        text: async () => 'Server error'
+        text: async () => 'Server error',
       })
 
       const success = await deleteDnsRecords(['dns-1', 'dns-2'])

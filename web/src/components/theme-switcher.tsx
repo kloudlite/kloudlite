@@ -21,15 +21,10 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggleTheme}
-      aria-label="Toggle theme"
-    >
+    <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
       {/* Show moon icon in light mode, sun icon in dark mode */}
       <Moon className="h-4 w-4 dark:hidden" />
-      <Sun className="h-4 w-4 hidden dark:block" />
+      <Sun className="hidden h-4 w-4 dark:block" />
     </Button>
   )
 }

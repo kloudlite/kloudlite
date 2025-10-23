@@ -65,7 +65,7 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Variable
         </Button>
       </SheetTrigger>
@@ -73,9 +73,7 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
         <form onSubmit={handleSubmit} className="flex h-full flex-col">
           <SheetHeader>
             <SheetTitle>Add Envvar</SheetTitle>
-            <SheetDescription>
-              Add a new configuration or secret envvar
-            </SheetDescription>
+            <SheetDescription>Add a new configuration or secret envvar</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-6 overflow-y-auto p-4">
@@ -90,7 +88,7 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                 required
                 className="font-mono text-sm"
               />
-              <p className="text-sm text-muted-foreground">The envvar name</p>
+              <p className="text-muted-foreground text-sm">The envvar name</p>
             </div>
 
             <div className="space-y-2">
@@ -105,45 +103,49 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                 required
                 className="font-mono text-sm"
               />
-              <p className="text-sm text-muted-foreground">The envvar value</p>
+              <p className="text-muted-foreground text-sm">The envvar value</p>
             </div>
 
             <div className="space-y-3">
               <Label>Type</Label>
               <div className="space-y-2">
-                <label className="flex items-center space-x-3 border rounded-lg p-3 cursor-pointer hover:bg-accent/50">
+                <label className="hover:bg-accent/50 flex cursor-pointer items-center space-x-3 rounded-lg border p-3">
                   <input
                     type="radio"
                     name="type"
                     value="config"
                     checked={type === 'config'}
                     onChange={(e) => setType(e.target.value as 'config' | 'secret')}
-                    className="w-4 h-4 text-blue-600"
+                    className="h-4 w-4 text-blue-600"
                   />
                   <div className="flex-1">
                     <div className="font-medium">Config</div>
-                    <div className="text-sm text-muted-foreground">Regular configuration variable (visible in list)</div>
+                    <div className="text-muted-foreground text-sm">
+                      Regular configuration variable (visible in list)
+                    </div>
                   </div>
                 </label>
-                <label className="flex items-center space-x-3 border rounded-lg p-3 cursor-pointer hover:bg-accent/50">
+                <label className="hover:bg-accent/50 flex cursor-pointer items-center space-x-3 rounded-lg border p-3">
                   <input
                     type="radio"
                     name="type"
                     value="secret"
                     checked={type === 'secret'}
                     onChange={(e) => setType(e.target.value as 'config' | 'secret')}
-                    className="w-4 h-4 text-blue-600"
+                    className="h-4 w-4 text-blue-600"
                   />
                   <div className="flex-1">
                     <div className="font-medium">Secret</div>
-                    <div className="text-sm text-muted-foreground">Sensitive data (value hidden in list)</div>
+                    <div className="text-muted-foreground text-sm">
+                      Sensitive data (value hidden in list)
+                    </div>
                   </div>
                 </label>
               </div>
             </div>
           </div>
 
-          <SheetFooter className="flex-row justify-end gap-2 p-4 border-t">
+          <SheetFooter className="flex-row justify-end gap-2 border-t p-4">
             <Button
               type="button"
               variant="outline"
