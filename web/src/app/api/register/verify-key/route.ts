@@ -47,24 +47,13 @@ export async function POST(request: NextRequest) {
     const updatedUser = await updateHealthCheck(user.email)
     user.lastHealthCheck = updatedUser.lastHealthCheck
 
-    // Return user info including secretKey for bearer token auth
+    // Return only operational information needed by deployment
     const response = NextResponse.json({
       success: true,
-      user: {
-        userId: user.userId,
-        email: user.email,
-        name: user.name,
-        providers: user.providers,
-        registeredAt: user.registeredAt,
-        hasCompletedInstallation: user.hasCompletedInstallation,
-        subdomain: user.subdomain,
-        domainConfigured: !!user.subdomain,
-        url: user.subdomain ? `https://${user.subdomain}.kloudlite.io` : null,
-        deploymentReady: user.deploymentReady || false,
-        ipRecords: user.ipRecords || [],
-        secretKey: user.secretKey, // Include secret key for bearer token authentication
-        lastHealthCheck: user.lastHealthCheck,
-      },
+      secretKey: user.secretKey,
+      subdomain: user.subdomain,
+      deploymentReady: user.deploymentReady || false,
+      ipRecords: user.ipRecords || [],
     })
 
     // Disable all caching
