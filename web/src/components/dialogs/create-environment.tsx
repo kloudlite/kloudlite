@@ -116,9 +116,10 @@ export function CreateEnvironmentDialog({
       } else {
         setError(result.error || 'Failed to create environment. Please try again.')
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to create environment:', err)
-      setError(err.message || 'Failed to create environment. Please try again.')
+      const error = err instanceof Error ? err : new Error('Failed to create environment')
+      setError(error.message)
     } finally {
       setLoading(false)
     }

@@ -28,8 +28,33 @@ export interface UpdateUserFormData {
   isActive?: boolean
 }
 
+// Backend API User resource structure
+export interface UserProvider {
+  provider: string
+  providerId: string
+  connectedAt?: string
+}
+
+export interface UserResource {
+  metadata?: {
+    name?: string
+    uid?: string
+    creationTimestamp?: string
+  }
+  spec?: {
+    email?: string
+    displayName?: string
+    active?: boolean
+    roles?: string[]
+    providers?: UserProvider[]
+  }
+  status?: {
+    lastLogin?: string
+  }
+}
+
 // Utility function to convert API User to UserDisplay
-export function userToDisplay(user: any): UserDisplay {
+export function userToDisplay(user: UserResource): UserDisplay {
   const email = user.spec?.email || ''
   const displayName = user.spec?.displayName || email.split('@')[0]
 
@@ -58,7 +83,7 @@ export function userToDisplay(user: any): UserDisplay {
     lastLogin: lastLoginAt ? formatTimeAgo(lastLoginAt) : 'Never',
     created: formatTimeAgo(createdAt),
     displayName: user.spec?.displayName,
-    providers: user.spec?.providers?.map((p: any) => ({
+    providers: user.spec?.providers?.map((p: UserProvider) => ({
       provider: p.provider,
       providerId: p.providerId,
       connectedAt: p.connectedAt

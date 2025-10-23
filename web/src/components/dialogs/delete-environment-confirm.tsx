@@ -93,9 +93,10 @@ export function DeleteEnvironmentConfirm({
       } else {
         setError(parseErrorMessage(result.error || ''))
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to delete environment:', err)
-      setError(parseErrorMessage(err.message || ''))
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      setError(parseErrorMessage(error.message))
     } finally {
       setLoading(false)
     }
