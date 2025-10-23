@@ -15,7 +15,7 @@ export const runtime = 'nodejs'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { installationKey, markComplete } = body
+    const { installationKey } = body
 
     if (!installationKey) {
       return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
@@ -41,12 +41,6 @@ export async function POST(request: NextRequest) {
       user.hasCompletedInstallation = updatedUser.hasCompletedInstallation
 
       console.log('Secret key generated and installation marked as complete')
-    }
-
-    // Optionally mark installation as complete (legacy support)
-    if (markComplete && !user.hasCompletedInstallation) {
-      const updatedUser = await markInstallationComplete(user.email)
-      user.hasCompletedInstallation = updatedUser.hasCompletedInstallation
     }
 
     // Atomically update last health check timestamp (deployment is polling)

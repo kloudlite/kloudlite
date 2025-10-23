@@ -48,14 +48,12 @@ The secret key is generated when the deployment first verifies itself.
 **Request Body:**
 ```json
 {
-  "installationKey": "uuid-string",
-  "markComplete": true  // Optional, legacy support
+  "installationKey": "uuid-string"
 }
 ```
 
 **Request Parameters:**
 - `installationKey` (required): UUID provided during registration
-- `markComplete` (optional): Mark installation as complete (legacy)
 
 **Response (Success - 200):**
 ```json
