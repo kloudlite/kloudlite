@@ -3,9 +3,9 @@ import { listFiles } from '@/app/actions/environment-config'
 import { AlertCircle } from 'lucide-react'
 
 interface FilesPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 // Error component

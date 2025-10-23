@@ -18,6 +18,7 @@ import {
 import { createComposition, updateComposition } from '@/app/actions/composition.actions'
 import { toast } from 'sonner'
 import type { Composition } from '@/types/composition'
+import type { Extension } from '@codemirror/state'
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
@@ -26,7 +27,6 @@ const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
 interface CompositionEditorProps {
   composition: Composition | null
   namespace: string
-  user: string
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -38,20 +38,20 @@ const defaultComposeContent = `services:
       - "80:80"
 `
 
-export function CompositionEditor({ composition, namespace, user, open, onOpenChange }: CompositionEditorProps) {
+export function CompositionEditor({ composition, namespace, open, onOpenChange }: CompositionEditorProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [composeContent, setComposeContent] = useState(
     composition?.spec.composeContent || defaultComposeContent
   )
-  const [yamlExtension, setYamlExtension] = useState<unknown>(null)
+  const [yamlExtension, setYamlExtension] = useState<Extension | null>(null)
 
   useEffect(() => {
     import('@codemirror/lang-yaml').then((mod) => {
       setYamlExtension(mod.yaml())
     }).catch((err) => {
       console.error('Failed to load YAML extension:', err)
-      setYamlExtension([])
+      setYamlExtension(null)
     })
   }, [])
 
@@ -74,8 +74,7 @@ export function CompositionEditor({ composition, namespace, user, open, onOpenCh
             composeContent: composeContent,
             composeFormat: 'v3.8',
           },
-        },
-        user
+        }
       )
 
       // If update failed because composition doesn't exist, create it
@@ -89,8 +88,7 @@ export function CompositionEditor({ composition, namespace, user, open, onOpenCh
               composeContent: composeContent,
               composeFormat: 'v3.8',
             },
-          },
-          user
+          }
         )
       }
 

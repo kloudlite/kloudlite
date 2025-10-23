@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, MoreHorizontal, UserPlus, Edit, Trash2, Key, Mail, Loader2, UserCheck, UserX } from 'lucide-react'
+import { Plus, MoreHorizontal, Edit, Trash2, Key, Mail, Loader2, UserCheck, UserX } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,13 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { createUser, updateUser, deleteUser, resetUserPassword } from '@/lib/actions/user-actions'
 import { UserDisplay, CreateUserFormData } from '@/types/user'
 import { toast } from 'sonner'

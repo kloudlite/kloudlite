@@ -1,7 +1,7 @@
 'use server'
 
 import { apiClient } from '@/lib/api-client'
-import { userService, type User, type CreateUserRequest, type UpdateUserRequest } from '@/lib/services/user.service'
+import { userService, type CreateUserRequest, type UpdateUserRequest } from '@/lib/services/user.service'
 import { userToDisplay, type UserDisplay, type CreateUserFormData, type UserResource } from '@/types/user'
 import { revalidatePath } from 'next/cache'
 
@@ -58,12 +58,12 @@ export async function authenticateUser(userData: UserData) {
     }
 
     // Check if this provider is already connected
-    const existingProviders = existingUser.spec.providers || []
+    const existingProviders = existingUser.spec?.providers || []
     const providerIndex = existingProviders.findIndex(
-      (p: ProviderAccount) => p.provider === userData.provider
+      (p) => p.provider === userData.provider
     )
 
-    let updatedProviders: ProviderAccount[]
+    let updatedProviders
     if (providerIndex >= 0) {
       // Update existing provider info
       updatedProviders = [...existingProviders]
@@ -77,22 +77,17 @@ export async function authenticateUser(userData: UserData) {
     const updatePayload = {
       ...existingUser.spec,
       providers: updatedProviders,
-      metadata: {
-        ...(existingUser.spec.metadata ?? {}),
-        lastProvider: userData.provider,
-        totalProviders: updatedProviders.length.toString(),
-      }
     }
 
     // Update using the Kubernetes resource name from metadata
     const updatedUser = await apiClient.put(
-      `/api/v1/users/${existingUser.metadata.name}`,
+      `/api/v1/users/${existingUser.metadata?.name}`,
       updatePayload
     )
 
     // Update last login in status field using dedicated endpoint
     try {
-      await apiClient.post(`/api/v1/users/${existingUser.metadata.name}/update-last-login`)
+      await apiClient.post(`/api/v1/users/${existingUser.metadata?.name}/update-last-login`)
     } catch (error) {
       console.warn('Failed to update last login status:', error)
       // Don't fail authentication if this fails

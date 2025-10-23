@@ -11,7 +11,7 @@ export interface UserDisplay {
   providers?: Array<{
     provider: string
     providerId: string
-    connectedAt: string
+    connectedAt?: string
   }>
 }
 
@@ -69,10 +69,8 @@ export function userToDisplay(user: UserResource): UserDisplay {
   // Extract roles from the roles array or default to ['user']
   const roles = user.spec?.roles || []
 
-  // For display, show the highest privilege role first, but store all roles
-  const roleHierarchy = ['super-admin', 'admin', 'user']
+  // For display, show all roles consistently
   const userRoles = roles.length > 0 ? roles : ['user']
-  const primaryRole = roleHierarchy.find(role => userRoles.includes(role)) || userRoles[0]
 
   return {
     id: user.metadata?.name || user.metadata?.uid || email,

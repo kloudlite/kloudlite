@@ -24,7 +24,7 @@ interface NavigationProps {
   userRoles?: string[]
 }
 
-export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRoles = [] }: NavigationProps) {
+export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRoles: _userRoles = [] }: NavigationProps) {
   const pathname = usePathname()
 
   const navItems = [

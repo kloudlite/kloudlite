@@ -99,10 +99,11 @@ export function CreateEnvironmentDialog({
         spec: {
           targetNamespace: targetNamespace,
           activated: false,
+          createdBy: currentUser,
         },
       }
 
-      const result = await createEnvironment(request, currentUser)
+      const result = await createEnvironment(request)
 
       if (result.success) {
         // Reset form

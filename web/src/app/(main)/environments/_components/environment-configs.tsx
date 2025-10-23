@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Lock, FileText, Key, File, Plus, Trash2, Eye, EyeOff, Upload, Download, Edit2 } from 'lucide-react'
+import { Lock, FileText, File, Trash2, Eye, EyeOff, Upload, Download, Edit2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 type ConfigType = 'configs' | 'secrets' | 'files'

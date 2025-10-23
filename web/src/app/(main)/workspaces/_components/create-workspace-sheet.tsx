@@ -176,7 +176,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
 
     startTransition(async () => {
       // Convert PackageWithVersion to PackageSpec (remove displayVersion)
-      const packageSpecs: PackageSpec[] = packages.map(({ displayVersion, ...pkg }) => pkg)
+      const packageSpecs: PackageSpec[] = packages.map(({ displayVersion: _displayVersion, ...pkg }) => pkg)
 
       const result = await createWorkspace(namespace, {
         name: name.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-'),

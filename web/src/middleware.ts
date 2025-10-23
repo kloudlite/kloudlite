@@ -202,8 +202,8 @@ async function handleDashboardMode(
  * Handles public website routing
  */
 async function handleWebsiteMode(
-  req: NextRequest,
-  pathname: string
+  _req: NextRequest,
+  _pathname: string
 ): Promise<NextResponse> {
   // Website is public, no authentication required
   return NextResponse.next()

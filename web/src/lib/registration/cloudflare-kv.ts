@@ -84,7 +84,7 @@ export async function kvPut(key: string, value: JsonValue, expirationTtl?: numbe
       throw new Error(`KV PUT failed: ${error}`)
     }
 
-    const result: CloudflareKVResponse = await response.json()
+    const result: CloudflareKVResponse<null> = await response.json()
 
     if (!result.success) {
       throw new Error(`KV PUT failed: ${result.errors[0]?.message || 'Unknown error'}`)

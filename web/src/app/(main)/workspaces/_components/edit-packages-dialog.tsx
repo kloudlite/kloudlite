@@ -156,7 +156,7 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
     setIsLoading(true)
 
     // Convert PackageWithVersion to PackageSpec
-    const packageSpecs: PackageSpec[] = packages.map(({ displayVersion, ...pkg }) => pkg)
+    const packageSpecs: PackageSpec[] = packages.map(({ displayVersion: _displayVersion, ...pkg }) => pkg)
 
     const result = await updateWorkspace(
       workspace.metadata.name,

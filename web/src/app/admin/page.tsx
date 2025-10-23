@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
 import { isSystemReady } from '@/lib/system-check'
 
 export default async function AdminPage() {

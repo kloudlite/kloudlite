@@ -55,7 +55,7 @@ export class ApiClient {
         // Extract the most relevant error message
         const message = errorJson.error || errorJson.message || errorText
         throw new Error(message)
-      } catch (parseError) {
+      } catch (_parseError) {
         // If not JSON, use the raw error text
         throw new Error(errorText || `Request failed with status ${response.status}`)
       }
@@ -137,7 +137,7 @@ export class UnauthenticatedApiClient {
         // Extract the most relevant error message
         const message = errorJson.error || errorJson.message || errorText
         throw new Error(message)
-      } catch (parseError) {
+      } catch (_parseError) {
         // If not JSON, use the raw error text
         throw new Error(errorText || `Request failed with status ${response.status}`)
       }

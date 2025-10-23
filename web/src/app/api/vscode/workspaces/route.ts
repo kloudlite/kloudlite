@@ -14,9 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Extract the connection token from Bearer header
-    const token = authHeader.replace('Bearer ', '')
-
-    // Decode the JWT to get user information (we don't need to verify since backend will verify)
+    // We don't need to decode it since the backend will verify it
     // For now, we'll just forward the request to the backend
 
     // Proxy the request to the backend API
