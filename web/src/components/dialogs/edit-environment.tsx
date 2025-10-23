@@ -87,9 +87,10 @@ export function EditEnvironmentDialog({
           description: result.error || 'An error occurred while updating the environment',
         })
       }
-    } catch (error: any) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
       toast.error('Failed to update environment', {
-        description: error.message || 'An error occurred while updating the environment',
+        description: error.message,
       })
     } finally {
       setIsSubmitting(false)

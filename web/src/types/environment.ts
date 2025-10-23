@@ -6,7 +6,7 @@ export interface EnvironmentMetadata {
   resourceVersion?: string
   generation?: number
   creationTimestamp?: string
-  managedFields?: any[]
+  managedFields?: unknown[]
 }
 
 export interface ResourceQuotas {

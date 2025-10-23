@@ -120,9 +120,10 @@ export function CloneEnvironmentDialog({
       } else {
         setError(result.error || 'Failed to clone environment. Please try again.')
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to clone environment:', err)
-      setError(err.message || 'Failed to clone environment. Please try again.')
+      const error = err instanceof Error ? err : new Error('Failed to clone environment')
+      setError(error.message)
     } finally {
       setLoading(false)
     }
