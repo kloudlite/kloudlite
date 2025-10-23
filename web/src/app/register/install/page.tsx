@@ -20,9 +20,7 @@ interface SessionData {
 const getCloudProviderCommands = (installationKey: string) => ({
   aws: {
     name: 'AWS',
-    commands: [
-      `curl -fsSL https://get.kloudlite.io/aws | bash -s -- --key ${installationKey}`,
-    ],
+    commands: [`curl -fsSL https://get.kloudlite.io/aws | bash -s -- --key ${installationKey}`],
     requirements: [
       'AWS CLI configured',
       'IAM user with EC2 full access and iam:PassRole permissions',
@@ -31,9 +29,7 @@ const getCloudProviderCommands = (installationKey: string) => ({
   },
   gcp: {
     name: 'Google Cloud',
-    commands: [
-      `curl -fsSL https://get.kloudlite.io/gcp | bash -s -- --key ${installationKey}`,
-    ],
+    commands: [`curl -fsSL https://get.kloudlite.io/gcp | bash -s -- --key ${installationKey}`],
     requirements: [
       'gcloud CLI configured',
       'Service account with Compute Admin and Service Account User roles',
@@ -42,9 +38,7 @@ const getCloudProviderCommands = (installationKey: string) => ({
   },
   azure: {
     name: 'Azure',
-    commands: [
-      `curl -fsSL https://get.kloudlite.io/azure | bash -s -- --key ${installationKey}`,
-    ],
+    commands: [`curl -fsSL https://get.kloudlite.io/azure | bash -s -- --key ${installationKey}`],
     requirements: [
       'Azure CLI configured',
       'Service principal with Virtual Machine Contributor and User Access Administrator roles',
@@ -105,8 +99,8 @@ export default function InstallPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="size-8 animate-spin text-primary" />
+      <div className="bg-background flex min-h-screen items-center justify-center">
+        <Loader2 className="text-primary size-8 animate-spin" />
       </div>
     )
   }
@@ -125,19 +119,17 @@ export default function InstallPage() {
   const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey)
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center p-8">
       <div className="w-full max-w-3xl">
-        <div className="mb-8 text-center flex flex-col items-center">
+        <div className="mb-8 flex flex-col items-center text-center">
           <KloudliteLogo className="mb-6 h-8" />
-          <h1 className="text-2xl font-medium text-foreground mb-2">
+          <h1 className="text-foreground mb-2 text-2xl font-medium">
             Welcome, {session.user?.name || 'User'}!
           </h1>
-          <p className="text-sm text-muted-foreground mb-4">
-            {session.user?.email || ''}
-          </p>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
-            <span className="text-xs text-muted-foreground">Installation Key:</span>
-            <code className="text-xs font-mono text-foreground">{session.installationKey}</code>
+          <p className="text-muted-foreground mb-4 text-sm">{session.user?.email || ''}</p>
+          <div className="bg-muted inline-flex items-center gap-2 rounded-md px-3 py-1.5">
+            <span className="text-muted-foreground text-xs">Installation Key:</span>
+            <code className="text-foreground font-mono text-xs">{session.installationKey}</code>
             <Button
               variant="ghost"
               size="sm"
@@ -168,7 +160,7 @@ export default function InstallPage() {
               </TabsList>
 
               {Object.entries(CLOUD_PROVIDERS).map(([key, config]) => (
-                <TabsContent key={key} value={key} className="space-y-4 mt-4">
+                <TabsContent key={key} value={key} className="mt-4 space-y-4">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Cloud className="size-4" />
                     Installing on {config.name}
@@ -176,11 +168,11 @@ export default function InstallPage() {
 
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm font-medium mb-2">Prerequisites:</p>
-                      <ul className="text-sm text-muted-foreground space-y-1">
+                      <p className="mb-2 text-sm font-medium">Prerequisites:</p>
+                      <ul className="text-muted-foreground space-y-1 text-sm">
                         {config.requirements.map((req, idx) => (
                           <li key={idx} className="flex items-center gap-2">
-                            <div className="size-1.5 rounded-full bg-muted-foreground" />
+                            <div className="bg-muted-foreground size-1.5 rounded-full" />
                             {req}
                           </li>
                         ))}
@@ -188,12 +180,12 @@ export default function InstallPage() {
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium mb-2">Installation steps:</p>
+                      <p className="mb-2 text-sm font-medium">Installation steps:</p>
                       <div className="space-y-2">
                         {config.commands.map((cmd, idx) => (
                           <div key={idx} className="bg-muted rounded-lg p-3">
                             <div className="flex items-start justify-between gap-2">
-                              <code className="text-xs font-mono flex-1">{cmd}</code>
+                              <code className="flex-1 font-mono text-xs">{cmd}</code>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -212,11 +204,11 @@ export default function InstallPage() {
               ))}
             </Tabs>
 
-            <div className="pt-4 border-t">
+            <div className="border-t pt-4">
               <Button onClick={handleContinue} className="w-full">
                 I&apos;ve completed installation
               </Button>
-              <p className="text-xs text-muted-foreground text-center mt-2">
+              <p className="text-muted-foreground mt-2 text-center text-xs">
                 Click continue after running the installation commands
               </p>
             </div>
@@ -224,12 +216,7 @@ export default function InstallPage() {
         </Card>
 
         <div className="mt-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="gap-2"
-          >
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
             <LogOut className="size-4" />
             Sign out
           </Button>

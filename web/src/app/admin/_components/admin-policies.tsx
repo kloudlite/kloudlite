@@ -1,10 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Save,
-  AlertCircle
-} from 'lucide-react'
+import { Save, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,23 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import {
-  Alert,
-  AlertDescription,
-} from '@/components/ui/alert'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function AdminPolicies() {
   const [machineTypes, setMachineTypes] = useState({
@@ -64,7 +47,7 @@ export function AdminPolicies() {
   const handleSave = async () => {
     setIsSaving(true)
     // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
     setIsSaving(false)
   }
 
@@ -74,7 +57,7 @@ export function AdminPolicies() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Machine Policies</h1>
-          <p className="text-sm text-gray-600 mt-1.5">
+          <p className="mt-1.5 text-sm text-gray-600">
             Configure machine types, resource limits, and user policies
           </p>
         </div>
@@ -87,7 +70,8 @@ export function AdminPolicies() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Changes to policies will affect all users immediately. Existing machines will be updated on their next restart.
+          Changes to policies will affect all users immediately. Existing machines will be updated
+          on their next restart.
         </AlertDescription>
       </Alert>
 
@@ -109,20 +93,20 @@ export function AdminPolicies() {
             </CardHeader>
             <CardContent className="space-y-6">
               {Object.entries(machineTypes).map(([type, specs]) => (
-                <div key={type} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
+                <div key={type} className="rounded-lg border p-4">
+                  <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-lg font-medium capitalize">{type}</h3>
                     <Switch
                       checked={specs.enabled}
                       onCheckedChange={(checked) =>
-                        setMachineTypes(prev => ({
+                        setMachineTypes((prev) => ({
                           ...prev,
-                          [type]: { ...prev[type as keyof typeof prev], enabled: checked }
+                          [type]: { ...prev[type as keyof typeof prev], enabled: checked },
                         }))
                       }
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div>
                       <Label htmlFor={`${type}-cpu`}>CPU Cores</Label>
                       <Input
@@ -130,9 +114,12 @@ export function AdminPolicies() {
                         type="number"
                         value={specs.cpu}
                         onChange={(e) =>
-                          setMachineTypes(prev => ({
+                          setMachineTypes((prev) => ({
                             ...prev,
-                            [type]: { ...prev[type as keyof typeof prev], cpu: parseInt(e.target.value) }
+                            [type]: {
+                              ...prev[type as keyof typeof prev],
+                              cpu: parseInt(e.target.value),
+                            },
                           }))
                         }
                         disabled={!specs.enabled}
@@ -145,9 +132,12 @@ export function AdminPolicies() {
                         type="number"
                         value={specs.memory}
                         onChange={(e) =>
-                          setMachineTypes(prev => ({
+                          setMachineTypes((prev) => ({
                             ...prev,
-                            [type]: { ...prev[type as keyof typeof prev], memory: parseInt(e.target.value) }
+                            [type]: {
+                              ...prev[type as keyof typeof prev],
+                              memory: parseInt(e.target.value),
+                            },
                           }))
                         }
                         disabled={!specs.enabled}
@@ -160,9 +150,12 @@ export function AdminPolicies() {
                         type="number"
                         value={specs.disk}
                         onChange={(e) =>
-                          setMachineTypes(prev => ({
+                          setMachineTypes((prev) => ({
                             ...prev,
-                            [type]: { ...prev[type as keyof typeof prev], disk: parseInt(e.target.value) }
+                            [type]: {
+                              ...prev[type as keyof typeof prev],
+                              disk: parseInt(e.target.value),
+                            },
                           }))
                         }
                         disabled={!specs.enabled}
@@ -184,13 +177,13 @@ export function AdminPolicies() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <Label htmlFor="default-type">Default Machine Type</Label>
                   <Select
                     value={userPolicies.defaultMachineType}
                     onValueChange={(value) =>
-                      setUserPolicies(prev => ({ ...prev, defaultMachineType: value }))
+                      setUserPolicies((prev) => ({ ...prev, defaultMachineType: value }))
                     }
                   >
                     <SelectTrigger id="default-type">
@@ -211,7 +204,10 @@ export function AdminPolicies() {
                     type="number"
                     value={userPolicies.maxMachinesPerUser}
                     onChange={(e) =>
-                      setUserPolicies(prev => ({ ...prev, maxMachinesPerUser: parseInt(e.target.value) }))
+                      setUserPolicies((prev) => ({
+                        ...prev,
+                        maxMachinesPerUser: parseInt(e.target.value),
+                      }))
                     }
                   />
                 </div>
@@ -226,7 +222,7 @@ export function AdminPolicies() {
                   <Switch
                     checked={userPolicies.allowTypeUpgrade}
                     onCheckedChange={(checked) =>
-                      setUserPolicies(prev => ({ ...prev, allowTypeUpgrade: checked }))
+                      setUserPolicies((prev) => ({ ...prev, allowTypeUpgrade: checked }))
                     }
                   />
                 </div>
@@ -238,13 +234,13 @@ export function AdminPolicies() {
                   <Switch
                     checked={userPolicies.requireApprovalForPremium}
                     onCheckedChange={(checked) =>
-                      setUserPolicies(prev => ({ ...prev, requireApprovalForPremium: checked }))
+                      setUserPolicies((prev) => ({ ...prev, requireApprovalForPremium: checked }))
                     }
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <Label htmlFor="auto-stop">Auto-stop Idle (minutes)</Label>
                   <Input
@@ -252,10 +248,13 @@ export function AdminPolicies() {
                     type="number"
                     value={userPolicies.autoStopIdleMinutes}
                     onChange={(e) =>
-                      setUserPolicies(prev => ({ ...prev, autoStopIdleMinutes: parseInt(e.target.value) }))
+                      setUserPolicies((prev) => ({
+                        ...prev,
+                        autoStopIdleMinutes: parseInt(e.target.value),
+                      }))
                     }
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="mt-1 text-sm text-gray-500">
                     Machines will auto-stop after this idle time
                   </p>
                 </div>
@@ -266,10 +265,13 @@ export function AdminPolicies() {
                     type="number"
                     value={userPolicies.maxIdleMinutes}
                     onChange={(e) =>
-                      setUserPolicies(prev => ({ ...prev, maxIdleMinutes: parseInt(e.target.value) }))
+                      setUserPolicies((prev) => ({
+                        ...prev,
+                        maxIdleMinutes: parseInt(e.target.value),
+                      }))
                     }
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="mt-1 text-sm text-gray-500">
                     Force stop machines after this idle time
                   </p>
                 </div>
@@ -282,12 +284,10 @@ export function AdminPolicies() {
           <Card>
             <CardHeader>
               <CardTitle>Resource Quotas</CardTitle>
-              <CardDescription>
-                Set maximum resource limits per machine
-              </CardDescription>
+              <CardDescription>Set maximum resource limits per machine</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <Label htmlFor="max-workspaces">Max Workspaces per Machine</Label>
                   <Input
@@ -295,7 +295,10 @@ export function AdminPolicies() {
                     type="number"
                     value={resourceQuotas.maxWorkspacesPerMachine}
                     onChange={(e) =>
-                      setResourceQuotas(prev => ({ ...prev, maxWorkspacesPerMachine: parseInt(e.target.value) }))
+                      setResourceQuotas((prev) => ({
+                        ...prev,
+                        maxWorkspacesPerMachine: parseInt(e.target.value),
+                      }))
                     }
                   />
                 </div>
@@ -306,7 +309,10 @@ export function AdminPolicies() {
                     type="number"
                     value={resourceQuotas.maxEnvironmentsPerMachine}
                     onChange={(e) =>
-                      setResourceQuotas(prev => ({ ...prev, maxEnvironmentsPerMachine: parseInt(e.target.value) }))
+                      setResourceQuotas((prev) => ({
+                        ...prev,
+                        maxEnvironmentsPerMachine: parseInt(e.target.value),
+                      }))
                     }
                   />
                 </div>
@@ -317,7 +323,10 @@ export function AdminPolicies() {
                     type="number"
                     value={resourceQuotas.maxDiskUsageGB}
                     onChange={(e) =>
-                      setResourceQuotas(prev => ({ ...prev, maxDiskUsageGB: parseInt(e.target.value) }))
+                      setResourceQuotas((prev) => ({
+                        ...prev,
+                        maxDiskUsageGB: parseInt(e.target.value),
+                      }))
                     }
                   />
                 </div>
@@ -328,7 +337,10 @@ export function AdminPolicies() {
                     type="number"
                     value={resourceQuotas.maxMemoryUsageGB}
                     onChange={(e) =>
-                      setResourceQuotas(prev => ({ ...prev, maxMemoryUsageGB: parseInt(e.target.value) }))
+                      setResourceQuotas((prev) => ({
+                        ...prev,
+                        maxMemoryUsageGB: parseInt(e.target.value),
+                      }))
                     }
                   />
                 </div>
@@ -339,7 +351,10 @@ export function AdminPolicies() {
                     type="number"
                     value={resourceQuotas.maxCPUCores}
                     onChange={(e) =>
-                      setResourceQuotas(prev => ({ ...prev, maxCPUCores: parseInt(e.target.value) }))
+                      setResourceQuotas((prev) => ({
+                        ...prev,
+                        maxCPUCores: parseInt(e.target.value),
+                      }))
                     }
                   />
                 </div>
@@ -352,16 +367,16 @@ export function AdminPolicies() {
           <Card>
             <CardHeader>
               <CardTitle>Auto Scaling</CardTitle>
-              <CardDescription>
-                Configure automatic resource scaling based on usage
-              </CardDescription>
+              <CardDescription>Configure automatic resource scaling based on usage</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Enable Auto Scaling</Label>
-                    <p className="text-sm text-gray-500">Automatically adjust resources based on usage</p>
+                    <p className="text-sm text-gray-500">
+                      Automatically adjust resources based on usage
+                    </p>
                   </div>
                   <Switch />
                 </div>
@@ -374,26 +389,18 @@ export function AdminPolicies() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <Label htmlFor="scale-up-threshold">Scale Up Threshold (%)</Label>
-                  <Input
-                    id="scale-up-threshold"
-                    type="number"
-                    defaultValue="80"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <Input id="scale-up-threshold" type="number" defaultValue="80" />
+                  <p className="mt-1 text-sm text-gray-500">
                     Scale up when usage exceeds this threshold
                   </p>
                 </div>
                 <div>
                   <Label htmlFor="scale-down-threshold">Scale Down Threshold (%)</Label>
-                  <Input
-                    id="scale-down-threshold"
-                    type="number"
-                    defaultValue="20"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <Input id="scale-down-threshold" type="number" defaultValue="20" />
+                  <p className="mt-1 text-sm text-gray-500">
                     Scale down when usage falls below this threshold
                   </p>
                 </div>

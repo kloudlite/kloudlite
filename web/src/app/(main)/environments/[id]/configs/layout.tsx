@@ -13,9 +13,7 @@ export default async function ConfigsLayout({ children, params }: LayoutProps) {
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="flex gap-6">
         <ConfigSectionNav environmentId={id} />
-        <div className="flex-1">
-          {children}
-        </div>
+        <div className="flex-1">{children}</div>
       </div>
     </div>
   )

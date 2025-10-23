@@ -62,9 +62,7 @@ export function userToDisplay(user: UserResource): UserDisplay {
     ? new Date(user.metadata.creationTimestamp)
     : new Date()
 
-  const lastLoginAt = user.status?.lastLogin
-    ? new Date(user.status.lastLogin)
-    : null
+  const lastLoginAt = user.status?.lastLogin ? new Date(user.status.lastLogin) : null
 
   // Extract roles from the roles array or default to ['user']
   const roles = user.spec?.roles || []
@@ -81,11 +79,12 @@ export function userToDisplay(user: UserResource): UserDisplay {
     lastLogin: lastLoginAt ? formatTimeAgo(lastLoginAt) : 'Never',
     created: formatTimeAgo(createdAt),
     displayName: user.spec?.displayName,
-    providers: user.spec?.providers?.map((p: UserProvider) => ({
-      provider: p.provider,
-      providerId: p.providerId,
-      connectedAt: p.connectedAt
-    })) || []
+    providers:
+      user.spec?.providers?.map((p: UserProvider) => ({
+        provider: p.provider,
+        providerId: p.providerId,
+        connectedAt: p.connectedAt,
+      })) || [],
   }
 }
 

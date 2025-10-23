@@ -31,7 +31,7 @@ export const authConfig: NextAuthConfig = {
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -40,10 +40,10 @@ export const authConfig: NextAuthConfig = {
 
         try {
           // Call backend API to authenticate and get JWT token
-          const response = await unauthenticatedApiClient.post('/api/v1/auth/login', {
+          const response = (await unauthenticatedApiClient.post('/api/v1/auth/login', {
             email: credentials.email,
-            password: credentials.password
-          }) as LoginResponse
+            password: credentials.password,
+          })) as LoginResponse
 
           if (response.token && response.user) {
             // Return user object with JWT token that will be stored in NextAuth JWT cookie
@@ -53,7 +53,7 @@ export const authConfig: NextAuthConfig = {
               name: response.user.displayName || response.user.email,
               roles: response.roles,
               backendToken: response.token, // This will be stored in the NextAuth JWT cookie
-              isActive: response.user.isActive
+              isActive: response.user.isActive,
             }
           }
           return null
@@ -61,7 +61,7 @@ export const authConfig: NextAuthConfig = {
           console.error('Login error:', error)
           return null
         }
-      }
+      },
     }),
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -103,9 +103,9 @@ export const authConfig: NextAuthConfig = {
           // Get JWT token from backend for OAuth providers
           if (account.provider !== 'credentials' && user.email) {
             try {
-              const response = await unauthenticatedApiClient.post('/api/v1/auth/token', {
-                email: user.email
-              }) as TokenResponse
+              const response = (await unauthenticatedApiClient.post('/api/v1/auth/token', {
+                email: user.email,
+              })) as TokenResponse
               if (response.token) {
                 token.backendToken = response.token
                 token.roles = response.roles
@@ -171,7 +171,7 @@ export const authConfig: NextAuthConfig = {
     },
     async redirect({ url, baseUrl }) {
       // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (url.startsWith('/')) return `${baseUrl}${url}`
       // Allows callback URLs on the same origin
       else if (new URL(url).origin === baseUrl) return url
       // Default redirect to homepage after login

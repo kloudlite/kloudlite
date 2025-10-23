@@ -167,9 +167,13 @@ export function CreateEnvironmentDialog({
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-1 text-sm text-gray-600 transition-colors hover:text-gray-900"
               >
-                {showAdvanced ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {showAdvanced ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
                 Advanced Options
               </button>
 
@@ -181,12 +185,15 @@ export function CreateEnvironmentDialog({
                       id="namespace"
                       placeholder={`env-${formData.name || 'environment-name'}`}
                       value={formData.targetNamespace}
-                      onChange={(e) => setFormData({ ...formData, targetNamespace: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, targetNamespace: e.target.value })
+                      }
                       disabled={loading}
                     />
                     <p className="text-xs text-gray-500">
-                      Leave empty to auto-generate as &quot;env-{formData.name || 'environment-name'}&quot;.
-                      The Kubernetes namespace that will be created for this environment.
+                      Leave empty to auto-generate as &quot;env-
+                      {formData.name || 'environment-name'}&quot;. The Kubernetes namespace that
+                      will be created for this environment.
                     </p>
                   </div>
                 </div>

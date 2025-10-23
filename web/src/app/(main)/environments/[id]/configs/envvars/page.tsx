@@ -11,7 +11,7 @@ interface PageProps {
 // Error component
 function EnvVarsError({ error }: { error: string }) {
   return (
-    <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
       <div className="flex items-center gap-2 text-red-800">
         <AlertCircle className="h-5 w-5" />
         <span className="font-medium">Error loading envvars</span>
@@ -29,6 +29,10 @@ export default async function EnvVarsPage({ params }: PageProps) {
 
     return <EnvVarsList environmentId={id} envVars={envVars} />
   } catch (error) {
-    return <EnvVarsError error={error instanceof Error ? error.message : 'Failed to load environment variables'} />
+    return (
+      <EnvVarsError
+        error={error instanceof Error ? error.message : 'Failed to load environment variables'}
+      />
+    )
   }
 }

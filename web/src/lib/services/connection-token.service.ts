@@ -55,7 +55,10 @@ class ConnectionTokenServiceImpl implements ConnectionTokenService {
   }
 
   async createToken(data: CreateConnectionTokenRequest): Promise<ConnectionTokenResponse> {
-    const response = await apiClient.post<ConnectionTokenResponse>('/api/v1/connection-tokens', data)
+    const response = await apiClient.post<ConnectionTokenResponse>(
+      '/api/v1/connection-tokens',
+      data,
+    )
     return response
   }
 

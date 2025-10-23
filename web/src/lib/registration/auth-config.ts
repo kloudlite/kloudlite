@@ -1,17 +1,17 @@
-import NextAuth from "next-auth"
-import GitHub from "next-auth/providers/github"
-import Google from "next-auth/providers/google"
-import { Provider } from "next-auth/providers"
+import NextAuth from 'next-auth'
+import GitHub from 'next-auth/providers/github'
+import Google from 'next-auth/providers/google'
+import { Provider } from 'next-auth/providers'
 
 // Microsoft Azure AD provider configuration
 const AzureAD: Provider = {
-  id: "azure-ad",
-  name: "Microsoft",
-  type: "oidc",
+  id: 'azure-ad',
+  name: 'Microsoft',
+  type: 'oidc',
   issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/v2.0`,
   authorization: {
     url: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/authorize`,
-    params: { scope: "openid email profile" }
+    params: { scope: 'openid email profile' },
   },
   token: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/token`,
   userinfo: `https://graph.microsoft.com/oidc/userinfo`,
@@ -68,7 +68,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 })

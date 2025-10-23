@@ -2,18 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { compositionService } from '@/lib/services/composition.service'
-import type {
-  CompositionCreateRequest,
-  CompositionUpdateRequest
-} from '@/types/composition'
+import type { CompositionCreateRequest, CompositionUpdateRequest } from '@/types/composition'
 
 /**
  * Server action to create a composition
  */
-export async function createComposition(
-  namespace: string,
-  data: CompositionCreateRequest
-) {
+export async function createComposition(namespace: string, data: CompositionCreateRequest) {
   try {
     const result = await compositionService.createComposition(namespace, data)
     revalidatePath(`/environments/${namespace}/resources/compositions`)
@@ -23,7 +17,7 @@ export async function createComposition(
     const error = err instanceof Error ? err : new Error('Failed to create composition')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -34,7 +28,7 @@ export async function createComposition(
 export async function updateComposition(
   namespace: string,
   name: string,
-  data: CompositionUpdateRequest
+  data: CompositionUpdateRequest,
 ) {
   try {
     const result = await compositionService.updateComposition(namespace, name, data)
@@ -45,7 +39,7 @@ export async function updateComposition(
     const error = err instanceof Error ? err : new Error('Failed to update composition')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -53,10 +47,7 @@ export async function updateComposition(
 /**
  * Server action to delete a composition
  */
-export async function deleteComposition(
-  namespace: string,
-  name: string
-) {
+export async function deleteComposition(namespace: string, name: string) {
   try {
     const result = await compositionService.deleteComposition(namespace, name)
     revalidatePath(`/environments/${namespace}/resources/compositions`)
@@ -66,7 +57,7 @@ export async function deleteComposition(
     const error = err instanceof Error ? err : new Error('Failed to delete composition')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -74,10 +65,7 @@ export async function deleteComposition(
 /**
  * Server action to get composition status
  */
-export async function getCompositionStatus(
-  namespace: string,
-  name: string
-) {
+export async function getCompositionStatus(namespace: string, name: string) {
   try {
     const result = await compositionService.getCompositionStatus(namespace, name)
     return { success: true, data: result }
@@ -86,7 +74,7 @@ export async function getCompositionStatus(
     const error = err instanceof Error ? err : new Error('Failed to get composition status')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }

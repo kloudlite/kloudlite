@@ -12,15 +12,12 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
+    <nav className="text-muted-foreground flex items-center space-x-1 text-sm">
       {items.map((item, index) => (
         <div key={index} className="flex items-center">
-          {index > 0 && <ChevronRight className="h-3.5 w-3.5 mx-1" />}
+          {index > 0 && <ChevronRight className="mx-1 h-3.5 w-3.5" />}
           {item.href ? (
-            <Link
-              href={item.href}
-              className="hover:text-foreground transition-colors"
-            >
+            <Link href={item.href} className="hover:text-foreground transition-colors">
               {item.label}
             </Link>
           ) : (

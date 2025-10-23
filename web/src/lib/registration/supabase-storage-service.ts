@@ -84,20 +84,23 @@ export async function getUserByEmail(email: string): Promise<UserRegistration | 
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
-    ipRecords: ((ipResult.data || []) as IPRecordRow[]).map(ip => ({
-      type: ip.type,
-      ip: ip.ip,
-      workMachineName: ip.work_machine_name || undefined,
-      configuredAt: ip.configured_at,
-      dnsRecordIds: ip.dns_record_ids || undefined,
-    })) || [],
+    ipRecords:
+      ((ipResult.data || []) as IPRecordRow[]).map((ip) => ({
+        type: ip.type,
+        ip: ip.ip,
+        workMachineName: ip.work_machine_name || undefined,
+        configuredAt: ip.configured_at,
+        dnsRecordIds: ip.dns_record_ids || undefined,
+      })) || [],
   }
 }
 
 /**
  * Get user by installation key
  */
-export async function getUserByInstallationKey(installationKey: string): Promise<UserRegistration | null> {
+export async function getUserByInstallationKey(
+  installationKey: string,
+): Promise<UserRegistration | null> {
   const result = await supabase
     .from('user_registrations')
     .select('*')
@@ -138,10 +141,10 @@ export async function saveUserRegistration(registration: UserRegistration): Prom
     last_health_check: registration.lastHealthCheck || null,
   }
 
-  const { error } = await (supabase
+  const { error } = await supabase
     .from('user_registrations')
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .upsert(insertData))
+    .upsert(insertData)
 
   if (error) {
     console.error('Error saving user registration:', error)
@@ -152,7 +155,10 @@ export async function saveUserRegistration(registration: UserRegistration): Prom
 /**
  * Atomically mark installation complete with optional secret key
  */
-export async function markInstallationComplete(email: string, secretKey?: string): Promise<UserRegistration> {
+export async function markInstallationComplete(
+  email: string,
+  secretKey?: string,
+): Promise<UserRegistration> {
   const update: {
     has_completed_installation: boolean
     secret_key?: string
@@ -166,7 +172,7 @@ export async function markInstallationComplete(email: string, secretKey?: string
 
   const { error } = await supabase
     .from('user_registrations')
-    
+
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update(update)
     .eq('email', email.toLowerCase())
@@ -189,7 +195,7 @@ export async function markInstallationComplete(email: string, secretKey?: string
 export async function updateHealthCheck(email: string): Promise<UserRegistration> {
   const { error } = await supabase
     .from('user_registrations')
-    
+
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({ last_health_check: new Date().toISOString() })
     .eq('email', email.toLowerCase())
@@ -214,16 +220,19 @@ export async function addOrUpdateIpRecord(email: string, ipRecord: IPRecord): Pr
   const { error } = await supabase
     .from('ip_records')
     // @ts-expect-error - Supabase placeholder client type inference issue
-    .upsert({
-      user_email: email.toLowerCase(),
-      type: ipRecord.type,
-      ip: ipRecord.ip,
-      work_machine_name: ipRecord.workMachineName || null,
-      configured_at: ipRecord.configuredAt,
-      dns_record_ids: ipRecord.dnsRecordIds || [],
-    }, {
-      onConflict: 'user_email,type,work_machine_name'
-    })
+    .upsert(
+      {
+        user_email: email.toLowerCase(),
+        type: ipRecord.type,
+        ip: ipRecord.ip,
+        work_machine_name: ipRecord.workMachineName || null,
+        configured_at: ipRecord.configuredAt,
+        dns_record_ids: ipRecord.dnsRecordIds || [],
+      },
+      {
+        onConflict: 'user_email,type,work_machine_name',
+      },
+    )
 
   if (error) {
     throw new Error(`Failed to add IP record: ${error.message}`)
@@ -244,7 +253,7 @@ export async function addOrUpdateIpRecord(email: string, ipRecord: IPRecord): Pr
 export async function markDeploymentReady(email: string, ready: boolean): Promise<void> {
   const { error } = await supabase
     .from('user_registrations')
-    
+
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({ deployment_ready: ready })
     .eq('email', email.toLowerCase())
@@ -259,10 +268,32 @@ export async function markDeploymentReady(email: string, ready: boolean): Promis
  */
 export async function isSubdomainAvailable(subdomain: string): Promise<boolean> {
   const RESERVED_KEYWORDS = [
-    'www', 'api', 'admin', 'mail', 'smtp', 'ftp', 'ssh', 'vpn',
-    'dev', 'staging', 'prod', 'production', 'test', 'demo',
-    'app', 'portal', 'dashboard', 'console', 'docs', 'blog',
-    'status', 'support', 'help', 'cdn', 'static', 'assets',
+    'www',
+    'api',
+    'admin',
+    'mail',
+    'smtp',
+    'ftp',
+    'ssh',
+    'vpn',
+    'dev',
+    'staging',
+    'prod',
+    'production',
+    'test',
+    'demo',
+    'app',
+    'portal',
+    'dashboard',
+    'console',
+    'docs',
+    'blog',
+    'status',
+    'support',
+    'help',
+    'cdn',
+    'static',
+    'assets',
   ]
 
   if (RESERVED_KEYWORDS.includes(subdomain.toLowerCase())) {
@@ -286,7 +317,7 @@ export async function reserveSubdomain(
   subdomain: string,
   userId: string,
   userEmail: string,
-  userName: string
+  userName: string,
 ): Promise<DomainReservation> {
   const subdomainLower = subdomain.toLowerCase()
   const reservedAt = new Date().toISOString()
@@ -294,7 +325,7 @@ export async function reserveSubdomain(
   // Insert domain reservation (will fail if subdomain already exists due to PRIMARY KEY)
   const result = await supabase
     .from('domain_reservations')
-    
+
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .insert({
       subdomain: subdomainLower,
@@ -321,7 +352,7 @@ export async function reserveSubdomain(
   // Atomically update user registration with subdomain
   await supabase
     .from('user_registrations')
-    
+
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({
       subdomain: subdomainLower,
@@ -382,7 +413,7 @@ export async function deleteIpRecords(email: string): Promise<string[]> {
   const dnsRecordIds: string[] = []
 
   if (ipData) {
-    for (const record of (ipData as IPRecordRow[])) {
+    for (const record of ipData as IPRecordRow[]) {
       if (record.dns_record_ids && Array.isArray(record.dns_record_ids)) {
         dnsRecordIds.push(...record.dns_record_ids)
       }
@@ -390,10 +421,7 @@ export async function deleteIpRecords(email: string): Promise<string[]> {
   }
 
   // Delete all IP records
-  const { error } = await supabase
-    .from('ip_records')
-    .delete()
-    .eq('user_email', email.toLowerCase())
+  const { error } = await supabase.from('ip_records').delete().eq('user_email', email.toLowerCase())
 
   if (error) {
     console.error('Error deleting IP records:', error)
@@ -423,7 +451,7 @@ export async function deleteDomainReservation(email: string): Promise<void> {
 export async function resetUserInstallation(email: string): Promise<void> {
   const { error } = await supabase
     .from('user_registrations')
-    
+
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({
       subdomain: null,
@@ -466,7 +494,7 @@ export interface TLSCertificate {
 export async function saveCertificate(cert: TLSCertificate): Promise<void> {
   const { error } = await supabase
     .from('tls_certificates')
-    
+
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .insert({
       user_email: cert.userEmail.toLowerCase(),
@@ -494,12 +522,9 @@ export async function getLatestCertificate(
   email: string,
   scope?: CertificateScope,
   scopeIdentifier?: string,
-  parentScopeIdentifier?: string
+  parentScopeIdentifier?: string,
 ): Promise<TLSCertificate | null> {
-  let query = supabase
-    .from('tls_certificates')
-    .select('*')
-    .eq('user_email', email.toLowerCase())
+  let query = supabase.from('tls_certificates').select('*').eq('user_email', email.toLowerCase())
 
   if (scope) {
     query = query.eq('scope', scope)
@@ -513,10 +538,7 @@ export async function getLatestCertificate(
     query = query.eq('parent_scope_identifier', parentScopeIdentifier)
   }
 
-  const result = await query
-    .order('generated_at', { ascending: false })
-    .limit(1)
-    .single()
+  const result = await query.order('generated_at', { ascending: false }).limit(1).single()
 
   if (result.error) {
     if (result.error.code === 'PGRST116') return null
@@ -550,7 +572,7 @@ export async function getCertificateByScope(
   email: string,
   scope: CertificateScope,
   scopeIdentifier?: string,
-  parentScopeIdentifier?: string
+  parentScopeIdentifier?: string,
 ): Promise<TLSCertificate | null> {
   return getLatestCertificate(email, scope, scopeIdentifier, parentScopeIdentifier)
 }
@@ -567,7 +589,7 @@ export async function deleteCertificates(email: string): Promise<string[]> {
 
   const certIds: string[] = []
   if (data) {
-    for (const record of (data as Pick<TLSCertificateRow, 'cloudflare_cert_id'>[])) {
+    for (const record of data as Pick<TLSCertificateRow, 'cloudflare_cert_id'>[]) {
       if (record.cloudflare_cert_id) {
         certIds.push(record.cloudflare_cert_id)
       }

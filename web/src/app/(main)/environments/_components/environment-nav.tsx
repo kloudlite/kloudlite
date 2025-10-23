@@ -23,19 +23,19 @@ export function EnvironmentNav({ environmentId }: EnvironmentNavProps) {
       id: 'services',
       label: 'Services',
       icon: <FileCode2 className="h-4 w-4" />,
-      href: `/environments/${environmentId}/services`
+      href: `/environments/${environmentId}/services`,
     },
     {
       id: 'configs',
       label: 'Config Management',
       icon: <Key className="h-4 w-4" />,
-      href: `/environments/${environmentId}/configs`
+      href: `/environments/${environmentId}/configs`,
     },
     {
       id: 'settings',
       label: 'Settings',
       icon: <Settings className="h-4 w-4" />,
-      href: `/environments/${environmentId}/settings`
+      href: `/environments/${environmentId}/settings`,
     },
   ]
 
@@ -49,13 +49,11 @@ export function EnvironmentNav({ environmentId }: EnvironmentNavProps) {
               <Link
                 key={tab.id}
                 href={tab.href}
-                className={`
-                  flex items-center gap-2 px-1 py-4 text-sm font-medium border-b-2 transition-colors
-                  ${isActive
+                className={`flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+                  isActive
                     ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                  }
-                `}
+                    : 'text-muted-foreground hover:border-border hover:text-foreground border-transparent'
+                } `}
               >
                 {tab.icon}
                 {tab.label}

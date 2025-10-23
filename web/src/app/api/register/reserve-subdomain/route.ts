@@ -13,10 +13,7 @@ export async function POST(request: NextRequest) {
     const token = cookieStore.get('registration_session')?.value
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
@@ -27,10 +24,7 @@ export async function POST(request: NextRequest) {
     const userId = payload.userId as string
 
     if (!userEmail) {
-      return NextResponse.json(
-        { error: 'Invalid session' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
     // Get subdomain from request body
@@ -38,19 +32,11 @@ export async function POST(request: NextRequest) {
     const { subdomain } = body
 
     if (!subdomain) {
-      return NextResponse.json(
-        { error: 'Subdomain is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Subdomain is required' }, { status: 400 })
     }
 
     // Reserve subdomain
-    const reservation = await reserveSubdomain(
-      subdomain,
-      userId,
-      userEmail,
-      userName
-    )
+    const reservation = await reserveSubdomain(subdomain, userId, userEmail, userName)
 
     const response = NextResponse.json({
       success: true,
@@ -68,16 +54,13 @@ export async function POST(request: NextRequest) {
     console.error('Reserve subdomain error:', err)
 
     const error = err instanceof Error ? err : new Error('Unknown error')
-    if (error.message === 'Subdomain is not available' || error.message === 'Subdomain is already reserved') {
-      return NextResponse.json(
-        { error: 'Subdomain is not available' },
-        { status: 409 }
-      )
+    if (
+      error.message === 'Subdomain is not available' ||
+      error.message === 'Subdomain is already reserved'
+    ) {
+      return NextResponse.json({ error: 'Subdomain is not available' }, { status: 409 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

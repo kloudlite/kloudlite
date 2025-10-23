@@ -9,17 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Terminal,
-  Copy,
-  Check,
-  Sparkles
-} from 'lucide-react'
-import {
-  SiIntellijidea,
-  SiAnthropic,
-  SiZedindustries
-} from 'react-icons/si'
+import { Terminal, Copy, Check, Sparkles } from 'lucide-react'
+import { SiIntellijidea, SiAnthropic, SiZedindustries } from 'react-icons/si'
 import { VscVscode } from 'react-icons/vsc'
 import { CursorIcon } from '@/components/icons/cursor-icon'
 import { OpenCodeIcon } from '@/components/icons/opencode-icon'
@@ -42,7 +33,10 @@ interface AccessMethod {
   category: string
 }
 
-export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }: WorkspaceConnectOptionsProps) {
+export function WorkspaceConnectOptions({
+  workspaceId: _workspaceId,
+  workspace,
+}: WorkspaceConnectOptionsProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
   const [sshDialogOpen, setSshDialogOpen] = useState(false)
 
@@ -85,7 +79,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <Copy className="h-4 w-4 flex-shrink-0" />,
       available: !!workspaceName,
       command: sshConfig,
-      category: 'Setup'
+      category: 'Setup',
     },
     {
       id: 'vscode-extension',
@@ -94,7 +88,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
       available: !!vsCodeExtensionUrl,
       url: vsCodeExtensionUrl,
-      category: 'Desktop IDEs'
+      category: 'Desktop IDEs',
     },
     {
       id: 'vscode',
@@ -103,7 +97,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
       available: !!workspaceName,
       command: vscodeCommand,
-      category: 'Desktop IDEs'
+      category: 'Desktop IDEs',
     },
     {
       id: 'cursor',
@@ -112,7 +106,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <CursorIcon className="h-4 w-4 flex-shrink-0" />,
       available: !!workspaceName,
       command: cursorCommand,
-      category: 'Desktop IDEs'
+      category: 'Desktop IDEs',
     },
     {
       id: 'intellij',
@@ -121,7 +115,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <SiIntellijidea className="h-4 w-4 flex-shrink-0" />,
       available: !!workspaceName,
       command: intellijCommand,
-      category: 'Desktop IDEs'
+      category: 'Desktop IDEs',
     },
     {
       id: 'zed',
@@ -130,7 +124,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <SiZedindustries className="h-4 w-4 flex-shrink-0" />,
       available: !!workspaceName,
       command: zedCommand,
-      category: 'Desktop IDEs'
+      category: 'Desktop IDEs',
     },
     {
       id: 'code-server',
@@ -139,7 +133,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
       available: !!codeServerUrl,
       url: codeServerUrl,
-      category: 'Web-Based IDEs'
+      category: 'Web-Based IDEs',
     },
     {
       id: 'ttyd-terminal',
@@ -148,7 +142,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <Terminal className="h-4 w-4 flex-shrink-0" />,
       available: !!ttydUrl,
       url: ttydUrl,
-      category: 'Web Terminal & AI Assistants'
+      category: 'Web Terminal & AI Assistants',
     },
     {
       id: 'claude-code-web',
@@ -157,7 +151,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <SiAnthropic className="h-4 w-4 flex-shrink-0" />,
       available: !!ttydUrl,
       url: ttydUrl,
-      category: 'Web Terminal & AI Assistants'
+      category: 'Web Terminal & AI Assistants',
     },
     {
       id: 'opencode',
@@ -167,7 +161,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       available: !!ttydUrl,
       url: ttydUrl,
       comingSoon: true,
-      category: 'Web Terminal & AI Assistants'
+      category: 'Web Terminal & AI Assistants',
     },
     {
       id: 'codex',
@@ -176,7 +170,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <Sparkles className="h-4 w-4 flex-shrink-0" />,
       available: !!ttydUrl,
       url: ttydUrl,
-      category: 'Web Terminal & AI Assistants'
+      category: 'Web Terminal & AI Assistants',
     },
     {
       id: 'ssh',
@@ -185,18 +179,21 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
       icon: <Terminal className="h-4 w-4 flex-shrink-0" />,
       available: !!workspaceName,
       command: sshCommand,
-      category: 'Direct Access'
-    }
+      category: 'Direct Access',
+    },
   ]
 
   // Group methods by category
-  const groupedMethods = accessMethods.reduce((acc, method) => {
-    if (!acc[method.category]) {
-      acc[method.category] = []
-    }
-    acc[method.category].push(method)
-    return acc
-  }, {} as Record<string, AccessMethod[]>)
+  const groupedMethods = accessMethods.reduce(
+    (acc, method) => {
+      if (!acc[method.category]) {
+        acc[method.category] = []
+      }
+      acc[method.category].push(method)
+      return acc
+    },
+    {} as Record<string, AccessMethod[]>,
+  )
 
   const handleCopyCommand = (command: string, methodId: string) => {
     navigator.clipboard.writeText(command)
@@ -217,28 +214,30 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
   return (
     <>
       <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-sm font-medium mb-4">Connect to Workspace</h3>
+        <h3 className="mb-4 text-sm font-medium">Connect to Workspace</h3>
 
         <div className="space-y-6">
           {Object.entries(groupedMethods).map(([category, methods]) => (
             <div key={category}>
-              <h4 className="text-xs font-medium text-muted-foreground mb-3">{category}</h4>
+              <h4 className="text-muted-foreground mb-3 text-xs font-medium">{category}</h4>
               <div className="flex flex-wrap gap-2">
                 {methods.map((method) => (
                   <button
                     key={method.id}
                     onClick={() => handleConnect(method)}
                     disabled={!method.available || method.comingSoon}
-                    className={`inline-flex items-center gap-2 h-8 px-3 rounded-full border transition-all ${
+                    className={`inline-flex h-8 items-center gap-2 rounded-full border px-3 transition-all ${
                       !method.available || method.comingSoon
-                        ? 'opacity-50 cursor-not-allowed bg-muted/30'
+                        ? 'bg-muted/30 cursor-not-allowed opacity-50'
                         : 'hover:bg-muted/50 hover:border-primary/50'
                     }`}
                   >
                     {method.icon}
-                    <span className="text-sm font-medium whitespace-nowrap leading-none">{method.name}</span>
+                    <span className="text-sm leading-none font-medium whitespace-nowrap">
+                      {method.name}
+                    </span>
                     {method.comingSoon && (
-                      <span className="text-[10px] text-muted-foreground leading-none">Soon</span>
+                      <span className="text-muted-foreground text-[10px] leading-none">Soon</span>
                     )}
                   </button>
                 ))}
@@ -260,7 +259,7 @@ export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }
 
           <div className="space-y-4">
             <div className="bg-muted rounded-md p-4">
-              <code className="text-sm font-mono break-all">{sshCommand}</code>
+              <code className="font-mono text-sm break-all">{sshCommand}</code>
             </div>
 
             <Button

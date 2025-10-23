@@ -14,7 +14,7 @@ export async function listConnectionTokens() {
     return { success: true, data: result }
   } catch (err) {
     console.error('List connection tokens error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -30,13 +30,13 @@ export async function createConnectionToken(data: Omit<CreateConnectionTokenRequ
     // Get the webUrl from environment variables
     const result = await connectionTokenService.createToken({
       ...data,
-      webUrl: env.webUrl
+      webUrl: env.webUrl,
     })
     revalidatePath('/connection-tokens')
     return { success: true, data: result }
   } catch (err) {
     console.error('Create connection token error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,
@@ -54,7 +54,7 @@ export async function deleteConnectionToken(name: string) {
     return { success: true }
   } catch (err) {
     console.error('Delete connection token error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
       error: error.message,

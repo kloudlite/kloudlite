@@ -64,10 +64,7 @@ export function FileActions({ file, environmentId }: FileActionsProps) {
       <Button variant="ghost" size="sm" onClick={handleDownload}>
         <Download className="h-4 w-4" />
       </Button>
-      <EditFileSheet
-        environmentId={environmentId}
-        filename={file.name}
-      />
+      <EditFileSheet environmentId={environmentId} filename={file.name} />
       <Button
         variant="ghost"
         size="sm"
@@ -83,13 +80,18 @@ export function FileActions({ file, environmentId }: FileActionsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete File</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the file <span className="font-mono font-semibold">{file.name}</span>?
-              This action cannot be undone.
+              Are you sure you want to delete the file{' '}
+              <span className="font-mono font-semibold">{file.name}</span>? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete
             </AlertDialogAction>

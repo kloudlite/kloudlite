@@ -42,16 +42,14 @@ export function EnvironmentFilter({ onFilterChange, counts }: EnvironmentFilterP
   return (
     <div className="flex items-center gap-3">
       {/* Scope Filter */}
-      <div className="inline-flex items-center p-1 bg-gray-100 rounded-lg">
+      <div className="inline-flex items-center rounded-lg bg-gray-100 p-1">
         <button
           onClick={() => handleScopeChange('all')}
-          className={`
-            flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
-            ${scopeFilter === 'all'
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            scopeFilter === 'all'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
-            }
-          `}
+          } `}
         >
           <Users className="h-4 w-4" />
           <span>All</span>
@@ -59,13 +57,11 @@ export function EnvironmentFilter({ onFilterChange, counts }: EnvironmentFilterP
 
         <button
           onClick={() => handleScopeChange('mine')}
-          className={`
-            flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
-            ${scopeFilter === 'mine'
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            scopeFilter === 'mine'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
-            }
-          `}
+          } `}
         >
           <User className="h-4 w-4" />
           <span>Mine</span>
@@ -73,16 +69,14 @@ export function EnvironmentFilter({ onFilterChange, counts }: EnvironmentFilterP
       </div>
 
       {/* Status Filter */}
-      <div className="inline-flex items-center p-1 bg-gray-100 rounded-lg">
+      <div className="inline-flex items-center rounded-lg bg-gray-100 p-1">
         <button
           onClick={() => handleStatusChange('all')}
-          className={`
-            flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
-            ${statusFilter === 'all'
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            statusFilter === 'all'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
-            }
-          `}
+          } `}
         >
           <Grid className="h-4 w-4" />
           <span>All Status</span>
@@ -90,13 +84,11 @@ export function EnvironmentFilter({ onFilterChange, counts }: EnvironmentFilterP
 
         <button
           onClick={() => handleStatusChange('active')}
-          className={`
-            flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
-            ${statusFilter === 'active'
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            statusFilter === 'active'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
-            }
-          `}
+          } `}
         >
           <Activity className="h-4 w-4" />
           <span>Active</span>

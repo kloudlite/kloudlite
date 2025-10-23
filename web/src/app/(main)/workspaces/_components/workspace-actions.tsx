@@ -20,10 +20,7 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
     setIsLoading(true)
     setError(null)
 
-    const result = await suspendWorkspace(
-      workspace.metadata.name,
-      workspace.metadata.namespace
-    )
+    const result = await suspendWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
     if (result.success) {
       router.refresh()
@@ -38,10 +35,7 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
     setIsLoading(true)
     setError(null)
 
-    const result = await activateWorkspace(
-      workspace.metadata.name,
-      workspace.metadata.namespace
-    )
+    const result = await activateWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
     if (result.success) {
       router.refresh()
@@ -56,37 +50,23 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
         {workspace.spec.status === 'active' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSuspend}
-            disabled={isLoading}
-          >
-            <Pause className="h-4 w-4 mr-1" />
+          <Button variant="outline" size="sm" onClick={handleSuspend} disabled={isLoading}>
+            <Pause className="mr-1 h-4 w-4" />
             {isLoading ? 'Suspending...' : 'Suspend'}
           </Button>
         )}
         {workspace.spec.status === 'suspended' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleActivate}
-            disabled={isLoading}
-          >
-            <Play className="h-4 w-4 mr-1" />
+          <Button variant="outline" size="sm" onClick={handleActivate} disabled={isLoading}>
+            <Play className="mr-1 h-4 w-4" />
             {isLoading ? 'Activating...' : 'Activate'}
           </Button>
         )}
         <Button variant="outline" size="sm">
-          <Settings className="h-4 w-4 mr-1" />
+          <Settings className="mr-1 h-4 w-4" />
           Settings
         </Button>
       </div>
-      {error && (
-        <div className="text-xs text-red-600 dark:text-red-400">
-          {error}
-        </div>
-      )}
+      {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
     </div>
   )
 }

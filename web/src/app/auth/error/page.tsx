@@ -26,21 +26,19 @@ export default function AuthErrorPage() {
   const isNotRegistered = errorMessage.includes('not registered')
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>
-            {isNotRegistered ? 'Account Not Found' : 'Authentication Error'}
-          </CardTitle>
-          <CardDescription className={isNotRegistered ? "text-orange-600" : "text-red-600"}>
+          <CardTitle>{isNotRegistered ? 'Account Not Found' : 'Authentication Error'}</CardTitle>
+          <CardDescription className={isNotRegistered ? 'text-orange-600' : 'text-red-600'}>
             {errorMessage}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {isNotRegistered && (
-            <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm text-orange-800">
+            <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
               <p className="font-semibold">Next steps:</p>
-              <ul className="list-disc list-inside mt-1 space-y-1">
+              <ul className="mt-1 list-inside list-disc space-y-1">
                 <li>Contact your system administrator</li>
                 <li>Request account creation with your email address</li>
                 <li>Once created, you can sign in with any OAuth provider</li>

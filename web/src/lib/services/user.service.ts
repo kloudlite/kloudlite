@@ -70,7 +70,9 @@ class UserServiceImpl implements UserService {
   }
 
   async getUserByEmail(email: string): Promise<User> {
-    const response = await apiClient.get<User>(`/api/v1/users/by-email?email=${encodeURIComponent(email)}`)
+    const response = await apiClient.get<User>(
+      `/api/v1/users/by-email?email=${encodeURIComponent(email)}`,
+    )
     return response
   }
 

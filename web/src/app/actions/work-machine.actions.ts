@@ -8,10 +8,10 @@ export async function getMyWorkMachine() {
     return { success: true, data }
   } catch (err) {
     console.error('Get my work machine error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -22,10 +22,10 @@ export async function listAllWorkMachines() {
     return { success: true, data }
   } catch (err) {
     console.error('List work machines error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -36,10 +36,10 @@ export async function startMyWorkMachine() {
     return { success: true, data }
   } catch (err) {
     console.error('Start work machine error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -50,24 +50,27 @@ export async function stopMyWorkMachine() {
     return { success: true, data }
   } catch (err) {
     console.error('Stop work machine error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
 
-export async function updateMyWorkMachine(updateData: { machineType?: string; sshPublicKeys?: string[] }) {
+export async function updateMyWorkMachine(updateData: {
+  machineType?: string
+  sshPublicKeys?: string[]
+}) {
   try {
     const data = await workMachineService.updateMyWorkMachine(updateData)
     return { success: true, data }
   } catch (err) {
     console.error('Update work machine error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }

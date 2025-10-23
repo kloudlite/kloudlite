@@ -35,7 +35,7 @@ export default async function SuperAdminDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900">Unable to load providers</h2>
           <p className="mt-2 text-gray-600">{error}</p>
@@ -45,16 +45,19 @@ export default async function SuperAdminDashboard() {
   }
 
   // Convert array to object for easier access
-  const providersData = providers.reduce((acc, provider) => {
-    acc[provider.type] = provider
-    return acc
-  }, {} as Record<string, Provider>)
+  const providersData = providers.reduce(
+    (acc, provider) => {
+      acc[provider.type] = provider
+      return acc
+    },
+    {} as Record<string, Provider>,
+  )
 
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between py-8 border-b border-gray-200">
+        <div className="flex items-center justify-between border-b border-gray-200 py-8">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Provider Configuration</h1>
             <p className="mt-1 text-sm text-gray-600">Manage OAuth providers for authentication</p>

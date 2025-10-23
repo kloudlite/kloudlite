@@ -1,13 +1,9 @@
-import { AuthSessionProvider } from "@/components/registration/session-provider";
+import { AuthSessionProvider } from '@/components/registration/session-provider'
 
 export default function RegisterLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-  return (
-    <AuthSessionProvider>
-      {children}
-    </AuthSessionProvider>
-  );
+  return <AuthSessionProvider>{children}</AuthSessionProvider>
 }

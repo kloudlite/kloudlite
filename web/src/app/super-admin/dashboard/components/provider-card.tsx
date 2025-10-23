@@ -30,7 +30,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
     clientId: provider.clientId || '',
     clientSecret: provider.clientSecret || '',
   })
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Clean up timeout on unmount
@@ -95,7 +95,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
       })
 
       if (result.success) {
-        setFormData(prev => ({ ...prev, enabled: checked }))
+        setFormData((prev) => ({ ...prev, enabled: checked }))
         setMessage({ type: 'success', text: 'Updated successfully' })
         router.refresh() // Refresh server-side data
 
@@ -129,7 +129,9 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {message && (
-          <div className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+          <div
+            className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}
+          >
             {message.text}
           </div>
         )}
@@ -144,7 +146,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
                 id={`${provider.type}-client-id`}
                 type="text"
                 value={formData.clientId}
-                onChange={(e) => setFormData(prev => ({ ...prev, clientId: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, clientId: e.target.value }))}
                 disabled={saving}
                 className="h-9 text-sm"
                 placeholder="Enter client ID"
@@ -159,7 +161,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
                 id={`${provider.type}-client-secret`}
                 type="password"
                 value={formData.clientSecret}
-                onChange={(e) => setFormData(prev => ({ ...prev, clientSecret: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, clientSecret: e.target.value }))}
                 disabled={saving}
                 className="h-9 text-sm"
                 placeholder="Enter client secret"
@@ -175,12 +177,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
               >
                 {saving ? 'Saving...' : 'Save'}
               </Button>
-              <Button
-                onClick={handleCancel}
-                disabled={saving}
-                variant="outline"
-                size="sm"
-              >
+              <Button onClick={handleCancel} disabled={saving} variant="outline" size="sm">
                 Cancel
               </Button>
             </div>
@@ -189,14 +186,14 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
           <>
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Client ID</p>
-                <p className="text-sm font-mono text-gray-900 truncate">
+                <p className="mb-1 text-xs text-gray-500">Client ID</p>
+                <p className="truncate font-mono text-sm text-gray-900">
                   {formData.clientId || 'Not configured'}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Client Secret</p>
-                <p className="text-sm font-mono text-gray-900">
+                <p className="mb-1 text-xs text-gray-500">Client Secret</p>
+                <p className="font-mono text-sm text-gray-900">
                   {formData.clientSecret ? '••••••••' : 'Not configured'}
                 </p>
               </div>

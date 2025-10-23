@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, markInstallationComplete, updateHealthCheck } from '@/lib/registration/supabase-storage-service'
+import {
+  getUserByInstallationKey,
+  markInstallationComplete,
+  updateHealthCheck,
+} from '@/lib/registration/supabase-storage-service'
 
 /**
  * Verify installation key (POST method)
@@ -12,20 +16,14 @@ export async function POST(request: NextRequest) {
     const { installationKey, markComplete } = body
 
     if (!installationKey) {
-      return NextResponse.json(
-        { error: 'Installation key is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
     }
 
     // Look up user by installation key
     const user = await getUserByInstallationKey(installationKey)
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid installation key' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Generate secret key on first verification (if not exists)
@@ -81,9 +79,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Verification error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

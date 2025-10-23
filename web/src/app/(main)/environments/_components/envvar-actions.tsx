@@ -77,13 +77,18 @@ export function EnvVarActions({ envVar, environmentId }: EnvVarActionsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Envvar</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the envvar <span className="font-mono font-semibold">{envVar.key}</span>?
-              This action cannot be undone.
+              Are you sure you want to delete the envvar{' '}
+              <span className="font-mono font-semibold">{envVar.key}</span>? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete
             </AlertDialogAction>

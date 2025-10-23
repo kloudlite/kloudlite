@@ -38,21 +38,28 @@ const defaultComposeContent = `services:
       - "80:80"
 `
 
-export function CompositionEditor({ composition, namespace, open, onOpenChange }: CompositionEditorProps) {
+export function CompositionEditor({
+  composition,
+  namespace,
+  open,
+  onOpenChange,
+}: CompositionEditorProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [composeContent, setComposeContent] = useState(
-    composition?.spec.composeContent || defaultComposeContent
+    composition?.spec.composeContent || defaultComposeContent,
   )
   const [yamlExtension, setYamlExtension] = useState<Extension | null>(null)
 
   useEffect(() => {
-    import('@codemirror/lang-yaml').then((mod) => {
-      setYamlExtension(mod.yaml())
-    }).catch((err) => {
-      console.error('Failed to load YAML extension:', err)
-      setYamlExtension(null)
-    })
+    import('@codemirror/lang-yaml')
+      .then((mod) => {
+        setYamlExtension(mod.yaml())
+      })
+      .catch((err) => {
+        console.error('Failed to load YAML extension:', err)
+        setYamlExtension(null)
+      })
   }, [])
 
   // Update compose content when composition changes or sheet opens
@@ -65,31 +72,24 @@ export function CompositionEditor({ composition, namespace, open, onOpenChange }
   const handleSave = async () => {
     startTransition(async () => {
       // Always try to update first, create if it doesn't exist
-      let result = await updateComposition(
-        namespace,
-        'main-composition',
-        {
+      let result = await updateComposition(namespace, 'main-composition', {
+        spec: {
+          displayName: 'Main Composition',
+          composeContent: composeContent,
+          composeFormat: 'v3.8',
+        },
+      })
+
+      // If update failed because composition doesn't exist, create it
+      if (!result.success && !composition) {
+        result = await createComposition(namespace, {
+          name: 'main-composition',
           spec: {
             displayName: 'Main Composition',
             composeContent: composeContent,
             composeFormat: 'v3.8',
           },
-        }
-      )
-
-      // If update failed because composition doesn't exist, create it
-      if (!result.success && !composition) {
-        result = await createComposition(
-          namespace,
-          {
-            name: 'main-composition',
-            spec: {
-              displayName: 'Main Composition',
-              composeContent: composeContent,
-              composeFormat: 'v3.8',
-            },
-          }
-        )
+        })
       }
 
       if (result.success) {
@@ -114,9 +114,7 @@ export function CompositionEditor({ composition, namespace, open, onOpenChange }
         <div className="flex h-full flex-col">
           <SheetHeader>
             <SheetTitle>Edit Composition</SheetTitle>
-            <SheetDescription>
-              Define your services using Docker Compose format
-            </SheetDescription>
+            <SheetDescription>Define your services using Docker Compose format</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
@@ -132,7 +130,7 @@ export function CompositionEditor({ composition, namespace, open, onOpenChange }
                     className="text-sm"
                   />
                 ) : (
-                  <div className="h-[500px] flex items-center justify-center text-muted-foreground">
+                  <div className="text-muted-foreground flex h-[500px] items-center justify-center">
                     Loading editor...
                   </div>
                 )}
