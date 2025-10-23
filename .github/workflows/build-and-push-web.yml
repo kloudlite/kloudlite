@@ -1,4 +1,4 @@
-name: Build Web (Register Mode)
+name: Build and Push Web Docker Images
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - development
     paths:
       - 'web/**'
-      - '.github/workflows/build-web-register.yml'
+      - '.github/workflows/build-and-push-web.yml'
   pull_request:
     branches:
       - master
@@ -18,11 +18,20 @@ on:
 
 env:
   NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/web
 
 jobs:
-  build:
-    name: Build Frontend in Register Mode
+  build-and-push:
+    name: Build and Push (${{ matrix.mode }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        mode: [registration, dashboard, website]
 
     defaults:
       run:
@@ -44,14 +53,27 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: web/pnpm-lock.yaml
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/node_modules
+            ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Create environment file
         run: |
           cat > .env.local << EOF
-          # Register Mode Configuration
-          NEXT_PUBLIC_APP_MODE=register
+          # App Mode
+          NEXT_PUBLIC_APP_MODE=${{ matrix.mode }}
+          APP_MODE=${{ matrix.mode }}
+
+          # Base URL
           NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
 
           # OAuth Configuration (GitHub)
@@ -91,41 +113,72 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Export static site (optional)
+      - name: Verify standalone output
         run: |
-          if grep -q '"output": "export"' next.config.js 2>/dev/null || grep -q 'output: "export"' next.config.ts 2>/dev/null; then
-            echo "Static export enabled, running next export..."
-            pnpm run build
-          else
-            echo "Not configured for static export, skipping..."
+          if [ ! -d ".next/standalone" ]; then
+            echo "Error: .next/standalone directory not found"
+            echo "Make sure next.config.ts has output: 'standalone'"
+            exit 1
           fi
-        continue-on-error: true
+          echo "Standalone build size:"
+          du -sh .next/standalone
+          echo "Static files size:"
+          du -sh .next/static
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
         with:
-          name: web-register-build-${{ github.sha }}
-          path: |
-            web/.next/
-            web/out/
-          retention-days: 7
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+            suffix=-${{ matrix.mode }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.mode }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.mode }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            APP_MODE=${{ matrix.mode }}
 
       - name: Build summary
         run: |
-          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Summary - ${{ matrix.mode }} mode" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Mode**: Register" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: ${{ matrix.mode }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
-          if [ -d ".next" ]; then
-            echo "**Build Output:**" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            du -sh .next >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "**Docker Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   lint:
     name: Lint Check
@@ -150,6 +203,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
           cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/node_modules
+            ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
