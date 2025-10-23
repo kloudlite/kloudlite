@@ -1,0 +1,153 @@
+name: Build Web (Register Mode)
+
+on:
+  push:
+    branches:
+      - master
+      - development
+    paths:
+      - 'web/**'
+      - '.github/workflows/build-web-register.yml'
+  pull_request:
+    branches:
+      - master
+      - development
+    paths:
+      - 'web/**'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build:
+    name: Build Frontend in Register Mode
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create environment file
+        run: |
+          cat > .env.local << EOF
+          # Register Mode Configuration
+          NEXT_PUBLIC_APP_MODE=register
+          NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
+
+          # OAuth Configuration (GitHub)
+          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }}
+          AUTH_GITHUB_ID=${{ secrets.GITHUB_CLIENT_ID }}
+          AUTH_GITHUB_SECRET=${{ secrets.GITHUB_CLIENT_SECRET }}
+
+          # OAuth Configuration (Google)
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          AUTH_GOOGLE_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          AUTH_GOOGLE_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+          # OAuth Configuration (Microsoft Entra)
+          NEXT_PUBLIC_MICROSOFT_ENTRA_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}
+          NEXT_PUBLIC_MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
+          AUTH_MICROSOFT_ENTRA_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}
+          AUTH_MICROSOFT_ENTRA_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}
+          AUTH_MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
+
+          # NextAuth Configuration
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          NEXTAUTH_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
+
+          # Supabase Configuration
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+          # Cloudflare Configuration
+          CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
+          EOF
+
+      - name: Build Next.js application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Export static site (optional)
+        run: |
+          if grep -q '"output": "export"' next.config.js 2>/dev/null || grep -q 'output: "export"' next.config.ts 2>/dev/null; then
+            echo "Static export enabled, running next export..."
+            npm run build
+          else
+            echo "Not configured for static export, skipping..."
+          fi
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-register-build-${{ github.sha }}
+          path: |
+            web/.next/
+            web/out/
+          retention-days: 7
+
+      - name: Build summary
+        run: |
+          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: Register" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d ".next" ]; then
+            echo "**Build Output:**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            du -sh .next >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Run Prettier check
+        run: npm run format:check
+        continue-on-error: true
