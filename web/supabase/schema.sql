@@ -45,12 +45,34 @@ CREATE TABLE IF NOT EXISTS domain_reservations (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- TLS certificates table (Cloudflare Origin CA certificates)
+CREATE TABLE IF NOT EXISTS tls_certificates (
+  id SERIAL PRIMARY KEY,
+  user_email TEXT NOT NULL REFERENCES user_registrations(email) ON DELETE CASCADE,
+  cloudflare_cert_id TEXT,
+  certificate TEXT NOT NULL, -- PEM-encoded certificate
+  private_key TEXT NOT NULL, -- PEM-encoded private key
+  hostnames TEXT[] NOT NULL, -- List of hostnames covered by this certificate
+  scope TEXT NOT NULL CHECK (scope IN ('installation', 'workmachine', 'workspace')) DEFAULT 'installation',
+  scope_identifier TEXT, -- wm-user for workmachine, workspace name for workspace, null for installation
+  parent_scope_identifier TEXT, -- wm-user for workspace scope, null for others
+  valid_from TIMESTAMPTZ NOT NULL,
+  valid_until TIMESTAMPTZ NOT NULL,
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_email, cloudflare_cert_id)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_user_registrations_installation_key ON user_registrations(installation_key);
 CREATE INDEX IF NOT EXISTS idx_user_registrations_subdomain ON user_registrations(subdomain);
 CREATE INDEX IF NOT EXISTS idx_ip_records_user_email ON ip_records(user_email);
 CREATE INDEX IF NOT EXISTS idx_ip_records_type ON ip_records(type);
 CREATE INDEX IF NOT EXISTS idx_domain_reservations_user_email ON domain_reservations(user_email);
+CREATE INDEX IF NOT EXISTS idx_tls_certificates_user_email ON tls_certificates(user_email);
+CREATE INDEX IF NOT EXISTS idx_tls_certificates_valid_until ON tls_certificates(valid_until);
+CREATE INDEX IF NOT EXISTS idx_tls_certificates_scope ON tls_certificates(user_email, scope, scope_identifier, parent_scope_identifier);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -62,18 +84,27 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers to automatically update updated_at
+DROP TRIGGER IF EXISTS update_user_registrations_updated_at ON user_registrations;
 CREATE TRIGGER update_user_registrations_updated_at
   BEFORE UPDATE ON user_registrations
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_ip_records_updated_at ON ip_records;
 CREATE TRIGGER update_ip_records_updated_at
   BEFORE UPDATE ON ip_records
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_domain_reservations_updated_at ON domain_reservations;
 CREATE TRIGGER update_domain_reservations_updated_at
   BEFORE UPDATE ON domain_reservations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_tls_certificates_updated_at ON tls_certificates;
+CREATE TRIGGER update_tls_certificates_updated_at
+  BEFORE UPDATE ON tls_certificates
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -81,3 +112,4 @@ CREATE TRIGGER update_domain_reservations_updated_at
 -- ALTER TABLE user_registrations ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE ip_records ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE domain_reservations ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE tls_certificates ENABLE ROW LEVEL SECURITY;

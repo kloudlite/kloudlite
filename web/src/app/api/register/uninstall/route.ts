@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, deleteIpRecords, deleteDomainReservation, resetUserInstallation } from '@/lib/registration/supabase-storage-service'
+import { getUserByInstallationKey, deleteIpRecords, deleteDomainReservation, resetUserInstallation, deleteCertificates } from '@/lib/registration/supabase-storage-service'
 import { deleteDnsRecords } from '@/lib/registration/cloudflare-dns'
+import { revokeCertificate } from '@/lib/registration/cloudflare-certificates'
 
 /**
  * Uninstall deployment
@@ -72,7 +73,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Delete domain reservation
+    // Step 3: Delete TLS certificates
+    let certRevokeCount = 0
+    try {
+      const certIds = await deleteCertificates(user.email)
+      console.log(`Found ${certIds.length} certificates to revoke`)
+
+      for (const certId of certIds) {
+        const revoked = await revokeCertificate(certId)
+        if (revoked) {
+          certRevokeCount++
+        }
+      }
+      console.log(`Revoked ${certRevokeCount} certificates from Cloudflare`)
+    } catch (error) {
+      console.error('Failed to delete/revoke certificates:', error)
+      // Continue anyway - other cleanup is done
+    }
+
+    // Step 4: Delete domain reservation
     try {
       await deleteDomainReservation(user.email)
       console.log(`Deleted domain reservation for: ${user.subdomain}`)
@@ -81,7 +100,7 @@ export async function POST(request: NextRequest) {
       // Continue anyway - IP records and DNS are already deleted
     }
 
-    // Step 4: Reset user installation
+    // Step 5: Reset user installation
     await resetUserInstallation(user.email)
     console.log(`Reset installation for user: ${user.email}`)
 
@@ -92,6 +111,7 @@ export async function POST(request: NextRequest) {
       subdomain: user.subdomain,
       dnsRecordsDeleted: dnsDeleteCount,
       ipRecordsDeleted: dnsRecordIds.length,
+      certificatesRevoked: certRevokeCount,
     })
 
     // Disable all caching
