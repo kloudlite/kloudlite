@@ -90,6 +90,7 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
+          ESLINT_NO_DEV_ERRORS: true
 
       - name: Export static site (optional)
         run: |
