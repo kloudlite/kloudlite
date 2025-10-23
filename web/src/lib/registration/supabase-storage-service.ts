@@ -399,3 +399,145 @@ export async function resetUserInstallation(email: string): Promise<void> {
     throw new Error(`Failed to reset installation: ${error.message}`)
   }
 }
+
+/**
+ * Certificate management
+ */
+export type CertificateScope = 'installation' | 'workmachine' | 'workspace'
+
+export interface TLSCertificate {
+  id?: number
+  userEmail: string
+  cloudflareCertId: string | null
+  certificate: string
+  privateKey: string
+  hostnames: string[]
+  scope: CertificateScope
+  scopeIdentifier?: string | null // wm-user for workmachine, workspace name for workspace
+  parentScopeIdentifier?: string | null // wm-user for workspace scope
+  validFrom: string
+  validUntil: string
+  generatedAt?: string
+}
+
+/**
+ * Save TLS certificate
+ */
+export async function saveCertificate(cert: TLSCertificate): Promise<void> {
+  const { error } = await supabase
+    .from('tls_certificates')
+    .insert({
+      user_email: cert.userEmail.toLowerCase(),
+      cloudflare_cert_id: cert.cloudflareCertId,
+      certificate: cert.certificate,
+      private_key: cert.privateKey,
+      hostnames: cert.hostnames,
+      scope: cert.scope,
+      scope_identifier: cert.scopeIdentifier || null,
+      parent_scope_identifier: cert.parentScopeIdentifier || null,
+      valid_from: cert.validFrom,
+      valid_until: cert.validUntil,
+      generated_at: cert.generatedAt || new Date().toISOString(),
+    })
+
+  if (error) {
+    throw new Error(`Failed to save certificate: ${error.message}`)
+  }
+}
+
+/**
+ * Get latest certificate for user, optionally filtered by scope
+ */
+export async function getLatestCertificate(
+  email: string,
+  scope?: CertificateScope,
+  scopeIdentifier?: string,
+  parentScopeIdentifier?: string
+): Promise<TLSCertificate | null> {
+  let query = supabase
+    .from('tls_certificates')
+    .select('*')
+    .eq('user_email', email.toLowerCase())
+
+  if (scope) {
+    query = query.eq('scope', scope)
+  }
+
+  if (scopeIdentifier !== undefined) {
+    query = query.eq('scope_identifier', scopeIdentifier)
+  }
+
+  if (parentScopeIdentifier !== undefined) {
+    query = query.eq('parent_scope_identifier', parentScopeIdentifier)
+  }
+
+  const { data, error } = await query
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') return null
+    console.error('Error getting certificate:', error)
+    return null
+  }
+
+  return {
+    id: data.id,
+    userEmail: data.user_email,
+    cloudflareCertId: data.cloudflare_cert_id,
+    certificate: data.certificate,
+    privateKey: data.private_key,
+    hostnames: data.hostnames,
+    scope: data.scope,
+    scopeIdentifier: data.scope_identifier,
+    parentScopeIdentifier: data.parent_scope_identifier,
+    validFrom: data.valid_from,
+    validUntil: data.valid_until,
+    generatedAt: data.generated_at,
+  }
+}
+
+/**
+ * Get certificate by specific scope and identifiers
+ */
+export async function getCertificateByScope(
+  email: string,
+  scope: CertificateScope,
+  scopeIdentifier?: string,
+  parentScopeIdentifier?: string
+): Promise<TLSCertificate | null> {
+  return getLatestCertificate(email, scope, scopeIdentifier, parentScopeIdentifier)
+}
+
+/**
+ * Delete all certificates for a user
+ */
+export async function deleteCertificates(email: string): Promise<string[]> {
+  // Get all certificate IDs first
+  const { data } = await supabase
+    .from('tls_certificates')
+    .select('cloudflare_cert_id')
+    .eq('user_email', email.toLowerCase())
+
+  const certIds: string[] = []
+  if (data) {
+    for (const record of data) {
+      if (record.cloudflare_cert_id) {
+        certIds.push(record.cloudflare_cert_id)
+      }
+    }
+  }
+
+  // Delete from database
+  const { error } = await supabase
+    .from('tls_certificates')
+    .delete()
+    .eq('user_email', email.toLowerCase())
+
+  if (error) {
+    console.error('Error deleting certificates:', error)
+  }
+
+  return certIds
+}
