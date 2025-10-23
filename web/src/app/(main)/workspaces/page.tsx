@@ -52,20 +52,20 @@ export default async function WorkspacesPage() {
       <div className="mb-8">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold">Workspaces</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-muted-foreground mt-1.5 text-sm">
             Manage your development workspaces and collaborate with your team
           </p>
         </div>
 
         {/* Node Metrics Section */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-4">Node Resources</h2>
+          <h2 className="mb-4 text-lg font-semibold">Node Resources</h2>
           <WorkMachineMetrics nodeName="master" />
         </div>
 
         {/* Error Display */}
         {(error || workMachineError) && (
-          <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+          <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-200">

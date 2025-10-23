@@ -32,12 +32,9 @@ export class CompositionService {
    */
   async createComposition(
     namespace: string,
-    data: CompositionCreateRequest
+    data: CompositionCreateRequest,
   ): Promise<CompositionResponse> {
-    return apiClient.post<CompositionResponse>(
-      `/api/v1/namespaces/${namespace}/compositions`,
-      data
-    )
+    return apiClient.post<CompositionResponse>(`/api/v1/namespaces/${namespace}/compositions`, data)
   }
 
   /**
@@ -46,35 +43,29 @@ export class CompositionService {
   async updateComposition(
     namespace: string,
     name: string,
-    data: CompositionUpdateRequest
+    data: CompositionUpdateRequest,
   ): Promise<CompositionResponse> {
     return apiClient.put<CompositionResponse>(
       `/api/v1/namespaces/${namespace}/compositions/${name}`,
-      data
+      data,
     )
   }
 
   /**
    * Delete a composition
    */
-  async deleteComposition(
-    namespace: string,
-    name: string
-  ): Promise<CompositionDeleteResponse> {
+  async deleteComposition(namespace: string, name: string): Promise<CompositionDeleteResponse> {
     return apiClient.delete<CompositionDeleteResponse>(
-      `/api/v1/namespaces/${namespace}/compositions/${name}`
+      `/api/v1/namespaces/${namespace}/compositions/${name}`,
     )
   }
 
   /**
    * Get composition status
    */
-  async getCompositionStatus(
-    namespace: string,
-    name: string
-  ): Promise<CompositionStatusResponse> {
+  async getCompositionStatus(namespace: string, name: string): Promise<CompositionStatusResponse> {
     return apiClient.get<CompositionStatusResponse>(
-      `/api/v1/namespaces/${namespace}/compositions/${name}/status`
+      `/api/v1/namespaces/${namespace}/compositions/${name}/status`,
     )
   }
 }

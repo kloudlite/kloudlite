@@ -14,7 +14,7 @@ export function AdminNavigation() {
   ]
 
   return (
-    <nav className="hidden md:flex items-center gap-1">
+    <nav className="hidden items-center gap-1 md:flex">
       {navItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
         const Icon = item.icon
@@ -23,10 +23,10 @@ export function AdminNavigation() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
+            className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
               isActive
-                ? 'bg-gray-100 text-gray-900 font-medium'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                ? 'bg-gray-100 font-medium text-gray-900'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
             <Icon className="h-4 w-4" />

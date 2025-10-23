@@ -38,7 +38,7 @@ export interface TLSCertificate {
  */
 export async function generateCertificate(
   hostnames: string[],
-  validityDays: number = 5475 // 15 years (max for Cloudflare Origin CA)
+  validityDays: number = 5475, // 15 years (max for Cloudflare Origin CA)
 ): Promise<TLSCertificate | null> {
   try {
     console.log(`Generating Cloudflare Origin CA certificate for hostnames:`, hostnames)
@@ -52,7 +52,7 @@ export async function generateCertificate(
       body: JSON.stringify({
         hostnames,
         requested_validity: validityDays,
-        request_type: 'origin-rsa' // RSA 2048-bit key
+        request_type: 'origin-rsa', // RSA 2048-bit key
       }),
     })
 
@@ -179,14 +179,11 @@ export function generateHostnames(
   baseDomain: string,
   scope: CertificateScope = 'installation',
   scopeIdentifier?: string,
-  parentScopeIdentifier?: string
+  parentScopeIdentifier?: string,
 ): string[] {
   switch (scope) {
     case 'installation':
-      return [
-        `${subdomain}.${baseDomain}`,
-        `*.${subdomain}.${baseDomain}`
-      ]
+      return [`${subdomain}.${baseDomain}`, `*.${subdomain}.${baseDomain}`]
 
     case 'workmachine':
       if (!scopeIdentifier) {
@@ -194,16 +191,18 @@ export function generateHostnames(
       }
       return [
         `${scopeIdentifier}.${subdomain}.${baseDomain}`,
-        `*.${scopeIdentifier}.${subdomain}.${baseDomain}`
+        `*.${scopeIdentifier}.${subdomain}.${baseDomain}`,
       ]
 
     case 'workspace':
       if (!scopeIdentifier || !parentScopeIdentifier) {
-        throw new Error('scopeIdentifier (workspace) and parentScopeIdentifier (wm-user) are required for workspace scope')
+        throw new Error(
+          'scopeIdentifier (workspace) and parentScopeIdentifier (wm-user) are required for workspace scope',
+        )
       }
       return [
         `${scopeIdentifier}.${parentScopeIdentifier}.${subdomain}.${baseDomain}`,
-        `*.${scopeIdentifier}.${parentScopeIdentifier}.${subdomain}.${baseDomain}`
+        `*.${scopeIdentifier}.${parentScopeIdentifier}.${subdomain}.${baseDomain}`,
       ]
 
     default:

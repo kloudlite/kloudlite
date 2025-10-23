@@ -13,7 +13,7 @@ export function PageLayout({
   children,
   stickyNav = false,
   customHeader,
-  noScrollArea = false
+  noScrollArea = false,
 }: PageLayoutProps) {
   const navContent = (
     <>
@@ -24,31 +24,17 @@ export function PageLayout({
 
   if (noScrollArea) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
-        {stickyNav ? (
-          <div className="sticky top-0 z-20">
-            {navContent}
-          </div>
-        ) : (
-          navContent
-        )}
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        {stickyNav ? <div className="sticky top-0 z-20">{navContent}</div> : navContent}
         {children}
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {stickyNav ? (
-        <div className="sticky top-0 z-20">
-          {navContent}
-        </div>
-      ) : (
-        navContent
-      )}
-      <ScrollArea className="flex-1 bg-gray-50">
-        {children}
-      </ScrollArea>
+    <div className="flex min-h-screen flex-col">
+      {stickyNav ? <div className="sticky top-0 z-20">{navContent}</div> : navContent}
+      <ScrollArea className="flex-1 bg-gray-50">{children}</ScrollArea>
     </div>
   )
 }

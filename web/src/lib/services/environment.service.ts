@@ -54,7 +54,7 @@ export class EnvironmentService {
    */
   async updateEnvironment(
     name: string,
-    data: EnvironmentUpdateRequest
+    data: EnvironmentUpdateRequest,
   ): Promise<EnvironmentResponse> {
     return apiClient.put<EnvironmentResponse>(`${this.baseUrl}/${name}`, data)
   }
@@ -70,20 +70,14 @@ export class EnvironmentService {
    * Activate an environment
    */
   async activateEnvironment(name: string): Promise<EnvironmentResponse> {
-    return apiClient.post<EnvironmentResponse>(
-      `${this.baseUrl}/${name}/activate`,
-      undefined
-    )
+    return apiClient.post<EnvironmentResponse>(`${this.baseUrl}/${name}/activate`, undefined)
   }
 
   /**
    * Deactivate an environment
    */
   async deactivateEnvironment(name: string): Promise<EnvironmentResponse> {
-    return apiClient.post<EnvironmentResponse>(
-      `${this.baseUrl}/${name}/deactivate`,
-      undefined
-    )
+    return apiClient.post<EnvironmentResponse>(`${this.baseUrl}/${name}/deactivate`, undefined)
   }
 
   /**
@@ -124,11 +118,21 @@ export class EnvironmentService {
     return apiClient.get(`${this.baseUrl}/${name}/envvars`)
   }
 
-  async createEnvVar(name: string, key: string, value: string, type: 'config' | 'secret'): Promise<SetEnvVarResponse> {
+  async createEnvVar(
+    name: string,
+    key: string,
+    value: string,
+    type: 'config' | 'secret',
+  ): Promise<SetEnvVarResponse> {
     return apiClient.post(`${this.baseUrl}/${name}/envvars`, { key, value, type })
   }
 
-  async setEnvVar(name: string, key: string, value: string, type: 'config' | 'secret'): Promise<SetEnvVarResponse> {
+  async setEnvVar(
+    name: string,
+    key: string,
+    value: string,
+    type: 'config' | 'secret',
+  ): Promise<SetEnvVarResponse> {
     return apiClient.put(`${this.baseUrl}/${name}/envvars`, { key, value, type })
   }
 
@@ -162,7 +166,7 @@ export class EnvironmentService {
     targetNamespace: string,
     _cloneEnvVars: boolean,
     _cloneFiles: boolean,
-    currentUser: string
+    currentUser: string,
   ): Promise<EnvironmentResponse> {
     const request: EnvironmentCreateRequest = {
       name: targetName,
@@ -171,7 +175,7 @@ export class EnvironmentService {
         createdBy: currentUser,
         activated: false,
         cloneFrom: sourceName,
-      }
+      },
     }
     return this.createEnvironment(request)
   }

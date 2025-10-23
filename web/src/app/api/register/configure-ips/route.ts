@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, addOrUpdateIpRecord, markDeploymentReady } from '@/lib/registration/supabase-storage-service'
+import {
+  getUserByInstallationKey,
+  addOrUpdateIpRecord,
+  markDeploymentReady,
+} from '@/lib/registration/supabase-storage-service'
 import type { IPRecord } from '@/lib/registration/supabase-storage-service'
-import { createInstallationDnsRecords, createWorkmachineDnsRecords, updateDnsRecords } from '@/lib/registration/cloudflare-dns'
+import {
+  createInstallationDnsRecords,
+  createWorkmachineDnsRecords,
+  updateDnsRecords,
+} from '@/lib/registration/cloudflare-dns'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 /**
  * Configure IP for deployment
  * Called by the installed deployment to send individual IP configurations
@@ -22,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -32,30 +42,24 @@ export async function POST(request: NextRequest) {
     const { installationKey, type, ip, workMachineName } = body
 
     if (!installationKey) {
-      return NextResponse.json(
-        { error: 'Installation key is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
     }
 
     if (!type || (type !== 'installation' && type !== 'workmachine')) {
       return NextResponse.json(
         { error: 'Type must be "installation" or "workmachine"' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     if (!ip || typeof ip !== 'string') {
-      return NextResponse.json(
-        { error: 'IP address is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'IP address is required' }, { status: 400 })
     }
 
     if (type === 'workmachine' && !workMachineName) {
       return NextResponse.json(
         { error: 'workMachineName is required for workmachine type' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -63,34 +67,32 @@ export async function POST(request: NextRequest) {
     const user = await getUserByInstallationKey(installationKey)
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid installation key' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Verify secret key matches
     if (user.secretKey !== secretKey) {
-      return NextResponse.json(
-        { error: 'Invalid secret key' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
     // Check if user has subdomain assigned (required for DNS creation)
     if (!user.subdomain) {
       return NextResponse.json(
         { error: 'User must have a subdomain assigned before configuring IPs' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     // Get existing IP record to check if we need to update DNS
-    const existingRecord = user.ipRecords?.find(r => {
+    const existingRecord = user.ipRecords?.find((r) => {
       if (r.type === 'installation' && type === 'installation') {
         return true
       }
-      if (r.type === 'workmachine' && type === 'workmachine' && r.workMachineName === workMachineName) {
+      if (
+        r.type === 'workmachine' &&
+        type === 'workmachine' &&
+        r.workMachineName === workMachineName
+      ) {
         return true
       }
       return false
@@ -104,10 +106,13 @@ export async function POST(request: NextRequest) {
       if (existingRecord) {
         // Update existing record
         // If IP changed and we have DNS record IDs, update them
-        if (existingRecord.ip !== ip && existingRecord.dnsRecordIds && existingRecord.dnsRecordIds.length > 0) {
-          const domainName = type === 'installation'
-            ? `${user.subdomain}`
-            : `${workMachineName}.${user.subdomain}`
+        if (
+          existingRecord.ip !== ip &&
+          existingRecord.dnsRecordIds &&
+          existingRecord.dnsRecordIds.length > 0
+        ) {
+          const domainName =
+            type === 'installation' ? `${user.subdomain}` : `${workMachineName}.${user.subdomain}`
 
           await updateDnsRecords(existingRecord.dnsRecordIds, domainName, ip)
           dnsRecordIds = existingRecord.dnsRecordIds
@@ -122,7 +127,9 @@ export async function POST(request: NextRequest) {
           } else if (type === 'workmachine') {
             dnsRecordIds = await createWorkmachineDnsRecords(workMachineName!, user.subdomain, ip)
             dnsCreated = dnsRecordIds.length > 0
-            console.log(`Created ${dnsRecordIds.length} DNS records for workmachine: ${workMachineName}`)
+            console.log(
+              `Created ${dnsRecordIds.length} DNS records for workmachine: ${workMachineName}`,
+            )
           }
         } else {
           // IP didn't change, keep existing DNS record IDs
@@ -138,7 +145,9 @@ export async function POST(request: NextRequest) {
         } else if (type === 'workmachine') {
           dnsRecordIds = await createWorkmachineDnsRecords(workMachineName!, user.subdomain, ip)
           dnsCreated = dnsRecordIds.length > 0
-          console.log(`Created ${dnsRecordIds.length} DNS records for new workmachine: ${workMachineName}`)
+          console.log(
+            `Created ${dnsRecordIds.length} DNS records for new workmachine: ${workMachineName}`,
+          )
         }
       }
     } catch (dnsError) {
@@ -186,9 +195,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Configure IP error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

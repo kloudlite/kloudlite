@@ -5,7 +5,7 @@ import type {
   MachineTypeUpdateRequest,
   MachineTypeListResponse,
   MachineTypeResponse,
-  MachineTypeDeleteResponse
+  MachineTypeDeleteResponse,
 } from '@/types/machine'
 
 export class MachineTypeService {
@@ -38,12 +38,12 @@ export class MachineTypeService {
         resources: {
           cpu: data.cpu.toString(),
           memory: `${data.memory}Gi`,
-          ...(data.gpu && { gpu: data.gpu.toString() })
+          ...(data.gpu && { gpu: data.gpu.toString() }),
         },
         category: data.category,
         active: data.active !== undefined ? data.active : true,
-        isDefault: false
-      }
+        isDefault: false,
+      },
     }
     return apiClient.post<MachineTypeResponse>(this.baseUrl, payload)
   }
@@ -51,7 +51,10 @@ export class MachineTypeService {
   /**
    * Update an existing machine type
    */
-  async updateMachineType(name: string, data: MachineTypeUpdateRequest): Promise<MachineTypeResponse> {
+  async updateMachineType(
+    name: string,
+    data: MachineTypeUpdateRequest,
+  ): Promise<MachineTypeResponse> {
     // Transform frontend data structure to backend API format
     const payload = {
       spec: {
@@ -61,12 +64,12 @@ export class MachineTypeService {
           resources: {
             cpu: data.cpu.toString(),
             memory: data.memory ? `${data.memory}Gi` : undefined,
-            ...(data.gpu && { gpu: data.gpu.toString() })
-          }
+            ...(data.gpu && { gpu: data.gpu.toString() }),
+          },
         }),
         ...(data.category && { category: data.category }),
-        ...(data.active !== undefined && { active: data.active })
-      }
+        ...(data.active !== undefined && { active: data.active }),
+      },
     }
     return apiClient.put<MachineTypeResponse>(`${this.baseUrl}/${name}`, payload)
   }

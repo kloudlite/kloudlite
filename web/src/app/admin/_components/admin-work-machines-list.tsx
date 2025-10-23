@@ -10,7 +10,7 @@ import {
   RefreshCw,
   AlertCircle,
   Activity,
-  Clock
+  Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,15 +49,12 @@ interface AdminWorkMachinesListProps {
   isSuperAdmin?: boolean
 }
 
-export function AdminWorkMachinesList({
-  workMachines,
-  isSuperAdmin
-}: AdminWorkMachinesListProps) {
+export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkMachinesListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
 
-  const filteredMachines = workMachines.filter(machine => {
+  const filteredMachines = workMachines.filter((machine) => {
     const matchesSearch =
       machine.owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
       machine.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -94,14 +91,14 @@ export function AdminWorkMachinesList({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="border-b border-gray-200 px-6 py-4">
           <h2 className="text-lg font-medium">Work Machines</h2>
         </div>
 
         {/* Filters */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
             <Input
               placeholder="Search by owner or machine name..."
               value={searchQuery}
@@ -139,25 +136,25 @@ export function AdminWorkMachinesList({
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Machine
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Owner
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Resources
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Activity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Last Active
                 </th>
                 <th className="relative px-6 py-3">
@@ -165,13 +162,13 @@ export function AdminWorkMachinesList({
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 bg-white">
               {filteredMachines.map((machine) => (
                 <tr key={machine.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/administration/machines/${machine.id}`}
-                      className="flex items-center gap-3 group"
+                      className="group flex items-center gap-3"
                     >
                       <Server className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
                       <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
@@ -183,7 +180,9 @@ export function AdminWorkMachinesList({
                     <span className="text-sm text-gray-600">{machine.owner}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(machine.status)}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(machine.status)}`}
+                    >
                       {machine.status}
                     </span>
                   </td>
@@ -210,7 +209,7 @@ export function AdminWorkMachinesList({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                    <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">
                       {machine.type}
                     </span>
                   </td>
@@ -226,7 +225,7 @@ export function AdminWorkMachinesList({
                       {new Date(machine.lastActive).toLocaleString()}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">

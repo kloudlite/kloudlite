@@ -1,8 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type {
-  WorkMachine,
-  WorkMachineListResponse,
-} from '@/types/work-machine'
+import type { WorkMachine, WorkMachineListResponse } from '@/types/work-machine'
 
 export class WorkMachineService {
   private baseUrl = '/api/v1/work-machines'
@@ -32,21 +29,24 @@ export class WorkMachineService {
   /**
    * Start current user's work machine
    */
-  async startMyWorkMachine(): Promise<{message: string; state: string}> {
-    return apiClient.post<{message: string; state: string}>(`${this.baseUrl}/my/start`, undefined)
+  async startMyWorkMachine(): Promise<{ message: string; state: string }> {
+    return apiClient.post<{ message: string; state: string }>(`${this.baseUrl}/my/start`, undefined)
   }
 
   /**
    * Stop current user's work machine
    */
-  async stopMyWorkMachine(): Promise<{message: string; state: string}> {
-    return apiClient.post<{message: string; state: string}>(`${this.baseUrl}/my/stop`, undefined)
+  async stopMyWorkMachine(): Promise<{ message: string; state: string }> {
+    return apiClient.post<{ message: string; state: string }>(`${this.baseUrl}/my/stop`, undefined)
   }
 
   /**
    * Update current user's work machine
    */
-  async updateMyWorkMachine(data: { machineType?: string; sshPublicKeys?: string[] }): Promise<WorkMachine> {
+  async updateMyWorkMachine(data: {
+    machineType?: string
+    sshPublicKeys?: string[]
+  }): Promise<WorkMachine> {
     return apiClient.put<WorkMachine>(`${this.baseUrl}/my`, data)
   }
 }

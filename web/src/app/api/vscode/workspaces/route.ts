@@ -7,10 +7,7 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('authorization')
 
     if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authorization header required' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
     }
 
     // Extract the connection token from Bearer header
@@ -24,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(backendUrl, {
       headers: {
-        'Authorization': authHeader,
+        Authorization: authHeader,
         'Content-Type': 'application/json',
       },
     })
@@ -33,7 +30,7 @@ export async function GET(request: NextRequest) {
       const errorText = await response.text()
       return NextResponse.json(
         { error: errorText || 'Failed to fetch workspaces' },
-        { status: response.status }
+        { status: response.status },
       )
     }
 
@@ -41,15 +38,11 @@ export async function GET(request: NextRequest) {
 
     // Return the workspaces in the format expected by the VS Code extension
     return NextResponse.json({
-      workspaces: data.items || []
+      workspaces: data.items || [],
     })
-
   } catch (err) {
     console.error('VS Code API error:', err)
     const error = err instanceof Error ? err : new Error('Internal server error')
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

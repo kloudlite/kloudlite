@@ -17,7 +17,7 @@ export default async function EnvironmentsPage() {
   let allEnvironments: EnvironmentUIModel[] = []
   try {
     const response = await environmentService.listEnvironments()
-    allEnvironments = response.environments.map(env => {
+    allEnvironments = response.environments.map((env) => {
       let owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
 
       // Try to get and decode the email if available
@@ -288,21 +288,18 @@ export default async function EnvironmentsPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Title and Filter Section */}
-        <div className="mb-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold">Environments</h1>
-            <p className="text-sm text-muted-foreground mt-1.5">
-              Manage development environments across your team
-            </p>
-          </div>
-
-          {/* Environments List with Filter */}
-          <EnvironmentsList
-            environments={allEnvironments}
-            currentUser={currentUser}
-          />
+      {/* Title and Filter Section */}
+      <div className="mb-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold">Environments</h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            Manage development environments across your team
+          </p>
         </div>
+
+        {/* Environments List with Filter */}
+        <EnvironmentsList environments={allEnvironments} currentUser={currentUser} />
+      </div>
     </main>
   )
 }

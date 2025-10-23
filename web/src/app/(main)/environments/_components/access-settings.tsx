@@ -7,18 +7,20 @@ export function AccessSettings() {
     <div className="space-y-4">
       <div className="mb-4">
         <h3 className="text-lg font-medium">Access Control</h3>
-        <p className="text-sm text-muted-foreground">Manage environment visibility and access permissions</p>
+        <p className="text-muted-foreground text-sm">
+          Manage environment visibility and access permissions
+        </p>
       </div>
       <div className="bg-card rounded-lg border p-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Environment Visibility
-            </label>
+            <label className="mb-2 block text-sm font-medium">Environment Visibility</label>
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input type="radio" name="visibility" defaultChecked className="text-blue-600" />
-                <span className="text-sm">Private - Only accessible to owner and invited members</span>
+                <span className="text-sm">
+                  Private - Only accessible to owner and invited members
+                </span>
               </label>
               <label className="flex items-center gap-2">
                 <input type="radio" name="visibility" className="text-blue-600" />
@@ -32,17 +34,25 @@ export function AccessSettings() {
           </div>
 
           <div className="pt-2">
-            <h4 className="text-sm font-medium mb-2">Shared With</h4>
+            <h4 className="mb-2 text-sm font-medium">Shared With</h4>
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+              <div className="bg-muted/50 flex items-center justify-between rounded p-2">
                 <span className="text-sm">alice@team.com</span>
-                <Button variant="ghost" size="sm" className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
                   Remove
                 </Button>
               </div>
-              <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+              <div className="bg-muted/50 flex items-center justify-between rounded p-2">
                 <span className="text-sm">bob@team.com</span>
-                <Button variant="ghost" size="sm" className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
                   Remove
                 </Button>
               </div>

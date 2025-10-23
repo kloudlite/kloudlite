@@ -83,8 +83,8 @@ export default function CompletePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="size-8 animate-spin text-primary" />
+      <div className="bg-background flex min-h-screen items-center justify-center">
+        <Loader2 className="text-primary size-8 animate-spin" />
       </div>
     )
   }
@@ -94,7 +94,7 @@ export default function CompletePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center p-8">
       <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
           <KloudliteLogo className="mx-auto mb-6" />
@@ -104,19 +104,17 @@ export default function CompletePage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Installation Details</CardTitle>
-              <CardDescription>
-                Your Kloudlite dashboard is ready
-              </CardDescription>
+              <CardDescription>Your Kloudlite dashboard is ready</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm font-medium mb-2">Dashboard URL:</p>
+              <div className="bg-muted rounded-lg p-4">
+                <p className="mb-2 text-sm font-medium">Dashboard URL:</p>
                 <div className="flex items-center justify-between gap-2">
                   <a
                     href={userData.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline font-mono text-sm flex items-center gap-1"
+                    className="text-primary flex items-center gap-1 font-mono text-sm hover:underline"
                   >
                     {userData.subdomain}.kloudlite.io
                     <ExternalLink className="size-3" />
@@ -132,10 +130,7 @@ export default function CompletePage() {
                 </div>
               </div>
 
-              <Button
-                className="w-full"
-                onClick={() => window.open(userData.url, '_blank')}
-              >
+              <Button className="w-full" onClick={() => window.open(userData.url, '_blank')}>
                 Open Dashboard
               </Button>
             </CardContent>
@@ -143,13 +138,11 @@ export default function CompletePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Trash2 className="size-4 text-destructive" />
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Trash2 className="text-destructive size-4" />
                 Uninstall Kloudlite
               </CardTitle>
-              <CardDescription>
-                Remove Kloudlite from your cloud provider
-              </CardDescription>
+              <CardDescription>Remove Kloudlite from your cloud provider</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Tabs value={selectedProvider} onValueChange={setSelectedProvider}>
@@ -159,36 +152,38 @@ export default function CompletePage() {
                   <TabsTrigger value="azure">Azure</TabsTrigger>
                 </TabsList>
 
-                {Object.entries(getUninstallCommands(userData.installationKey)).map(([key, config]) => (
-                  <TabsContent key={key} value={key} className="space-y-3 mt-4">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Trash2 className="size-4" />
-                      Uninstall from {config.name}
-                    </div>
+                {Object.entries(getUninstallCommands(userData.installationKey)).map(
+                  ([key, config]) => (
+                    <TabsContent key={key} value={key} className="mt-4 space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Trash2 className="size-4" />
+                        Uninstall from {config.name}
+                      </div>
 
-                    <div className="space-y-2">
-                      {config.commands.map((cmd, idx) => (
-                        <div key={idx} className="bg-muted rounded-lg p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <code className="text-xs font-mono flex-1 break-all">{cmd}</code>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 flex-shrink-0"
-                              onClick={() => copyToClipboard(cmd, 'Command')}
-                            >
-                              <Copy className="size-3" />
-                            </Button>
+                      <div className="space-y-2">
+                        {config.commands.map((cmd, idx) => (
+                          <div key={idx} className="bg-muted rounded-lg p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <code className="flex-1 font-mono text-xs break-all">{cmd}</code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 flex-shrink-0 p-0"
+                                onClick={() => copyToClipboard(cmd, 'Command')}
+                              >
+                                <Copy className="size-3" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
 
-                    <p className="text-xs text-muted-foreground">
-                      This will remove all Kloudlite resources from your {config.name} account
-                    </p>
-                  </TabsContent>
-                ))}
+                      <p className="text-muted-foreground text-xs">
+                        This will remove all Kloudlite resources from your {config.name} account
+                      </p>
+                    </TabsContent>
+                  ),
+                )}
               </Tabs>
             </CardContent>
           </Card>

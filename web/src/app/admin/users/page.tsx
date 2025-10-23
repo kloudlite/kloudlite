@@ -11,14 +11,12 @@ function UsersError({ error }: { error: string }) {
     <main className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-        <p className="text-sm text-gray-600 mt-1.5">
-          Manage user accounts, roles, and permissions
-        </p>
+        <p className="mt-1.5 text-sm text-gray-600">Manage user accounts, roles, and permissions</p>
       </div>
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center max-w-md">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load users</h3>
+      <div className="flex h-64 items-center justify-center">
+        <div className="max-w-md text-center">
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+          <h3 className="mb-2 text-lg font-medium text-gray-900">Failed to load users</h3>
           <p className="text-sm text-gray-600">{error}</p>
         </div>
       </div>
@@ -52,11 +50,11 @@ export default async function UsersPage() {
     const users: UserDisplay[] = result.users || []
 
     return (
-      <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
         {/* Page Header */}
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-          <p className="text-sm text-gray-600 mt-1.5">
+          <p className="mt-1.5 text-sm text-gray-600">
             Manage user accounts, roles, and permissions
           </p>
         </div>

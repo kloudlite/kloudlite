@@ -165,42 +165,48 @@ export function EditEnvironmentDialog({
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="allow-ingress">Allow Ingress</Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       Allow incoming traffic to this namespace
                     </p>
                   </div>
                   <Switch
                     id="allow-ingress"
                     checked={formData.allowIngress}
-                    onCheckedChange={(checked) => setFormData({ ...formData, allowIngress: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, allowIngress: checked })
+                    }
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="allow-egress">Allow Egress</Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       Allow outgoing traffic from this namespace
                     </p>
                   </div>
                   <Switch
                     id="allow-egress"
                     checked={formData.allowEgress}
-                    onCheckedChange={(checked) => setFormData({ ...formData, allowEgress: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, allowEgress: checked })
+                    }
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="isolate-namespace">Isolate Namespace</Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       Prevent cross-namespace communication
                     </p>
                   </div>
                   <Switch
                     id="isolate-namespace"
                     checked={formData.isolateNamespace}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isolateNamespace: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isolateNamespace: checked })
+                    }
                   />
                 </div>
               </div>

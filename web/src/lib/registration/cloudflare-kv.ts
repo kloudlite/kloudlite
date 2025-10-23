@@ -25,7 +25,7 @@ export async function kvGet<T>(key: string): Promise<T | null> {
   try {
     const response = await fetch(`${KV_API_BASE}/values/${key}`, {
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
       cache: 'no-store', // Force fresh data, no Next.js caching
       next: { revalidate: 0 }, // Disable Next.js data cache
@@ -74,7 +74,7 @@ export async function kvPut(key: string, value: JsonValue, expirationTtl?: numbe
     const response = await fetch(`${KV_API_BASE}/values/${key}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
       body: formData,
     })
@@ -103,7 +103,7 @@ export async function kvDelete(key: string): Promise<void> {
     const response = await fetch(`${KV_API_BASE}/values/${key}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
     })
 
@@ -128,7 +128,7 @@ export async function kvList(prefix?: string): Promise<string[]> {
 
     const response = await fetch(url.toString(), {
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
     })
 
@@ -142,7 +142,7 @@ export async function kvList(prefix?: string): Promise<string[]> {
       throw new Error(`KV LIST failed: ${result.errors[0]?.message || 'Unknown error'}`)
     }
 
-    return result.result.map(item => item.name)
+    return result.result.map((item) => item.name)
   } catch (error) {
     console.error('KV LIST error:', error)
     throw error

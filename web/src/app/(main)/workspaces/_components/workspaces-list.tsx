@@ -14,7 +14,12 @@ interface WorkspacesListProps {
   namespace?: string
 }
 
-export function WorkspacesList({ workspaces, currentUser, isAdmin = false, namespace = 'default' }: WorkspacesListProps) {
+export function WorkspacesList({
+  workspaces,
+  currentUser,
+  isAdmin = false,
+  namespace = 'default',
+}: WorkspacesListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active' | 'suspended' | 'archived'>('all')
 
@@ -22,12 +27,12 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
 
   // Apply scope filter (only for admins)
   if (isAdmin && scopeFilter === 'mine') {
-    filteredWorkspaces = filteredWorkspaces.filter(ws => ws.spec.owner === currentUser)
+    filteredWorkspaces = filteredWorkspaces.filter((ws) => ws.spec.owner === currentUser)
   }
 
   // Apply status filter
   if (statusFilter !== 'all') {
-    filteredWorkspaces = filteredWorkspaces.filter(ws => ws.spec.status === statusFilter)
+    filteredWorkspaces = filteredWorkspaces.filter((ws) => ws.spec.status === statusFilter)
   }
 
   return (
@@ -37,10 +42,10 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
         <div className="flex items-center gap-4">
           {/* Scope Filter - Only for Admins */}
           {isAdmin && (
-            <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+            <div className="bg-muted flex items-center gap-1 rounded-md p-1">
               <button
                 onClick={() => setScope('all')}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
+                className={`rounded px-3 py-1 text-sm transition-colors ${
                   scopeFilter === 'all'
                     ? 'bg-background shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -50,7 +55,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
               </button>
               <button
                 onClick={() => setScope('mine')}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
+                className={`rounded px-3 py-1 text-sm transition-colors ${
                   scopeFilter === 'mine'
                     ? 'bg-background shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -62,10 +67,10 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
           )}
 
           {/* Status Filter */}
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
             <button
               onClick={() => setStatus('all')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'all'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -75,7 +80,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
             </button>
             <button
               onClick={() => setStatus('active')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'active'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -85,7 +90,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
             </button>
             <button
               onClick={() => setStatus('suspended')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'suspended'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -95,7 +100,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
             </button>
             <button
               onClick={() => setStatus('archived')}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
+              className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'archived'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -105,77 +110,86 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
             </button>
           </div>
 
-          <span className="text-sm text-muted-foreground">
-            {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
+          <span className="text-muted-foreground text-sm">
+            {filteredWorkspaces.length}{' '}
+            {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
           </span>
         </div>
         <CreateWorkspaceSheet namespace={namespace} user={currentUser} />
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-lg border overflow-hidden">
+      <div className="bg-card overflow-hidden rounded-lg border">
         <table className="min-w-full">
           <thead className="bg-muted/50 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Owner
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Environment
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Packages
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Created
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {filteredWorkspaces.map((workspace) => {
-              const statusColor = workspace.spec.status === 'active'
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                : workspace.spec.status === 'suspended'
-                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                : workspace.spec.status === 'archived'
-                ? 'bg-secondary text-secondary-foreground'
-                : 'bg-secondary text-secondary-foreground'
+              const statusColor =
+                workspace.spec.status === 'active'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                  : workspace.spec.status === 'suspended'
+                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    : workspace.spec.status === 'archived'
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'bg-secondary text-secondary-foreground'
 
               const packageCount = workspace.spec.packages?.length || 0
               const installedCount = workspace.status?.installedPackages?.length || 0
 
               return (
-                <tr key={workspace.metadata.uid || workspace.metadata.name} className="hover:bg-muted/50">
+                <tr
+                  key={workspace.metadata.uid || workspace.metadata.name}
+                  className="hover:bg-muted/50"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}
-                      className="text-sm font-semibold hover:text-primary flex items-center gap-1"
+                      className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                     >
                       {workspace.spec.displayName || workspace.metadata.name}
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                     {workspace.spec.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{workspace.spec.description}</p>
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        {workspace.spec.description}
+                      </p>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.spec.owner.split('@')[0]}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                    >
                       {workspace.spec.status || 'active'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.status?.connectedEnvironment ? (
                       <span className="text-foreground font-medium">
                         {workspace.status.connectedEnvironment.name}
@@ -184,7 +198,7 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                       <span className="text-muted-foreground">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-6 py-4 text-sm whitespace-nowrap">
                     {packageCount > 0 ? (
                       <div className="text-xs">
                         <span className="text-muted-foreground">
@@ -195,16 +209,16 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
                       <span className="text-muted-foreground">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.metadata.creationTimestamp
                       ? new Date(workspace.metadata.creationTimestamp).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
-                          day: 'numeric'
+                          day: 'numeric',
                         })
                       : '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                  <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                     <WorkspaceRowActions workspace={workspace} />
                   </td>
                 </tr>
@@ -215,15 +229,15 @@ export function WorkspacesList({ workspaces, currentUser, isAdmin = false, names
       </div>
 
       {filteredWorkspaces.length === 0 && (
-        <div className="bg-card rounded-lg border text-center py-12">
-          <p className="text-sm text-muted-foreground">
+        <div className="bg-card rounded-lg border py-12 text-center">
+          <p className="text-muted-foreground text-sm">
             {isAdmin && scopeFilter === 'all' && statusFilter === 'active'
-              ? "No active workspaces found"
+              ? 'No active workspaces found'
               : isAdmin && scopeFilter === 'all'
-              ? "No workspaces found"
-              : statusFilter === 'active'
-              ? "You don't have any active workspaces"
-              : "You don't have any workspaces yet"}
+                ? 'No workspaces found'
+                : statusFilter === 'active'
+                  ? "You don't have any active workspaces"
+                  : "You don't have any workspaces yet"}
           </p>
         </div>
       )}

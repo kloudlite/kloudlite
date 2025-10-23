@@ -95,9 +95,7 @@ export function EditFileSheet({ environmentId, filename }: EditFileSheetProps) {
         <form onSubmit={handleSubmit} className="flex h-full flex-col">
           <SheetHeader>
             <SheetTitle>Edit File</SheetTitle>
-            <SheetDescription>
-              Update the configuration file
-            </SheetDescription>
+            <SheetDescription>Update the configuration file</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
@@ -116,7 +114,7 @@ export function EditFileSheet({ environmentId, filename }: EditFileSheetProps) {
             <div className="space-y-2">
               <Label htmlFor="content">Content</Label>
               {loadingFile ? (
-                <div className="flex items-center justify-center py-12 border border-gray-300 rounded-md">
+                <div className="flex items-center justify-center rounded-md border border-gray-300 py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 </div>
               ) : (

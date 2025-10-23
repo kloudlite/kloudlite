@@ -11,17 +11,17 @@ interface FilesListProps {
 export function FilesList({ environmentId, files }: FilesListProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium">File Configs</h3>
-          <p className="text-sm text-muted-foreground">Configuration files mounted to containers</p>
+          <p className="text-muted-foreground text-sm">Configuration files mounted to containers</p>
         </div>
         {files.length > 0 && <AddFileSheet environmentId={environmentId} />}
       </div>
 
       {files.length === 0 ? (
-        <div className="text-center py-12 bg-muted/50 rounded-lg border">
-          <File className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <div className="bg-muted/50 rounded-lg border py-12 text-center">
+          <File className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
           <p className="text-muted-foreground">No configuration files</p>
           <div className="mt-4">
             <AddFileSheet environmentId={environmentId} />

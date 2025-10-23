@@ -2,10 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { machineTypeService } from '@/lib/services/machine-type.service'
-import type {
-  MachineTypeCreateRequest,
-  MachineTypeUpdateRequest
-} from '@/types/machine'
+import type { MachineTypeCreateRequest, MachineTypeUpdateRequest } from '@/types/machine'
 
 /**
  * Server action to list all machine types
@@ -16,10 +13,10 @@ export async function listMachineTypes() {
     return { success: true, data: result }
   } catch (err) {
     console.error('List machine types error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -33,10 +30,10 @@ export async function getMachineType(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Get machine type error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -51,10 +48,10 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Create machine type error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -69,10 +66,10 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
     return { success: true, data: result }
   } catch (err) {
     console.error('Update machine type error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -87,10 +84,10 @@ export async function deleteMachineType(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Delete machine type error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -105,10 +102,10 @@ export async function activateMachineType(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Activate machine type error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -123,10 +120,10 @@ export async function deactivateMachineType(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Deactivate machine type error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -142,10 +139,10 @@ export async function setMachineTypeAsDefault(name: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Set machine type as default error:', err)
-    const error = err instanceof Error ? err : new Error("Unknown error")
+    const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }

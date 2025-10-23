@@ -25,7 +25,10 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Plus, Copy, Trash2, Eye, EyeOff, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { createConnectionToken, deleteConnectionToken } from '@/app/actions/connection-token.actions'
+import {
+  createConnectionToken,
+  deleteConnectionToken,
+} from '@/app/actions/connection-token.actions'
 import type { ConnectionToken } from '@/lib/services/connection-token.service'
 
 interface ConnectionTokensListProps {
@@ -48,7 +51,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
 
     setIsCreating(true)
     const result = await createConnectionToken({
-      displayName: newTokenName.trim()
+      displayName: newTokenName.trim(),
     })
     setIsCreating(false)
 
@@ -73,7 +76,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
     setDeletingToken(null)
 
     if (result.success) {
-      setTokens(tokens.filter(t => t.metadata.name !== name))
+      setTokens(tokens.filter((t) => t.metadata.name !== name))
       toast.success('Connection token deleted')
     } else {
       toast.error(result.error || 'Failed to delete token')
@@ -106,7 +109,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
     <div className="space-y-4">
       {/* Filter and Actions */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           {tokens.length} {tokens.length === 1 ? 'token' : 'tokens'}
         </span>
         <Button size="sm" className="gap-2" onClick={() => setCreateDialogOpen(true)}>
@@ -121,7 +124,8 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
           <DialogHeader>
             <DialogTitle>Create Connection Token</DialogTitle>
             <DialogDescription>
-              Create a new token to access Kloudlite workspaces from external tools like VS Code, CLI, etc.
+              Create a new token to access Kloudlite workspaces from external tools like VS Code,
+              CLI, etc.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -138,7 +142,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
                   }
                 }}
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Give your token a descriptive name to remember where it&apos;s used
               </p>
             </div>
@@ -157,17 +161,13 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
           <DialogHeader>
             <DialogTitle>Token Created Successfully!</DialogTitle>
             <DialogDescription>
-              Make sure to copy your token now. You won&apos;t be able to see it again!
-              This token contains the server URL and can be used directly in VS Code or other tools.
+              Make sure to copy your token now. You won&apos;t be able to see it again! This token
+              contains the server URL and can be used directly in VS Code or other tools.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex items-center gap-2">
-              <Input
-                readOnly
-                value={newlyCreatedJWT || ''}
-                className="font-mono text-sm"
-              />
+              <Input readOnly value={newlyCreatedJWT || ''} className="font-mono text-sm" />
               <Button
                 variant="outline"
                 size="icon"
@@ -182,10 +182,12 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => {
-              setShowTokenDialogOpen(false)
-              setNewlyCreatedJWT(null)
-            }}>
+            <Button
+              onClick={() => {
+                setShowTokenDialogOpen(false)
+                setNewlyCreatedJWT(null)
+              }}
+            >
               Done
             </Button>
           </DialogFooter>
@@ -193,23 +195,23 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
       </Dialog>
 
       {/* Table */}
-      <div className="bg-card rounded-lg border overflow-hidden">
+      <div className="bg-card overflow-hidden rounded-lg border">
         <table className="min-w-full">
           <thead className="bg-muted/50 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Token
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Last Used
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                 Actions
               </th>
             </tr>
@@ -226,7 +228,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                      <code className="bg-muted rounded px-2 py-1 font-mono text-sm">
                         {isVisible ? displayToken : maskToken(displayToken)}
                       </code>
                       {displayToken !== 'Hidden' && (
@@ -259,25 +261,25 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {token.metadata.creationTimestamp
                       ? new Date(token.metadata.creationTimestamp).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
-                          day: 'numeric'
+                          day: 'numeric',
                         })
                       : '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {token.status?.lastUsed
                       ? new Date(token.status.lastUsed).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
-                          day: 'numeric'
+                          day: 'numeric',
                         })
                       : 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                  <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -286,15 +288,16 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
                           className="h-8 w-8"
                           disabled={deletingToken === token.metadata.name}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="text-destructive h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Token?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will permanently delete the token &quot;{token.spec.displayName}&quot;.
-                            Applications using this token will no longer be able to access your workspaces.
+                            This will permanently delete the token &quot;{token.spec.displayName}
+                            &quot;. Applications using this token will no longer be able to access
+                            your workspaces.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -317,8 +320,8 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
       </div>
 
       {tokens.length === 0 && (
-        <div className="bg-card rounded-lg border text-center py-12">
-          <p className="text-sm text-muted-foreground">
+        <div className="bg-card rounded-lg border py-12 text-center">
+          <p className="text-muted-foreground text-sm">
             No connection tokens found. Create one to start using external tools.
           </p>
         </div>

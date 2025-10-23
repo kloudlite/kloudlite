@@ -15,7 +15,7 @@ import {
   Loader2,
   Copy,
   Trash2,
-  Plus
+  Plus,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { updateMyWorkMachine } from '@/app/actions/work-machine.actions'
@@ -106,7 +106,7 @@ export function WorkMachineControls({
   onStart,
   onStop,
   onTypeChange,
-  isLoading = false
+  isLoading = false,
 }: WorkMachineControlsProps) {
   const router = useRouter()
   const [_isPending, startTransition] = useTransition()
@@ -121,7 +121,8 @@ export function WorkMachineControls({
   const [isAddingKey, setIsAddingKey] = useState(false)
   const [isDeletingKey, setIsDeletingKey] = useState<string | null>(null)
 
-  const currentMachineType = availableMachineTypes.find(t => t.id === currentType) || availableMachineTypes[0]
+  const currentMachineType =
+    availableMachineTypes.find((t) => t.id === currentType) || availableMachineTypes[0]
 
   const handleStart = () => {
     if (onStart) onStart()
@@ -199,7 +200,7 @@ export function WorkMachineControls({
   const handleRemoveSSHKey = async (keyToRemove: string) => {
     setIsDeletingKey(keyToRemove)
     try {
-      const updatedKeys = sshAuthorizedKeys.filter(k => k !== keyToRemove)
+      const updatedKeys = sshAuthorizedKeys.filter((k) => k !== keyToRemove)
       const result = await updateMyWorkMachine({ sshPublicKeys: updatedKeys })
 
       if (result.success) {
@@ -229,7 +230,7 @@ export function WorkMachineControls({
         label: 'Start Machine',
         icon: <Play className="h-4 w-4" />,
         variant: 'default' as const,
-        disabled: isLoading
+        disabled: isLoading,
       }
     }
 
@@ -239,7 +240,7 @@ export function WorkMachineControls({
         label: 'Starting...',
         icon: <Loader2 className="h-4 w-4 animate-spin" />,
         variant: 'default' as const,
-        disabled: true
+        disabled: true,
       }
     }
 
@@ -249,7 +250,7 @@ export function WorkMachineControls({
         label: 'Stopping...',
         icon: <Loader2 className="h-4 w-4 animate-spin" />,
         variant: 'outline' as const,
-        disabled: true
+        disabled: true,
       }
     }
 
@@ -259,7 +260,7 @@ export function WorkMachineControls({
         label: 'Stop Machine',
         icon: <Square className="h-4 w-4" />,
         variant: 'destructive' as const,
-        disabled: isLoading
+        disabled: isLoading,
       }
     }
 
@@ -269,7 +270,7 @@ export function WorkMachineControls({
       label: currentState.charAt(0).toUpperCase() + currentState.slice(1),
       icon: <AlertCircle className="h-4 w-4" />,
       variant: 'outline' as const,
-      disabled: true
+      disabled: true,
     }
   }
 
@@ -280,7 +281,13 @@ export function WorkMachineControls({
       <div className="flex items-center gap-2">
         {/* Start/Stop Button */}
         <Button
-          onClick={buttonConfig.action === 'start' ? handleStart : buttonConfig.action === 'stop' ? handleStop : undefined}
+          onClick={
+            buttonConfig.action === 'start'
+              ? handleStart
+              : buttonConfig.action === 'stop'
+                ? handleStop
+                : undefined
+          }
           size="sm"
           className="gap-2"
           variant={buttonConfig.variant}
@@ -298,7 +305,11 @@ export function WorkMachineControls({
               size="sm"
               className="gap-2"
               disabled={isLoading || isTransitioning}
-              title={isTransitioning ? 'Machine type cannot be changed during state transitions' : undefined}
+              title={
+                isTransitioning
+                  ? 'Machine type cannot be changed during state transitions'
+                  : undefined
+              }
             >
               <Zap className="h-4 w-4" />
               {currentMachineType?.name || 'Select Type'}
@@ -321,8 +332,8 @@ export function WorkMachineControls({
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{type.name}</span>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">{type.description}</div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                  <div className="text-muted-foreground mt-1 text-xs">{type.description}</div>
+                  <div className="text-muted-foreground mt-2 flex items-center gap-4 text-xs">
                     <span className="flex items-center gap-1">
                       <Cpu className="h-3 w-3" />
                       {parseResourceValue(type.cpu)} vCPU
@@ -345,11 +356,7 @@ export function WorkMachineControls({
         </DropdownMenu>
 
         {/* Settings Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSettingsOpen(true)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)}>
           <Settings className="h-4 w-4" />
         </Button>
       </div>
@@ -360,15 +367,16 @@ export function WorkMachineControls({
           <DialogHeader>
             <DialogTitle>Change Machine Type</DialogTitle>
             <DialogDescription>
-              Changing the machine type requires stopping and restarting your work machine.
-              All running workspaces will be temporarily suspended.
+              Changing the machine type requires stopping and restarting your work machine. All
+              running workspaces will be temporarily suspended.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your work machine will be unavailable for approximately 2-3 minutes during the resize operation.
+                Your work machine will be unavailable for approximately 2-3 minutes during the
+                resize operation.
               </AlertDescription>
             </Alert>
           </div>
@@ -383,10 +391,7 @@ export function WorkMachineControls({
             >
               Cancel
             </Button>
-            <Button
-              onClick={confirmTypeChange}
-              disabled={isChangingType}
-            >
+            <Button onClick={confirmTypeChange} disabled={isChangingType}>
               {isChangingType ? 'Changing...' : 'Proceed with Change'}
             </Button>
           </DialogFooter>
@@ -405,203 +410,196 @@ export function WorkMachineControls({
             </SheetHeader>
 
             <div className="flex-1 space-y-8 overflow-y-auto p-4">
-            {/* Auto-stop Settings */}
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="auto-stop" className="text-base font-medium">
-                    Auto-stop when idle
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically stop the machine after a period of inactivity
-                  </p>
-                </div>
-                <Switch
-                  id="auto-stop"
-                  checked={autoStop}
-                  onCheckedChange={setAutoStop}
-                  className="mt-1"
-                />
-              </div>
-
-              {autoStop && (
-                <div className="ml-0 space-y-2">
-                  <Label htmlFor="idle-timeout" className="text-sm font-medium">
-                    Idle timeout (minutes)
-                  </Label>
-                  <Input
-                    id="idle-timeout"
-                    type="number"
-                    min="5"
-                    max="120"
-                    value={idleTimeout}
-                    onChange={(e) => setIdleTimeout(e.target.value)}
-                    className="w-32"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* SSH Keys */}
-            <div className="space-y-4 border-t pt-6">
-              <div>
-                <Label className="text-base font-medium">SSH Configuration</Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Manage SSH keys for workspace access
-                </p>
-              </div>
-
-              {/* SSH Public Key */}
-              {sshPublicKey ? (
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium">WorkMachine SSH Public Key</Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      This SSH public key is shared across all workspaces in this WorkMachine. Use it to authorize access to external systems.
+              {/* Auto-stop Settings */}
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <Label htmlFor="auto-stop" className="text-base font-medium">
+                      Auto-stop when idle
+                    </Label>
+                    <p className="text-muted-foreground text-sm">
+                      Automatically stop the machine after a period of inactivity
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 text-xs bg-muted px-3 py-2 rounded font-mono break-all border">
-                      {sshPublicKey}
-                    </code>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCopySSHKey(sshPublicKey)}
-                      className="flex-shrink-0"
-                    >
-                      {copiedSSHKey ? (
-                        <>
-                          <Check className="h-4 w-4 mr-2" />
-                          Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <Switch
+                    id="auto-stop"
+                    checked={autoStop}
+                    onCheckedChange={setAutoStop}
+                    className="mt-1"
+                  />
                 </div>
-              ) : (
-                <div className="text-center py-4 rounded-md border border-dashed">
-                  <p className="text-xs text-muted-foreground">
-                    SSH public key is being generated
+
+                {autoStop && (
+                  <div className="ml-0 space-y-2">
+                    <Label htmlFor="idle-timeout" className="text-sm font-medium">
+                      Idle timeout (minutes)
+                    </Label>
+                    <Input
+                      id="idle-timeout"
+                      type="number"
+                      min="5"
+                      max="120"
+                      value={idleTimeout}
+                      onChange={(e) => setIdleTimeout(e.target.value)}
+                      className="w-32"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* SSH Keys */}
+              <div className="space-y-4 border-t pt-6">
+                <div>
+                  <Label className="text-base font-medium">SSH Configuration</Label>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    Manage SSH keys for workspace access
                   </p>
                 </div>
-              )}
 
-              {/* Authorized Keys */}
-              <div className="space-y-3 pt-3">
-                <div className="flex items-start justify-between">
-                  <Label className="text-base font-medium">Authorized Keys</Label>
-                  {sshAuthorizedKeys.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {sshAuthorizedKeys.length} {sshAuthorizedKeys.length === 1 ? 'key' : 'keys'}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Add SSH public keys to authorize external access to all workspaces in this WorkMachine
-                </p>
-
-                {/* List of authorized keys */}
-                {sshAuthorizedKeys.length > 0 ? (
-                  <div className="max-h-48 overflow-y-auto space-y-1 rounded-md border">
-                    {sshAuthorizedKeys.map((key, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 transition-colors group"
+                {/* SSH Public Key */}
+                {sshPublicKey ? (
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium">WorkMachine SSH Public Key</Label>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        This SSH public key is shared across all workspaces in this WorkMachine. Use
+                        it to authorize access to external systems.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-muted flex-1 rounded border px-3 py-2 font-mono text-xs break-all">
+                        {sshPublicKey}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCopySSHKey(sshPublicKey)}
+                        className="flex-shrink-0"
                       >
-                        <code className="text-xs font-mono text-muted-foreground">
-                          {parseSSHKey(key)}
-                        </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={async () => {
-                            await handleRemoveSSHKey(key)
-                          }}
-                          disabled={isDeletingKey === key}
-                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          {isDeletingKey === key ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
-                    ))}
+                        {copiedSSHKey ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="text-center py-6 rounded-md border border-dashed">
-                    <p className="text-sm text-muted-foreground">
-                      No authorized keys
+                  <div className="rounded-md border border-dashed py-4 text-center">
+                    <p className="text-muted-foreground text-xs">
+                      SSH public key is being generated
                     </p>
                   </div>
                 )}
 
-                {/* Add new key */}
-                <div className="space-y-2 pt-2">
-                  <Label htmlFor="new-ssh-key" className="text-sm font-medium">
-                    Add New Key
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="new-ssh-key"
-                      type="text"
-                      placeholder="ssh-rsa AAAAB3NzaC1yc2EA... user@example.com"
-                      value={newSSHKey}
-                      onChange={(e) => setNewSSHKey(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddSSHKey()
-                        }
-                      }}
-                      className="flex-1 font-mono text-xs"
-                      disabled={isAddingKey}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={handleAddSSHKey}
-                      disabled={isAddingKey || !newSSHKey.trim()}
-                      className="flex-shrink-0"
-                    >
-                      {isAddingKey ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Adding...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add
-                        </>
-                      )}
-                    </Button>
+                {/* Authorized Keys */}
+                <div className="space-y-3 pt-3">
+                  <div className="flex items-start justify-between">
+                    <Label className="text-base font-medium">Authorized Keys</Label>
+                    {sshAuthorizedKeys.length > 0 && (
+                      <span className="text-muted-foreground text-xs">
+                        {sshAuthorizedKeys.length} {sshAuthorizedKeys.length === 1 ? 'key' : 'keys'}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Paste the full SSH public key (e.g., ssh-rsa, ssh-ed25519)
+                  <p className="text-muted-foreground text-xs">
+                    Add SSH public keys to authorize external access to all workspaces in this
+                    WorkMachine
                   </p>
+
+                  {/* List of authorized keys */}
+                  {sshAuthorizedKeys.length > 0 ? (
+                    <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border">
+                      {sshAuthorizedKeys.map((key, index) => (
+                        <div
+                          key={index}
+                          className="hover:bg-muted/50 group flex items-center justify-between px-3 py-2 transition-colors"
+                        >
+                          <code className="text-muted-foreground font-mono text-xs">
+                            {parseSSHKey(key)}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              await handleRemoveSSHKey(key)
+                            }}
+                            disabled={isDeletingKey === key}
+                            className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            {isDeletingKey === key ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-dashed py-6 text-center">
+                      <p className="text-muted-foreground text-sm">No authorized keys</p>
+                    </div>
+                  )}
+
+                  {/* Add new key */}
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="new-ssh-key" className="text-sm font-medium">
+                      Add New Key
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="new-ssh-key"
+                        type="text"
+                        placeholder="ssh-rsa AAAAB3NzaC1yc2EA... user@example.com"
+                        value={newSSHKey}
+                        onChange={(e) => setNewSSHKey(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddSSHKey()
+                          }
+                        }}
+                        className="flex-1 font-mono text-xs"
+                        disabled={isAddingKey}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleAddSSHKey}
+                        disabled={isAddingKey || !newSSHKey.trim()}
+                        className="flex-shrink-0"
+                      >
+                        {isAddingKey ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      Paste the full SSH public key (e.g., ssh-rsa, ssh-ed25519)
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-            </div>
 
             <SheetFooter className="p-4">
-              <Button
-                variant="outline"
-                onClick={() => setSettingsOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setSettingsOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                onClick={saveSettings}
-              >
-                Save Settings
-              </Button>
+              <Button onClick={saveSettings}>Save Settings</Button>
             </SheetFooter>
           </div>
         </SheetContent>

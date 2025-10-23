@@ -1,7 +1,17 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
 
-export default nextConfig;
+  // Compress responses
+  compress: true,
+
+  // Enable experimental features
+  experimental: {
+    // Optimize package imports
+    optimizePackageImports: ['@radix-ui/react-icons', '@radix-ui/react-dialog'],
+  },
+}
+
+export default nextConfig

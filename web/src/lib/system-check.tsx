@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button'
  */
 export async function isSystemReady(): Promise<boolean> {
   const machineTypesResult = await listMachineTypes()
-  return machineTypesResult.success &&
-    machineTypesResult.data?.items.some(mt => mt.spec.active !== false) || false
+  return (
+    (machineTypesResult.success &&
+      machineTypesResult.data?.items.some((mt) => mt.spec.active !== false)) ||
+    false
+  )
 }
 
 /**
@@ -16,8 +19,8 @@ export async function isSystemReady(): Promise<boolean> {
  */
 export function SystemSetupPage() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background">
-      <div className="text-center space-y-6">
+    <div className="bg-background fixed inset-0 flex items-center justify-center">
+      <div className="space-y-6 text-center">
         <div className="space-y-4">
           <h1 className="text-3xl font-bold">System Setup in Progress</h1>
           <p className="text-muted-foreground">
