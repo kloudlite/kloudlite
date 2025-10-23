@@ -1,0 +1,94 @@
+name: Deploy Registration to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy-azure-registration.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  RESOURCE_GROUP: rg-kloudlite-registration
+  CONTAINER_APP: ca-kloudlite-registration
+
+jobs:
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    # Only run on push events (not PRs)
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Wait for Docker image
+        run: |
+          echo "Waiting for Docker image to be available..."
+          MAX_RETRIES=30
+          RETRY_COUNT=0
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web/registration:${IMAGE_TAG}"
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if docker manifest inspect $IMAGE > /dev/null 2>&1; then
+              echo "✓ Image $IMAGE is available"
+              break
+            fi
+            echo "Waiting for image... (attempt $((RETRY_COUNT + 1))/$MAX_RETRIES)"
+            sleep 10
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          done
+
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "ERROR: Image not available after $MAX_RETRIES attempts"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Container App
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web/registration:${IMAGE_TAG}"
+
+          echo "Deploying image: $IMAGE"
+
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image $IMAGE \
+            --query "properties.provisioningState" -o tsv
+
+      - name: Get Container App URL
+        id: app-url
+        run: |
+          URL=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "url=https://$URL" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+
+          echo "### Azure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Resource Group**: ${{ env.RESOURCE_GROUP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container App**: ${{ env.CONTAINER_APP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Public URL**: https://onboard.kloudlite.io" >> $GITHUB_STEP_SUMMARY
+          echo "- **Azure URL**: ${{ steps.app-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
