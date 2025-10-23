@@ -156,7 +156,7 @@ export function CreateEnvironmentDialog({
                 required
               />
               <p className="text-xs text-gray-500">
-                Must be lowercase alphanumeric or "-", max 63 characters
+                Must be lowercase alphanumeric or &quot;-&quot;, max 63 characters
               </p>
             </div>
 
@@ -183,7 +183,7 @@ export function CreateEnvironmentDialog({
                       disabled={loading}
                     />
                     <p className="text-xs text-gray-500">
-                      Leave empty to auto-generate as "env-{formData.name || 'environment-name'}".
+                      Leave empty to auto-generate as &quot;env-{formData.name || 'environment-name'}&quot;.
                       The Kubernetes namespace that will be created for this environment.
                     </p>
                   </div>

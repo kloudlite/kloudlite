@@ -578,7 +578,7 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete user "{deletingUser?.name}"? This action cannot be undone.
+              Are you sure you want to delete user &quot;{deletingUser?.name}&quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -613,7 +613,7 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
             <DialogDescription>
-              Set a new password for user "{resettingPasswordUser?.email}". The password must be at least 8 characters long.
+              Set a new password for user &quot;{resettingPasswordUser?.email}&quot;. The password must be at least 8 characters long.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
