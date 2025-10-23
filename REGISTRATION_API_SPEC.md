@@ -59,23 +59,18 @@ The secret key is generated when the deployment first verifies itself.
 ```json
 {
   "success": true,
-  "user": {
-    "userId": "github-123456",
-    "email": "user@example.com",
-    "name": "John Doe",
-    "providers": ["github"],
-    "registeredAt": "2025-10-23T10:00:00Z",
-    "hasCompletedInstallation": true,
-    "subdomain": "user-subdomain",
-    "domainConfigured": true,
-    "url": "https://user-subdomain.kloudlite.io",
-    "deploymentReady": false,
-    "ipRecords": [],
-    "secretKey": "generated-uuid-secret-key",
-    "lastHealthCheck": "2025-10-23T13:00:00Z"
-  }
+  "secretKey": "generated-uuid-secret-key",
+  "subdomain": "user-subdomain",
+  "deploymentReady": false,
+  "ipRecords": []
 }
 ```
+
+**Response Fields:**
+- `secretKey`: Generated UUID for bearer token authentication (save this!)
+- `subdomain`: Assigned subdomain for this installation
+- `deploymentReady`: Boolean indicating if deployment has configured IPs
+- `ipRecords`: Array of configured IP records (installation and workmachine IPs)
 
 **Key Behaviors:**
 
@@ -85,9 +80,9 @@ The secret key is generated when the deployment first verifies itself.
    - Returns the secret key (store this securely!)
 
 2. **Subsequent Calls (Health Check):**
-   - Updates `lastHealthCheck` timestamp
-   - Returns current user configuration
-   - Includes current `ipRecords` and `deploymentReady` status
+   - Updates health check timestamp
+   - Returns current deployment configuration
+   - Includes `secretKey`, `subdomain`, `deploymentReady` status, and `ipRecords`
 
 3. **Polling:**
    - Deployment should poll this endpoint every 10 minutes
@@ -712,8 +707,8 @@ VERIFY_RESPONSE=$(curl -X POST https://onboard.kloudlite.io/api/register/verify-
   }")
 
 # Extract secret key and subdomain
-SECRET_KEY=$(echo $VERIFY_RESPONSE | jq -r '.user.secretKey')
-SUBDOMAIN=$(echo $VERIFY_RESPONSE | jq -r '.user.subdomain')
+SECRET_KEY=$(echo $VERIFY_RESPONSE | jq -r '.secretKey')
+SUBDOMAIN=$(echo $VERIFY_RESPONSE | jq -r '.subdomain')
 
 echo "Secret Key: $SECRET_KEY"
 echo "Subdomain: $SUBDOMAIN"
