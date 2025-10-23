@@ -34,7 +34,7 @@ export function isRouteAllowedInMode(pathname: string, mode: AppMode): boolean {
   const allowedRoutes = MODE_ROUTES[mode]
 
   // Check if pathname starts with any of the allowed routes
-  return allowedRoutes.some(route => pathname.startsWith(route))
+  return allowedRoutes.some((route) => pathname.startsWith(route))
 }
 
 /**

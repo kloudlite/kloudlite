@@ -6,8 +6,26 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Plus, MoreHorizontal, Edit, Trash2, Server, Cpu, HardDrive, Gpu, Power, PowerOff, Circle } from 'lucide-react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Server,
+  Cpu,
+  HardDrive,
+  Gpu,
+  Power,
+  PowerOff,
+  Circle,
+} from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import {
@@ -15,7 +33,7 @@ import {
   updateMachineType,
   deleteMachineType,
   activateMachineType,
-  deactivateMachineType
+  deactivateMachineType,
 } from '@/app/actions/machine-type.actions'
 import {
   DropdownMenu,
@@ -71,7 +89,10 @@ const categoryLabels: Record<string, string> = {
   memory: 'Memory',
 }
 
-export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false }: MachineConfigsListProps) {
+export function MachineConfigsList({
+  configs: initialConfigs,
+  isReadOnly = false,
+}: MachineConfigsListProps) {
   const router = useRouter()
   const [_isPending, startTransition] = useTransition()
   const [configs, _setConfigs] = useState(initialConfigs)
@@ -79,7 +100,9 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
   const [editingConfig, setEditingConfig] = useState<MachineConfig | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isActive, setIsActive] = useState(true)
-  const [selectedCategory, setSelectedCategory] = useState<'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'>('general')
+  const [selectedCategory, setSelectedCategory] = useState<
+    'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'
+  >('general')
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this machine configuration?')) {
@@ -107,12 +130,12 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
   const handleToggleActive = async (id: string, currentActive: boolean) => {
     setIsLoading(true)
     try {
-      const result = currentActive
-        ? await deactivateMachineType(id)
-        : await activateMachineType(id)
+      const result = currentActive ? await deactivateMachineType(id) : await activateMachineType(id)
 
       if (result.success) {
-        toast.success(`Machine configuration ${currentActive ? 'deactivated' : 'activated'} successfully`)
+        toast.success(
+          `Machine configuration ${currentActive ? 'deactivated' : 'activated'} successfully`,
+        )
         startTransition(() => {
           router.refresh()
         })
@@ -137,7 +160,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
         memory: parseInt(formData.get('memory') as string),
         gpu: formData.get('gpu') ? parseInt(formData.get('gpu') as string) : undefined,
         category: selectedCategory,
-        active: isActive
+        active: isActive,
       }
 
       const result = editingConfig
@@ -152,7 +175,9 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
           router.refresh()
         })
       } else {
-        toast.error(result.error || `Failed to ${editingConfig ? 'update' : 'create'} machine configuration`)
+        toast.error(
+          result.error || `Failed to ${editingConfig ? 'update' : 'create'} machine configuration`,
+        )
       }
     } catch (_error) {
       toast.error('An error occurred')
@@ -170,44 +195,51 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
         </div>
 
         {!isReadOnly && (
-          <Button onClick={() => {
-            setSelectedCategory('general')
-            setIsActive(true)
-            setIsAddConfigOpen(true)
-          }}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button
+            onClick={() => {
+              setSelectedCategory('general')
+              setIsActive(true)
+              setIsAddConfigOpen(true)
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
             Add Configuration
           </Button>
         )}
       </div>
 
       {/* Configurations Table */}
-      <div className="bg-white rounded-lg border">
+      <div className="rounded-lg border bg-white">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-gray-50/50">
-              <th className="text-left p-4 font-medium text-sm text-gray-700">Configuration</th>
-              <th className="text-left p-4 font-medium text-sm text-gray-700">Resources</th>
-              <th className="text-left p-4 font-medium text-sm text-gray-700">Status</th>
+              <th className="p-4 text-left text-sm font-medium text-gray-700">Configuration</th>
+              <th className="p-4 text-left text-sm font-medium text-gray-700">Resources</th>
+              <th className="p-4 text-left text-sm font-medium text-gray-700">Status</th>
               {!isReadOnly && (
-                <th className="text-left p-4 font-medium text-sm text-gray-700">Actions</th>
+                <th className="p-4 text-left text-sm font-medium text-gray-700">Actions</th>
               )}
             </tr>
           </thead>
           <tbody>
             {configs.map((config) => (
-              <tr key={config.id} className="border-b hover:bg-gray-50/50 transition-colors">
+              <tr key={config.id} className="border-b transition-colors hover:bg-gray-50/50">
                 <td className="p-4">
                   <div className="space-y-2">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Server className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium text-sm text-gray-900">{config.name}</span>
+                        <span className="text-sm font-medium text-gray-900">{config.name}</span>
                       </div>
-                      <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">{config.id}</code>
+                      <code className="rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500">
+                        {config.id}
+                      </code>
                     </div>
                     <p className="text-sm text-gray-500">{config.description}</p>
-                    <Badge variant="outline" className={`${categoryColors[config.category || 'general']} text-xs`}>
+                    <Badge
+                      variant="outline"
+                      className={`${categoryColors[config.category || 'general']} text-xs`}
+                    >
                       {categoryLabels[config.category || 'general']}
                     </Badge>
                   </div>
@@ -235,12 +267,12 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                     {config.active ? (
                       <>
                         <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                        <span className="text-sm text-green-600 font-medium">Active</span>
+                        <span className="text-sm font-medium text-green-600">Active</span>
                       </>
                     ) : (
                       <>
                         <Circle className="h-2 w-2 fill-gray-400 text-gray-400" />
-                        <span className="text-sm text-gray-500 font-medium">Inactive</span>
+                        <span className="text-sm font-medium text-gray-500">Inactive</span>
                       </>
                     )}
                   </div>
@@ -254,16 +286,20 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          setEditingConfig(config)
-                          setIsActive(config.active !== false)
-                          setSelectedCategory(config.category || 'general')
-                          setIsAddConfigOpen(true)
-                        }}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditingConfig(config)
+                            setIsActive(config.active !== false)
+                            setSelectedCategory(config.category || 'general')
+                            setIsAddConfigOpen(true)
+                          }}
+                        >
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Configuration
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleActive(config.id, config.active || false)}>
+                        <DropdownMenuItem
+                          onClick={() => handleToggleActive(config.id, config.active || false)}
+                        >
                           {config.active ? (
                             <>
                               <PowerOff className="mr-2 h-4 w-4" />
@@ -296,18 +332,22 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
 
         {configs.length === 0 && (
           <div className="p-12 text-center">
-            <Server className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No machine configurations</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              {isReadOnly ? 'No machine configurations have been created yet.' : 'Get started by creating your first machine configuration.'}
+            <Server className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">No machine configurations</h3>
+            <p className="mb-4 text-sm text-gray-500">
+              {isReadOnly
+                ? 'No machine configurations have been created yet.'
+                : 'Get started by creating your first machine configuration.'}
             </p>
             {!isReadOnly && (
-              <Button onClick={() => {
-                setSelectedCategory('general')
-                setIsActive(true)
-                setIsAddConfigOpen(true)
-              }}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button
+                onClick={() => {
+                  setSelectedCategory('general')
+                  setIsActive(true)
+                  setIsAddConfigOpen(true)
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
                 Add Configuration
               </Button>
             )}
@@ -316,17 +356,20 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
       </div>
 
       {/* Add/Edit Configuration Dialog */}
-      <Dialog open={isAddConfigOpen || !!editingConfig} onOpenChange={(open) => {
-        if (!open) {
-          setIsAddConfigOpen(false)
-          setEditingConfig(null)
-          setIsActive(true) // Reset to default
-          setSelectedCategory('general') // Reset to default
-        } else if (editingConfig) {
-          setIsActive(editingConfig.active !== false)
-          setSelectedCategory(editingConfig.category || 'general')
-        }
-      }}>
+      <Dialog
+        open={isAddConfigOpen || !!editingConfig}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsAddConfigOpen(false)
+            setEditingConfig(null)
+            setIsActive(true) // Reset to default
+            setSelectedCategory('general') // Reset to default
+          } else if (editingConfig) {
+            setIsActive(editingConfig.active !== false)
+            setSelectedCategory(editingConfig.category || 'general')
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingConfig ? 'Edit Configuration' : 'Add Configuration'}</DialogTitle>
@@ -334,11 +377,13 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
               Define the machine specifications and resource limits
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => {
-            e.preventDefault()
-            const formData = new FormData(e.currentTarget)
-            handleSave(formData)
-          }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.currentTarget)
+              handleSave(formData)
+            }}
+          >
             <div className="space-y-5 py-4">
               {/* Basic Information */}
               <div className="space-y-4">
@@ -379,8 +424,13 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
 
               {/* Category */}
               <div className="space-y-2">
-                <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as typeof selectedCategory)}>
+                <Label htmlFor="category">
+                  Category <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={(value) => setSelectedCategory(value as typeof selectedCategory)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -399,7 +449,9 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                 <Label className="text-sm font-medium">Resources</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="cpu" className="text-xs text-gray-600">CPU (vCPU)</Label>
+                    <Label htmlFor="cpu" className="text-xs text-gray-600">
+                      CPU (vCPU)
+                    </Label>
                     <Input
                       id="cpu"
                       name="cpu"
@@ -410,7 +462,9 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="memory" className="text-xs text-gray-600">Memory (GB)</Label>
+                    <Label htmlFor="memory" className="text-xs text-gray-600">
+                      Memory (GB)
+                    </Label>
                     <Input
                       id="memory"
                       name="memory"
@@ -421,7 +475,9 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="gpu" className="text-xs text-gray-600">GPU (optional)</Label>
+                    <Label htmlFor="gpu" className="text-xs text-gray-600">
+                      GPU (optional)
+                    </Label>
                     <Input
                       id="gpu"
                       name="gpu"
@@ -436,12 +492,10 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
               {/* Status */}
               <div className="border-t pt-4">
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="active"
-                    checked={isActive}
-                    onCheckedChange={setIsActive}
-                  />
-                  <Label htmlFor="active" className="text-sm font-normal">Active (available for use)</Label>
+                  <Switch id="active" checked={isActive} onCheckedChange={setIsActive} />
+                  <Label htmlFor="active" className="text-sm font-normal">
+                    Active (available for use)
+                  </Label>
                 </div>
               </div>
             </div>

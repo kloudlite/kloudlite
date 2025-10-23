@@ -37,18 +37,52 @@ export function EnvironmentConfigs() {
   ]
 
   const secrets: ConfigEntry[] = [
-    { id: '8', key: 'JWT_SECRET', value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', isSecure: true },
-    { id: '9', key: 'AWS_SECRET_ACCESS_KEY', value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY', isSecure: true },
+    {
+      id: '8',
+      key: 'JWT_SECRET',
+      value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      isSecure: true,
+    },
+    {
+      id: '9',
+      key: 'AWS_SECRET_ACCESS_KEY',
+      value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+      isSecure: true,
+    },
     { id: '10', key: 'STRIPE_SECRET_KEY', value: 'sk_test_51H5gJKL8...', isSecure: true },
     { id: '11', key: 'GITHUB_TOKEN', value: 'ghp_xxxxxxxxxxxxxxxxxxxx', isSecure: true },
     { id: '12', key: 'DATABASE_PASSWORD', value: 'supersecretpassword123', isSecure: true },
   ]
 
   const files: FileEntry[] = [
-    { id: '13', name: 'nginx.conf', mountPath: '/etc/nginx/nginx.conf', size: '2.4 KB', lastModified: '2 hours ago' },
-    { id: '14', name: 'ssl-cert.pem', mountPath: '/etc/ssl/certs/server.pem', size: '1.8 KB', lastModified: '1 day ago' },
-    { id: '15', name: 'app.properties', mountPath: '/app/config/app.properties', size: '856 B', lastModified: '3 days ago' },
-    { id: '16', name: 'server.key', mountPath: '/etc/ssl/private/server.key', size: '1.6 KB', lastModified: '1 week ago' },
+    {
+      id: '13',
+      name: 'nginx.conf',
+      mountPath: '/etc/nginx/nginx.conf',
+      size: '2.4 KB',
+      lastModified: '2 hours ago',
+    },
+    {
+      id: '14',
+      name: 'ssl-cert.pem',
+      mountPath: '/etc/ssl/certs/server.pem',
+      size: '1.8 KB',
+      lastModified: '1 day ago',
+    },
+    {
+      id: '15',
+      name: 'app.properties',
+      mountPath: '/app/config/app.properties',
+      size: '856 B',
+      lastModified: '3 days ago',
+    },
+    {
+      id: '16',
+      name: 'server.key',
+      mountPath: '/etc/ssl/private/server.key',
+      size: '1.6 KB',
+      lastModified: '1 week ago',
+    },
   ]
 
   const sections = [
@@ -58,7 +92,7 @@ export function EnvironmentConfigs() {
   ]
 
   const toggleSecretVisibility = (id: string) => {
-    setShowSecrets(prev => ({ ...prev, [id]: !prev[id] }))
+    setShowSecrets((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
   return (
@@ -72,13 +106,11 @@ export function EnvironmentConfigs() {
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
-                  ${activeSection === section.id
-                    ? 'bg-gray-100 text-gray-900 font-medium'
+                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  activeSection === section.id
+                    ? 'bg-gray-100 font-medium text-gray-900'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }
-                `}
+                } `}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
                 {section.label}
@@ -93,36 +125,50 @@ export function EnvironmentConfigs() {
       <div className="flex-1">
         {activeSection === 'configs' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">Config Maps</h3>
                 <p className="text-sm text-gray-500">Environment configuration variables</p>
               </div>
               <Button variant="outline" size="sm">
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="mr-2 h-4 w-4" />
                 Import
               </Button>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
               <table className="min-w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Key
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Value
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {configs.map((config) => (
                     <tr key={config.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{config.key}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-mono max-w-md truncate">{config.value}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <td className="px-6 py-4 font-mono text-sm whitespace-nowrap text-gray-900">
+                        {config.key}
+                      </td>
+                      <td className="max-w-md truncate px-6 py-4 font-mono text-sm text-gray-600">
+                        {config.value}
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                         <Button variant="ghost" size="sm" className="mr-2">
                           <Edit2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </td>
@@ -136,39 +182,45 @@ export function EnvironmentConfigs() {
 
         {activeSection === 'secrets' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">Secrets</h3>
                 <p className="text-sm text-gray-500">Encrypted sensitive information</p>
               </div>
               <Button variant="outline" size="sm">
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="mr-2 h-4 w-4" />
                 Import
               </Button>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
               <table className="min-w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Key
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Value
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {secrets.map((secret) => (
                     <tr key={secret.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                      <td className="px-6 py-4 font-mono text-sm whitespace-nowrap text-gray-900">
                         <div className="flex items-center gap-2">
                           <Lock className="h-3 w-3 text-amber-500" />
                           {secret.key}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-mono">
+                      <td className="px-6 py-4 font-mono text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           {showSecrets[secret.id] ? (
-                            <span className="text-xs max-w-md truncate">{secret.value}</span>
+                            <span className="max-w-md truncate text-xs">{secret.value}</span>
                           ) : (
                             <span>••••••••••••••••</span>
                           )}
@@ -185,11 +237,15 @@ export function EnvironmentConfigs() {
                           </Button>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                         <Button variant="ghost" size="sm" className="mr-2">
                           <Edit2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </td>
@@ -203,48 +259,68 @@ export function EnvironmentConfigs() {
 
         {activeSection === 'files' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">File Configs</h3>
                 <p className="text-sm text-gray-500">Configuration files mounted to containers</p>
               </div>
               <Button variant="outline" size="sm">
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="mr-2 h-4 w-4" />
                 Upload File
               </Button>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
               <table className="min-w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mount Path</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modified</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      File Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Mount Path
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Size
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Modified
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {files.map((file) => (
                     <tr key={file.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
                         <div className="flex items-center gap-2">
                           <File className="h-4 w-4 text-gray-400" />
                           {file.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-mono text-xs">{file.mountPath}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{file.size}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{file.lastModified}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-1">
+                      <td className="px-6 py-4 font-mono text-sm text-xs text-gray-600">
+                        {file.mountPath}
+                      </td>
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                        {file.size}
+                      </td>
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                        {file.lastModified}
+                      </td>
+                      <td className="space-x-1 px-6 py-4 text-right text-sm whitespace-nowrap">
                         <Button variant="ghost" size="sm">
                           <Download className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="sm">
                           <Edit2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </td>

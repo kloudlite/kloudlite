@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, getLatestCertificate, type CertificateScope } from '@/lib/registration/supabase-storage-service'
+import {
+  getUserByInstallationKey,
+  getLatestCertificate,
+  type CertificateScope,
+} from '@/lib/registration/supabase-storage-service'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 /**
  * Download TLS certificates (certificate + private key)
  * Called by the deployment to download certificates
@@ -26,7 +32,7 @@ export async function GET(request: NextRequest) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -40,24 +46,24 @@ export async function GET(request: NextRequest) {
     const parentScopeIdentifier = searchParams.get('parentScopeIdentifier')
 
     if (!installationKey) {
-      return NextResponse.json(
-        { error: 'Installation key is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
     }
 
     // Validate scope-specific requirements
     if (scope === 'workmachine' && !scopeIdentifier) {
       return NextResponse.json(
         { error: 'scopeIdentifier (wm-user) is required for workmachine scope' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     if (scope === 'workspace' && (!scopeIdentifier || !parentScopeIdentifier)) {
       return NextResponse.json(
-        { error: 'scopeIdentifier (workspace) and parentScopeIdentifier (wm-user) are required for workspace scope' },
-        { status: 400 }
+        {
+          error:
+            'scopeIdentifier (workspace) and parentScopeIdentifier (wm-user) are required for workspace scope',
+        },
+        { status: 400 },
       )
     }
 
@@ -65,18 +71,12 @@ export async function GET(request: NextRequest) {
     const user = await getUserByInstallationKey(installationKey)
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid installation key' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Verify secret key matches
     if (user.secretKey !== secretKey) {
-      return NextResponse.json(
-        { error: 'Invalid secret key' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
     // Get latest certificate (optionally filtered by scope)
@@ -84,14 +84,14 @@ export async function GET(request: NextRequest) {
       user.email,
       scope || undefined,
       scopeIdentifier || undefined,
-      parentScopeIdentifier || undefined
+      parentScopeIdentifier || undefined,
     )
 
     if (!cert) {
       const scopeDesc = scope ? ` for ${scope} scope` : ''
       return NextResponse.json(
         { error: `No certificate found for this installation${scopeDesc}` },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
@@ -123,8 +123,8 @@ export async function GET(request: NextRequest) {
             'Content-Type': 'text/plain',
             'Content-Disposition': `attachment; filename="${user.subdomain}-tls-bundle.pem"`,
             'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-            'Pragma': 'no-cache',
-            'Expires': '0',
+            Pragma: 'no-cache',
+            Expires: '0',
           },
         })
       }
@@ -154,9 +154,6 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('Download certificates error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

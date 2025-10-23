@@ -26,7 +26,13 @@ interface EditEnvVarSheetProps {
   onSuccess?: () => void
 }
 
-export function EditEnvVarSheet({ environmentId, envVar, open, onOpenChange, onSuccess }: EditEnvVarSheetProps) {
+export function EditEnvVarSheet({
+  environmentId,
+  envVar,
+  open,
+  onOpenChange,
+  onSuccess,
+}: EditEnvVarSheetProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [value, setValue] = useState(envVar.value)
@@ -76,7 +82,7 @@ export function EditEnvVarSheet({ environmentId, envVar, open, onOpenChange, onS
                 id="key"
                 value={envVar.key}
                 disabled
-                className="font-mono text-sm bg-gray-50"
+                className="bg-gray-50 font-mono text-sm"
               />
               <p className="text-sm text-gray-500">The key cannot be changed</p>
             </div>
@@ -98,14 +104,14 @@ export function EditEnvVarSheet({ environmentId, envVar, open, onOpenChange, onS
 
             <div className="space-y-2">
               <Label>Type</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="rounded-lg border bg-gray-50 p-3">
                 <div className="flex items-center gap-2">
                   {envVar.type === 'config' ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                       Config
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
                       Secret
                     </span>
                   )}
@@ -118,7 +124,7 @@ export function EditEnvVarSheet({ environmentId, envVar, open, onOpenChange, onS
             </div>
           </div>
 
-          <SheetFooter className="flex-row justify-end gap-2 p-4 border-t">
+          <SheetFooter className="flex-row justify-end gap-2 border-t p-4">
             <Button
               type="button"
               variant="outline"

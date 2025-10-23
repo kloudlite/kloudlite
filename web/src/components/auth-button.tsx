@@ -12,13 +12,8 @@ export function AuthButton({ session }: AuthButtonProps) {
   if (session?.user) {
     return (
       <div className="flex items-center gap-4">
-        <span className="text-sm">
-          Signed in as {session.user.email || session.user.name}
-        </span>
-        <Button
-          variant="outline"
-          onClick={() => signOut()}
-        >
+        <span className="text-sm">Signed in as {session.user.email || session.user.name}</span>
+        <Button variant="outline" onClick={() => signOut()}>
           Sign Out
         </Button>
       </div>
@@ -26,10 +21,7 @@ export function AuthButton({ session }: AuthButtonProps) {
   }
 
   return (
-    <Button
-      variant="outline"
-      onClick={() => signIn()}
-    >
+    <Button variant="outline" onClick={() => signIn()}>
       Sign In
     </Button>
   )

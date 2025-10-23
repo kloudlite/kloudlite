@@ -53,8 +53,12 @@ function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
     currentState: currentState,
     desiredState: desiredState,
     // Legacy status for backward compatibility
-    status: currentState === 'running' ? 'active' as const :
-            currentState === 'stopped' ? 'stopped' as const : 'idle' as const,
+    status:
+      currentState === 'running'
+        ? ('active' as const)
+        : currentState === 'stopped'
+          ? ('stopped' as const)
+          : ('idle' as const),
     cpu: 0, // Will be updated by metrics
     memory: 0, // Will be updated by metrics
     disk: 0, // Will be updated by metrics
@@ -77,19 +81,20 @@ export default async function WorkMachinesPage() {
 
   // Fetch machine types
   const machineTypesResult = await listMachineTypes()
-  const availableMachineTypes = machineTypesResult.success && machineTypesResult.data
-    ? machineTypesResult.data.items
-      .filter(mt => mt.spec.active !== false) // Only active types
-      .map(mt => ({
-        id: mt.metadata.name,
-        name: mt.spec.displayName || mt.metadata.name,
-        description: mt.spec.description || '',
-        category: mt.spec.category || 'general',
-        cpu: mt.spec.resources?.cpu || '',
-        memory: mt.spec.resources?.memory || '',
-        gpu: mt.spec.resources?.gpu,
-      }))
-    : []
+  const availableMachineTypes =
+    machineTypesResult.success && machineTypesResult.data
+      ? machineTypesResult.data.items
+          .filter((mt) => mt.spec.active !== false) // Only active types
+          .map((mt) => ({
+            id: mt.metadata.name,
+            name: mt.spec.displayName || mt.metadata.name,
+            description: mt.spec.description || '',
+            category: mt.spec.category || 'general',
+            cpu: mt.spec.resources?.cpu || '',
+            memory: mt.spec.resources?.memory || '',
+            gpu: mt.spec.resources?.gpu,
+          }))
+      : []
 
   // Fetch real work machine data from CRs
   let workMachines: TransformedWorkMachine[] = []

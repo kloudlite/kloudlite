@@ -44,14 +44,15 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
   const breadcrumbItems = [
     { label: 'Workspaces', href: '/workspaces' },
-    { label: workspace.spec.displayName || workspace.metadata.name }
+    { label: workspace.spec.displayName || workspace.metadata.name },
   ]
 
-  const statusColor = workspace.spec.status === 'active'
-    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-    : workspace.spec.status === 'suspended'
-    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-    : 'bg-secondary text-secondary-foreground'
+  const statusColor =
+    workspace.spec.status === 'active'
+      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      : workspace.spec.status === 'suspended'
+        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+        : 'bg-secondary text-secondary-foreground'
 
   const packageCount = workspace.spec.packages?.length || 0
   const installedCount = workspace.status?.installedPackages?.length || 0
@@ -72,16 +73,22 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
           <div className="pb-6">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl font-semibold">{workspace.spec.displayName || workspace.metadata.name}</h1>
+                <h1 className="text-2xl font-semibold">
+                  {workspace.spec.displayName || workspace.metadata.name}
+                </h1>
                 {workspace.spec.description && (
-                  <p className="text-sm text-muted-foreground mt-1.5">{workspace.spec.description}</p>
+                  <p className="text-muted-foreground mt-1.5 text-sm">
+                    {workspace.spec.description}
+                  </p>
                 )}
-                <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="text-muted-foreground mt-3 flex items-center gap-4 text-sm">
                   <span>Owner: {workspace.spec.owner.split('@')[0]}</span>
                   <span>•</span>
                   <span>Namespace: {workspace.metadata.namespace}</span>
                   <span>•</span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}
+                  >
                     {workspace.spec.status || 'active'}
                   </span>
                   {workspace.status?.phase && (
@@ -113,26 +120,26 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
           <div className="space-y-6">
             {/* Packages */}
             <div className="bg-card rounded-lg border">
-              <div className="p-4 border-b">
+              <div className="border-b p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Package className="h-4 w-4 text-primary" />
+                    <div className="bg-primary/10 rounded-lg p-2">
+                      <Package className="text-primary h-4 w-4" />
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold">Packages</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {packageCount} {packageCount === 1 ? 'package' : 'packages'} configured
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="p-4 space-y-3">
+              <div className="space-y-3 p-4">
                 {/* Installing Packages Status */}
                 {pendingCount > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/50">
-                    <Loader2 className="h-4 w-4 text-yellow-600 dark:text-yellow-500 animate-spin flex-shrink-0" />
+                  <div className="flex items-center gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 dark:border-yellow-900/50 dark:bg-yellow-950/20">
+                    <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-yellow-600 dark:text-yellow-500" />
                     <span className="text-sm text-yellow-700 dark:text-yellow-400">
                       Installing {pendingCount} package{pendingCount > 1 ? 's' : ''}
                     </span>
@@ -140,8 +147,8 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 )}
 
                 {failedCount > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50">
-                    <XCircle className="h-4 w-4 text-red-600 dark:text-red-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-950/20">
+                    <XCircle className="h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-500" />
                     <span className="text-sm text-red-700 dark:text-red-400">
                       {failedCount} package{failedCount > 1 ? 's' : ''} failed
                     </span>
@@ -172,16 +179,18 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
             {/* Activity & Info */}
             <div className="bg-card rounded-lg border p-6">
-              <h3 className="text-sm font-medium mb-4">Information</h3>
+              <h3 className="mb-4 text-sm font-medium">Information</h3>
               <div className="space-y-3">
                 {workspace.metadata.creationTimestamp && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Created</span>
-                    <span>{new Date(workspace.metadata.creationTimestamp).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}</span>
+                    <span>
+                      {new Date(workspace.metadata.creationTimestamp).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
                   </div>
                 )}
                 {workspace.status?.lastActivity && (

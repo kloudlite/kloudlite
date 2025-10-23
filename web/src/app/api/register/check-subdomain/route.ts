@@ -10,10 +10,7 @@ export async function GET(request: NextRequest) {
     const subdomain = searchParams.get('subdomain')
 
     if (!subdomain) {
-      return NextResponse.json(
-        { error: 'Subdomain is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Subdomain is required' }, { status: 400 })
     }
 
     const available = await isSubdomainAvailable(subdomain)
@@ -31,9 +28,6 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Check subdomain error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

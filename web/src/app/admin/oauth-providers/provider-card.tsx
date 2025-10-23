@@ -66,7 +66,7 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
       const result = await updateOAuthProvider(provider.type, updatedProvider)
 
       if (result.success) {
-        setFormData(prev => ({ ...prev, enabled: checked }))
+        setFormData((prev) => ({ ...prev, enabled: checked }))
         toast.success(`${displayName} ${checked ? 'enabled' : 'disabled'} successfully`)
         router.refresh() // Refresh server-side data
       } else {
@@ -80,7 +80,7 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
   }
 
   return (
-    <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+    <Card className="border border-gray-200 shadow-sm transition-shadow hover:shadow-md">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium text-gray-900">{displayName}</CardTitle>
@@ -103,7 +103,7 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
                 id={`${provider.type}-client-id`}
                 type="text"
                 value={formData.clientId}
-                onChange={(e) => setFormData(prev => ({ ...prev, clientId: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, clientId: e.target.value }))}
                 disabled={saving}
                 className="h-9 text-sm"
                 placeholder="Enter client ID"
@@ -118,7 +118,7 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
                 id={`${provider.type}-client-secret`}
                 type="password"
                 value={formData.clientSecret}
-                onChange={(e) => setFormData(prev => ({ ...prev, clientSecret: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, clientSecret: e.target.value }))}
                 disabled={saving}
                 className="h-9 text-sm"
                 placeholder="Enter client secret"
@@ -130,16 +130,11 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
                 onClick={handleSave}
                 disabled={saving}
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 text-white hover:bg-blue-700"
               >
                 {saving ? 'Saving...' : 'Save'}
               </Button>
-              <Button
-                onClick={handleCancel}
-                disabled={saving}
-                variant="outline"
-                size="sm"
-              >
+              <Button onClick={handleCancel} disabled={saving} variant="outline" size="sm">
                 Cancel
               </Button>
             </div>
@@ -148,14 +143,18 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
           <>
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Client ID</p>
-                <p className="text-sm font-mono text-gray-700 truncate">
+                <p className="mb-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
+                  Client ID
+                </p>
+                <p className="truncate font-mono text-sm text-gray-700">
                   {formData.clientId || 'Not configured'}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Client Secret</p>
-                <p className="text-sm font-mono text-gray-700">
+                <p className="mb-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
+                  Client Secret
+                </p>
+                <p className="font-mono text-sm text-gray-700">
                   {formData.clientSecret ? '••••••••' : 'Not configured'}
                 </p>
               </div>

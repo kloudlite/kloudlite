@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, saveCertificate, type CertificateScope } from '@/lib/registration/supabase-storage-service'
+import {
+  getUserByInstallationKey,
+  saveCertificate,
+  type CertificateScope,
+} from '@/lib/registration/supabase-storage-service'
 import { generateCertificate, generateHostnames } from '@/lib/registration/cloudflare-certificates'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 const CLOUDFLARE_DNS_DOMAIN = process.env.CLOUDFLARE_DNS_DOMAIN!
 
 /**
@@ -30,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
@@ -41,28 +47,28 @@ export async function POST(request: NextRequest) {
       installationKey,
       scope = 'installation' as CertificateScope,
       scopeIdentifier,
-      parentScopeIdentifier
+      parentScopeIdentifier,
     } = body
 
     if (!installationKey) {
-      return NextResponse.json(
-        { error: 'Installation key is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
     }
 
     // Validate scope-specific requirements
     if (scope === 'workmachine' && !scopeIdentifier) {
       return NextResponse.json(
         { error: 'scopeIdentifier (wm-user) is required for workmachine scope' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     if (scope === 'workspace' && (!scopeIdentifier || !parentScopeIdentifier)) {
       return NextResponse.json(
-        { error: 'scopeIdentifier (workspace) and parentScopeIdentifier (wm-user) are required for workspace scope' },
-        { status: 400 }
+        {
+          error:
+            'scopeIdentifier (workspace) and parentScopeIdentifier (wm-user) are required for workspace scope',
+        },
+        { status: 400 },
       )
     }
 
@@ -70,29 +76,25 @@ export async function POST(request: NextRequest) {
     const user = await getUserByInstallationKey(installationKey)
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid installation key' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Verify secret key matches
     if (user.secretKey !== secretKey) {
-      return NextResponse.json(
-        { error: 'Invalid secret key' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
     // Check if user has subdomain assigned
     if (!user.subdomain) {
       return NextResponse.json(
         { error: 'User must have a subdomain assigned before generating certificates' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    console.log(`Generating ${scope} certificates for user: ${user.email}, subdomain: ${user.subdomain}`)
+    console.log(
+      `Generating ${scope} certificates for user: ${user.email}, subdomain: ${user.subdomain}`,
+    )
     if (scopeIdentifier) {
       console.log(`Scope identifier: ${scopeIdentifier}`)
     }
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
       CLOUDFLARE_DNS_DOMAIN,
       scope,
       scopeIdentifier,
-      parentScopeIdentifier
+      parentScopeIdentifier,
     )
     console.log(`Certificate will cover hostnames:`, hostnames)
 
@@ -114,10 +116,7 @@ export async function POST(request: NextRequest) {
     const cert = await generateCertificate(hostnames)
 
     if (!cert) {
-      return NextResponse.json(
-        { error: 'Failed to generate certificate' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to generate certificate' }, { status: 500 })
     }
 
     // Save certificate to database
@@ -145,7 +144,7 @@ export async function POST(request: NextRequest) {
       parentScopeIdentifier: parentScopeIdentifier || null,
       validFrom: cert.validFrom,
       validUntil: cert.validUntil,
-      message: `Certificate generated successfully for ${scope} scope`
+      message: `Certificate generated successfully for ${scope} scope`,
     })
 
     // Disable all caching
@@ -156,9 +155,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Generate certificates error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

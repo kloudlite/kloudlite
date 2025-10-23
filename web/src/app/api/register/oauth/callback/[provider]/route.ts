@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { SignJWT } from 'jose'
-import { saveUserRegistration, getUserByEmail, type UserRegistration, updateHealthCheck } from '@/lib/registration/supabase-storage-service'
+import {
+  saveUserRegistration,
+  getUserByEmail,
+  type UserRegistration,
+  updateHealthCheck,
+} from '@/lib/registration/supabase-storage-service'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 // Registration mode OAuth configuration - uses REGISTRATION_ prefixed env vars
 const OAUTH_CONFIGS = {
   github: {
@@ -27,7 +34,7 @@ const OAUTH_CONFIGS = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ provider: string }> }
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get('code')
@@ -122,7 +129,7 @@ export async function GET(
       throw new Error('Failed to fetch user data')
     }
 
-    userData = await userResponse.json() as OAuthUserData
+    userData = (await userResponse.json()) as OAuthUserData
   } catch (err) {
     console.error('OAuth exchange error:', err)
     return NextResponse.redirect(new URL('/register?error=oauth_exchange_failed', request.url))
@@ -135,21 +142,21 @@ export async function GET(
         email: data.email,
         name: data.name || data.login,
         id: data.id,
-        avatar: data.avatar_url
+        avatar: data.avatar_url,
       }
     } else if (prov === 'google' && 'picture' in data) {
       return {
         email: data.email,
         name: data.name,
         id: data.id,
-        avatar: data.picture
+        avatar: data.picture,
       }
     } else if (prov === 'azure-ad' && 'userPrincipalName' in data) {
       return {
         email: data.mail || data.userPrincipalName,
         name: data.displayName,
         id: data.id,
-        avatar: undefined
+        avatar: undefined,
       }
     }
     throw new Error('Invalid provider or user data')
@@ -172,7 +179,12 @@ export async function GET(
 
   if (existingUser) {
     // User already exists - reuse existing installation key
-    console.log('Existing user found:', email, 'with installation key:', existingUser.installationKey)
+    console.log(
+      'Existing user found:',
+      email,
+      'with installation key:',
+      existingUser.installationKey,
+    )
     console.log('Reusing existing installation. No new keys will be generated.')
 
     // Add provider to array if not already present

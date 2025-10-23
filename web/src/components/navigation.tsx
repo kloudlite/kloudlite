@@ -24,7 +24,13 @@ interface NavigationProps {
   userRoles?: string[]
 }
 
-export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRoles: _userRoles = [] }: NavigationProps) {
+export function Navigation({
+  email,
+  displayName,
+  isSuperAdmin,
+  isAdmin,
+  userRoles: _userRoles = [],
+}: NavigationProps) {
   const pathname = usePathname()
 
   const navItems = [
@@ -34,7 +40,7 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
   ]
 
   return (
-    <header className="border-b bg-background">
+    <header className="bg-background border-b">
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo / Brand */}
@@ -42,7 +48,7 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
             <KloudliteLogo className="text-lg font-medium" />
 
             {/* Main Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden items-center gap-1 md:flex">
               {navItems.map((item) => {
                 // Check if current path is the item's path or a sub-path
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -52,7 +58,7 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
+                    className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                       isActive
                         ? 'bg-accent text-accent-foreground font-semibold'
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
@@ -76,42 +82,42 @@ export function Navigation({ email, displayName, isSuperAdmin, isAdmin, userRole
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-semibold">{displayName || 'User'}</p>
-                  <p className="text-xs text-muted-foreground">{email}</p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/connection-tokens" className="cursor-pointer">
-                  <Key className="mr-2 h-4 w-4" />
-                  Connection Tokens
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {(isAdmin || isSuperAdmin) && (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin" className="cursor-pointer">
-                      <Shield className="mr-2 h-4 w-4" />
-                      Administration
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              <form action={signOutAction}>
-                <DropdownMenuItem variant="destructive" asChild>
-                  <button type="submit" className="w-full">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </button>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-semibold">{displayName || 'User'}</p>
+                    <p className="text-muted-foreground text-xs">{email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/connection-tokens" className="cursor-pointer">
+                    <Key className="mr-2 h-4 w-4" />
+                    Connection Tokens
+                  </Link>
                 </DropdownMenuItem>
-              </form>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator />
+                {(isAdmin || isSuperAdmin) && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="cursor-pointer">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Administration
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <form action={signOutAction}>
+                  <DropdownMenuItem variant="destructive" asChild>
+                    <button type="submit" className="w-full">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </button>
+                  </DropdownMenuItem>
+                </form>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <ThemeSwitcher />
           </div>
         </div>

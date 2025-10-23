@@ -70,7 +70,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
       setLoadingSearch(false)
 
       if (result.success && result.data) {
-        const packageNames = result.data.packages.map(p => p.name)
+        const packageNames = result.data.packages.map((p) => p.name)
         setSearchResults(packageNames.slice(0, 10))
       }
     }, 300) // Debounce 300ms
@@ -91,9 +91,9 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
       setLoadingVersions(false)
 
       if (result.success && result.data) {
-        const pkg = result.data.packages.find(p => p.name === newPackageName)
+        const pkg = result.data.packages.find((p) => p.name === newPackageName)
         if (pkg && pkg.versions.length > 0) {
-          const versions = pkg.versions.map(v => v.version)
+          const versions = pkg.versions.map((v) => v.version)
           setAvailableVersions(versions.slice(0, 50)) // Limit to 50 versions
         }
       }
@@ -176,10 +176,15 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
 
     startTransition(async () => {
       // Convert PackageWithVersion to PackageSpec (remove displayVersion)
-      const packageSpecs: PackageSpec[] = packages.map(({ displayVersion: _displayVersion, ...pkg }) => pkg)
+      const packageSpecs: PackageSpec[] = packages.map(
+        ({ displayVersion: _displayVersion, ...pkg }) => pkg,
+      )
 
       const result = await createWorkspace(namespace, {
-        name: name.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        name: name
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '-'),
         spec: {
           displayName: displayName.trim(),
           description: description.trim() || undefined,
@@ -239,176 +244,178 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
           </SheetHeader>
 
           <div className="flex-1 space-y-6 overflow-y-auto p-4">
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name *</Label>
-              <Input
-                id="displayName"
-                placeholder="My Workspace"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                disabled={isPending}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Resource Name *</Label>
-              <Input
-                id="name"
-                placeholder="my-workspace"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isPending}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Lowercase letters, numbers, and hyphens only
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe your workspace..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={isPending}
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* Packages Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              <Label>Nix Packages</Label>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Add packages to install in your workspace using Nix package manager
-            </p>
-
-            {/* Package List */}
-            {packages.length > 0 && (
+            {/* Basic Information */}
+            <div className="space-y-4">
               <div className="space-y-2">
-                {packages.map((pkg, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium">{pkg.name}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {pkg.displayVersion ? (
-                          <span>Version: {pkg.displayVersion}</span>
-                        ) : pkg.channel ? (
-                          <span>Channel: {pkg.channel}</span>
-                        ) : pkg.nixpkgsCommit ? (
-                          <span>Commit: {pkg.nixpkgsCommit.substring(0, 8)}</span>
-                        ) : (
-                          <span>Latest from unstable</span>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removePackage(index)}
-                      disabled={isPending}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add Package Form */}
-            <div className="space-y-3 p-4 border rounded-lg">
-              <div className="space-y-2">
-                <Label htmlFor="packageName">
-                  Package Name *
-                  {loadingSearch && <Loader2 className="inline ml-2 h-3 w-3 animate-spin" />}
-                </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="packageName"
-                    placeholder="Search packages (e.g., nodejs, vim, git)"
-                    value={newPackageName}
-                    onChange={(e) => setNewPackageName(e.target.value)}
-                    disabled={isPending}
-                    className="pl-9"
-                  />
-                </div>
-                {searchResults.length > 0 && newPackageName.length >= 2 && (
-                  <div className="border rounded-md bg-background shadow-lg max-h-40 overflow-y-auto">
-                    {searchResults.map((pkgName) => (
-                      <button
-                        key={pkgName}
-                        type="button"
-                        onClick={() => {
-                          setNewPackageName(pkgName)
-                          setSearchResults([])
-                        }}
-                        className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
-                      >
-                        {pkgName}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <Label htmlFor="displayName">Display Name *</Label>
+                <Input
+                  id="displayName"
+                  placeholder="My Workspace"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  disabled={isPending}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="packageVersion">
-                  Version *
-                  {loadingVersions && <Loader2 className="inline ml-2 h-3 w-3 animate-spin" />}
-                </Label>
-                <Select
-                  value={newPackageVersion}
-                  onValueChange={setNewPackageVersion}
-                  disabled={isPending || availableVersions.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={
-                      availableVersions.length === 0
-                        ? "Select a package first"
-                        : "Select a version"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableVersions.map((version) => (
-                      <SelectItem key={version} value={version}>
-                        {version}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Semantic version will be resolved to exact nixpkgs commit
+                <Label htmlFor="name">Resource Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="my-workspace"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isPending}
+                  className="font-mono text-sm"
+                />
+                <p className="text-muted-foreground text-xs">
+                  Lowercase letters, numbers, and hyphens only
                 </p>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addPackage}
-                disabled={isPending || !newPackageName.trim() || !newPackageVersion.trim()}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Package
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe your workspace..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={isPending}
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Packages Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                <Label>Nix Packages</Label>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Add packages to install in your workspace using Nix package manager
+              </p>
+
+              {/* Package List */}
+              {packages.length > 0 && (
+                <div className="space-y-2">
+                  {packages.map((pkg, index) => (
+                    <div
+                      key={index}
+                      className="bg-muted flex items-center justify-between rounded-lg p-3"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{pkg.name}</div>
+                        <div className="text-muted-foreground mt-1 text-xs">
+                          {pkg.displayVersion ? (
+                            <span>Version: {pkg.displayVersion}</span>
+                          ) : pkg.channel ? (
+                            <span>Channel: {pkg.channel}</span>
+                          ) : pkg.nixpkgsCommit ? (
+                            <span>Commit: {pkg.nixpkgsCommit.substring(0, 8)}</span>
+                          ) : (
+                            <span>Latest from unstable</span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removePackage(index)}
+                        disabled={isPending}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add Package Form */}
+              <div className="space-y-3 rounded-lg border p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="packageName">
+                    Package Name *
+                    {loadingSearch && <Loader2 className="ml-2 inline h-3 w-3 animate-spin" />}
+                  </Label>
+                  <div className="relative">
+                    <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <Input
+                      id="packageName"
+                      placeholder="Search packages (e.g., nodejs, vim, git)"
+                      value={newPackageName}
+                      onChange={(e) => setNewPackageName(e.target.value)}
+                      disabled={isPending}
+                      className="pl-9"
+                    />
+                  </div>
+                  {searchResults.length > 0 && newPackageName.length >= 2 && (
+                    <div className="bg-background max-h-40 overflow-y-auto rounded-md border shadow-lg">
+                      {searchResults.map((pkgName) => (
+                        <button
+                          key={pkgName}
+                          type="button"
+                          onClick={() => {
+                            setNewPackageName(pkgName)
+                            setSearchResults([])
+                          }}
+                          className="hover:bg-muted w-full px-3 py-2 text-left text-sm"
+                        >
+                          {pkgName}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="packageVersion">
+                    Version *
+                    {loadingVersions && <Loader2 className="ml-2 inline h-3 w-3 animate-spin" />}
+                  </Label>
+                  <Select
+                    value={newPackageVersion}
+                    onValueChange={setNewPackageVersion}
+                    disabled={isPending || availableVersions.length === 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          availableVersions.length === 0
+                            ? 'Select a package first'
+                            : 'Select a version'
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableVersions.map((version) => (
+                        <SelectItem key={version} value={version}>
+                          {version}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-muted-foreground text-xs">
+                    Semantic version will be resolved to exact nixpkgs commit
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addPackage}
+                  disabled={isPending || !newPackageName.trim() || !newPackageVersion.trim()}
+                  className="w-full"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Package
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <SheetFooter className="p-4">
+          <SheetFooter className="p-4">
             <Button
               type="button"
               variant="outline"

@@ -1,8 +1,17 @@
 'use server'
 
 import { apiClient } from '@/lib/api-client'
-import { userService, type CreateUserRequest, type UpdateUserRequest } from '@/lib/services/user.service'
-import { userToDisplay, type UserDisplay, type CreateUserFormData, type UserResource } from '@/types/user'
+import {
+  userService,
+  type CreateUserRequest,
+  type UpdateUserRequest,
+} from '@/lib/services/user.service'
+import {
+  userToDisplay,
+  type UserDisplay,
+  type CreateUserFormData,
+  type UserResource,
+} from '@/types/user'
 import { revalidatePath } from 'next/cache'
 
 export interface ProviderAccount {
@@ -27,7 +36,9 @@ export async function authenticateUser(userData: UserData) {
     // Get user by email using efficient endpoint
     let existingUser
     try {
-      existingUser = await apiClient.get<UserResource>(`/api/v1/users/by-email?email=${encodeURIComponent(userData.email)}`)
+      existingUser = await apiClient.get<UserResource>(
+        `/api/v1/users/by-email?email=${encodeURIComponent(userData.email)}`,
+      )
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error')
       // Check if it's a 404 from our API (user not found)
@@ -36,14 +47,14 @@ export async function authenticateUser(userData: UserData) {
         console.log(`Authentication failed: User with email ${userData.email} not found`)
         return {
           success: false,
-          error: `You are not registered. Please contact your administrator to create an account for ${userData.email}.`
+          error: `You are not registered. Please contact your administrator to create an account for ${userData.email}.`,
         }
       }
       // For other errors, return a generic message
       console.error('Error during authentication:', error)
       return {
         success: false,
-        error: 'Authentication failed. Please try again later.'
+        error: 'Authentication failed. Please try again later.',
       }
     }
 
@@ -59,9 +70,7 @@ export async function authenticateUser(userData: UserData) {
 
     // Check if this provider is already connected
     const existingProviders = existingUser.spec?.providers || []
-    const providerIndex = existingProviders.findIndex(
-      (p) => p.provider === userData.provider
-    )
+    const providerIndex = existingProviders.findIndex((p) => p.provider === userData.provider)
 
     let updatedProviders
     if (providerIndex >= 0) {
@@ -82,7 +91,7 @@ export async function authenticateUser(userData: UserData) {
     // Update using the Kubernetes resource name from metadata
     const updatedUser = await apiClient.put(
       `/api/v1/users/${existingUser.metadata?.name}`,
-      updatePayload
+      updatePayload,
     )
 
     // Update last login in status field using dedicated endpoint
@@ -93,18 +102,19 @@ export async function authenticateUser(userData: UserData) {
       // Don't fail authentication if this fails
     }
 
-    console.log(`User ${userData.email} authenticated successfully with provider: ${userData.provider}`)
+    console.log(
+      `User ${userData.email} authenticated successfully with provider: ${userData.provider}`,
+    )
     return {
       success: true,
       user: updatedUser,
-      message: 'Authentication successful'
+      message: 'Authentication successful',
     }
-
   } catch (error) {
     console.error('Error during authentication:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Authentication failed'
+      error: error instanceof Error ? error.message : 'Authentication failed',
     }
   }
 }
@@ -127,31 +137,37 @@ export async function checkUserExists(email: string): Promise<boolean> {
 }
 
 // User management CRUD operations
-export async function getAllUsers(): Promise<{ success: boolean; users?: UserDisplay[]; error?: string }> {
+export async function getAllUsers(): Promise<{
+  success: boolean
+  users?: UserDisplay[]
+  error?: string
+}> {
   try {
     const users = await userService.listUsers()
     const displayUsers = users.map(userToDisplay)
 
     return {
       success: true,
-      users: displayUsers
+      users: displayUsers,
     }
   } catch (error) {
     console.error('Error fetching users:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch users'
+      error: error instanceof Error ? error.message : 'Failed to fetch users',
     }
   }
 }
 
-export async function createUser(data: CreateUserFormData): Promise<{ success: boolean; user?: UserDisplay; error?: string }> {
+export async function createUser(
+  data: CreateUserFormData,
+): Promise<{ success: boolean; user?: UserDisplay; error?: string }> {
   try {
     const createData: CreateUserRequest = {
       email: data.email,
       displayName: data.displayName,
       roles: data.roles,
-      isActive: true
+      isActive: true,
     }
 
     const user = await userService.createUser(createData)
@@ -161,18 +177,21 @@ export async function createUser(data: CreateUserFormData): Promise<{ success: b
 
     return {
       success: true,
-      user: userToDisplay(user)
+      user: userToDisplay(user),
     }
   } catch (error) {
     console.error('Error creating user:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create user'
+      error: error instanceof Error ? error.message : 'Failed to create user',
     }
   }
 }
 
-export async function updateUser(userName: string, data: Partial<CreateUserFormData & { isActive?: boolean }>): Promise<{ success: boolean; user?: UserDisplay; error?: string }> {
+export async function updateUser(
+  userName: string,
+  data: Partial<CreateUserFormData & { isActive?: boolean }>,
+): Promise<{ success: boolean; user?: UserDisplay; error?: string }> {
   try {
     // If only updating active status, use domain-specific endpoints
     if (data.isActive !== undefined && Object.keys(data).length === 1) {
@@ -185,7 +204,7 @@ export async function updateUser(userName: string, data: Partial<CreateUserFormD
 
       return {
         success: true,
-        user: userToDisplay(user)
+        user: userToDisplay(user),
       }
     }
 
@@ -194,7 +213,7 @@ export async function updateUser(userName: string, data: Partial<CreateUserFormD
       email: data.email,
       displayName: data.displayName,
       roles: data.roles,
-      isActive: data.isActive
+      isActive: data.isActive,
     }
 
     const user = await userService.updateUser(userName, updateData)
@@ -204,13 +223,13 @@ export async function updateUser(userName: string, data: Partial<CreateUserFormD
 
     return {
       success: true,
-      user: userToDisplay(user)
+      user: userToDisplay(user),
     }
   } catch (error) {
     console.error('Error updating user:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to update user'
+      error: error instanceof Error ? error.message : 'Failed to update user',
     }
   }
 }
@@ -223,35 +242,37 @@ export async function deleteUser(userName: string): Promise<{ success: boolean; 
     revalidatePath('/admin/users')
 
     return {
-      success: true
+      success: true,
     }
   } catch (error) {
     console.error('Error deleting user:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete user'
+      error: error instanceof Error ? error.message : 'Failed to delete user',
     }
   }
 }
 
-export async function resetUserPassword(userName: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+export async function resetUserPassword(
+  userName: string,
+  newPassword: string,
+): Promise<{ success: boolean; error?: string }> {
   try {
     await apiClient.post(`/api/v1/users/${userName}/reset-password`, {
-      newPassword: newPassword
+      newPassword: newPassword,
     })
 
     // Revalidate the users page
     revalidatePath('/admin/users')
 
     return {
-      success: true
+      success: true,
     }
   } catch (error) {
     console.error('Error resetting user password:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to reset password'
+      error: error instanceof Error ? error.message : 'Failed to reset password',
     }
   }
 }
-

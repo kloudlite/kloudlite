@@ -36,7 +36,7 @@ export default async function OAuthProvidersPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900">Unable to load OAuth providers</h2>
           <p className="mt-2 text-gray-600">{error}</p>
@@ -46,12 +46,14 @@ export default async function OAuthProvidersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">OAuth Provider Configuration</h1>
-        <p className="text-sm text-gray-600 mt-1.5">
-          {isSuperAdmin ? 'Manage OAuth providers for user authentication' : 'View OAuth provider configurations'}
+        <p className="mt-1.5 text-sm text-gray-600">
+          {isSuperAdmin
+            ? 'Manage OAuth providers for user authentication'
+            : 'View OAuth provider configurations'}
         </p>
       </div>
 

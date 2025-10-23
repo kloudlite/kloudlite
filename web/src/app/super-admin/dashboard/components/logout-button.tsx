@@ -9,11 +9,7 @@ export function LogoutButton() {
   }
 
   return (
-    <Button
-      onClick={handleLogout}
-      variant="outline"
-      className="h-9 px-4 text-sm"
-    >
+    <Button onClick={handleLogout} variant="outline" className="h-9 px-4 text-sm">
       Sign out
     </Button>
   )

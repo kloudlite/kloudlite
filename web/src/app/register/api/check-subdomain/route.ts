@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     if (!subdomain) {
       return NextResponse.json(
         { success: false, error: 'Subdomain parameter is required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
           available: false,
           error: 'Invalid subdomain format',
         },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
           available: false,
           error: 'Subdomain must be between 3 and 63 characters',
         },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         error: 'Failed to check subdomain availability',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

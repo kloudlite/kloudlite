@@ -108,8 +108,8 @@ export function DeleteEnvironmentConfirm({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Environment</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the environment &quot;{environmentName}&quot;?
-            This action cannot be undone and will remove all associated resources.
+            Are you sure you want to delete the environment &quot;{environmentName}&quot;? This
+            action cannot be undone and will remove all associated resources.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
