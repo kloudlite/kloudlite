@@ -5,6 +5,8 @@ import {
   type CertificateScope,
 } from '@/lib/registration/supabase-storage-service'
 
+// Use Node.js runtime for Supabase (uses Node.js APIs)
+export const runtime = 'nodejs'
 /**
  * Download TLS certificates (certificate + private key)
  * Called by the deployment to download certificates

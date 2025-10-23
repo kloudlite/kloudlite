@@ -2,6 +2,9 @@ import { SignInForm } from './signin-form'
 import { unauthenticatedApiClient } from '@/lib/api-client'
 import { KloudliteLogo } from '@/components/kloudlite-logo'
 
+// Force dynamic rendering - this page fetches providers from API
+export const dynamic = 'force-dynamic'
+
 interface Provider {
   type: string
   enabled: boolean
