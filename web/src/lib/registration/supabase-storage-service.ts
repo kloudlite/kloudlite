@@ -136,7 +136,10 @@ export async function saveUserRegistration(registration: UserRegistration): Prom
  * Atomically mark installation complete with optional secret key
  */
 export async function markInstallationComplete(email: string, secretKey?: string): Promise<UserRegistration> {
-  const update: any = {
+  const update: {
+    has_completed_installation: boolean
+    secret_key?: string
+  } = {
     has_completed_installation: true,
   }
 

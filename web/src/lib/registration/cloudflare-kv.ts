@@ -11,7 +11,7 @@ const KV_NAMESPACE_ID = process.env.CLOUDFLARE_KV_NAMESPACE_ID!
 
 const KV_API_BASE = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}`
 
-interface CloudflareKVResponse<T = any> {
+interface CloudflareKVResponse<T> {
   success: boolean
   errors: Array<{ code: number; message: string }>
   messages: string[]
@@ -21,7 +21,7 @@ interface CloudflareKVResponse<T = any> {
 /**
  * Get a value from KV
  */
-export async function kvGet<T = any>(key: string): Promise<T | null> {
+export async function kvGet<T>(key: string): Promise<T | null> {
   try {
     const response = await fetch(`${KV_API_BASE}/values/${key}`, {
       headers: {
@@ -53,10 +53,12 @@ export async function kvGet<T = any>(key: string): Promise<T | null> {
   }
 }
 
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+
 /**
  * Put a value into KV
  */
-export async function kvPut(key: string, value: any, expirationTtl?: number): Promise<void> {
+export async function kvPut(key: string, value: JsonValue, expirationTtl?: number): Promise<void> {
   try {
     const formData = new FormData()
 

@@ -4,10 +4,16 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, ExternalLink, Loader2, Copy, Trash2 } from 'lucide-react'
+import { ExternalLink, Loader2, Copy, Trash2 } from 'lucide-react'
 import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+interface UserData {
+  subdomain: string
+  url: string
+  installationKey: string
+}
 
 const getUninstallCommands = (installationKey: string) => ({
   aws: {
@@ -33,7 +39,7 @@ const getUninstallCommands = (installationKey: string) => ({
 export default function CompletePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [userData, setUserData] = useState<any>(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
   const [selectedProvider, setSelectedProvider] = useState('aws')
 
   useEffect(() => {

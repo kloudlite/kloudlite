@@ -4,14 +4,13 @@
  * Manages DNS A records for Kloudlite installations and workmachines
  */
 
-const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!
 const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!
 const CLOUDFLARE_ZONE_ID = process.env.CLOUDFLARE_ZONE_ID!
 const CLOUDFLARE_DNS_DOMAIN = process.env.CLOUDFLARE_DNS_DOMAIN!
 
 const DNS_API_BASE = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records`
 
-interface CloudflareDnsResponse<T = any> {
+interface CloudflareDnsResponse<T> {
   success: boolean
   errors: Array<{ code: number; message: string }>
   messages: string[]

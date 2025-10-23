@@ -119,7 +119,7 @@ export const authConfig: NextAuthConfig = {
       }
       return session
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // For credentials provider, we've already authenticated in authorize()
       if (account?.provider === 'credentials') {
         return true
