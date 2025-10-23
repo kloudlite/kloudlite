@@ -62,6 +62,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ matrix.mode }}-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/**/*.ts', 'web/**/*.tsx', 'web/**/*.js', 'web/**/*.jsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ matrix.mode }}-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-${{ matrix.mode }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
