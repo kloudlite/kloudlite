@@ -36,17 +36,20 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ provider: string }> },
 ) {
+  // Use environment variable for base URL to avoid internal container URLs in redirects
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || request.url
+
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get('code')
   const state = searchParams.get('state')
   const error = searchParams.get('error')
 
   if (error) {
-    return NextResponse.redirect(new URL(`/register?error=${error}`, request.url))
+    return NextResponse.redirect(new URL(`/register?error=${error}`, baseUrl))
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(new URL('/register?error=missing_params', request.url))
+    return NextResponse.redirect(new URL('/register?error=missing_params', baseUrl))
   }
 
   // Verify state
@@ -54,7 +57,7 @@ export async function GET(
   const storedState = cookieStore.get('oauth_state')?.value
 
   if (!storedState || storedState !== state) {
-    return NextResponse.redirect(new URL('/register?error=invalid_state', request.url))
+    return NextResponse.redirect(new URL('/register?error=invalid_state', baseUrl))
   }
 
   const { provider: providerParam } = await params
@@ -62,7 +65,7 @@ export async function GET(
   const config = OAUTH_CONFIGS[provider]
 
   if (!config) {
-    return NextResponse.redirect(new URL('/register?error=invalid_provider', request.url))
+    return NextResponse.redirect(new URL('/register?error=invalid_provider', baseUrl))
   }
 
   // OAuth user data interfaces for different providers
@@ -132,7 +135,7 @@ export async function GET(
     userData = (await userResponse.json()) as OAuthUserData
   } catch (err) {
     console.error('OAuth exchange error:', err)
-    return NextResponse.redirect(new URL('/register?error=oauth_exchange_failed', request.url))
+    return NextResponse.redirect(new URL('/register?error=oauth_exchange_failed', baseUrl))
   }
 
   // Extract user data from OAuth response based on provider
@@ -169,7 +172,7 @@ export async function GET(
 
   if (!email) {
     console.error('No email found in OAuth response')
-    return NextResponse.redirect(new URL('/register?error=no_email', request.url))
+    return NextResponse.redirect(new URL('/register?error=no_email', baseUrl))
   }
 
   // Check if user already exists by email (primary key)
@@ -254,7 +257,7 @@ export async function GET(
     .sign(secret)
 
   // Set session cookie and redirect to installation instructions
-  const response = NextResponse.redirect(new URL('/register/install', request.url))
+  const response = NextResponse.redirect(new URL('/register/install', baseUrl))
   response.cookies.set('registration_session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
