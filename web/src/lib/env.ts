@@ -1,6 +1,4 @@
 // Environment variable validation and typing
-const requiredEnvVars = ['NEXT_PUBLIC_API_URL'] as const
-
 // Validate required environment variables at module load time
 function validateEnv() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL

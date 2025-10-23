@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/registration/auth-config'
-import { reserveSubdomain, getUserRegistration, saveUserRegistration } from '@/lib/registration/storage-service'
+import { reserveSubdomain, getUserRegistration } from '@/lib/registration/storage-service'
 
 export async function POST(request: NextRequest) {
   try {

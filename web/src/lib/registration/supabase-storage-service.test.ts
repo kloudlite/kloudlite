@@ -1,21 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { Mock } from 'vitest'
 import {
   getUserByEmail,
-  getUserByInstallationKey,
   saveUserRegistration,
   markInstallationComplete,
-  updateHealthCheck,
   addOrUpdateIpRecord,
-  markDeploymentReady,
   isSubdomainAvailable,
   reserveSubdomain,
-  getDomainReservation,
   deleteIpRecords,
   deleteDomainReservation,
   resetUserInstallation,
   type UserRegistration,
   type IPRecord
 } from './supabase-storage-service'
+
+// Type for Supabase query response
+interface SupabaseResponse<T> {
+  data: T | null
+  error: Error | null
+  count?: number
+}
+
+// Type for callback functions in mock chains
+type PromiseCallback<T> = (value: SupabaseResponse<T>) => SupabaseResponse<T> | PromiseLike<SupabaseResponse<T>>
 
 // Create a mockSupabase object that we'll configure in each test
 const mockSupabaseClient = {
@@ -28,25 +35,25 @@ vi.mock('./supabase', () => ({
 }))
 
 describe('Supabase Storage Service', () => {
-  let mockFrom: any
-  let mockSelect: any
-  let mockEq: any
-  let mockSingle: any
-  let mockUpsert: any
-  let mockUpdate: any
-  let mockInsert: any
-  let mockDelete: any
+  let mockFrom: Mock
+  let mockSelect: Mock
+  let mockEq: Mock
+  let mockSingle: Mock
+  let mockUpsert: Mock
+  let mockUpdate: Mock
+  let mockInsert: Mock
+  let mockDelete: Mock
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
 
     // Set up mock chain with proper method returns
     mockSingle = vi.fn().mockResolvedValue({ data: null, error: null })
     mockEq = vi.fn().mockReturnValue({
       single: mockSingle,
-      then: (fn: any) => mockSingle.then(fn) // Make eq() thenable for direct resolution
+      then: <T>(fn: PromiseCallback<T>) => mockSingle.then(fn) // Make eq() thenable for direct resolution
     })
-    mockSelect = vi.fn().mockImplementation((columns?: string, options?: any) => {
+    mockSelect = vi.fn().mockImplementation((columns?: string, options?: { head?: boolean }) => {
       if (options?.head) {
         return Promise.resolve({ data: null, error: null, count: 0 })
       }
@@ -55,12 +62,12 @@ describe('Supabase Storage Service', () => {
     mockUpsert = vi.fn().mockResolvedValue({ error: null })
     mockUpdate = vi.fn().mockReturnValue({
       eq: mockEq,
-      then: (fn: any) => Promise.resolve({ error: null }).then(fn) // Make update() thenable
+      then: <T>(fn: PromiseCallback<T>) => Promise.resolve({ error: null }).then(fn) // Make update() thenable
     })
     mockInsert = vi.fn().mockReturnValue({ select: mockSelect })
     mockDelete = vi.fn().mockReturnValue({
       eq: mockEq,
-      then: (fn: any) => Promise.resolve({ error: null }).then(fn) // Make delete() thenable
+      then: <T>(fn: PromiseCallback<T>) => Promise.resolve({ error: null }).then(fn) // Make delete() thenable
     })
     mockFrom = vi.fn().mockReturnValue({
       select: mockSelect,
@@ -70,7 +77,7 @@ describe('Supabase Storage Service', () => {
       delete: mockDelete
     })
 
-    const { supabase } = require('./supabase')
+    const { supabase } = await import('./supabase')
     supabase.from = mockFrom
   })
 

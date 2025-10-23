@@ -64,10 +64,11 @@ export async function POST(request: NextRequest) {
     response.headers.set('Expires', '0')
 
     return response
-  } catch (error: any) {
-    console.error('Reserve subdomain error:', error)
+  } catch (err) {
+    console.error('Reserve subdomain error:', err)
 
-    if (error.message === 'Subdomain is not available') {
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    if (error.message === 'Subdomain is not available' || error.message === 'Subdomain is already reserved') {
       return NextResponse.json(
         { error: 'Subdomain is not available' },
         { status: 409 }

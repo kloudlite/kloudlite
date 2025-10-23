@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { Mock } from 'vitest'
 import {
   createDnsRecord,
   updateDnsRecord,
@@ -11,7 +12,7 @@ import {
 } from './cloudflare-dns'
 
 // Mock global fetch
-global.fetch = vi.fn()
+global.fetch = vi.fn() as Mock<[RequestInfo | URL, RequestInit?], Promise<Response>>
 
 describe('Cloudflare DNS Service', () => {
   beforeEach(() => {
@@ -34,7 +35,7 @@ describe('Cloudflare DNS Service', () => {
         }
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       })
@@ -56,7 +57,7 @@ describe('Cloudflare DNS Service', () => {
     })
 
     it('should return null when API call fails', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         text: async () => 'API Error'
       })
@@ -74,7 +75,7 @@ describe('Cloudflare DNS Service', () => {
         result: null
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       })
@@ -99,7 +100,7 @@ describe('Cloudflare DNS Service', () => {
         }
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       })
@@ -126,7 +127,7 @@ describe('Cloudflare DNS Service', () => {
         }
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       })
@@ -143,7 +144,7 @@ describe('Cloudflare DNS Service', () => {
     })
 
     it('should return false when update fails', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         text: async () => 'Update failed'
       })
@@ -156,7 +157,7 @@ describe('Cloudflare DNS Service', () => {
 
   describe('deleteDnsRecord', () => {
     it('should delete DNS record successfully', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         text: async () => 'Success'
       })
@@ -173,7 +174,7 @@ describe('Cloudflare DNS Service', () => {
     })
 
     it('should return true when record not found (404)', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         status: 404,
         text: async () => 'Not found'
@@ -185,7 +186,7 @@ describe('Cloudflare DNS Service', () => {
     })
 
     it('should return false on other errors', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         status: 500,
         text: async () => 'Server error'
@@ -213,7 +214,7 @@ describe('Cloudflare DNS Service', () => {
         }]
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       })
@@ -238,7 +239,7 @@ describe('Cloudflare DNS Service', () => {
         result: []
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       })
@@ -265,7 +266,7 @@ describe('Cloudflare DNS Service', () => {
         }
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       })
@@ -277,7 +278,7 @@ describe('Cloudflare DNS Service', () => {
     })
 
     it('should return empty array if creation fails', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         text: async () => 'Failed'
       })
@@ -318,11 +319,11 @@ describe('Cloudflare DNS Service', () => {
         }
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => exactMockResponse
       })
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => wildcardMockResponse
       })
@@ -348,11 +349,11 @@ describe('Cloudflare DNS Service', () => {
         }
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => exactMockResponse
       })
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         text: async () => 'Failed'
       })
@@ -366,7 +367,7 @@ describe('Cloudflare DNS Service', () => {
 
   describe('updateDnsRecords', () => {
     it('should update multiple DNS records successfully', async () => {
-      ;(global.fetch as any).mockResolvedValue({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => ({
           success: true,
@@ -387,7 +388,7 @@ describe('Cloudflare DNS Service', () => {
     })
 
     it('should return false if any update fails', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           success: true,
@@ -396,7 +397,7 @@ describe('Cloudflare DNS Service', () => {
           result: {}
         })
       })
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         text: async () => 'Failed'
       })
@@ -413,7 +414,7 @@ describe('Cloudflare DNS Service', () => {
 
   describe('deleteDnsRecords', () => {
     it('should delete multiple DNS records successfully', async () => {
-      ;(global.fetch as any).mockResolvedValue({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         text: async () => 'Success'
       })
@@ -425,11 +426,11 @@ describe('Cloudflare DNS Service', () => {
     })
 
     it('should return false if any deletion fails', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         text: async () => 'Success'
       })
-      ;(global.fetch as any).mockResolvedValueOnce({
+      ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         status: 500,
         text: async () => 'Server error'

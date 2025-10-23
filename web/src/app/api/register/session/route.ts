@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const cookieStore = await cookies()
   const token = cookieStore.get('registration_session')?.value
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     response.headers.set('Expires', '0')
 
     return response
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
   }
 }
