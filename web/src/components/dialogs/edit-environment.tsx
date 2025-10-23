@@ -31,7 +31,7 @@ export function EditEnvironmentDialog({
   onOpenChange,
   environment,
   onSuccess,
-  currentUser,
+  currentUser: _currentUser,
 }: EditEnvironmentDialogProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -40,14 +40,14 @@ export function EditEnvironmentDialog({
   const isTransitional = ['deleting', 'activating', 'deactivating'].includes(environment.status)
 
   const [formData, setFormData] = useState({
-    cpuRequests: environment.resourceQuotas?.cpuRequests || '',
-    memoryRequests: environment.resourceQuotas?.memoryRequests || '',
-    cpuLimits: environment.resourceQuotas?.cpuLimits || '',
-    memoryLimits: environment.resourceQuotas?.memoryLimits || '',
-    storageRequests: environment.resourceQuotas?.storageRequests || '',
-    allowIngress: environment.networkPolicies?.allowIngress || false,
-    allowEgress: environment.networkPolicies?.allowEgress || false,
-    isolateNamespace: environment.networkPolicies?.isolateNamespace || false,
+    cpuRequests: '',
+    memoryRequests: '',
+    cpuLimits: '',
+    memoryLimits: '',
+    storageRequests: '',
+    allowIngress: false,
+    allowEgress: false,
+    isolateNamespace: false,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,23 +56,14 @@ export function EditEnvironmentDialog({
 
     try {
       const updateData = {
-        targetNamespace: environment.targetNamespace,
-        activated: environment.status === 'active',
-        resourceQuotas: {
-          cpuRequests: formData.cpuRequests,
-          memoryRequests: formData.memoryRequests,
-          cpuLimits: formData.cpuLimits,
-          memoryLimits: formData.memoryLimits,
-          storageRequests: formData.storageRequests,
-        },
-        networkPolicies: {
-          allowIngress: formData.allowIngress,
-          allowEgress: formData.allowEgress,
-          isolateNamespace: formData.isolateNamespace,
+        spec: {
+          targetNamespace: environment.targetNamespace,
+          activated: environment.status === 'active',
+          createdBy: _currentUser,
         },
       }
 
-      const result = await updateEnvironment(environment.name, updateData, currentUser)
+      const result = await updateEnvironment(environment.name, updateData)
 
       if (result.success) {
         toast.success('Environment updated', {
@@ -87,9 +78,10 @@ export function EditEnvironmentDialog({
           description: result.error || 'An error occurred while updating the environment',
         })
       }
-    } catch (error: any) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
       toast.error('Failed to update environment', {
-        description: error.message || 'An error occurred while updating the environment',
+        description: error.message,
       })
     } finally {
       setIsSubmitting(false)

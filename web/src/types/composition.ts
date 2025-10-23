@@ -8,7 +8,7 @@ export interface CompositionMetadata {
   generation?: number
   creationTimestamp?: string
   deletionTimestamp?: string
-  managedFields?: any[]
+  managedFields?: unknown[]
 }
 
 export interface EnvFromSource {

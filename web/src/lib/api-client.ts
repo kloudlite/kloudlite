@@ -16,7 +16,7 @@ export class ApiClient {
     const url = `${this.baseUrl}${endpoint}`
 
     // Get authentication session (only works in server components/actions)
-    let authHeaders: Record<string, string> = {}
+    const authHeaders: Record<string, string> = {}
     try {
       const session = await auth()
       if (session?.user?.backendToken) {
@@ -55,7 +55,7 @@ export class ApiClient {
         // Extract the most relevant error message
         const message = errorJson.error || errorJson.message || errorText
         throw new Error(message)
-      } catch (parseError) {
+      } catch (_parseError) {
         // If not JSON, use the raw error text
         throw new Error(errorText || `Request failed with status ${response.status}`)
       }
@@ -83,7 +83,7 @@ export class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'GET' })
   }
 
-  post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+  post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -91,7 +91,7 @@ export class ApiClient {
     })
   }
 
-  put<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+  put<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -137,7 +137,7 @@ export class UnauthenticatedApiClient {
         // Extract the most relevant error message
         const message = errorJson.error || errorJson.message || errorText
         throw new Error(message)
-      } catch (parseError) {
+      } catch (_parseError) {
         // If not JSON, use the raw error text
         throw new Error(errorText || `Request failed with status ${response.status}`)
       }
@@ -165,7 +165,7 @@ export class UnauthenticatedApiClient {
     return this.request<T>(endpoint, { ...options, method: 'GET' })
   }
 
-  post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+  post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -173,7 +173,7 @@ export class UnauthenticatedApiClient {
     })
   }
 
-  put<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+  put<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',

@@ -15,11 +15,12 @@ export async function createEnvironment(data: EnvironmentCreateRequest) {
     const result = await environmentService.createEnvironment(data)
     revalidatePath('/environments')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Create environment error:', error)
+  } catch (err) {
+    console.error('Create environment error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to create environment'
+      error: error.message
     }
   }
 }
@@ -33,11 +34,12 @@ export async function updateEnvironment(name: string, data: EnvironmentUpdateReq
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Update environment error:', error)
+  } catch (err) {
+    console.error('Update environment error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to update environment'
+      error: error.message
     }
   }
 }
@@ -50,11 +52,12 @@ export async function deleteEnvironment(name: string) {
     const result = await environmentService.deleteEnvironment(name)
     revalidatePath('/environments')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Delete environment error:', error)
+  } catch (err) {
+    console.error('Delete environment error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to delete environment'
+      error: error.message
     }
   }
 }
@@ -68,11 +71,12 @@ export async function activateEnvironment(name: string) {
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Activate environment error:', error)
+  } catch (err) {
+    console.error('Activate environment error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to activate environment'
+      error: error.message
     }
   }
 }
@@ -86,11 +90,12 @@ export async function deactivateEnvironment(name: string) {
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Deactivate environment error:', error)
+  } catch (err) {
+    console.error('Deactivate environment error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to deactivate environment'
+      error: error.message
     }
   }
 }
@@ -102,11 +107,12 @@ export async function getEnvironmentStatus(name: string) {
   try {
     const result = await environmentService.getEnvironmentStatus(name)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Get environment status error:', error)
+  } catch (err) {
+    console.error('Get environment status error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to get environment status'
+      error: error.message
     }
   }
 }
@@ -133,11 +139,12 @@ export async function cloneEnvironment(
     )
     revalidatePath('/environments')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Clone environment error:', error)
+  } catch (err) {
+    console.error('Clone environment error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to clone environment'
+      error: error.message
     }
   }
 }

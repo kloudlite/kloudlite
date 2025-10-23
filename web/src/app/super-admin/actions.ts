@@ -24,8 +24,9 @@ export async function updateProvider(type: string, provider: Provider) {
     await apiClient.put(`/api/v1/providers/${type}`, provider)
 
     return { success: true }
-  } catch (error: any) {
-    console.error('Error updating provider:', error)
-    return { success: false, error: error.message || 'Failed to update provider' }
+  } catch (err) {
+    console.error('Error updating provider:', err)
+    const error = err instanceof Error ? err : new Error('Failed to update provider')
+    return { success: false, error: error.message }
   }
 }

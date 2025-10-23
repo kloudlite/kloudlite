@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ConfigsPage({ params }: PageProps) {

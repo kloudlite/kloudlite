@@ -9,12 +9,10 @@ import {
   ChevronDown,
   Cpu,
   MemoryStick,
-  HardDrive,
   Zap,
   AlertCircle,
   Check,
   Loader2,
-  Key,
   Copy,
   Trash2,
   Plus
@@ -51,6 +49,16 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
+interface MachineType {
+  id: string
+  name: string
+  description: string
+  category: string
+  cpu: string
+  memory: string
+  gpu?: string
+}
+
 interface WorkMachineControlsProps {
   machineId: string
   machineName: string
@@ -58,7 +66,7 @@ interface WorkMachineControlsProps {
   currentState: string
   desiredState: string
   currentType?: string
-  availableMachineTypes: any[]
+  availableMachineTypes: MachineType[]
   sshPublicKey?: string
   sshAuthorizedKeys?: string[]
   onStart?: () => void
@@ -86,7 +94,7 @@ function parseSSHKey(key: string): string {
 }
 
 export function WorkMachineControls({
-  machineId,
+  machineId: _machineId,
   machineName,
   status,
   currentState,
@@ -101,7 +109,7 @@ export function WorkMachineControls({
   isLoading = false
 }: WorkMachineControlsProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [_isPending, startTransition] = useTransition()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedType, setSelectedType] = useState(currentType)
   const [autoStop, setAutoStop] = useState(true)
@@ -181,7 +189,7 @@ export function WorkMachineControls({
       } else {
         toast.error(result.error || 'Failed to add SSH key')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred while adding SSH key')
     } finally {
       setIsAddingKey(false)
@@ -202,7 +210,7 @@ export function WorkMachineControls({
       } else {
         toast.error(result.error || 'Failed to remove SSH key')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred while removing SSH key')
     } finally {
       setIsDeletingKey(null)

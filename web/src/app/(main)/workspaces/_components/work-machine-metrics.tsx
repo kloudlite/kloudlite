@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Cpu, HardDrive, MemoryStick } from 'lucide-react'
+import { Cpu, MemoryStick } from 'lucide-react'
 import { getNodeMetrics } from '@/app/actions/workspace.actions'
 
 interface NodeMetrics {
@@ -35,8 +35,6 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout
-
     const fetchMetrics = async () => {
       try {
         const result = await getNodeMetrics(nodeName)
@@ -56,12 +54,10 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
     fetchMetrics()
 
     // Poll every 3 seconds
-    intervalId = setInterval(fetchMetrics, 3000)
+    const intervalId = setInterval(fetchMetrics, 3000)
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
+      clearInterval(intervalId)
     }
   }, [nodeName])
 

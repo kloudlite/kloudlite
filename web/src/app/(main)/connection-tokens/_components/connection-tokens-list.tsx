@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   AlertDialog,
@@ -140,7 +139,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
                 }}
               />
               <p className="text-sm text-muted-foreground">
-                Give your token a descriptive name to remember where it's used
+                Give your token a descriptive name to remember where it&apos;s used
               </p>
             </div>
           </div>
@@ -158,7 +157,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
           <DialogHeader>
             <DialogTitle>Token Created Successfully!</DialogTitle>
             <DialogDescription>
-              Make sure to copy your token now. You won't be able to see it again!
+              Make sure to copy your token now. You won&apos;t be able to see it again!
               This token contains the server URL and can be used directly in VS Code or other tools.
             </DialogDescription>
           </DialogHeader>
@@ -294,7 +293,7 @@ export function ConnectionTokensList({ tokens: initialTokens }: ConnectionTokens
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Token?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will permanently delete the token "{token.spec.displayName}".
+                            This will permanently delete the token &quot;{token.spec.displayName}&quot;.
                             Applications using this token will no longer be able to access your workspaces.
                           </AlertDialogDescription>
                         </AlertDialogHeader>

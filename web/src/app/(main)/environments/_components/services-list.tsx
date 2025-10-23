@@ -1,12 +1,11 @@
 'use client'
 
-import { Network, Wifi, Pencil } from 'lucide-react'
+import { Network, Wifi } from 'lucide-react'
 import { useState } from 'react'
 import type { K8sService } from '@/types/service'
 import type { ServiceIntercept } from '@/types/serviceintercept'
 import type { Composition } from '@/types/composition'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { CompositionEditor } from './composition-editor'
 
 interface ServicesListProps {
@@ -14,10 +13,9 @@ interface ServicesListProps {
   namespace: string
   serviceIntercepts: ServiceIntercept[]
   composition: Composition | null
-  user: string
 }
 
-export function ServicesList({ services, namespace, serviceIntercepts, composition, user }: ServicesListProps) {
+export function ServicesList({ services, namespace, serviceIntercepts, composition }: ServicesListProps) {
   const [open, setOpen] = useState(false)
 
   // Helper function to find active intercept for a service
@@ -42,7 +40,6 @@ export function ServicesList({ services, namespace, serviceIntercepts, compositi
           <CompositionEditor
             composition={composition}
             namespace={namespace}
-            user={user}
             open={open}
             onOpenChange={setOpen}
           />
@@ -70,7 +67,6 @@ export function ServicesList({ services, namespace, serviceIntercepts, compositi
         <CompositionEditor
           composition={composition}
           namespace={namespace}
-          user={user}
           open={open}
           onOpenChange={setOpen}
         />

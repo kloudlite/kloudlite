@@ -66,7 +66,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to save' })
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'An error occurred' })
     } finally {
       setSaving(false)
@@ -107,7 +107,7 @@ export function ProviderCard({ provider, displayName }: ProviderCardProps) {
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to update' })
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'An error occurred' })
     } finally {
       setSaving(false)

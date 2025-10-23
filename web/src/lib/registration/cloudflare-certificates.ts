@@ -1,0 +1,212 @@
+/**
+ * Cloudflare Origin CA Certificate Service
+ *
+ * Generates TLS certificates using Cloudflare's Origin CA API
+ * These certificates are trusted by Cloudflare's edge for origin connections
+ */
+
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!
+const CLOUDFLARE_ORIGIN_CA_API = 'https://api.cloudflare.com/client/v4/certificates'
+
+interface CloudflareCertificateResponse {
+  success: boolean
+  errors: Array<{ code: number; message: string }>
+  messages: string[]
+  result: {
+    id: string
+    certificate: string
+    private_key: string
+    hostnames: string[]
+    expires_on: string
+    request_type: string
+    requested_validity: number
+  }
+}
+
+export interface TLSCertificate {
+  id: string
+  certificate: string
+  privateKey: string
+  hostnames: string[]
+  validFrom: string
+  validUntil: string
+}
+
+/**
+ * Generate a private key and CSR (Certificate Signing Request)
+ * For simplicity, we'll let Cloudflare generate both the key and certificate
+ */
+export async function generateCertificate(
+  hostnames: string[],
+  validityDays: number = 5475 // 15 years (max for Cloudflare Origin CA)
+): Promise<TLSCertificate | null> {
+  try {
+    console.log(`Generating Cloudflare Origin CA certificate for hostnames:`, hostnames)
+
+    const response = await fetch(CLOUDFLARE_ORIGIN_CA_API, {
+      method: 'POST',
+      headers: {
+        'X-Auth-User-Service-Key': CLOUDFLARE_API_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        hostnames,
+        requested_validity: validityDays,
+        request_type: 'origin-rsa' // RSA 2048-bit key
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error(`Cloudflare certificate generation failed:`, error)
+      return null
+    }
+
+    const result: CloudflareCertificateResponse = await response.json()
+
+    if (!result.success) {
+      console.error(`Cloudflare certificate generation failed:`, result.errors)
+      return null
+    }
+
+    const cert: TLSCertificate = {
+      id: result.result.id,
+      certificate: result.result.certificate,
+      privateKey: result.result.private_key,
+      hostnames: result.result.hostnames,
+      validFrom: new Date().toISOString(),
+      validUntil: new Date(result.result.expires_on).toISOString(),
+    }
+
+    console.log(`Certificate generated successfully for hostnames:`, hostnames)
+    console.log(`Certificate ID: ${cert.id}`)
+    console.log(`Valid until: ${cert.validUntil}`)
+
+    return cert
+  } catch (error) {
+    console.error(`Certificate generation error:`, error)
+    return null
+  }
+}
+
+/**
+ * Revoke a certificate by ID
+ */
+export async function revokeCertificate(certificateId: string): Promise<boolean> {
+  try {
+    console.log(`Revoking certificate: ${certificateId}`)
+
+    const response = await fetch(`${CLOUDFLARE_ORIGIN_CA_API}/${certificateId}`, {
+      method: 'DELETE',
+      headers: {
+        'X-Auth-User-Service-Key': CLOUDFLARE_API_TOKEN,
+      },
+    })
+
+    if (!response.ok && response.status !== 404) {
+      const error = await response.text()
+      console.error(`Certificate revocation failed:`, error)
+      return false
+    }
+
+    console.log(`Certificate revoked successfully: ${certificateId}`)
+    return true
+  } catch (error) {
+    console.error(`Certificate revocation error:`, error)
+    return false
+  }
+}
+
+/**
+ * Get certificate information by ID
+ */
+export async function getCertificate(certificateId: string): Promise<TLSCertificate | null> {
+  try {
+    const response = await fetch(`${CLOUDFLARE_ORIGIN_CA_API}/${certificateId}`, {
+      headers: {
+        'X-Auth-User-Service-Key': CLOUDFLARE_API_TOKEN,
+      },
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const result: CloudflareCertificateResponse = await response.json()
+
+    if (!result.success) {
+      return null
+    }
+
+    return {
+      id: result.result.id,
+      certificate: result.result.certificate,
+      privateKey: result.result.private_key,
+      hostnames: result.result.hostnames,
+      validFrom: new Date().toISOString(),
+      validUntil: new Date(result.result.expires_on).toISOString(),
+    }
+  } catch (error) {
+    console.error(`Get certificate error:`, error)
+    return null
+  }
+}
+
+export type CertificateScope = 'installation' | 'workmachine' | 'workspace'
+
+/**
+ * Generate hostnames for certificates at different domain levels
+ *
+ * @param subdomain - User's subdomain (e.g., "hello-wrold")
+ * @param baseDomain - Base domain (e.g., "khost.dev")
+ * @param scope - Certificate scope level
+ * @param scopeIdentifier - Identifier for the scope (wm-user for workmachine, workspace name for workspace)
+ * @param parentScopeIdentifier - Parent scope identifier (only for workspace scope - the wm-user)
+ *
+ * Examples:
+ * - scope="installation": ["hello-wrold.khost.dev", "*.hello-wrold.khost.dev"]
+ *   Covers: hello-wrold.khost.dev, dev1.hello-wrold.khost.dev
+ *
+ * - scope="workmachine", scopeIdentifier="dev1": ["dev1.hello-wrold.khost.dev", "*.dev1.hello-wrold.khost.dev"]
+ *   Covers: dev1.hello-wrold.khost.dev, workspace1.dev1.hello-wrold.khost.dev
+ *
+ * - scope="workspace", scopeIdentifier="workspace1", parentScopeIdentifier="dev1":
+ *   ["workspace1.dev1.hello-wrold.khost.dev", "*.workspace1.dev1.hello-wrold.khost.dev"]
+ *   Covers: workspace1.dev1.hello-wrold.khost.dev, vscode.workspace1.dev1.hello-wrold.khost.dev
+ */
+export function generateHostnames(
+  subdomain: string,
+  baseDomain: string,
+  scope: CertificateScope = 'installation',
+  scopeIdentifier?: string,
+  parentScopeIdentifier?: string
+): string[] {
+  switch (scope) {
+    case 'installation':
+      return [
+        `${subdomain}.${baseDomain}`,
+        `*.${subdomain}.${baseDomain}`
+      ]
+
+    case 'workmachine':
+      if (!scopeIdentifier) {
+        throw new Error('scopeIdentifier (wm-user) is required for workmachine scope')
+      }
+      return [
+        `${scopeIdentifier}.${subdomain}.${baseDomain}`,
+        `*.${scopeIdentifier}.${subdomain}.${baseDomain}`
+      ]
+
+    case 'workspace':
+      if (!scopeIdentifier || !parentScopeIdentifier) {
+        throw new Error('scopeIdentifier (workspace) and parentScopeIdentifier (wm-user) are required for workspace scope')
+      }
+      return [
+        `${scopeIdentifier}.${parentScopeIdentifier}.${subdomain}.${baseDomain}`,
+        `*.${scopeIdentifier}.${parentScopeIdentifier}.${subdomain}.${baseDomain}`
+      ]
+
+    default:
+      throw new Error(`Invalid certificate scope: ${scope}`)
+  }
+}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
@@ -14,7 +13,6 @@ import {
   Clock,
   Cpu,
   MemoryStick,
-  HardDrive,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -181,11 +179,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
         </div>
 
         {/* Metrics */}
-        <WorkMachineMetrics
-          cpu={machine.cpu}
-          memory={machine.memory}
-          disk={machine.disk}
-        />
+        <WorkMachineMetrics />
       </div>
 
       {/* Tabs */}

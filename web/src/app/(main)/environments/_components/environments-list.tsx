@@ -35,7 +35,7 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
   const [cloneSourceEnvironment, setCloneSourceEnvironment] = useState<EnvironmentUIModel | null>(null)
   const [deleteEnvironmentName, setDeleteEnvironmentName] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [environments, setEnvironments] = useState<EnvironmentUIModel[]>(initialEnvironments)
   const router = useRouter()
 
@@ -72,17 +72,9 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
     filteredEnvironments = filteredEnvironments.filter(env => env.status === 'active')
   }
 
-  const counts = {
-    all: environments.length,
-    mine: environments.filter(env => env.owner === currentUser).length,
-    active: environments.filter(env => env.status === 'active').length,
-    allActive: environments.filter(env => env.status === 'active').length,
-    mineActive: environments.filter(env => env.owner === currentUser && env.status === 'active').length,
-  }
-
   const handleActivate = async (envName: string) => {
     try {
-      const result = await activateEnvironment(envName, currentUser)
+      const result = await activateEnvironment(envName)
       if (result.success) {
         toast.success('Environment activated', {
           description: `${envName} has been activated successfully.`,
@@ -95,16 +87,16 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
           description: result.error || 'An error occurred',
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to activate environment', {
-        description: error.message || 'An error occurred',
+        description: error instanceof Error ? error.message : 'An error occurred',
       })
     }
   }
 
   const handleDeactivate = async (envName: string) => {
     try {
-      const result = await deactivateEnvironment(envName, currentUser)
+      const result = await deactivateEnvironment(envName)
       if (result.success) {
         toast.success('Environment deactivated', {
           description: `${envName} has been deactivated successfully.`,
@@ -117,9 +109,9 @@ export function EnvironmentsList({ environments: initialEnvironments, currentUse
           description: result.error || 'An error occurred',
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to deactivate environment', {
-        description: error.message || 'An error occurred',
+        description: error instanceof Error ? error.message : 'An error occurred',
       })
     }
   }

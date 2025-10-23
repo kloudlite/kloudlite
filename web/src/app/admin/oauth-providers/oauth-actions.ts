@@ -5,9 +5,10 @@ import { oauthProviderService, type OAuthProvider } from '@/lib/services/oauth-p
 export async function getOAuthProviders(): Promise<Record<string, OAuthProvider>> {
   try {
     return await oauthProviderService.getOAuthProviders()
-  } catch (error: any) {
-    console.error('Error fetching OAuth providers:', error)
-    throw new Error(error.message || 'Failed to fetch OAuth providers')
+  } catch (err) {
+    console.error('Error fetching OAuth providers:', err)
+    const error = err instanceof Error ? err : new Error('Failed to fetch OAuth providers')
+    throw error
   }
 }
 
@@ -18,8 +19,9 @@ export async function updateOAuthProvider(
   try {
     const result = await oauthProviderService.updateOAuthProvider(type, provider)
     return result
-  } catch (error: any) {
-    console.error('Error updating OAuth provider:', error)
-    return { success: false, error: error.message || 'Failed to update OAuth provider' }
+  } catch (err) {
+    console.error('Error updating OAuth provider:', err)
+    const error = err instanceof Error ? err : new Error('Failed to update OAuth provider')
+    return { success: false, error: error.message }
   }
 }

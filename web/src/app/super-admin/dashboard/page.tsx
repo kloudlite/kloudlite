@@ -27,9 +27,10 @@ export default async function SuperAdminDashboard() {
   try {
     const data = await apiClient.get<Record<string, Provider>>('/api/v1/providers')
     providers = Object.values(data || {})
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error fetching providers:', err)
-    error = err.message || 'Failed to fetch providers'
+    const errorObj = err instanceof Error ? err : new Error('Failed to fetch providers')
+    error = errorObj.message
   }
 
   if (error) {

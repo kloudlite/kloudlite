@@ -2,9 +2,9 @@ import { SettingsSectionNav } from '../../_components/settings-section-nav'
 
 interface LayoutProps {
   children: React.ReactNode
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function SettingsLayout({ children, params }: LayoutProps) {

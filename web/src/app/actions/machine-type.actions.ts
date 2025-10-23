@@ -14,11 +14,12 @@ export async function listMachineTypes() {
   try {
     const result = await machineTypeService.listMachineTypes()
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('List machine types error:', error)
+  } catch (err) {
+    console.error('List machine types error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to list machine types'
+      error: error.message
     }
   }
 }
@@ -30,11 +31,12 @@ export async function getMachineType(name: string) {
   try {
     const result = await machineTypeService.getMachineType(name)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Get machine type error:', error)
+  } catch (err) {
+    console.error('Get machine type error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to get machine type'
+      error: error.message
     }
   }
 }
@@ -47,11 +49,12 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
     const result = await machineTypeService.createMachineType(data)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Create machine type error:', error)
+  } catch (err) {
+    console.error('Create machine type error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to create machine type'
+      error: error.message
     }
   }
 }
@@ -64,11 +67,12 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
     const result = await machineTypeService.updateMachineType(name, data)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Update machine type error:', error)
+  } catch (err) {
+    console.error('Update machine type error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to update machine type'
+      error: error.message
     }
   }
 }
@@ -81,11 +85,12 @@ export async function deleteMachineType(name: string) {
     const result = await machineTypeService.deleteMachineType(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Delete machine type error:', error)
+  } catch (err) {
+    console.error('Delete machine type error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to delete machine type'
+      error: error.message
     }
   }
 }
@@ -98,11 +103,12 @@ export async function activateMachineType(name: string) {
     const result = await machineTypeService.activateMachineType(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Activate machine type error:', error)
+  } catch (err) {
+    console.error('Activate machine type error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to activate machine type'
+      error: error.message
     }
   }
 }
@@ -115,11 +121,12 @@ export async function deactivateMachineType(name: string) {
     const result = await machineTypeService.deactivateMachineType(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Deactivate machine type error:', error)
+  } catch (err) {
+    console.error('Deactivate machine type error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to deactivate machine type'
+      error: error.message
     }
   }
 }
@@ -133,11 +140,12 @@ export async function setMachineTypeAsDefault(name: string) {
     revalidatePath('/admin/machine-configs')
     revalidatePath('/')
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Set machine type as default error:', error)
+  } catch (err) {
+    console.error('Set machine type as default error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
     return {
       success: false,
-      error: error.message || 'Failed to set machine type as default'
+      error: error.message
     }
   }
 }
