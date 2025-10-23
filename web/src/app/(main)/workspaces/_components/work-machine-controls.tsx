@@ -51,6 +51,16 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
+interface MachineType {
+  id: string
+  name: string
+  description: string
+  category: string
+  cpu: string
+  memory: string
+  gpu?: string
+}
+
 interface WorkMachineControlsProps {
   machineId: string
   machineName: string
@@ -58,7 +68,7 @@ interface WorkMachineControlsProps {
   currentState: string
   desiredState: string
   currentType?: string
-  availableMachineTypes: any[]
+  availableMachineTypes: MachineType[]
   sshPublicKey?: string
   sshAuthorizedKeys?: string[]
   onStart?: () => void

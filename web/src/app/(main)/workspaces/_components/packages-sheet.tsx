@@ -310,7 +310,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
                             )}
                             {!loadingSearch && searchResults.length === 0 && newPackageName.length >= 2 && (
                               <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                                No packages found matching "{newPackageName}"
+                                No packages found matching &quot;{newPackageName}&quot;
                               </CommandEmpty>
                             )}
                             <CommandGroup>

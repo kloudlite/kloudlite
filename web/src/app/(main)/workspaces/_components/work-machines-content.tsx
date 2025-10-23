@@ -61,13 +61,23 @@ function getStateDisplay(currentState: string, desiredState: string) {
   }
 }
 
+interface MachineType {
+  id: string
+  name: string
+  description: string
+  category: string
+  cpu: string
+  memory: string
+  gpu?: string
+}
+
 interface WorkMachinesContentProps {
   initialMachines: WorkMachine[]
   currentUser: string
   isAdmin: boolean
-  availableMachineTypes: any[]
-  pinnedWorkspaces: any[]
-  pinnedEnvironments: any[]
+  availableMachineTypes: MachineType[]
+  pinnedWorkspaces: never[]
+  pinnedEnvironments: never[]
 }
 
 export function WorkMachinesContent({
