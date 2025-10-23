@@ -3,7 +3,10 @@ node_modules
 .pnpm-store
 
 # Build outputs
-.next
+# Exclude .next except for standalone and static (needed for Docker image)
+.next/*
+!.next/standalone
+!.next/static
 out
 dist
 
