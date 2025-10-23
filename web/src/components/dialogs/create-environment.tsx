@@ -99,10 +99,11 @@ export function CreateEnvironmentDialog({
         spec: {
           targetNamespace: targetNamespace,
           activated: false,
+          createdBy: currentUser,
         },
       }
 
-      const result = await createEnvironment(request, currentUser)
+      const result = await createEnvironment(request)
 
       if (result.success) {
         // Reset form
@@ -116,9 +117,10 @@ export function CreateEnvironmentDialog({
       } else {
         setError(result.error || 'Failed to create environment. Please try again.')
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to create environment:', err)
-      setError(err.message || 'Failed to create environment. Please try again.')
+      const error = err instanceof Error ? err : new Error('Failed to create environment')
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -156,7 +158,7 @@ export function CreateEnvironmentDialog({
                 required
               />
               <p className="text-xs text-gray-500">
-                Must be lowercase alphanumeric or "-", max 63 characters
+                Must be lowercase alphanumeric or &quot;-&quot;, max 63 characters
               </p>
             </div>
 
@@ -183,7 +185,7 @@ export function CreateEnvironmentDialog({
                       disabled={loading}
                     />
                     <p className="text-xs text-gray-500">
-                      Leave empty to auto-generate as "env-{formData.name || 'environment-name'}".
+                      Leave empty to auto-generate as &quot;env-{formData.name || 'environment-name'}&quot;.
                       The Kubernetes namespace that will be created for this environment.
                     </p>
                   </div>

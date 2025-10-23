@@ -33,10 +33,11 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
     return NextResponse.json(data)
 
-  } catch (error: any) {
-    console.error('Work machine API error:', error)
+  } catch (err) {
+    console.error('Work machine API error:', err)
+    const error = err instanceof Error ? err : new Error('Internal server error')
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error.message },
       { status: 500 }
     )
   }
@@ -78,10 +79,11 @@ export async function PUT(request: NextRequest) {
     const data = await response.json()
     return NextResponse.json(data)
 
-  } catch (error: any) {
-    console.error('Work machine API error:', error)
+  } catch (err) {
+    console.error('Work machine API error:', err)
+    const error = err instanceof Error ? err : new Error('Internal server error')
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error.message },
       { status: 500 }
     )
   }

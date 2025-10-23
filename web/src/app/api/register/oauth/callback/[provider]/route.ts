@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { SignJWT } from 'jose'
-import { saveUserRegistration, getUserByEmail, type UserRegistration } from '@/lib/registration/storage-service'
+import { saveUserRegistration, getUserByEmail, type UserRegistration, updateHealthCheck } from '@/lib/registration/supabase-storage-service'
 
 // Registration mode OAuth configuration - uses REGISTRATION_ prefixed env vars
 const OAUTH_CONFIGS = {
@@ -58,7 +58,32 @@ export async function GET(
     return NextResponse.redirect(new URL('/register?error=invalid_provider', request.url))
   }
 
-  let userData: any = {}
+  // OAuth user data interfaces for different providers
+  interface GitHubUser {
+    id: number
+    login: string
+    email: string
+    name: string
+    avatar_url: string
+  }
+
+  interface GoogleUser {
+    id: string
+    email: string
+    name: string
+    picture: string
+  }
+
+  interface AzureADUser {
+    id: string
+    userPrincipalName: string
+    displayName: string
+    mail?: string
+  }
+
+  type OAuthUserData = GitHubUser | GoogleUser | AzureADUser
+
+  let userData: OAuthUserData | Record<string, never> = {}
 
   try {
     // Exchange authorization code for access token
@@ -97,16 +122,43 @@ export async function GET(
       throw new Error('Failed to fetch user data')
     }
 
-    userData = await userResponse.json()
+    userData = await userResponse.json() as OAuthUserData
   } catch (err) {
     console.error('OAuth exchange error:', err)
     return NextResponse.redirect(new URL('/register?error=oauth_exchange_failed', request.url))
   }
 
-  // Extract user data from OAuth response
-  const email = userData.email || userData.login || userData.userPrincipalName
-  const name = userData.name || userData.login || userData.displayName
-  const userId = `${provider}-${userData.id || email}` // Unique user ID combining provider and their ID
+  // Extract user data from OAuth response based on provider
+  const getUserInfo = (data: OAuthUserData, prov: typeof provider) => {
+    if (prov === 'github' && 'login' in data) {
+      return {
+        email: data.email,
+        name: data.name || data.login,
+        id: data.id,
+        avatar: data.avatar_url
+      }
+    } else if (prov === 'google' && 'picture' in data) {
+      return {
+        email: data.email,
+        name: data.name,
+        id: data.id,
+        avatar: data.picture
+      }
+    } else if (prov === 'azure-ad' && 'userPrincipalName' in data) {
+      return {
+        email: data.mail || data.userPrincipalName,
+        name: data.displayName,
+        id: data.id,
+        avatar: undefined
+      }
+    }
+    throw new Error('Invalid provider or user data')
+  }
+
+  const userInfo = getUserInfo(userData, provider)
+  const email = userInfo.email
+  const name = userInfo.name
+  const userId = `${provider}-${userInfo.id || email}` // Unique user ID combining provider and their ID
 
   if (!email) {
     console.error('No email found in OAuth response')
@@ -114,7 +166,7 @@ export async function GET(
   }
 
   // Check if user already exists by email (primary key)
-  let existingUser = await getUserByEmail(email)
+  const existingUser = await getUserByEmail(email)
 
   let userRegistration: UserRegistration
 
@@ -123,19 +175,29 @@ export async function GET(
     console.log('Existing user found:', email, 'with installation key:', existingUser.installationKey)
     console.log('Reusing existing installation. No new keys will be generated.')
 
-    // Update user information that might have changed
-    existingUser.name = name // Update name in case it changed in OAuth provider
-    existingUser.lastHealthCheck = new Date().toISOString() // Track last login
+    // Add provider to array if not already present
+    const currentProvider = provider as 'github' | 'google' | 'azure-ad'
+    if (!existingUser.providers.includes(currentProvider)) {
+      existingUser.providers = [...existingUser.providers, currentProvider]
+      console.log('Adding new provider:', currentProvider)
 
-    // Save updated user information back to storage
-    try {
-      await saveUserRegistration(existingUser)
-      console.log('Updated user information for:', email)
-    } catch (error) {
-      console.error('Failed to update user registration:', error)
+      try {
+        await saveUserRegistration(existingUser)
+        console.log('Updated providers array for:', email)
+      } catch (error) {
+        console.error('Failed to update providers:', error)
+      }
     }
 
-    userRegistration = existingUser
+    // Atomically update health check timestamp
+    try {
+      const updatedUser = await updateHealthCheck(email)
+      userRegistration = { ...updatedUser, providers: existingUser.providers }
+      console.log('Updated health check for:', email)
+    } catch (error) {
+      console.error('Failed to update health check:', error)
+      userRegistration = existingUser
+    }
   } else {
     // New user - generate installation key ONLY (secret key generated on first deployment verification)
     console.log('New user registration:', email)
@@ -147,7 +209,7 @@ export async function GET(
       userId,
       email,
       name,
-      provider: provider as 'github' | 'google' | 'azure-ad',
+      providers: [provider as 'github' | 'google' | 'azure-ad'],
       registeredAt: new Date().toISOString(),
       installationKey,
       hasCompletedInstallation: false, // Will be set to true when deployment verifies and gets secret
@@ -166,10 +228,11 @@ export async function GET(
   // Create a JWT session token with user data
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
   const token = await new SignJWT({
-    provider: userRegistration.provider,
+    provider: provider, // Current provider used for login
+    providers: userRegistration.providers, // All providers user has used
     email: userRegistration.email,
     name: userRegistration.name,
-    image: userData.avatar_url || userData.picture,
+    image: userInfo.avatar,
     installationKey: userRegistration.installationKey,
     userId: userRegistration.userId,
   })

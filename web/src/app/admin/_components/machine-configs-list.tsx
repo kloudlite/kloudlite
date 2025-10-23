@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Plus, MoreHorizontal, Edit, Trash2, Server, Cpu, HardDrive, Gpu, Power, PowerOff, CheckCircle, Circle } from 'lucide-react'
+import { Plus, MoreHorizontal, Edit, Trash2, Server, Cpu, HardDrive, Gpu, Power, PowerOff, Circle } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
@@ -73,8 +73,8 @@ const categoryLabels: Record<string, string> = {
 
 export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false }: MachineConfigsListProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [configs, setConfigs] = useState(initialConfigs)
+  const [_isPending, startTransition] = useTransition()
+  const [configs, _setConfigs] = useState(initialConfigs)
   const [isAddConfigOpen, setIsAddConfigOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<MachineConfig | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -97,7 +97,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
       } else {
         toast.error(result.error || 'Failed to delete machine configuration')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred while deleting')
     } finally {
       setIsLoading(false)
@@ -119,7 +119,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
       } else {
         toast.error(result.error || 'Failed to update machine configuration')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred while updating')
     } finally {
       setIsLoading(false)
@@ -154,7 +154,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
       } else {
         toast.error(result.error || `Failed to ${editingConfig ? 'update' : 'create'} machine configuration`)
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred')
     } finally {
       setIsLoading(false)
@@ -257,7 +257,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
                         <DropdownMenuItem onClick={() => {
                           setEditingConfig(config)
                           setIsActive(config.active !== false)
-                          setSelectedCategory((config.category || 'general') as any)
+                          setSelectedCategory(config.category || 'general')
                           setIsAddConfigOpen(true)
                         }}>
                           <Edit className="mr-2 h-4 w-4" />
@@ -324,7 +324,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
           setSelectedCategory('general') // Reset to default
         } else if (editingConfig) {
           setIsActive(editingConfig.active !== false)
-          setSelectedCategory((editingConfig.category || 'general') as any)
+          setSelectedCategory(editingConfig.category || 'general')
         }
       }}>
         <DialogContent className="max-w-2xl">
@@ -380,7 +380,7 @@ export function MachineConfigsList({ configs: initialConfigs, isReadOnly = false
               {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-                <Select value={selectedCategory} onValueChange={(value: any) => setSelectedCategory(value)}>
+                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as typeof selectedCategory)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>

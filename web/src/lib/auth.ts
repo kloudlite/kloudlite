@@ -7,6 +7,24 @@ import type { NextAuthConfig } from 'next-auth'
 import { authenticateUser } from '@/lib/actions/user-actions'
 import { unauthenticatedApiClient } from '@/lib/api-client'
 
+interface LoginResponse {
+  token: string
+  user: {
+    email: string
+    displayName?: string
+    isActive: boolean
+  }
+  roles: string[]
+}
+
+interface TokenResponse {
+  token: string
+  roles: string[]
+  user?: {
+    isActive: boolean
+  }
+}
+
 export const authConfig: NextAuthConfig = {
   providers: [
     Credentials({
@@ -25,7 +43,7 @@ export const authConfig: NextAuthConfig = {
           const response = await unauthenticatedApiClient.post('/api/v1/auth/login', {
             email: credentials.email,
             password: credentials.password
-          })
+          }) as LoginResponse
 
           if (response.token && response.user) {
             // Return user object with JWT token that will be stored in NextAuth JWT cookie
@@ -56,7 +74,7 @@ export const authConfig: NextAuthConfig = {
     MicrosoftEntraId({
       clientId: process.env.MICROSOFT_ENTRA_CLIENT_ID!,
       clientSecret: process.env.MICROSOFT_ENTRA_CLIENT_SECRET!,
-      tenantId: process.env.MICROSOFT_ENTRA_TENANT_ID!,
+      issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/v2.0`,
     }),
   ],
   pages: {
@@ -87,7 +105,7 @@ export const authConfig: NextAuthConfig = {
             try {
               const response = await unauthenticatedApiClient.post('/api/v1/auth/token', {
                 email: user.email
-              })
+              }) as TokenResponse
               if (response.token) {
                 token.backendToken = response.token
                 token.roles = response.roles
@@ -119,7 +137,7 @@ export const authConfig: NextAuthConfig = {
       }
       return session
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // For credentials provider, we've already authenticated in authorize()
       if (account?.provider === 'credentials') {
         return true

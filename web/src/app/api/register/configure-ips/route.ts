@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, saveUserRegistration } from '@/lib/registration/storage-service'
-import type { IPRecord } from '@/lib/registration/storage-service'
+import { getUserByInstallationKey, addOrUpdateIpRecord, markDeploymentReady } from '@/lib/registration/supabase-storage-service'
+import type { IPRecord } from '@/lib/registration/supabase-storage-service'
+import { createInstallationDnsRecords, createWorkmachineDnsRecords, updateDnsRecords } from '@/lib/registration/cloudflare-dns'
 
 /**
  * Configure IP for deployment
@@ -76,24 +77,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Initialize ipRecords array if it doesn't exist
-    if (!user.ipRecords) {
-      user.ipRecords = []
+    // Check if user has subdomain assigned (required for DNS creation)
+    if (!user.subdomain) {
+      return NextResponse.json(
+        { error: 'User must have a subdomain assigned before configuring IPs' },
+        { status: 400 }
+      )
     }
 
-    // Create new IP record
-    const newRecord: IPRecord = {
-      type,
-      ip,
-      configuredAt: new Date().toISOString(),
-    }
-
-    if (type === 'workmachine') {
-      newRecord.workMachineName = workMachineName
-    }
-
-    // Check if this type/workMachineName combination already exists, update if so, otherwise add
-    const existingIndex = user.ipRecords.findIndex(r => {
+    // Get existing IP record to check if we need to update DNS
+    const existingRecord = user.ipRecords?.find(r => {
       if (r.type === 'installation' && type === 'installation') {
         return true
       }
@@ -103,26 +96,86 @@ export async function POST(request: NextRequest) {
       return false
     })
 
-    if (existingIndex >= 0) {
-      user.ipRecords[existingIndex] = newRecord
-    } else {
-      user.ipRecords.push(newRecord)
+    let dnsRecordIds: string[] = []
+    let dnsCreated = false
+
+    // Create or update DNS records
+    try {
+      if (existingRecord) {
+        // Update existing record
+        // If IP changed and we have DNS record IDs, update them
+        if (existingRecord.ip !== ip && existingRecord.dnsRecordIds && existingRecord.dnsRecordIds.length > 0) {
+          const domainName = type === 'installation'
+            ? `${user.subdomain}`
+            : `${workMachineName}.${user.subdomain}`
+
+          await updateDnsRecords(existingRecord.dnsRecordIds, domainName, ip)
+          dnsRecordIds = existingRecord.dnsRecordIds
+          dnsCreated = true
+          console.log(`Updated DNS records for ${type}: ${domainName}`)
+        } else if (!existingRecord.dnsRecordIds || existingRecord.dnsRecordIds.length === 0) {
+          // No DNS records exist, create them
+          if (type === 'installation') {
+            dnsRecordIds = await createInstallationDnsRecords(user.subdomain, ip)
+            dnsCreated = dnsRecordIds.length > 0
+            console.log(`Created ${dnsRecordIds.length} DNS records for installation`)
+          } else if (type === 'workmachine') {
+            dnsRecordIds = await createWorkmachineDnsRecords(workMachineName!, user.subdomain, ip)
+            dnsCreated = dnsRecordIds.length > 0
+            console.log(`Created ${dnsRecordIds.length} DNS records for workmachine: ${workMachineName}`)
+          }
+        } else {
+          // IP didn't change, keep existing DNS record IDs
+          dnsRecordIds = existingRecord.dnsRecordIds
+          dnsCreated = true
+        }
+      } else {
+        // Create new DNS records for new IP record
+        if (type === 'installation') {
+          dnsRecordIds = await createInstallationDnsRecords(user.subdomain, ip)
+          dnsCreated = dnsRecordIds.length > 0
+          console.log(`Created ${dnsRecordIds.length} DNS records for new installation`)
+        } else if (type === 'workmachine') {
+          dnsRecordIds = await createWorkmachineDnsRecords(workMachineName!, user.subdomain, ip)
+          dnsCreated = dnsRecordIds.length > 0
+          console.log(`Created ${dnsRecordIds.length} DNS records for new workmachine: ${workMachineName}`)
+        }
+      }
+    } catch (dnsError) {
+      console.error('DNS record creation/update failed:', dnsError)
+      // Continue even if DNS fails - use existing DNS record IDs if available
+      if (existingRecord?.dnsRecordIds) {
+        dnsRecordIds = existingRecord.dnsRecordIds
+      }
     }
 
-    // Mark deployment as ready
-    // Note: hasCompletedInstallation is set when secret key is generated (in verify-key API)
-    user.deploymentReady = true
+    // Create new IP record with DNS record IDs
+    const newRecord: IPRecord = {
+      type,
+      ip,
+      configuredAt: new Date().toISOString(),
+      dnsRecordIds,
+    }
 
-    // Save updated registration
-    await saveUserRegistration(user)
+    if (type === 'workmachine') {
+      newRecord.workMachineName = workMachineName
+    }
+
+    // Atomically add or update IP record
+    const totalRecords = await addOrUpdateIpRecord(user.email, newRecord)
+
+    // Atomically mark deployment as ready
+    await markDeploymentReady(user.email, true)
 
     const response = NextResponse.json({
       success: true,
       type,
       ip,
       workMachineName: type === 'workmachine' ? workMachineName : undefined,
-      totalRecords: user.ipRecords.length,
+      totalRecords,
       subdomain: user.subdomain,
+      dnsRecordsCreated: dnsRecordIds.length,
+      dnsSuccess: dnsCreated,
     })
 
     // Disable all caching

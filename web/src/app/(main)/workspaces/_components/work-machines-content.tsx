@@ -7,14 +7,7 @@ import { PinnedResources } from '../../environments/_components/pinned-resources
 import { WorkMachineControls } from './work-machine-controls'
 import { updateMyWorkMachine, startMyWorkMachine, stopMyWorkMachine } from '@/app/actions/work-machine.actions'
 import { toast } from 'sonner'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
-import { ChevronDown, Server, Loader2, ArrowRight } from 'lucide-react'
+import { Server, Loader2, ArrowRight } from 'lucide-react'
 
 interface WorkMachine {
   id: string
@@ -29,6 +22,7 @@ interface WorkMachine {
   uptime: string
   type: string
   sshPublicKey?: string
+  sshAuthorizedKeys?: string[]
 }
 
 // Helper to get state display info
@@ -61,27 +55,37 @@ function getStateDisplay(currentState: string, desiredState: string) {
   }
 }
 
+interface MachineType {
+  id: string
+  name: string
+  description: string
+  category: string
+  cpu: string
+  memory: string
+  gpu?: string
+}
+
 interface WorkMachinesContentProps {
   initialMachines: WorkMachine[]
   currentUser: string
   isAdmin: boolean
-  availableMachineTypes: any[]
-  pinnedWorkspaces: any[]
-  pinnedEnvironments: any[]
+  availableMachineTypes: MachineType[]
+  pinnedWorkspaces: never[]
+  pinnedEnvironments: never[]
 }
 
 export function WorkMachinesContent({
   initialMachines,
-  currentUser,
-  isAdmin,
+  currentUser: _currentUser,
+  isAdmin: _isAdmin,
   availableMachineTypes,
   pinnedWorkspaces,
   pinnedEnvironments
 }: WorkMachinesContentProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [_isPending, startTransition] = useTransition()
   const [workMachines, setWorkMachines] = useState(initialMachines)
-  const [selectedMachineId, setSelectedMachineId] = useState(workMachines[0]?.id)
+  const [selectedMachineId, _setSelectedMachineId] = useState(workMachines[0]?.id)
   const [isLoading, setIsLoading] = useState(false)
 
   const selectedMachine = workMachines.find(m => m.id === selectedMachineId) || workMachines[0]
@@ -105,7 +109,9 @@ export function WorkMachinesContent({
 
       return () => clearInterval(interval)
     }
-  }, [selectedMachine?.currentState, selectedMachine?.desiredState, router])
+
+    return undefined
+  }, [selectedMachine, router])
 
   // Handle case where user has no work machine
   if (!selectedMachine) {
@@ -143,7 +149,7 @@ export function WorkMachinesContent({
       } else {
         toast.error(result.error || 'Failed to start work machine')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred')
     } finally {
       setIsLoading(false)
@@ -162,7 +168,7 @@ export function WorkMachinesContent({
       } else {
         toast.error(result.error || 'Failed to stop work machine')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred')
     } finally {
       setIsLoading(false)
@@ -181,7 +187,7 @@ export function WorkMachinesContent({
       } else {
         toast.error(result.error || 'Failed to update work machine')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred')
     } finally {
       setIsLoading(false)
@@ -302,11 +308,7 @@ export function WorkMachinesContent({
         {/* Metrics Section - Always show, but CPU/Memory are 0 when stopped */}
         <div className="mb-6">
           <h2 className="text-base font-semibold mb-4">Resource Usage</h2>
-          <WorkMachineMetrics
-            cpu={selectedMachine.cpu}
-            memory={selectedMachine.memory}
-            disk={selectedMachine.disk}
-          />
+          <WorkMachineMetrics />
         </div>
 
         {/* Pinned Resources Section */}

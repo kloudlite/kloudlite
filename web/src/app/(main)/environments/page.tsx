@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { EnvironmentsList } from './_components/environments-list'
 import { environmentService } from '@/lib/services/environment.service'
-import { environmentToUIModel } from '@/types/environment'
+import { environmentToUIModel, type EnvironmentUIModel } from '@/types/environment'
 
 export default async function EnvironmentsPage() {
   const session = await auth()
@@ -14,9 +14,9 @@ export default async function EnvironmentsPage() {
   const currentUser = session.user?.email || 'test-user'
 
   // Fetch real environments from API
-  let allEnvironments = []
+  let allEnvironments: EnvironmentUIModel[] = []
   try {
-    const response = await environmentService.listEnvironments(currentUser)
+    const response = await environmentService.listEnvironments()
     allEnvironments = response.environments.map(env => {
       let owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
 
@@ -26,7 +26,7 @@ export default async function EnvironmentsPage() {
         try {
           // Decode base64 URL-encoded email
           owner = Buffer.from(encodedEmail, 'base64').toString('utf-8')
-        } catch (e) {
+        } catch {
           // Fall back to username if decoding fails
           owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
         }

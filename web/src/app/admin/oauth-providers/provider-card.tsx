@@ -41,7 +41,7 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
       } else {
         toast.error(result.error || 'Failed to save configuration')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred while saving')
     } finally {
       setSaving(false)
@@ -72,7 +72,7 @@ export function ProviderCard({ provider, displayName, isReadOnly = false }: Prov
       } else {
         toast.error(result.error || 'Failed to update provider')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred while updating')
     } finally {
       setSaving(false)

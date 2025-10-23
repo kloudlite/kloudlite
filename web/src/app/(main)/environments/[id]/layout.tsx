@@ -6,9 +6,9 @@ import { environmentService } from '@/lib/services/environment.service'
 
 interface LayoutProps {
   children: React.ReactNode
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 function formatTimeAgo(timestamp?: string): string {
@@ -61,7 +61,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
 
     environment = {
       id,
-      name: env.spec.displayName || env.metadata.name,
+      name: env.metadata.name,
       owner,
       status: env.status?.state || 'unknown',
       created: formatTimeAgo(env.metadata.creationTimestamp),

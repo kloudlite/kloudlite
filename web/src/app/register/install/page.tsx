@@ -9,6 +9,14 @@ import { Loader2, Cloud, Copy, LogOut } from 'lucide-react'
 import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { toast } from 'sonner'
 
+interface SessionData {
+  user: {
+    email: string
+    name: string
+  }
+  installationKey: string
+}
+
 const getCloudProviderCommands = (installationKey: string) => ({
   aws: {
     name: 'AWS',
@@ -48,7 +56,7 @@ const getCloudProviderCommands = (installationKey: string) => ({
 export default function InstallPage() {
   const router = useRouter()
   const [selectedProvider, setSelectedProvider] = useState('aws')
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -64,7 +72,7 @@ export default function InstallPage() {
         } else {
           router.push('/register')
         }
-      } catch (error) {
+      } catch {
         router.push('/register')
       } finally {
         setLoading(false)
@@ -90,7 +98,7 @@ export default function InstallPage() {
       await fetch('/api/register/signout', { method: 'POST' })
       toast.success('Signed out successfully')
       router.push('/register')
-    } catch (error) {
+    } catch {
       toast.error('Failed to sign out')
     }
   }
@@ -206,7 +214,7 @@ export default function InstallPage() {
 
             <div className="pt-4 border-t">
               <Button onClick={handleContinue} className="w-full">
-                I've completed installation
+                I&apos;ve completed installation
               </Button>
               <p className="text-xs text-muted-foreground text-center mt-2">
                 Click continue after running the installation commands

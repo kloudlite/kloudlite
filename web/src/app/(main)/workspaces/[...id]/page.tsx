@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { Breadcrumb } from '@/components/breadcrumb'
-import { Package, CheckCircle2, XCircle, Loader2, AlertCircle, ArrowRight } from 'lucide-react'
+import { Package, XCircle, Loader2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WorkspaceConnectOptions } from '../_components/workspace-connect-options'
 import { WorkspaceActions } from '../_components/workspace-actions'
@@ -10,9 +10,9 @@ import { WorkspaceMetrics } from '../_components/workspace-metrics'
 import { workspaceService } from '@/lib/services/workspace.service'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string[]
-  }
+  }>
 }
 
 export default async function WorkspaceDetailPage({ params }: PageProps) {
@@ -24,18 +24,17 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
   // Parse ID array to extract namespace and name
   // Format: ["namespace", "name"] or ["name"]
-  const namespace = params.id.length === 2 ? params.id[0] : 'default'
-  const name = params.id.length === 2 ? params.id[1] : params.id[0]
+  const { id } = await params
+  const namespace = id.length === 2 ? id[0] : 'default'
+  const name = id.length === 2 ? id[1] : id[0]
 
   // Fetch workspace data
   let workspace
-  let error = null
 
   try {
     workspace = await workspaceService.get(name, namespace)
   } catch (err) {
     console.error('Failed to fetch workspace:', err)
-    error = err instanceof Error ? err.message : 'Failed to fetch workspace'
     notFound()
   }
 
@@ -58,25 +57,6 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
   const installedCount = workspace.status?.installedPackages?.length || 0
   const failedCount = workspace.status?.failedPackages?.length || 0
   const pendingCount = packageCount - installedCount - failedCount
-
-  // Create a map of installed packages for quick lookup
-  const installedPackagesMap = new Map(
-    workspace.status?.installedPackages?.map(pkg => [pkg.name, pkg]) || []
-  )
-  const failedPackagesSet = new Set(workspace.status?.failedPackages || [])
-
-  // Determine package status for each configured package
-  const packageStatuses = workspace.spec.packages?.map(pkg => {
-    const isInstalled = installedPackagesMap.has(pkg.name)
-    const isFailed = failedPackagesSet.has(pkg.name)
-    const isPending = !isInstalled && !isFailed
-
-    return {
-      ...pkg,
-      status: isInstalled ? 'installed' : isFailed ? 'failed' : 'pending',
-      installedInfo: installedPackagesMap.get(pkg.name)
-    }
-  }) || []
 
   return (
     <>

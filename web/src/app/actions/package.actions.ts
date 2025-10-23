@@ -80,9 +80,10 @@ export async function searchPackages(query: string): Promise<{ success: boolean;
 
     const data: SearchResponse = await response.json()
     return { success: true, data }
-  } catch (error) {
-    console.error('Package search error:', error)
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to search packages' }
+  } catch (err) {
+    console.error('Package search error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
+    return { success: false, error: error.message }
   }
 }
 
@@ -118,9 +119,10 @@ export async function resolvePackageVersion(
 
     const data: ResolveResponse = await response.json()
     return { success: true, data }
-  } catch (error) {
-    console.error('Package resolve error:', error)
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to resolve package version' }
+  } catch (err) {
+    console.error('Package resolve error:', err)
+    const error = err instanceof Error ? err : new Error("Unknown error")
+    return { success: false, error: error.message }
   }
 }
 

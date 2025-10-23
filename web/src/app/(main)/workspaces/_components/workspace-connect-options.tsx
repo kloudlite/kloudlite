@@ -11,12 +11,9 @@ import {
 } from '@/components/ui/dialog'
 import {
   Terminal,
-  ExternalLink,
   Copy,
   Check,
-  Sparkles,
-  Globe,
-  Zap
+  Sparkles
 } from 'lucide-react'
 import {
   SiIntellijidea,
@@ -45,7 +42,7 @@ interface AccessMethod {
   category: string
 }
 
-export function WorkspaceConnectOptions({ workspaceId, workspace }: WorkspaceConnectOptionsProps) {
+export function WorkspaceConnectOptions({ workspaceId: _workspaceId, workspace }: WorkspaceConnectOptionsProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
   const [sshDialogOpen, setSshDialogOpen] = useState(false)
 

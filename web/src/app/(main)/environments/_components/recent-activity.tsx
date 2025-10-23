@@ -6,7 +6,6 @@ import {
   Globe,
   Activity,
   Terminal,
-  GitBranch,
   Settings,
   Package,
   Cloud

@@ -11,7 +11,7 @@ export interface UserDisplay {
   providers?: Array<{
     provider: string
     providerId: string
-    connectedAt: string
+    connectedAt?: string
   }>
 }
 
@@ -28,8 +28,33 @@ export interface UpdateUserFormData {
   isActive?: boolean
 }
 
+// Backend API User resource structure
+export interface UserProvider {
+  provider: string
+  providerId: string
+  connectedAt?: string
+}
+
+export interface UserResource {
+  metadata?: {
+    name?: string
+    uid?: string
+    creationTimestamp?: string
+  }
+  spec?: {
+    email?: string
+    displayName?: string
+    active?: boolean
+    roles?: string[]
+    providers?: UserProvider[]
+  }
+  status?: {
+    lastLogin?: string
+  }
+}
+
 // Utility function to convert API User to UserDisplay
-export function userToDisplay(user: any): UserDisplay {
+export function userToDisplay(user: UserResource): UserDisplay {
   const email = user.spec?.email || ''
   const displayName = user.spec?.displayName || email.split('@')[0]
 
@@ -44,10 +69,8 @@ export function userToDisplay(user: any): UserDisplay {
   // Extract roles from the roles array or default to ['user']
   const roles = user.spec?.roles || []
 
-  // For display, show the highest privilege role first, but store all roles
-  const roleHierarchy = ['super-admin', 'admin', 'user']
+  // For display, show all roles consistently
   const userRoles = roles.length > 0 ? roles : ['user']
-  const primaryRole = roleHierarchy.find(role => userRoles.includes(role)) || userRoles[0]
 
   return {
     id: user.metadata?.name || user.metadata?.uid || email,
@@ -58,7 +81,7 @@ export function userToDisplay(user: any): UserDisplay {
     lastLogin: lastLoginAt ? formatTimeAgo(lastLoginAt) : 'Never',
     created: formatTimeAgo(createdAt),
     displayName: user.spec?.displayName,
-    providers: user.spec?.providers?.map((p: any) => ({
+    providers: user.spec?.providers?.map((p: UserProvider) => ({
       provider: p.provider,
       providerId: p.providerId,
       connectedAt: p.connectedAt

@@ -1,8 +1,8 @@
 'use server'
 
 import { apiClient } from '@/lib/api-client'
-import { userService, type User, type CreateUserRequest, type UpdateUserRequest } from '@/lib/services/user.service'
-import { userToDisplay, type UserDisplay, type CreateUserFormData } from '@/types/user'
+import { userService, type CreateUserRequest, type UpdateUserRequest } from '@/lib/services/user.service'
+import { userToDisplay, type UserDisplay, type CreateUserFormData, type UserResource } from '@/types/user'
 import { revalidatePath } from 'next/cache'
 
 export interface ProviderAccount {
@@ -27,8 +27,9 @@ export async function authenticateUser(userData: UserData) {
     // Get user by email using efficient endpoint
     let existingUser
     try {
-      existingUser = await apiClient.get<any>(`/api/v1/users/by-email?email=${encodeURIComponent(userData.email)}`)
-    } catch (error: any) {
+      existingUser = await apiClient.get<UserResource>(`/api/v1/users/by-email?email=${encodeURIComponent(userData.email)}`)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
       // Check if it's a 404 from our API (user not found)
       if (error.message?.includes('404')) {
         // User doesn't exist, authentication should fail
@@ -57,12 +58,12 @@ export async function authenticateUser(userData: UserData) {
     }
 
     // Check if this provider is already connected
-    const existingProviders = existingUser.spec.providers || []
+    const existingProviders = existingUser.spec?.providers || []
     const providerIndex = existingProviders.findIndex(
-      (p: ProviderAccount) => p.provider === userData.provider
+      (p) => p.provider === userData.provider
     )
 
-    let updatedProviders: ProviderAccount[]
+    let updatedProviders
     if (providerIndex >= 0) {
       // Update existing provider info
       updatedProviders = [...existingProviders]
@@ -76,22 +77,17 @@ export async function authenticateUser(userData: UserData) {
     const updatePayload = {
       ...existingUser.spec,
       providers: updatedProviders,
-      metadata: {
-        ...(existingUser.spec.metadata ?? {}),
-        lastProvider: userData.provider,
-        totalProviders: updatedProviders.length.toString(),
-      }
     }
 
     // Update using the Kubernetes resource name from metadata
     const updatedUser = await apiClient.put(
-      `/api/v1/users/${existingUser.metadata.name}`,
+      `/api/v1/users/${existingUser.metadata?.name}`,
       updatePayload
     )
 
     // Update last login in status field using dedicated endpoint
     try {
-      await apiClient.post(`/api/v1/users/${existingUser.metadata.name}/update-last-login`)
+      await apiClient.post(`/api/v1/users/${existingUser.metadata?.name}/update-last-login`)
     } catch (error) {
       console.warn('Failed to update last login status:', error)
       // Don't fail authentication if this fails
@@ -115,13 +111,17 @@ export async function authenticateUser(userData: UserData) {
 
 export async function checkUserExists(email: string): Promise<boolean> {
   try {
-    await apiClient.get<any>(`/api/v1/users/by-email?email=${encodeURIComponent(email)}`)
+    await apiClient.get<UserResource>(`/api/v1/users/by-email?email=${encodeURIComponent(email)}`)
     return true
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return false
+  } catch (err) {
+    // Type guard for error objects with response property
+    if (err && typeof err === 'object' && 'response' in err) {
+      const errorWithResponse = err as { response?: { status?: number } }
+      if (errorWithResponse.response?.status === 404) {
+        return false
+      }
     }
-    console.error('Error checking user existence:', error)
+    console.error('Error checking user existence:', err)
     return false
   }
 }

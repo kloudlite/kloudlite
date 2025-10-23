@@ -28,7 +28,7 @@ export function DeleteEnvironmentConfirm({
   onOpenChange,
   environmentName,
   onSuccess,
-  currentUser = 'test-user',
+  currentUser: _currentUser = 'test-user',
 }: DeleteEnvironmentConfirmProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +56,7 @@ export function DeleteEnvironmentConfirm({
             return errorData.details
           }
         }
-      } catch (e) {
+      } catch (_e) {
         // If JSON parsing fails, try to extract key messages
       }
     }
@@ -84,7 +84,7 @@ export function DeleteEnvironmentConfirm({
     setLoading(true)
 
     try {
-      const result = await deleteEnvironment(environmentName, currentUser)
+      const result = await deleteEnvironment(environmentName)
       if (result.success) {
         onOpenChange(false)
         if (onSuccess) {
@@ -93,9 +93,10 @@ export function DeleteEnvironmentConfirm({
       } else {
         setError(parseErrorMessage(result.error || ''))
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to delete environment:', err)
-      setError(parseErrorMessage(err.message || ''))
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      setError(parseErrorMessage(error.message))
     } finally {
       setLoading(false)
     }
@@ -107,7 +108,7 @@ export function DeleteEnvironmentConfirm({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Environment</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the environment "{environmentName}"?
+            Are you sure you want to delete the environment &quot;{environmentName}&quot;?
             This action cannot be undone and will remove all associated resources.
           </AlertDialogDescription>
         </AlertDialogHeader>

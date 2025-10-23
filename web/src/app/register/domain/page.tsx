@@ -21,6 +21,14 @@ import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
 import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { toast } from 'sonner'
 
+interface SessionData {
+  user: {
+    email: string
+    name: string
+  }
+  installationKey: string
+}
+
 const subdomainSchema = z.object({
   subdomain: z
     .string()
@@ -36,7 +44,7 @@ type SubdomainFormData = z.infer<typeof subdomainSchema>
 
 export default function DomainPage() {
   const router = useRouter()
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [checkingSubdomain, setCheckingSubdomain] = useState(false)
   const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
@@ -61,7 +69,7 @@ export default function DomainPage() {
         } else {
           router.push('/register')
         }
-      } catch (error) {
+      } catch {
         router.push('/register')
       } finally {
         setLoading(false)
@@ -108,12 +116,13 @@ export default function DomainPage() {
         throw new Error(errorData.error || 'Failed to reserve subdomain')
       }
 
-      const result = await response.json()
+      await response.json()
 
       // Redirect immediately to complete page
       router.push('/register/complete')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to reserve subdomain')
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to reserve subdomain')
+      toast.error(error.message)
     } finally {
       setSaving(false)
     }

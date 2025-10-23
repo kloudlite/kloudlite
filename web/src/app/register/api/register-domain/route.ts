@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/registration/auth-config'
-import { reserveSubdomain, getUserRegistration, saveUserRegistration } from '@/lib/registration/storage-service'
+import { reserveSubdomain, getUserByEmail } from '@/lib/registration/storage-service'
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
     const session = await auth()
-    if (!session || !session.user) {
+    if (!session || !session.user || !session.user.email) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has a domain
-    const existingRegistration = await getUserRegistration(session.user.id)
+    const existingRegistration = await getUserByEmail(session.user.email)
     if (existingRegistration?.subdomain) {
       return NextResponse.json(
         {
@@ -46,11 +46,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Reserve the subdomain
+    // Use the existing user's userId from registration, or construct from email if needed
+    const userId = existingRegistration?.userId || `auth-${session.user.email}`
     const reservation = await reserveSubdomain(
       subdomain,
-      session.user.id,
-      session.user.email!,
-      session.user.name!
+      userId,
+      session.user.email,
+      session.user.name || session.user.email
     )
 
     return NextResponse.json({

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByInstallationKey, markInstallationComplete, saveUserRegistration } from '@/lib/registration/storage-service'
+import { getUserByInstallationKey, markInstallationComplete, updateHealthCheck } from '@/lib/registration/supabase-storage-service'
 
 /**
  * Verify installation key (POST method)
@@ -33,21 +33,25 @@ export async function POST(request: NextRequest) {
       console.log('First deployment verification for:', user.email)
       console.log('Generating secret key for installation key:', installationKey)
 
-      user.secretKey = crypto.randomUUID()
-      user.hasCompletedInstallation = true // Mark as complete when secret is generated
+      const secretKey = crypto.randomUUID()
+
+      // Atomically mark installation complete and set secret key
+      const updatedUser = await markInstallationComplete(user.email, secretKey)
+      user.secretKey = updatedUser.secretKey
+      user.hasCompletedInstallation = updatedUser.hasCompletedInstallation
 
       console.log('Secret key generated and installation marked as complete')
     }
 
     // Optionally mark installation as complete (legacy support)
     if (markComplete && !user.hasCompletedInstallation) {
-      await markInstallationComplete(user.email)
-      user.hasCompletedInstallation = true
+      const updatedUser = await markInstallationComplete(user.email)
+      user.hasCompletedInstallation = updatedUser.hasCompletedInstallation
     }
 
-    // Update last health check timestamp (deployment is polling)
-    user.lastHealthCheck = new Date().toISOString()
-    await saveUserRegistration(user)
+    // Atomically update last health check timestamp (deployment is polling)
+    const updatedUser = await updateHealthCheck(user.email)
+    user.lastHealthCheck = updatedUser.lastHealthCheck
 
     // Return user info including secretKey for bearer token auth
     const response = NextResponse.json({
@@ -56,7 +60,7 @@ export async function POST(request: NextRequest) {
         userId: user.userId,
         email: user.email,
         name: user.name,
-        provider: user.provider,
+        providers: user.providers,
         registeredAt: user.registeredAt,
         hasCompletedInstallation: user.hasCompletedInstallation,
         subdomain: user.subdomain,

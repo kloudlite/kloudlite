@@ -19,7 +19,6 @@ import type {
   GetFileResponse,
   ListFilesResponse,
   DeleteFileResponse,
-  EnvVar,
   GetEnvVarsResponse,
   SetEnvVarResponse,
   DeleteEnvVarResponse,
@@ -161,8 +160,8 @@ export class EnvironmentService {
     sourceName: string,
     targetName: string,
     targetNamespace: string,
-    cloneEnvVars: boolean,
-    cloneFiles: boolean,
+    _cloneEnvVars: boolean,
+    _cloneFiles: boolean,
     currentUser: string
   ): Promise<EnvironmentResponse> {
     const request: EnvironmentCreateRequest = {

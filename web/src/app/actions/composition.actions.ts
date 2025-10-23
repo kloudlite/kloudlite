@@ -18,11 +18,12 @@ export async function createComposition(
     const result = await compositionService.createComposition(namespace, data)
     revalidatePath(`/environments/${namespace}/resources/compositions`)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Create composition error:', error)
+  } catch (err) {
+    console.error('Create composition error:', err)
+    const error = err instanceof Error ? err : new Error('Failed to create composition')
     return {
       success: false,
-      error: error.message || 'Failed to create composition'
+      error: error.message
     }
   }
 }
@@ -39,11 +40,12 @@ export async function updateComposition(
     const result = await compositionService.updateComposition(namespace, name, data)
     revalidatePath(`/environments/${namespace}/resources/compositions`)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Update composition error:', error)
+  } catch (err) {
+    console.error('Update composition error:', err)
+    const error = err instanceof Error ? err : new Error('Failed to update composition')
     return {
       success: false,
-      error: error.message || 'Failed to update composition'
+      error: error.message
     }
   }
 }
@@ -59,11 +61,12 @@ export async function deleteComposition(
     const result = await compositionService.deleteComposition(namespace, name)
     revalidatePath(`/environments/${namespace}/resources/compositions`)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Delete composition error:', error)
+  } catch (err) {
+    console.error('Delete composition error:', err)
+    const error = err instanceof Error ? err : new Error('Failed to delete composition')
     return {
       success: false,
-      error: error.message || 'Failed to delete composition'
+      error: error.message
     }
   }
 }
@@ -78,11 +81,12 @@ export async function getCompositionStatus(
   try {
     const result = await compositionService.getCompositionStatus(namespace, name)
     return { success: true, data: result }
-  } catch (error: any) {
-    console.error('Get composition status error:', error)
+  } catch (err) {
+    console.error('Get composition status error:', err)
+    const error = err instanceof Error ? err : new Error('Failed to get composition status')
     return {
       success: false,
-      error: error.message || 'Failed to get composition status'
+      error: error.message
     }
   }
 }

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, MoreHorizontal, UserPlus, Edit, Trash2, Key, Mail, Loader2, UserCheck, UserX } from 'lucide-react'
+import { Plus, MoreHorizontal, Edit, Trash2, Key, Mail, Loader2, UserCheck, UserX } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,13 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { createUser, updateUser, deleteUser, resetUserPassword } from '@/lib/actions/user-actions'
 import { UserDisplay, CreateUserFormData } from '@/types/user'
 import { toast } from 'sonner'
@@ -578,7 +571,7 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete user "{deletingUser?.name}"? This action cannot be undone.
+              Are you sure you want to delete user &quot;{deletingUser?.name}&quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -613,7 +606,7 @@ export function UserManagementList({ users: initialUsers, currentUserRole }: Use
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
             <DialogDescription>
-              Set a new password for user "{resettingPasswordUser?.email}". The password must be at least 8 characters long.
+              Set a new password for user &quot;{resettingPasswordUser?.email}&quot;. The password must be at least 8 characters long.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
