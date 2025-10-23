@@ -28,9 +28,10 @@ export default async function OAuthProvidersPage() {
 
   try {
     providers = await getOAuthProviders()
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error fetching OAuth providers:', err)
-    error = err.message || 'Failed to fetch OAuth providers'
+    const errorObj = err instanceof Error ? err : new Error('Failed to fetch OAuth providers')
+    error = errorObj.message
   }
 
   if (error) {

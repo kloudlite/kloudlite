@@ -2,7 +2,7 @@
 
 import { apiClient } from '@/lib/api-client'
 import { userService, type User, type CreateUserRequest, type UpdateUserRequest } from '@/lib/services/user.service'
-import { userToDisplay, type UserDisplay, type CreateUserFormData } from '@/types/user'
+import { userToDisplay, type UserDisplay, type CreateUserFormData, type UserResource } from '@/types/user'
 import { revalidatePath } from 'next/cache'
 
 export interface ProviderAccount {
@@ -27,8 +27,9 @@ export async function authenticateUser(userData: UserData) {
     // Get user by email using efficient endpoint
     let existingUser
     try {
-      existingUser = await apiClient.get<any>(`/api/v1/users/by-email?email=${encodeURIComponent(userData.email)}`)
-    } catch (error: any) {
+      existingUser = await apiClient.get<UserResource>(`/api/v1/users/by-email?email=${encodeURIComponent(userData.email)}`)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
       // Check if it's a 404 from our API (user not found)
       if (error.message?.includes('404')) {
         // User doesn't exist, authentication should fail
@@ -115,13 +116,17 @@ export async function authenticateUser(userData: UserData) {
 
 export async function checkUserExists(email: string): Promise<boolean> {
   try {
-    await apiClient.get<any>(`/api/v1/users/by-email?email=${encodeURIComponent(email)}`)
+    await apiClient.get<UserResource>(`/api/v1/users/by-email?email=${encodeURIComponent(email)}`)
     return true
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return false
+  } catch (err) {
+    // Type guard for error objects with response property
+    if (err && typeof err === 'object' && 'response' in err) {
+      const errorWithResponse = err as { response?: { status?: number } }
+      if (errorWithResponse.response?.status === 404) {
+        return false
+      }
     }
-    console.error('Error checking user existence:', error)
+    console.error('Error checking user existence:', err)
     return false
   }
 }
