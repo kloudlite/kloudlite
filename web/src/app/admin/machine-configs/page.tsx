@@ -23,7 +23,7 @@ function transformMachineTypes(machineTypes: MachineType[]) {
     name: mt.spec.displayName || mt.metadata.name,
     cpu: parseResourceValue(mt.spec.resources?.cpu || mt.spec.cpu),
     memory: parseResourceValue(mt.spec.resources?.memory || mt.spec.memory),
-    gpu: mt.spec.resources?.gpu ? parseResourceValue(mt.spec.resources.gpu) : mt.spec.gpu,
+    gpu: mt.spec.resources?.gpu ? parseResourceValue(mt.spec.resources.gpu) : mt.spec.gpu ? parseResourceValue(mt.spec.gpu) : undefined,
     description: mt.spec.description || '',
     category: mt.spec.category || 'general',
     active: mt.spec.active !== false

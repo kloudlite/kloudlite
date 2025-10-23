@@ -3,9 +3,9 @@ import { getEnvVars } from '@/app/actions/environment-config'
 import { AlertCircle } from 'lucide-react'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 // Error component

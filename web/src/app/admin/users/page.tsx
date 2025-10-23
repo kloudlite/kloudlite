@@ -68,7 +68,7 @@ export default async function UsersPage() {
         />
       </div>
     )
-  } catch (error) {
+  } catch (_error) {
     return <UsersError error="An unexpected error occurred while loading users" />
   }
 }

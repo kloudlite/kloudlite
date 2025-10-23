@@ -8,6 +8,9 @@ dependencies:
   '@codemirror/lang-yaml':
     specifier: ^6.1.1
     version: 6.1.2
+  '@codemirror/state':
+    specifier: ^6.5.2
+    version: 6.5.2
   '@hookform/resolvers':
     specifier: ^5.2.2
     version: 5.2.2(react-hook-form@7.65.0)
@@ -59,6 +62,9 @@ dependencies:
   cmdk:
     specifier: ^1.1.1
     version: 1.1.1(@types/react-dom@19.2.2)(@types/react@19.2.2)(react-dom@19.1.0)(react@19.1.0)
+  jose:
+    specifier: ^6.1.0
+    version: 6.1.0
   lucide-react:
     specifier: ^0.544.0
     version: 0.544.0(react@19.1.0)

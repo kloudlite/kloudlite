@@ -5,11 +5,14 @@ import { serviceService } from '@/lib/services/service.service'
 import { environmentService } from '@/lib/services/environment.service'
 import { serviceInterceptService } from '@/lib/services/serviceintercept.service'
 import { compositionService } from '@/lib/services/composition.service'
+import type { K8sService } from '@/types/service'
+import type { ServiceIntercept } from '@/types/serviceintercept'
+import type { Composition } from '@/types/composition'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ServicesPage({ params }: PageProps) {
@@ -20,7 +23,6 @@ export default async function ServicesPage({ params }: PageProps) {
   }
 
   const { id } = await params
-  const currentUser = session.user?.email || 'test-user'
   const environmentName = id
 
   // Fetch the environment to get its target namespace
@@ -32,13 +34,18 @@ export default async function ServicesPage({ params }: PageProps) {
     console.error('Failed to fetch environment:', error)
     return (
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <ServicesList services={[]} namespace={environmentName} serviceIntercepts={[]} />
+        <ServicesList
+          services={[]}
+          namespace={environmentName}
+          serviceIntercepts={[]}
+          composition={null}
+        />
       </div>
     )
   }
 
   // Fetch services from API using the target namespace
-  let services = []
+  let services: K8sService[] = []
   try {
     const response = await serviceService.listServices(namespace)
     services = response.services || []
@@ -48,7 +55,7 @@ export default async function ServicesPage({ params }: PageProps) {
   }
 
   // Fetch service intercepts from API
-  let serviceIntercepts = []
+  let serviceIntercepts: ServiceIntercept[] = []
   try {
     const response = await serviceInterceptService.listServiceIntercepts(namespace)
     serviceIntercepts = response.serviceIntercepts || []
@@ -58,10 +65,10 @@ export default async function ServicesPage({ params }: PageProps) {
   }
 
   // Fetch the main composition
-  let composition = null
+  let composition: Composition | null = null
   try {
     composition = await compositionService.getComposition(namespace, 'main-composition')
-  } catch (error) {
+  } catch {
     // Composition doesn't exist yet, that's okay
     console.log('Main composition not found, will be created on first save')
   }
@@ -72,7 +79,6 @@ export default async function ServicesPage({ params }: PageProps) {
       namespace={namespace}
       serviceIntercepts={serviceIntercepts}
       composition={composition}
-      user={currentUser}
     />
   )
 }

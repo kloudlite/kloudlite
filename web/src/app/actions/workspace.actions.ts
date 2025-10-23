@@ -5,6 +5,7 @@ import { workspaceService } from '@/lib/services/workspace.service'
 import type {
   WorkspaceCreateRequest,
   WorkspaceUpdateRequest,
+  WorkspaceListParams,
 } from '@/types/workspace'
 
 /**
@@ -12,13 +13,7 @@ import type {
  */
 export async function listWorkspaces(
   namespace: string = 'default',
-  params?: {
-    owner?: string
-    workMachine?: string
-    status?: string
-    limit?: number
-    continue?: string
-  }
+  params?: WorkspaceListParams
 ) {
   try {
     const result = await workspaceService.list(namespace, params)

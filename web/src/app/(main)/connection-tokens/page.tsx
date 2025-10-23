@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { connectionTokenService } from '@/lib/services/connection-token.service'
+import { connectionTokenService, type ConnectionToken } from '@/lib/services/connection-token.service'
 import { ConnectionTokensList } from './_components/connection-tokens-list'
 
 export default async function ConnectionTokensPage() {
@@ -11,8 +11,8 @@ export default async function ConnectionTokensPage() {
   }
 
   // Fetch connection tokens from API
-  let tokens = []
-  let error = null
+  let tokens: ConnectionToken[] = []
+  let error: string | null = null
 
   try {
     tokens = await connectionTokenService.listTokens()

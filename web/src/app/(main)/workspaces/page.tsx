@@ -4,6 +4,7 @@ import { WorkspacesList } from './_components/workspaces-list'
 import { WorkMachineMetrics } from './_components/work-machine-metrics'
 import { workspaceService } from '@/lib/services/workspace.service'
 import { workMachineService } from '@/lib/services/work-machine.service'
+import type { Workspace } from '@/types/workspace'
 
 export default async function WorkspacesPage() {
   const session = await auth()
@@ -32,8 +33,8 @@ export default async function WorkspacesPage() {
   }
 
   // Fetch real workspace data from API using the work machine's target namespace
-  let workspaces = []
-  let error = null
+  let workspaces: Workspace[] = []
+  let error: string | null = null
 
   try {
     const response = await workspaceService.list(namespace)

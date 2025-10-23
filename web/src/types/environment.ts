@@ -6,6 +6,7 @@ export interface EnvironmentMetadata {
   resourceVersion?: string
   generation?: number
   creationTimestamp?: string
+  deletionTimestamp?: string
   managedFields?: unknown[]
 }
 

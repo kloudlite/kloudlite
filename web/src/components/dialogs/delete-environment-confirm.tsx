@@ -28,7 +28,7 @@ export function DeleteEnvironmentConfirm({
   onOpenChange,
   environmentName,
   onSuccess,
-  currentUser = 'test-user',
+  currentUser: _currentUser = 'test-user',
 }: DeleteEnvironmentConfirmProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +56,7 @@ export function DeleteEnvironmentConfirm({
             return errorData.details
           }
         }
-      } catch (e) {
+      } catch (_e) {
         // If JSON parsing fails, try to extract key messages
       }
     }
@@ -84,7 +84,7 @@ export function DeleteEnvironmentConfirm({
     setLoading(true)
 
     try {
-      const result = await deleteEnvironment(environmentName, currentUser)
+      const result = await deleteEnvironment(environmentName)
       if (result.success) {
         onOpenChange(false)
         if (onSuccess) {

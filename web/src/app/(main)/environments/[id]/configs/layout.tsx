@@ -2,9 +2,9 @@ import { ConfigSectionNav } from '../../_components/config-section-nav'
 
 interface LayoutProps {
   children: React.ReactNode
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ConfigsLayout({ children, params }: LayoutProps) {

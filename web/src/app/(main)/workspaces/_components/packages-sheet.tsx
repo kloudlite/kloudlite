@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Package, Plus, X, Loader2, CheckCircle2, XCircle, AlertCircle, Check, ChevronsUpDown } from 'lucide-react'
+import { Package, Plus, X, Loader2, CheckCircle2, XCircle, Check, ChevronsUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -199,7 +199,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
     setIsLoading(true)
 
     // Convert PackageWithVersion to PackageSpec
-    const packageSpecs: PackageSpec[] = packages.map(({ displayVersion, status, installedInfo, ...pkg }) => pkg)
+    const packageSpecs: PackageSpec[] = packages.map(({ displayVersion: _displayVersion, status: _status, installedInfo: _installedInfo, ...pkg }) => pkg)
 
     const result = await updateWorkspace(
       workspace.metadata.name,
@@ -230,11 +230,6 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
     setSearchResults([])
     setOpen(false)
   }
-
-  const packageCount = packages.length
-  const installedCount = packages.filter(p => p.status === 'installed').length
-  const pendingCount = packages.filter(p => p.status === 'pending').length
-  const failedCount = packages.filter(p => p.status === 'failed').length
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

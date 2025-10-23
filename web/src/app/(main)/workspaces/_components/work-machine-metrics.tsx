@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Cpu, HardDrive, MemoryStick } from 'lucide-react'
+import { Cpu, MemoryStick } from 'lucide-react'
 import { getNodeMetrics } from '@/app/actions/workspace.actions'
 
 interface NodeMetrics {
