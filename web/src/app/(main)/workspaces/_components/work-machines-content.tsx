@@ -34,12 +34,12 @@ function getStateDisplay(currentState: string, desiredState: string) {
   const isTransitioning = currentState !== desiredState
 
   const stateColors: Record<string, string> = {
-    running: 'text-green-600',
-    stopped: 'text-gray-600',
-    starting: 'text-blue-600',
-    stopping: 'text-yellow-600',
-    disabled: 'text-red-600',
-    error: 'text-red-600',
+    running: 'text-success',
+    stopped: 'text-muted-foreground',
+    starting: 'text-info',
+    stopping: 'text-warning',
+    disabled: 'text-destructive',
+    error: 'text-destructive',
   }
 
   const stateLabels: Record<string, string> = {
@@ -52,7 +52,7 @@ function getStateDisplay(currentState: string, desiredState: string) {
   }
 
   return {
-    color: stateColors[currentState] || 'text-gray-600',
+    color: stateColors[currentState] || 'text-muted-foreground',
     label: stateLabels[currentState] || currentState,
     isTransitioning,
     desiredLabel: stateLabels[desiredState] || desiredState,
@@ -249,7 +249,7 @@ export function WorkMachinesContent({
               <div className="mt-2 flex items-center gap-2">
                 {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
                   .isTransitioning && (
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-info" />
                 )}
                 <p
                   className={`text-sm font-medium ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}
@@ -297,11 +297,11 @@ export function WorkMachinesContent({
         {/* Transitioning State Banner */}
         {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
           .isTransitioning && (
-          <div className="mb-6 border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="mb-6 border border-info bg-info/10 p-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-info" />
               <div>
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                <p className="text-sm font-medium text-foreground">
                   Machine is transitioning from{' '}
                   <span className="font-semibold">
                     {
@@ -317,7 +317,7 @@ export function WorkMachinesContent({
                     }
                   </span>
                 </p>
-                <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                <p className="mt-1 text-xs text-muted-foreground">
                   This may take a few moments. The page will refresh automatically when complete.
                 </p>
               </div>
@@ -329,8 +329,8 @@ export function WorkMachinesContent({
         {selectedMachine.currentState === 'stopped' &&
           !getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
             .isTransitioning && (
-            <div className="mb-6 border border-yellow-200 bg-yellow-50 p-4 text-center dark:border-yellow-800 dark:bg-yellow-900/20">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            <div className="mb-6 border border-warning bg-warning/10 p-4 text-center">
+              <p className="text-sm text-foreground">
                 Machine is stopped. CPU and Memory are not consuming resources, but disk storage is
                 preserved.
               </p>

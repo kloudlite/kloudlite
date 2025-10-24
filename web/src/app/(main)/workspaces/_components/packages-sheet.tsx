@@ -423,13 +423,13 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
                           <span className="truncate font-mono text-sm">{pkg.name}</span>
                           <div className="flex-shrink-0">
                             {pkg.status === 'installed' && (
-                              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                              <CheckCircle2 className="h-4 w-4 text-success" />
                             )}
                             {pkg.status === 'pending' && (
-                              <Loader2 className="h-4 w-4 animate-spin text-yellow-600 dark:text-yellow-400" />
+                              <Loader2 className="h-4 w-4 animate-spin text-warning" />
                             )}
                             {pkg.status === 'failed' && (
-                              <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                              <XCircle className="h-4 w-4 text-destructive" />
                             )}
                           </div>
                         </div>

@@ -66,7 +66,7 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
           Settings
         </Button>
       </div>
-      {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
+      {error && <div className="text-xs text-destructive">{error}</div>}
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { WorkspacesList } from './_components/workspaces-list'
-import { WorkMachineMetrics } from './_components/work-machine-metrics'
 import { workspaceService } from '@/lib/services/workspace.service'
 import { workMachineService } from '@/lib/services/work-machine.service'
 import type { Workspace } from '@/types/workspace'
@@ -55,12 +54,6 @@ export default async function WorkspacesPage() {
           <p className="text-muted-foreground mt-1.5 text-sm">
             Manage your development workspaces and collaborate with your team
           </p>
-        </div>
-
-        {/* Node Metrics Section */}
-        <div className="mb-6">
-          <h2 className="mb-4 text-lg font-semibold">Node Resources</h2>
-          <WorkMachineMetrics nodeName="master" />
         </div>
 
         {/* Error Display */}

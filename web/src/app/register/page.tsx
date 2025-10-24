@@ -11,7 +11,7 @@ export default function LoginPage() {
         </div>
         <div>
           <h2 className="mb-4 text-2xl font-light">Cloud Development Environments</h2>
-          <p className="max-w-md text-sm leading-relaxed text-gray-400">
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
             Designed to reduce the development loop
           </p>
         </div>

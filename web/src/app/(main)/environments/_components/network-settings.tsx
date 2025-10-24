@@ -15,21 +15,21 @@ export function NetworkSettings() {
             <label className="mb-1 block text-sm font-medium">Custom Domain</label>
             <input
               type="text"
-              className="bg-background w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-info focus:outline-none"
               placeholder="app.example.com"
             />
           </div>
 
           <div>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="text-blue-600" />
+              <input type="checkbox" className="text-info" />
               <span className="text-sm">Enable HTTPS redirect</span>
             </label>
           </div>
 
           <div>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="text-blue-600" defaultChecked />
+              <input type="checkbox" className="text-info" defaultChecked />
               <span className="text-sm">Auto-generate SSL certificate</span>
             </label>
           </div>

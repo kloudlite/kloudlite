@@ -116,7 +116,7 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                     value="config"
                     checked={type === 'config'}
                     onChange={(e) => setType(e.target.value as 'config' | 'secret')}
-                    className="h-4 w-4 text-blue-600"
+                    className="h-4 w-4 text-info"
                   />
                   <div className="flex-1">
                     <div className="font-medium">Config</div>
@@ -132,7 +132,7 @@ export function AddEnvVarSheet({ environmentId, onSuccess }: AddEnvVarSheetProps
                     value="secret"
                     checked={type === 'secret'}
                     onChange={(e) => setType(e.target.value as 'config' | 'secret')}
-                    className="h-4 w-4 text-blue-600"
+                    className="h-4 w-4 text-info"
                   />
                   <div className="flex-1">
                     <div className="font-medium">Secret</div>
