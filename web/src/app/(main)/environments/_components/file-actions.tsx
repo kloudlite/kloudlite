@@ -68,7 +68,7 @@ export function FileActions({ file, environmentId }: FileActionsProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="text-red-600 hover:text-red-700"
+        className="text-destructive hover:text-destructive/80"
         onClick={() => setShowDeleteDialog(true)}
       >
         <Trash2 className="h-4 w-4" />
@@ -90,7 +90,7 @@ export function FileActions({ file, environmentId }: FileActionsProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete

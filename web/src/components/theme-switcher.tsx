@@ -1,30 +1,71 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Moon, Sun } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { setThemeCookie, getThemeFromCookie, type Theme } from '@/lib/theme'
+import { Moon, Sun, Monitor } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { setThemeCookie, type Theme } from '@/lib/theme'
 
-export function ThemeSwitcher() {
-  const [theme, setTheme] = useState<Theme>(() => getThemeFromCookie())
+type ThemeOption = Theme | 'system'
+
+interface ThemeSwitcherProps {
+  initialTheme?: Theme
+}
+
+export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
+  const [theme, setTheme] = useState<ThemeOption>(initialTheme)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Sync state with cookie on mount
-    setTheme(getThemeFromCookie())
+    setMounted(true)
   }, [])
 
-  const toggleTheme = () => {
-    const newTheme: Theme = theme === 'light' ? 'dark' : 'light'
+  const applyTheme = (newTheme: ThemeOption) => {
     setTheme(newTheme)
-    setThemeCookie(newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
+
+    if (newTheme === 'system') {
+      // Remove theme cookie to use system preference
+      document.cookie = 'theme=; path=/; max-age=0'
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      document.documentElement.classList.toggle('dark', prefersDark)
+    } else {
+      setThemeCookie(newTheme)
+      document.documentElement.classList.toggle('dark', newTheme === 'dark')
+    }
+  }
+
+  const getIcon = () => {
+    if (!mounted) return <Monitor className="h-4 w-4" />
+    if (theme === 'light') return <Sun className="h-4 w-4" />
+    if (theme === 'dark') return <Moon className="h-4 w-4" />
+    return <Monitor className="h-4 w-4" />
   }
 
   return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
-      {/* Show moon icon in light mode, sun icon in dark mode */}
-      <Moon className="h-4 w-4 dark:hidden" />
-      <Sun className="hidden h-4 w-4 dark:block" />
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="text-muted-foreground transition-colors hover:text-foreground">
+          {getIcon()}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => applyTheme('light')}>
+          <Sun className="mr-2 h-4 w-4" />
+          <span>Light</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => applyTheme('dark')}>
+          <Moon className="mr-2 h-4 w-4" />
+          <span>Dark</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => applyTheme('system')}>
+          <Monitor className="mr-2 h-4 w-4" />
+          <span>System</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

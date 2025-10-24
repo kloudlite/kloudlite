@@ -24,7 +24,7 @@ export const MODE_ROUTES = {
     '/super-admin',
     '/auth',
   ],
-  website: ['/docs', '/pricing', '/about', '/contact', '/blog'],
+  website: ['/', '/docs', '/pricing', '/about', '/contact', '/blog'],
 } as const
 
 /**

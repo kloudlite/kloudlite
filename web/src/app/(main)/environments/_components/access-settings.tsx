@@ -17,17 +17,17 @@ export function AccessSettings() {
             <label className="mb-2 block text-sm font-medium">Environment Visibility</label>
             <div className="space-y-2">
               <label className="flex items-center gap-2">
-                <input type="radio" name="visibility" defaultChecked className="text-blue-600" />
+                <input type="radio" name="visibility" defaultChecked className="text-info" />
                 <span className="text-sm">
                   Private - Only accessible to owner and invited members
                 </span>
               </label>
               <label className="flex items-center gap-2">
-                <input type="radio" name="visibility" className="text-blue-600" />
+                <input type="radio" name="visibility" className="text-info" />
                 <span className="text-sm">Team - Accessible to all team members</span>
               </label>
               <label className="flex items-center gap-2">
-                <input type="radio" name="visibility" className="text-blue-600" />
+                <input type="radio" name="visibility" className="text-info" />
                 <span className="text-sm">Public - Accessible to everyone</span>
               </label>
             </div>
@@ -41,7 +41,7 @@ export function AccessSettings() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  className="text-destructive hover:text-destructive/80"
                 >
                   Remove
                 </Button>
@@ -51,7 +51,7 @@ export function AccessSettings() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  className="text-destructive hover:text-destructive/80"
                 >
                   Remove
                 </Button>

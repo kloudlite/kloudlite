@@ -184,7 +184,7 @@ export default function DomainPage() {
                           )}
                           {!checkingSubdomain && subdomainAvailable === true && (
                             <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                              <CheckCircle2 className="size-4 text-green-600" />
+                              <CheckCircle2 className="size-4 text-success" />
                             </div>
                           )}
                           {!checkingSubdomain && subdomainAvailable === false && (

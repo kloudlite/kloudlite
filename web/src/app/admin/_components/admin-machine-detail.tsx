@@ -87,11 +87,11 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <CheckCircle className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-success" />
       case 'idle':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />
+        return <AlertTriangle className="h-5 w-5 text-warning" />
       case 'stopped':
-        return <XCircle className="h-5 w-5 text-gray-400" />
+        return <XCircle className="h-5 w-5 text-muted-foreground" />
       default:
         return null
     }
@@ -138,17 +138,17 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
       </div>
 
       {/* Machine Info */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <div className="mb-6 flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <Server className="mt-1 h-10 w-10 text-gray-400" />
+            <Server className="mt-1 h-10 w-10 text-muted-foreground" />
             <div>
               <h1 className="flex items-center gap-2 text-2xl font-semibold">
                 {machine.name}
                 {getStatusIcon(machine.status)}
               </h1>
-              <p className="mt-1 text-sm text-gray-600">Owner: {machine.owner}</p>
-              <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-muted-foreground">Owner: {machine.owner}</p>
+              <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Activity className="h-4 w-4" />
                   Type: {machine.type}
@@ -177,36 +177,36 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
         </TabsList>
 
         <TabsContent value="workspaces">
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-border bg-card">
+            <div className="border-b border-border px-6 py-4">
               <h2 className="text-lg font-medium">Active Workspaces</h2>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-border">
               {machine.workspaces.map((workspace) => (
                 <div key={workspace.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <FolderOpen className="h-5 w-5 text-gray-400" />
+                    <FolderOpen className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{workspace.name}</p>
-                      <p className="text-sm text-gray-500">Last accessed {workspace.lastAccess}</p>
+                      <p className="text-sm text-muted-foreground">Last accessed {workspace.lastAccess}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4 text-sm">
                       <span className="flex items-center gap-1">
-                        <Cpu className="h-4 w-4 text-gray-400" />
+                        <Cpu className="h-4 w-4 text-muted-foreground" />
                         {workspace.resources.cpu}%
                       </span>
                       <span className="flex items-center gap-1">
-                        <MemoryStick className="h-4 w-4 text-gray-400" />
+                        <MemoryStick className="h-4 w-4 text-muted-foreground" />
                         {workspace.resources.memory}%
                       </span>
                     </div>
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${
                         workspace.status === 'running'
-                          ? 'bg-green-50 text-green-600'
-                          : 'bg-gray-50 text-gray-600'
+                          ? 'bg-success/10 text-success'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {workspace.status}
@@ -218,22 +218,22 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                 </div>
               ))}
               {machine.workspaces.length === 0 && (
-                <div className="px-6 py-12 text-center text-gray-500">No active workspaces</div>
+                <div className="px-6 py-12 text-center text-muted-foreground">No active workspaces</div>
               )}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="environments">
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-border bg-card">
+            <div className="border-b border-border px-6 py-4">
               <h2 className="text-lg font-medium">Active Environments</h2>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-border">
               {machine.environments.map((environment) => (
                 <div key={environment.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <Server className="h-5 w-5 text-gray-400" />
+                    <Server className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{environment.name}</p>
                     </div>
@@ -241,19 +241,19 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4 text-sm">
                       <span className="flex items-center gap-1">
-                        <Cpu className="h-4 w-4 text-gray-400" />
+                        <Cpu className="h-4 w-4 text-muted-foreground" />
                         {environment.resources.cpu}%
                       </span>
                       <span className="flex items-center gap-1">
-                        <MemoryStick className="h-4 w-4 text-gray-400" />
+                        <MemoryStick className="h-4 w-4 text-muted-foreground" />
                         {environment.resources.memory}%
                       </span>
                     </div>
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${
                         environment.status === 'running'
-                          ? 'bg-green-50 text-green-600'
-                          : 'bg-gray-50 text-gray-600'
+                          ? 'bg-success/10 text-success'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {environment.status}
@@ -262,28 +262,28 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                 </div>
               ))}
               {machine.environments.length === 0 && (
-                <div className="px-6 py-12 text-center text-gray-500">No active environments</div>
+                <div className="px-6 py-12 text-center text-muted-foreground">No active environments</div>
               )}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="activity">
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-border bg-card">
+            <div className="border-b border-border px-6 py-4">
               <h2 className="text-lg font-medium">Activity Log</h2>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-border">
               {machine.activityLog.map((log, index) => (
                 <div key={index} className="px-6 py-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium">{log.action}</p>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         by {log.user === 'system' ? 'System' : log.user}
                       </p>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-muted-foreground">
                       {new Date(log.timestamp).toLocaleString()}
                     </span>
                   </div>

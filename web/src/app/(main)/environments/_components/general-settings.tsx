@@ -15,7 +15,7 @@ export function GeneralSettings() {
             <label className="mb-1 block text-sm font-medium">Environment Name</label>
             <input
               type="text"
-              className="bg-background w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-info focus:outline-none"
               defaultValue="my-dev-env"
             />
           </div>
@@ -23,7 +23,7 @@ export function GeneralSettings() {
           <div>
             <label className="mb-1 block text-sm font-medium">Description</label>
             <textarea
-              className="bg-background w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-info focus:outline-none"
               rows={3}
               defaultValue="Development environment for the main application"
             />
