@@ -62,15 +62,15 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
   }, [nodeName])
 
   const getUsageColor = (value: number) => {
-    if (value < 50) return 'bg-green-500'
-    if (value < 80) return 'bg-yellow-500'
-    return 'bg-red-500'
+    if (value < 50) return 'bg-success'
+    if (value < 80) return 'bg-warning'
+    return 'bg-destructive'
   }
 
   const getUsageTextColor = (value: number) => {
-    if (value < 50) return 'text-green-600'
-    if (value < 80) return 'text-yellow-600'
-    return 'text-red-600'
+    if (value < 50) return 'text-success'
+    if (value < 80) return 'text-warning'
+    return 'text-destructive'
   }
 
   // Calculate percentages
@@ -126,8 +126,8 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
       <div className="bg-card rounded-lg border p-6">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-blue-50 p-2 dark:bg-blue-900/30">
-              <Cpu className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="rounded-lg bg-info/10 p-2">
+              <Cpu className="h-5 w-5 text-info" />
             </div>
             <div>
               <h3 className="text-sm font-semibold">CPU Usage</h3>
@@ -159,8 +159,8 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
       <div className="bg-card rounded-lg border p-6">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-purple-50 p-2 dark:bg-purple-900/30">
-              <MemoryStick className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            <div className="rounded-lg bg-accent/10 p-2">
+              <MemoryStick className="h-5 w-5 text-accent-foreground" />
             </div>
             <div>
               <h3 className="text-sm font-semibold">Memory Usage</h3>

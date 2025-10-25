@@ -114,8 +114,8 @@ export function EditFileSheet({ environmentId, filename }: EditFileSheetProps) {
             <div className="space-y-2">
               <Label htmlFor="content">Content</Label>
               {loadingFile ? (
-                <div className="flex items-center justify-center rounded-md border border-gray-300 py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <div className="flex items-center justify-center rounded-md border py-12">
+                  <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
                 </div>
               ) : (
                 <Textarea

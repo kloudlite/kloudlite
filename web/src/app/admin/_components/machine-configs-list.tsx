@@ -68,11 +68,11 @@ interface MachineConfigsListProps {
 }
 
 const categoryColors: Record<string, string> = {
-  general: 'bg-blue-50 text-blue-700 border-blue-200',
+  general: 'bg-info/10 text-info border-info/20',
   'compute-optimized': 'bg-purple-50 text-purple-700 border-purple-200',
   'memory-optimized': 'bg-orange-50 text-orange-700 border-orange-200',
-  gpu: 'bg-green-50 text-green-700 border-green-200',
-  development: 'bg-gray-50 text-gray-700 border-gray-200',
+  gpu: 'bg-success/10 text-success border-success/20',
+  development: 'bg-muted text-foreground border-border',
   // Fallback for old values
   compute: 'bg-purple-50 text-purple-700 border-purple-200',
   memory: 'bg-orange-50 text-orange-700 border-orange-200',
@@ -190,7 +190,7 @@ export function MachineConfigsList({
     <div className="space-y-4">
       {/* Actions Bar */}
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {configs.length} configuration{configs.length !== 1 ? 's' : ''} defined
         </div>
 
@@ -209,33 +209,33 @@ export function MachineConfigsList({
       </div>
 
       {/* Configurations Table */}
-      <div className="rounded-lg border bg-white">
+      <div className="rounded-lg border bg-card">
         <table className="w-full">
           <thead>
-            <tr className="border-b bg-gray-50/50">
-              <th className="p-4 text-left text-sm font-medium text-gray-700">Configuration</th>
-              <th className="p-4 text-left text-sm font-medium text-gray-700">Resources</th>
-              <th className="p-4 text-left text-sm font-medium text-gray-700">Status</th>
+            <tr className="border-b bg-muted">
+              <th className="p-4 text-left text-sm font-medium text-foreground">Configuration</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">Resources</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">Status</th>
               {!isReadOnly && (
-                <th className="p-4 text-left text-sm font-medium text-gray-700">Actions</th>
+                <th className="p-4 text-left text-sm font-medium text-foreground">Actions</th>
               )}
             </tr>
           </thead>
           <tbody>
             {configs.map((config) => (
-              <tr key={config.id} className="border-b transition-colors hover:bg-gray-50/50">
+              <tr key={config.id} className="border-b transition-colors hover:bg-muted">
                 <td className="p-4">
                   <div className="space-y-2">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Server className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">{config.name}</span>
+                        <Server className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">{config.name}</span>
                       </div>
-                      <code className="rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500">
+                      <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
                         {config.id}
                       </code>
                     </div>
-                    <p className="text-sm text-gray-500">{config.description}</p>
+                    <p className="text-sm text-muted-foreground">{config.description}</p>
                     <Badge
                       variant="outline"
                       className={`${categoryColors[config.category || 'general']} text-xs`}
@@ -247,17 +247,17 @@ export function MachineConfigsList({
                 <td className="p-4">
                   <div className="space-y-1.5 text-sm">
                     <div className="flex items-center gap-2">
-                      <Cpu className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="text-gray-700">{config.cpu} vCPU</span>
+                      <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-foreground">{config.cpu} vCPU</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <HardDrive className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="text-gray-700">{config.memory}GB RAM</span>
+                      <HardDrive className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-foreground">{config.memory}GB RAM</span>
                     </div>
                     {config.gpu && (
                       <div className="flex items-center gap-2">
-                        <Gpu className="h-3.5 w-3.5 text-gray-400" />
-                        <span className="text-gray-700">{config.gpu} GPU</span>
+                        <Gpu className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-foreground">{config.gpu} GPU</span>
                       </div>
                     )}
                   </div>
@@ -266,13 +266,13 @@ export function MachineConfigsList({
                   <div className="flex items-center gap-1.5">
                     {config.active ? (
                       <>
-                        <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                        <span className="text-sm font-medium text-green-600">Active</span>
+                        <Circle className="h-2 w-2 fill-success text-success" />
+                        <span className="text-sm font-medium text-success">Active</span>
                       </>
                     ) : (
                       <>
-                        <Circle className="h-2 w-2 fill-gray-400 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-500">Inactive</span>
+                        <Circle className="h-2 w-2 fill-muted-foreground text-muted-foreground" />
+                        <span className="text-sm font-medium text-muted-foreground">Inactive</span>
                       </>
                     )}
                   </div>
@@ -314,7 +314,7 @@ export function MachineConfigsList({
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          className="text-red-600"
+                          className="text-destructive"
                           onClick={() => handleDelete(config.id)}
                           disabled={isLoading}
                         >
@@ -332,9 +332,9 @@ export function MachineConfigsList({
 
         {configs.length === 0 && (
           <div className="p-12 text-center">
-            <Server className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-            <h3 className="mb-2 text-lg font-medium text-gray-900">No machine configurations</h3>
-            <p className="mb-4 text-sm text-gray-500">
+            <Server className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-medium text-foreground">No machine configurations</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
               {isReadOnly
                 ? 'No machine configurations have been created yet.'
                 : 'Get started by creating your first machine configuration.'}
@@ -425,7 +425,7 @@ export function MachineConfigsList({
               {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">
-                  Category <span className="text-red-500">*</span>
+                  Category <span className="text-destructive">*</span>
                 </Label>
                 <Select
                   value={selectedCategory}
@@ -449,7 +449,7 @@ export function MachineConfigsList({
                 <Label className="text-sm font-medium">Resources</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="cpu" className="text-xs text-gray-600">
+                    <Label htmlFor="cpu" className="text-xs text-muted-foreground">
                       CPU (vCPU)
                     </Label>
                     <Input
@@ -462,7 +462,7 @@ export function MachineConfigsList({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="memory" className="text-xs text-gray-600">
+                    <Label htmlFor="memory" className="text-xs text-muted-foreground">
                       Memory (GB)
                     </Label>
                     <Input
@@ -475,7 +475,7 @@ export function MachineConfigsList({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="gpu" className="text-xs text-gray-600">
+                    <Label htmlFor="gpu" className="text-xs text-muted-foreground">
                       GPU (optional)
                     </Label>
                     <Input

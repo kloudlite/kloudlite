@@ -80,8 +80,8 @@ export function PinnedResources({
                 <div className="flex items-start justify-between">
                   <Link href={`/workspaces/${workspace.id}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-blue-50 p-2 dark:bg-blue-900/30">
-                        <Code2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <div className="rounded-lg bg-info/10 p-2 dark:bg-info/20">
+                        <Code2 className="h-4 w-4 text-info" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export function PinnedResources({
                           <span
                             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                               workspace.status === 'active'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                ? 'bg-success/10 text-success dark:bg-success/20'
                                 : 'bg-secondary text-secondary-foreground'
                             }`}
                           >
@@ -175,8 +175,8 @@ export function PinnedResources({
                 <div className="flex items-start justify-between">
                   <Link href={`/environments/${env.id}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-green-50 p-2 dark:bg-green-900/30">
-                        <Server className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <div className="rounded-lg bg-success/10 p-2 dark:bg-success/20">
+                        <Server className="h-4 w-4 text-success" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -184,7 +184,7 @@ export function PinnedResources({
                           <span
                             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                               env.status === 'active'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                ? 'bg-success/10 text-success dark:bg-success/20'
                                 : 'bg-secondary text-secondary-foreground'
                             }`}
                           >

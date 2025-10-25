@@ -108,13 +108,13 @@ export function EnvironmentConfigs() {
                 onClick={() => setActiveSection(section.id)}
                 className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                   activeSection === section.id
-                    ? 'bg-gray-100 font-medium text-gray-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-accent font-medium text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 } `}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
                 {section.label}
-                <span className="ml-auto text-xs text-gray-500">{section.count}</span>
+                <span className="text-muted-foreground ml-auto text-xs">{section.count}</span>
               </button>
             )
           })}
@@ -128,7 +128,7 @@ export function EnvironmentConfigs() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">Config Maps</h3>
-                <p className="text-sm text-gray-500">Environment configuration variables</p>
+                <p className="text-muted-foreground text-sm">Environment configuration variables</p>
               </div>
               <Button variant="outline" size="sm">
                 <Upload className="mr-2 h-4 w-4" />
@@ -136,28 +136,28 @@ export function EnvironmentConfigs() {
               </Button>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="bg-card overflow-hidden rounded-lg border">
               <table className="min-w-full">
-                <thead className="border-b border-gray-200 bg-gray-50">
+                <thead className="bg-muted/50 border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Key
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Value
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y">
                   {configs.map((config) => (
-                    <tr key={config.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-mono text-sm whitespace-nowrap text-gray-900">
+                    <tr key={config.id} className="hover:bg-muted/50">
+                      <td className="px-6 py-4 font-mono text-sm whitespace-nowrap">
                         {config.key}
                       </td>
-                      <td className="max-w-md truncate px-6 py-4 font-mono text-sm text-gray-600">
+                      <td className="text-muted-foreground max-w-md truncate px-6 py-4 font-mono text-sm">
                         {config.value}
                       </td>
                       <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
@@ -167,7 +167,7 @@ export function EnvironmentConfigs() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:text-destructive/80"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -185,7 +185,7 @@ export function EnvironmentConfigs() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">Secrets</h3>
-                <p className="text-sm text-gray-500">Encrypted sensitive information</p>
+                <p className="text-muted-foreground text-sm">Encrypted sensitive information</p>
               </div>
               <Button variant="outline" size="sm">
                 <Upload className="mr-2 h-4 w-4" />
@@ -193,31 +193,31 @@ export function EnvironmentConfigs() {
               </Button>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="bg-card overflow-hidden rounded-lg border">
               <table className="min-w-full">
-                <thead className="border-b border-gray-200 bg-gray-50">
+                <thead className="bg-muted/50 border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Key
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Value
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y">
                   {secrets.map((secret) => (
-                    <tr key={secret.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-mono text-sm whitespace-nowrap text-gray-900">
+                    <tr key={secret.id} className="hover:bg-muted/50">
+                      <td className="px-6 py-4 font-mono text-sm whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Lock className="h-3 w-3 text-amber-500" />
+                          <Lock className="h-3 w-3 text-amber-500 dark:text-amber-400" />
                           {secret.key}
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-mono text-sm text-gray-600">
+                      <td className="text-muted-foreground px-6 py-4 font-mono text-sm">
                         <div className="flex items-center gap-2">
                           {showSecrets[secret.id] ? (
                             <span className="max-w-md truncate text-xs">{secret.value}</span>
@@ -244,7 +244,7 @@ export function EnvironmentConfigs() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:text-destructive/80"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -262,7 +262,7 @@ export function EnvironmentConfigs() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">File Configs</h3>
-                <p className="text-sm text-gray-500">Configuration files mounted to containers</p>
+                <p className="text-muted-foreground text-sm">Configuration files mounted to containers</p>
               </div>
               <Button variant="outline" size="sm">
                 <Upload className="mr-2 h-4 w-4" />
@@ -270,43 +270,43 @@ export function EnvironmentConfigs() {
               </Button>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="bg-card overflow-hidden rounded-lg border">
               <table className="min-w-full">
-                <thead className="border-b border-gray-200 bg-gray-50">
+                <thead className="bg-muted/50 border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       File Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Mount Path
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Size
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Modified
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y">
                   {files.map((file) => (
-                    <tr key={file.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
+                    <tr key={file.id} className="hover:bg-muted/50">
+                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <File className="h-4 w-4 text-gray-400" />
+                          <File className="text-muted-foreground h-4 w-4" />
                           {file.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-mono text-sm text-xs text-gray-600">
+                      <td className="text-muted-foreground px-6 py-4 font-mono text-sm text-xs">
                         {file.mountPath}
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                         {file.size}
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                         {file.lastModified}
                       </td>
                       <td className="space-x-1 px-6 py-4 text-right text-sm whitespace-nowrap">
@@ -319,7 +319,7 @@ export function EnvironmentConfigs() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:text-destructive/80"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

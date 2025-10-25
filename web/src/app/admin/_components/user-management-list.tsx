@@ -276,13 +276,13 @@ export function UserManagementList({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Role Filter */}
-          <div className="flex items-center gap-1 rounded-md bg-gray-100 p-1">
+          <div className="flex items-center gap-1 rounded-md bg-muted p-1">
             <button
               onClick={() => setRoleFilter('all')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 roleFilter === 'all'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               All
@@ -291,8 +291,8 @@ export function UserManagementList({
               onClick={() => setRoleFilter('admin')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 roleFilter === 'admin'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Admin
@@ -301,8 +301,8 @@ export function UserManagementList({
               onClick={() => setRoleFilter('user')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 roleFilter === 'user'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               User
@@ -310,13 +310,13 @@ export function UserManagementList({
           </div>
 
           {/* Status Filter */}
-          <div className="flex items-center gap-1 rounded-md bg-gray-100 p-1">
+          <div className="flex items-center gap-1 rounded-md bg-muted p-1">
             <button
               onClick={() => setStatusFilter('all')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               All
@@ -325,8 +325,8 @@ export function UserManagementList({
               onClick={() => setStatusFilter('active')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'active'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Active
@@ -349,25 +349,25 @@ export function UserManagementList({
       </div>
 
       {/* Users Table */}
-      <div className="rounded-lg border bg-white">
+      <div className="rounded-lg border bg-card">
         <table className="w-full">
           <thead>
             <tr className="border-b">
-              <th className="p-4 text-left text-sm font-medium text-gray-900">User</th>
-              <th className="p-4 text-left text-sm font-medium text-gray-900">Role</th>
-              <th className="p-4 text-left text-sm font-medium text-gray-900">Status</th>
-              <th className="p-4 text-left text-sm font-medium text-gray-900">Last Login</th>
-              <th className="p-4 text-left text-sm font-medium text-gray-900">Created</th>
-              <th className="p-4 text-left text-sm font-medium text-gray-900">Actions</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">User</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">Role</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">Status</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">Last Login</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">Created</th>
+              <th className="p-4 text-left text-sm font-medium text-foreground">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.map((user) => (
-              <tr key={user.id} className="border-b hover:bg-gray-50">
+              <tr key={user.id} className="border-b hover:bg-muted">
                 <td className="p-4">
                   <div>
                     <div className="text-sm font-medium">{user.name}</div>
-                    <div className="text-sm text-gray-600">{user.email}</div>
+                    <div className="text-sm text-muted-foreground">{user.email}</div>
                   </div>
                 </td>
                 <td className="p-4">
@@ -379,8 +379,8 @@ export function UserManagementList({
                           role === 'super-admin'
                             ? 'bg-purple-100 text-purple-700'
                             : role === 'admin'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-gray-100 text-gray-700'
+                              ? 'bg-info/10 text-info'
+                              : 'bg-muted text-foreground'
                         }`}
                       >
                         {role}
@@ -392,20 +392,20 @@ export function UserManagementList({
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                       user.status === 'active'
-                        ? 'bg-green-100 text-green-700'
+                        ? 'bg-success/10 text-success'
                         : user.status === 'suspended'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
+                          ? 'bg-destructive/10 text-destructive'
+                          : 'bg-warning/10 text-warning'
                     }`}
                   >
                     {user.status}
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className="text-sm text-gray-600">{user.lastLogin}</span>
+                  <span className="text-sm text-muted-foreground">{user.lastLogin}</span>
                 </td>
                 <td className="p-4">
-                  <span className="text-sm text-gray-600">{user.created}</span>
+                  <span className="text-sm text-muted-foreground">{user.created}</span>
                 </td>
                 <td className="p-4">
                   <DropdownMenu>
@@ -432,7 +432,7 @@ export function UserManagementList({
                           <DropdownMenuSeparator />
                           {user.status === 'active' ? (
                             <DropdownMenuItem
-                              className="text-orange-600"
+                              className="text-warning"
                               onClick={() => handleToggleUserStatus(user, false)}
                             >
                               <UserX className="mr-2 h-4 w-4" />
@@ -440,7 +440,7 @@ export function UserManagementList({
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem
-                              className="text-green-600"
+                              className="text-success"
                               onClick={() => handleToggleUserStatus(user, true)}
                             >
                               <UserCheck className="mr-2 h-4 w-4" />
@@ -449,7 +449,7 @@ export function UserManagementList({
                           )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className="text-destructive"
                             onClick={() => setDeletingUser(user)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -553,7 +553,7 @@ export function UserManagementList({
                     className={`rounded-md border px-3 py-2 text-sm transition-colors ${
                       formData.roles.includes(role)
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background hover:bg-muted border-border'
+                        : 'bg-card hover:bg-muted border-border'
                     }`}
                   >
                     {role === 'super-admin'
@@ -656,7 +656,7 @@ export function UserManagementList({
                 className="w-full"
               />
               {newPassword && newPassword.length < 8 && (
-                <p className="text-sm text-red-600">Password must be at least 8 characters long</p>
+                <p className="text-sm text-destructive">Password must be at least 8 characters long</p>
               )}
             </div>
           </div>

@@ -31,7 +31,7 @@ export function EnvironmentTabs({ children }: EnvironmentTabsProps) {
   return (
     <div className="flex flex-1 flex-col">
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 bg-white">
+      <div className="bg-card border-b">
         <div className="mx-auto max-w-7xl px-6">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {tabs.map((tab) => (
@@ -40,8 +40,8 @@ export function EnvironmentTabs({ children }: EnvironmentTabsProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    ? 'border-info text-info'
+                    : 'text-muted-foreground hover:border-border hover:text-foreground border-transparent'
                 } `}
               >
                 {tab.icon}

@@ -82,9 +82,9 @@ export function EditEnvVarSheet({
                 id="key"
                 value={envVar.key}
                 disabled
-                className="bg-gray-50 font-mono text-sm"
+                className="bg-muted font-mono text-sm"
               />
-              <p className="text-sm text-gray-500">The key cannot be changed</p>
+              <p className="text-muted-foreground text-sm">The key cannot be changed</p>
             </div>
 
             <div className="space-y-2">
@@ -99,28 +99,28 @@ export function EditEnvVarSheet({
                 required
                 className="font-mono text-sm"
               />
-              <p className="text-sm text-gray-500">Update the envvar value</p>
+              <p className="text-muted-foreground text-sm">Update the envvar value</p>
             </div>
 
             <div className="space-y-2">
               <Label>Type</Label>
-              <div className="rounded-lg border bg-gray-50 p-3">
+              <div className="rounded-lg border bg-muted p-3">
                 <div className="flex items-center gap-2">
                   {envVar.type === 'config' ? (
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                    <span className="inline-flex items-center rounded-full bg-info/10 px-2.5 py-0.5 text-xs font-medium text-info dark:bg-info/20">
                       Config
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
+                    <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
                       Secret
                     </span>
                   )}
-                  <span className="text-sm text-gray-600">
+                  <span className="text-muted-foreground text-sm">
                     {envVar.type === 'config' ? 'Regular configuration variable' : 'Sensitive data'}
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-gray-500">Type cannot be changed after creation</p>
+              <p className="text-muted-foreground text-sm">Type cannot be changed after creation</p>
             </div>
           </div>
 

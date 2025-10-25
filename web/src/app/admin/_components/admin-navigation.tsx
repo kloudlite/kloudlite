@@ -25,8 +25,8 @@ export function AdminNavigation() {
             href={item.href}
             className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
               isActive
-                ? 'bg-gray-100 font-medium text-gray-900'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-muted font-medium text-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
           >
             <Icon className="h-4 w-4" />

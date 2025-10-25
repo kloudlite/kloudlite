@@ -30,13 +30,13 @@ export default function AuthErrorPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>{isNotRegistered ? 'Account Not Found' : 'Authentication Error'}</CardTitle>
-          <CardDescription className={isNotRegistered ? 'text-orange-600' : 'text-red-600'}>
+          <CardDescription className={isNotRegistered ? 'text-info' : 'text-destructive'}>
             {errorMessage}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {isNotRegistered && (
-            <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+            <div className="rounded-md border border-border bg-muted p-3 text-sm text-foreground">
               <p className="font-semibold">Next steps:</p>
               <ul className="mt-1 list-inside list-disc space-y-1">
                 <li>Contact your system administrator</li>

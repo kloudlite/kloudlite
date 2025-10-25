@@ -40,47 +40,47 @@ export function RecentActivity({ workspaces, environments }: RecentActivityProps
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Recent Workspaces */}
-      <div className="rounded-lg border border-gray-200 bg-white">
-        <div className="border-b border-gray-200 p-4">
+      <div className="bg-card rounded-lg border">
+        <div className="border-b p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900">Recent Workspaces</h3>
-            <Link href="/workspaces" className="text-sm text-blue-600 hover:text-blue-700">
+            <h3 className="text-sm font-medium">Recent Workspaces</h3>
+            <Link href="/workspaces" className="text-info hover:text-info/80 text-sm">
               View all →
             </Link>
           </div>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y">
           {workspaces.map((workspace) => (
             <Link
               key={workspace.id}
               href={`/workspaces/${workspace.id}`}
-              className="block p-4 transition-colors hover:bg-gray-50"
+              className="block p-4 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-lg bg-gray-100 p-2">
+                  <div className="bg-muted mt-0.5 rounded-lg p-2">
                     {getActionIcon(workspace.action)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-medium text-gray-900">{workspace.name}</h4>
+                      <h4 className="text-sm font-medium">{workspace.name}</h4>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                           workspace.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-success/10 text-success dark:bg-success/20'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {workspace.status}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-gray-600">{workspace.action}</p>
+                    <p className="text-muted-foreground mt-1 text-xs">{workspace.action}</p>
                     <div className="mt-2 flex items-center gap-4">
-                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <span className="text-muted-foreground flex items-center gap-1 text-xs">
                         <Globe className="h-3 w-3" />
                         {workspace.environment}
                       </span>
-                      <span className="text-xs text-gray-500">{workspace.lastActivity}</span>
+                      <span className="text-muted-foreground text-xs">{workspace.lastActivity}</span>
                     </div>
                   </div>
                 </div>
@@ -91,11 +91,11 @@ export function RecentActivity({ workspaces, environments }: RecentActivityProps
       </div>
 
       {/* Recent Environments */}
-      <div className="rounded-lg border border-gray-200 bg-white">
-        <div className="border-b border-gray-200 p-4">
+      <div className="bg-card rounded-lg border">
+        <div className="border-b p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900">Recent Environments</h3>
-            <Link href="/environments" className="text-sm text-blue-600 hover:text-blue-700">
+            <h3 className="text-sm font-medium">Recent Environments</h3>
+            <Link href="/environments" className="text-info hover:text-info/80 text-sm">
               View all →
             </Link>
           </div>
@@ -105,31 +105,31 @@ export function RecentActivity({ workspaces, environments }: RecentActivityProps
             <Link
               key={env.id}
               href={`/environments/${env.id}`}
-              className="block p-4 transition-colors hover:bg-gray-50"
+              className="block p-4 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-lg bg-gray-100 p-2">
+                  <div className="bg-muted mt-0.5 rounded-lg p-2">
                     {getActionIcon(env.action)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-medium text-gray-900">{env.name}</h4>
+                      <h4 className="text-sm font-medium">{env.name}</h4>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                           env.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-success/10 text-success dark:bg-success/20'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {env.status}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-gray-600">{env.action}</p>
+                    <p className="text-muted-foreground mt-1 text-xs">{env.action}</p>
                     <div className="mt-2 flex items-center gap-4">
-                      <span className="text-xs text-gray-500">{env.services} services</span>
-                      <span className="text-xs text-gray-500">{env.workspaces} workspaces</span>
-                      <span className="text-xs text-gray-500">{env.lastActivity}</span>
+                      <span className="text-muted-foreground text-xs">{env.services} services</span>
+                      <span className="text-muted-foreground text-xs">{env.workspaces} workspaces</span>
+                      <span className="text-muted-foreground text-xs">{env.lastActivity}</span>
                     </div>
                   </div>
                 </div>
