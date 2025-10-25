@@ -41,6 +41,12 @@ export const MODE_ROUTES = {
 export function isRouteAllowedInMode(pathname: string, mode: AppMode): boolean {
   const allowedRoutes = MODE_ROUTES[mode]
 
+  // Safety check: if allowedRoutes is undefined, default to false
+  if (!allowedRoutes) {
+    console.error(`Invalid app mode: ${mode}. Expected 'dashboard' or 'website'`)
+    return false
+  }
+
   // Check if pathname starts with any of the allowed routes
   return allowedRoutes.some((route) => pathname.startsWith(route))
 }
