@@ -3,14 +3,18 @@
  *
  * Provides atomic operations using SQL transactions
  * No eventual consistency - ACID guarantees
+ *
+ * Updated to support multiple installations per user
  */
 
 import type { Database } from './supabase-types'
 import { supabase } from './supabase'
 
 type UserRegistrationRow = Database['public']['Tables']['user_registrations']['Row']
+type InstallationRow = Database['public']['Tables']['installations']['Row']
 type IPRecordRow = Database['public']['Tables']['ip_records']['Row']
 type TLSCertificateRow = Database['public']['Tables']['tls_certificates']['Row']
+type DomainReservationRow = Database['public']['Tables']['domain_reservations']['Row']
 
 export interface IPRecord {
   type: 'installation' | 'workmachine'
@@ -20,12 +24,11 @@ export interface IPRecord {
   dnsRecordIds?: string[]
 }
 
-export interface UserRegistration {
+export interface Installation {
+  id: string
   userId: string
-  email: string
   name: string
-  providers: ('github' | 'google' | 'azure-ad')[]
-  registeredAt: string
+  description?: string
   installationKey: string
   secretKey?: string
   hasCompletedInstallation: boolean
@@ -34,10 +37,23 @@ export interface UserRegistration {
   ipRecords?: IPRecord[]
   deploymentReady?: boolean
   lastHealthCheck?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserRegistration {
+  userId: string
+  email: string
+  name: string
+  providers: ('github' | 'google' | 'azure-ad')[]
+  registeredAt: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface DomainReservation {
   subdomain: string
+  installationId: string
   userId: string
   reservedAt: string
   status: 'reserved' | 'active' | 'cancelled'
@@ -46,7 +62,41 @@ export interface DomainReservation {
 }
 
 /**
- * Get user registration by email (primary key)
+ * User Management Functions
+ */
+
+/**
+ * Get user by userId
+ */
+export async function getUserById(userId: string): Promise<UserRegistration | null> {
+  const result = await supabase
+    .from('user_registrations')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  if (result.error) {
+    if (result.error.code === 'PGRST116') return null
+    console.error('Error getting user:', result.error)
+    return null
+  }
+
+  const data = result.data as UserRegistrationRow | null
+  if (!data) return null
+
+  return {
+    userId: data.user_id,
+    email: data.email,
+    name: data.name,
+    providers: data.providers || [],
+    registeredAt: data.registered_at,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }
+}
+
+/**
+ * Get user by email
  */
 export async function getUserByEmail(email: string): Promise<UserRegistration | null> {
   const result = await supabase
@@ -56,20 +106,13 @@ export async function getUserByEmail(email: string): Promise<UserRegistration | 
     .single()
 
   if (result.error) {
-    if (result.error.code === 'PGRST116') return null // Not found
+    if (result.error.code === 'PGRST116') return null
     console.error('Error getting user:', result.error)
     return null
   }
 
   const data = result.data as UserRegistrationRow | null
-
   if (!data) return null
-
-  // Fetch IP records
-  const ipResult = await supabase
-    .from('ip_records')
-    .select('*')
-    .eq('user_email', email.toLowerCase())
 
   return {
     userId: data.user_id,
@@ -77,6 +120,89 @@ export async function getUserByEmail(email: string): Promise<UserRegistration | 
     name: data.name,
     providers: data.providers || [],
     registeredAt: data.registered_at,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }
+}
+
+/**
+ * Create or update user registration
+ */
+export async function saveUserRegistration(registration: UserRegistration): Promise<void> {
+  type UserRegistrationInsert = Database['public']['Tables']['user_registrations']['Insert']
+  type UserRegistrationUpdate = Database['public']['Tables']['user_registrations']['Update']
+
+  const insertData: UserRegistrationInsert = {
+    user_id: registration.userId,
+    email: registration.email.toLowerCase(),
+    name: registration.name,
+    providers: registration.providers,
+    registered_at: registration.registeredAt,
+  }
+
+  // Try to insert first
+  const { error: insertError } = await supabase
+    .from('user_registrations')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .insert(insertData)
+
+  // If user already exists (unique constraint violation), update instead
+  if (insertError && insertError.code === '23505') {
+    const updateData: UserRegistrationUpdate = {
+      name: registration.name,
+      providers: registration.providers,
+    }
+
+    const { error: updateError } = await supabase
+      .from('user_registrations')
+      // @ts-expect-error - Supabase client with placeholder values has type issues during build
+      .update(updateData)
+      .eq('user_id', registration.userId)
+
+    if (updateError) {
+      console.error('Error updating user registration:', updateError)
+      throw new Error(`Failed to update user registration: ${updateError.message}`)
+    }
+  } else if (insertError) {
+    console.error('Error saving user registration:', insertError)
+    throw new Error(`Failed to save user registration: ${insertError.message}`)
+  }
+}
+
+/**
+ * Installation Management Functions
+ */
+
+/**
+ * Get installation by ID with IP records
+ */
+export async function getInstallationById(installationId: string): Promise<Installation | null> {
+  const result = await supabase
+    .from('installations')
+    .select('*')
+    .eq('id', installationId)
+    .single()
+
+  if (result.error) {
+    if (result.error.code === 'PGRST116') return null
+    console.error('Error getting installation:', result.error)
+    return null
+  }
+
+  const data = result.data as InstallationRow | null
+  if (!data) return null
+
+  // Fetch IP records
+  const ipResult = await supabase
+    .from('ip_records')
+    .select('*')
+    .eq('installation_id', installationId)
+
+  return {
+    id: data.id,
+    userId: data.user_id,
+    name: data.name,
+    description: data.description || undefined,
     installationKey: data.installation_key,
     secretKey: data.secret_key || undefined,
     hasCompletedInstallation: data.has_completed_installation,
@@ -84,6 +210,8 @@ export async function getUserByEmail(email: string): Promise<UserRegistration | 
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
     ipRecords:
       ((ipResult.data || []) as IPRecordRow[]).map((ip) => ({
         type: ip.type,
@@ -96,133 +224,249 @@ export async function getUserByEmail(email: string): Promise<UserRegistration | 
 }
 
 /**
- * Get user by installation key
+ * Get installation by installation key
  */
-export async function getUserByInstallationKey(
+export async function getInstallationByKey(
   installationKey: string,
-): Promise<UserRegistration | null> {
+): Promise<Installation | null> {
   const result = await supabase
-    .from('user_registrations')
+    .from('installations')
     .select('*')
     .eq('installation_key', installationKey)
     .single()
 
   if (result.error) {
     if (result.error.code === 'PGRST116') return null
-    console.error('Error getting user by installation key:', result.error)
+    console.error('Error getting installation by key:', result.error)
     return null
   }
 
-  const data = result.data as UserRegistrationRow | null
+  const data = result.data as InstallationRow | null
   if (!data) return null
 
-  return getUserByEmail(data.email)
+  return getInstallationById(data.id)
 }
 
 /**
- * Create or update user registration
- * Uses INSERT ... ON CONFLICT (upsert) for atomicity
+ * Get all installations for a user
  */
-export async function saveUserRegistration(registration: UserRegistration): Promise<void> {
-  type UserRegistrationInsert = Database['public']['Tables']['user_registrations']['Insert']
+export async function getUserInstallations(userId: string): Promise<Installation[]> {
+  const result = await supabase
+    .from('installations')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
 
-  const insertData: UserRegistrationInsert = {
-    email: registration.email.toLowerCase(),
-    user_id: registration.userId,
-    name: registration.name,
-    providers: registration.providers,
-    registered_at: registration.registeredAt,
-    installation_key: registration.installationKey,
-    secret_key: registration.secretKey || null,
-    has_completed_installation: registration.hasCompletedInstallation,
-    subdomain: registration.subdomain || null,
-    reserved_at: registration.reservedAt || null,
-    deployment_ready: registration.deploymentReady || null,
-    last_health_check: registration.lastHealthCheck || null,
+  if (result.error) {
+    console.error('Error getting user installations:', result.error)
+    return []
   }
+
+  const installations = (result.data || []) as InstallationRow[]
+
+  // Fetch IP records for all installations in parallel
+  const installationsWithIpRecords = await Promise.all(
+    installations.map(async (inst) => {
+      const ipResult = await supabase
+        .from('ip_records')
+        .select('*')
+        .eq('installation_id', inst.id)
+
+      return {
+        id: inst.id,
+        userId: inst.user_id,
+        name: inst.name,
+        description: inst.description || undefined,
+        installationKey: inst.installation_key,
+        secretKey: inst.secret_key || undefined,
+        hasCompletedInstallation: inst.has_completed_installation,
+        subdomain: inst.subdomain || undefined,
+        reservedAt: inst.reserved_at || undefined,
+        deploymentReady: inst.deployment_ready || undefined,
+        lastHealthCheck: inst.last_health_check || undefined,
+        createdAt: inst.created_at,
+        updatedAt: inst.updated_at,
+        ipRecords:
+          ((ipResult.data || []) as IPRecordRow[]).map((ip) => ({
+            type: ip.type,
+            ip: ip.ip,
+            workMachineName: ip.work_machine_name || undefined,
+            configuredAt: ip.configured_at,
+            dnsRecordIds: ip.dns_record_ids || undefined,
+          })) || [],
+      }
+    }),
+  )
+
+  return installationsWithIpRecords
+}
+
+/**
+ * Create a new installation
+ */
+export async function createInstallation(
+  userId: string,
+  name: string,
+  description: string | undefined,
+  installationKey: string,
+): Promise<Installation> {
+  type InstallationInsert = Database['public']['Tables']['installations']['Insert']
+
+  const insertData: InstallationInsert = {
+    user_id: userId,
+    name,
+    description: description || null,
+    installation_key: installationKey,
+    has_completed_installation: false,
+  }
+
+  const result = await supabase
+    .from('installations')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .insert(insertData)
+    .select()
+    .single()
+
+  if (result.error) {
+    console.error('Error creating installation:', result.error)
+    throw new Error(`Failed to create installation: ${result.error.message}`)
+  }
+
+  const data = result.data as InstallationRow
+
+  return {
+    id: data.id,
+    userId: data.user_id,
+    name: data.name,
+    description: data.description || undefined,
+    installationKey: data.installation_key,
+    secretKey: data.secret_key || undefined,
+    hasCompletedInstallation: data.has_completed_installation,
+    subdomain: data.subdomain || undefined,
+    reservedAt: data.reserved_at || undefined,
+    deploymentReady: data.deployment_ready || undefined,
+    lastHealthCheck: data.last_health_check || undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    ipRecords: [],
+  }
+}
+
+/**
+ * Update an installation
+ */
+export async function updateInstallation(
+  installationId: string,
+  updates: Partial<Installation>,
+): Promise<Installation> {
+  type InstallationUpdate = Database['public']['Tables']['installations']['Update']
+
+  const updateData: InstallationUpdate = {}
+
+  if (updates.name !== undefined) updateData.name = updates.name
+  if (updates.description !== undefined) updateData.description = updates.description || null
+  if (updates.secretKey !== undefined) updateData.secret_key = updates.secretKey || null
+  if (updates.hasCompletedInstallation !== undefined)
+    updateData.has_completed_installation = updates.hasCompletedInstallation
+  if (updates.subdomain !== undefined) updateData.subdomain = updates.subdomain || null
+  if (updates.reservedAt !== undefined) updateData.reserved_at = updates.reservedAt || null
+  if (updates.deploymentReady !== undefined)
+    updateData.deployment_ready = updates.deploymentReady || null
+  if (updates.lastHealthCheck !== undefined)
+    updateData.last_health_check = updates.lastHealthCheck || null
 
   const { error } = await supabase
-    .from('user_registrations')
+    .from('installations')
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .upsert(insertData)
+    .update(updateData)
+    .eq('id', installationId)
 
   if (error) {
-    console.error('Error saving user registration:', error)
-    throw new Error(`Failed to save user registration: ${error.message}`)
+    throw new Error(`Failed to update installation: ${error.message}`)
   }
+
+  const installation = await getInstallationById(installationId)
+  if (!installation) {
+    throw new Error('Installation not found after update')
+  }
+  return installation
 }
 
 /**
  * Atomically mark installation complete with optional secret key
  */
 export async function markInstallationComplete(
-  email: string,
+  installationId: string,
   secretKey?: string,
-): Promise<UserRegistration> {
-  const update: {
-    has_completed_installation: boolean
-    secret_key?: string
-  } = {
-    has_completed_installation: true,
-  }
-
-  if (secretKey) {
-    update.secret_key = secretKey
-  }
-
-  const { error } = await supabase
-    .from('user_registrations')
-
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .update(update)
-    .eq('email', email.toLowerCase())
-
-  if (error) {
-    throw new Error(`Failed to mark installation complete: ${error.message}`)
-  }
-
-  // Fetch and return the updated user
-  const user = await getUserByEmail(email)
-  if (!user) {
-    throw new Error('User not found after update')
-  }
-  return user
+): Promise<Installation> {
+  return updateInstallation(installationId, {
+    hasCompletedInstallation: true,
+    secretKey,
+  })
 }
 
 /**
  * Atomically update health check timestamp
  */
-export async function updateHealthCheck(email: string): Promise<UserRegistration> {
-  const { error } = await supabase
-    .from('user_registrations')
-
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .update({ last_health_check: new Date().toISOString() })
-    .eq('email', email.toLowerCase())
-
-  if (error) {
-    throw new Error(`Failed to update health check: ${error.message}`)
-  }
-
-  // Fetch and return the updated user
-  const user = await getUserByEmail(email)
-  if (!user) {
-    throw new Error('User not found after update')
-  }
-  return user
+export async function updateHealthCheck(installationId: string): Promise<Installation> {
+  return updateInstallation(installationId, {
+    lastHealthCheck: new Date().toISOString(),
+  })
 }
 
 /**
- * Atomically add or update IP record
- * Uses UPSERT with unique constraint on (user_email, type, work_machine_name)
+ * Delete an installation and its related IP records
  */
-export async function addOrUpdateIpRecord(email: string, ipRecord: IPRecord): Promise<number> {
+export async function deleteInstallation(installationId: string): Promise<void> {
+  // First delete related IP records
+  const { error: ipError } = await supabase
+    .from('ip_records')
+    .delete()
+    .eq('installation_id', installationId)
+
+  if (ipError) {
+    console.error('Error deleting IP records:', ipError)
+    // Continue anyway - we still want to try to delete the installation
+  }
+
+  // Delete the installation
+  const { error } = await supabase
+    .from('installations')
+    .delete()
+    .eq('id', installationId)
+
+  if (error) {
+    throw new Error(`Failed to delete installation: ${error.message}`)
+  }
+}
+
+/**
+ * Atomically mark deployment ready
+ */
+export async function markDeploymentReady(
+  installationId: string,
+  ready: boolean,
+): Promise<void> {
+  await updateInstallation(installationId, { deploymentReady: ready })
+}
+
+/**
+ * IP Record Management
+ */
+
+/**
+ * Atomically add or update IP record
+ */
+export async function addOrUpdateIpRecord(
+  installationId: string,
+  ipRecord: IPRecord,
+): Promise<number> {
   const { error } = await supabase
     .from('ip_records')
     // @ts-expect-error - Supabase placeholder client type inference issue
     .upsert(
       {
-        user_email: email.toLowerCase(),
+        installation_id: installationId,
         type: ipRecord.type,
         ip: ipRecord.ip,
         work_machine_name: ipRecord.workMachineName || null,
@@ -230,7 +474,7 @@ export async function addOrUpdateIpRecord(email: string, ipRecord: IPRecord): Pr
         dns_record_ids: ipRecord.dnsRecordIds || [],
       },
       {
-        onConflict: 'user_email,type,work_machine_name',
+        onConflict: 'installation_id,type,work_machine_name',
       },
     )
 
@@ -242,26 +486,47 @@ export async function addOrUpdateIpRecord(email: string, ipRecord: IPRecord): Pr
   const { count } = await supabase
     .from('ip_records')
     .select('*', { count: 'exact', head: true })
-    .eq('user_email', email.toLowerCase())
+    .eq('installation_id', installationId)
 
   return count || 0
 }
 
 /**
- * Atomically mark deployment ready
+ * Delete all IP records for an installation and return their DNS record IDs
  */
-export async function markDeploymentReady(email: string, ready: boolean): Promise<void> {
-  const { error } = await supabase
-    .from('user_registrations')
+export async function deleteIpRecords(installationId: string): Promise<string[]> {
+  // Get all IP records to extract DNS record IDs
+  const { data: ipData } = await supabase
+    .from('ip_records')
+    .select('*')
+    .eq('installation_id', installationId)
 
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .update({ deployment_ready: ready })
-    .eq('email', email.toLowerCase())
+  const dnsRecordIds: string[] = []
+
+  if (ipData) {
+    for (const record of ipData as IPRecordRow[]) {
+      if (record.dns_record_ids && Array.isArray(record.dns_record_ids)) {
+        dnsRecordIds.push(...record.dns_record_ids)
+      }
+    }
+  }
+
+  // Delete all IP records
+  const { error } = await supabase
+    .from('ip_records')
+    .delete()
+    .eq('installation_id', installationId)
 
   if (error) {
-    throw new Error(`Failed to mark deployment ready: ${error.message}`)
+    console.error('Error deleting IP records:', error)
   }
+
+  return dnsRecordIds
 }
+
+/**
+ * Domain Reservation Management
+ */
 
 /**
  * Check if subdomain is available
@@ -310,11 +575,11 @@ export async function isSubdomainAvailable(subdomain: string): Promise<boolean> 
 }
 
 /**
- * Atomically reserve a subdomain
- * Uses INSERT with unique constraint for atomicity
+ * Atomically reserve a subdomain for an installation
  */
 export async function reserveSubdomain(
   subdomain: string,
+  installationId: string,
   userId: string,
   userEmail: string,
   userName: string,
@@ -325,10 +590,10 @@ export async function reserveSubdomain(
   // Insert domain reservation (will fail if subdomain already exists due to PRIMARY KEY)
   const result = await supabase
     .from('domain_reservations')
-
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .insert({
       subdomain: subdomainLower,
+      installation_id: installationId,
       user_id: userId,
       user_email: userEmail.toLowerCase(),
       user_name: userName,
@@ -346,22 +611,22 @@ export async function reserveSubdomain(
     throw new Error(`Failed to reserve subdomain: ${result.error.message}`)
   }
 
-  type DomainReservationRow = Database['public']['Tables']['domain_reservations']['Row']
   const data = result.data as DomainReservationRow
 
-  // Atomically update user registration with subdomain
+  // Atomically update installation with subdomain and mark as ready
   await supabase
-    .from('user_registrations')
-
+    .from('installations')
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({
       subdomain: subdomainLower,
       reserved_at: reservedAt,
+      deployment_ready: true,
     })
-    .eq('email', userEmail.toLowerCase())
+    .eq('id', installationId)
 
   return {
     subdomain: data.subdomain,
+    installationId: data.installation_id,
     userId: data.user_id,
     reservedAt: data.reserved_at,
     status: data.status,
@@ -386,12 +651,12 @@ export async function getDomainReservation(subdomain: string): Promise<DomainRes
     return null
   }
 
-  type DomainReservationRow = Database['public']['Tables']['domain_reservations']['Row']
   const data = result.data as DomainReservationRow | null
   if (!data) return null
 
   return {
     subdomain: data.subdomain,
+    installationId: data.installation_id,
     userId: data.user_id,
     reservedAt: data.reserved_at,
     status: data.status,
@@ -401,43 +666,13 @@ export async function getDomainReservation(subdomain: string): Promise<DomainRes
 }
 
 /**
- * Delete all IP records for a user and return their DNS record IDs
+ * Delete domain reservation for an installation
  */
-export async function deleteIpRecords(email: string): Promise<string[]> {
-  // Get all IP records to extract DNS record IDs
-  const { data: ipData } = await supabase
-    .from('ip_records')
-    .select('*')
-    .eq('user_email', email.toLowerCase())
-
-  const dnsRecordIds: string[] = []
-
-  if (ipData) {
-    for (const record of ipData as IPRecordRow[]) {
-      if (record.dns_record_ids && Array.isArray(record.dns_record_ids)) {
-        dnsRecordIds.push(...record.dns_record_ids)
-      }
-    }
-  }
-
-  // Delete all IP records
-  const { error } = await supabase.from('ip_records').delete().eq('user_email', email.toLowerCase())
-
-  if (error) {
-    console.error('Error deleting IP records:', error)
-  }
-
-  return dnsRecordIds
-}
-
-/**
- * Delete domain reservation for a user
- */
-export async function deleteDomainReservation(email: string): Promise<void> {
+export async function deleteDomainReservation(installationId: string): Promise<void> {
   const { error } = await supabase
     .from('domain_reservations')
     .delete()
-    .eq('user_email', email.toLowerCase())
+    .eq('installation_id', installationId)
 
   if (error) {
     console.error('Error deleting domain reservation:', error)
@@ -446,12 +681,11 @@ export async function deleteDomainReservation(email: string): Promise<void> {
 }
 
 /**
- * Reset user installation (clears subdomain, deployment status, but keeps user registration)
+ * Reset installation (clears subdomain, deployment status)
  */
-export async function resetUserInstallation(email: string): Promise<void> {
+export async function resetInstallation(installationId: string): Promise<void> {
   const { error } = await supabase
-    .from('user_registrations')
-
+    .from('installations')
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({
       subdomain: null,
@@ -461,7 +695,7 @@ export async function resetUserInstallation(email: string): Promise<void> {
       deployment_ready: false,
       last_health_check: null,
     })
-    .eq('email', email.toLowerCase())
+    .eq('id', installationId)
 
   if (error) {
     throw new Error(`Failed to reset installation: ${error.message}`)
@@ -469,20 +703,20 @@ export async function resetUserInstallation(email: string): Promise<void> {
 }
 
 /**
- * Certificate management
+ * Certificate Management
  */
 export type CertificateScope = 'installation' | 'workmachine' | 'workspace'
 
 export interface TLSCertificate {
   id?: number
-  userEmail: string
+  installationId: string
   cloudflareCertId: string | null
   certificate: string
   privateKey: string
   hostnames: string[]
   scope: CertificateScope
-  scopeIdentifier?: string | null // wm-user for workmachine, workspace name for workspace
-  parentScopeIdentifier?: string | null // wm-user for workspace scope
+  scopeIdentifier?: string | null
+  parentScopeIdentifier?: string | null
   validFrom: string
   validUntil: string
   generatedAt?: string
@@ -494,10 +728,9 @@ export interface TLSCertificate {
 export async function saveCertificate(cert: TLSCertificate): Promise<void> {
   const { error } = await supabase
     .from('tls_certificates')
-
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .insert({
-      user_email: cert.userEmail.toLowerCase(),
+      installation_id: cert.installationId,
       cloudflare_cert_id: cert.cloudflareCertId,
       certificate: cert.certificate,
       private_key: cert.privateKey,
@@ -516,15 +749,18 @@ export async function saveCertificate(cert: TLSCertificate): Promise<void> {
 }
 
 /**
- * Get latest certificate for user, optionally filtered by scope
+ * Get latest certificate for installation, optionally filtered by scope
  */
 export async function getLatestCertificate(
-  email: string,
+  installationId: string,
   scope?: CertificateScope,
   scopeIdentifier?: string,
   parentScopeIdentifier?: string,
 ): Promise<TLSCertificate | null> {
-  let query = supabase.from('tls_certificates').select('*').eq('user_email', email.toLowerCase())
+  let query = supabase
+    .from('tls_certificates')
+    .select('*')
+    .eq('installation_id', installationId)
 
   if (scope) {
     query = query.eq('scope', scope)
@@ -551,7 +787,7 @@ export async function getLatestCertificate(
 
   return {
     id: data.id,
-    userEmail: data.user_email,
+    installationId: data.installation_id,
     cloudflareCertId: data.cloudflare_cert_id,
     certificate: data.certificate,
     privateKey: data.private_key,
@@ -569,23 +805,23 @@ export async function getLatestCertificate(
  * Get certificate by specific scope and identifiers
  */
 export async function getCertificateByScope(
-  email: string,
+  installationId: string,
   scope: CertificateScope,
   scopeIdentifier?: string,
   parentScopeIdentifier?: string,
 ): Promise<TLSCertificate | null> {
-  return getLatestCertificate(email, scope, scopeIdentifier, parentScopeIdentifier)
+  return getLatestCertificate(installationId, scope, scopeIdentifier, parentScopeIdentifier)
 }
 
 /**
- * Delete all certificates for a user
+ * Delete all certificates for an installation
  */
-export async function deleteCertificates(email: string): Promise<string[]> {
+export async function deleteCertificates(installationId: string): Promise<string[]> {
   // Get all certificate IDs first
   const { data } = await supabase
     .from('tls_certificates')
     .select('cloudflare_cert_id')
-    .eq('user_email', email.toLowerCase())
+    .eq('installation_id', installationId)
 
   const certIds: string[] = []
   if (data) {
@@ -600,11 +836,46 @@ export async function deleteCertificates(email: string): Promise<string[]> {
   const { error } = await supabase
     .from('tls_certificates')
     .delete()
-    .eq('user_email', email.toLowerCase())
+    .eq('installation_id', installationId)
 
   if (error) {
     console.error('Error deleting certificates:', error)
   }
 
   return certIds
+}
+
+/**
+ * Legacy Compatibility Functions
+ * These maintain backwards compatibility with old email-based API
+ */
+
+/**
+ * @deprecated Use getUserInstallations instead
+ * Get the first (or only) installation for a user by email
+ */
+export async function getUserByEmailLegacy(email: string): Promise<any | null> {
+  const user = await getUserByEmail(email)
+  if (!user) return null
+
+  const installations = await getUserInstallations(user.userId)
+  if (installations.length === 0) return null
+
+  const installation = installations[0]
+
+  return {
+    userId: user.userId,
+    email: user.email,
+    name: user.name,
+    providers: user.providers,
+    registeredAt: user.registeredAt,
+    installationKey: installation.installationKey,
+    secretKey: installation.secretKey,
+    hasCompletedInstallation: installation.hasCompletedInstallation,
+    subdomain: installation.subdomain,
+    reservedAt: installation.reservedAt,
+    deploymentReady: installation.deploymentReady,
+    lastHealthCheck: installation.lastHealthCheck,
+    ipRecords: installation.ipRecords,
+  }
 }

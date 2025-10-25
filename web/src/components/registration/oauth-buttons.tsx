@@ -34,7 +34,7 @@ const OAUTH_PROVIDERS = {
     ),
     label: 'Continue with Google',
   },
-  'azure-ad': {
+  'microsoft-entra-id': {
     icon: (
       <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
         <path fill="#f25022" d="M11.4 11.4H0V0h11.4z" />
@@ -50,7 +50,7 @@ const OAUTH_PROVIDERS = {
 export function OAuthButtons() {
   const handleClick = (provider: keyof typeof OAUTH_PROVIDERS) => {
     // Redirect to our API route that will initiate OAuth
-    window.location.href = `/api/register/oauth/${provider}`
+    window.location.href = `/api/installations/oauth/${provider}`
   }
 
   return (

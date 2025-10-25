@@ -24,10 +24,10 @@ export async function GetStartedButton({
     )
   }
 
-  // Otherwise show "Get Started" that goes to contact page
+  // Otherwise show "Get Started" that goes to access-console page
   return (
     <Button asChild size={size} className={className} variant={variant}>
-      <Link href="/contact">Get Started</Link>
+      <Link href="/installations/login">Get Started</Link>
     </Button>
   )
 }
