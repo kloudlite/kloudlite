@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/registration/auth-config'
-import { reserveSubdomain, getUserByEmail } from '@/lib/registration/storage-service'
+import { getRegistrationSession } from '@/lib/registration-auth'
+import { reserveSubdomain, getUserInstallations } from '@/lib/registration/supabase-storage-service'
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth()
-    if (!session || !session.user || !session.user.email) {
+    const session = await getRegistrationSession()
+    if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -26,27 +26,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already has a domain
-    const existingRegistration = await getUserByEmail(session.user.email)
-    if (existingRegistration?.subdomain) {
+    // Check if user already has installations with reserved domains
+    const installations = await getUserInstallations(session.user.id)
+    const installationWithDomain = installations.find((i) => i.subdomain)
+
+    if (installationWithDomain) {
       return NextResponse.json(
         {
           success: false,
           error: 'You already have a domain reserved',
-          subdomain: existingRegistration.subdomain,
+          subdomain: installationWithDomain.subdomain,
         },
         { status: 400 },
       )
     }
 
-    // Reserve the subdomain
-    // Use the existing user's userId from registration, or construct from email if needed
-    const userId = existingRegistration?.userId || `auth-${session.user.email}`
+    // Get an incomplete installation or use the first one
+    const incompleteInstallation = installations.find((i) => !i.hasCompletedInstallation)
+    const targetInstallation = incompleteInstallation || installations[0]
+
+    if (!targetInstallation) {
+      return NextResponse.json(
+        { success: false, error: 'No installation found. Please create an installation first.' },
+        { status: 400 },
+      )
+    }
+
+    // Reserve the subdomain for the installation
     const reservation = await reserveSubdomain(
       subdomain,
-      userId,
-      session.user.email,
-      session.user.name || session.user.email,
+      targetInstallation.id,
+      session.user.id,
+      session.user.email!,
+      session.user.name || session.user.email!,
     )
 
     return NextResponse.json({

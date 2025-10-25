@@ -27,7 +27,7 @@ export interface IPRecord {
 export interface Installation {
   id: string
   userId: string
-  name: string
+  name?: string
   description?: string
   installationKey: string
   secretKey?: string
@@ -201,8 +201,6 @@ export async function getInstallationById(installationId: string): Promise<Insta
   return {
     id: data.id,
     userId: data.user_id,
-    name: data.name,
-    description: data.description || undefined,
     installationKey: data.installation_key,
     secretKey: data.secret_key || undefined,
     hasCompletedInstallation: data.has_completed_installation,
@@ -275,8 +273,6 @@ export async function getUserInstallations(userId: string): Promise<Installation
       return {
         id: inst.id,
         userId: inst.user_id,
-        name: inst.name,
-        description: inst.description || undefined,
         installationKey: inst.installation_key,
         secretKey: inst.secret_key || undefined,
         hasCompletedInstallation: inst.has_completed_installation,
@@ -306,16 +302,14 @@ export async function getUserInstallations(userId: string): Promise<Installation
  */
 export async function createInstallation(
   userId: string,
-  name: string,
-  description: string | undefined,
+  _name: string,
+  _description: string | undefined,
   installationKey: string,
 ): Promise<Installation> {
   type InstallationInsert = Database['public']['Tables']['installations']['Insert']
 
   const insertData: InstallationInsert = {
     user_id: userId,
-    name,
-    description: description || null,
     installation_key: installationKey,
     has_completed_installation: false,
   }
@@ -337,8 +331,6 @@ export async function createInstallation(
   return {
     id: data.id,
     userId: data.user_id,
-    name: data.name,
-    description: data.description || undefined,
     installationKey: data.installation_key,
     secretKey: data.secret_key || undefined,
     hasCompletedInstallation: data.has_completed_installation,
@@ -363,8 +355,6 @@ export async function updateInstallation(
 
   const updateData: InstallationUpdate = {}
 
-  if (updates.name !== undefined) updateData.name = updates.name
-  if (updates.description !== undefined) updateData.description = updates.description || null
   if (updates.secretKey !== undefined) updateData.secret_key = updates.secretKey || null
   if (updates.hasCompletedInstallation !== undefined)
     updateData.has_completed_installation = updates.hasCompletedInstallation
