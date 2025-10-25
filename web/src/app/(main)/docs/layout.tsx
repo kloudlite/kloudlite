@@ -1,6 +1,5 @@
 import { KloudliteLogo } from '@/components/kloudlite-logo'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Search } from 'lucide-react'
 import { DocsSidebar } from './_components/docs-sidebar'
 import { getTheme } from '@/lib/theme-server'

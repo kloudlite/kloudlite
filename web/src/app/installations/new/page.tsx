@@ -142,7 +142,7 @@ export default function NewInstallationPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      A brief description of this installation's purpose
+                      A brief description of this installation&apos;s purpose
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

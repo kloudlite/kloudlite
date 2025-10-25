@@ -92,7 +92,7 @@ export function DeleteInstallationButton({
                 <div className="rounded-md border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950 p-3">
                   <p className="text-sm text-red-900 dark:text-red-200">
                     <strong>Warning:</strong> This will immediately uninstall Kloudlite from your cluster. All data and configurations will be permanently removed.
-                    It's recommended to uninstall from your installation's dashboard settings for a cleaner removal.
+                    It&apos;s recommended to uninstall from your installation&apos;s dashboard settings for a cleaner removal.
                   </p>
                 </div>
               )}

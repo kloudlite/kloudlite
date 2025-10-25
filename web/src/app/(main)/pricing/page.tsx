@@ -46,7 +46,7 @@ function PricingPage() {
               Simple, Transparent Pricing
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              Choose the plan that fits your team's needs
+              Choose the plan that fits your team&apos;s needs
             </p>
           </div>
 
@@ -253,7 +253,7 @@ function PricingPage() {
             <div className="mx-auto mt-12 max-w-3xl space-y-8">
               <div>
                 <h3 className="text-lg font-semibold text-foreground">
-                  What's included in the free BYOC plan?
+                  What&apos;s included in the free BYOC plan?
                 </h3>
                 <p className="mt-2 text-muted-foreground">
                   The BYOC (Bring Your Own Cloud) plan includes all core features of Kloudlite with no
@@ -266,7 +266,7 @@ function PricingPage() {
                   Can I try the Cloud plan before committing?
                 </h3>
                 <p className="mt-2 text-muted-foreground">
-                  Yes! We'll give you 15 days of access for one developer to try out the Cloud plan.
+                  Yes! We&apos;ll give you 15 days of access for one developer to try out the Cloud plan.
                 </p>
               </div>
               <div>
@@ -291,7 +291,7 @@ function PricingPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-foreground">
-                  What's the difference between Cloud and Enterprise?
+                  What&apos;s the difference between Cloud and Enterprise?
                 </h3>
                 <p className="mt-2 text-muted-foreground">
                   Enterprise includes on-premise deployment, advanced authentication options (SSO,

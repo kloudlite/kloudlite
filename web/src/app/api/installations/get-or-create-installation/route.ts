@@ -35,7 +35,13 @@ export async function POST() {
       console.log('Reusing incomplete installation:', installationKey)
     } else {
       // Create a new installation
-      const newInstallation = await createInstallation(session.user.id, crypto.randomUUID())
+      const generatedKey = crypto.randomUUID()
+      const newInstallation = await createInstallation(
+        session.user.id,
+        'My Installation',
+        undefined,
+        generatedKey
+      )
       installationKey = newInstallation.installationKey
       console.log('Created new installation:', installationKey)
     }

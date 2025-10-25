@@ -854,7 +854,7 @@ export async function deleteCertificates(installationId: string): Promise<string
  * @deprecated Use getUserInstallations instead
  * Get the first (or only) installation for a user by email
  */
-export async function getUserByEmailLegacy(email: string): Promise<any | null> {
+export async function getUserByEmailLegacy(email: string): Promise<unknown | null> {
   const user = await getUserByEmail(email)
   if (!user) return null
 

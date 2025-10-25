@@ -144,7 +144,7 @@ export default function CompletePage() {
 
               <div className="border-t pt-4">
                 <p className="text-muted-foreground text-sm">
-                  <strong>What's next?</strong> You can now access your Kloudlite installation dashboard to
+                  <strong>What&apos;s next?</strong> You can now access your Kloudlite installation dashboard to
                   create and manage workspaces, environments, and work machines. Your team members can log in
                   using their own credentials at your installation URL.
                 </p>

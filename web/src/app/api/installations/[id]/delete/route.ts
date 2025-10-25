@@ -6,7 +6,7 @@ import { getInstallationById, deleteInstallation } from '@/lib/registration/supa
  * Delete installation API route
  */
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params

@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { APP_MODE } from '@/lib/app-mode'
 import { Zap, GitBranch, Package, Terminal } from 'lucide-react'
-import { DocsSidebar } from './_components/docs-sidebar'
 
 // Documentation page for website mode
 function DocsPage() {
