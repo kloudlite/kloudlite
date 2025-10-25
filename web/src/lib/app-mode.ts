@@ -1,12 +1,13 @@
 /**
  * App Mode Configuration
  *
- * This application can run in two distinct modes:
- * 1. website - Public marketing/documentation website + installation console
- * 2. dashboard - Tenant's workspace management (inside an installation)
+ * This application can run in three distinct modes:
+ * 1. website - Public marketing/documentation website
+ * 2. console - Installation console for managing Kloudlite installations
+ * 3. dashboard - Tenant's workspace management (inside an installation)
  */
 
-export type AppMode = 'dashboard' | 'website'
+export type AppMode = 'dashboard' | 'website' | 'console'
 
 export const APP_MODE = (process.env.APP_MODE || 'website') as AppMode
 
@@ -19,8 +20,12 @@ export const MODE_ROUTES = {
     '/about',
     '/contact',
     '/blog',
-    '/access-console',
+    '/auth',
+  ],
+  console: [
+    '/',
     '/installations',
+    '/access-console',
     '/auth',
   ],
   dashboard: [
@@ -43,7 +48,7 @@ export function isRouteAllowedInMode(pathname: string, mode: AppMode): boolean {
 
   // Safety check: if allowedRoutes is undefined, default to false
   if (!allowedRoutes) {
-    console.error(`Invalid app mode: ${mode}. Expected 'dashboard' or 'website'`)
+    console.error(`Invalid app mode: ${mode}. Expected 'dashboard', 'console', or 'website'`)
     return false
   }
 
@@ -58,6 +63,8 @@ export function getRedirectForMode(mode: AppMode): string {
   switch (mode) {
     case 'website':
       return '/'
+    case 'console':
+      return '/installations'
     case 'dashboard':
       return '/dashboard'
     default:
