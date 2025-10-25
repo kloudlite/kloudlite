@@ -55,6 +55,9 @@ spec:
           spec:
             description: WorkMachineSpec defines the desired state of WorkMachine
             properties:
+              allowedCIDR:
+                default: 0.0.0.0/0
+                type: string
               autoShutdown:
                 description: |-
                   AutoShutdown configures automatic instance shutdown when idle
@@ -96,18 +99,15 @@ spec:
                   availabilityZone:
                     description: AvailabilityZone is the specific AZ within the region
                     type: string
+                  deleteVolumePostTermination:
+                    type: boolean
                   domainName:
                     description: |-
                       DomainName is the base domain for WorkMachine DNS records
                       (e.g., "workmachines.example.com" → "<machine-name>.workmachines.example.com")
                     type: string
-                  iamInstanceProfileRole:
-                    description: IAMInstanceProfileRole is the IAM role name to attach
-                      to the instance
-                    type: string
-                  instanceType:
-                    description: InstanceType is the EC2 instance type (e.g., m5.large,
-                      t3.medium)
+                  iamRole:
+                    description: IAMRole is the IAM role name to attach to the instance
                     type: string
                   k3sServerURL:
                     description: K3sServerURL is the URL of the K3s server to join
@@ -116,26 +116,13 @@ spec:
                     description: K3sTokenSecret is the name of the Secret containing
                       the K3s join token
                     type: string
+                  machineType:
+                    description: MachineType is the EC2 instance type (e.g., m5.large,
+                      t3.medium)
+                    type: string
                   region:
                     description: Region is the AWS region where the instance will
                       be created
-                    type: string
-                  rootVolumeSize:
-                    default: 50
-                    description: RootVolumeSize is the size of the root EBS volume
-                      in GB
-                    maximum: 1000
-                    minimum: 20
-                    type: integer
-                  rootVolumeType:
-                    default: gp3
-                    description: RootVolumeType is the EBS volume type (gp3, gp2,
-                      io1, io2)
-                    enum:
-                    - gp3
-                    - gp2
-                    - io1
-                    - io2
                     type: string
                   route53HostedZoneID:
                     description: Route53HostedZoneID is the ID of the Route53 hosted
@@ -152,21 +139,39 @@ spec:
                     description: SubnetID is the ID of the subnet where the instance
                       will be created
                     type: string
+                  volumeSize:
+                    default: 50
+                    description: VolumeSize is the size of the root EBS volume in
+                      GB
+                    format: int32
+                    maximum: 1000
+                    minimum: 20
+                    type: integer
+                  volumeType:
+                    default: gp3
+                    description: VolumeType is the EBS volume type (gp3, gp2, io1,
+                      io2)
+                    enum:
+                    - gp3
+                    - gp2
+                    - io1
+                    - io2
+                    type: string
                   vpcID:
-                    description: VPCID is the ID of the VPC where the instance will
+                    description: VPC_ID is the ID of the VPC where the instance will
                       be created
                     type: string
                 required:
                 - ami
                 - domainName
-                - instanceType
                 - k3sServerURL
                 - k3sTokenSecret
+                - machineType
                 - region
-                - rootVolumeSize
-                - rootVolumeType
                 - route53HostedZoneID
                 - subnetID
+                - volumeSize
+                - volumeType
                 - vpcID
                 type: object
               desiredState:
@@ -283,7 +288,7 @@ spec:
                   type: object
                 type: object
               instanceID:
-                description: InstanceID is the EC2 instance ID (only for AWS provider)
+                description: MachineID is the EC2 instance ID (only for AWS provider)
                 type: string
               isReady:
                 type: boolean

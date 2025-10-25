@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -x
+
+# Log to both console and file
+exec > >(tee /var/log/user-data.log)
+exec 2>&1
+
+function log() {
+  echo "[$(date -Iseconds)] $*"
+}
+
+# --- System tuning ---
+log "Disabling swap and preparing system..."
+
+swapoff -a || true
+sed -i '/ swap / s/^/#/' /etc/fstab || true
+
+log "Starting K3s agent setup..."
+
+export K3S_URL="{{.K3sURL}}"
+export K3S_TOKEN="{{.K3sAgentToken}}"
+
+export MACHINE_NAME="{{.MachineName}}"
+export MACHINE_OWNER="{{.MachineOwner}}"
+
+export INSTALL_K3S_EXEC="agent \
+  --node-name=${MACHINE_NAME} \
+  --node-label=kloudlite.io/workmachine=${MACHINE_NAME} \
+  --node-label=kloudlite.io/owner=${MACHINE_OWNER} \
+  --node-taint=kloudlite.io/workmachine=${MACHINE_NAME}:NoSchedule \
+  --kubelet-arg=system-reserved=cpu=100m,memory=256Mi \
+  --kubelet-arg=kube-reserved=cpu=100m,memory=256Mi \
+  --kubelet-arg=eviction-hard=memory.available<200Mi,nodefs.available<5% \
+  --kubelet-arg=eviction-soft=memory.available<300Mi,nodefs.available<10% \
+  --kubelet-arg=cgroup-driver=systemd \
+  --kubelet-arg=fail-swap-on=false"
+
+curl -sfL https://get.k3s.io | sh -
+
+log "k3s agent ($MACHINE_NAME) installed, node will join cluster soon ..."

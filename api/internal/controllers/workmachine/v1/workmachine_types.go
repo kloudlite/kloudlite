@@ -1,6 +1,7 @@
 package v1
 
 import (
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -59,6 +60,9 @@ type WorkMachineSpec struct {
 	// SSHPublicKeys for SSH access to the VM
 	// +optional
 	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
+
+	// +kubebuilder:default="0.0.0.0/0"
+	AllowedCIDR string `json:"allowedCIDR,omitempty"`
 
 	// Provider specifies the cloud provider (aws, gcp, azure, or empty for k8s deployment)
 	// +optional
@@ -137,9 +141,9 @@ type AWSProviderConfig struct {
 	// +optional
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 
-	// VPCID is the ID of the VPC where the instance will be created
+	// VPC_ID is the ID of the VPC where the instance will be created
 	// +kubebuilder:validation:Required
-	VPCID string `json:"vpcID"`
+	VPC_ID string `json:"vpcID"`
 
 	// SubnetID is the ID of the subnet where the instance will be created
 	// +kubebuilder:validation:Required
@@ -149,24 +153,26 @@ type AWSProviderConfig struct {
 	// +kubebuilder:validation:Required
 	AMI string `json:"ami"`
 
-	// InstanceType is the EC2 instance type (e.g., m5.large, t3.medium)
+	// MachineType is the EC2 instance type (e.g., m5.large, t3.medium)
 	// +kubebuilder:validation:Required
-	InstanceType string `json:"instanceType"`
+	MachineType ec2types.InstanceType `json:"machineType"`
 
-	// RootVolumeSize is the size of the root EBS volume in GB
+	// VolumeSize is the size of the root EBS volume in GB
 	// +kubebuilder:default=50
 	// +kubebuilder:validation:Minimum=20
 	// +kubebuilder:validation:Maximum=1000
-	RootVolumeSize int `json:"rootVolumeSize"`
+	VolumeSize int32 `json:"volumeSize"`
 
-	// RootVolumeType is the EBS volume type (gp3, gp2, io1, io2)
+	// VolumeType is the EBS volume type (gp3, gp2, io1, io2)
 	// +kubebuilder:default=gp3
 	// +kubebuilder:validation:Enum=gp3;gp2;io1;io2
-	RootVolumeType string `json:"rootVolumeType"`
+	VolumeType ec2types.VolumeType `json:"volumeType"`
 
-	// IAMInstanceProfileRole is the IAM role name to attach to the instance
+	DeleteVolumePostTermination bool `json:"deleteVolumePostTermination,omitempty"`
+
+	// IAMRole is the IAM role name to attach to the instance
 	// +optional
-	IAMInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty"`
+	IAMRole *string `json:"iamRole,omitempty"`
 
 	// SecurityGroupIDs are additional security group IDs to attach
 	// (WorkMachine controller will create a dedicated SG automatically)
@@ -266,9 +272,9 @@ type WorkMachineStatus struct {
 
 	// --- AWS-specific fields ---
 
-	// InstanceID is the EC2 instance ID (only for AWS provider)
+	// MachineID is the EC2 instance ID (only for AWS provider)
 	// +optional
-	InstanceID string `json:"instanceID,omitempty"`
+	MachineID string `json:"instanceID,omitempty"`
 
 	// PublicIP is the public IP address of the EC2 instance
 	// +optional
@@ -308,6 +314,65 @@ type WorkMachineStatus struct {
 	// ActiveWorkspaceCount is the number of active (non-suspended) workspaces
 	// +optional
 	ActiveWorkspaceCount int32 `json:"activeWorkspaceCount,omitempty"`
+}
+
+// // MachineState represents the current state of a cloud instance
+// type MachineState string
+//
+// const (
+// 	// MachineStatePending means the instance is being created
+// 	MachineStatePending MachineState = "pending"
+//
+// 	// MachineStateRunning means the instance is running
+// 	MachineStateRunning MachineState = "running"
+//
+// 	// MachineStateStopping means the instance is stopping
+// 	MachineStateStopping MachineState = "stopping"
+//
+// 	// MachineStateStopped means the instance is stopped
+// 	MachineStateStopped MachineState = "stopped"
+//
+// 	// MachineStateTerminating means the instance is being terminated
+// 	MachineStateTerminating MachineState = "terminating"
+//
+// 	// MachineStateTerminated means the instance has been terminated
+// 	MachineStateTerminated MachineState = "terminated"
+//
+// 	// MachineStateError means there was an error with the instance
+// 	MachineStateError MachineState = "error"
+//
+// 	// MachineStateNotFound means the instance doesn't exist
+// 	MachineStateNotFound MachineState = "not-found"
+// )
+
+// MachineInfo contains information about a cloud instance
+type MachineInfo struct {
+	// MachineID is the cloud provider's unique identifier for the instance
+	MachineID string
+
+	// State is the current state of the instance
+	State MachineState
+
+	// PublicIP is the public IP address of the instance (if available)
+	PublicIP string
+
+	// PrivateIP is the private IP address of the instance
+	PrivateIP string
+
+	// Region is the cloud region where the instance is running
+	Region string
+
+	// AvailabilityZone is the availability zone within the region
+	AvailabilityZone string
+
+	// Message provides additional information about the instance state
+	Message string
+
+	// SecurityGroupID is the ID of the security group attached to the instance
+	SecurityGroupID string
+
+	// K3sJoinStatus indicates whether the K3s agent successfully joined the cluster
+	K3sJoinStatus string
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

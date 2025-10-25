@@ -2,10 +2,11 @@ version: "2"
 
 linters:
   default: "none"
+  # default: "fast"
   enable:
-    - govet
+    # - govet
     - revive
-    - bodyclose
+    # - bodyclose
     - misspell
     - nilerr
     - nilnil

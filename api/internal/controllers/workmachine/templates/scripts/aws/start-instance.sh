@@ -5,20 +5,14 @@ set -euo pipefail
 # Uses hybrid approach: INSTANCE_ID env var OR query by tags
 
 # Required environment variables:
-# - REGION: AWS region
 # - INSTANCE_ID: Instance ID
 
 function log() {
   echo "[$(date -Iseconds)] $*"
 }
 
-function valid() {
-  [ -n "$1" ] && [ "$1" != "None" ]
-}
-
 # Required variables
 required_vars=(
-  "REGION"
   "INSTANCE_ID"
 )
 
@@ -30,11 +24,11 @@ for var in "${required_vars[@]}"; do
 done
 
 log "Starting Instance: ${INSTANCE_ID}"
+
 aws ec2 start-instances \
-  --region "${REGION}" \
   --instance-ids "${INSTANCE_ID}"
 
 log "Waiting till instance is in running state ..."
+
 aws ec2 wait instance-running \
-  --region "${REGION}" \
   --instance-ids "${INSTANCE_ID}"
