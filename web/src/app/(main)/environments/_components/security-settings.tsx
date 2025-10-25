@@ -13,21 +13,21 @@ export function SecuritySettings() {
         <div className="space-y-4">
           <div>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="text-blue-600" defaultChecked />
+              <input type="checkbox" className="text-info" defaultChecked />
               <span className="text-sm">Enable network policies</span>
             </label>
           </div>
 
           <div>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="text-blue-600" defaultChecked />
+              <input type="checkbox" className="text-info" defaultChecked />
               <span className="text-sm">Encrypt secrets at rest</span>
             </label>
           </div>
 
           <div>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="text-blue-600" />
+              <input type="checkbox" className="text-info" />
               <span className="text-sm">Enable pod security policies</span>
             </label>
           </div>

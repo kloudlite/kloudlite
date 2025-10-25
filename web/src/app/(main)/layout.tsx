@@ -3,9 +3,20 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { isSystemReady, SystemSetupPage } from '@/lib/system-check'
+import { APP_MODE } from '@/lib/app-mode'
 
-// Main layout - middleware ensures only users with 'user' role can access this
+// Main layout - handles both dashboard and website modes
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  // Website mode: Simple layout without navigation with ScrollArea
+  if (APP_MODE === 'website') {
+    return (
+      <ScrollArea className="h-screen">
+        <div className="min-h-screen">{children}</div>
+      </ScrollArea>
+    )
+  }
+
+  // Dashboard mode: Full layout with navigation
   const session = await auth()
   const userRoles = session?.user?.roles || []
   const isSuperAdmin = userRoles.includes('super-admin')

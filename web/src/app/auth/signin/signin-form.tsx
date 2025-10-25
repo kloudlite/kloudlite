@@ -78,7 +78,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="email" className="text-sm font-medium text-foreground">
             Email
           </Label>
           <Input
@@ -95,7 +95,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="password" className="text-sm font-medium text-foreground">
             Password
           </Label>
           <Input
@@ -113,7 +113,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
 
         <Button
           type="submit"
-          className="h-10 w-full bg-gray-900 text-sm font-medium text-white hover:bg-gray-800"
+          className="h-10 w-full text-sm font-medium"
           disabled={loading}
         >
           {loading ? 'Signing in...' : 'Sign in'}
@@ -124,10 +124,10 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
           <>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-200" />
+                <span className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
 

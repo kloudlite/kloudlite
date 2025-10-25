@@ -7,11 +7,32 @@ export type Database = {
     Tables: {
       user_registrations: {
         Row: {
-          email: string
           user_id: string
+          email: string
           name: string
           providers: ('github' | 'google' | 'azure-ad')[]
           registered_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          email: string
+          name: string
+          providers?: ('github' | 'google' | 'azure-ad')[]
+          registered_at?: string
+        }
+        Update: {
+          email?: string
+          name?: string
+          providers?: ('github' | 'google' | 'azure-ad')[]
+          registered_at?: string
+        }
+      }
+      installations: {
+        Row: {
+          id: string
+          user_id: string
           installation_key: string
           secret_key: string | null
           has_completed_installation: boolean
@@ -23,11 +44,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          email: string
+          id?: string
           user_id: string
-          name: string
-          providers?: ('github' | 'google' | 'azure-ad')[]
-          registered_at?: string
           installation_key: string
           secret_key?: string | null
           has_completed_installation?: boolean
@@ -37,11 +55,7 @@ export type Database = {
           last_health_check?: string | null
         }
         Update: {
-          email?: string
           user_id?: string
-          name?: string
-          providers?: ('github' | 'google' | 'azure-ad')[]
-          registered_at?: string
           installation_key?: string
           secret_key?: string | null
           has_completed_installation?: boolean
@@ -54,7 +68,7 @@ export type Database = {
       ip_records: {
         Row: {
           id: number
-          user_email: string
+          installation_id: string
           type: 'installation' | 'workmachine'
           ip: string
           work_machine_name: string | null
@@ -64,7 +78,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          user_email: string
+          installation_id: string
           type: 'installation' | 'workmachine'
           ip: string
           work_machine_name?: string | null
@@ -72,7 +86,7 @@ export type Database = {
           dns_record_ids?: string[]
         }
         Update: {
-          user_email?: string
+          installation_id?: string
           type?: 'installation' | 'workmachine'
           ip?: string
           work_machine_name?: string | null
@@ -83,6 +97,7 @@ export type Database = {
       domain_reservations: {
         Row: {
           subdomain: string
+          installation_id: string
           user_id: string
           user_email: string
           user_name: string
@@ -93,6 +108,7 @@ export type Database = {
         }
         Insert: {
           subdomain: string
+          installation_id: string
           user_id: string
           user_email: string
           user_name: string
@@ -101,6 +117,7 @@ export type Database = {
         }
         Update: {
           subdomain?: string
+          installation_id?: string
           user_id?: string
           user_email?: string
           user_name?: string
@@ -111,7 +128,7 @@ export type Database = {
       tls_certificates: {
         Row: {
           id: number
-          user_email: string
+          installation_id: string
           cloudflare_cert_id: string | null
           certificate: string
           private_key: string
@@ -126,7 +143,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          user_email: string
+          installation_id: string
           cloudflare_cert_id?: string | null
           certificate: string
           private_key: string
@@ -139,7 +156,7 @@ export type Database = {
           generated_at?: string
         }
         Update: {
-          user_email?: string
+          installation_id?: string
           cloudflare_cert_id?: string | null
           certificate?: string
           private_key?: string

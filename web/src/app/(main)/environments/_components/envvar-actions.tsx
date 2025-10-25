@@ -48,7 +48,7 @@ export function EnvVarActions({ envVar, environmentId }: EnvVarActionsProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="text-gray-600 hover:text-gray-700"
+        className="text-muted-foreground hover:text-foreground"
         onClick={() => setShowEditSheet(true)}
       >
         <Pencil className="h-4 w-4" />
@@ -56,7 +56,7 @@ export function EnvVarActions({ envVar, environmentId }: EnvVarActionsProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="text-red-600 hover:text-red-700"
+        className="text-destructive hover:text-destructive/80"
         onClick={() => setShowDeleteDialog(true)}
       >
         <Trash2 className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function EnvVarActions({ envVar, environmentId }: EnvVarActionsProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete

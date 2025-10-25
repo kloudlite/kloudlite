@@ -30,28 +30,28 @@ interface EnvironmentCardProps {
 export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
   return (
     <Link href={`/environments/${env.id}`} className="group block">
-      <div className="cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-gray-300 hover:shadow-md">
+      <div className="cursor-pointer overflow-hidden rounded-lg border bg-card transition-all hover:border-border hover:shadow-md">
         {/* Card Header */}
-        <div className="border-b border-gray-100 px-6 py-4">
+        <div className="border-b px-6 py-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h3 className="text-lg font-medium text-gray-900 transition-colors group-hover:text-blue-600">
+                <h3 className="text-lg font-medium transition-colors group-hover:text-info">
                   {env.name}
                 </h3>
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                     env.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-success/10 text-success dark:bg-success/20'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {env.status}
                 </span>
               </div>
               <div className="mt-1 flex flex-col gap-0.5">
-                <p className="text-sm text-gray-500">Owned by {env.owner.split('@')[0]}</p>
-                <p className="text-sm text-gray-500">Last deployed {env.lastDeployed}</p>
+                <p className="text-muted-foreground text-sm">Owned by {env.owner.split('@')[0]}</p>
+                <p className="text-muted-foreground text-sm">Last deployed {env.lastDeployed}</p>
               </div>
             </div>
             <DropdownMenu>
@@ -73,7 +73,7 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
                 <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                   Export Config
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -86,34 +86,34 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
           {/* Stats */}
           <div className="mb-4 grid grid-cols-3 gap-4">
             <div className="flex items-center gap-2">
-              <Box className="h-4 w-4 text-gray-400" />
+              <Box className="text-muted-foreground h-4 w-4" />
               <div>
                 <p className="text-sm font-medium">{env.services}</p>
-                <p className="text-xs text-gray-500">Services</p>
+                <p className="text-muted-foreground text-xs">Services</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <FileCode className="h-4 w-4 text-gray-400" />
+              <FileCode className="text-muted-foreground h-4 w-4" />
               <div>
                 <p className="text-sm font-medium">{env.configs}</p>
-                <p className="text-xs text-gray-500">Configs</p>
+                <p className="text-muted-foreground text-xs">Configs</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-gray-400" />
+              <Lock className="text-muted-foreground h-4 w-4" />
               <div>
                 <p className="text-sm font-medium">{env.secrets}</p>
-                <p className="text-xs text-gray-500">Secrets</p>
+                <p className="text-muted-foreground text-xs">Secrets</p>
               </div>
             </div>
           </div>
 
           {/* Connected Workspaces */}
-          <div className="border-t border-gray-100 pt-4">
+          <div className="border-t pt-4">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium text-gray-500">Connected Workspaces</p>
+              <p className="text-muted-foreground text-xs font-medium">Connected Workspaces</p>
               {env.workspaces.length > 0 && (
-                <span className="text-xs text-gray-400">{env.workspaces.length}</span>
+                <span className="text-muted-foreground text-xs">{env.workspaces.length}</span>
               )}
             </div>
             {env.workspaces.length > 0 ? (
@@ -121,20 +121,20 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
                 {env.workspaces.map((workspace) => (
                   <span
                     key={workspace}
-                    className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                    className="bg-muted inline-flex items-center rounded px-2 py-0.5 text-xs"
                   >
                     {workspace}
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-400">No workspaces connected</p>
+              <p className="text-muted-foreground text-xs">No workspaces connected</p>
             )}
           </div>
 
           {/* Footer */}
-          <div className="mt-3 border-t border-gray-100 pt-3">
-            <span className="text-xs text-gray-500">Created {env.created}</span>
+          <div className="mt-3 border-t pt-3">
+            <span className="text-muted-foreground text-xs">Created {env.created}</span>
           </div>
         </div>
       </div>

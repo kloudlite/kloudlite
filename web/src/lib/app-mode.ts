@@ -1,19 +1,28 @@
 /**
  * App Mode Configuration
  *
- * This application can run in three distinct modes:
- * 1. registration - For new user registration and onboarding
- * 2. dashboard - Main application dashboard for authenticated users
- * 3. website - Public marketing/documentation website
+ * This application can run in two distinct modes:
+ * 1. website - Public marketing/documentation website + installation console
+ * 2. dashboard - Tenant's workspace management (inside an installation)
  */
 
-export type AppMode = 'registration' | 'dashboard' | 'website'
+export type AppMode = 'dashboard' | 'website'
 
-export const APP_MODE = (process.env.APP_MODE || 'dashboard') as AppMode
+export const APP_MODE = (process.env.APP_MODE || 'website') as AppMode
 
 // Route definitions for each mode
 export const MODE_ROUTES = {
-  registration: ['/register'],
+  website: [
+    '/',
+    '/docs',
+    '/pricing',
+    '/about',
+    '/contact',
+    '/blog',
+    '/access-console',
+    '/installations',
+    '/auth',
+  ],
   dashboard: [
     '/',
     '/dashboard',
@@ -24,7 +33,6 @@ export const MODE_ROUTES = {
     '/super-admin',
     '/auth',
   ],
-  website: ['/docs', '/pricing', '/about', '/contact', '/blog'],
 } as const
 
 /**
@@ -42,12 +50,10 @@ export function isRouteAllowedInMode(pathname: string, mode: AppMode): boolean {
  */
 export function getRedirectForMode(mode: AppMode): string {
   switch (mode) {
-    case 'registration':
-      return '/register'
-    case 'dashboard':
-      return '/dashboard'
     case 'website':
       return '/'
+    case 'dashboard':
+      return '/dashboard'
     default:
       return '/'
   }
