@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getUserInstallations } from '@/lib/registration/supabase-storage-service'
+import { getUserInstallations, type Installation } from '@/lib/registration/supabase-storage-service'
 import { getRegistrationSession } from '@/lib/registration-auth'
 import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
@@ -13,7 +13,7 @@ export default async function InstallationsPage() {
   }
 
   // Fetch user's installations from database
-  let installations = []
+  let installations: Installation[] = []
   try {
     installations = await getUserInstallations(session.user.id)
   } catch (error) {

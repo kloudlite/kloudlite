@@ -19,7 +19,7 @@ import { toast } from 'sonner'
 
 interface DeleteInstallationButtonProps {
   installationId: string
-  installationName: string
+  installationName?: string
   hasSecretKey?: boolean
   variant?: 'icon' | 'button'
 }

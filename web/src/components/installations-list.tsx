@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { Installation } from '@/types/registration'
+import type { Installation } from '@/lib/registration/supabase-storage-service'
 
 interface InstallationsListProps {
   installations: Installation[]

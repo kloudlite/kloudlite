@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Copy, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Installation } from '@/types/registration'
+import type { Installation } from '@/lib/registration/supabase-storage-service'
 
 interface InstallationDetailsCardProps {
   installation: Installation
