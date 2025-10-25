@@ -10,12 +10,13 @@ function validateEnv() {
   const isBuildTime =
     typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build'
 
-  // Website mode (installations/registration console) doesn't need API_URL/WEB_URL as it uses Supabase directly
-  const isWebsiteMode = appMode === 'registration' || appMode === 'website'
+  // Website and console modes don't need API_URL/WEB_URL as they use Supabase directly
+  // registration is the legacy name for console mode
+  const isSupabaseMode = appMode === 'registration' || appMode === 'website' || appMode === 'console'
 
   // In production runtime (not build), fail fast if critical env vars are missing
-  // Skip validation for website mode as it doesn't use the backend API
-  if (process.env.NODE_ENV === 'production' && !isBuildTime && !isWebsiteMode && !apiUrl) {
+  // Skip validation for website/console modes as they don't use the backend API
+  if (process.env.NODE_ENV === 'production' && !isBuildTime && !isSupabaseMode && !apiUrl) {
     throw new Error(
       'CRITICAL: NEXT_PUBLIC_API_URL environment variable is not set. ' +
         'The application cannot function without this configuration. ' +
@@ -23,7 +24,7 @@ function validateEnv() {
     )
   }
 
-  if (process.env.NODE_ENV === 'production' && !isBuildTime && !isWebsiteMode && !webUrl) {
+  if (process.env.NODE_ENV === 'production' && !isBuildTime && !isSupabaseMode && !webUrl) {
     throw new Error(
       'CRITICAL: NEXT_PUBLIC_WEB_URL environment variable is not set. ' +
         'The application cannot function without this configuration. ' +
