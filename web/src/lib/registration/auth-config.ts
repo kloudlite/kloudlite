@@ -64,7 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (url.startsWith(baseUrl)) {
         return url
       }
-      return `${baseUrl}/register/install`
+      return `${baseUrl}/access-console/install`
     },
   },
   session: {
