@@ -603,7 +603,7 @@ export async function reserveSubdomain(
 
   const data = result.data as DomainReservationRow
 
-  // Atomically update installation with subdomain and mark as ready
+  // Atomically update installation with subdomain and mark as ready for deployment
   await supabase
     .from('installations')
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
