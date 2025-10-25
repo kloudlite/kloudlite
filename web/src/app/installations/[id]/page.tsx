@@ -5,7 +5,6 @@ import { getInstallationById } from '@/lib/registration/supabase-storage-service
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { InstallationsHeader } from '@/components/installations-header'
-import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
@@ -98,7 +97,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
                   </p>
                   <p className="text-sm text-amber-900 dark:text-amber-200">
                     Force deleting this installation will immediately remove it from our system and attempt to uninstall Kloudlite from your cluster.
-                    For a cleaner uninstallation, it's recommended to uninstall from your installation's dashboard settings first, then delete the record here.
+                    For a cleaner uninstallation, it&apos;s recommended to uninstall from your installation&apos;s dashboard settings first, then delete the record here.
                   </p>
                 </div>
               )}

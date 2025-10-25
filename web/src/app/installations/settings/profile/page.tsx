@@ -98,7 +98,7 @@ export default async function ProfilePage() {
                 {session.provider}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                You're signed in with {session.provider}
+                You&apos;re signed in with {session.provider}
               </span>
             </div>
           </div>

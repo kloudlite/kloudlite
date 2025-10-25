@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  getUserByInstallationKey,
+  getInstallationByKey,
   deleteIpRecords,
   deleteDomainReservation,
-  resetUserInstallation,
+  resetInstallation,
   deleteCertificates,
 } from '@/lib/registration/supabase-storage-service'
 import { deleteDnsRecords } from '@/lib/registration/cloudflare-dns'
@@ -42,22 +42,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
     }
 
-    // Look up user by installation key
-    const user = await getUserByInstallationKey(installationKey)
+    // Look up installation by installation key
+    const installation = await getInstallationByKey(installationKey)
 
-    if (!user) {
+    if (!installation) {
       return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Verify secret key matches
-    if (user.secretKey !== secretKey) {
+    if (installation.secretKey !== secretKey) {
       return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
-    console.log(`Starting uninstall for user: ${user.email}`)
+    console.log(`Starting uninstall for installation: ${installation.id}`)
 
     // Step 1: Get all DNS record IDs and delete IP records
-    const dnsRecordIds = await deleteIpRecords(user.email)
+    const dnsRecordIds = await deleteIpRecords(installation.id)
     console.log(`Found ${dnsRecordIds.length} DNS records to delete`)
 
     // Step 2: Delete DNS records from Cloudflare
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     // Step 3: Delete TLS certificates
     let certRevokeCount = 0
     try {
-      const certIds = await deleteCertificates(user.email)
+      const certIds = await deleteCertificates(installation.id)
       console.log(`Found ${certIds.length} certificates to revoke`)
 
       for (const certId of certIds) {
@@ -92,22 +92,22 @@ export async function POST(request: NextRequest) {
 
     // Step 4: Delete domain reservation
     try {
-      await deleteDomainReservation(user.email)
-      console.log(`Deleted domain reservation for: ${user.subdomain}`)
+      await deleteDomainReservation(installation.id)
+      console.log(`Deleted domain reservation for: ${installation.subdomain}`)
     } catch (error) {
       console.error('Failed to delete domain reservation:', error)
       // Continue anyway - IP records and DNS are already deleted
     }
 
-    // Step 5: Reset user installation
-    await resetUserInstallation(user.email)
-    console.log(`Reset installation for user: ${user.email}`)
+    // Step 5: Reset installation
+    await resetInstallation(installation.id)
+    console.log(`Reset installation: ${installation.id}`)
 
     const response = NextResponse.json({
       success: true,
       message: 'Installation uninstalled successfully',
-      email: user.email,
-      subdomain: user.subdomain,
+      installationId: installation.id,
+      subdomain: installation.subdomain,
       dnsRecordsDeleted: dnsDeleteCount,
       ipRecordsDeleted: dnsRecordIds.length,
       certificatesRevoked: certRevokeCount,

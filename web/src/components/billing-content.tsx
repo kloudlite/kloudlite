@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { Cloud, Rocket } from 'lucide-react'
 
 export function BillingContent() {
@@ -14,7 +14,7 @@ export function BillingContent() {
           </div>
           <CardTitle className="text-3xl mb-3">Cloud Plans Coming Soon</CardTitle>
           <CardDescription className="max-w-md text-base mb-8">
-            We're working on bringing you flexible cloud hosting plans for your installations.
+            We&apos;re working on bringing you flexible cloud hosting plans for your installations.
             Stay tuned for updates!
           </CardDescription>
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-full">

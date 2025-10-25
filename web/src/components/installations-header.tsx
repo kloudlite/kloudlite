@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Settings, LogOut, User } from 'lucide-react'
+import { Settings, LogOut } from 'lucide-react'
 import { KloudliteLogo } from '@/components/kloudlite-logo'
 
 interface InstallationsHeaderProps {

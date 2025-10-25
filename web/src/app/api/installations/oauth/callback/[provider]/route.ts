@@ -209,7 +209,7 @@ export async function GET(
     console.log('Existing user found:', email)
 
     // Add provider to array if not already present
-    const currentProvider = provider as 'github' | 'google' | 'microsoft-entra-id'
+    const currentProvider = (provider === 'microsoft-entra-id' ? 'azure-ad' : provider) as 'github' | 'google' | 'azure-ad'
     if (!existingUser.providers.includes(currentProvider)) {
       existingUser.providers = [...existingUser.providers, currentProvider]
       console.log('Adding new provider:', currentProvider)
@@ -227,11 +227,12 @@ export async function GET(
     // New user - create user registration
     console.log('New user registration:', email)
 
+    const normalizedProvider = (provider === 'microsoft-entra-id' ? 'azure-ad' : provider) as 'github' | 'google' | 'azure-ad'
     userRegistration = {
       userId,
       email,
       name,
-      providers: [provider as 'github' | 'google' | 'microsoft-entra-id'],
+      providers: [normalizedProvider],
       registeredAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

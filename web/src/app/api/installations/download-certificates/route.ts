@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  getUserByInstallationKey,
+  getInstallationByKey,
   getLatestCertificate,
   type CertificateScope,
 } from '@/lib/registration/supabase-storage-service'
@@ -67,21 +67,21 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Look up user by installation key
-    const user = await getUserByInstallationKey(installationKey)
+    // Look up installation by installation key
+    const installation = await getInstallationByKey(installationKey)
 
-    if (!user) {
+    if (!installation) {
       return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Verify secret key matches
-    if (user.secretKey !== secretKey) {
+    if (installation.secretKey !== secretKey) {
       return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
     // Get latest certificate (optionally filtered by scope)
     const cert = await getLatestCertificate(
-      user.email,
+      installation.id,
       scope || undefined,
       scopeIdentifier || undefined,
       parentScopeIdentifier || undefined,
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
     }
 
     const scopeLog = scope ? `, scope: ${scope}` : ''
-    console.log(`Downloading certificate for user: ${user.email}${scopeLog}, format: ${format}`)
+    console.log(`Downloading certificate for installation: ${installation.id}${scopeLog}, format: ${format}`)
 
     // Return in requested format
     switch (format) {
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse(bundle, {
           headers: {
             'Content-Type': 'text/plain',
-            'Content-Disposition': `attachment; filename="${user.subdomain}-tls-bundle.pem"`,
+            'Content-Disposition': `attachment; filename="${installation.subdomain}-tls-bundle.pem"`,
             'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
             Pragma: 'no-cache',
             Expires: '0',

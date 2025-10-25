@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  getUserByInstallationKey,
+  getInstallationByKey,
   saveCertificate,
   type CertificateScope,
 } from '@/lib/registration/supabase-storage-service'
@@ -72,28 +72,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Look up user by installation key
-    const user = await getUserByInstallationKey(installationKey)
+    // Look up installation by installation key
+    const installation = await getInstallationByKey(installationKey)
 
-    if (!user) {
+    if (!installation) {
       return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
     // Verify secret key matches
-    if (user.secretKey !== secretKey) {
+    if (installation.secretKey !== secretKey) {
       return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
-    // Check if user has subdomain assigned
-    if (!user.subdomain) {
+    // Check if installation has subdomain assigned
+    if (!installation.subdomain) {
       return NextResponse.json(
-        { error: 'User must have a subdomain assigned before generating certificates' },
+        { error: 'Installation must have a subdomain assigned before generating certificates' },
         { status: 400 },
       )
     }
 
     console.log(
-      `Generating ${scope} certificates for user: ${user.email}, subdomain: ${user.subdomain}`,
+      `Generating ${scope} certificates for installation: ${installation.id}, subdomain: ${installation.subdomain}`,
     )
     if (scopeIdentifier) {
       console.log(`Scope identifier: ${scopeIdentifier}`)
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     // Generate hostnames for certificate
     const hostnames = generateHostnames(
-      user.subdomain,
+      installation.subdomain,
       CLOUDFLARE_DNS_DOMAIN,
       scope,
       scopeIdentifier,
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Save certificate to database
     await saveCertificate({
-      userEmail: user.email,
+      installationId: installation.id,
       cloudflareCertId: cert.id,
       certificate: cert.certificate,
       privateKey: cert.privateKey,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       validUntil: cert.validUntil,
     })
 
-    console.log(`Certificate saved for user: ${user.email}, scope: ${scope}`)
+    console.log(`Certificate saved for installation: ${installation.id}, scope: ${scope}`)
 
     const response = NextResponse.json({
       success: true,
