@@ -6,7 +6,13 @@
 
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { fileURLToPath } from 'url'
 import { Pool } from 'pg'
+import dotenv from 'dotenv'
+
+// Get __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = join(__filename, '..')
 
 async function migrate() {
   // Parse Supabase URL to get database connection info
@@ -122,11 +128,13 @@ async function migrate() {
   }
 }
 
-// Handle command line execution
-if (require.main === module) {
+// Handle command line execution - check if this module is being run directly
+const isMainModule = import.meta.url === `file://${process.argv[1]}`
+
+if (isMainModule) {
   // Load environment variables from .env.local
-  require('dotenv').config({ path: join(__dirname, '..', '.env.local') })
-  require('dotenv').config({ path: join(__dirname, '..', '.env') })
+  dotenv.config({ path: join(__dirname, '..', '.env.local') })
+  dotenv.config({ path: join(__dirname, '..', '.env') })
 
   migrate()
     .then(() => process.exit(0))
