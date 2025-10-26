@@ -33,6 +33,8 @@ export type Database = {
         Row: {
           id: string
           user_id: string
+          name: string | null
+          description: string | null
           installation_key: string
           secret_key: string | null
           has_completed_installation: boolean
@@ -46,6 +48,8 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
+          name?: string | null
+          description?: string | null
           installation_key: string
           secret_key?: string | null
           has_completed_installation?: boolean
@@ -56,6 +60,8 @@ export type Database = {
         }
         Update: {
           user_id?: string
+          name?: string | null
+          description?: string | null
           installation_key?: string
           secret_key?: string | null
           has_completed_installation?: boolean
