@@ -238,6 +238,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    permissions:
+      contents: read
 
     steps:
       - name: Azure Login
