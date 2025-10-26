@@ -1,4 +1,4 @@
-import { AuthSessionProvider } from '@/components/registration/session-provider'
+import { AuthSessionProvider } from '@/components/console/session-provider'
 
 export default function RegisterLayout({
   children,

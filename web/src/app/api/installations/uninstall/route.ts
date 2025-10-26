@@ -5,9 +5,9 @@ import {
   deleteDomainReservation,
   resetInstallation,
   deleteCertificates,
-} from '@/lib/registration/supabase-storage-service'
-import { deleteDnsRecords } from '@/lib/registration/cloudflare-dns'
-import { revokeCertificate } from '@/lib/registration/cloudflare-certificates'
+} from '@/lib/console/supabase-storage-service'
+import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
+import { revokeCertificate } from '@/lib/console/cloudflare-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'

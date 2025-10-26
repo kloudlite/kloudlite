@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRegistrationSession } from '@/lib/registration-auth'
-import { reserveSubdomain, getUserInstallations } from '@/lib/registration/supabase-storage-service'
+import { getRegistrationSession } from '@/lib/console-auth'
+import { reserveSubdomain, getUserInstallations } from '@/lib/console/supabase-storage-service'
 
 export async function POST(request: NextRequest) {
   try {

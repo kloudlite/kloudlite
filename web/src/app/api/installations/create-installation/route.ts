@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getRegistrationSession } from '@/lib/registration-auth'
-import { createInstallation } from '@/lib/registration/supabase-storage-service'
+import { getRegistrationSession } from '@/lib/console-auth'
+import { createInstallation } from '@/lib/console/supabase-storage-service'
 import { SignJWT } from 'jose'
 import crypto from 'crypto'
 

@@ -1,6 +1,6 @@
 import { KloudliteLogo } from '@/components/kloudlite-logo'
-import { OAuthButtons } from '@/components/registration/oauth-buttons'
-import { getRegistrationSession } from '@/lib/registration-auth'
+import { OAuthButtons } from '@/components/console/oauth-buttons'
+import { getRegistrationSession } from '@/lib/console-auth'
 import { redirect } from 'next/navigation'
 import { AlertCircle } from 'lucide-react'
 
