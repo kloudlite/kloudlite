@@ -73,10 +73,10 @@ The `aws doctor` command checks:
 
 The `aws install` command:
 - Requires `--installation-key` parameter to identify the installation
-- Creates IAM role 'kl-{key}-role' with EC2 management permissions
+- Creates IAM role 'kl-{key}-role' with EC2 management permissions and SSM access
 - Creates security group 'kl-{key}-sg' with required ports (443 external, 6443/8472/10250/5001 internal)
-- Creates SSH key pair 'kl-{key}-key' and saves to ~/.kl/kl-{key}-key.pem
 - Launches t3.medium EC2 instance 'kl-{key}-instance' with Ubuntu 24.04 LTS AMD64
+- Enables AWS Systems Manager (SSM) for secure instance access without SSH keys
 - Automatically installs and starts K3s server on instance startup (via cloud-init)
 - Enables EC2 termination protection by default (can be disabled with `--enable-termination-protection=false`)
 - Configures 100GB root volume
@@ -95,8 +95,7 @@ The `aws uninstall` command:
 - Requires `--installation-key` parameter to identify which installation to remove
 - Automatically disables termination protection before terminating instances
 - Terminates EC2 instance(s) with the matching installation key
-- Deletes security group 'kl-{key}-sg'
-- Deletes SSH key pair 'kl-{key}-key' from AWS and local file
+- Deletes security group 'kl-{key}-sg' (with automatic retries for dependency violations)
 - Deletes IAM instance profile 'kl-{key}-role'
 - Deletes IAM role 'kl-{key}-role' and all attached policies
 - All resources are identified by the `InstallationKey` tag
