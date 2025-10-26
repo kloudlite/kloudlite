@@ -23,10 +23,7 @@ export const MODE_ROUTES = {
     '/auth',
   ],
   console: [
-    '/',
     '/installations',
-    '/access-console',
-    '/auth',
   ],
   dashboard: [
     '/',
