@@ -56,8 +56,8 @@ export function AdminPolicies() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Machine Policies</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
+          <h1 className="text-foreground text-2xl font-semibold">Machine Policies</h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">
             Configure machine types, resource limits, and user policies
           </p>
         </div>
@@ -217,7 +217,9 @@ export function AdminPolicies() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Allow Type Upgrade</Label>
-                    <p className="text-sm text-muted-foreground">Users can upgrade their machine type</p>
+                    <p className="text-muted-foreground text-sm">
+                      Users can upgrade their machine type
+                    </p>
                   </div>
                   <Switch
                     checked={userPolicies.allowTypeUpgrade}
@@ -229,7 +231,9 @@ export function AdminPolicies() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Require Approval for Premium</Label>
-                    <p className="text-sm text-muted-foreground">Premium machines need admin approval</p>
+                    <p className="text-muted-foreground text-sm">
+                      Premium machines need admin approval
+                    </p>
                   </div>
                   <Switch
                     checked={userPolicies.requireApprovalForPremium}
@@ -254,7 +258,7 @@ export function AdminPolicies() {
                       }))
                     }
                   />
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     Machines will auto-stop after this idle time
                   </p>
                 </div>
@@ -271,7 +275,7 @@ export function AdminPolicies() {
                       }))
                     }
                   />
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     Force stop machines after this idle time
                   </p>
                 </div>
@@ -374,7 +378,7 @@ export function AdminPolicies() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Enable Auto Scaling</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Automatically adjust resources based on usage
                     </p>
                   </div>
@@ -383,7 +387,9 @@ export function AdminPolicies() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Scale Down When Idle</Label>
-                    <p className="text-sm text-muted-foreground">Reduce resources for idle machines</p>
+                    <p className="text-muted-foreground text-sm">
+                      Reduce resources for idle machines
+                    </p>
                   </div>
                   <Switch />
                 </div>
@@ -393,14 +399,14 @@ export function AdminPolicies() {
                 <div>
                   <Label htmlFor="scale-up-threshold">Scale Up Threshold (%)</Label>
                   <Input id="scale-up-threshold" type="number" defaultValue="80" />
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     Scale up when usage exceeds this threshold
                   </p>
                 </div>
                 <div>
                   <Label htmlFor="scale-down-threshold">Scale Down Threshold (%)</Label>
                   <Input id="scale-down-threshold" type="number" defaultValue="20" />
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     Scale down when usage falls below this threshold
                   </p>
                 </div>

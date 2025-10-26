@@ -48,7 +48,7 @@ export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="text-muted-foreground transition-colors hover:text-foreground">
+        <button className="text-muted-foreground hover:text-foreground transition-colors">
           {getIcon()}
         </button>
       </DropdownMenuTrigger>

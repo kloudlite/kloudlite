@@ -36,7 +36,7 @@ export default function AuthErrorPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {isNotRegistered && (
-            <div className="rounded-md border border-border bg-muted p-3 text-sm text-foreground">
+            <div className="border-border bg-muted text-foreground rounded-md border p-3 text-sm">
               <p className="font-semibold">Next steps:</p>
               <ul className="mt-1 list-inside list-disc space-y-1">
                 <li>Contact your system administrator</li>

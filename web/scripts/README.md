@@ -27,6 +27,7 @@ pnpm db:migrate
 ```
 
 This will:
+
 - Drop existing tables (if any)
 - Create new tables with the updated schema:
   - `user_registrations` - User authentication data
@@ -42,6 +43,7 @@ This will:
 ### Missing DATABASE_URL
 
 If you see this error:
+
 ```
 ❌ DATABASE_URL is required. Please add it to your .env.local file.
 ```
@@ -51,6 +53,7 @@ Follow the prerequisites section above to add your database connection string.
 ### Connection Failed
 
 If the migration fails to connect:
+
 - Verify your database password is correct
 - Check that your IP is allowed in Supabase (Project Settings > Database > Connection Pooling > Allow connections from)
 - Ensure you're using the direct database connection string, not the pooler connection string

@@ -42,7 +42,9 @@ async function migrate() {
   } else {
     // Try to construct from Supabase URL (won't work without password)
     console.error('❌ DATABASE_URL is required. Please add it to your .env.local file.')
-    console.error('   Get it from: Supabase Dashboard > Project Settings > Database > Connection String')
+    console.error(
+      '   Get it from: Supabase Dashboard > Project Settings > Database > Connection String',
+    )
     process.exit(1)
   }
 
@@ -94,7 +96,7 @@ async function migrate() {
     for (const table of tables) {
       const result = await pool.query(
         `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
-        [table]
+        [table],
       )
       const exists = result.rows[0].count > 0
 
