@@ -79,20 +79,22 @@ export function DeleteInstallationButton({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <AlertTriangle className="text-destructive h-5 w-5" />
             Force Delete Installation
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3">
               <p>
-                Are you sure you want to force delete <strong>{installationName}</strong>? This action
-                cannot be undone.
+                Are you sure you want to force delete <strong>{installationName}</strong>? This
+                action cannot be undone.
               </p>
               {hasSecretKey && (
-                <div className="rounded-md border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950 p-3">
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">
                   <p className="text-sm text-red-900 dark:text-red-200">
-                    <strong>Warning:</strong> This will immediately uninstall Kloudlite from your cluster. All data and configurations will be permanently removed.
-                    It&apos;s recommended to uninstall from your installation&apos;s dashboard settings for a cleaner removal.
+                    <strong>Warning:</strong> This will immediately uninstall Kloudlite from your
+                    cluster. All data and configurations will be permanently removed. It&apos;s
+                    recommended to uninstall from your installation&apos;s dashboard settings for a
+                    cleaner removal.
                   </p>
                 </div>
               )}

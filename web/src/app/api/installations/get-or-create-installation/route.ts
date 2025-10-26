@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import {
-  getUserInstallations,
-  createInstallation,
-} from '@/lib/console/supabase-storage-service'
+import { getUserInstallations, createInstallation } from '@/lib/console/supabase-storage-service'
 import { SignJWT } from 'jose'
 import crypto from 'crypto'
 
@@ -40,7 +37,7 @@ export async function POST() {
         session.user.id,
         'My Installation',
         undefined,
-        generatedKey
+        generatedKey,
       )
       installationKey = newInstallation.installationKey
       console.log('Created new installation:', installationKey)
@@ -64,7 +61,9 @@ export async function POST() {
     const response = NextResponse.json({
       success: true,
       installationKey,
-      message: incompleteInstallation ? 'Reusing incomplete installation' : 'Created new installation',
+      message: incompleteInstallation
+        ? 'Reusing incomplete installation'
+        : 'Created new installation',
     })
 
     // Update the session cookie

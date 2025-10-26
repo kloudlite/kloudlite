@@ -91,13 +91,13 @@ export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkM
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border px-6 py-4">
+      <div className="border-border bg-card rounded-lg border">
+        <div className="border-border border-b px-6 py-4">
           <h2 className="text-lg font-medium">Work Machines</h2>
         </div>
 
         {/* Filters */}
-        <div className="border-b border-border px-6 py-4">
+        <div className="border-border border-b px-6 py-4">
           <div className="flex flex-col gap-4 sm:flex-row">
             <Input
               placeholder="Search by owner or machine name..."
@@ -135,26 +135,26 @@ export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkM
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+              <tr className="border-border border-b">
+                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Machine
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Owner
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Resources
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Activity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Last Active
                 </th>
                 <th className="relative px-6 py-3">
@@ -162,7 +162,7 @@ export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkM
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border bg-card">
+            <tbody className="divide-border bg-card divide-y">
               {filteredMachines.map((machine) => (
                 <tr key={machine.id} className="hover:bg-muted">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -170,14 +170,14 @@ export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkM
                       href={`/administration/machines/${machine.id}`}
                       className="group flex items-center gap-3"
                     >
-                      <Server className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
-                      <span className="text-sm font-medium text-foreground group-hover:text-info">
+                      <Server className="text-muted-foreground group-hover:text-foreground h-5 w-5" />
+                      <span className="text-foreground group-hover:text-info text-sm font-medium">
                         {machine.name}
                       </span>
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-muted-foreground">{machine.owner}</span>
+                    <span className="text-muted-foreground text-sm">{machine.owner}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -209,18 +209,18 @@ export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkM
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center rounded bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+                    <span className="bg-muted text-foreground inline-flex items-center rounded px-2 py-0.5 text-xs font-medium">
                       {machine.type}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       <div>{machine.workspaces} workspaces</div>
                       <div>{machine.environments} environments</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center gap-1 text-xs">
                       <Clock className="h-3 w-3" />
                       {new Date(machine.lastActive).toLocaleString()}
                     </div>
@@ -281,8 +281,8 @@ export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkM
 
         {filteredMachines.length === 0 && (
           <div className="px-6 py-12 text-center">
-            <Server className="mx-auto h-12 w-12 text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">No work machines found</p>
+            <Server className="text-muted-foreground mx-auto h-12 w-12" />
+            <p className="text-muted-foreground mt-2 text-sm">No work machines found</p>
           </div>
         )}
       </div>

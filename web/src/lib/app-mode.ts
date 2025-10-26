@@ -13,18 +13,8 @@ export const APP_MODE = (process.env.APP_MODE || 'website') as AppMode
 
 // Route definitions for each mode
 export const MODE_ROUTES = {
-  website: [
-    '/',
-    '/docs',
-    '/pricing',
-    '/about',
-    '/contact',
-    '/blog',
-    '/auth',
-  ],
-  console: [
-    '/installations',
-  ],
+  website: ['/', '/docs', '/pricing', '/about', '/contact', '/blog', '/auth'],
+  console: ['/installations'],
   dashboard: [
     '/',
     '/dashboard',

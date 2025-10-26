@@ -154,7 +154,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                       <div>
                         <div className="text-sm font-semibold">{installation.name}</div>
                         {installation.description && (
-                          <div className="text-muted-foreground text-xs mt-0.5">
+                          <div className="text-muted-foreground mt-0.5 text-xs">
                             {installation.description}
                           </div>
                         )}
@@ -166,7 +166,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                           href={installationUrl!}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center gap-1 font-mono"
+                          className="text-primary flex items-center gap-1 font-mono hover:underline"
                         >
                           {installation.subdomain}.{domain}
                           <ExternalLink className="h-3 w-3" />
@@ -176,7 +176,9 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                      >
                         {status}
                       </span>
                     </td>

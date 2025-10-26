@@ -126,8 +126,8 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
       <div className="bg-card rounded-lg border p-6">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-info/10 p-2">
-              <Cpu className="h-5 w-5 text-info" />
+            <div className="bg-info/10 rounded-lg p-2">
+              <Cpu className="text-info h-5 w-5" />
             </div>
             <div>
               <h3 className="text-sm font-semibold">CPU Usage</h3>
@@ -159,8 +159,8 @@ export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsPr
       <div className="bg-card rounded-lg border p-6">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-accent/10 p-2">
-              <MemoryStick className="h-5 w-5 text-accent-foreground" />
+            <div className="bg-accent/10 rounded-lg p-2">
+              <MemoryStick className="text-accent-foreground h-5 w-5" />
             </div>
             <div>
               <h3 className="text-sm font-semibold">Memory Usage</h3>

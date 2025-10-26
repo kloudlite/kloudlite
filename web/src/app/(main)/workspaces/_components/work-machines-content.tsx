@@ -248,9 +248,7 @@ export function WorkMachinesContent({
               </p>
               <div className="mt-2 flex items-center gap-2">
                 {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-                  .isTransitioning && (
-                  <Loader2 className="h-4 w-4 animate-spin text-info" />
-                )}
+                  .isTransitioning && <Loader2 className="text-info h-4 w-4 animate-spin" />}
                 <p
                   className={`text-sm font-medium ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}
                 >
@@ -297,11 +295,11 @@ export function WorkMachinesContent({
         {/* Transitioning State Banner */}
         {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
           .isTransitioning && (
-          <div className="mb-6 border border-info bg-info/10 p-4">
+          <div className="border-info bg-info/10 mb-6 border p-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-info" />
+              <Loader2 className="text-info h-5 w-5 animate-spin" />
               <div>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-foreground text-sm font-medium">
                   Machine is transitioning from{' '}
                   <span className="font-semibold">
                     {
@@ -317,7 +315,7 @@ export function WorkMachinesContent({
                     }
                   </span>
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-xs">
                   This may take a few moments. The page will refresh automatically when complete.
                 </p>
               </div>
@@ -329,8 +327,8 @@ export function WorkMachinesContent({
         {selectedMachine.currentState === 'stopped' &&
           !getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
             .isTransitioning && (
-            <div className="mb-6 border border-warning bg-warning/10 p-4 text-center">
-              <p className="text-sm text-foreground">
+            <div className="border-warning bg-warning/10 mb-6 border p-4 text-center">
+              <p className="text-foreground text-sm">
                 Machine is stopped. CPU and Memory are not consuming resources, but disk storage is
                 preserved.
               </p>

@@ -27,10 +27,7 @@ const installationSchema = z.object({
     .string()
     .min(3, 'Name must be at least 3 characters')
     .max(50, 'Name must be less than 50 characters')
-    .regex(
-      /^[a-zA-Z0-9\s-]+$/,
-      'Name can only contain letters, numbers, spaces, and hyphens',
-    ),
+    .regex(/^[a-zA-Z0-9\s-]+$/, 'Name can only contain letters, numbers, spaces, and hyphens'),
   description: z.string().max(200, 'Description must be less than 200 characters').optional(),
 })
 
@@ -119,9 +116,7 @@ export default function NewInstallationPage() {
                         className="h-11 px-4 text-base"
                       />
                     </FormControl>
-                    <FormDescription>
-                      A friendly name to identify this installation
-                    </FormDescription>
+                    <FormDescription>A friendly name to identify this installation</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -149,12 +144,7 @@ export default function NewInstallationPage() {
                 )}
               />
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={creating}
-              >
+              <Button type="submit" className="w-full" size="lg" disabled={creating}>
                 {creating ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />

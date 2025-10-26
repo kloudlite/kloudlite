@@ -78,12 +78,7 @@ export function EditEnvVarSheet({
           <div className="flex-1 space-y-6 overflow-y-auto p-4">
             <div className="space-y-2">
               <Label htmlFor="key">Key</Label>
-              <Input
-                id="key"
-                value={envVar.key}
-                disabled
-                className="bg-muted font-mono text-sm"
-              />
+              <Input id="key" value={envVar.key} disabled className="bg-muted font-mono text-sm" />
               <p className="text-muted-foreground text-sm">The key cannot be changed</p>
             </div>
 
@@ -104,10 +99,10 @@ export function EditEnvVarSheet({
 
             <div className="space-y-2">
               <Label>Type</Label>
-              <div className="rounded-lg border bg-muted p-3">
+              <div className="bg-muted rounded-lg border p-3">
                 <div className="flex items-center gap-2">
                   {envVar.type === 'config' ? (
-                    <span className="inline-flex items-center rounded-full bg-info/10 px-2.5 py-0.5 text-xs font-medium text-info dark:bg-info/20">
+                    <span className="bg-info/10 text-info dark:bg-info/20 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                       Config
                     </span>
                   ) : (

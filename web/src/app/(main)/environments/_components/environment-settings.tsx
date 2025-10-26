@@ -30,7 +30,7 @@ export function EnvironmentSettings() {
                 onClick={() => setActiveSection(section.id)}
                 className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                   activeSection === section.id
-                    ? 'bg-accent font-medium text-accent-foreground'
+                    ? 'bg-accent text-accent-foreground font-medium'
                     : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 } ${section.id === 'danger' ? 'text-destructive hover:bg-destructive/10' : ''} `}
               >
@@ -48,27 +48,25 @@ export function EnvironmentSettings() {
           <div className="space-y-4">
             <div className="mb-4">
               <h3 className="text-lg font-medium">General Settings</h3>
-              <p className="text-muted-foreground text-sm">Configure basic environment properties</p>
+              <p className="text-muted-foreground text-sm">
+                Configure basic environment properties
+              </p>
             </div>
             <div className="bg-card rounded-lg border p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Environment Name
-                  </label>
+                  <label className="mb-1 block text-sm font-medium">Environment Name</label>
                   <input
                     type="text"
-                    className="w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-info focus:outline-none"
+                    className="focus:ring-info w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
                     defaultValue="my-dev-env"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Description
-                  </label>
+                  <label className="mb-1 block text-sm font-medium">Description</label>
                   <textarea
-                    className="w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-info focus:outline-none"
+                    className="focus:ring-info w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
                     rows={3}
                     defaultValue="Development environment for the main application"
                   />
@@ -93,17 +91,10 @@ export function EnvironmentSettings() {
             <div className="bg-card rounded-lg border p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">
-                    Environment Visibility
-                  </label>
+                  <label className="mb-2 block text-sm font-medium">Environment Visibility</label>
                   <div className="space-y-2">
                     <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="visibility"
-                        defaultChecked
-                        className="text-info"
-                      />
+                      <input type="radio" name="visibility" defaultChecked className="text-info" />
                       <span className="text-sm">
                         Private - Only accessible to owner and invited members
                       </span>
@@ -124,13 +115,21 @@ export function EnvironmentSettings() {
                   <div className="space-y-2">
                     <div className="bg-muted flex items-center justify-between rounded p-2">
                       <span className="text-sm">alice@team.com</span>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive/80">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive/80"
+                      >
                         Remove
                       </Button>
                     </div>
                     <div className="bg-muted flex items-center justify-between rounded p-2">
                       <span className="text-sm">bob@team.com</span>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive/80">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive/80"
+                      >
                         Remove
                       </Button>
                     </div>
@@ -153,12 +152,10 @@ export function EnvironmentSettings() {
             <div className="bg-card rounded-lg border p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Custom Domain
-                  </label>
+                  <label className="mb-1 block text-sm font-medium">Custom Domain</label>
                   <input
                     type="text"
-                    className="w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-info focus:outline-none"
+                    className="focus:ring-info w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
                     placeholder="app.example.com"
                   />
                 </div>
@@ -189,7 +186,9 @@ export function EnvironmentSettings() {
           <div className="space-y-4">
             <div className="mb-4">
               <h3 className="text-lg font-medium">Security</h3>
-              <p className="text-muted-foreground text-sm">Security policies and encryption settings</p>
+              <p className="text-muted-foreground text-sm">
+                Security policies and encryption settings
+              </p>
             </div>
             <div className="bg-card rounded-lg border p-6">
               <div className="space-y-4">
@@ -235,7 +234,10 @@ export function EnvironmentSettings() {
                     Once you delete an environment, there is no going back. All resources will be
                     permanently removed.
                   </p>
-                  <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10">
+                  <Button
+                    variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive/10"
+                  >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Environment
                   </Button>

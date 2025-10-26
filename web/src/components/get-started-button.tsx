@@ -11,7 +11,7 @@ interface GetStartedButtonProps {
 export async function GetStartedButton({
   size = 'default',
   className,
-  variant = 'default'
+  variant = 'default',
 }: GetStartedButtonProps) {
   const session = await auth()
 
