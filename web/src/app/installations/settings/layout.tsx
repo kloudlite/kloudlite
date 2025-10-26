@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getRegistrationSession } from '@/lib/registration-auth'
+import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsHeader } from '@/components/installations-header'
 import { InstallationSettingsTabs } from '@/components/installation-settings-tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'

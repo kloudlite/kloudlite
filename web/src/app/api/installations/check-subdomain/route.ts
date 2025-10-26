@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isSubdomainAvailable } from '@/lib/registration/storage-service'
+import { isSubdomainAvailable } from '@/lib/console/storage-service'
 
 /**
  * Check if subdomain is available

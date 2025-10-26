@@ -3,13 +3,13 @@ import {
   getInstallationByKey,
   addOrUpdateIpRecord,
   markDeploymentReady,
-} from '@/lib/registration/supabase-storage-service'
-import type { IPRecord } from '@/lib/registration/supabase-storage-service'
+} from '@/lib/console/supabase-storage-service'
+import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
   createInstallationDnsRecords,
   createWorkmachineDnsRecords,
   updateDnsRecords,
-} from '@/lib/registration/cloudflare-dns'
+} from '@/lib/console/cloudflare-dns'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
