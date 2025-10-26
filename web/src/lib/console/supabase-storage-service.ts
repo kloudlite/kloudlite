@@ -273,6 +273,8 @@ export async function getUserInstallations(userId: string): Promise<Installation
       return {
         id: inst.id,
         userId: inst.user_id,
+        name: inst.name || undefined,
+        description: inst.description || undefined,
         installationKey: inst.installation_key,
         secretKey: inst.secret_key || undefined,
         hasCompletedInstallation: inst.has_completed_installation,
