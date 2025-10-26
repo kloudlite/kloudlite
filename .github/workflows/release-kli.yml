@@ -1,0 +1,223 @@
+name: Release kli
+
+on:
+  push:
+    tags:
+      - 'kli-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., kli-v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build kli binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - goos: linux
+            goarch: amd64
+            output: kli-linux-amd64
+          - goos: linux
+            goarch: arm64
+            output: kli-linux-arm64
+
+          # macOS
+          - goos: darwin
+            goarch: amd64
+            output: kli-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            output: kli-darwin-arm64
+
+          # Windows
+          - goos: windows
+            goarch: amd64
+            output: kli-windows-amd64.exe
+          - goos: windows
+            goarch: arm64
+            output: kli-windows-arm64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'api/go.mod'
+          cache-dependency-path: 'api/go.sum'
+
+      - name: Get version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#kli-v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION}"
+
+      - name: Build binary
+        working-directory: ./api
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -v \
+            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/kli/cmd.Version=${{ steps.version.outputs.version }}" \
+            -o ../dist/${{ matrix.output }} \
+            ./cmd/kli
+
+      - name: Generate checksum
+        working-directory: ./dist
+        run: |
+          sha256sum ${{ matrix.output }} > ${{ matrix.output }}.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: |
+            dist/${{ matrix.output }}
+            dist/${{ matrix.output }}.sha256
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#kli-v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          find dist-artifacts -type f -exec cp {} release-assets/ \;
+          ls -lah release-assets/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          # kli ${{ steps.version.outputs.version }}
+
+          ## Installation
+
+          ### Linux (AMD64)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-linux-amd64
+          chmod +x kli-linux-amd64
+          sudo mv kli-linux-amd64 /usr/local/bin/kli
+          ```
+
+          ### Linux (ARM64)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-linux-arm64
+          chmod +x kli-linux-arm64
+          sudo mv kli-linux-arm64 /usr/local/bin/kli
+          ```
+
+          ### macOS (Intel)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-darwin-amd64
+          chmod +x kli-darwin-amd64
+          sudo mv kli-darwin-amd64 /usr/local/bin/kli
+          ```
+
+          ### macOS (Apple Silicon)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-darwin-arm64
+          chmod +x kli-darwin-arm64
+          sudo mv kli-darwin-arm64 /usr/local/bin/kli
+          ```
+
+          ### Windows (AMD64)
+          Download [kli-windows-amd64.exe](https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-windows-amd64.exe) and add to your PATH.
+
+          ### Windows (ARM64)
+          Download [kli-windows-arm64.exe](https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-windows-arm64.exe) and add to your PATH.
+
+          ## Verify Checksums
+
+          After downloading, verify the integrity of the binary:
+
+          ```bash
+          # Download checksum file
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-linux-amd64.sha256
+
+          # Verify (Linux/macOS)
+          sha256sum -c kli-linux-amd64.sha256
+
+          # Verify (macOS alternative)
+          shasum -a 256 -c kli-darwin-arm64.sha256
+          ```
+
+          ## What's Included
+
+          - kli installer CLI with AWS support
+          - Multi-cloud provider support (AWS, GCP, Azure doctor commands)
+          - Comprehensive unit test coverage
+          - Automated K3s installation
+          - AWS Systems Manager (SSM) integration for secure access
+
+          ## Usage
+
+          ```bash
+          # Check version
+          kli version
+
+          # Check AWS prerequisites
+          kli aws doctor
+
+          # Install Kloudlite on AWS
+          kli aws install --installation-key myenv
+
+          # Uninstall
+          kli aws uninstall --installation-key myenv
+          ```
+
+          For full documentation, see [api/cmd/kli/README.md](https://github.com/kloudlite/kloudlite/blob/${{ steps.version.outputs.tag }}/api/cmd/kli/README.md)
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: kli ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
