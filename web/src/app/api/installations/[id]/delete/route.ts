@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getRegistrationSession } from '@/lib/registration-auth'
-import { getInstallationById, deleteInstallation } from '@/lib/registration/supabase-storage-service'
+import { getRegistrationSession } from '@/lib/console-auth'
+import { getInstallationById, deleteInstallation } from '@/lib/console/supabase-storage-service'
 
 /**
  * Delete installation API route
