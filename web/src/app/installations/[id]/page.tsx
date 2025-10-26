@@ -34,23 +34,41 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
   // Determine installation status
   const getStatus = () => {
     if (!installation.secretKey) {
-      return { label: 'Not Installed', color: 'bg-gray-500/10 text-gray-600', description: 'Installation has not been deployed yet' }
+      return {
+        label: 'Not Installed',
+        color: 'bg-gray-500/10 text-gray-600',
+        description: 'Installation has not been deployed yet',
+      }
     }
     if (!installation.subdomain) {
-      return { label: 'Pending Domain', color: 'bg-yellow-500/10 text-yellow-600', description: 'Domain configuration is pending' }
+      return {
+        label: 'Pending Domain',
+        color: 'bg-yellow-500/10 text-yellow-600',
+        description: 'Domain configuration is pending',
+      }
     }
     if (!installation.deploymentReady) {
-      return { label: 'Configuring', color: 'bg-blue-500/10 text-blue-600', description: 'Installation is being configured' }
+      return {
+        label: 'Configuring',
+        color: 'bg-blue-500/10 text-blue-600',
+        description: 'Installation is being configured',
+      }
     }
-    return { label: 'Active', color: 'bg-green-500/10 text-green-600', description: 'Installation is active and running' }
+    return {
+      label: 'Active',
+      color: 'bg-green-500/10 text-green-600',
+      description: 'Installation is active and running',
+    }
   }
 
   const status = getStatus()
   const domain = process.env.CLOUDFLARE_DNS_DOMAIN || 'khost.dev'
-  const installationUrl = installation.subdomain ? `https://${installation.subdomain}.${domain}` : null
+  const installationUrl = installation.subdomain
+    ? `https://${installation.subdomain}.${domain}`
+    : null
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <InstallationsHeader user={session.user} />
 
       {/* Content */}
@@ -82,29 +100,29 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
           <Card className="border-destructive">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <AlertTriangle className="text-destructive h-5 w-5" />
                 <CardTitle className="text-destructive">Danger Zone</CardTitle>
               </div>
-              <CardDescription>
-                Irreversible actions that affect your installation
-              </CardDescription>
+              <CardDescription>Irreversible actions that affect your installation</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {installation.secretKey && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-4">
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-2">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+                  <p className="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
                     Warning: Destructive Action
                   </p>
                   <p className="text-sm text-amber-900 dark:text-amber-200">
-                    Force deleting this installation will immediately remove it from our system and attempt to uninstall Kloudlite from your cluster.
-                    For a cleaner uninstallation, it&apos;s recommended to uninstall from your installation&apos;s dashboard settings first, then delete the record here.
+                    Force deleting this installation will immediately remove it from our system and
+                    attempt to uninstall Kloudlite from your cluster. For a cleaner uninstallation,
+                    it&apos;s recommended to uninstall from your installation&apos;s dashboard
+                    settings first, then delete the record here.
                   </p>
                 </div>
               )}
 
               <div>
-                <p className="text-sm font-semibold text-foreground">Force Delete Installation</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-foreground text-sm font-semibold">Force Delete Installation</p>
+                <p className="text-muted-foreground mt-1 text-sm">
                   {installation.secretKey
                     ? 'Forcefully delete this installation and uninstall Kloudlite from your cluster. This action cannot be undone.'
                     : 'Permanently delete this installation record. This action cannot be undone.'}

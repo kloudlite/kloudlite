@@ -80,8 +80,8 @@ export function PinnedResources({
                 <div className="flex items-start justify-between">
                   <Link href={`/workspaces/${workspace.id}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-info/10 p-2 dark:bg-info/20">
-                        <Code2 className="h-4 w-4 text-info" />
+                      <div className="bg-info/10 dark:bg-info/20 rounded-lg p-2">
+                        <Code2 className="text-info h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -175,8 +175,8 @@ export function PinnedResources({
                 <div className="flex items-start justify-between">
                   <Link href={`/environments/${env.id}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-success/10 p-2 dark:bg-success/20">
-                        <Server className="h-4 w-4 text-success" />
+                      <div className="bg-success/10 dark:bg-success/20 rounded-lg p-2">
+                        <Server className="text-success h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">

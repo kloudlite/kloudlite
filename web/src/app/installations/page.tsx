@@ -22,7 +22,7 @@ export default async function InstallationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <InstallationsHeader user={session.user} />
 
       <main className="mx-auto max-w-7xl px-6 py-8">

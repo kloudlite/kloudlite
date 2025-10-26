@@ -79,22 +79,22 @@ function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
 // Website Landing Page Component
 function WebsiteLandingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="bg-background flex min-h-screen flex-col">
       {/* Navigation Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
         <nav className="mx-auto flex h-16 max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6 lg:gap-8">
             <KloudliteLogo showText={true} linkToHome={true} />
             <div className="hidden items-center gap-6 md:flex">
               <Link
                 href="/docs"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
               >
                 Docs
               </Link>
               <Link
                 href="/pricing"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
               >
                 Pricing
               </Link>
@@ -112,72 +112,91 @@ function WebsiteLandingPage() {
         <div className="mx-auto w-full max-w-[90rem]">
           {/* Main Heading */}
           <div className="text-center">
-            <h1 className="text-5xl font-bold leading-tight tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+            <h1 className="text-foreground text-5xl leading-tight font-bold tracking-tight sm:text-6xl lg:text-7xl">
               Platform of Development Environments
             </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-xl text-muted-foreground sm:text-2xl">
+            <p className="text-muted-foreground mx-auto mt-6 max-w-3xl text-xl sm:text-2xl">
               No Setup. No build. No Deploy. Just Code.
             </p>
 
-            <p className="mx-auto mt-8 text-xl text-muted-foreground sm:text-2xl">
+            <p className="text-muted-foreground mx-auto mt-8 text-xl sm:text-2xl">
               For <TypingText />
             </p>
 
             {/* Visual Flow */}
             <div className="mx-auto mt-14 flex max-w-5xl items-center justify-center gap-3 sm:gap-4">
-              <div className="rounded-xl border bg-muted px-5 py-2.5 text-sm font-medium text-muted-foreground line-through decoration-muted-foreground/60 decoration-2 sm:px-6 sm:py-3 sm:text-base">
+              <div className="bg-muted text-muted-foreground decoration-muted-foreground/60 rounded-xl border px-5 py-2.5 text-sm font-medium line-through decoration-2 sm:px-6 sm:py-3 sm:text-base">
                 Setup
               </div>
-              <div className="h-0.5 w-6 bg-border sm:w-10"></div>
-              <div className="rounded-xl border-2 border-info bg-info/10 px-7 py-3 text-base font-bold text-info sm:px-9 sm:py-4 sm:text-lg">
+              <div className="bg-border h-0.5 w-6 sm:w-10"></div>
+              <div className="border-info bg-info/10 text-info rounded-xl border-2 px-7 py-3 text-base font-bold sm:px-9 sm:py-4 sm:text-lg">
                 Code
               </div>
-              <div className="h-0.5 w-6 bg-border sm:w-10"></div>
-              <div className="rounded-xl border bg-muted px-5 py-2.5 text-sm font-medium text-muted-foreground line-through decoration-muted-foreground/60 decoration-2 sm:px-6 sm:py-3 sm:text-base">
+              <div className="bg-border h-0.5 w-6 sm:w-10"></div>
+              <div className="bg-muted text-muted-foreground decoration-muted-foreground/60 rounded-xl border px-5 py-2.5 text-sm font-medium line-through decoration-2 sm:px-6 sm:py-3 sm:text-base">
                 Build
               </div>
-              <div className="h-0.5 w-6 bg-border sm:w-10"></div>
-              <div className="rounded-xl border bg-muted px-5 py-2.5 text-sm font-medium text-muted-foreground line-through decoration-muted-foreground/60 decoration-2 sm:px-6 sm:py-3 sm:text-base">
+              <div className="bg-border h-0.5 w-6 sm:w-10"></div>
+              <div className="bg-muted text-muted-foreground decoration-muted-foreground/60 rounded-xl border px-5 py-2.5 text-sm font-medium line-through decoration-2 sm:px-6 sm:py-3 sm:text-base">
                 Deploy
               </div>
-              <div className="h-0.5 w-6 bg-border sm:w-10"></div>
-              <div className="rounded-xl border-2 border-success bg-success/10 px-7 py-3 text-base font-bold text-success sm:px-9 sm:py-4 sm:text-lg">
+              <div className="bg-border h-0.5 w-6 sm:w-10"></div>
+              <div className="border-success bg-success/10 text-success rounded-xl border-2 px-7 py-3 text-base font-bold sm:px-9 sm:py-4 sm:text-lg">
                 Test
               </div>
             </div>
 
             {/* CTAs */}
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <GetStartedButton size="lg" className="w-full px-8 text-base font-semibold sm:w-auto" />
-              <Button asChild variant="outline" size="lg" className="w-full px-8 text-base font-semibold sm:w-auto">
+              <GetStartedButton
+                size="lg"
+                className="w-full px-8 text-base font-semibold sm:w-auto"
+              />
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="w-full px-8 text-base font-semibold sm:w-auto"
+              >
                 <Link href="/docs">Read Documentation</Link>
               </Button>
             </div>
 
-            <p className="mt-6 text-base text-muted-foreground">
+            <p className="text-muted-foreground mt-6 text-base">
               Designed to reduce development loop
             </p>
           </div>
-
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-muted">
+      <footer className="bg-muted border-t">
         <div className="mx-auto max-w-[90rem] px-4 py-12 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-sm text-muted-foreground">© 2024 Kloudlite. All rights reserved.</p>
+            <p className="text-muted-foreground text-sm">© 2024 Kloudlite. All rights reserved.</p>
             <div className="flex items-center gap-6">
-              <Link href="/docs" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <Link
+                href="/docs"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
                 Docs
               </Link>
-              <Link href="/pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <Link
+                href="/pricing"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
                 Pricing
               </Link>
-              <Link href="/contact" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <Link
+                href="/contact"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
                 Contact
               </Link>
-              <Link href="https://github.com/kloudlite/kloudlite" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <Link
+                href="https://github.com/kloudlite/kloudlite"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
                 GitHub
               </Link>
               <ThemeSwitcherServer />

@@ -39,10 +39,10 @@ export function InstallationDetailsCard({
       <CardContent className="space-y-6">
         {/* Status */}
         <div>
-          <label className="text-sm font-medium text-foreground">Status</label>
+          <label className="text-foreground text-sm font-medium">Status</label>
           <div className="mt-2 flex items-center gap-3">
             <Badge className={status.color}>{status.label}</Badge>
-            <span className="text-sm text-muted-foreground">{status.description}</span>
+            <span className="text-muted-foreground text-sm">{status.description}</span>
           </div>
         </div>
 
@@ -50,9 +50,9 @@ export function InstallationDetailsCard({
 
         {/* Installation Key */}
         <div>
-          <label className="text-sm font-medium text-foreground">Installation Key</label>
+          <label className="text-foreground text-sm font-medium">Installation Key</label>
           <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 rounded-md bg-muted px-3 py-2 font-mono text-sm">
+            <code className="bg-muted flex-1 rounded-md px-3 py-2 font-mono text-sm">
               {installation.installationKey}
             </code>
             <Button
@@ -63,7 +63,7 @@ export function InstallationDetailsCard({
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             Use this key during installation deployment
           </p>
         </div>
@@ -73,7 +73,7 @@ export function InstallationDetailsCard({
           <>
             <Separator />
             <div>
-              <label className="text-sm font-medium text-foreground">Installation URL</label>
+              <label className="text-foreground text-sm font-medium">Installation URL</label>
               <div className="mt-2 flex items-center gap-2">
                 <a
                   href={installationUrl}
@@ -92,7 +92,7 @@ export function InstallationDetailsCard({
                 </Button>
               </div>
               {installation.reservedAt && (
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-xs">
                   Reserved on {new Date(installation.reservedAt).toLocaleDateString()}
                 </p>
               )}
@@ -104,15 +104,15 @@ export function InstallationDetailsCard({
         <Separator />
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <label className="font-medium text-foreground">Created</label>
-            <p className="mt-1 text-muted-foreground">
+            <label className="text-foreground font-medium">Created</label>
+            <p className="text-muted-foreground mt-1">
               {new Date(installation.createdAt).toLocaleString()}
             </p>
           </div>
           {installation.lastHealthCheck && (
             <div>
-              <label className="font-medium text-foreground">Last Health Check</label>
-              <p className="mt-1 text-muted-foreground">
+              <label className="text-foreground font-medium">Last Health Check</label>
+              <p className="text-muted-foreground mt-1">
                 {new Date(installation.lastHealthCheck).toLocaleString()}
               </p>
             </div>

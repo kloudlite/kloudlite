@@ -87,11 +87,11 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <CheckCircle className="h-5 w-5 text-success" />
+        return <CheckCircle className="text-success h-5 w-5" />
       case 'idle':
-        return <AlertTriangle className="h-5 w-5 text-warning" />
+        return <AlertTriangle className="text-warning h-5 w-5" />
       case 'stopped':
-        return <XCircle className="h-5 w-5 text-muted-foreground" />
+        return <XCircle className="text-muted-foreground h-5 w-5" />
       default:
         return null
     }
@@ -138,17 +138,17 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
       </div>
 
       {/* Machine Info */}
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="border-border bg-card rounded-lg border p-6">
         <div className="mb-6 flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <Server className="mt-1 h-10 w-10 text-muted-foreground" />
+            <Server className="text-muted-foreground mt-1 h-10 w-10" />
             <div>
               <h1 className="flex items-center gap-2 text-2xl font-semibold">
                 {machine.name}
                 {getStatusIcon(machine.status)}
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">Owner: {machine.owner}</p>
-              <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-sm">Owner: {machine.owner}</p>
+              <div className="text-muted-foreground mt-2 flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1">
                   <Activity className="h-4 w-4" />
                   Type: {machine.type}
@@ -177,28 +177,30 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
         </TabsList>
 
         <TabsContent value="workspaces">
-          <div className="rounded-lg border border-border bg-card">
-            <div className="border-b border-border px-6 py-4">
+          <div className="border-border bg-card rounded-lg border">
+            <div className="border-border border-b px-6 py-4">
               <h2 className="text-lg font-medium">Active Workspaces</h2>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-border divide-y">
               {machine.workspaces.map((workspace) => (
                 <div key={workspace.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                    <FolderOpen className="text-muted-foreground h-5 w-5" />
                     <div>
                       <p className="font-medium">{workspace.name}</p>
-                      <p className="text-sm text-muted-foreground">Last accessed {workspace.lastAccess}</p>
+                      <p className="text-muted-foreground text-sm">
+                        Last accessed {workspace.lastAccess}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4 text-sm">
                       <span className="flex items-center gap-1">
-                        <Cpu className="h-4 w-4 text-muted-foreground" />
+                        <Cpu className="text-muted-foreground h-4 w-4" />
                         {workspace.resources.cpu}%
                       </span>
                       <span className="flex items-center gap-1">
-                        <MemoryStick className="h-4 w-4 text-muted-foreground" />
+                        <MemoryStick className="text-muted-foreground h-4 w-4" />
                         {workspace.resources.memory}%
                       </span>
                     </div>
@@ -218,22 +220,24 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                 </div>
               ))}
               {machine.workspaces.length === 0 && (
-                <div className="px-6 py-12 text-center text-muted-foreground">No active workspaces</div>
+                <div className="text-muted-foreground px-6 py-12 text-center">
+                  No active workspaces
+                </div>
               )}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="environments">
-          <div className="rounded-lg border border-border bg-card">
-            <div className="border-b border-border px-6 py-4">
+          <div className="border-border bg-card rounded-lg border">
+            <div className="border-border border-b px-6 py-4">
               <h2 className="text-lg font-medium">Active Environments</h2>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-border divide-y">
               {machine.environments.map((environment) => (
                 <div key={environment.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <Server className="h-5 w-5 text-muted-foreground" />
+                    <Server className="text-muted-foreground h-5 w-5" />
                     <div>
                       <p className="font-medium">{environment.name}</p>
                     </div>
@@ -241,11 +245,11 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4 text-sm">
                       <span className="flex items-center gap-1">
-                        <Cpu className="h-4 w-4 text-muted-foreground" />
+                        <Cpu className="text-muted-foreground h-4 w-4" />
                         {environment.resources.cpu}%
                       </span>
                       <span className="flex items-center gap-1">
-                        <MemoryStick className="h-4 w-4 text-muted-foreground" />
+                        <MemoryStick className="text-muted-foreground h-4 w-4" />
                         {environment.resources.memory}%
                       </span>
                     </div>
@@ -262,28 +266,30 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                 </div>
               ))}
               {machine.environments.length === 0 && (
-                <div className="px-6 py-12 text-center text-muted-foreground">No active environments</div>
+                <div className="text-muted-foreground px-6 py-12 text-center">
+                  No active environments
+                </div>
               )}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="activity">
-          <div className="rounded-lg border border-border bg-card">
-            <div className="border-b border-border px-6 py-4">
+          <div className="border-border bg-card rounded-lg border">
+            <div className="border-border border-b px-6 py-4">
               <h2 className="text-lg font-medium">Activity Log</h2>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-border divide-y">
               {machine.activityLog.map((log, index) => (
                 <div key={index} className="px-6 py-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium">{log.action}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="text-muted-foreground mt-1 text-sm">
                         by {log.user === 'system' ? 'System' : log.user}
                       </p>
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       {new Date(log.timestamp).toLocaleString()}
                     </span>
                   </div>

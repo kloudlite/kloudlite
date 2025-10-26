@@ -58,7 +58,10 @@ const navigation: NavItem[] = [
       { title: 'FAQ', href: '/docs/faq' },
       { title: 'Contact Us', href: '/contact' },
       { title: 'Report Issue', href: 'https://github.com/kloudlite/kloudlite/issues/new' },
-      { title: 'Feature Request', href: 'https://github.com/kloudlite/kloudlite/issues/new?labels=enhancement' },
+      {
+        title: 'Feature Request',
+        href: 'https://github.com/kloudlite/kloudlite/issues/new?labels=enhancement',
+      },
     ],
   },
 ]
@@ -78,7 +81,7 @@ export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
                   'block px-3 py-2 text-sm font-semibold transition-colors',
                   pathname === section.href
                     ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 {section.title}
@@ -92,8 +95,8 @@ export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
                         className={cn(
                           'block py-1 pl-3 text-sm transition-colors',
                           pathname === item.href
-                            ? 'font-medium text-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
+                            ? 'text-foreground font-medium'
+                            : 'text-muted-foreground hover:text-foreground',
                         )}
                       >
                         {item.title}
@@ -108,9 +111,9 @@ export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="border-t bg-muted px-4 py-3">
+      <div className="bg-muted border-t px-4 py-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">© 2024 Kloudlite</p>
+          <p className="text-muted-foreground text-xs">© 2024 Kloudlite</p>
           <ThemeSwitcher initialTheme={initialTheme} />
         </div>
       </div>

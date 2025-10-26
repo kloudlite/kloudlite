@@ -326,7 +326,7 @@ export function WorkMachineControls({
                 onClick={() => handleTypeSelect(type.id)}
               >
                 <div className="mt-0.5">
-                  {selectedType === type.id && <Check className="h-4 w-4 text-success" />}
+                  {selectedType === type.id && <Check className="text-success h-4 w-4" />}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">

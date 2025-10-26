@@ -54,7 +54,7 @@ export function RecentActivity({ workspaces, environments }: RecentActivityProps
             <Link
               key={workspace.id}
               href={`/workspaces/${workspace.id}`}
-              className="block p-4 transition-colors hover:bg-muted/50"
+              className="hover:bg-muted/50 block p-4 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
@@ -80,7 +80,9 @@ export function RecentActivity({ workspaces, environments }: RecentActivityProps
                         <Globe className="h-3 w-3" />
                         {workspace.environment}
                       </span>
-                      <span className="text-muted-foreground text-xs">{workspace.lastActivity}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {workspace.lastActivity}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -105,13 +107,11 @@ export function RecentActivity({ workspaces, environments }: RecentActivityProps
             <Link
               key={env.id}
               href={`/environments/${env.id}`}
-              className="block p-4 transition-colors hover:bg-muted/50"
+              className="hover:bg-muted/50 block p-4 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="bg-muted mt-0.5 rounded-lg p-2">
-                    {getActionIcon(env.action)}
-                  </div>
+                  <div className="bg-muted mt-0.5 rounded-lg p-2">{getActionIcon(env.action)}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-medium">{env.name}</h4>
@@ -128,7 +128,9 @@ export function RecentActivity({ workspaces, environments }: RecentActivityProps
                     <p className="text-muted-foreground mt-1 text-xs">{env.action}</p>
                     <div className="mt-2 flex items-center gap-4">
                       <span className="text-muted-foreground text-xs">{env.services} services</span>
-                      <span className="text-muted-foreground text-xs">{env.workspaces} workspaces</span>
+                      <span className="text-muted-foreground text-xs">
+                        {env.workspaces} workspaces
+                      </span>
                       <span className="text-muted-foreground text-xs">{env.lastActivity}</span>
                     </div>
                   </div>

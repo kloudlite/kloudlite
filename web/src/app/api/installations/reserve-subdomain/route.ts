@@ -59,7 +59,12 @@ export async function POST(request: NextRequest) {
       } else {
         // Create new installation
         const generatedKey = crypto.randomUUID()
-        const newInstallation = await createInstallation(userId, 'My Installation', undefined, generatedKey)
+        const newInstallation = await createInstallation(
+          userId,
+          'My Installation',
+          undefined,
+          generatedKey,
+        )
         installationId = newInstallation.id
       }
     }

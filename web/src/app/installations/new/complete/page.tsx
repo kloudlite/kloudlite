@@ -84,9 +84,7 @@ export default function CompletePage() {
             </div>
           </div>
           <h1 className="text-foreground mb-2 text-3xl font-semibold">Installation Complete!</h1>
-          <p className="text-muted-foreground">
-            Your Kloudlite installation is ready to use
-          </p>
+          <p className="text-muted-foreground">Your Kloudlite installation is ready to use</p>
         </div>
 
         <InstallationProgress currentStep={4} />
@@ -109,7 +107,8 @@ export default function CompletePage() {
                     rel="noopener noreferrer"
                     className="text-primary flex items-center gap-2 font-mono text-lg hover:underline"
                   >
-                    {installationData.subdomain}.{process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
+                    {installationData.subdomain}.
+                    {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
                     <ExternalLink className="size-4" />
                   </a>
                   <Button
@@ -144,9 +143,9 @@ export default function CompletePage() {
 
               <div className="border-t pt-4">
                 <p className="text-muted-foreground text-sm">
-                  <strong>What&apos;s next?</strong> You can now access your Kloudlite installation dashboard to
-                  create and manage workspaces, environments, and work machines. Your team members can log in
-                  using their own credentials at your installation URL.
+                  <strong>What&apos;s next?</strong> You can now access your Kloudlite installation
+                  dashboard to create and manage workspaces, environments, and work machines. Your
+                  team members can log in using their own credentials at your installation URL.
                 </p>
               </div>
             </CardContent>
