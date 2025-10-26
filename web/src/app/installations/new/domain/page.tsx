@@ -105,9 +105,7 @@ export default function ConfigureDomainPage() {
         <h1 className="text-foreground mb-3 text-4xl font-bold tracking-tight">
           Configure Your Domain
         </h1>
-        <p className="text-muted-foreground text-lg">
-          Choose a domain name for your installation
-        </p>
+        <p className="text-muted-foreground text-lg">Choose a domain name for your installation</p>
       </div>
 
       <InstallationProgress currentStep={3} />
@@ -119,85 +117,86 @@ export default function ConfigureDomainPage() {
             Select a subdomain for your Kloudlite installation. Your team will access Kloudlite at
             this domain.
           </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="subdomain"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subdomain</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            placeholder="your-company"
-                            {...field}
-                            disabled={saving}
-                            className="h-11 px-4 pr-10 text-base"
-                            onChange={(e) => {
-                              field.onChange(e)
-                              checkSubdomainAvailability(e.target.value)
-                            }}
-                          />
-                          {checkingSubdomain && (
-                            <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                              <Loader2 className="text-muted-foreground size-4 animate-spin" />
-                            </div>
-                          )}
-                          {!checkingSubdomain && subdomainAvailable === true && (
-                            <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                              <CheckCircle2 className="size-5 text-green-600" />
-                            </div>
-                          )}
-                          {!checkingSubdomain && subdomainAvailable === false && (
-                            <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                              <AlertCircle className="text-destructive size-5" />
-                            </div>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        Your installation will be available at{' '}
-                        <span className="font-mono font-medium">
-                          {field.value || 'your-subdomain'}.{process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
-                        </span>
-                      </FormDescription>
-                      {!checkingSubdomain && subdomainAvailable === false && (
-                        <p className="text-destructive text-sm font-medium">
-                          This subdomain is already taken. Please choose another.
-                        </p>
-                      )}
-                      {!checkingSubdomain && subdomainAvailable === true && (
-                        <p className="text-sm font-medium text-green-600">
-                          This subdomain is available!
-                        </p>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="subdomain"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subdomain</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder="your-company"
+                          {...field}
+                          disabled={saving}
+                          className="h-11 px-4 pr-10 text-base"
+                          onChange={(e) => {
+                            field.onChange(e)
+                            checkSubdomainAvailability(e.target.value)
+                          }}
+                        />
+                        {checkingSubdomain && (
+                          <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                            <Loader2 className="text-muted-foreground size-4 animate-spin" />
+                          </div>
+                        )}
+                        {!checkingSubdomain && subdomainAvailable === true && (
+                          <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                            <CheckCircle2 className="size-5 text-green-600" />
+                          </div>
+                        )}
+                        {!checkingSubdomain && subdomainAvailable === false && (
+                          <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                            <AlertCircle className="text-destructive size-5" />
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Your installation will be available at{' '}
+                      <span className="font-mono font-medium">
+                        {field.value || 'your-subdomain'}.
+                        {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
+                      </span>
+                    </FormDescription>
+                    {!checkingSubdomain && subdomainAvailable === false && (
+                      <p className="text-destructive text-sm font-medium">
+                        This subdomain is already taken. Please choose another.
+                      </p>
+                    )}
+                    {!checkingSubdomain && subdomainAvailable === true && (
+                      <p className="text-sm font-medium text-green-600">
+                        This subdomain is available!
+                      </p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={saving || subdomainAvailable !== true}
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                      Reserving domain...
-                    </>
-                  ) : (
-                    'Complete Setup'
-                  )}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={saving || subdomainAvailable !== true}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Reserving domain...
+                  </>
+                ) : (
+                  'Complete Setup'
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </>
   )
 }

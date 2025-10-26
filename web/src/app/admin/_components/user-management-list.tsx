@@ -276,7 +276,7 @@ export function UserManagementList({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Role Filter */}
-          <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
             <button
               onClick={() => setRoleFilter('all')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
@@ -310,7 +310,7 @@ export function UserManagementList({
           </div>
 
           {/* Status Filter */}
-          <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
             <button
               onClick={() => setStatusFilter('all')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
@@ -349,25 +349,25 @@ export function UserManagementList({
       </div>
 
       {/* Users Table */}
-      <div className="rounded-lg border bg-card">
+      <div className="bg-card rounded-lg border">
         <table className="w-full">
           <thead>
             <tr className="border-b">
-              <th className="p-4 text-left text-sm font-medium text-foreground">User</th>
-              <th className="p-4 text-left text-sm font-medium text-foreground">Role</th>
-              <th className="p-4 text-left text-sm font-medium text-foreground">Status</th>
-              <th className="p-4 text-left text-sm font-medium text-foreground">Last Login</th>
-              <th className="p-4 text-left text-sm font-medium text-foreground">Created</th>
-              <th className="p-4 text-left text-sm font-medium text-foreground">Actions</th>
+              <th className="text-foreground p-4 text-left text-sm font-medium">User</th>
+              <th className="text-foreground p-4 text-left text-sm font-medium">Role</th>
+              <th className="text-foreground p-4 text-left text-sm font-medium">Status</th>
+              <th className="text-foreground p-4 text-left text-sm font-medium">Last Login</th>
+              <th className="text-foreground p-4 text-left text-sm font-medium">Created</th>
+              <th className="text-foreground p-4 text-left text-sm font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.map((user) => (
-              <tr key={user.id} className="border-b hover:bg-muted">
+              <tr key={user.id} className="hover:bg-muted border-b">
                 <td className="p-4">
                   <div>
                     <div className="text-sm font-medium">{user.name}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                    <div className="text-muted-foreground text-sm">{user.email}</div>
                   </div>
                 </td>
                 <td className="p-4">
@@ -402,10 +402,10 @@ export function UserManagementList({
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className="text-sm text-muted-foreground">{user.lastLogin}</span>
+                  <span className="text-muted-foreground text-sm">{user.lastLogin}</span>
                 </td>
                 <td className="p-4">
-                  <span className="text-sm text-muted-foreground">{user.created}</span>
+                  <span className="text-muted-foreground text-sm">{user.created}</span>
                 </td>
                 <td className="p-4">
                   <DropdownMenu>
@@ -656,7 +656,9 @@ export function UserManagementList({
                 className="w-full"
               />
               {newPassword && newPassword.length < 8 && (
-                <p className="text-sm text-destructive">Password must be at least 8 characters long</p>
+                <p className="text-destructive text-sm">
+                  Password must be at least 8 characters long
+                </p>
               )}
             </div>
           </div>

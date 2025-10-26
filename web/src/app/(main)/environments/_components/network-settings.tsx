@@ -15,7 +15,7 @@ export function NetworkSettings() {
             <label className="mb-1 block text-sm font-medium">Custom Domain</label>
             <input
               type="text"
-              className="w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:ring-info focus:outline-none"
+              className="focus:ring-info w-full max-w-md rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
               placeholder="app.example.com"
             />
           </div>

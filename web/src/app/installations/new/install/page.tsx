@@ -194,7 +194,7 @@ export default function InstallPage() {
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <Clock className="size-4" />
               <span className="font-medium">Checking status...</span>
             </div>
@@ -213,9 +213,15 @@ export default function InstallPage() {
         <CardContent className="space-y-6">
           <Tabs value={selectedProvider} onValueChange={setSelectedProvider}>
             <TabsList className="grid w-full grid-cols-3 p-1">
-              <TabsTrigger value="aws" className="text-sm font-semibold">AWS</TabsTrigger>
-              <TabsTrigger value="gcp" className="text-sm font-semibold">GCP</TabsTrigger>
-              <TabsTrigger value="azure" className="text-sm font-semibold">Azure</TabsTrigger>
+              <TabsTrigger value="aws" className="text-sm font-semibold">
+                AWS
+              </TabsTrigger>
+              <TabsTrigger value="gcp" className="text-sm font-semibold">
+                GCP
+              </TabsTrigger>
+              <TabsTrigger value="azure" className="text-sm font-semibold">
+                Azure
+              </TabsTrigger>
             </TabsList>
 
             {Object.entries(CLOUD_PROVIDERS).map(([key, config]) => (
@@ -227,7 +233,7 @@ export default function InstallPage() {
 
                 <div className="space-y-5">
                   <div>
-                    <p className="mb-3 text-sm font-semibold text-foreground">Prerequisites:</p>
+                    <p className="text-foreground mb-3 text-sm font-semibold">Prerequisites:</p>
                     <ul className="text-muted-foreground space-y-2 text-sm leading-relaxed">
                       {config.requirements.map((req, idx) => (
                         <li key={idx} className="flex items-start gap-3">
@@ -239,12 +245,14 @@ export default function InstallPage() {
                   </div>
 
                   <div>
-                    <p className="mb-3 text-sm font-semibold text-foreground">Run this command:</p>
+                    <p className="text-foreground mb-3 text-sm font-semibold">Run this command:</p>
                     <div className="space-y-3">
                       {config.commands.map((cmd, idx) => (
                         <div key={idx} className="bg-muted rounded-lg p-4">
                           <div className="flex items-start justify-between gap-4">
-                            <code className="flex-1 break-all font-mono text-sm leading-relaxed">{cmd}</code>
+                            <code className="flex-1 font-mono text-sm leading-relaxed break-all">
+                              {cmd}
+                            </code>
                             <Button
                               variant="outline"
                               size="sm"
@@ -262,8 +270,9 @@ export default function InstallPage() {
 
                   <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
                     <p className="text-sm leading-relaxed text-blue-900">
-                      <span className="font-semibold">Note:</span> After running the command, this page will automatically
-                      detect when your deployment contacts our server and proceed to the next step.
+                      <span className="font-semibold">Note:</span> After running the command, this
+                      page will automatically detect when your deployment contacts our server and
+                      proceed to the next step.
                     </p>
                   </div>
                 </div>

@@ -12,7 +12,8 @@ function validateEnv() {
 
   // Website and console modes don't need API_URL/WEB_URL as they use Supabase directly
   // registration is the legacy name for console mode
-  const isSupabaseMode = appMode === 'registration' || appMode === 'website' || appMode === 'console'
+  const isSupabaseMode =
+    appMode === 'registration' || appMode === 'website' || appMode === 'console'
 
   // In production runtime (not build), fail fast if critical env vars are missing
   // Skip validation for website/console modes as they don't use the backend API

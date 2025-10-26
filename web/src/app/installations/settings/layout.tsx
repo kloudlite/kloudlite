@@ -16,7 +16,7 @@ export default async function SettingsLayout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="bg-background flex h-screen flex-col">
       <InstallationsHeader user={session.user} />
 
       <ScrollArea className="flex-1">

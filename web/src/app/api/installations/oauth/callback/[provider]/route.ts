@@ -135,7 +135,9 @@ export async function GET(
     userData = (await userResponse.json()) as OAuthUserData
   } catch (err) {
     console.error('OAuth exchange error:', err)
-    return NextResponse.redirect(new URL('/installations/login?error=oauth_exchange_failed', baseUrl))
+    return NextResponse.redirect(
+      new URL('/installations/login?error=oauth_exchange_failed', baseUrl),
+    )
   }
 
   // Extract email from Microsoft userPrincipalName (handles guest users)
@@ -147,7 +149,11 @@ export async function GET(
       // Replace the last underscore with @ to restore original email
       const lastUnderscoreIndex = beforeExt.lastIndexOf('_')
       if (lastUnderscoreIndex !== -1) {
-        return beforeExt.substring(0, lastUnderscoreIndex) + '@' + beforeExt.substring(lastUnderscoreIndex + 1)
+        return (
+          beforeExt.substring(0, lastUnderscoreIndex) +
+          '@' +
+          beforeExt.substring(lastUnderscoreIndex + 1)
+        )
       }
     }
     return upn
@@ -209,7 +215,10 @@ export async function GET(
     console.log('Existing user found:', email)
 
     // Add provider to array if not already present
-    const currentProvider = (provider === 'microsoft-entra-id' ? 'azure-ad' : provider) as 'github' | 'google' | 'azure-ad'
+    const currentProvider = (provider === 'microsoft-entra-id' ? 'azure-ad' : provider) as
+      | 'github'
+      | 'google'
+      | 'azure-ad'
     if (!existingUser.providers.includes(currentProvider)) {
       existingUser.providers = [...existingUser.providers, currentProvider]
       console.log('Adding new provider:', currentProvider)
@@ -227,7 +236,10 @@ export async function GET(
     // New user - create user registration
     console.log('New user registration:', email)
 
-    const normalizedProvider = (provider === 'microsoft-entra-id' ? 'azure-ad' : provider) as 'github' | 'google' | 'azure-ad'
+    const normalizedProvider = (provider === 'microsoft-entra-id' ? 'azure-ad' : provider) as
+      | 'github'
+      | 'google'
+      | 'azure-ad'
     userRegistration = {
       userId,
       email,

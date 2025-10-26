@@ -177,11 +177,7 @@ export async function saveUserRegistration(registration: UserRegistration): Prom
  * Get installation by ID with IP records
  */
 export async function getInstallationById(installationId: string): Promise<Installation | null> {
-  const result = await supabase
-    .from('installations')
-    .select('*')
-    .eq('id', installationId)
-    .single()
+  const result = await supabase.from('installations').select('*').eq('id', installationId).single()
 
   if (result.error) {
     if (result.error.code === 'PGRST116') return null
@@ -224,9 +220,7 @@ export async function getInstallationById(installationId: string): Promise<Insta
 /**
  * Get installation by installation key
  */
-export async function getInstallationByKey(
-  installationKey: string,
-): Promise<Installation | null> {
+export async function getInstallationByKey(installationKey: string): Promise<Installation | null> {
   const result = await supabase
     .from('installations')
     .select('*')
@@ -265,10 +259,7 @@ export async function getUserInstallations(userId: string): Promise<Installation
   // Fetch IP records for all installations in parallel
   const installationsWithIpRecords = await Promise.all(
     installations.map(async (inst) => {
-      const ipResult = await supabase
-        .from('ip_records')
-        .select('*')
-        .eq('installation_id', inst.id)
+      const ipResult = await supabase.from('ip_records').select('*').eq('installation_id', inst.id)
 
       return {
         id: inst.id,
@@ -422,10 +413,7 @@ export async function deleteInstallation(installationId: string): Promise<void> 
   }
 
   // Delete the installation
-  const { error } = await supabase
-    .from('installations')
-    .delete()
-    .eq('id', installationId)
+  const { error } = await supabase.from('installations').delete().eq('id', installationId)
 
   if (error) {
     throw new Error(`Failed to delete installation: ${error.message}`)
@@ -435,10 +423,7 @@ export async function deleteInstallation(installationId: string): Promise<void> 
 /**
  * Atomically mark deployment ready
  */
-export async function markDeploymentReady(
-  installationId: string,
-  ready: boolean,
-): Promise<void> {
+export async function markDeploymentReady(installationId: string, ready: boolean): Promise<void> {
   await updateInstallation(installationId, { deploymentReady: ready })
 }
 
@@ -504,10 +489,7 @@ export async function deleteIpRecords(installationId: string): Promise<string[]>
   }
 
   // Delete all IP records
-  const { error } = await supabase
-    .from('ip_records')
-    .delete()
-    .eq('installation_id', installationId)
+  const { error } = await supabase.from('ip_records').delete().eq('installation_id', installationId)
 
   if (error) {
     console.error('Error deleting IP records:', error)
@@ -749,10 +731,7 @@ export async function getLatestCertificate(
   scopeIdentifier?: string,
   parentScopeIdentifier?: string,
 ): Promise<TLSCertificate | null> {
-  let query = supabase
-    .from('tls_certificates')
-    .select('*')
-    .eq('installation_id', installationId)
+  let query = supabase.from('tls_certificates').select('*').eq('installation_id', installationId)
 
   if (scope) {
     query = query.eq('scope', scope)

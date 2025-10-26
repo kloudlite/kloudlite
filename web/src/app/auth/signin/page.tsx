@@ -35,14 +35,14 @@ export default async function SignInPage() {
         </div>
         <div>
           <h2 className="mb-4 text-2xl font-light">Cloud Development Environments</h2>
-          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+          <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
             Designed to reduce the development loop
           </p>
         </div>
       </div>
 
       {/* Right side - Form */}
-      <div className="flex items-center justify-center bg-card p-8">
+      <div className="bg-card flex items-center justify-center p-8">
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="mb-8 lg:hidden">
@@ -50,8 +50,8 @@ export default async function SignInPage() {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-lg font-medium text-foreground">Sign in</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Access your workspace</p>
+            <h1 className="text-foreground text-lg font-medium">Sign in</h1>
+            <p className="text-muted-foreground mt-1 text-sm">Access your workspace</p>
           </div>
 
           <SignInForm enabledProviders={enabledProviders} />

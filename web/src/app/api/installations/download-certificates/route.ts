@@ -96,7 +96,9 @@ export async function GET(request: NextRequest) {
     }
 
     const scopeLog = scope ? `, scope: ${scope}` : ''
-    console.log(`Downloading certificate for installation: ${installation.id}${scopeLog}, format: ${format}`)
+    console.log(
+      `Downloading certificate for installation: ${installation.id}${scopeLog}, format: ${format}`,
+    )
 
     // Return in requested format
     switch (format) {
