@@ -4,7 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const Version = "0.1.0"
+// Version is set via ldflags during build
+var Version = "dev"
 
 // RootCmd represents the base command
 var RootCmd = &cobra.Command{

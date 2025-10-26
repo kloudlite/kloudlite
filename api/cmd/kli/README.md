@@ -8,12 +8,68 @@ A command-line tool for managing Kloudlite installations.
 
 ## Installation
 
-Build the CLI:
+### Download Pre-built Binaries
 
+Download the latest release for your platform from [GitHub Releases](https://github.com/kloudlite/kloudlite/releases?q=kli-v&expanded=true).
+
+#### Linux (AMD64)
 ```bash
-cd api
-go build -o kli ./cmd/kli
+curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64
+chmod +x kli-linux-amd64
+sudo mv kli-linux-amd64 /usr/local/bin/kli
 ```
+
+#### Linux (ARM64)
+```bash
+curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-arm64
+chmod +x kli-linux-arm64
+sudo mv kli-linux-arm64 /usr/local/bin/kli
+```
+
+#### macOS (Intel)
+```bash
+curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-darwin-amd64
+chmod +x kli-darwin-amd64
+sudo mv kli-darwin-amd64 /usr/local/bin/kli
+```
+
+#### macOS (Apple Silicon)
+```bash
+curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-darwin-arm64
+chmod +x kli-darwin-arm64
+sudo mv kli-darwin-arm64 /usr/local/bin/kli
+```
+
+#### Windows
+Download the appropriate `.exe` file for your architecture from the releases page and add it to your PATH.
+
+### Build from Source
+
+#### Quick Build
+```bash
+cd api/cmd/kli
+task build
+```
+
+#### Build for All Platforms
+```bash
+cd api/cmd/kli
+VERSION=0.1.0 task build-all
+```
+
+#### Install Locally
+```bash
+cd api/cmd/kli
+task install
+```
+
+#### Run Tests
+```bash
+cd api/cmd/kli
+task test
+```
+
+See `task --list` for all available commands.
 
 ## Usage
 
@@ -171,3 +227,25 @@ Additional commands will be added for each provider:
 ## Version
 
 Current version: 0.1.0
+
+## Releasing
+
+To create a new release:
+
+1. **Tag the release**:
+   ```bash
+   git tag kli-v0.1.0
+   git push origin kli-v0.1.0
+   ```
+
+2. **Automated build**: The GitHub Actions workflow will automatically:
+   - Build binaries for all platforms (Linux, macOS, Windows) and architectures (AMD64, ARM64)
+   - Generate SHA256 checksums for verification
+   - Create a GitHub release with all binaries and checksums
+   - Generate installation instructions
+
+3. **Manual trigger** (if needed):
+   - Go to Actions → Release kli → Run workflow
+   - Enter the tag name (e.g., `kli-v0.1.0`)
+
+The release will be available at: `https://github.com/kloudlite/kloudlite/releases/tag/kli-v0.1.0`

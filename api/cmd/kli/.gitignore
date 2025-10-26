@@ -1,0 +1,7 @@
+# Build artifacts
+kli
+kli-*
+dist/
+
+# OS files
+.DS_Store
