@@ -1,0 +1,119 @@
+version: '3'
+
+vars:
+  VERSION:
+    sh: echo "${VERSION:-dev}"
+  LDFLAGS: -s -w -X github.com/kloudlite/kloudlite/api/cmd/kli/cmd.Version={{.VERSION}}
+
+tasks:
+  build:
+    desc: Build kli for current platform
+    cmds:
+      - echo "Building kli for current platform..."
+      - cd ../.. && go build -ldflags="{{.LDFLAGS}}" -o kli ./cmd/kli
+      - echo "Built kli (version {{.VERSION}})"
+
+  build-all:
+    desc: Build kli for all platforms
+    deps: [clean]
+    cmds:
+      - echo "Building kli for all platforms..."
+      - mkdir -p dist
+      - task: build-linux-amd64
+      - task: build-linux-arm64
+      - task: build-darwin-amd64
+      - task: build-darwin-arm64
+      - task: build-windows-amd64
+      - task: build-windows-arm64
+      - echo "Built all platforms in dist/"
+      - ls -lh dist/
+
+  build-linux-amd64:
+    internal: true
+    env:
+      GOOS: linux
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    cmds:
+      - cd ../.. && go build -ldflags="{{.LDFLAGS}}" -o cmd/kli/dist/kli-linux-amd64 ./cmd/kli
+
+  build-linux-arm64:
+    internal: true
+    env:
+      GOOS: linux
+      GOARCH: arm64
+      CGO_ENABLED: 0
+    cmds:
+      - cd ../.. && go build -ldflags="{{.LDFLAGS}}" -o cmd/kli/dist/kli-linux-arm64 ./cmd/kli
+
+  build-darwin-amd64:
+    internal: true
+    env:
+      GOOS: darwin
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    cmds:
+      - cd ../.. && go build -ldflags="{{.LDFLAGS}}" -o cmd/kli/dist/kli-darwin-amd64 ./cmd/kli
+
+  build-darwin-arm64:
+    internal: true
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+      CGO_ENABLED: 0
+    cmds:
+      - cd ../.. && go build -ldflags="{{.LDFLAGS}}" -o cmd/kli/dist/kli-darwin-arm64 ./cmd/kli
+
+  build-windows-amd64:
+    internal: true
+    env:
+      GOOS: windows
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    cmds:
+      - cd ../.. && go build -ldflags="{{.LDFLAGS}}" -o cmd/kli/dist/kli-windows-amd64.exe ./cmd/kli
+
+  build-windows-arm64:
+    internal: true
+    env:
+      GOOS: windows
+      GOARCH: arm64
+      CGO_ENABLED: 0
+    cmds:
+      - cd ../.. && go build -ldflags="{{.LDFLAGS}}" -o cmd/kli/dist/kli-windows-arm64.exe ./cmd/kli
+
+  checksums:
+    desc: Generate SHA256 checksums for all binaries
+    dir: dist
+    cmds:
+      - echo "Generating checksums..."
+      - for file in kli-*; do sha256sum $file > $file.sha256; done
+      - echo "Checksums generated"
+
+  install:
+    desc: Build and install kli to /usr/local/bin
+    deps: [build]
+    cmds:
+      - echo "Installing kli to /usr/local/bin..."
+      - sudo mv kli /usr/local/bin/kli
+      - echo "Installed successfully"
+
+  test:
+    desc: Run unit tests
+    dir: ../..
+    cmds:
+      - echo "Running tests..."
+      - go test -v ./cmd/kli/cmd/...
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - echo "Cleaning build artifacts..."
+      - rm -rf dist/
+      - rm -f kli kli-*
+      - echo "Clean complete"
+
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
