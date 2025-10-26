@@ -295,14 +295,16 @@ export async function getUserInstallations(userId: string): Promise<Installation
  */
 export async function createInstallation(
   userId: string,
-  _name: string,
-  _description: string | undefined,
+  name: string,
+  description: string | undefined,
   installationKey: string,
 ): Promise<Installation> {
   type InstallationInsert = Database['public']['Tables']['installations']['Insert']
 
   const insertData: InstallationInsert = {
     user_id: userId,
+    name: name,
+    description: description,
     installation_key: installationKey,
     has_completed_installation: false,
   }
@@ -324,6 +326,8 @@ export async function createInstallation(
   return {
     id: data.id,
     userId: data.user_id,
+    name: data.name || undefined,
+    description: data.description || undefined,
     installationKey: data.installation_key,
     secretKey: data.secret_key || undefined,
     hasCompletedInstallation: data.has_completed_installation,
