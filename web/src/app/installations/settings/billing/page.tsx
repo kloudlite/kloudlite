@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getRegistrationSession } from '@/lib/registration-auth'
+import { getRegistrationSession } from '@/lib/console-auth'
 import { BillingContent } from '@/components/billing-content'
 
 export default async function BillingPage() {

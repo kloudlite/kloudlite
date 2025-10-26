@@ -3,8 +3,8 @@ import {
   getInstallationByKey,
   saveCertificate,
   type CertificateScope,
-} from '@/lib/registration/supabase-storage-service'
-import { generateCertificate, generateHostnames } from '@/lib/registration/cloudflare-certificates'
+} from '@/lib/console/supabase-storage-service'
+import { generateCertificate, generateHostnames } from '@/lib/console/cloudflare-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getRegistrationSession } from '@/lib/registration-auth'
+import { getRegistrationSession } from '@/lib/console-auth'
 import {
   getUserInstallations,
   createInstallation,
-} from '@/lib/registration/supabase-storage-service'
+} from '@/lib/console/supabase-storage-service'
 import { SignJWT } from 'jose'
 import crypto from 'crypto'
 

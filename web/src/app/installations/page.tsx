@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getUserInstallations, type Installation } from '@/lib/registration/supabase-storage-service'
-import { getRegistrationSession } from '@/lib/registration-auth'
+import { getUserInstallations, type Installation } from '@/lib/console/supabase-storage-service'
+import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getRegistrationSession } from '@/lib/registration-auth'
-import { getInstallationById } from '@/lib/registration/supabase-storage-service'
+import { getRegistrationSession } from '@/lib/console-auth'
+import { getInstallationById } from '@/lib/console/supabase-storage-service'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 

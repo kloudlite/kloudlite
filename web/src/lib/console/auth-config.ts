@@ -60,11 +60,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session
     },
     async redirect({ url, baseUrl }) {
-      // After successful login, redirect to install page
+      // After successful login, redirect to installations page
       if (url.startsWith(baseUrl)) {
         return url
       }
-      return `${baseUrl}/access-console/install`
+      return `${baseUrl}/installations`
     },
   },
   session: {

@@ -5,7 +5,7 @@ import {
   reserveSubdomain,
   getUserInstallations,
   createInstallation,
-} from '@/lib/registration/supabase-storage-service'
+} from '@/lib/console/supabase-storage-service'
 
 /**
  * Reserve subdomain for user's installation

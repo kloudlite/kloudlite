@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getInstallationByKey } from '@/lib/registration/supabase-storage-service'
+import { getInstallationByKey } from '@/lib/console/supabase-storage-service'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
