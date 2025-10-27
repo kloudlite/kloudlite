@@ -8,9 +8,21 @@ A command-line tool for managing Kloudlite installations.
 
 ## Installation
 
-### Download Pre-built Binaries
+### Quick Install
 
-Visit [console.kloudlite.io/install/kli](https://console.kloudlite.io/install/kli) for installation instructions.
+#### Linux and macOS
+```bash
+curl -fsSL https://console.kloudlite.io/api/install | bash
+```
+
+#### Windows (PowerShell)
+```powershell
+iwr -useb https://console.kloudlite.io/api/install/windows | iex
+```
+
+### Manual Installation
+
+Visit [console.kloudlite.io/install/kli](https://console.kloudlite.io/install/kli) for more installation options.
 
 Or download directly:
 
