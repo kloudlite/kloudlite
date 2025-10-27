@@ -10,38 +10,56 @@ A command-line tool for managing Kloudlite installations.
 
 ### Download Pre-built Binaries
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/kloudlite/kloudlite/releases?q=kli-v&expanded=true).
+Visit [console.kloudlite.io/install/kli](https://console.kloudlite.io/install/kli) for installation instructions.
+
+Or download directly:
 
 #### Linux (AMD64)
 ```bash
-curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64
-chmod +x kli-linux-amd64
-sudo mv kli-linux-amd64 /usr/local/bin/kli
+curl -fsSL https://console.kloudlite.io/api/download/kli/linux-amd64 -o kli
+chmod +x kli
+sudo mv kli /usr/local/bin/kli
 ```
 
 #### Linux (ARM64)
 ```bash
-curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-arm64
-chmod +x kli-linux-arm64
-sudo mv kli-linux-arm64 /usr/local/bin/kli
+curl -fsSL https://console.kloudlite.io/api/download/kli/linux-arm64 -o kli
+chmod +x kli
+sudo mv kli /usr/local/bin/kli
 ```
 
 #### macOS (Intel)
 ```bash
-curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-darwin-amd64
-chmod +x kli-darwin-amd64
-sudo mv kli-darwin-amd64 /usr/local/bin/kli
+curl -fsSL https://console.kloudlite.io/api/download/kli/darwin-amd64 -o kli
+chmod +x kli
+sudo mv kli /usr/local/bin/kli
 ```
 
 #### macOS (Apple Silicon)
 ```bash
-curl -LO https://github.com/kloudlite/kloudlite/releases/latest/download/kli-darwin-arm64
-chmod +x kli-darwin-arm64
-sudo mv kli-darwin-arm64 /usr/local/bin/kli
+curl -fsSL https://console.kloudlite.io/api/download/kli/darwin-arm64 -o kli
+chmod +x kli
+sudo mv kli /usr/local/bin/kli
 ```
 
-#### Windows
-Download the appropriate `.exe` file for your architecture from the releases page and add it to your PATH.
+#### Windows (PowerShell)
+```powershell
+# AMD64
+Invoke-WebRequest -Uri "https://console.kloudlite.io/api/download/kli/windows-amd64" -OutFile "kli.exe"
+
+# ARM64
+Invoke-WebRequest -Uri "https://console.kloudlite.io/api/download/kli/windows-arm64" -OutFile "kli.exe"
+```
+
+Then add the directory containing `kli.exe` to your PATH.
+
+#### Install Specific Version
+```bash
+curl -fsSL https://console.kloudlite.io/api/download/kli/linux-amd64?version=0.1.0 -o kli
+```
+
+#### All Releases
+View all releases at [GitHub Releases](https://github.com/kloudlite/kloudlite/releases?q=kli-v&expanded=true).
 
 ### Build from Source
 
