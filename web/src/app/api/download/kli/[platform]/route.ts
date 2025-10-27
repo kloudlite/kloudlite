@@ -14,9 +14,9 @@ const PLATFORM_BINARIES: Record<string, string> = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { platform: string } }
+  { params }: { params: Promise<{ platform: string }> }
 ) {
-  const { platform } = params;
+  const { platform } = await params;
   const searchParams = request.nextUrl.searchParams;
   const version = searchParams.get('version') || 'latest';
 
