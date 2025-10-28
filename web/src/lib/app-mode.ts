@@ -66,9 +66,11 @@ export function validateRouteAccess(pathname: string): {
   allowed: boolean
   redirectTo?: string
 } {
-  // Allow API routes and static files in all modes
+  // Allow API routes, installation scripts, and static files in all modes
   if (
     pathname.startsWith('/api/') ||
+    pathname.startsWith('/install/') ||
+    pathname.startsWith('/uninstall/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/static/') ||
     pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js)$/)
