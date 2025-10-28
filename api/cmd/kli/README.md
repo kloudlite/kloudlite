@@ -12,12 +12,12 @@ A command-line tool for managing Kloudlite installations.
 
 #### Linux and macOS
 ```bash
-curl -fsSL https://console.kloudlite.io/api/install | bash
+curl -fsSL https://get.khost.dev | bash
 ```
 
 #### Windows (PowerShell)
 ```powershell
-iwr -useb https://console.kloudlite.io/api/install/windows | iex
+iwr -useb https://get.khost.dev/windows | iex
 ```
 
 ### Manual Installation
