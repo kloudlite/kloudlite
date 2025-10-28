@@ -4,7 +4,7 @@ const INSTALL_SCRIPT = `# Kloudlite Installer (kli) - Windows Installation Scrip
 $ErrorActionPreference = "Stop"
 
 # Base URL for downloads
-$DOWNLOAD_BASE_URL = "https://console.kloudlite.io/api/download/kli"
+$DOWNLOAD_BASE_URL = "https://get.khost.dev/api/download/kli"
 
 # Colors
 function Write-ColorOutput($ForegroundColor) {
@@ -101,15 +101,15 @@ function Show-Usage {
 Kloudlite Installer (kli) - Windows Installation Script
 
 Usage:
-  iwr -useb https://console.kloudlite.io/api/install/windows | iex
-  iwr -useb https://console.kloudlite.io/api/install/windows | iex -Version 0.1.0
+  iwr -useb https://get.khost.dev/windows | iex
+  iwr -useb https://get.khost.dev/windows | iex -Version 0.1.0
 
 Examples:
   # Install latest version
-  iwr -useb https://console.kloudlite.io/api/install/windows | iex
+  iwr -useb https://get.khost.dev/windows | iex
 
   # Install specific version
-  `$env:KLI_VERSION="0.1.0"; iwr -useb https://console.kloudlite.io/api/install/windows | iex
+  `$env:KLI_VERSION="0.1.0"; iwr -useb https://get.khost.dev/windows | iex
 
 After installation:
   kli --help          Show kli help

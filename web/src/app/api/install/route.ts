@@ -11,7 +11,7 @@ BLUE='\\033[0;34m'
 NC='\\033[0m' # No Color
 
 # Base URL for downloads
-DOWNLOAD_BASE_URL="https://console.kloudlite.io/api/download/kli"
+DOWNLOAD_BASE_URL="https://get.khost.dev/api/download/kli"
 
 # Detect OS and Architecture
 detect_platform() {
@@ -93,8 +93,8 @@ print_usage() {
 \${BLUE}Kloudlite Installer (kli) - Installation Script\${NC}
 
 Usage:
-  curl -fsSL https://console.kloudlite.io/api/install | bash
-  curl -fsSL https://console.kloudlite.io/api/install | bash -s -- [OPTIONS]
+  curl -fsSL https://get.khost.dev | bash
+  curl -fsSL https://get.khost.dev | bash -s -- [OPTIONS]
 
 Options:
   --version VERSION    Install specific version (default: latest)
@@ -102,10 +102,10 @@ Options:
 
 Examples:
   # Install latest version
-  curl -fsSL https://console.kloudlite.io/api/install | bash
+  curl -fsSL https://get.khost.dev | bash
 
   # Install specific version
-  curl -fsSL https://console.kloudlite.io/api/install | bash -s -- --version 0.1.0
+  curl -fsSL https://get.khost.dev | bash -s -- --version 0.1.0
 
 After installation:
   kli --help          Show kli help
