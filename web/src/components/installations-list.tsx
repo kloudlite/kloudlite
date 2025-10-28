@@ -144,7 +144,12 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             <tbody className="divide-y">
               {filteredInstallations.map((installation) => {
                 const { status, statusColor, nextStep } = getInstallationStatus(installation)
-                const installationUrl = installation.subdomain
+                // Validate subdomain before constructing URL
+                const isValidSubdomain =
+                  installation.subdomain &&
+                  installation.subdomain !== '0.0.0.0' &&
+                  !installation.subdomain.includes('0.0.0.0')
+                const installationUrl = isValidSubdomain
                   ? `https://${installation.subdomain}.${domain}`
                   : null
 
@@ -161,9 +166,9 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap">
-                      {installation.subdomain ? (
+                      {installationUrl ? (
                         <a
-                          href={installationUrl!}
+                          href={installationUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary flex items-center gap-1 font-mono hover:underline"
