@@ -109,7 +109,7 @@ Examples:
   iwr -useb https://get.khost.dev/windows | iex
 
   # Install specific version
-  `$env:KLI_VERSION="0.1.0"; iwr -useb https://get.khost.dev/windows | iex
+  \`$env:KLI_VERSION="0.1.0"; iwr -useb https://get.khost.dev/windows | iex
 
 After installation:
   kli --help          Show kli help
@@ -167,7 +167,7 @@ function Main {
 Main
 `;
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return new NextResponse(INSTALL_SCRIPT, {
     headers: {
       'Content-Type': 'text/plain',
