@@ -98,41 +98,54 @@ export default function CompletePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-muted rounded-lg p-4">
-                <p className="mb-2 text-sm font-medium">Installation Dashboard URL:</p>
-                <div className="flex items-center justify-between gap-3">
-                  <a
-                    href={installationData.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary flex items-center gap-2 font-mono text-lg hover:underline"
-                  >
-                    {installationData.subdomain}.
-                    {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
-                    <ExternalLink className="size-4" />
-                  </a>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(installationData.url, 'URL')}
-                  >
-                    <Copy className="mr-2 size-3" />
-                    Copy
-                  </Button>
+              {installationData.subdomain ? (
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="mb-2 text-sm font-medium">Installation Dashboard URL:</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <a
+                      href={installationData.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary flex items-center gap-2 font-mono text-lg hover:underline"
+                    >
+                      {installationData.subdomain}.
+                      {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
+                      <ExternalLink className="size-4" />
+                    </a>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(installationData.url, 'URL')}
+                    >
+                      <Copy className="mr-2 size-3" />
+                      Copy
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
+                  <p className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">
+                    Domain Not Configured
+                  </p>
+                  <p className="text-sm text-amber-900 dark:text-amber-200">
+                    Your installation key was generated, but no subdomain was configured. Please configure a domain for your installation from the installations list.
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3">
+                {installationData.subdomain ? (
+                  <Button
+                    className="flex-1"
+                    size="lg"
+                    onClick={() => window.open(installationData.url, '_blank')}
+                  >
+                    <ExternalLink className="mr-2 size-4" />
+                    Open Installation Dashboard
+                  </Button>
+                ) : null}
                 <Button
-                  className="flex-1"
-                  size="lg"
-                  onClick={() => window.open(installationData.url, '_blank')}
-                >
-                  <ExternalLink className="mr-2 size-4" />
-                  Open Installation Dashboard
-                </Button>
-                <Button
-                  variant="outline"
+                  variant={installationData.subdomain ? 'outline' : 'default'}
                   size="lg"
                   className="flex-1"
                   onClick={() => router.push('/installations')}
