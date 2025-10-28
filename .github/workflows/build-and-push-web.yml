@@ -22,15 +22,11 @@ env:
 
 jobs:
   build-and-push:
-    name: Build and Push (${{ matrix.mode }})
+    name: Build and Push
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
-    strategy:
-      matrix:
-        mode: [console, dashboard, website]
 
     defaults:
       run:
@@ -67,10 +63,10 @@ jobs:
         with:
           path: |
             web/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ matrix.mode }}-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/**/*.ts', 'web/**/*.tsx', 'web/**/*.js', 'web/**/*.jsx') }}
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/**/*.ts', 'web/**/*.tsx', 'web/**/*.js', 'web/**/*.jsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ matrix.mode }}-${{ hashFiles('web/pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-${{ matrix.mode }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -78,10 +74,6 @@ jobs:
       - name: Create environment file
         run: |
           cat > .env.local << EOF
-          # App Mode
-          NEXT_PUBLIC_APP_MODE=${{ matrix.mode }}
-          APP_MODE=${{ matrix.mode }}
-
           # Base URL
           NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
 
@@ -149,7 +141,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/web/${{ matrix.mode }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/web
           flavor: |
             latest=false
           tags: |
@@ -168,17 +160,14 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.mode }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.mode }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            APP_MODE=${{ matrix.mode }}
 
       - name: Build summary
         run: |
-          echo "### Build Summary - ${{ matrix.mode }} mode" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Mode**: ${{ matrix.mode }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
@@ -187,6 +176,8 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** APP_MODE should be set as environment variable at deployment time (console, dashboard, or website)" >> $GITHUB_STEP_SUMMARY
 
   lint:
     name: Lint Check
@@ -250,7 +241,7 @@ jobs:
       - name: Update Container App
         run: |
           IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
-          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web/console:${IMAGE_TAG}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web:${IMAGE_TAG}"
 
           echo "Deploying image: $IMAGE"
 
@@ -258,6 +249,7 @@ jobs:
             --name ca-kloudlite-registration \
             --resource-group rg-kloudlite-registration \
             --image $IMAGE \
+            --set-env-vars APP_MODE=console \
             --query "properties.provisioningState" -o tsv
 
       - name: Deployment Summary
@@ -268,5 +260,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
           echo "- **Container App**: ca-kloudlite-registration" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Mode**: console" >> $GITHUB_STEP_SUMMARY
           echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
           echo "- **Public URL**: https://console.kloudlite.io" >> $GITHUB_STEP_SUMMARY
