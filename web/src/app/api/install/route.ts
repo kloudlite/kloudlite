@@ -175,7 +175,7 @@ main() {
 main "$@"
 `;
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return new NextResponse(INSTALL_SCRIPT, {
     headers: {
       'Content-Type': 'text/x-shellscript',
