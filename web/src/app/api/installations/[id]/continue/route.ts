@@ -76,5 +76,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     redirectPath = '/installations'
   }
 
-  return NextResponse.redirect(new URL(redirectPath, request.url))
+  // Construct redirect URL using the request host headers
+  const host = request.headers.get('host') || request.headers.get('x-forwarded-host')
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+  const redirectUrl = host ? `${protocol}://${host}${redirectPath}` : new URL(redirectPath, request.url).toString()
+
+  return NextResponse.redirect(redirectUrl)
 }
