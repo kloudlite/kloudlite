@@ -20,7 +20,7 @@ interface SessionData {
 const getCloudProviderCommands = (installationKey: string) => ({
   aws: {
     name: 'AWS',
-    commands: [`curl -fsSL https://get.khost.dev/aws | bash -s -- --key ${installationKey}`],
+    commands: [`curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key ${installationKey}`],
     requirements: [
       'AWS CLI configured',
       'IAM user with EC2 full access and iam:PassRole permissions',
@@ -29,7 +29,7 @@ const getCloudProviderCommands = (installationKey: string) => ({
   },
   gcp: {
     name: 'Google Cloud',
-    commands: [`curl -fsSL https://get.khost.dev/gcp | bash -s -- --key ${installationKey}`],
+    commands: [`curl -fsSL https://get.khost.dev/install/gcp | bash -s -- --key ${installationKey}`],
     requirements: [
       'gcloud CLI configured',
       'Service account with Compute Admin and Service Account User roles',
@@ -38,7 +38,7 @@ const getCloudProviderCommands = (installationKey: string) => ({
   },
   azure: {
     name: 'Azure',
-    commands: [`curl -fsSL https://get.khost.dev/azure | bash -s -- --key ${installationKey}`],
+    commands: [`curl -fsSL https://get.khost.dev/install/azure | bash -s -- --key ${installationKey}`],
     requirements: [
       'Azure CLI configured',
       'Service principal with Virtual Machine Contributor and User Access Administrator roles',
