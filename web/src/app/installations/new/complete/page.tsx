@@ -35,7 +35,12 @@ export default function CompletePage() {
             })
             if (verifyResponse.ok) {
               const verifyData = await verifyResponse.json()
-              if (verifyData.subdomain) {
+              // Validate subdomain is not a placeholder/invalid value
+              const isValidSubdomain = verifyData.subdomain &&
+                verifyData.subdomain !== '0.0.0.0' &&
+                !verifyData.subdomain.includes('0.0.0.0')
+
+              if (isValidSubdomain) {
                 const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
                 setInstallationData({
                   subdomain: verifyData.subdomain,

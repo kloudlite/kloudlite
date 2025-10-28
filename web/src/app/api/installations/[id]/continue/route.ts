@@ -51,17 +51,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     maxAge: 30 * 24 * 60 * 60, // 30 days
   })
 
+  // Helper function to validate subdomain
+  const isValidSubdomain = (subdomain: string | null | undefined): boolean => {
+    if (!subdomain) return false
+    if (subdomain === '0.0.0.0') return false
+    if (subdomain.includes('0.0.0.0')) return false
+    return true
+  }
+
   // Determine next step based on installation status
   let redirectPath: string
 
   if (!installation.secretKey) {
     // Not installed yet - go to install step
     redirectPath = '/installations/new/install'
-  } else if (!installation.subdomain) {
-    // Installed but no domain - go to domain step
+  } else if (!isValidSubdomain(installation.subdomain)) {
+    // Installed but no valid domain - go to domain step
     redirectPath = '/installations/new/domain'
   } else if (!installation.deploymentReady) {
-    // Has domain but not ready - go to complete step
+    // Has valid domain but not ready - go to complete step
     redirectPath = '/installations/new/complete'
   } else {
     // Fully set up - go back to installations list
