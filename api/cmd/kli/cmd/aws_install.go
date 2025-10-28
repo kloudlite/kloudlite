@@ -154,6 +154,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" ✓\n")
 	fmt.Printf("    %s\n", amiID)
 
+	// Pace API calls to prevent rate limiting
+	time.Sleep(1 * time.Second)
+
 	// Network Resources
 	fmt.Printf("  ○ Setting up network...")
 	vpcID, vpcCIDR, err := getDefaultVPC(ctx, cfg)
@@ -171,6 +174,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" ✓\n")
 	fmt.Printf("    VPC: %s (%s)\n", vpcID, vpcCIDR)
 	fmt.Printf("    Subnet: %s (AZ: %s)\n", subnetID, subnetAZ)
+
+	// Pace API calls to prevent rate limiting
+	time.Sleep(1 * time.Second)
 
 	// Parallel Resource Creation
 	fmt.Printf("  ○ Creating resources in parallel...\n")
@@ -235,6 +241,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    Security Group: %s\n", sgName)
 	fmt.Printf("    IAM Role:       %s\n", roleName)
 
+	// Pace API calls to prevent rate limiting (longer delay after parallel operations)
+	time.Sleep(2 * time.Second)
+
 	// Instance Profile (depends on IAM role)
 	bold.Println("\nFinalizing IAM Setup")
 	bold.Println("────────────────────")
@@ -246,6 +255,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	green.Printf(" ✓\n")
+
+	// Pace API calls to prevent rate limiting
+	time.Sleep(1 * time.Second)
 
 	// Instance Launch
 	bold.Println("\nInstance Deployment")
