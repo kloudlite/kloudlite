@@ -12,6 +12,8 @@ import (
 	// NOTE: AWS SDK import commented out - using Job-based approach
 	// "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/aws"
 	// "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/types"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/templates"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -39,6 +41,8 @@ type WorkMachineReconciler struct {
 	K3sAgentToken string
 
 	YAMLClient kubectl.YAMLClient
+
+	awsClient cloud.Provider
 }
 
 const WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
@@ -172,24 +176,11 @@ func (r *WorkMachineReconciler) Reconcile(
 			OnDelete: nil,
 		},
 		{
-			Name:     "reconcile-cloud-instance-state",
-			Title:    "Reconcile cloud instance state",
-			OnCreate: r.reconcileCloudInstanceStateJobBased,
-			OnDelete: nil, // TODO: implement Job-based deletion
+			Name:     "setup cloud machine",
+			Title:    "Setup Cloud Machine",
+			OnCreate: r.setupCloudMachine,
+			OnDelete: r.cleanupCloudMachine,
 		},
-		// TODO: Implement these for Job-based approach
-		// {
-		// 	Name:     "ensure-cloud-dns",
-		// 	Title:    "Ensure DNS configuration for cloud instance",
-		// 	OnCreate: r.ensureCloudDNSStep,
-		// 	OnDelete: r.deleteCloudDNSStep,
-		// },
-		// {
-		// 	Name:     "check-auto-shutdown",
-		// 	Title:    "Check auto-shutdown conditions",
-		// 	OnCreate: r.checkAutoShutdownStep,
-		// 	OnDelete: nil,
-		// },
 	})
 }
 
@@ -721,11 +712,6 @@ StrictModes no
 func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(
 	check *reconciler.Check[*machinesv1.WorkMachine], obj *machinesv1.WorkMachine,
 ) reconciler.StepResult {
-	// Skip for cloud provider WorkMachines
-	if obj.Spec.Provider != "" {
-		return check.Passed()
-	}
-
 	namespace := obj.Spec.TargetNamespace
 	deploymentName := "workmachine-host-manager"
 
@@ -760,11 +746,30 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(
 	return check.Passed()
 }
 
+func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*machinesv1.WorkMachine], obj *machinesv1.WorkMachine) reconciler.StepResult {
+	switch obj.Spec.Provider {
+	case machinesv1.AWS:
+		{
+			// TODO(claude): implement this
+			return check.Passed()
+		}
+	default:
+		return check.Failed(fmt.Errorf("unknown cloud provider %s", obj.Spec.Provider))
+	}
+}
+
 // SetupWithManager sets up the controller with the Manager
 func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.K3sAgentToken == "" {
 		return fmt.Errorf("reconciler.K3sAgentToken must be set")
 	}
+
+	p, err := aws.NewProvider(context.TODO(), "", "")
+	if err != nil {
+		return err
+	}
+
+	r.awsClient = p
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	return builder.Complete(r)

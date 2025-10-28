@@ -21,8 +21,10 @@ type Provider interface {
 	GetMachineStatus(ctx context.Context, machineID string) (*v1.MachineInfo, error)
 
 	// StartMachine starts a stopped instance
-	// Returns error if instance doesn't exist or cannot be started
 	StartMachine(ctx context.Context, machineID string) error
+
+	// StopMachine stops a running instance
+	StopMachine(ctx context.Context, machineID string) error
 
 	// IncreaseVolumeSize increases root volume size for root volume of the machine
 	IncreaseVolumeSize(ctx context.Context, machineID string, newSize int32) error

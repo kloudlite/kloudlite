@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"runtime"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -53,14 +54,15 @@ func NewProvider(ctx context.Context, k3sURL string, k3sToken string) (cloud.Pro
 		return nil, errors.Wrap("failed to get current client VPC", err)
 	}
 
-	slog.Info("post describe VPCs call", "defaultVPC", defaultVPC.Vpcs)
+	slog.Info("post describe VPCs call", "len(defaultVPC)", len(defaultVPC.Vpcs), "vpcs", defaultVPC.Vpcs)
+	slog.Info("vpc info", "vpc.id", *defaultVPC.Vpcs[0].VpcId)
 
 	if len(defaultVPC.Vpcs) != 1 {
 		return nil, errors.New("got no results for default VPC")
 	}
 
 	return &provider{
-		ec2Client: ec2.NewFromConfig(awsCfg),
+		ec2Client: ec2Client,
 
 		k3sURL:   k3sURL,
 		k3sToken: k3sToken,
@@ -87,11 +89,23 @@ func (p *provider) ValidatePermissions(ctx context.Context) error {
 	g, errctx := errgroup.WithContext(ctx)
 	dryRunChecks := []func(context.Context) error{
 		p.dryRunCreateInstance,
+		p.dryRunTerminateInstance,
+		p.dryRunCreateSecurityGroup,
+		p.dryRunAuthorizeSecurityGroupIngress,
+		p.dryRunAuthorizeSecurityGroupEgress,
+		p.dryRunDeleteSecurityGroup,
+		p.dryRunDescribeVolumes,
+		p.dryRunDescribeInstanceStatus,
+		p.dryRunDescribeSecurityGroups,
+		p.dryRunDescribeInstances,
 	}
 
 	for i := range dryRunChecks {
 		g.Go(func() error {
-			return dryRunChecks[i](errctx)
+			if err := dryRunChecks[i](errctx); err != nil {
+				return err
+			}
+			return nil
 		})
 	}
 
@@ -196,12 +210,16 @@ func (p *provider) GetMachineStatus(ctx context.Context, machineID string) (*v1.
 		return nil, errors.Wrap("must provide machineID")
 	}
 
+	slog.Info("about calling describe instances")
+
 	output, err := p.ec2Client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
 		InstanceIds: []string{machineID},
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to find machine", err)
 	}
+
+	slog.Info("post describe instances", "len(output.Reservations)", len(output.Reservations), "reservations", output.Reservations)
 
 	if len(output.Reservations) == 0 || len(output.Reservations[0].Instances) == 0 {
 		return nil, errors.New("failed to find machine")
@@ -224,6 +242,19 @@ func (p *provider) StartMachine(ctx context.Context, machineID string) error {
 	}
 
 	if _, err := p.ec2Client.StartInstances(ctx, &ec2.StartInstancesInput{
+		InstanceIds: []string{machineID},
+	}); err != nil {
+		return fmt.Errorf("failed to start machine: %w", err)
+	}
+	return nil
+}
+
+func (p *provider) StopMachine(ctx context.Context, machineID string) error {
+	if machineID == "" {
+		return fmt.Errorf("must provide machineID, got (%s)", machineID)
+	}
+
+	if _, err := p.ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{
 		InstanceIds: []string{machineID},
 	}); err != nil {
 		return fmt.Errorf("failed to start machine: %w", err)
