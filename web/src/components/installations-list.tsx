@@ -188,11 +188,15 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                           <Button asChild variant="default" size="sm">
                             <a href={nextStep}>Continue Setup</a>
                           </Button>
-                        ) : (
+                        ) : installationUrl ? (
                           <Button asChild variant="default" size="sm">
-                            <a href={installationUrl!} target="_blank" rel="noopener noreferrer">
+                            <a href={installationUrl} target="_blank" rel="noopener noreferrer">
                               Open
                             </a>
+                          </Button>
+                        ) : (
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/installations/${installation.id}`}>View Details</Link>
                           </Button>
                         )}
                         <DropdownMenu>
