@@ -1056,8 +1056,8 @@ func TestPackageManagerReconciler_InstallPackage_CommitScriptGeneration(t *testi
 	reconciler := setupTestReconcilerWithMock(t, mockExec)
 
 	pkg := workspacev1.PackageSpec{
-		Name:           "nodejs_20",
-		NixpkgsCommit:  "abc123def456789",
+		Name:          "nodejs_20",
+		NixpkgsCommit: "abc123def456789",
 	}
 
 	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
@@ -1250,7 +1250,6 @@ func TestSetupWorkspaceHome_ChownError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to set ownership on workspace home directory")
 }
-
 
 // ========================================
 // SSH ConfigMap Controller Tests
@@ -2072,9 +2071,9 @@ func TestReconcile_ClearsFailedPackagesOnRetry(t *testing.T) {
 			},
 		},
 		Status: workspacev1.PackageRequestStatus{
-			Phase:           "Failed",
-			FailedPackages:  []string{"nodejs", "python"}, // Previous failures
-			Message:         "Installation failed",
+			Phase:          "Failed",
+			FailedPackages: []string{"nodejs", "python"}, // Previous failures
+			Message:        "Installation failed",
 		},
 	}
 
@@ -2147,8 +2146,8 @@ func TestReconcile_ChecksActualStateNotStatus(t *testing.T) {
 			},
 		},
 		Status: workspacev1.PackageRequestStatus{
-			Phase:              "Pending",  // Status says pending
-			InstalledPackages:  []workspacev1.InstalledPackage{}, // Status says not installed
+			Phase:             "Pending",                        // Status says pending
+			InstalledPackages: []workspacev1.InstalledPackage{}, // Status says not installed
 		},
 	}
 

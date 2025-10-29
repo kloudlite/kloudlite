@@ -11,8 +11,8 @@ import (
 	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
-	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,9 +61,9 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 
 	// Optimize REST config for better performance
-	config.QPS = 50.0                           // Increased QPS for higher throughput
-	config.Burst = 100                          // Increased burst capacity
-	config.Timeout = 30 * time.Second           // Reasonable timeout
+	config.QPS = 50.0                 // Increased QPS for higher throughput
+	config.Burst = 100                // Increased burst capacity
+	config.Timeout = 30 * time.Second // Reasonable timeout
 
 	// Create standard Kubernetes clientset with optimized transport
 	clientset, err := kubernetes.NewForConfig(config)
@@ -113,8 +113,8 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 
 	// Apply connection pooling optimizations to the transport
 	if httpTransport, ok := transport.(*http.Transport); ok {
-		httpTransport.MaxIdleConns = 100              // Maximum number of idle connections
-		httpTransport.MaxIdleConnsPerHost = 10        // Maximum idle connections per host
+		httpTransport.MaxIdleConns = 100                 // Maximum number of idle connections
+		httpTransport.MaxIdleConnsPerHost = 10           // Maximum idle connections per host
 		httpTransport.IdleConnTimeout = 90 * time.Second // How long to keep idle connections
 	}
 

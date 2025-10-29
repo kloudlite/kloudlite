@@ -354,11 +354,11 @@ func TestClient_WorkspaceWithEnvironmentRef(t *testing.T) {
 			DisplayName: "Test Workspace",
 			Owner:       "user@example.com",
 			EnvironmentConnection: &workspacesv1.EnvironmentConnectionSpec{
-			EnvironmentRef: corev1.ObjectReference{
-				Name:      "test-environment",
-				Namespace: "test-namespace",
+				EnvironmentRef: corev1.ObjectReference{
+					Name:      "test-environment",
+					Namespace: "test-namespace",
+				},
 			},
-		},
 		},
 	}
 

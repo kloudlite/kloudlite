@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
+	fzf "github.com/junegunn/fzf/src"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
-	fzf "github.com/junegunn/fzf/src"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -422,4 +422,3 @@ func selectEnvironmentWithFzf(envs []environmentsv1.Environment) (*environmentsv
 
 	return env, nil
 }
-

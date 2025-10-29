@@ -171,11 +171,11 @@ func TestCompositionReconciler_FetchEnvironmentData_Missing(t *testing.T) {
 // correctly tracks environment activation state and triggers reconciliation when it changes
 func TestCompositionReconciler_EnvironmentActivationStateTracking(t *testing.T) {
 	tests := []struct {
-		name                       string
-		compositionStatus          compositionsv1.CompositionStatus
-		environmentActivated       bool
-		expectReconciliation       bool
-		description                string
+		name                 string
+		compositionStatus    compositionsv1.CompositionStatus
+		environmentActivated bool
+		expectReconciliation bool
+		description          string
 	}{
 		{
 			name: "Reconcile when activation state changes from false to true",

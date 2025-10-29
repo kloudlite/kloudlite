@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -322,12 +322,12 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 
 	tests := []struct {
-		name               string
-		workspace          *workspacev1.Workspace
-		existingPod        *corev1.Pod
-		expectedPhase      string
-		expectedMessage    string
-		expectPodDeletion  bool
+		name              string
+		workspace         *workspacev1.Workspace
+		existingPod       *corev1.Pod
+		expectedPhase     string
+		expectedMessage   string
+		expectPodDeletion bool
 	}{
 		{
 			name: "Suspend workspace with running pod",
@@ -373,10 +373,10 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 					Status:      "suspended",
 				},
 			},
-			existingPod:        nil,
-			expectedPhase:      "Stopped",
-			expectedMessage:    "Workspace is stopped",
-			expectPodDeletion:  false,
+			existingPod:       nil,
+			expectedPhase:     "Stopped",
+			expectedMessage:   "Workspace is stopped",
+			expectPodDeletion: false,
 		},
 	}
 

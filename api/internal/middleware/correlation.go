@@ -14,9 +14,9 @@ import (
 type correlationKey string
 
 const (
-	CorrelationIDKey correlationKey = "correlation_id"
-	CorrelationHeader = "X-Correlation-ID"
-	RequestIDHeader   = "X-Request-ID"
+	CorrelationIDKey  correlationKey = "correlation_id"
+	CorrelationHeader                = "X-Correlation-ID"
+	RequestIDHeader                  = "X-Request-ID"
 )
 
 // CorrelationMiddleware adds correlation IDs to requests for tracing
@@ -81,12 +81,12 @@ func generateCorrelationID() string {
 
 // ErrorResponse represents a standardized error response
 type ErrorResponse struct {
-	Error       string `json:"error"`
-	Message     string `json:"message,omitempty"`
-	Code        string `json:"code,omitempty"`
-	RequestID   string `json:"request_id"`
-	Timestamp   string `json:"timestamp"`
-	TraceID     string `json:"trace_id,omitempty"`
+	Error     string `json:"error"`
+	Message   string `json:"message,omitempty"`
+	Code      string `json:"code,omitempty"`
+	RequestID string `json:"request_id"`
+	Timestamp string `json:"timestamp"`
+	TraceID   string `json:"trace_id,omitempty"`
 }
 
 // NewErrorResponse creates a new error response with correlation ID

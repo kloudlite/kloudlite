@@ -12,8 +12,8 @@ import (
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -21,8 +21,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func setupWorkspaceWebhookTest(t *testing.T, objects ...client.Object) *WorkspaceWebhook {

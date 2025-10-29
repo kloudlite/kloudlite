@@ -24,11 +24,11 @@ func (r *WorkspaceReconciler) validateCommandForExec(command []string) error {
 
 	// Define allowed commands and their safe patterns
 	allowedCommands := map[string]bool{
-		"sh":     true,
-		"awk":    true,
-		"wc":     true,
-		"cat":    true,
-		"grep":   true,
+		"sh":   true,
+		"awk":  true,
+		"wc":   true,
+		"cat":  true,
+		"grep": true,
 	}
 
 	// Check first argument is an allowed command
