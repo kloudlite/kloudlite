@@ -17,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-
 // CompositionReconciler reconciles Composition objects
 type CompositionReconciler struct {
 	client.Client
@@ -105,12 +104,6 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateRunning, "Composition deployed successfully", zapLogger)
 }
 
-
-
-
-
-
-
 // SetupWithManager sets up the controller with the Manager
 func (r *CompositionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
@@ -131,4 +124,3 @@ func (r *CompositionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Complete(r)
 }
-

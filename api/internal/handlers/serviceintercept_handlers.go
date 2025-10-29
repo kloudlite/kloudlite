@@ -37,7 +37,7 @@ func (h *ServiceInterceptHandlers) CreateServiceIntercept(c *gin.Context) {
 	}
 
 	var req struct {
-		Name string                           `json:"name" binding:"required"`
+		Name string                            `json:"name" binding:"required"`
 		Spec interceptsv1.ServiceInterceptSpec `json:"spec" binding:"required"`
 	}
 

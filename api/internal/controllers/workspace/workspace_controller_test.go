@@ -9,9 +9,9 @@ import (
 
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -192,10 +192,10 @@ func TestReconcile_WithEnvironmentConnection(t *testing.T) {
 			Owner:       "test@example.com",
 			Status:      "active",
 			EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
-			EnvironmentRef: corev1.ObjectReference{
-				Name: "test-env",
+				EnvironmentRef: corev1.ObjectReference{
+					Name: "test-env",
+				},
 			},
-		},
 		},
 	}
 
@@ -550,11 +550,11 @@ func TestAddOrUpdateWorkspaceCondition(t *testing.T) {
 					Conditions: []metav1.Condition{},
 				},
 			},
-			conditionType:   "Ready",
-			status:          metav1.ConditionTrue,
-			reason:          "TestReason",
-			message:         "Test message",
-			expectedStatus:  metav1.ConditionTrue,
+			conditionType:  "Ready",
+			status:         metav1.ConditionTrue,
+			reason:         "TestReason",
+			message:        "Test message",
+			expectedStatus: metav1.ConditionTrue,
 		},
 		{
 			name: "update existing condition",
@@ -569,11 +569,11 @@ func TestAddOrUpdateWorkspaceCondition(t *testing.T) {
 					},
 				},
 			},
-			conditionType:   "Ready",
-			status:          metav1.ConditionTrue,
-			reason:          "NewReason",
-			message:         "Updated message",
-			expectedStatus:  metav1.ConditionTrue,
+			conditionType:  "Ready",
+			status:         metav1.ConditionTrue,
+			reason:         "NewReason",
+			message:        "Updated message",
+			expectedStatus: metav1.ConditionTrue,
 		},
 	}
 
@@ -626,17 +626,17 @@ func TestValidateEnvironmentConnection(t *testing.T) {
 				},
 			},
 			environment: nil,
-			expectError:  false,
+			expectError: false,
 		},
 		{
 			name: "workspace with valid activated environment",
 			workspace: &workspacev1.Workspace{
 				Spec: workspacev1.WorkspaceSpec{
 					EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
-			EnvironmentRef: corev1.ObjectReference{
-				Name: "test-env",
-			},
-		},
+						EnvironmentRef: corev1.ObjectReference{
+							Name: "test-env",
+						},
+					},
 				},
 			},
 			environment: &environmentv1.Environment{
@@ -655,10 +655,10 @@ func TestValidateEnvironmentConnection(t *testing.T) {
 			workspace: &workspacev1.Workspace{
 				Spec: workspacev1.WorkspaceSpec{
 					EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
-			EnvironmentRef: corev1.ObjectReference{
-				Name: "test-env",
-			},
-		},
+						EnvironmentRef: corev1.ObjectReference{
+							Name: "test-env",
+						},
+					},
 				},
 			},
 			environment: &environmentv1.Environment{
@@ -715,10 +715,10 @@ func TestApplyLabelsAndAnnotations(t *testing.T) {
 	}
 
 	tests := []struct {
-		name               string
-		workspace          *workspacev1.Workspace
-		obj                metav1.Object
-		expectedLabels     map[string]string
+		name                string
+		workspace           *workspacev1.Workspace
+		obj                 metav1.Object
+		expectedLabels      map[string]string
 		expectedAnnotations map[string]string
 	}{
 		{
@@ -738,15 +738,15 @@ func TestApplyLabelsAndAnnotations(t *testing.T) {
 				},
 			},
 			expectedLabels: map[string]string{
-				"app": "workspace",
-				"workspace": "test-workspace",
+				"app":                                    "workspace",
+				"workspace":                              "test-workspace",
 				"workspaces.kloudlite.io/workspace-name": "test-workspace",
-				"kloudlite.io/workspace-owner": "test@example.com",
-				"kloudlite.io/workspace-display-name": "test workspace",
+				"kloudlite.io/workspace-owner":           "test@example.com",
+				"kloudlite.io/workspace-display-name":    "test workspace",
 			},
 			expectedAnnotations: map[string]string{
 				"kloudlite.io/workspace-display-name": "Test Workspace",
-				"kloudlite.io/workspace-owner": "test@example.com",
+				"kloudlite.io/workspace-owner":        "test@example.com",
 			},
 		},
 		{
@@ -771,15 +771,15 @@ func TestApplyLabelsAndAnnotations(t *testing.T) {
 				},
 			},
 			expectedLabels: map[string]string{
-				"app": "workspace",
-				"workspace": "test-workspace",
+				"app":                                    "workspace",
+				"workspace":                              "test-workspace",
 				"workspaces.kloudlite.io/workspace-name": "test-workspace",
-				"kloudlite.io/workspace-owner": "test@example.com",
-				"existing-label": "existing-value",
+				"kloudlite.io/workspace-owner":           "test@example.com",
+				"existing-label":                         "existing-value",
 			},
 			expectedAnnotations: map[string]string{
 				"kloudlite.io/workspace-owner": "test@example.com",
-				"existing-annotation": "existing-value",
+				"existing-annotation":          "existing-value",
 			},
 		},
 	}
@@ -906,10 +906,10 @@ func TestDeleteHostDirectory(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		setupFunc     func() string
-		expectError   bool
-		errorMsg      string
+		name        string
+		setupFunc   func() string
+		expectError bool
+		errorMsg    string
 	}{
 		{
 			name: "delete existing directory with correct format",
@@ -1125,8 +1125,8 @@ func TestHandleDeletion(t *testing.T) {
 			Finalizers: []string{workspaceFinalizer},
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			Owner:       "test@example.com",
-			DisplayName: "Test Workspace",
+			Owner:         "test@example.com",
+			DisplayName:   "Test Workspace",
 			WorkspacePath: "/home/kl/workspaces/test-workspace",
 		},
 		Status: workspacev1.WorkspaceStatus{
@@ -1168,15 +1168,15 @@ func TestHandleDeletion(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name        string
-		workspace   *workspacev1.Workspace
-		expectError bool
+		name           string
+		workspace      *workspacev1.Workspace
+		expectError    bool
 		checkFinalizer bool
 	}{
 		{
-			name:      "successful deletion with finalizer",
-			workspace: workspace,
-			expectError: false,
+			name:           "successful deletion with finalizer",
+			workspace:      workspace,
+			expectError:    false,
 			checkFinalizer: true,
 		},
 		{
@@ -1190,7 +1190,7 @@ func TestHandleDeletion(t *testing.T) {
 					Owner: "test@example.com",
 				},
 			},
-			expectError: false,
+			expectError:    false,
 			checkFinalizer: false,
 		},
 	}
@@ -1236,7 +1236,7 @@ func TestHandleSuspendedWorkspace(t *testing.T) {
 			DisplayName: "Test Workspace",
 		},
 		Status: workspacev1.WorkspaceStatus{
-			Phase: "Running",
+			Phase:   "Running",
 			PodName: "test-workspace-pod",
 		},
 	}
@@ -1359,8 +1359,8 @@ func TestUpdateDNSConfigInRunningPod(t *testing.T) {
 			},
 		},
 		Status: corev1.PodStatus{
-			Phase:  corev1.PodRunning,
-			PodIP:  "192.168.1.100",
+			Phase: corev1.PodRunning,
+			PodIP: "192.168.1.100",
 		},
 	}
 

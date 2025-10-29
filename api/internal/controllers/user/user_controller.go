@@ -153,8 +153,8 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 
 	needsStatusUpdate := false
 	if user.Status.Phase == "" ||
-	   (isUserActive && user.Status.Phase != "active") ||
-	   (!isUserActive && user.Status.Phase != "inactive") {
+		(isUserActive && user.Status.Phase != "active") ||
+		(!isUserActive && user.Status.Phase != "inactive") {
 		needsStatusUpdate = true
 	}
 

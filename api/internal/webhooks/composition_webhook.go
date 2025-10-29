@@ -10,10 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
+	"gopkg.in/yaml.v3"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"gopkg.in/yaml.v3"
 )
 
 type CompositionWebhook struct {

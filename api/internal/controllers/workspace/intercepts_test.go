@@ -6,8 +6,8 @@ import (
 
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
-	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -436,7 +436,7 @@ func TestReconcileServiceIntercepts_DeleteObsolete(t *testing.T) {
 		Spec: workspacev1.WorkspaceSpec{
 			EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
 				EnvironmentRef: corev1.ObjectReference{Name: "test-env"},
-				Intercepts:     []workspacev1.InterceptSpec{
+				Intercepts: []workspacev1.InterceptSpec{
 					// Only keep web intercept
 					{
 						ServiceName: "web",
@@ -539,7 +539,7 @@ func TestReconcileServiceIntercepts_UpdatePortMappings(t *testing.T) {
 					{
 						ServiceName: "web",
 						PortMappings: []interceptsv1.PortMapping{
-							{ServicePort: 80, WorkspacePort: 9090, Protocol: "TCP"}, // Changed port
+							{ServicePort: 80, WorkspacePort: 9090, Protocol: "TCP"},  // Changed port
 							{ServicePort: 443, WorkspacePort: 9443, Protocol: "TCP"}, // New port
 						},
 					},

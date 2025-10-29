@@ -74,7 +74,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_Success(t *testing.T) 
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -201,7 +201,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_WorkspaceNotFound(t *t
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "nonexistent-workspace",
 				Namespace: "test-ns",
@@ -277,7 +277,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_WorkspaceNotRunning(t 
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "stopped-workspace",
 				Namespace: "test-ns",
@@ -353,7 +353,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_ServiceNotFound(t *tes
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -447,7 +447,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_InvalidServicePort(t *
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -535,7 +535,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_NoPortMappings(t *test
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -618,7 +618,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_InvalidPortNumbers(t *
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -629,7 +629,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_InvalidPortNumbers(t *
 			},
 			PortMappings: []interceptsv1.PortMapping{
 				{
-					ServicePort:   0, // Invalid
+					ServicePort:   0,     // Invalid
 					WorkspacePort: 70000, // Invalid (> 65535)
 				},
 			},
@@ -705,7 +705,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_DuplicateActiveInterce
 			},
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name: "other-workspace",
 			},
@@ -729,7 +729,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_DuplicateActiveInterce
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "test-ns",
@@ -794,7 +794,7 @@ func TestServiceInterceptWebhook_MutateServiceIntercept_AddsLabelsAndFinalizer(t
 			Namespace: "test-ns",
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
-			
+
 			WorkspaceRef: corev1.ObjectReference{
 				Name:      "test-workspace",
 				Namespace: "workspace-ns",
@@ -943,7 +943,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_PortlessHeadlessServic
 			Namespace: "test-ns",
 		},
 		Spec: corev1.ServiceSpec{
-			ClusterIP: "None", // Headless service
+			ClusterIP: "None",                 // Headless service
 			Ports:     []corev1.ServicePort{}, // No ports defined
 			Selector: map[string]string{
 				"app": "test",
@@ -1010,7 +1010,7 @@ func TestServiceInterceptWebhook_ValidateServiceIntercept_PortlessHeadlessServic
 	var response admissionv1.AdmissionReview
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	
+
 	// For portless services, the webhook should allow user-provided port mappings
 	// without validating against service.Spec.Ports
 	assert.True(t, response.Response.Allowed, "Portless headless services should allow user-provided port mappings")

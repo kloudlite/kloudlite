@@ -231,10 +231,10 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  "socat-forwarder",
-					Image: "alpine/socat:latest",
+					Name:    "socat-forwarder",
+					Image:   "alpine/socat:latest",
 					Command: []string{"sh", "-c", socatCommand},
-					Ports: []corev1.ContainerPort{},
+					Ports:   []corev1.ContainerPort{},
 					Lifecycle: &corev1.Lifecycle{
 						PreStop: &corev1.LifecycleHandler{
 							Exec: &corev1.ExecAction{
