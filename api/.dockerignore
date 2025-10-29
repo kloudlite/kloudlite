@@ -1,5 +1,7 @@
 # Build artifacts
-server
+# NOTE: server and workmachine-node-manager binaries are pre-built in CI and needed for Docker image
+# server
+# workmachine-node-manager
 *.exe
 *.dll
 *.so
