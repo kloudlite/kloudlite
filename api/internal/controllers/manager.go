@@ -130,7 +130,6 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
 	}
 
-	
 	// Setup ServiceIntercept controller
 	serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
 		Client: mgr.GetClient(),

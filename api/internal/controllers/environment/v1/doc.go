@@ -12,6 +12,7 @@
 // - Composition controller: manages Docker Compose deployments
 //
 // Controllers import this package using descriptive aliases for clarity:
-//   environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1" // for Environment types
-//   compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1" // for Composition types
+//
+//	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1" // for Environment types
+//	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1" // for Composition types
 package v1

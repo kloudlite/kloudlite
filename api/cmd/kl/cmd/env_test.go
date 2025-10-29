@@ -9,10 +9,10 @@ import (
 
 func TestGetSearchDomainsFromResolvConf(t *testing.T) {
 	tests := []struct {
-		name           string
-		resolvContent  string
+		name            string
+		resolvContent   string
 		expectedDomains []string
-		expectError    bool
+		expectError     bool
 	}{
 		{
 			name: "with search domains",
@@ -109,11 +109,11 @@ search svc.cluster.local`,
 
 func TestUpdateResolvConf_BuildSearchDomains(t *testing.T) {
 	tests := []struct {
-		name              string
-		initialContent    string
-		targetNamespace   string
-		add               bool
-		expectedSearch    string
+		name            string
+		initialContent  string
+		targetNamespace string
+		add             bool
+		expectedSearch  string
 	}{
 		{
 			name: "add environment namespace",
@@ -222,28 +222,28 @@ options ndots:5`,
 
 func TestSearchDomainParsing(t *testing.T) {
 	tests := []struct {
-		name           string
-		searchLine     string
+		name            string
+		searchLine      string
 		expectedDomains []string
 	}{
 		{
-			name:           "multiple domains",
-			searchLine:     "search env-sample.svc.cluster.local svc.cluster.local cluster.local",
+			name:            "multiple domains",
+			searchLine:      "search env-sample.svc.cluster.local svc.cluster.local cluster.local",
 			expectedDomains: []string{"env-sample.svc.cluster.local", "svc.cluster.local", "cluster.local"},
 		},
 		{
-			name:           "single domain",
-			searchLine:     "search svc.cluster.local",
+			name:            "single domain",
+			searchLine:      "search svc.cluster.local",
 			expectedDomains: []string{"svc.cluster.local"},
 		},
 		{
-			name:           "empty search",
-			searchLine:     "search",
+			name:            "empty search",
+			searchLine:      "search",
 			expectedDomains: []string{},
 		},
 		{
-			name:           "with tabs",
-			searchLine:     "search\tenv-sample.svc.cluster.local\tsvc.cluster.local",
+			name:            "with tabs",
+			searchLine:      "search\tenv-sample.svc.cluster.local\tsvc.cluster.local",
 			expectedDomains: []string{"env-sample.svc.cluster.local", "svc.cluster.local"},
 		},
 	}

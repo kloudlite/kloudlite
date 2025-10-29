@@ -226,8 +226,8 @@ func (r *WorkspaceReconciler) ensureWorkspaceHeadlessService(ctx context.Context
 				Name:      headlessServiceName,
 				Namespace: workspace.Namespace,
 				Labels: map[string]string{
-					"app":                           "workspace",
-					"workspace":                     workspace.Name,
+					"app":                               "workspace",
+					"workspace":                         workspace.Name,
 					"workspaces.kloudlite.io/workspace": workspace.Name,
 				},
 			},

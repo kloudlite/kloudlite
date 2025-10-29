@@ -41,7 +41,7 @@ func TestCreateServiceIntercept(t *testing.T) {
 		router.POST("/api/v1/namespaces/:namespace/service-intercepts", handlers.CreateServiceIntercept)
 
 		reqBody := struct {
-			Name string                           `json:"name"`
+			Name string                            `json:"name"`
 			Spec interceptsv1.ServiceInterceptSpec `json:"spec"`
 		}{
 			Name: "test-intercept",
@@ -79,7 +79,7 @@ func TestCreateServiceIntercept(t *testing.T) {
 		router.POST("/api/v1/namespaces/:namespace/service-intercepts", handlers.CreateServiceIntercept)
 
 		reqBody := struct {
-			Name string                           `json:"name"`
+			Name string                            `json:"name"`
 			Spec interceptsv1.ServiceInterceptSpec `json:"spec"`
 		}{
 			Name: "test-intercept",
@@ -139,7 +139,7 @@ func TestCreateServiceIntercept(t *testing.T) {
 		router.POST("/api/v1/namespaces/:namespace/service-intercepts", handlers.CreateServiceIntercept)
 
 		reqBody := struct {
-			Name string                           `json:"name"`
+			Name string                            `json:"name"`
 			Spec interceptsv1.ServiceInterceptSpec `json:"spec"`
 		}{
 			Name: "existing-intercept",
@@ -250,19 +250,19 @@ func TestListServiceIntercepts(t *testing.T) {
 			},
 			Spec: interceptsv1.ServiceInterceptSpec{
 				WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
+					Name:      "test-workspace",
+					Namespace: "test-ns",
 				},
-			},
+				ServiceRef: corev1.ObjectReference{
+					Name:      "test-service",
+					Namespace: "test-ns",
+				},
+				PortMappings: []interceptsv1.PortMapping{
+					{
+						ServicePort:   80,
+						WorkspacePort: 3000,
+					},
+				},
 			},
 		}
 		intercept2 := &interceptsv1.ServiceIntercept{
@@ -272,19 +272,19 @@ func TestListServiceIntercepts(t *testing.T) {
 			},
 			Spec: interceptsv1.ServiceInterceptSpec{
 				WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
+					Name:      "test-workspace",
+					Namespace: "test-ns",
 				},
-			},
+				ServiceRef: corev1.ObjectReference{
+					Name:      "test-service",
+					Namespace: "test-ns",
+				},
+				PortMappings: []interceptsv1.PortMapping{
+					{
+						ServicePort:   80,
+						WorkspacePort: 3000,
+					},
+				},
 			},
 		}
 		_ = handlers.k8sClient.Create(context.Background(), intercept1)
@@ -344,19 +344,19 @@ func TestUpdateServiceIntercept(t *testing.T) {
 			},
 			Spec: interceptsv1.ServiceInterceptSpec{
 				WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
+					Name:      "test-workspace",
+					Namespace: "test-ns",
 				},
-			},
+				ServiceRef: corev1.ObjectReference{
+					Name:      "test-service",
+					Namespace: "test-ns",
+				},
+				PortMappings: []interceptsv1.PortMapping{
+					{
+						ServicePort:   80,
+						WorkspacePort: 3000,
+					},
+				},
 			},
 		}
 		_ = handlers.k8sClient.Create(context.Background(), intercept)
@@ -368,19 +368,19 @@ func TestUpdateServiceIntercept(t *testing.T) {
 		}{
 			Spec: interceptsv1.ServiceInterceptSpec{
 				WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
+					Name:      "test-workspace",
+					Namespace: "test-ns",
 				},
-			},
+				ServiceRef: corev1.ObjectReference{
+					Name:      "test-service",
+					Namespace: "test-ns",
+				},
+				PortMappings: []interceptsv1.PortMapping{
+					{
+						ServicePort:   80,
+						WorkspacePort: 3000,
+					},
+				},
 			},
 		}
 		body, _ := json.Marshal(reqBody)
@@ -459,19 +459,19 @@ func TestDeleteServiceIntercept(t *testing.T) {
 			},
 			Spec: interceptsv1.ServiceInterceptSpec{
 				WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
+					Name:      "test-workspace",
+					Namespace: "test-ns",
 				},
-			},
+				ServiceRef: corev1.ObjectReference{
+					Name:      "test-service",
+					Namespace: "test-ns",
+				},
+				PortMappings: []interceptsv1.PortMapping{
+					{
+						ServicePort:   80,
+						WorkspacePort: 3000,
+					},
+				},
 			},
 		}
 		_ = handlers.k8sClient.Create(context.Background(), intercept)
@@ -522,19 +522,19 @@ func TestActivateServiceIntercept(t *testing.T) {
 			},
 			Spec: interceptsv1.ServiceInterceptSpec{
 				WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
+					Name:      "test-workspace",
+					Namespace: "test-ns",
 				},
-			},
+				ServiceRef: corev1.ObjectReference{
+					Name:      "test-service",
+					Namespace: "test-ns",
+				},
+				PortMappings: []interceptsv1.PortMapping{
+					{
+						ServicePort:   80,
+						WorkspacePort: 3000,
+					},
+				},
 			},
 		}
 		_ = handlers.k8sClient.Create(context.Background(), intercept)
@@ -585,19 +585,19 @@ func TestDeactivateServiceIntercept(t *testing.T) {
 			},
 			Spec: interceptsv1.ServiceInterceptSpec{
 				WorkspaceRef: corev1.ObjectReference{
-				Name:      "test-workspace",
-				Namespace: "test-ns",
-			},
-			ServiceRef: corev1.ObjectReference{
-				Name:      "test-service",
-				Namespace: "test-ns",
-			},
-			PortMappings: []interceptsv1.PortMapping{
-				{
-					ServicePort:   80,
-					WorkspacePort: 3000,
+					Name:      "test-workspace",
+					Namespace: "test-ns",
 				},
-			},
+				ServiceRef: corev1.ObjectReference{
+					Name:      "test-service",
+					Namespace: "test-ns",
+				},
+				PortMappings: []interceptsv1.PortMapping{
+					{
+						ServicePort:   80,
+						WorkspacePort: 3000,
+					},
+				},
 			},
 		}
 		_ = handlers.k8sClient.Create(context.Background(), intercept)

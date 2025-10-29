@@ -1,15 +1,3 @@
-FROM golang:1.24 AS builder
-
-# Copy source code
-WORKDIR /workspace
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-
-# Build the workmachine-node-manager binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o workmachine-node-manager ./cmd/workmachine-node-manager
-
 # Final image
 FROM debian:bookworm-slim
 
@@ -36,8 +24,8 @@ RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 # Source nix profile
 ENV PATH="/root/.nix-profile/bin:${PATH}"
 
-# Copy the workmachine-node-manager binary
-COPY --from=builder /workspace/workmachine-node-manager /usr/local/bin/workmachine-node-manager
+# Copy the pre-built workmachine-node-manager binary from GitHub Actions
+COPY workmachine-node-manager /usr/local/bin/workmachine-node-manager
 
 # Run workmachine-node-manager
 CMD ["/usr/local/bin/workmachine-node-manager"]

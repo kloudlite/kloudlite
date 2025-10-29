@@ -154,6 +154,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" ✓\n")
 	fmt.Printf("    %s\n", amiID)
 
+	// Pace API calls to prevent rate limiting
+	time.Sleep(1 * time.Second)
+
 	// Network Resources
 	fmt.Printf("  ○ Setting up network...")
 	vpcID, vpcCIDR, err := getDefaultVPC(ctx, cfg)
@@ -171,6 +174,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" ✓\n")
 	fmt.Printf("    VPC: %s (%s)\n", vpcID, vpcCIDR)
 	fmt.Printf("    Subnet: %s (AZ: %s)\n", subnetID, subnetAZ)
+
+	// Pace API calls to prevent rate limiting
+	time.Sleep(1 * time.Second)
 
 	// Parallel Resource Creation
 	fmt.Printf("  ○ Creating resources in parallel...\n")
@@ -235,6 +241,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    Security Group: %s\n", sgName)
 	fmt.Printf("    IAM Role:       %s\n", roleName)
 
+	// Pace API calls to prevent rate limiting (longer delay after parallel operations)
+	time.Sleep(2 * time.Second)
+
 	// Instance Profile (depends on IAM role)
 	bold.Println("\nFinalizing IAM Setup")
 	bold.Println("────────────────────")
@@ -246,6 +255,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	green.Printf(" ✓\n")
+
+	// Pace API calls to prevent rate limiting
+	time.Sleep(1 * time.Second)
 
 	// Instance Launch
 	bold.Println("\nInstance Deployment")
@@ -606,10 +618,18 @@ func ensureSecurityGroup(ctx context.Context, cfg aws.Config, vpcID, vpcCIDR str
 	sgID := *createResult.GroupId
 
 	// Add ingress rules
-	// Port 443 from anywhere
+	// Port 80 and 443 from anywhere for web access
 	_, err = ec2Client.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
 		GroupId: aws.String(sgID),
 		IpPermissions: []types.IpPermission{
+			{
+				IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int32(80),
+				ToPort:     aws.Int32(80),
+				IpRanges: []types.IpRange{
+					{CidrIp: aws.String("0.0.0.0/0")},
+				},
+			},
 			{
 				IpProtocol: aws.String("tcp"),
 				FromPort:   aws.Int32(443),
@@ -695,7 +715,31 @@ until kubectl get nodes 2>/dev/null; do
 done
 
 echo "K3s installation completed at $(date)"
-echo "Kloudlite installation completed successfully!"
+
+# Download and apply Kloudlite manifests
+echo "Installing Kloudlite API Server and Frontend..."
+MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/master/api/manifests/install"
+
+# Apply API Server StatefulSet
+echo "Deploying API Server..."
+kubectl apply -f ${MANIFEST_BASE_URL}/api-server.yaml
+
+# Wait for API Server to be ready
+echo "Waiting for API Server to be ready..."
+kubectl wait --for=condition=ready pod -l app=api-server -n kloudlite --timeout=300s || true
+
+# Apply Frontend Deployment
+echo "Deploying Frontend..."
+kubectl apply -f ${MANIFEST_BASE_URL}/frontend.yaml
+
+# Wait for Frontend to be ready
+echo "Waiting for Frontend to be ready..."
+kubectl wait --for=condition=ready pod -l app=frontend -n kloudlite --timeout=300s || true
+
+echo "Getting service endpoints..."
+kubectl get svc -n kloudlite
+
+echo "Kloudlite installation completed successfully at $(date)!"
 `
 
 	// Base64 encode the user data
