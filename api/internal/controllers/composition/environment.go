@@ -11,7 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-
 // getEnvironmentForNamespace finds the environment that owns the given namespace
 func (r *CompositionReconciler) getEnvironmentForNamespace(ctx context.Context, namespace string, logger *zap.Logger) (*compositionsv1.Environment, error) {
 	envList := &compositionsv1.EnvironmentList{}

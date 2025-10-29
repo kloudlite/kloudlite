@@ -352,7 +352,6 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	logger.Info("Successfully created namespace for environment",
 		zap.String("namespace", environment.Spec.TargetNamespace))
 
-
 	// Update environment status to indicate namespace has been created
 	desiredState := environmentsv1.EnvironmentStateInactive
 	if environment.Spec.Activated {

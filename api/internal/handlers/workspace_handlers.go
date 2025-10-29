@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -489,13 +489,13 @@ func (h *WorkspaceHandlers) GetMetrics(c *gin.Context) {
 // NodeMetrics represents CPU and memory metrics for a node
 type NodeMetrics struct {
 	CPU struct {
-		Usage     int64 `json:"usage"`     // in millicores
-		Capacity  int64 `json:"capacity"`  // in millicores
+		Usage       int64 `json:"usage"`       // in millicores
+		Capacity    int64 `json:"capacity"`    // in millicores
 		Allocatable int64 `json:"allocatable"` // in millicores
 	} `json:"cpu"`
 	Memory struct {
-		Usage     int64 `json:"usage"`     // in bytes
-		Capacity  int64 `json:"capacity"`  // in bytes
+		Usage       int64 `json:"usage"`       // in bytes
+		Capacity    int64 `json:"capacity"`    // in bytes
 		Allocatable int64 `json:"allocatable"` // in bytes
 	} `json:"memory"`
 	Timestamp string `json:"timestamp"`

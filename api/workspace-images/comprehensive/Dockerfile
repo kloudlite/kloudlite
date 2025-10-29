@@ -1,4 +1,5 @@
-FROM kloudlite/workspace-base:latest
+ARG BASE_IMAGE=kloudlite/workspace-base:latest
+FROM ${BASE_IMAGE}
 
 USER root
 

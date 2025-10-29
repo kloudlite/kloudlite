@@ -151,7 +151,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 		// Workspace is active, update last activity time
 		now := metav1.Now()
 		if workspace.Status.LastActivityTime == nil ||
-		   time.Since(workspace.Status.LastActivityTime.Time) > 30*time.Second {
+			time.Since(workspace.Status.LastActivityTime.Time) > 30*time.Second {
 			workspace.Status.LastActivityTime = &now
 			if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
 				logger.Warn("Failed to update last activity time", zap.Error(err))

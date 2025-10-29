@@ -67,7 +67,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
-		serviceHandlers := handlers.NewServiceHandlers(
+	serviceHandlers := handlers.NewServiceHandlers(
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
@@ -244,7 +244,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				compositions.GET("/:name/status", compositionHandlers.GetCompositionStatus)
 			}
 
-			
 			// Service routes (namespaced, read-only)
 			services := protected.Group("/namespaces/:namespace/services")
 			{

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -144,8 +144,8 @@ func TestServiceInterceptReconciler_Reconcile_Activation_CreatesSOCATPod(t *test
 			Name:      "workspace-test-workspace-headless",
 			Namespace: "workspace-namespace",
 			Labels: map[string]string{
-				"app":                                   "workspace",
-				"workspace":                             "test-workspace",
+				"app":                               "workspace",
+				"workspace":                         "test-workspace",
 				"workspaces.kloudlite.io/workspace": "test-workspace",
 			},
 		},
@@ -319,8 +319,8 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_CleansUpSOCATPod(t *testi
 			Name:      "workspace-test-workspace-headless",
 			Namespace: "workspace-namespace",
 			Labels: map[string]string{
-				"app":                                   "workspace",
-				"workspace":                             "test-workspace",
+				"app":                               "workspace",
+				"workspace":                         "test-workspace",
 				"workspaces.kloudlite.io/workspace": "test-workspace",
 			},
 		},
@@ -366,7 +366,7 @@ func TestServiceInterceptReconciler_Reconcile_Deletion_CleansUpSOCATPod(t *testi
 			Name:      "test-service-intercept-test-workspace",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
-				"app":                                "test-app",
+				"app":                               "test-app",
 				"intercepts.kloudlite.io/managed":   "true",
 				"intercepts.kloudlite.io/service":   "test-service",
 				"intercepts.kloudlite.io/workspace": "test-workspace",

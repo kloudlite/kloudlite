@@ -8,8 +8,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/kloudlite/kloudlite/api/cmd/kl/pkg/devbox"
 	fzf "github.com/junegunn/fzf/src"
+	"github.com/kloudlite/kloudlite/api/cmd/kl/pkg/devbox"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/spf13/cobra"
 )

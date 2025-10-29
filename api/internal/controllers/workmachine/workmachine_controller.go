@@ -802,8 +802,8 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeployment(ctx context.Conte
 					},
 				},
 				Spec: corev1.PodSpec{
-					HostNetwork:        true,
-					DNSPolicy:          corev1.DNSNone,
+					HostNetwork: true,
+					DNSPolicy:   corev1.DNSNone,
 					DNSConfig: &corev1.PodDNSConfig{
 						Nameservers: []string{"10.43.0.10"},
 						Searches:    []string{namespace + ".svc.cluster.local", "svc.cluster.local", "cluster.local"},
