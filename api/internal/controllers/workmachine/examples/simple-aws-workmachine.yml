@@ -1,0 +1,15 @@
+apiVersion: machines.kloudlite.io/v1
+kind: WorkMachine
+metadata:
+  name: simple
+spec:
+  displayName: "simple-one"
+  ownedBy: "nxtcoder17"
+  machineType: "SAMPLE"
+  targetNamespace: "wm-sample"
+  state: "running"
+  aws:
+    machineType: "t2.small"
+    volumeSize: 20
+
+    domainName: "sample"

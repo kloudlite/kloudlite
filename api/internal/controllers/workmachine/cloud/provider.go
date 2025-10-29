@@ -26,6 +26,9 @@ type Provider interface {
 	// StopMachine stops a running instance
 	StopMachine(ctx context.Context, machineID string) error
 
+	// Reboot the Machine
+	RebootMachine(ctx context.Context, machineID string) error
+
 	// IncreaseVolumeSize increases root volume size for root volume of the machine
 	IncreaseVolumeSize(ctx context.Context, machineID string, newSize int32) error
 

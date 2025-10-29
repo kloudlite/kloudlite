@@ -1,6 +1,12 @@
 version: 3
 
 tasks:
+  build:server:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags='-s -w' -o ./server ./cmd/server/
+
   manifests:
     cmds:
       # generate CRDs from type definitions

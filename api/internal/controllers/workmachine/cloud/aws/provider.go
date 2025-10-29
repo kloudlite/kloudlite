@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
-	"runtime"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -22,53 +21,39 @@ import (
 
 type provider struct {
 	ec2Client *ec2.Client
-	k3sURL    string
-	k3sToken  string
-
-	// ---
-	region string
-	vpcID  *string
+	ProviderArgs
 }
 
 var _ cloud.Provider = (*provider)(nil)
 
-func NewProvider(ctx context.Context, k3sURL string, k3sToken string) (cloud.Provider, error) {
-	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithEC2IMDSRegion())
+type Tag struct {
+	Key   string
+	Value string
+}
+
+type ProviderArgs struct {
+	AMI             string
+	Region          string
+	VPC             string
+	SecurityGroupID string
+	ResourceTags    []Tag
+
+	K3sVersion string
+	K3sURL     string
+	K3sToken   string
+}
+
+func NewProvider(ctx context.Context, args ProviderArgs) (cloud.Provider, error) {
+	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(args.Region))
 	if err != nil {
 		return nil, errors.Wrap("failed to load AWS config", err)
 	}
 
-	slog.Info("aws default config", "region", awsCfg.Region)
-
 	ec2Client := ec2.NewFromConfig(awsCfg)
 
-	defaultVPC, err := ec2Client.DescribeVpcs(ctx, &ec2.DescribeVpcsInput{
-		Filters: []ec2types.Filter{
-			{
-				Name:   fn.Ptr("isDefault"),
-				Values: []string{"true"},
-			},
-		},
-	})
-	if err != nil {
-		return nil, errors.Wrap("failed to get current client VPC", err)
-	}
-
-	slog.Info("post describe VPCs call", "len(defaultVPC)", len(defaultVPC.Vpcs), "vpcs", defaultVPC.Vpcs)
-	slog.Info("vpc info", "vpc.id", *defaultVPC.Vpcs[0].VpcId)
-
-	if len(defaultVPC.Vpcs) != 1 {
-		return nil, errors.New("got no results for default VPC")
-	}
-
 	return &provider{
-		ec2Client: ec2Client,
-
-		k3sURL:   k3sURL,
-		k3sToken: k3sToken,
-
-		region: awsCfg.Region,
-		vpcID:  defaultVPC.Vpcs[0].VpcId,
+		ec2Client:    ec2Client,
+		ProviderArgs: args,
 	}, nil
 }
 
@@ -85,18 +70,60 @@ func handleDryRunError(err error, action string) error {
 	return err
 }
 
+func (p *provider) getMachine(ctx context.Context, machineID string) (*ec2types.Instance, error) {
+	output, err := p.ec2Client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
+		InstanceIds: []string{machineID},
+	})
+	if err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("failed to find machine (ID: %s)", machineID), err)
+	}
+
+	if len(output.Reservations) == 0 || len(output.Reservations[0].Instances) == 0 {
+		return nil, errors.New(fmt.Sprintf("failed to find machine (ID: %s)", machineID))
+	}
+
+	return &output.Reservations[0].Instances[0], nil
+}
+
+func (p *provider) getRootVolume(ctx context.Context, instance *ec2types.Instance) (*ec2types.Volume, error) {
+	var volumeID *string
+	for _, m := range instance.BlockDeviceMappings {
+		if m.DeviceName == instance.RootDeviceName && m.Ebs != nil {
+			volumeID = m.Ebs.VolumeId
+		}
+	}
+
+	if volumeID == nil {
+		return nil, errors.New("root volume not found")
+	}
+
+	// Get current size
+	output, err := p.ec2Client.DescribeVolumes(ctx, &ec2.DescribeVolumesInput{
+		VolumeIds: []string{*volumeID},
+	})
+	if err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("failed to get volume (ID: %s)", *volumeID), err)
+	}
+
+	if len(output.Volumes) == 0 {
+		return nil, errors.New(fmt.Sprintf("volume (ID: %s) not found", *volumeID))
+	}
+
+	return &output.Volumes[0], nil
+}
+
 func (p *provider) ValidatePermissions(ctx context.Context) error {
 	g, errctx := errgroup.WithContext(ctx)
 	dryRunChecks := []func(context.Context) error{
 		p.dryRunCreateInstance,
 		p.dryRunTerminateInstance,
-		p.dryRunCreateSecurityGroup,
-		p.dryRunAuthorizeSecurityGroupIngress,
-		p.dryRunAuthorizeSecurityGroupEgress,
-		p.dryRunDeleteSecurityGroup,
+		// p.dryRunCreateSecurityGroup,
+		// p.dryRunAuthorizeSecurityGroupIngress,
+		// p.dryRunAuthorizeSecurityGroupEgress,
+		// p.dryRunDeleteSecurityGroup,
 		p.dryRunDescribeVolumes,
 		p.dryRunDescribeInstanceStatus,
-		p.dryRunDescribeSecurityGroups,
+		// p.dryRunDescribeSecurityGroups,
 		p.dryRunDescribeInstances,
 	}
 
@@ -109,58 +136,52 @@ func (p *provider) ValidatePermissions(ctx context.Context) error {
 		})
 	}
 
-	return g.Wait()
+	if err := g.Wait(); err != nil {
+		return errors.Wrap("failed to validate permissions", err)
+	}
+
+	slog.Info("[AWS Provider] Dry Run check passed")
+	return nil
 }
 
 func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.MachineInfo, error) {
-	// Step 2: Get or create security group
-	sgID, err := p.getOrCreateSecurityGroup(ctx, wm.Spec.AWSProvider.VPC_ID, wm.Spec.AllowedCIDR)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get or create security group: %w", err)
-	}
-
-	sshKeyPair, err := p.getOrCreateSSHKeyPair(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get/create SSH key pair: %w", err)
-	}
-
-	// Step 3: Build security group IDs list
-	securityGroupIDs := []string{sgID}
-
-	// Step 4: Prepare instance tags
 	tags := []ec2types.Tag{
-		{Key: fn.Ptr("Name"), Value: fn.Ptr("workmachine-" + wm.Name)},
+		{Key: fn.Ptr("Name"), Value: fn.Ptr("kl-workmachine-" + wm.Name)},
 		{Key: fn.Ptr("kloudlite.io/workmachine"), Value: &wm.Name},
 		{Key: fn.Ptr("kloudlite.io/owner"), Value: &wm.Spec.OwnedBy},
 		{Key: fn.Ptr("kloudlite.io/managed-by"), Value: fn.Ptr("kloudlite-controller")},
 	}
 
+	for _, tag := range p.ResourceTags {
+		tags = append(tags, ec2types.Tag{Key: &tag.Key, Value: &tag.Value})
+	}
+
 	amiInfo, err := p.ec2Client.DescribeImages(ctx, &ec2.DescribeImagesInput{
-		ImageIds: []string{wm.Spec.AWSProvider.AMI},
+		ImageIds: []string{p.AMI},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get AMI info: %w", err)
+		return nil, errors.Wrap("failed to get AMI info", err)
 	}
 
 	userData, err := templates.K3sAgentSetup.Render(templates.K3sAgentSetupArgs{
-		K3sURL:       p.k3sURL,
-		K3sToken:     p.k3sToken,
-		MachineName:  wm.Name,
-		MachineOwner: wm.Spec.OwnedBy,
+		K3sVersion:    p.K3sVersion,
+		K3sURL:        p.K3sURL,
+		K3sAgentToken: p.K3sToken,
+		MachineName:   wm.Name,
+		MachineOwner:  wm.Spec.OwnedBy,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to render k3s user data script: %w", err)
+		return nil, errors.Wrap("failed to render k3s user data script", err)
 	}
 
 	// Step 6: Build RunInstances input
 	runInput := &ec2.RunInstancesInput{
-		ImageId:          fn.Ptr(wm.Spec.AWSProvider.AMI),
+		ImageId:          fn.Ptr(p.AMI),
 		InstanceType:     wm.Spec.AWSProvider.MachineType,
 		MinCount:         fn.Ptr[int32](1),
 		MaxCount:         fn.Ptr[int32](1),
-		SecurityGroupIds: securityGroupIDs,
+		SecurityGroupIds: []string{p.SecurityGroupID},
 		UserData:         fn.Ptr(base64.StdEncoding.EncodeToString(userData)),
-		KeyName:          sshKeyPair,
 		BlockDeviceMappings: []ec2types.BlockDeviceMapping{
 			{
 				DeviceName: amiInfo.Images[0].RootDeviceName,
@@ -186,7 +207,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	// Step 7: Create instance
 	runOutput, err := p.ec2Client.RunInstances(ctx, runInput)
 	if err != nil {
-		return nil, errors.Wrap("failed to create instance", err)
+		return nil, errors.Wrap("failed to create AWS instance", err)
 	}
 
 	if len(runOutput.Instances) == 0 {
@@ -196,12 +217,14 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	instance := runOutput.Instances[0]
 
 	return &v1.MachineInfo{
-		MachineID:        aws.ToString(instance.InstanceId),
+		MachineID:        *instance.InstanceId,
 		State:            mapEC2StateToMachineState(instance.State),
-		PrivateIP:        aws.ToString(instance.PrivateIpAddress),
-		PublicIP:         aws.ToString(instance.PublicIpAddress),
+		PrivateIP:        fn.ValueOf(instance.PrivateIpAddress),
+		PublicIP:         fn.ValueOf(instance.PublicIpAddress),
 		AvailabilityZone: aws.ToString(instance.Placement.AvailabilityZone),
 		Message:          "Instance created successfully",
+		Region:           p.Region,
+		RootVolumeSize:   wm.Spec.AWSProvider.VolumeSize,
 	}, nil
 }
 
@@ -210,22 +233,11 @@ func (p *provider) GetMachineStatus(ctx context.Context, machineID string) (*v1.
 		return nil, errors.Wrap("must provide machineID")
 	}
 
-	slog.Info("about calling describe instances")
-
-	output, err := p.ec2Client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
-		InstanceIds: []string{machineID},
-	})
+	instance, err := p.getMachine(ctx, machineID)
 	if err != nil {
-		return nil, errors.Wrap("failed to find machine", err)
+		return nil, err
 	}
 
-	slog.Info("post describe instances", "len(output.Reservations)", len(output.Reservations), "reservations", output.Reservations)
-
-	if len(output.Reservations) == 0 || len(output.Reservations[0].Instances) == 0 {
-		return nil, errors.New("failed to find machine")
-	}
-
-	instance := output.Reservations[0].Instances[0]
 	return &v1.MachineInfo{
 		MachineID:        aws.ToString(instance.InstanceId),
 		State:            mapEC2StateToMachineState(instance.State),
@@ -233,6 +245,7 @@ func (p *provider) GetMachineStatus(ctx context.Context, machineID string) (*v1.
 		PublicIP:         aws.ToString(instance.PublicIpAddress),
 		AvailabilityZone: aws.ToString(instance.Placement.AvailabilityZone),
 		Message:          fmt.Sprintf("Instance is %s", string(instance.State.Name)),
+		Region:           p.Region,
 	}, nil
 }
 
@@ -262,6 +275,19 @@ func (p *provider) StopMachine(ctx context.Context, machineID string) error {
 	return nil
 }
 
+func (p *provider) RebootMachine(ctx context.Context, machineID string) error {
+	if machineID == "" {
+		return fmt.Errorf("must provide machineID, got (%s)", machineID)
+	}
+
+	if _, err := p.ec2Client.RebootInstances(ctx, &ec2.RebootInstancesInput{
+		InstanceIds: []string{machineID},
+	}); err != nil {
+		return fmt.Errorf("failed to start machine: %w", err)
+	}
+	return nil
+}
+
 func (p *provider) DeleteMachine(ctx context.Context, machineID string) error {
 	if machineID == "" {
 		return fmt.Errorf("must provide machineID, got (%s)", machineID)
@@ -280,49 +306,26 @@ func (p *provider) IncreaseVolumeSize(ctx context.Context, machineID string, new
 		return errors.New("must provide machineID and newSize")
 	}
 
-	// Get instance to find root volume
-	output, err := p.ec2Client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
-		InstanceIds: []string{machineID},
-	})
+	instance, err := p.getMachine(ctx, machineID)
 	if err != nil {
-		return errors.Wrap("failed to find machine", err)
+		return err
 	}
 
-	if len(output.Reservations) != 1 {
-		return errors.New("failed to find machine")
-	}
+	volume, err := p.getRootVolume(ctx, instance)
 
-	instance := output.Reservations[0].Instances[0]
-
-	var volumeID string
-	for _, mapping := range instance.BlockDeviceMappings {
-		if aws.ToString(mapping.DeviceName) == *instance.RootDeviceName {
-			volumeID = aws.ToString(mapping.Ebs.VolumeId)
-			break
-		}
-	}
-	if volumeID == "" {
-		return fmt.Errorf("root volume not found")
-	}
-
-	// Get current size
-	volOutput, err := p.ec2Client.DescribeVolumes(ctx, &ec2.DescribeVolumesInput{
-		VolumeIds: []string{volumeID},
-	})
-	if err != nil || len(volOutput.Volumes) == 0 {
-		return fmt.Errorf("volume not found: %s", volumeID)
-	}
-
-	currentSize := aws.ToInt32(volOutput.Volumes[0].Size)
-	if newSize <= currentSize {
+	currentSize := fn.ValueOf(volume.Size)
+	if newSize < currentSize {
 		return fmt.Errorf("new size (%d GB) must be greater than current size (%d GB)", newSize, currentSize)
 	}
 
-	_, err = p.ec2Client.ModifyVolume(ctx, &ec2.ModifyVolumeInput{
-		VolumeId: aws.String(volumeID),
-		Size:     aws.Int32(newSize),
-	})
-	return err
+	if _, err = p.ec2Client.ModifyVolume(ctx, &ec2.ModifyVolumeInput{
+		VolumeId: volume.VolumeId,
+		Size:     &newSize,
+	}); err != nil {
+		return errors.Wrap(fmt.Sprintf("failed to increase volume's (ID: %s) size", *volume.VolumeId), err)
+	}
+
+	return nil
 }
 
 func (p *provider) ChangeMachine(ctx context.Context, machineID string, newInstanceType string) error {
@@ -365,7 +368,7 @@ func (p *provider) ChangeMachine(ctx context.Context, machineID string, newInsta
 
 func mapEC2StateToMachineState(state *ec2types.InstanceState) v1.MachineState {
 	if state == nil {
-		return v1.MachineStateError
+		return v1.MachineStateErrored
 	}
 	switch state.Name {
 	case ec2types.InstanceStateNamePending:
@@ -377,105 +380,6 @@ func mapEC2StateToMachineState(state *ec2types.InstanceState) v1.MachineState {
 	case ec2types.InstanceStateNameStopped:
 		return v1.MachineStateStopped
 	default:
-		return v1.MachineStateError
+		return v1.MachineStateErrored
 	}
-}
-
-// Helper methods
-
-func (p *provider) getOrCreateSecurityGroup(
-	ctx context.Context, vpcID string, allowedCIDR string,
-) (string, error) {
-	name := "kloudlite-workmachines"
-
-	// Try to find existing security group
-	out, err := p.ec2Client.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
-		GroupNames: []string{name},
-		Filters: []ec2types.Filter{
-			{Name: fn.Ptr("group-name"), Values: []string{name}},
-			{Name: fn.Ptr("vpc-id"), Values: []string{vpcID}},
-		},
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to get security groups: %w", err)
-	}
-
-	if len(out.SecurityGroups) == 1 {
-		return aws.ToString(out.SecurityGroups[0].GroupId), nil
-	}
-
-	// Create new security group
-	sg, err := p.ec2Client.CreateSecurityGroup(ctx, &ec2.CreateSecurityGroupInput{
-		GroupName:   fn.Ptr(name),
-		Description: fn.Ptr(fmt.Sprintf("Security group for kloudlite workmachines")),
-		VpcId:       fn.Ptr(vpcID),
-		TagSpecifications: []ec2types.TagSpecification{
-			{
-				ResourceType: ec2types.ResourceTypeSecurityGroup,
-				Tags: []ec2types.Tag{
-					{Key: fn.Ptr("Name"), Value: fn.Ptr(name)},
-					{Key: fn.Ptr("kloudlite.io/managed-by"), Value: fn.Ptr("kloudlite-controller")},
-				},
-			},
-		},
-	})
-	if err != nil {
-		return "", errors.Wrap("failed to create security group", err)
-	}
-
-	sgID := sg.GroupId
-
-	// Add ingress rules for HTTPS (443) and SSH (22)
-	_, err = p.ec2Client.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
-		GroupId: sgID,
-		IpPermissions: []ec2types.IpPermission{
-			{
-				IpProtocol: fn.Ptr("tcp"),
-				FromPort:   fn.Ptr[int32](443),
-				ToPort:     fn.Ptr[int32](443),
-				IpRanges:   []ec2types.IpRange{{CidrIp: &allowedCIDR, Description: fn.Ptr("HTTPS access")}},
-			},
-		},
-	})
-	if err != nil && !strings.Contains(err.Error(), "InvalidPermission.Duplicate") {
-		return "", errors.Wrap("failed to authorize security group ingress", err)
-	}
-
-	// Add egress rule (allow all outbound)
-	_, err = p.ec2Client.AuthorizeSecurityGroupEgress(ctx, &ec2.AuthorizeSecurityGroupEgressInput{
-		GroupId: sgID,
-		IpPermissions: []ec2types.IpPermission{
-			{
-				IpProtocol: fn.Ptr("-1"),
-				IpRanges:   []ec2types.IpRange{{CidrIp: fn.Ptr("0.0.0.0/0"), Description: fn.Ptr("Allow all outbound")}},
-			},
-		},
-	})
-	if err != nil && !strings.Contains(err.Error(), "InvalidPermission.Duplicate") {
-		return "", errors.Wrap("failed to authorize security group egress", err)
-	}
-
-	return *sgID, nil
-}
-
-func (p *provider) getOrCreateSSHKeyPair(ctx context.Context) (*string, error) {
-	name := "kloudlite-workmachine"
-	result, err := p.ec2Client.DescribeKeyPairs(ctx, &ec2.DescribeKeyPairsInput{
-		KeyNames: []string{name},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe AWS key pairs: %w", err)
-	}
-
-	if len(result.KeyPairs) == 1 {
-		return result.KeyPairs[0].KeyName, nil
-	}
-
-	slog.Info("kloudlite workmachine ssh secret not found, will be creating a new one")
-	out, err := p.ec2Client.CreateKeyPair(ctx, &ec2.CreateKeyPairInput{KeyName: &name})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS key pair: %w", err)
-	}
-
-	return out.KeyName, nil
 }

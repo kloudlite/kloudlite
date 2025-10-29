@@ -92,13 +92,6 @@ spec:
               aws:
                 description: AWSProvider contains AWS-specific configuration
                 properties:
-                  ami:
-                    description: AMI is the Amazon Machine Image ID to use for the
-                      instance
-                    type: string
-                  availabilityZone:
-                    description: AvailabilityZone is the specific AZ within the region
-                    type: string
                   deleteVolumePostTermination:
                     type: boolean
                   domainName:
@@ -109,35 +102,9 @@ spec:
                   iamRole:
                     description: IAMRole is the IAM role name to attach to the instance
                     type: string
-                  k3sServerURL:
-                    description: K3sServerURL is the URL of the K3s server to join
-                    type: string
-                  k3sTokenSecret:
-                    description: K3sTokenSecret is the name of the Secret containing
-                      the K3s join token
-                    type: string
                   machineType:
                     description: MachineType is the EC2 instance type (e.g., m5.large,
                       t3.medium)
-                    type: string
-                  region:
-                    description: Region is the AWS region where the instance will
-                      be created
-                    type: string
-                  route53HostedZoneID:
-                    description: Route53HostedZoneID is the ID of the Route53 hosted
-                      zone for DNS records
-                    type: string
-                  securityGroupIDs:
-                    description: |-
-                      SecurityGroupIDs are additional security group IDs to attach
-                      (WorkMachine controller will create a dedicated SG automatically)
-                    items:
-                      type: string
-                    type: array
-                  subnetID:
-                    description: SubnetID is the ID of the subnet where the instance
-                      will be created
                     type: string
                   volumeSize:
                     default: 50
@@ -157,32 +124,12 @@ spec:
                     - io1
                     - io2
                     type: string
-                  vpcID:
-                    description: VPC_ID is the ID of the VPC where the instance will
-                      be created
-                    type: string
                 required:
-                - ami
                 - domainName
-                - k3sServerURL
-                - k3sTokenSecret
                 - machineType
-                - region
-                - route53HostedZoneID
-                - subnetID
                 - volumeSize
                 - volumeType
-                - vpcID
                 type: object
-              desiredState:
-                default: stopped
-                description: DesiredState indicates whether the machine should be
-                  running or stopped
-                enum:
-                - running
-                - stopped
-                - disabled
-                type: string
               displayName:
                 description: DisplayName is the human-readable name for the work machine
                 maxLength: 100
@@ -195,33 +142,35 @@ spec:
               nodeSelector:
                 additionalProperties:
                   type: string
-                description: |-
-                  NodeSelector constrains this WorkMachine and all its workspaces to specific nodes
-                  All workspaces and environments created by this user will inherit this nodeSelector
                 type: object
               ownedBy:
                 description: OwnedBy is the username/email of the user who owns this
                   machine
-                type: string
-              provider:
-                description: Provider specifies the cloud provider (aws, gcp, azure,
-                  or empty for k8s deployment)
                 type: string
               sshPublicKeys:
                 description: SSHPublicKeys for SSH access to the VM
                 items:
                   type: string
                 type: array
+              state:
+                default: stopped
+                description: State indicates whether the machine should be running
+                  or stopped
+                enum:
+                - running
+                - stopped
+                - disabled
+                type: string
               targetNamespace:
                 description: |-
                   TargetNamespace is the namespace where the WorkMachine workloads will run
                   Defaults to wm-{username}
                 type: string
             required:
-            - desiredState
             - displayName
             - machineType
             - ownedBy
+            - state
             - targetNamespace
             type: object
           status:
@@ -252,8 +201,8 @@ spec:
                 - memory
                 type: object
               availabilityZone:
-                description: AvailabilityZone is the AWS AZ where the instance is
-                  running
+                description: AvailabilityZone is the availability zone within the
+                  region
                 type: string
               checkList:
                 items:
@@ -287,15 +236,12 @@ spec:
                       type: string
                   type: object
                 type: object
-              instanceID:
-                description: MachineID is the EC2 instance ID (only for AWS provider)
-                type: string
+              isAutoStopped:
+                description: IsAutoStopped when set means machine was auto-stopped
+                  by kloudlite
+                type: boolean
               isReady:
                 type: boolean
-              k3sJoinStatus:
-                description: K3sJoinStatus indicates whether the K3s agent successfully
-                  joined the cluster
-                type: string
               lastActivityAt:
                 description: LastActivityAt timestamp of last user activity (for auto-stop)
                 format: date-time
@@ -312,35 +258,30 @@ spec:
                   Used for auto-shutdown logic
                 format: date-time
                 type: string
+              machineID:
+                description: MachineID is the cloud provider's unique identifier for
+                  the instance
+                type: string
               message:
-                description: Message provides human-readable information about the
-                  current state
-                type: string
-              nodeName:
-                description: NodeName where the pod is running
-                type: string
-              podIP:
-                description: PodIP is the IP address of the pod
-                type: string
-              podName:
-                description: PodName is the name of the pod running this machine
+                description: Message provides additional information about the instance
+                  state
                 type: string
               privateIP:
-                description: PrivateIP is the private IP address of the EC2 instance
+                description: PrivateIP is the private IP address of the instance
                 type: string
               publicIP:
-                description: PublicIP is the public IP address of the EC2 instance
+                description: PublicIP is the public IP address of the instance (if
+                  available)
                 type: string
               region:
-                description: Region is the AWS region where the instance is running
+                description: Region is the cloud region where the instance is running
                 type: string
-              route53RecordSet:
-                description: Route53RecordSet is the DNS record for this WorkMachine
-                type: string
-              securityGroupID:
-                description: SecurityGroupID is the ID of the dedicated security group
-                  for this WorkMachine
-                type: string
+              rootVolumeSize:
+                description: |-
+                  RootVolumeSize is size in GBs for the root volume.
+                  It is used while processing request for increasing volume size
+                format: int32
+                type: integer
               sshPublicKey:
                 description: |-
                   SSHPublicKey is the WorkMachine's public SSH key for all workspaces
@@ -353,7 +294,7 @@ spec:
                 format: date-time
                 type: string
               state:
-                description: State is the current state of the machine
+                description: State is the current state of the instance
                 type: string
               stoppedAt:
                 description: StoppedAt timestamp when the machine was last stopped

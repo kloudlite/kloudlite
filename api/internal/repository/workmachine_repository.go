@@ -70,12 +70,12 @@ func (r *workMachineRepository) StartMachine(ctx context.Context, name string) e
 	}
 
 	log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
-		machine.Name, machine.Status.State, machine.Spec.DesiredState)
+		machine.Name, machine.Status.State, machine.Spec.State)
 
 	// Update desired state to running
-	oldDesiredState := machine.Spec.DesiredState
-	machine.Spec.DesiredState = machinesv1.MachineStateRunning
-	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.DesiredState)
+	oldDesiredState := machine.Spec.State
+	machine.Spec.State = machinesv1.MachineStateRunning
+	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.State)
 
 	err = r.Update(ctx, machine)
 	if err != nil {
@@ -98,12 +98,12 @@ func (r *workMachineRepository) StopMachine(ctx context.Context, name string) er
 	}
 
 	log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
-		machine.Name, machine.Status.State, machine.Spec.DesiredState)
+		machine.Name, machine.Status.State, machine.Spec.State)
 
 	// Update desired state to stopped
-	oldDesiredState := machine.Spec.DesiredState
-	machine.Spec.DesiredState = machinesv1.MachineStateStopped
-	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.DesiredState)
+	oldDesiredState := machine.Spec.State
+	machine.Spec.State = machinesv1.MachineStateStopped
+	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.State)
 
 	err = r.Update(ctx, machine)
 	if err != nil {

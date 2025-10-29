@@ -17,6 +17,7 @@ sed -i '/ swap / s/^/#/' /etc/fstab || true
 
 log "Starting K3s agent setup..."
 
+export K3S_VERSION={{.K3sVersion}}
 export K3S_URL="{{.K3sURL}}"
 export K3S_TOKEN="{{.K3sAgentToken}}"
 
@@ -32,6 +33,7 @@ export INSTALL_K3S_EXEC="agent \
   --kubelet-arg=kube-reserved=cpu=100m,memory=256Mi \
   --kubelet-arg=eviction-hard=memory.available<200Mi,nodefs.available<5% \
   --kubelet-arg=eviction-soft=memory.available<300Mi,nodefs.available<10% \
+  --kubelet-arg=eviction-soft-grace-period=memory.available=1m,nodefs.available=2m \
   --kubelet-arg=cgroup-driver=systemd \
   --kubelet-arg=fail-swap-on=false"
 

@@ -2,9 +2,9 @@ package statusutil
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
+	"go.uber.org/zap"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -18,7 +18,7 @@ func UpdateStatusWithRetry(
 	c client.Client,
 	obj client.Object,
 	updateFunc func() error,
-	logger *slog.Logger,
+	logger *zap.Logger,
 ) error {
 	backoff := wait.Backoff{
 		Steps:    5,
@@ -39,7 +39,7 @@ func UpdateStatusWithRetry(
 			lastErr = err
 			if apierrors.IsConflict(err) {
 				// Resource version conflict - fetch the latest version and retry
-				logger.Debug("Status update conflict, refetching and retrying",
+				logger.Sugar().Debug("Status update conflict, refetching and retrying",
 					"name", obj.GetName(),
 					"namespace", obj.GetNamespace(),
 					"error", err)
@@ -50,7 +50,7 @@ func UpdateStatusWithRetry(
 					Namespace: obj.GetNamespace(),
 				}
 				if err := c.Get(ctx, key, obj); err != nil {
-					logger.Error("Failed to refetch resource after conflict",
+					logger.Sugar().Error("Failed to refetch resource after conflict",
 						"name", obj.GetName(),
 						"namespace", obj.GetNamespace(),
 						"error", err)
@@ -62,7 +62,7 @@ func UpdateStatusWithRetry(
 				return false, nil
 			}
 			// For non-conflict errors, don't retry
-			logger.Error("Failed to update status",
+			logger.Sugar().Error("Failed to update status",
 				"name", obj.GetName(),
 				"namespace", obj.GetNamespace(),
 				"error", err)
@@ -71,10 +71,9 @@ func UpdateStatusWithRetry(
 		// Success
 		return true, nil
 	})
-
 	if err != nil {
 		if err == wait.ErrWaitTimeout {
-			logger.Error("Failed to update status after maximum retries",
+			logger.Sugar().Error("Failed to update status after maximum retries",
 				"name", obj.GetName(),
 				"namespace", obj.GetNamespace(),
 				"error", lastErr)
@@ -83,7 +82,7 @@ func UpdateStatusWithRetry(
 		return err
 	}
 
-	logger.Debug("Successfully updated status",
+	logger.Sugar().Debug("Successfully updated status",
 		"name", obj.GetName(),
 		"namespace", obj.GetNamespace())
 

@@ -32,7 +32,7 @@ func TestWorkMachineReconciler_Reconcile_AddFinalizer(t *testing.T) {
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -105,7 +105,7 @@ func TestWorkMachineReconciler_Reconcile_InitializeStatus(t *testing.T) {
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -152,7 +152,7 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_StoppedToRunning(t *tes
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateRunning, // Want to run
+			State:    machinesv1.MachineStateRunning, // Want to run
 		},
 		Status: machinesv1.WorkMachineStatus{
 			State: machinesv1.MachineStateStopped, // Currently stopped
@@ -201,7 +201,7 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_RunningToStopped(t *tes
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped, // Want to stop
+			State:    machinesv1.MachineStateStopped, // Want to stop
 		},
 		Status: machinesv1.WorkMachineStatus{
 			State: machinesv1.MachineStateRunning, // Currently running
@@ -506,7 +506,7 @@ func TestWorkMachineReconciler_Reconcile_NamespaceBeingDeleted(t *testing.T) {
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 		Status: machinesv1.WorkMachineStatus{
 			State: machinesv1.MachineStateStopped,
@@ -554,7 +554,7 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_StartingToRunning(t *te
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateRunning,
+			State:    machinesv1.MachineStateRunning,
 		},
 		Status: machinesv1.WorkMachineStatus{
 			State: machinesv1.MachineStateStarting,
@@ -603,7 +603,7 @@ func TestWorkMachineReconciler_Reconcile_StateTransition_StoppingToStopped(t *te
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 		Status: machinesv1.WorkMachineStatus{
 			State: machinesv1.MachineStateStopping,
@@ -652,7 +652,7 @@ func TestWorkMachineReconciler_Reconcile_InitializeStatus_DesiredRunning(t *test
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateRunning,
+			State:    machinesv1.MachineStateRunning,
 		},
 		// Empty status - will be initialized
 	}
@@ -701,7 +701,7 @@ func TestWorkMachineReconciler_Reconcile_SameState_NoTransition(t *testing.T) {
 			OwnedBy:         "test-user",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 		Status: machinesv1.WorkMachineStatus{
 			State: machinesv1.MachineStateStopped,

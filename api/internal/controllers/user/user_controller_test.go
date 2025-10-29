@@ -75,7 +75,7 @@ func TestUserReconciler_Reconcile_ExistingWorkMachine(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -102,7 +102,7 @@ func TestUserReconciler_Reconcile_ExistingWorkMachine(t *testing.T) {
 	workMachine := &machinesv1.WorkMachine{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "wm-test-user"}, workMachine)
 	assert.NoError(t, err)
-	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.DesiredState)
+	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.State)
 }
 
 func TestUserReconciler_Reconcile_UserDeactivation(t *testing.T) {
@@ -133,7 +133,7 @@ func TestUserReconciler_Reconcile_UserDeactivation(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -170,7 +170,7 @@ func TestUserReconciler_Reconcile_UserDeactivation(t *testing.T) {
 	workMachine := &machinesv1.WorkMachine{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "wm-test-user"}, workMachine)
 	assert.NoError(t, err)
-	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.DesiredState)
+	assert.Equal(t, machinesv1.MachineStateStopped, workMachine.Spec.State)
 }
 
 func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
@@ -201,7 +201,7 @@ func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateDisabled,
+			State:    machinesv1.MachineStateDisabled,
 		},
 	}
 
@@ -238,7 +238,7 @@ func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
 	workMachine := &machinesv1.WorkMachine{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "wm-test-user"}, workMachine)
 	assert.NoError(t, err)
-	assert.Equal(t, machinesv1.MachineStateDisabled, workMachine.Spec.DesiredState)
+	assert.Equal(t, machinesv1.MachineStateDisabled, workMachine.Spec.State)
 }
 
 func TestUserReconciler_HandleUserDeletion(t *testing.T) {
@@ -573,7 +573,7 @@ func TestUserReconciler_Reconcile_WorkMachineOwnedByDifferentUser(t *testing.T) 
 			OwnedBy:         "different@example.com", // Different owner
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -629,7 +629,7 @@ func TestUserReconciler_Reconcile_UserStatusConditions(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 	}
 

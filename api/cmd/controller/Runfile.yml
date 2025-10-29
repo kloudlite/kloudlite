@@ -1,0 +1,15 @@
+tasks:
+
+  build:
+    env:
+      CGO_ENABLED: 0
+    cmd:
+      - go build -x -o ./bin/manager ./main.go
+  dev:
+    env:
+      CGO_ENABLED: 0
+
+      K3S_URL: "https://172.31.42.121:6443"
+      K3S_AGENT_TOKEN: "K106eb1ac7d2bc2a92434e4b622977a01b77ec1783580092cefe79e741e6b07054e::server:970a47db04fcabacc9125e74b475f11d"
+    cmd:
+      - ./bin/manager

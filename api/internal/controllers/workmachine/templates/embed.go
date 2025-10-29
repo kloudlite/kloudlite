@@ -27,12 +27,13 @@ const (
 
 	WorkMachineHostManagerDeployment templateFile = "workmachine-host-manager-deployment.yaml.tpl"
 
-	K3sAgentSetup templateFile = "./k3s-agent-setup.yml"
+	K3sAgentSetup templateFile = "k3s-agent-setup.yml"
 )
 
 type K3sAgentSetupArgs struct {
-	K3sURL       string
-	K3sToken     string
-	MachineName  string
-	MachineOwner string
+	K3sVersion    string
+	K3sURL        string
+	K3sAgentToken string
+	MachineName   string
+	MachineOwner  string
 }

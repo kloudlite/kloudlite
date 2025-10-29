@@ -52,10 +52,10 @@ type WorkMachineSpec struct {
 	// +kubebuilder:validation:Required
 	TargetNamespace string `json:"targetNamespace"`
 
-	// DesiredState indicates whether the machine should be running or stopped
+	// State indicates whether the machine should be running or stopped
 	// +kubebuilder:validation:Enum=running;stopped;disabled
 	// +kubebuilder:default=stopped
-	DesiredState MachineState `json:"desiredState"`
+	State MachineState `json:"state"`
 
 	// SSHPublicKeys for SSH access to the VM
 	// +optional
@@ -63,10 +63,6 @@ type WorkMachineSpec struct {
 
 	// +kubebuilder:default="0.0.0.0/0"
 	AllowedCIDR string `json:"allowedCIDR,omitempty"`
-
-	// Provider specifies the cloud provider (aws, gcp, azure, or empty for k8s deployment)
-	// +optional
-	Provider CloudProvider `json:"provider,omitempty"`
 
 	// AWSProvider contains AWS-specific configuration
 	// +optional
@@ -76,6 +72,8 @@ type WorkMachineSpec struct {
 	// Only applicable for cloud providers (AWS, GCP, Azure)
 	// +optional
 	AutoShutdown *AutoShutdownConfig `json:"autoShutdown,omitempty"`
+
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 type CloudProvider string
@@ -133,26 +131,6 @@ type AutoShutdownConfig struct {
 
 // AWSProviderConfig contains AWS-specific configuration for WorkMachine
 type AWSProviderConfig struct {
-	// Region is the AWS region where the instance will be created
-	// +kubebuilder:validation:Required
-	Region string `json:"region"`
-
-	// AvailabilityZone is the specific AZ within the region
-	// +optional
-	AvailabilityZone string `json:"availabilityZone,omitempty"`
-
-	// VPC_ID is the ID of the VPC where the instance will be created
-	// +kubebuilder:validation:Required
-	VPC_ID string `json:"vpcID"`
-
-	// SubnetID is the ID of the subnet where the instance will be created
-	// +kubebuilder:validation:Required
-	SubnetID string `json:"subnetID"`
-
-	// AMI is the Amazon Machine Image ID to use for the instance
-	// +kubebuilder:validation:Required
-	AMI string `json:"ami"`
-
 	// MachineType is the EC2 instance type (e.g., m5.large, t3.medium)
 	// +kubebuilder:validation:Required
 	MachineType ec2types.InstanceType `json:"machineType"`
@@ -173,23 +151,6 @@ type AWSProviderConfig struct {
 	// IAMRole is the IAM role name to attach to the instance
 	// +optional
 	IAMRole *string `json:"iamRole,omitempty"`
-
-	// SecurityGroupIDs are additional security group IDs to attach
-	// (WorkMachine controller will create a dedicated SG automatically)
-	// +optional
-	SecurityGroupIDs []string `json:"securityGroupIDs,omitempty"`
-
-	// K3sServerURL is the URL of the K3s server to join
-	// +kubebuilder:validation:Required
-	K3sServerURL string `json:"k3sServerURL"`
-
-	// K3sTokenSecret is the name of the Secret containing the K3s join token
-	// +kubebuilder:validation:Required
-	K3sTokenSecret string `json:"k3sTokenSecret"`
-
-	// Route53HostedZoneID is the ID of the Route53 hosted zone for DNS records
-	// +kubebuilder:validation:Required
-	Route53HostedZoneID string `json:"route53HostedZoneID"`
 
 	// DomainName is the base domain for WorkMachine DNS records
 	// (e.g., "workmachines.example.com" → "<machine-name>.workmachines.example.com")
@@ -214,7 +175,7 @@ const (
 	MachineStateStopping MachineState = "stopping"
 
 	// MachineStateError means there was an error
-	MachineStateError MachineState = "error"
+	MachineStateErrored MachineState = "errored"
 
 	// MachineStateDisabled means the machine is disabled (user inactive)
 	MachineStateDisabled MachineState = "disabled"
@@ -224,24 +185,7 @@ const (
 type WorkMachineStatus struct {
 	reconciler.Status `json:",inline"`
 
-	// State is the current state of the machine
-	State MachineState `json:"state,omitempty"`
-
-	// Message provides human-readable information about the current state
-	// +optional
-	Message string `json:"message,omitempty"`
-
-	// PodName is the name of the pod running this machine
-	// +optional
-	PodName string `json:"podName,omitempty"`
-
-	// PodIP is the IP address of the pod
-	// +optional
-	PodIP string `json:"podIP,omitempty"`
-
-	// NodeName where the pod is running
-	// +optional
-	NodeName string `json:"nodeName,omitempty"`
+	MachineInfo `json:",inline"`
 
 	// StartedAt timestamp when the machine was last started
 	// +optional
@@ -270,40 +214,6 @@ type WorkMachineStatus struct {
 	// +optional
 	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 
-	// --- AWS-specific fields ---
-
-	// MachineID is the EC2 instance ID (only for AWS provider)
-	// +optional
-	MachineID string `json:"instanceID,omitempty"`
-
-	// PublicIP is the public IP address of the EC2 instance
-	// +optional
-	PublicIP string `json:"publicIP,omitempty"`
-
-	// PrivateIP is the private IP address of the EC2 instance
-	// +optional
-	PrivateIP string `json:"privateIP,omitempty"`
-
-	// Region is the AWS region where the instance is running
-	// +optional
-	Region string `json:"region,omitempty"`
-
-	// AvailabilityZone is the AWS AZ where the instance is running
-	// +optional
-	AvailabilityZone string `json:"availabilityZone,omitempty"`
-
-	// SecurityGroupID is the ID of the dedicated security group for this WorkMachine
-	// +optional
-	SecurityGroupID string `json:"securityGroupID,omitempty"`
-
-	// Route53RecordSet is the DNS record for this WorkMachine
-	// +optional
-	Route53RecordSet string `json:"route53RecordSet,omitempty"`
-
-	// K3sJoinStatus indicates whether the K3s agent successfully joined the cluster
-	// +optional
-	K3sJoinStatus string `json:"k3sJoinStatus,omitempty"`
-
 	// --- Auto-shutdown fields ---
 
 	// LastWorkspaceActivity is the last time any workspace was active on this WorkMachine
@@ -314,65 +224,37 @@ type WorkMachineStatus struct {
 	// ActiveWorkspaceCount is the number of active (non-suspended) workspaces
 	// +optional
 	ActiveWorkspaceCount int32 `json:"activeWorkspaceCount,omitempty"`
-}
 
-// // MachineState represents the current state of a cloud instance
-// type MachineState string
-//
-// const (
-// 	// MachineStatePending means the instance is being created
-// 	MachineStatePending MachineState = "pending"
-//
-// 	// MachineStateRunning means the instance is running
-// 	MachineStateRunning MachineState = "running"
-//
-// 	// MachineStateStopping means the instance is stopping
-// 	MachineStateStopping MachineState = "stopping"
-//
-// 	// MachineStateStopped means the instance is stopped
-// 	MachineStateStopped MachineState = "stopped"
-//
-// 	// MachineStateTerminating means the instance is being terminated
-// 	MachineStateTerminating MachineState = "terminating"
-//
-// 	// MachineStateTerminated means the instance has been terminated
-// 	MachineStateTerminated MachineState = "terminated"
-//
-// 	// MachineStateError means there was an error with the instance
-// 	MachineStateError MachineState = "error"
-//
-// 	// MachineStateNotFound means the instance doesn't exist
-// 	MachineStateNotFound MachineState = "not-found"
-// )
+	// IsAutoStopped when set means machine was auto-stopped by kloudlite
+	IsAutoStopped bool `json:"isAutoStopped,omitempty"`
+}
 
 // MachineInfo contains information about a cloud instance
 type MachineInfo struct {
 	// MachineID is the cloud provider's unique identifier for the instance
-	MachineID string
+	MachineID string `json:"machineID,omitempty"`
 
 	// State is the current state of the instance
-	State MachineState
+	State MachineState `json:"state,omitempty"`
+
+	// RootVolumeSize is size in GBs for the root volume.
+	// It is used while processing request for increasing volume size
+	RootVolumeSize int32 `json:"rootVolumeSize,omitempty"`
 
 	// PublicIP is the public IP address of the instance (if available)
-	PublicIP string
+	PublicIP string `json:"publicIP,omitempty"`
 
 	// PrivateIP is the private IP address of the instance
-	PrivateIP string
+	PrivateIP string `json:"privateIP,omitempty"`
 
 	// Region is the cloud region where the instance is running
-	Region string
+	Region string `json:"region,omitempty"`
 
 	// AvailabilityZone is the availability zone within the region
-	AvailabilityZone string
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
 
 	// Message provides additional information about the instance state
-	Message string
-
-	// SecurityGroupID is the ID of the security group attached to the instance
-	SecurityGroupID string
-
-	// K3sJoinStatus indicates whether the K3s agent successfully joined the cluster
-	K3sJoinStatus string
+	Message string `json:"message,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

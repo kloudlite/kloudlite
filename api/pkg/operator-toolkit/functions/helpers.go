@@ -6,6 +6,7 @@ import (
 
 	"github.com/gobuffalo/flect"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -106,6 +107,10 @@ func GVK(obj client.Object) metav1.GroupVersionKind {
 		Version: gvk.Version,
 		Kind:    gvk.Kind,
 	}
+}
+
+func NN(namespace, name string) types.NamespacedName {
+	return types.NamespacedName{Namespace: namespace, Name: name}
 }
 
 // RegularPlural is used to pluralize group of k8s CRDs from kind
