@@ -3,7 +3,9 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -312,8 +314,16 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	bold.Println("\nInstance Deployment")
 	bold.Println("───────────────────")
 
+	// Generate K3s agent token
+	k3sToken, err := generateK3sToken()
+	if err != nil {
+		red.Printf(" ✗\n")
+		yellow.Printf("    Error generating K3s token: %v\n\n", err)
+		os.Exit(1)
+	}
+
 	fmt.Printf("  ○ Launching EC2 instance (t3.medium)...")
-	instanceID, err := launchInstance(ctx, cfg, amiID, subnetID, sgID, vpcID, secretKey, bucketName, installationKey, enableTerminationProtection)
+	instanceID, err := launchInstance(ctx, cfg, amiID, subnetID, sgID, vpcID, secretKey, bucketName, k3sToken, installationKey, enableTerminationProtection)
 	if err != nil {
 		red.Printf(" ✗\n")
 		yellow.Printf("    Error: %v\n\n", err)
@@ -822,7 +832,16 @@ func verifyInstallation(ctx context.Context, installationKey string) (string, er
 	return verifyResp.SecretKey, nil
 }
 
-func launchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey, bucketName string, installationKey string, enableProtection bool) (string, error) {
+// generateK3sToken generates a random 64-character hexadecimal token for K3s agent authentication
+func generateK3sToken() (string, error) {
+	bytes := make([]byte, 32) // 32 bytes = 64 hex characters
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random token: %w", err)
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+func launchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey, bucketName, k3sToken string, installationKey string, enableProtection bool) (string, error) {
 	ec2Client := ec2.NewFromConfig(cfg)
 	instanceName := fmt.Sprintf("kl-%s-instance", installationKey)
 	profileName := fmt.Sprintf("kl-%s-role", installationKey)
@@ -845,10 +864,21 @@ apt-get upgrade -y
 # Install required packages
 apt-get install -y curl wget git
 
-# Install K3s server
+# Fetch instance IPs from EC2 metadata service
+echo "Fetching instance metadata..."
+METADATA_TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
+PRIVATE_IP=$(curl -H "X-aws-ec2-metadata-token: $METADATA_TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null || echo "")
+
+echo "Instance Private IP: $PRIVATE_IP"
+
+# K3s configuration from Go
+K3S_VERSION="%s"
+K3S_AGENT_TOKEN="%s"
+K3S_SERVER_URL="https://$PRIVATE_IP:6443"
+
+# Install K3s server with predefined token
 echo "Installing K3s server..."
-K3S_VERSION="v1.31.1+k3s1"
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" sh -s - server \
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" K3S_TOKEN="$K3S_AGENT_TOKEN" sh -s - server \
   --disable traefik \
   --write-kubeconfig-mode 644
 
@@ -859,19 +889,6 @@ until kubectl get nodes 2>/dev/null; do
 done
 
 echo "K3s installation completed at $(date)"
-
-# Extract K3s token and server URL
-echo "Extracting K3s configuration..."
-K3S_AGENT_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
-K3S_SERVER_URL="https://127.0.0.1:6443"
-
-# Fetch instance IPs from EC2 metadata service
-echo "Fetching instance metadata..."
-TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
-PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "")
-PRIVATE_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null || echo "")
-
-echo "Instance IPs - Public: $PUBLIC_IP, Private: $PRIVATE_IP"
 echo "K3s Version: $K3S_VERSION"
 echo "K3s Server URL: $K3S_SERVER_URL"
 
@@ -1117,7 +1134,7 @@ BACKUP_EOF
 echo "K3s backup CronJob created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, installationKey, secretKey, vpcID, sgID, region, amiID, bucketName, region, region)
+`, installationKey, secretKey, vpcID, sgID, region, amiID, bucketName, region, region, "v1.31.1+k3s1", k3sToken)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
