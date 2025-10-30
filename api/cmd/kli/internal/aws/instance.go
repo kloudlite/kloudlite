@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/manifests"
 )
 
 // GenerateK3sToken generates a random 64-character hexadecimal token for K3s agent authentication
@@ -82,11 +83,15 @@ kubectl create namespace kloudlite || true
 # Create K3s manifests directory
 mkdir -p /var/lib/rancher/k3s/server/manifests
 
-# Download CRDs and RBAC to manifests folder for auto-apply
-echo "Downloading Kloudlite CRDs and RBAC..."
-MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/development/api/manifests/install"
-curl -fsSL ${MANIFEST_BASE_URL}/crds.yaml -o /var/lib/rancher/k3s/server/manifests/kloudlite-crds.yaml
-curl -fsSL ${MANIFEST_BASE_URL}/api-server-rbac.yaml -o /var/lib/rancher/k3s/server/manifests/api-server-rbac.yaml
+# Write embedded CRDs and RBAC to manifests folder for auto-apply
+echo "Installing Kloudlite CRDs and RBAC..."
+cat <<'CRDS_EOF' | base64 -d > /var/lib/rancher/k3s/server/manifests/kloudlite-crds.yaml
+%s
+CRDS_EOF
+
+cat <<'RBAC_EOF' | base64 -d > /var/lib/rancher/k3s/server/manifests/api-server-rbac.yaml
+%s
+RBAC_EOF
 
 echo "CRDs and RBAC will be auto-applied by K3s"
 
@@ -354,7 +359,10 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, installationKey, vpcID, sgID, region, amiID, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken,
+		base64.StdEncoding.EncodeToString([]byte(manifests.CRDs)),
+		base64.StdEncoding.EncodeToString([]byte(manifests.APIServerRBAC)),
+		secretKey, installationKey, vpcID, sgID, region, amiID, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
