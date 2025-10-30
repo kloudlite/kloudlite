@@ -47,6 +47,7 @@ spec:
       labels:
         app: api-server
     spec:
+      serviceAccountName: api-server
       containers:
         - name: api-server
           image: ghcr.io/kloudlite/kloudlite/api-server:latest

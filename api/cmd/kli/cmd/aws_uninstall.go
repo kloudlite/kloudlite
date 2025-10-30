@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	awsinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/aws"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -85,7 +87,7 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	bold.Println("─────────────")
 	fmt.Printf("  Installation Key: %s\n", uninstallKey)
 	fmt.Printf("  Region:          ")
-	cfg, err := loadAWSConfig(ctx, uninstallRegion)
+	cfg, err := awsinternal.LoadAWSConfig(ctx, uninstallRegion)
 	if err != nil {
 		red.Printf("✗\n")
 		yellow.Printf("  Error: %v\n\n", err)
