@@ -698,16 +698,14 @@ func ensureSecurityGroup(ctx context.Context, cfg aws.Config, vpcID, vpcCIDR str
 }
 
 type verifyInstallationRequest struct {
-	Key string `json:"key"`
+	InstallationKey string `json:"installationKey"`
 }
 
 type verifyInstallationResponse struct {
-	Data struct {
-		SecretKey string `json:"secretKey"`
-		VpcID     string `json:"vpcId,omitempty"`
-		Region    string `json:"region,omitempty"`
-	} `json:"data"`
-	Error string `json:"error,omitempty"`
+	Success    bool   `json:"success"`
+	SecretKey  string `json:"secretKey"`
+	Subdomain  string `json:"subdomain,omitempty"`
+	Error      string `json:"error,omitempty"`
 }
 
 func verifyInstallation(ctx context.Context, installationKey string) (string, error) {
@@ -716,7 +714,7 @@ func verifyInstallation(ctx context.Context, installationKey string) (string, er
 
 	// Create request payload
 	reqPayload := verifyInstallationRequest{
-		Key: installationKey,
+		InstallationKey: installationKey,
 	}
 	reqBody, err := json.Marshal(reqPayload)
 	if err != nil {
@@ -764,11 +762,11 @@ func verifyInstallation(ctx context.Context, installationKey string) (string, er
 	}
 
 	// Validate secret key
-	if verifyResp.Data.SecretKey == "" {
+	if verifyResp.SecretKey == "" {
 		return "", fmt.Errorf("no secret key returned from API")
 	}
 
-	return verifyResp.Data.SecretKey, nil
+	return verifyResp.SecretKey, nil
 }
 
 func launchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey string, installationKey string, enableProtection bool) (string, error) {
