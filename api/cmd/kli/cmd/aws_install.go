@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -259,12 +262,26 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
 
+	// Verify Installation
+	bold.Println("\nVerifying Installation")
+	bold.Println("──────────────────────")
+
+	fmt.Printf("  ○ Verifying installation key with registration API...")
+	secretKey, err := verifyInstallation(ctx, installationKey)
+	if err != nil {
+		red.Printf(" ✗\n")
+		yellow.Printf("    Error: %v\n\n", err)
+		os.Exit(1)
+	}
+	green.Printf(" ✓\n")
+	fmt.Printf("    Secret key obtained successfully\n")
+
 	// Instance Launch
 	bold.Println("\nInstance Deployment")
 	bold.Println("───────────────────")
 
 	fmt.Printf("  ○ Launching EC2 instance (t3.medium)...")
-	instanceID, err := launchInstance(ctx, cfg, amiID, subnetID, sgID, installationKey, enableTerminationProtection)
+	instanceID, err := launchInstance(ctx, cfg, amiID, subnetID, sgID, vpcID, secretKey, installationKey, enableTerminationProtection)
 	if err != nil {
 		red.Printf(" ✗\n")
 		yellow.Printf("    Error: %v\n\n", err)
@@ -680,13 +697,88 @@ func ensureSecurityGroup(ctx context.Context, cfg aws.Config, vpcID, vpcCIDR str
 	return sgID, nil
 }
 
-func launchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID string, installationKey string, enableProtection bool) (string, error) {
+type verifyInstallationRequest struct {
+	Key string `json:"key"`
+}
+
+type verifyInstallationResponse struct {
+	Data struct {
+		SecretKey string `json:"secretKey"`
+		VpcID     string `json:"vpcId,omitempty"`
+		Region    string `json:"region,omitempty"`
+	} `json:"data"`
+	Error string `json:"error,omitempty"`
+}
+
+func verifyInstallation(ctx context.Context, installationKey string) (string, error) {
+	// TODO: Make this configurable via flag or environment variable
+	registrationAPIURL := "https://console.kloudlite.io/api/installations/verify-key"
+
+	// Create request payload
+	reqPayload := verifyInstallationRequest{
+		Key: installationKey,
+	}
+	reqBody, err := json.Marshal(reqPayload)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Create HTTP request with timeout
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", registrationAPIURL, bytes.NewReader(reqBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Execute request
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %w", err)
+	}
+
+	// Check HTTP status
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	// Parse response
+	var verifyResp verifyInstallationResponse
+	if err := json.Unmarshal(respBody, &verifyResp); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	// Check for API error
+	if verifyResp.Error != "" {
+		return "", fmt.Errorf("API error: %s", verifyResp.Error)
+	}
+
+	// Validate secret key
+	if verifyResp.Data.SecretKey == "" {
+		return "", fmt.Errorf("no secret key returned from API")
+	}
+
+	return verifyResp.Data.SecretKey, nil
+}
+
+func launchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey string, installationKey string, enableProtection bool) (string, error) {
 	ec2Client := ec2.NewFromConfig(cfg)
 	instanceName := fmt.Sprintf("kl-%s-instance", installationKey)
 	profileName := fmt.Sprintf("kl-%s-role", installationKey)
+	region := cfg.Region
 
 	// Create cloud-init script to install K3s on startup
-	userData := `#!/bin/bash
+	userData := fmt.Sprintf(`#!/bin/bash
 set -euo pipefail
 
 # Log output to file
@@ -716,13 +808,118 @@ done
 
 echo "K3s installation completed at $(date)"
 
-# Download and apply Kloudlite manifests
-echo "Installing Kloudlite API Server and Frontend..."
-MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/master/api/manifests/install"
+# Fetch instance IPs from EC2 metadata service
+echo "Fetching instance metadata..."
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
+PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "")
+PRIVATE_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null || echo "")
 
-# Apply API Server StatefulSet
-echo "Deploying API Server..."
-kubectl apply -f ${MANIFEST_BASE_URL}/api-server.yaml
+echo "Instance IPs - Public: $PUBLIC_IP, Private: $PRIVATE_IP"
+
+# Install Kloudlite components
+echo "Installing Kloudlite API Server and Frontend..."
+
+# Create namespace
+kubectl create namespace kloudlite || true
+
+# Create templated API Server manifest with environment variables
+echo "Creating API Server manifest..."
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-server
+  namespace: kloudlite
+spec:
+  selector:
+    app: api-server
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-server-lb
+  namespace: kloudlite
+spec:
+  type: LoadBalancer
+  selector:
+    app: api-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: api-server
+  namespace: kloudlite
+spec:
+  serviceName: api-server
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    metadata:
+      labels:
+        app: api-server
+    spec:
+      containers:
+        - name: api-server
+          image: ghcr.io/kloudlite/kloudlite/api-server:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: PORT
+              value: "8080"
+            - name: INSTALLATION_ID
+              value: "%s"
+            - name: INSTALLATION_SECRET
+              value: "%s"
+            - name: AWS_VPC_ID
+              value: "%s"
+            - name: AWS_SECURITY_GROUP_ID
+              value: "%s"
+            - name: AWS_REGION
+              value: "%s"
+            - name: AWS_PUBLIC_IP
+              value: "$PUBLIC_IP"
+            - name: AWS_PRIVATE_IP
+              value: "$PRIVATE_IP"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+EOF
 
 # Wait for API Server to be ready
 echo "Waiting for API Server to be ready..."
@@ -730,6 +927,7 @@ kubectl wait --for=condition=ready pod -l app=api-server -n kloudlite --timeout=
 
 # Apply Frontend Deployment
 echo "Deploying Frontend..."
+MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/master/api/manifests/install"
 kubectl apply -f ${MANIFEST_BASE_URL}/frontend.yaml
 
 # Wait for Frontend to be ready
@@ -740,7 +938,7 @@ echo "Getting service endpoints..."
 kubectl get svc -n kloudlite
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`
+`, installationKey, secretKey, vpcID, sgID, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
