@@ -82,14 +82,13 @@ kubectl create namespace kloudlite || true
 # Create K3s manifests directory
 mkdir -p /var/lib/rancher/k3s/server/manifests
 
-# Install CRDs
-echo "Installing Kloudlite CRDs..."
+# Download CRDs and RBAC to manifests folder for auto-apply
+echo "Downloading Kloudlite CRDs and RBAC..."
 MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/development/api/manifests/install"
-kubectl apply -f ${MANIFEST_BASE_URL}/crds.yaml
+curl -fsSL ${MANIFEST_BASE_URL}/crds.yaml -o /var/lib/rancher/k3s/server/manifests/kloudlite-crds.yaml
+curl -fsSL ${MANIFEST_BASE_URL}/api-server-rbac.yaml -o /var/lib/rancher/k3s/server/manifests/api-server-rbac.yaml
 
-# Install RBAC for API Server
-echo "Installing API Server RBAC..."
-kubectl apply -f ${MANIFEST_BASE_URL}/api-server-rbac.yaml
+echo "CRDs and RBAC will be auto-applied by K3s"
 
 # Apply Secret directly (secrets should not be in manifests folder)
 echo "Creating API Server Secret..."
