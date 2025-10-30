@@ -15,6 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +32,7 @@ This command will:
   - Delete SSH key pair 'kl-{installation-key}-key' and local key file
   - Delete IAM instance profile 'kl-{installation-key}-role'
   - Delete IAM role 'kl-{installation-key}-role'
+  - Delete S3 bucket 'kl-{installation-key}-backups' and all backups
 
 All resources are identified by the InstallationKey tag.`,
 	Example: `  # Uninstall using default AWS region from config
@@ -99,10 +102,11 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 
 	var wg sync.WaitGroup
 	var instanceCount int
-	var sgErr, keyErr, iamErr error
+	var sgErr, keyErr, iamErr, s3Err error
 	sgName := fmt.Sprintf("kl-%s-sg", uninstallKey)
 	keyName := fmt.Sprintf("kl-%s-key", uninstallKey)
 	roleName := fmt.Sprintf("kl-%s-role", uninstallKey)
+	bucketName := fmt.Sprintf("kl-%s-backups", uninstallKey)
 
 	startTime := time.Now()
 
@@ -161,12 +165,25 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 		}
 	}()
 
+	// Delete S3 bucket (parallel, independent of other resources)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fmt.Printf("    [%s] Starting: S3 Bucket deletion\n", time.Now().Format("15:04:05"))
+		s3Err = deleteS3BucketWithBackups(ctx, cfg, bucketName)
+		if s3Err != nil {
+			fmt.Printf("    [%s] Failed: S3 Bucket - %v\n", time.Now().Format("15:04:05"), s3Err)
+		} else {
+			fmt.Printf("    [%s] Completed: S3 Bucket\n", time.Now().Format("15:04:05"))
+		}
+	}()
+
 	wg.Wait()
 	elapsed := time.Since(startTime)
 	fmt.Printf("    Parallel operations completed in %.1fs\n", elapsed.Seconds())
 
 	// Report results
-	if sgErr != nil || keyErr != nil || iamErr != nil {
+	if sgErr != nil || keyErr != nil || iamErr != nil || s3Err != nil {
 		red.Printf(" ✗\n")
 		if sgErr != nil {
 			yellow.Printf("    Security Group: %v\n", sgErr)
@@ -176,6 +193,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 		}
 		if iamErr != nil {
 			yellow.Printf("    IAM: %v\n", iamErr)
+		}
+		if s3Err != nil {
+			yellow.Printf("    S3 Bucket: %v\n", s3Err)
 		}
 	} else {
 		green.Printf(" ✓\n")
@@ -193,6 +213,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	}
 	if iamErr == nil {
 		fmt.Printf("    IAM Role:       %s\n", roleName)
+	}
+	if s3Err == nil {
+		fmt.Printf("    S3 Bucket:      %s\n", bucketName)
 	}
 
 	// Success Summary
@@ -430,6 +453,90 @@ func deleteIAMRole(ctx context.Context, cfg aws.Config, installationKey string) 
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete IAM role: %w", err)
+	}
+
+	return nil
+}
+
+func deleteS3BucketWithBackups(ctx context.Context, cfg aws.Config, bucketName string) error {
+	s3Client := s3.NewFromConfig(cfg)
+
+	// Check if bucket exists
+	_, err := s3Client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		// Bucket doesn't exist, skip
+		return nil
+	}
+
+	// List and delete all objects (including versions)
+	listInput := &s3.ListObjectVersionsInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	for {
+		listOutput, err := s3Client.ListObjectVersions(ctx, listInput)
+		if err != nil {
+			return fmt.Errorf("failed to list objects: %w", err)
+		}
+
+		// Delete versions
+		if len(listOutput.Versions) > 0 {
+			var objects []s3Types.ObjectIdentifier
+			for _, version := range listOutput.Versions {
+				objects = append(objects, s3Types.ObjectIdentifier{
+					Key:       version.Key,
+					VersionId: version.VersionId,
+				})
+			}
+
+			_, err = s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3Types.Delete{
+					Objects: objects,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to delete object versions: %w", err)
+			}
+		}
+
+		// Delete delete markers
+		if len(listOutput.DeleteMarkers) > 0 {
+			var objects []s3Types.ObjectIdentifier
+			for _, marker := range listOutput.DeleteMarkers {
+				objects = append(objects, s3Types.ObjectIdentifier{
+					Key:       marker.Key,
+					VersionId: marker.VersionId,
+				})
+			}
+
+			_, err = s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3Types.Delete{
+					Objects: objects,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to delete markers: %w", err)
+			}
+		}
+
+		// Check if there are more objects
+		if !aws.ToBool(listOutput.IsTruncated) {
+			break
+		}
+		listInput.KeyMarker = listOutput.NextKeyMarker
+		listInput.VersionIdMarker = listOutput.NextVersionIdMarker
+	}
+
+	// Delete the bucket
+	_, err = s3Client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete bucket: %w", err)
 	}
 
 	return nil
