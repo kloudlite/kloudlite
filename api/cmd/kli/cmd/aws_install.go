@@ -898,9 +898,46 @@ echo "Installing Kloudlite API Server and Frontend..."
 # Create namespace
 kubectl create namespace kloudlite || true
 
-# Create templated API Server manifest with environment variables
+# Create K3s manifests directory
+mkdir -p /var/lib/rancher/k3s/server/manifests
+
+# Apply Secret directly (secrets should not be in manifests folder)
+echo "Creating API Server Secret..."
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-server-secret
+  namespace: kloudlite
+type: Opaque
+stringData:
+  INSTALLATION_SECRET: "%s"
+  K3S_AGENT_TOKEN: "$K3S_AGENT_TOKEN"
+EOF
+
+# Save ConfigMap to manifests folder for auto-apply
+echo "Creating API Server ConfigMap..."
+cat <<EOF > /var/lib/rancher/k3s/server/manifests/api-server-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-server-config
+  namespace: kloudlite
+data:
+  PORT: "8080"
+  INSTALLATION_ID: "%s"
+  AWS_VPC_ID: "%s"
+  AWS_SECURITY_GROUP_ID: "%s"
+  AWS_REGION: "%s"
+  AWS_AMI_ID: "%s"
+  AWS_PRIVATE_IP: "$PRIVATE_IP"
+  K3S_VERSION: "$K3S_VERSION"
+  K3S_SERVER_URL: "$K3S_SERVER_URL"
+EOF
+
+# Create API Server Services and StatefulSet
 echo "Creating API Server manifest..."
-cat <<'EOF' | kubectl apply -f -
+cat <<EOF > /var/lib/rancher/k3s/server/manifests/api-server.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -951,29 +988,11 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          env:
-            - name: PORT
-              value: "8080"
-            - name: INSTALLATION_ID
-              value: "%s"
-            - name: INSTALLATION_SECRET
-              value: "%s"
-            - name: AWS_VPC_ID
-              value: "%s"
-            - name: AWS_SECURITY_GROUP_ID
-              value: "%s"
-            - name: AWS_REGION
-              value: "%s"
-            - name: AWS_AMI_ID
-              value: "%s"
-            - name: AWS_PRIVATE_IP
-              value: "$PRIVATE_IP"
-            - name: K3S_VERSION
-              value: "$K3S_VERSION"
-            - name: K3S_AGENT_TOKEN
-              value: "$K3S_AGENT_TOKEN"
-            - name: K3S_SERVER_URL
-              value: "$K3S_SERVER_URL"
+          envFrom:
+            - configMapRef:
+                name: api-server-config
+            - secretRef:
+                name: api-server-secret
           resources:
             requests:
               memory: "256Mi"
@@ -1021,7 +1040,21 @@ kubectl get svc -n kloudlite
 
 # Setup K3s SQLite backup to S3
 echo "Setting up K3s backup CronJob..."
-cat <<'BACKUP_EOF' | kubectl apply -f -
+
+# Save backup ConfigMap to manifests folder
+cat <<EOF > /var/lib/rancher/k3s/server/manifests/k3s-backup-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k3s-backup-config
+  namespace: kloudlite
+data:
+  S3_BUCKET: "%s"
+  AWS_REGION: "%s"
+EOF
+
+# Save backup CronJob and RBAC to manifests folder
+cat <<'BACKUP_EOF' > /var/lib/rancher/k3s/server/manifests/k3s-backup.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1084,7 +1117,6 @@ spec:
                   # K3s database location
                   DB_PATH="/var/lib/rancher/k3s/server/db/state.db"
                   BACKUP_FILE="/tmp/k3s-backup-$(date +%%Y%%m%%d-%%H%%M%%S).db"
-                  S3_BUCKET="%s"
                   S3_KEY="backups/k3s-backup-$(date +%%Y%%m%%d-%%H%%M%%S).db"
 
                   # Check if database exists
@@ -1104,15 +1136,15 @@ spec:
 
                   # Upload to S3
                   echo "Uploading to S3: s3://${S3_BUCKET}/${S3_KEY}.gz"
-                  aws s3 cp "$BACKUP_FILE" "s3://${S3_BUCKET}/${S3_KEY}.gz" --region %s
+                  aws s3 cp "$BACKUP_FILE" "s3://${S3_BUCKET}/${S3_KEY}.gz" --region ${AWS_REGION}
 
                   # Cleanup local backup
                   rm -f "$BACKUP_FILE"
 
                   echo "Backup completed successfully at $(date)"
-              env:
-                - name: AWS_REGION
-                  value: "%s"
+              envFrom:
+                - configMapRef:
+                    name: k3s-backup-config
               volumeMounts:
                 - name: k3s-data
                   mountPath: /var/lib/rancher/k3s
@@ -1131,10 +1163,10 @@ spec:
                 type: Directory
 BACKUP_EOF
 
-echo "K3s backup CronJob created successfully"
+echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, installationKey, secretKey, vpcID, sgID, region, amiID, bucketName, region, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, installationKey, vpcID, sgID, region, amiID, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
