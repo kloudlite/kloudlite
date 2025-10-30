@@ -320,13 +320,39 @@ func deleteSecurityGroup(ctx context.Context, cfg aws.Config, installationKey st
 	sgID := *descResult.SecurityGroups[0].GroupId
 
 	// Retry deletion with exponential backoff for dependency violations
-	maxRetries := 6
+	// Increased retries and wait time to handle network interface detachment
+	maxRetries := 12
 	for i := 0; i < maxRetries; i++ {
 		if i > 0 {
-			waitTime := time.Duration(i*5) * time.Second
+			// Progressive backoff: 10s, 15s, 20s, 25s, 30s, then 30s for remaining
+			waitTime := time.Duration(10+min(i*5, 20)) * time.Second
 			fmt.Printf("    [%s] Security Group retry %d/%d, waiting %ds...\n",
 				time.Now().Format("15:04:05"), i, maxRetries-1, int(waitTime.Seconds()))
 			time.Sleep(waitTime)
+		}
+
+		// Before attempting deletion, check for and detach any network interfaces
+		if i > 0 && i%3 == 0 {
+			// Every 3rd retry, actively check for and detach network interfaces
+			fmt.Printf("    [%s] Checking for attached network interfaces...\n", time.Now().Format("15:04:05"))
+			descNIResult, err := ec2Client.DescribeNetworkInterfaces(ctx, &ec2.DescribeNetworkInterfacesInput{
+				Filters: []types.Filter{
+					{
+						Name:   aws.String("group-id"),
+						Values: []string{sgID},
+					},
+				},
+			})
+			if err == nil && len(descNIResult.NetworkInterfaces) > 0 {
+				fmt.Printf("    [%s] Found %d network interface(s) still attached, waiting for detachment...\n",
+					time.Now().Format("15:04:05"), len(descNIResult.NetworkInterfaces))
+				for _, ni := range descNIResult.NetworkInterfaces {
+					if ni.Attachment != nil && ni.Attachment.AttachmentId != nil {
+						fmt.Printf("    [%s] Network interface %s is still attached\n",
+							time.Now().Format("15:04:05"), *ni.NetworkInterfaceId)
+					}
+				}
+			}
 		}
 
 		_, err = ec2Client.DeleteSecurityGroup(ctx, &ec2.DeleteSecurityGroupInput{
@@ -351,6 +377,13 @@ func deleteSecurityGroup(ctx context.Context, cfg aws.Config, installationKey st
 	}
 
 	return nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func deleteKeyPair(ctx context.Context, cfg aws.Config, installationKey string) error {
