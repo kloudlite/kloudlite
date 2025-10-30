@@ -20,6 +20,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamTypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -31,11 +33,13 @@ var awsInstallCmd = &cobra.Command{
 
 This command will:
   - Find Ubuntu 24.04 LTS AMD64 AMI in the region
-  - Create IAM role 'kl-{installation-key}-role' with required permissions
+  - Create IAM role 'kl-{installation-key}-role' with required permissions (including S3)
+  - Create S3 bucket 'kl-{installation-key}-backups' for K3s database backups
   - Create security group 'kl-{installation-key}-sg' with required ports
   - Create SSH key pair 'kl-{installation-key}-key' and save to ~/.kl/kl-{installation-key}-key.pem
   - Launch t3.medium EC2 instance with 100GB storage
-  - Configure instance in default VPC with public IP`,
+  - Configure instance in default VPC with public IP
+  - Setup automated K3s SQLite backup to S3 every 30 minutes`,
 	Example: `  # Install using default AWS region from config
   kli aws install --installation-key prod
 
@@ -77,9 +81,10 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	var createdResources struct {
 		sync.Mutex
-		instanceID string
-		sgID       string
-		iamCreated bool
+		instanceID  string
+		sgID        string
+		iamCreated  bool
+		bucketName  string
 	}
 
 	go func() {
@@ -122,6 +127,10 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 			fmt.Printf("  Deleting IAM resources...\n")
 			deleteInstanceProfile(context.Background(), cfg, installationKey)
 			deleteIAMRole(context.Background(), cfg, installationKey)
+		}
+		if createdResources.bucketName != "" {
+			fmt.Printf("  Deleting S3 bucket...\n")
+			deleteS3Bucket(context.Background(), cfg, createdResources.bucketName)
 		}
 
 		yellow.Println("Cleanup completed. Exiting...")
@@ -185,10 +194,11 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("  ○ Creating resources in parallel...\n")
 
 	var wg sync.WaitGroup
-	var sgID string
-	var sgErr, iamErr error
+	var sgID, bucketName string
+	var sgErr, iamErr, s3Err error
 	sgName := fmt.Sprintf("kl-%s-sg", installationKey)
 	roleName := fmt.Sprintf("kl-%s-role", installationKey)
+	bucketName = fmt.Sprintf("kl-%s-backups", installationKey)
 
 	startTime := time.Now()
 
@@ -213,7 +223,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	go func() {
 		defer wg.Done()
 		fmt.Printf("    [%s] Starting: IAM Role creation\n", time.Now().Format("15:04:05"))
-		_, iamErr = ensureIAMRole(ctx, cfg, installationKey)
+		_, iamErr = ensureIAMRole(ctx, cfg, installationKey, bucketName)
 		if iamErr != nil {
 			fmt.Printf("    [%s] Failed: IAM Role - %v\n", time.Now().Format("15:04:05"), iamErr)
 		} else {
@@ -221,6 +231,22 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 			createdResources.iamCreated = true
 			createdResources.Unlock()
 			fmt.Printf("    [%s] Completed: IAM Role\n", time.Now().Format("15:04:05"))
+		}
+	}()
+
+	// S3 Bucket (parallel)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fmt.Printf("    [%s] Starting: S3 Bucket creation\n", time.Now().Format("15:04:05"))
+		s3Err = ensureS3Bucket(ctx, cfg, bucketName, installationKey)
+		if s3Err != nil {
+			fmt.Printf("    [%s] Failed: S3 Bucket - %v\n", time.Now().Format("15:04:05"), s3Err)
+		} else {
+			createdResources.Lock()
+			createdResources.bucketName = bucketName
+			createdResources.Unlock()
+			fmt.Printf("    [%s] Completed: S3 Bucket\n", time.Now().Format("15:04:05"))
 		}
 	}()
 
@@ -239,10 +265,16 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		yellow.Printf("    IAM Role Error: %v\n\n", iamErr)
 		os.Exit(1)
 	}
+	if s3Err != nil {
+		red.Printf(" ✗\n")
+		yellow.Printf("    S3 Bucket Error: %v\n\n", s3Err)
+		os.Exit(1)
+	}
 
 	green.Printf(" ✓\n")
 	fmt.Printf("    Security Group: %s\n", sgName)
 	fmt.Printf("    IAM Role:       %s\n", roleName)
+	fmt.Printf("    S3 Bucket:      %s\n", bucketName)
 
 	// Pace API calls to prevent rate limiting (longer delay after parallel operations)
 	time.Sleep(2 * time.Second)
@@ -281,7 +313,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	bold.Println("───────────────────")
 
 	fmt.Printf("  ○ Launching EC2 instance (t3.medium)...")
-	instanceID, err := launchInstance(ctx, cfg, amiID, subnetID, sgID, vpcID, secretKey, installationKey, enableTerminationProtection)
+	instanceID, err := launchInstance(ctx, cfg, amiID, subnetID, sgID, vpcID, secretKey, bucketName, installationKey, enableTerminationProtection)
 	if err != nil {
 		red.Printf(" ✗\n")
 		yellow.Printf("    Error: %v\n\n", err)
@@ -384,7 +416,7 @@ func findUbuntuAMI(ctx context.Context, cfg aws.Config) (string, error) {
 	return *newestAMI.ImageId, nil
 }
 
-func ensureIAMRole(ctx context.Context, cfg aws.Config, installationKey string) (string, error) {
+func ensureIAMRole(ctx context.Context, cfg aws.Config, installationKey, bucketName string) (string, error) {
 	iamClient := iam.NewFromConfig(cfg)
 	roleName := fmt.Sprintf("kl-%s-role", installationKey)
 
@@ -432,6 +464,10 @@ func ensureIAMRole(ctx context.Context, cfg aws.Config, installationKey string) 
 		return "", fmt.Errorf("failed to create IAM role: %w", err)
 	}
 
+	// Construct S3 ARN using bucket name
+	bucketArn := fmt.Sprintf("arn:aws:s3:::%s", bucketName)
+	bucketObjectArn := fmt.Sprintf("arn:aws:s3:::%s/*", bucketName)
+
 	// Create inline policy with required permissions
 	policy := map[string]interface{}{
 		"Version": "2012-10-17",
@@ -449,6 +485,23 @@ func ensureIAMRole(ctx context.Context, cfg aws.Config, installationKey string) 
 					"ec2:CreateTags",
 				},
 				"Resource": "*",
+			},
+			{
+				"Effect": "Allow",
+				"Action": []string{
+					"s3:ListBucket",
+					"s3:GetBucketLocation",
+				},
+				"Resource": bucketArn,
+			},
+			{
+				"Effect": "Allow",
+				"Action": []string{
+					"s3:PutObject",
+					"s3:GetObject",
+					"s3:DeleteObject",
+				},
+				"Resource": bucketObjectArn,
 			},
 		},
 	}
@@ -769,7 +822,7 @@ func verifyInstallation(ctx context.Context, installationKey string) (string, er
 	return verifyResp.SecretKey, nil
 }
 
-func launchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey string, installationKey string, enableProtection bool) (string, error) {
+func launchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey, bucketName string, installationKey string, enableProtection bool) (string, error) {
 	ec2Client := ec2.NewFromConfig(cfg)
 	instanceName := fmt.Sprintf("kl-%s-instance", installationKey)
 	profileName := fmt.Sprintf("kl-%s-role", installationKey)
@@ -935,8 +988,122 @@ kubectl wait --for=condition=ready pod -l app=frontend -n kloudlite --timeout=30
 echo "Getting service endpoints..."
 kubectl get svc -n kloudlite
 
+# Setup K3s SQLite backup to S3
+echo "Setting up K3s backup CronJob..."
+cat <<'BACKUP_EOF' | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k3s-backup
+  namespace: kloudlite
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k3s-backup
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k3s-backup
+subjects:
+  - kind: ServiceAccount
+    name: k3s-backup
+    namespace: kloudlite
+roleRef:
+  kind: ClusterRole
+  name: k3s-backup
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: k3s-backup
+  namespace: kloudlite
+spec:
+  schedule: "*/30 * * * *"  # Every 30 minutes
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: k3s-backup
+        spec:
+          serviceAccountName: k3s-backup
+          hostNetwork: true
+          hostPID: true
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: amazon/aws-cli:latest
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+
+                  echo "Starting K3s backup at $(date)"
+
+                  # K3s database location
+                  DB_PATH="/var/lib/rancher/k3s/server/db/state.db"
+                  BACKUP_FILE="/tmp/k3s-backup-$(date +%%Y%%m%%d-%%H%%M%%S).db"
+                  S3_BUCKET="%s"
+                  S3_KEY="backups/k3s-backup-$(date +%%Y%%m%%d-%%H%%M%%S).db"
+
+                  # Check if database exists
+                  if [ ! -f "$DB_PATH" ]; then
+                    echo "ERROR: K3s database not found at $DB_PATH"
+                    exit 1
+                  fi
+
+                  # Copy database (SQLite backup)
+                  echo "Backing up database..."
+                  cp "$DB_PATH" "$BACKUP_FILE"
+
+                  # Compress backup
+                  echo "Compressing backup..."
+                  gzip "$BACKUP_FILE"
+                  BACKUP_FILE="${BACKUP_FILE}.gz"
+
+                  # Upload to S3
+                  echo "Uploading to S3: s3://${S3_BUCKET}/${S3_KEY}.gz"
+                  aws s3 cp "$BACKUP_FILE" "s3://${S3_BUCKET}/${S3_KEY}.gz" --region %s
+
+                  # Cleanup local backup
+                  rm -f "$BACKUP_FILE"
+
+                  echo "Backup completed successfully at $(date)"
+              env:
+                - name: AWS_REGION
+                  value: "%s"
+              volumeMounts:
+                - name: k3s-data
+                  mountPath: /var/lib/rancher/k3s
+                  readOnly: true
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+          volumes:
+            - name: k3s-data
+              hostPath:
+                path: /var/lib/rancher/k3s
+                type: Directory
+BACKUP_EOF
+
+echo "K3s backup CronJob created successfully"
+
 echo "Kloudlite installation completed successfully at $(date)!"
-`, installationKey, secretKey, vpcID, sgID, region)
+`, installationKey, secretKey, vpcID, sgID, region, bucketName, region, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
@@ -1048,4 +1215,161 @@ func waitForInstance(ctx context.Context, cfg aws.Config, instanceID string) (st
 	}
 
 	return publicIP, privateIP, nil
+}
+
+func ensureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installationKey string) error {
+	s3Client := s3.NewFromConfig(cfg)
+
+	// Check if bucket exists
+	_, err := s3Client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err == nil {
+		// Bucket exists
+		return nil
+	}
+
+	// Create bucket
+	createInput := &s3.CreateBucketInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	// For regions other than us-east-1, we need to specify LocationConstraint
+	if cfg.Region != "us-east-1" {
+		createInput.CreateBucketConfiguration = &s3Types.CreateBucketConfiguration{
+			LocationConstraint: s3Types.BucketLocationConstraint(cfg.Region),
+		}
+	}
+
+	_, err = s3Client.CreateBucket(ctx, createInput)
+	if err != nil {
+		return fmt.Errorf("failed to create S3 bucket: %w", err)
+	}
+
+	// Enable versioning for backup safety
+	_, err = s3Client.PutBucketVersioning(ctx, &s3.PutBucketVersioningInput{
+		Bucket: aws.String(bucketName),
+		VersioningConfiguration: &s3Types.VersioningConfiguration{
+			Status: s3Types.BucketVersioningStatusEnabled,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to enable bucket versioning: %w", err)
+	}
+
+	// Add lifecycle policy to expire old backups after 30 days
+	_, err = s3Client.PutBucketLifecycleConfiguration(ctx, &s3.PutBucketLifecycleConfigurationInput{
+		Bucket: aws.String(bucketName),
+		LifecycleConfiguration: &s3Types.BucketLifecycleConfiguration{
+			Rules: []s3Types.LifecycleRule{
+				{
+					ID:     aws.String("expire-old-backups"),
+					Status: s3Types.ExpirationStatusEnabled,
+					Expiration: &s3Types.LifecycleExpiration{
+						Days: aws.Int32(30),
+					},
+					Filter: &s3Types.LifecycleRuleFilter{
+						Prefix: aws.String(""),
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set lifecycle policy: %w", err)
+	}
+
+	// Add tags
+	_, err = s3Client.PutBucketTagging(ctx, &s3.PutBucketTaggingInput{
+		Bucket: aws.String(bucketName),
+		Tagging: &s3Types.Tagging{
+			TagSet: []s3Types.Tag{
+				{Key: aws.String("Name"), Value: aws.String(bucketName)},
+				{Key: aws.String("ManagedBy"), Value: aws.String("kloudlite")},
+				{Key: aws.String("Project"), Value: aws.String("kloudlite")},
+				{Key: aws.String("Purpose"), Value: aws.String("k3s-backups")},
+				{Key: aws.String("InstallationKey"), Value: aws.String(installationKey)},
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to tag bucket: %w", err)
+	}
+
+	return nil
+}
+
+func deleteS3Bucket(ctx context.Context, cfg aws.Config, bucketName string) error {
+	s3Client := s3.NewFromConfig(cfg)
+
+	// List and delete all objects (including versions)
+	listInput := &s3.ListObjectVersionsInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	for {
+		listOutput, err := s3Client.ListObjectVersions(ctx, listInput)
+		if err != nil {
+			return fmt.Errorf("failed to list objects: %w", err)
+		}
+
+		// Delete versions
+		if len(listOutput.Versions) > 0 {
+			var objects []s3Types.ObjectIdentifier
+			for _, version := range listOutput.Versions {
+				objects = append(objects, s3Types.ObjectIdentifier{
+					Key:       version.Key,
+					VersionId: version.VersionId,
+				})
+			}
+
+			_, err = s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3Types.Delete{
+					Objects: objects,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to delete object versions: %w", err)
+			}
+		}
+
+		// Delete delete markers
+		if len(listOutput.DeleteMarkers) > 0 {
+			var objects []s3Types.ObjectIdentifier
+			for _, marker := range listOutput.DeleteMarkers {
+				objects = append(objects, s3Types.ObjectIdentifier{
+					Key:       marker.Key,
+					VersionId: marker.VersionId,
+				})
+			}
+
+			_, err = s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3Types.Delete{
+					Objects: objects,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to delete markers: %w", err)
+			}
+		}
+
+		// Check if there are more objects
+		if !aws.ToBool(listOutput.IsTruncated) {
+			break
+		}
+		listInput.KeyMarker = listOutput.NextKeyMarker
+		listInput.VersionIdMarker = listOutput.NextVersionIdMarker
+	}
+
+	// Delete the bucket
+	_, err := s3Client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete bucket: %w", err)
+	}
+
+	return nil
 }
