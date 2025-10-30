@@ -84,7 +84,7 @@ mkdir -p /var/lib/rancher/k3s/server/manifests
 
 # Install CRDs
 echo "Installing Kloudlite CRDs..."
-MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/master/api/manifests/install"
+MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/development/api/manifests/install"
 kubectl apply -f ${MANIFEST_BASE_URL}/crds.yaml
 
 # Install RBAC for API Server
@@ -218,7 +218,6 @@ kubectl wait --for=condition=ready pod -l app=api-server -n kloudlite --timeout=
 
 # Apply Frontend Deployment
 echo "Deploying Frontend..."
-MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/master/api/manifests/install"
 kubectl apply -f ${MANIFEST_BASE_URL}/frontend.yaml
 
 # Wait for Frontend to be ready
