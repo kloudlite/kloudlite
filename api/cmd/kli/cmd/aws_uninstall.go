@@ -11,10 +11,14 @@ import (
 	"syscall"
 	"time"
 
+	awsinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/aws"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +34,7 @@ This command will:
   - Delete SSH key pair 'kl-{installation-key}-key' and local key file
   - Delete IAM instance profile 'kl-{installation-key}-role'
   - Delete IAM role 'kl-{installation-key}-role'
+  - Delete S3 bucket 'kl-{installation-key}-backups' and all backups
 
 All resources are identified by the InstallationKey tag.`,
 	Example: `  # Uninstall using default AWS region from config
@@ -82,7 +87,7 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	bold.Println("─────────────")
 	fmt.Printf("  Installation Key: %s\n", uninstallKey)
 	fmt.Printf("  Region:          ")
-	cfg, err := loadAWSConfig(ctx, uninstallRegion)
+	cfg, err := awsinternal.LoadAWSConfig(ctx, uninstallRegion)
 	if err != nil {
 		red.Printf("✗\n")
 		yellow.Printf("  Error: %v\n\n", err)
@@ -99,10 +104,11 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 
 	var wg sync.WaitGroup
 	var instanceCount int
-	var sgErr, keyErr, iamErr error
+	var sgErr, keyErr, iamErr, s3Err error
 	sgName := fmt.Sprintf("kl-%s-sg", uninstallKey)
 	keyName := fmt.Sprintf("kl-%s-key", uninstallKey)
 	roleName := fmt.Sprintf("kl-%s-role", uninstallKey)
+	bucketName := fmt.Sprintf("kl-%s-backups", uninstallKey)
 
 	startTime := time.Now()
 
@@ -161,12 +167,25 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 		}
 	}()
 
+	// Delete S3 bucket (parallel, independent of other resources)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fmt.Printf("    [%s] Starting: S3 Bucket deletion\n", time.Now().Format("15:04:05"))
+		s3Err = deleteS3BucketWithBackups(ctx, cfg, bucketName)
+		if s3Err != nil {
+			fmt.Printf("    [%s] Failed: S3 Bucket - %v\n", time.Now().Format("15:04:05"), s3Err)
+		} else {
+			fmt.Printf("    [%s] Completed: S3 Bucket\n", time.Now().Format("15:04:05"))
+		}
+	}()
+
 	wg.Wait()
 	elapsed := time.Since(startTime)
 	fmt.Printf("    Parallel operations completed in %.1fs\n", elapsed.Seconds())
 
 	// Report results
-	if sgErr != nil || keyErr != nil || iamErr != nil {
+	if sgErr != nil || keyErr != nil || iamErr != nil || s3Err != nil {
 		red.Printf(" ✗\n")
 		if sgErr != nil {
 			yellow.Printf("    Security Group: %v\n", sgErr)
@@ -176,6 +195,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 		}
 		if iamErr != nil {
 			yellow.Printf("    IAM: %v\n", iamErr)
+		}
+		if s3Err != nil {
+			yellow.Printf("    S3 Bucket: %v\n", s3Err)
 		}
 	} else {
 		green.Printf(" ✓\n")
@@ -193,6 +215,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	}
 	if iamErr == nil {
 		fmt.Printf("    IAM Role:       %s\n", roleName)
+	}
+	if s3Err == nil {
+		fmt.Printf("    S3 Bucket:      %s\n", bucketName)
 	}
 
 	// Success Summary
@@ -297,13 +322,39 @@ func deleteSecurityGroup(ctx context.Context, cfg aws.Config, installationKey st
 	sgID := *descResult.SecurityGroups[0].GroupId
 
 	// Retry deletion with exponential backoff for dependency violations
-	maxRetries := 6
+	// Increased retries and wait time to handle network interface detachment
+	maxRetries := 12
 	for i := 0; i < maxRetries; i++ {
 		if i > 0 {
-			waitTime := time.Duration(i*5) * time.Second
+			// Progressive backoff: 10s, 15s, 20s, 25s, 30s, then 30s for remaining
+			waitTime := time.Duration(10+min(i*5, 20)) * time.Second
 			fmt.Printf("    [%s] Security Group retry %d/%d, waiting %ds...\n",
 				time.Now().Format("15:04:05"), i, maxRetries-1, int(waitTime.Seconds()))
 			time.Sleep(waitTime)
+		}
+
+		// Before attempting deletion, check for and detach any network interfaces
+		if i > 0 && i%3 == 0 {
+			// Every 3rd retry, actively check for and detach network interfaces
+			fmt.Printf("    [%s] Checking for attached network interfaces...\n", time.Now().Format("15:04:05"))
+			descNIResult, err := ec2Client.DescribeNetworkInterfaces(ctx, &ec2.DescribeNetworkInterfacesInput{
+				Filters: []types.Filter{
+					{
+						Name:   aws.String("group-id"),
+						Values: []string{sgID},
+					},
+				},
+			})
+			if err == nil && len(descNIResult.NetworkInterfaces) > 0 {
+				fmt.Printf("    [%s] Found %d network interface(s) still attached, waiting for detachment...\n",
+					time.Now().Format("15:04:05"), len(descNIResult.NetworkInterfaces))
+				for _, ni := range descNIResult.NetworkInterfaces {
+					if ni.Attachment != nil && ni.Attachment.AttachmentId != nil {
+						fmt.Printf("    [%s] Network interface %s is still attached\n",
+							time.Now().Format("15:04:05"), *ni.NetworkInterfaceId)
+					}
+				}
+			}
 		}
 
 		_, err = ec2Client.DeleteSecurityGroup(ctx, &ec2.DeleteSecurityGroupInput{
@@ -328,6 +379,13 @@ func deleteSecurityGroup(ctx context.Context, cfg aws.Config, installationKey st
 	}
 
 	return nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func deleteKeyPair(ctx context.Context, cfg aws.Config, installationKey string) error {
@@ -430,6 +488,90 @@ func deleteIAMRole(ctx context.Context, cfg aws.Config, installationKey string) 
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete IAM role: %w", err)
+	}
+
+	return nil
+}
+
+func deleteS3BucketWithBackups(ctx context.Context, cfg aws.Config, bucketName string) error {
+	s3Client := s3.NewFromConfig(cfg)
+
+	// Check if bucket exists
+	_, err := s3Client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		// Bucket doesn't exist, skip
+		return nil
+	}
+
+	// List and delete all objects (including versions)
+	listInput := &s3.ListObjectVersionsInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	for {
+		listOutput, err := s3Client.ListObjectVersions(ctx, listInput)
+		if err != nil {
+			return fmt.Errorf("failed to list objects: %w", err)
+		}
+
+		// Delete versions
+		if len(listOutput.Versions) > 0 {
+			var objects []s3Types.ObjectIdentifier
+			for _, version := range listOutput.Versions {
+				objects = append(objects, s3Types.ObjectIdentifier{
+					Key:       version.Key,
+					VersionId: version.VersionId,
+				})
+			}
+
+			_, err = s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3Types.Delete{
+					Objects: objects,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to delete object versions: %w", err)
+			}
+		}
+
+		// Delete delete markers
+		if len(listOutput.DeleteMarkers) > 0 {
+			var objects []s3Types.ObjectIdentifier
+			for _, marker := range listOutput.DeleteMarkers {
+				objects = append(objects, s3Types.ObjectIdentifier{
+					Key:       marker.Key,
+					VersionId: marker.VersionId,
+				})
+			}
+
+			_, err = s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3Types.Delete{
+					Objects: objects,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to delete markers: %w", err)
+			}
+		}
+
+		// Check if there are more objects
+		if !aws.ToBool(listOutput.IsTruncated) {
+			break
+		}
+		listInput.KeyMarker = listOutput.NextKeyMarker
+		listInput.VersionIdMarker = listOutput.NextVersionIdMarker
+	}
+
+	// Delete the bucket
+	_, err = s3Client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete bucket: %w", err)
 	}
 
 	return nil
