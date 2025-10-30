@@ -847,7 +847,8 @@ apt-get install -y curl wget git
 
 # Install K3s server
 echo "Installing K3s server..."
-curl -sfL https://get.k3s.io | sh -s - server \
+K3S_VERSION="v1.31.1+k3s1"
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" sh -s - server \
   --disable traefik \
   --write-kubeconfig-mode 644
 
@@ -859,6 +860,11 @@ done
 
 echo "K3s installation completed at $(date)"
 
+# Extract K3s token and server URL
+echo "Extracting K3s configuration..."
+K3S_AGENT_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
+K3S_SERVER_URL="https://127.0.0.1:6443"
+
 # Fetch instance IPs from EC2 metadata service
 echo "Fetching instance metadata..."
 TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
@@ -866,6 +872,8 @@ PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/la
 PRIVATE_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null || echo "")
 
 echo "Instance IPs - Public: $PUBLIC_IP, Private: $PRIVATE_IP"
+echo "K3s Version: $K3S_VERSION"
+echo "K3s Server URL: $K3S_SERVER_URL"
 
 # Install Kloudlite components
 echo "Installing Kloudlite API Server and Frontend..."
@@ -939,10 +947,16 @@ spec:
               value: "%s"
             - name: AWS_REGION
               value: "%s"
-            - name: AWS_PUBLIC_IP
-              value: "$PUBLIC_IP"
+            - name: AWS_AMI_ID
+              value: "%s"
             - name: AWS_PRIVATE_IP
               value: "$PRIVATE_IP"
+            - name: K3S_VERSION
+              value: "$K3S_VERSION"
+            - name: K3S_AGENT_TOKEN
+              value: "$K3S_AGENT_TOKEN"
+            - name: K3S_SERVER_URL
+              value: "$K3S_SERVER_URL"
           resources:
             requests:
               memory: "256Mi"
@@ -1103,7 +1117,7 @@ BACKUP_EOF
 echo "K3s backup CronJob created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, installationKey, secretKey, vpcID, sgID, region, bucketName, region, region)
+`, installationKey, secretKey, vpcID, sgID, region, amiID, bucketName, region, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
