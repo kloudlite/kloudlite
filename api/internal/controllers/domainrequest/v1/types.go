@@ -1,0 +1,130 @@
+package v1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:name="IP Address",type=string,JSONPath=`.spec.ipAddress`
+// +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
+// +kubebuilder:printcolumn:name="Domain",type=string,JSONPath=`.status.domain`
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+
+// DomainRequest represents a request to register an IP address with console.kloudlite.io
+// and fetch TLS certificates for the domain
+type DomainRequest struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   DomainRequestSpec   `json:"spec,omitempty"`
+	Status DomainRequestStatus `json:"status,omitempty"`
+}
+
+// DomainRequestSpec defines the desired state of DomainRequest
+type DomainRequestSpec struct {
+	// InstallationKey is the unique key for this Kloudlite installation
+	// +kubebuilder:validation:Required
+	InstallationKey string `json:"installationKey"`
+
+	// InstallationSecret is the secret key for authentication with console.kloudlite.io
+	// +kubebuilder:validation:Required
+	InstallationSecret string `json:"installationSecret"`
+
+	// Type indicates the type of registration: "installation" or "workmachine"
+	// +kubebuilder:validation:Enum=installation;workmachine
+	// +kubebuilder:default=installation
+	Type string `json:"type"`
+
+	// IPAddress is the IP address to register
+	// If not provided, will be auto-detected from the LoadBalancer service
+	// +optional
+	IPAddress string `json:"ipAddress,omitempty"`
+
+	// LoadBalancerServiceName is the name of the LoadBalancer service to watch for IP
+	// Used for auto-detecting the IP address
+	// +optional
+	LoadBalancerServiceName string `json:"loadBalancerServiceName,omitempty"`
+
+	// LoadBalancerServiceNamespace is the namespace of the LoadBalancer service
+	// +optional
+	LoadBalancerServiceNamespace string `json:"loadBalancerServiceNamespace,omitempty"`
+
+	// WorkMachineName is the name of the workmachine (required if type=workmachine)
+	// +optional
+	WorkMachineName string `json:"workMachineName,omitempty"`
+
+	// CertificateScope defines the scope for certificate generation
+	// +kubebuilder:validation:Enum=installation;workmachine;workspace
+	// +kubebuilder:default=installation
+	CertificateScope string `json:"certificateScope"`
+
+	// CertificateScopeIdentifier is the identifier for the certificate scope
+	// (e.g., workmachine name or workspace name)
+	// +optional
+	CertificateScopeIdentifier string `json:"certificateScopeIdentifier,omitempty"`
+
+	// CertificateParentScopeIdentifier is the parent scope identifier
+	// (e.g., workmachine name for workspace certificates)
+	// +optional
+	CertificateParentScopeIdentifier string `json:"certificateParentScopeIdentifier,omitempty"`
+}
+
+// DomainRequestStatus defines the observed state of DomainRequest
+type DomainRequestStatus struct {
+	// State represents the current state of the DomainRequest
+	// +kubebuilder:validation:Enum=Pending;IPRegistered;CertificateGenerated;Ready;Failed
+	// +kubebuilder:default=Pending
+	State string `json:"state"`
+
+	// Message provides additional information about the current state
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// Domain is the registered domain name
+	// +optional
+	Domain string `json:"domain,omitempty"`
+
+	// Subdomain is the subdomain assigned to this registration
+	// +optional
+	Subdomain string `json:"subdomain,omitempty"`
+
+	// DNSRecordIDs contains the Cloudflare DNS record IDs created
+	// +optional
+	DNSRecordIDs []string `json:"dnsRecordIds,omitempty"`
+
+	// CertificateID is the ID of the generated certificate
+	// +optional
+	CertificateID string `json:"certificateId,omitempty"`
+
+	// CertificateExpiresAt is the expiration time of the certificate
+	// +optional
+	CertificateExpiresAt *metav1.Time `json:"certificateExpiresAt,omitempty"`
+
+	// CertificateSecretName is the name of the Kubernetes Secret containing the certificate
+	// +optional
+	CertificateSecretName string `json:"certificateSecretName,omitempty"`
+
+	// LastIPRegistrationTime is when the IP was last registered
+	// +optional
+	LastIPRegistrationTime *metav1.Time `json:"lastIPRegistrationTime,omitempty"`
+
+	// LastCertificateGenerationTime is when the certificate was last generated
+	// +optional
+	LastCertificateGenerationTime *metav1.Time `json:"lastCertificateGenerationTime,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+
+// DomainRequestList contains a list of DomainRequest
+type DomainRequestList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []DomainRequest `json:"items"`
+}
