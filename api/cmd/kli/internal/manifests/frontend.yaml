@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/kloudlite/kloudlite/web/console:latest
+          image: ghcr.io/kloudlite/kloudlite-v2/frontend:development
           ports:
             - containerPort: 3000
               name: http
