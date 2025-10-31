@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/manifests"
 )
 
 // GenerateK3sToken generates a random 64-character hexadecimal token for K3s agent authentication
