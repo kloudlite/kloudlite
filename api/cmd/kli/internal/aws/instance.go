@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/manifests"
 )
 
 // GenerateK3sToken generates a random 64-character hexadecimal token for K3s agent authentication
@@ -80,20 +79,9 @@ echo "Installing Kloudlite API Server and Frontend..."
 # Create namespace
 kubectl create namespace kloudlite || true
 
-# Create K3s manifests directory
-mkdir -p /var/lib/rancher/k3s/server/manifests
-
-# Write embedded CRDs and RBAC to manifests folder for auto-apply
+# Install Kloudlite manifests using kli
 echo "Installing Kloudlite CRDs and RBAC..."
-cat <<'CRDS_EOF' | base64 -d > /var/lib/rancher/k3s/server/manifests/kloudlite-crds.yaml
-%s
-CRDS_EOF
-
-cat <<'RBAC_EOF' | base64 -d > /var/lib/rancher/k3s/server/manifests/api-server-rbac.yaml
-%s
-RBAC_EOF
-
-echo "CRDs and RBAC will be auto-applied by K3s"
+./kli install-manifests
 
 # Apply Secret directly (secrets should not be in manifests folder)
 echo "Creating API Server Secret..."
@@ -360,8 +348,6 @@ echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
 `, "v1.31.1+k3s1", k3sToken,
-		base64.StdEncoding.EncodeToString([]byte(manifests.CRDs)),
-		base64.StdEncoding.EncodeToString([]byte(manifests.APIServerRBAC)),
 		secretKey, installationKey, vpcID, sgID, region, amiID, bucketName, region)
 
 	// Base64 encode the user data
