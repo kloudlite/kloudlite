@@ -19,6 +19,7 @@ on:
 env:
   NODE_VERSION: '20'
   REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/web
 
 jobs:
   build-and-push:
@@ -141,7 +142,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/web
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
