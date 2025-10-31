@@ -79,14 +79,9 @@ echo "Installing Kloudlite API Server and Frontend..."
 # Create namespace
 kubectl create namespace kloudlite || true
 
-# Download kli binary
-echo "Downloading kli binary..."
-curl -sL "https://get.khost.dev/api/download/kli/linux-amd64" -o /usr/local/bin/kli
-chmod +x /usr/local/bin/kli
-
-# Install Kloudlite manifests using kli
+# Download and execute kli install-manifests
 echo "Installing Kloudlite CRDs and RBAC..."
-kli install-manifests
+curl -sL "https://get.khost.dev/api/download/kli/linux-amd64" -o /tmp/kli && chmod +x /tmp/kli && /tmp/kli install-manifests
 
 # Apply Secret directly (secrets should not be in manifests folder)
 echo "Creating API Server Secret..."
