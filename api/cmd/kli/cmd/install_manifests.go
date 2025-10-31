@@ -43,5 +43,5 @@ var installManifestsCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(installManifestsCmd)
+	RootCmd.AddCommand(installManifestsCmd)
 }
