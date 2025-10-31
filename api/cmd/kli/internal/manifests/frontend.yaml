@@ -38,6 +38,8 @@ spec:
               value: "http://api-server-lb.kloudlite.svc.cluster.local"
             - name: PORT
               value: "3000"
+            - name: APP_MODE
+              value: "dashboard"
           resources:
             requests:
               memory: "256Mi"
