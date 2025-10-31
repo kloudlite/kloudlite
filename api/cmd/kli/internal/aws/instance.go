@@ -178,7 +178,7 @@ spec:
     spec:
       containers:
         - name: api-server
-          image: ghcr.io/kloudlite/kloudlite/api-server:latest
+          image: ghcr.io/kloudlite/kloudlite/api-server:development
           ports:
             - containerPort: 8080
               name: http
