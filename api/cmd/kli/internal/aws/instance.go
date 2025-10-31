@@ -98,15 +98,12 @@ kubectl create namespace kloudlite || true
 # Create K3s manifests directory
 mkdir -p /var/lib/rancher/k3s/server/manifests
 
-# Write embedded CRDs and RBAC to manifests folder for auto-apply
-echo "Installing Kloudlite CRDs and RBAC..."
-cat <<'CRDS_EOF' | base64 -d > /var/lib/rancher/k3s/server/manifests/kloudlite-crds.yaml
-%s
-CRDS_EOF
+# Download and install Kloudlite manifests from GitHub
+echo "Downloading Kloudlite manifests..."
+MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/development/api/cmd/kli/internal/manifests"
 
-cat <<'RBAC_EOF' | base64 -d > /var/lib/rancher/k3s/server/manifests/api-server-rbac.yaml
-%s
-RBAC_EOF
+curl -fsSL "${MANIFEST_BASE_URL}/crds.yaml" -o /var/lib/rancher/k3s/server/manifests/kloudlite-crds.yaml
+curl -fsSL "${MANIFEST_BASE_URL}/api-server-rbac.yaml" -o /var/lib/rancher/k3s/server/manifests/api-server-rbac.yaml
 
 echo "CRDs and RBAC will be auto-applied by K3s"
 
@@ -238,7 +235,7 @@ kubectl wait --for=condition=ready pod -l app=api-server -n kloudlite --timeout=
 
 # Apply Frontend Deployment
 echo "Deploying Frontend..."
-kubectl apply -f ${MANIFEST_BASE_URL}/frontend.yaml
+curl -fsSL "${MANIFEST_BASE_URL}/frontend.yaml" | kubectl apply -f -
 
 # Wait for Frontend to be ready
 echo "Waiting for Frontend to be ready..."
@@ -375,10 +372,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken,
-		base64.StdEncoding.EncodeToString([]byte(manifests.CRDs)),
-		base64.StdEncoding.EncodeToString([]byte(manifests.APIServerRBAC)),
-		secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
