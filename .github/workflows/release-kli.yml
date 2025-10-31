@@ -18,6 +18,11 @@ on:
         description: 'Tag to release (e.g., kli-v0.1.0) - only for stable releases'
         required: false
         type: string
+      make_latest:
+        description: 'Mark as latest release (auto for nightly, custom for stable)'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -244,7 +249,8 @@ jobs:
           name: kli ${{ steps.version.outputs.version }}
           body_path: release-notes.md
           draft: false
-          prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type == 'nightly' }}
+          prerelease: false
+          make_latest: ${{ github.event_name == 'workflow_dispatch' && inputs.make_latest || github.event_name == 'push' }}
           files: |
             release-assets/*
         env:
