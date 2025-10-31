@@ -23,11 +23,26 @@ func GenerateK3sToken() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
+// GenerateJWTSecret generates a random base64-encoded secret for JWT signing
+func GenerateJWTSecret() (string, error) {
+	bytes := make([]byte, 32) // 32 bytes for JWT secret
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate JWT secret: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(bytes), nil
+}
+
 func LaunchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey, bucketName, k3sToken string, installationKey string, enableProtection bool) (string, error) {
 	ec2Client := ec2.NewFromConfig(cfg)
 	instanceName := fmt.Sprintf("kl-%s-instance", installationKey)
 	profileName := fmt.Sprintf("kl-%s-role", installationKey)
 	region := cfg.Region
+
+	// Generate JWT secret for api-server
+	jwtSecret, err := GenerateJWTSecret()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate JWT secret: %w", err)
+	}
 
 	// Create cloud-init script to install K3s on startup
 	userData := fmt.Sprintf(`#!/bin/bash
@@ -107,6 +122,7 @@ type: Opaque
 stringData:
   INSTALLATION_SECRET: "%s"
   K3S_AGENT_TOKEN: "$K3S_AGENT_TOKEN"
+  JWT_SECRET: "%s"
 EOF
 
 # Save ConfigMap to manifests folder for auto-apply
@@ -362,7 +378,7 @@ echo "Kloudlite installation completed successfully at $(date)!"
 `, "v1.31.1+k3s1", k3sToken,
 		base64.StdEncoding.EncodeToString([]byte(manifests.CRDs)),
 		base64.StdEncoding.EncodeToString([]byte(manifests.APIServerRBAC)),
-		secretKey, installationKey, vpcID, sgID, region, amiID, bucketName, region)
+		secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
