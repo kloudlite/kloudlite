@@ -50,7 +50,7 @@ spec:
       serviceAccountName: api-server
       containers:
         - name: api-server
-          image: ghcr.io/kloudlite/kloudlite/api-server:latest
+          image: ghcr.io/kloudlite/kloudlite-v2/api-server:latest
           ports:
             - containerPort: 8080
               name: http

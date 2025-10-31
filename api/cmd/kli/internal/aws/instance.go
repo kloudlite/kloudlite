@@ -79,11 +79,11 @@ echo "Installing Kloudlite API Server and Frontend..."
 # Create namespace
 kubectl create namespace kloudlite || true
 
-# Download and execute kli install-manifests
-echo "Installing Kloudlite CRDs and RBAC..."
+# Download and execute kli install-manifests (installs CRDs, RBAC, API Server, Frontend)
+echo "Installing Kloudlite manifests..."
 curl -sL "https://get.khost.dev/api/download/kli/linux-amd64" -o /tmp/kli && chmod +x /tmp/kli && /tmp/kli install-manifests
 
-# Apply Secret directly (secrets should not be in manifests folder)
+# Create Secret with dynamic values (secrets should not be in manifests folder)
 echo "Creating API Server Secret..."
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -97,7 +97,7 @@ stringData:
   K3S_AGENT_TOKEN: "$K3S_AGENT_TOKEN"
 EOF
 
-# Save ConfigMap to manifests folder for auto-apply
+# Create ConfigMap with dynamic values (saved to manifests folder for auto-apply)
 echo "Creating API Server ConfigMap..."
 cat <<EOF > /var/lib/rancher/k3s/server/manifests/api-server-config.yaml
 apiVersion: v1
@@ -117,100 +117,9 @@ data:
   K3S_SERVER_URL: "$K3S_SERVER_URL"
 EOF
 
-# Create API Server Services and StatefulSet
-echo "Creating API Server manifest..."
-cat <<EOF > /var/lib/rancher/k3s/server/manifests/api-server.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-server
-  namespace: kloudlite
-spec:
-  selector:
-    app: api-server
-  ports:
-    - name: http
-      port: 8080
-      targetPort: 8080
-  clusterIP: None
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-server-lb
-  namespace: kloudlite
-spec:
-  type: LoadBalancer
-  selector:
-    app: api-server
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: api-server
-  namespace: kloudlite
-spec:
-  serviceName: api-server
-  replicas: 1
-  selector:
-    matchLabels:
-      app: api-server
-  template:
-    metadata:
-      labels:
-        app: api-server
-    spec:
-      containers:
-        - name: api-server
-          image: ghcr.io/kloudlite/kloudlite/api-server:latest
-          ports:
-            - containerPort: 8080
-              name: http
-          envFrom:
-            - configMapRef:
-                name: api-server-config
-            - secretRef:
-                name: api-server-secret
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "100m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 10Gi
-EOF
-
 # Wait for API Server to be ready
 echo "Waiting for API Server to be ready..."
 kubectl wait --for=condition=ready pod -l app=api-server -n kloudlite --timeout=300s || true
-
-# Apply Frontend Deployment
-echo "Deploying Frontend..."
-kubectl apply -f ${MANIFEST_BASE_URL}/frontend.yaml
 
 # Wait for Frontend to be ready
 echo "Waiting for Frontend to be ready..."

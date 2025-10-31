@@ -12,7 +12,7 @@ import (
 var installManifestsCmd = &cobra.Command{
 	Use:   "install-manifests",
 	Short: "Write embedded Kloudlite manifests to K3s manifests directory",
-	Long:  `Writes the embedded CRDs and RBAC manifests to the K3s server manifests directory for auto-application.`,
+	Long:  `Writes the embedded CRDs, RBAC, API Server, and Frontend manifests to the K3s server manifests directory for auto-application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		manifestsDir := "/var/lib/rancher/k3s/server/manifests"
 
@@ -34,6 +34,20 @@ var installManifestsCmd = &cobra.Command{
 			return fmt.Errorf("failed to write RBAC: %w", err)
 		}
 		fmt.Printf("✓ Written RBAC to %s\n", rbacPath)
+
+		// Write API Server
+		apiServerPath := filepath.Join(manifestsDir, "api-server.yaml")
+		if err := os.WriteFile(apiServerPath, []byte(manifests.APIServer), 0644); err != nil {
+			return fmt.Errorf("failed to write API Server: %w", err)
+		}
+		fmt.Printf("✓ Written API Server to %s\n", apiServerPath)
+
+		// Write Frontend
+		frontendPath := filepath.Join(manifestsDir, "frontend.yaml")
+		if err := os.WriteFile(frontendPath, []byte(manifests.Frontend), 0644); err != nil {
+			return fmt.Errorf("failed to write Frontend: %w", err)
+		}
+		fmt.Printf("✓ Written Frontend to %s\n", frontendPath)
 
 		fmt.Println("\nKloudlite manifests installed successfully!")
 		fmt.Println("K3s will auto-apply these manifests on startup.")
