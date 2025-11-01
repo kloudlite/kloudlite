@@ -6,6 +6,7 @@ import {
 } from '@/lib/console/supabase-storage-service'
 import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
+  CLOUDFLARE_DNS_DOMAIN,
   createInstallationDnsRecords,
   createWorkmachineDnsRecords,
   updateDnsRecords,
@@ -192,7 +193,7 @@ export async function POST(request: NextRequest) {
       ip,
       workMachineName: type === 'workmachine' ? workMachineName : undefined,
       totalRecords,
-      subdomain: installation.subdomain,
+      subdomain: `installation.subdomain.${CLOUDFLARE_DNS_DOMAIN}`,
       dnsRecordsCreated: dnsRecordIds.length,
       dnsSuccess: dnsCreated,
     })

@@ -1,12 +1,15 @@
 package workmachine
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -34,7 +37,10 @@ import (
 )
 
 type Env struct {
-	KloudliteInstallationID string `env:"INSTALLATION_ID" required:"true"`
+	KloudliteInstallationID     string `env:"INSTALLATION_ID" required:"true"`
+	KloudliteInstallationSecret string `env:"INSTALLATION_SECRET" required:"true"`
+
+	DomainRegistrationAPI string `env:"DOMAIN_REGISTRATION_API" required:"true"`
 	// KloudliteInstallationSecret string `env:"KLOUDLITE_INSTALLATION_SECRET" required:"true"`
 
 	K3sVersion    string `env:"K3S_VERSION" required:"true"`
@@ -170,6 +176,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			Title:    "Setup Cloud Machine",
 			OnCreate: r.setupCloudMachine,
 			OnDelete: r.cleanupCloudMachine,
+		},
+		{
+			Name:     "setup DNS Host",
+			Title:    "Setup DNS Host",
+			OnCreate: r.registerDNSHost,
+			OnDelete: r.deRegisterDNSHost,
 		},
 	})
 }
@@ -713,30 +725,69 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 	obj.Status.State = machineInfo.State
 
-	if obj.Spec.AWSProvider.VolumeSize > obj.Status.RootVolumeSize {
-		check.Logger().Info("increasing volume size", "from", obj.Status.RootVolumeSize, "to", obj.Spec.AWSProvider.VolumeSize)
-
-		if err := r.cloudProviderAPI.IncreaseVolumeSize(check.Context(), obj.Status.MachineID, obj.Spec.AWSProvider.VolumeSize); err != nil {
-			return check.Failed(errors.Wrap("failed to increase volume size", err))
-		}
-
-		obj.Status.RootVolumeSize = obj.Spec.AWSProvider.VolumeSize
-		if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
-			return check.Errored(errors.Wrap(fmt.Sprintf("failed to reboot machine(ID: %s)", obj.Status.MachineID), err))
-		}
-
-		return check.UpdateMsg("waiting for volume size to be increased").RequeueAfter(10 * time.Second)
-	}
+	// if obj.Spec.AWSProvider.VolumeSize > obj.Status.RootVolumeSize {
+	// 	check.Logger().Info("increasing volume size", "from", obj.Status.RootVolumeSize, "to", obj.Spec.AWSProvider.VolumeSize)
+	//
+	// 	if err := r.cloudProviderAPI.IncreaseVolumeSize(check.Context(), obj.Status.MachineID, obj.Spec.AWSProvider.VolumeSize); err != nil {
+	// 		return check.Failed(errors.Wrap("failed to increase volume size", err))
+	// 	}
+	//
+	// 	obj.Status.RootVolumeSize = obj.Spec.AWSProvider.VolumeSize
+	// 	if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
+	// 		return check.Errored(errors.Wrap(fmt.Sprintf("failed to reboot machine(ID: %s)", obj.Status.MachineID), err))
+	// 	}
+	//
+	// 	return check.UpdateMsg("waiting for volume size to be increased").RequeueAfter(10 * time.Second)
+	// }
 
 	// // Update status with current machine info
 	obj.Status.State = machineInfo.State
 	obj.Status.Message = machineInfo.Message
 	obj.Status.PublicIP = machineInfo.PublicIP
 	obj.Status.PrivateIP = machineInfo.PrivateIP
-	obj.Status.Region = machineInfo.Region
-	obj.Status.RootVolumeSize = machineInfo.RootVolumeSize
-	obj.Status.AvailabilityZone = machineInfo.AvailabilityZone
+	// obj.Status.Region = machineInfo.Region
+	obj.Status.RootVolumeSize = obj.Spec.AWSProvider.VolumeSize
+	// obj.Status.AvailabilityZone = machineInfo.AvailabilityZone
 
+	return check.Passed()
+}
+
+func (r *WorkMachineReconciler) registerDNSHost(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	b, err := json.Marshal(map[string]any{
+		"installationKey": r.env.KloudliteInstallationID,
+		"type":            "workmachine",
+		"ip":              obj.Status.PublicIP,
+		"workMachineName": obj.Name,
+	})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	hreq, err := http.NewRequestWithContext(check.Context(), http.MethodPost, r.env.DomainRegistrationAPI, bytes.NewReader(b))
+	hreq.Header.Add("Content-Type", "application/json")
+	hreq.Header.Add("Authorization", "Bearer "+r.env.KloudliteInstallationSecret)
+
+	resp, err := http.DefaultClient.Do(hreq)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return check.Failed(fmt.Errorf("register DNS Host API failed with status code (%d)", resp.StatusCode))
+	}
+
+	var result struct {
+		SubDomain string `json:"subdomain"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return check.Failed(err)
+	}
+
+	obj.Status.DNSHost = obj.Name + result.SubDomain
+	return check.Passed()
+}
+
+func (r *WorkMachineReconciler) deRegisterDNSHost(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	return check.Passed()
 }
 

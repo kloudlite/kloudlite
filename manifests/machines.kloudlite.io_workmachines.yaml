@@ -236,6 +236,8 @@ spec:
                       type: string
                   type: object
                 type: object
+              dnsHost:
+                type: string
               isAutoStopped:
                 description: IsAutoStopped when set means machine was auto-stopped
                   by kloudlite
