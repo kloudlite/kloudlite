@@ -22,8 +22,11 @@ type Server struct {
 	repositoryManager   *repository.Manager
 	servicesManager     *services.Manager
 	controllerManager   *controllers.Manager
+	subdomainPoller     *services.SubdomainPoller
 	controllerCtx       context.Context
 	controllerCtxCancel context.CancelFunc
+	pollerCtx           context.Context
+	pollerCtxCancel     context.CancelFunc
 }
 
 func New(cfg *config.Config, logger *zap.Logger) *Server {
@@ -65,11 +68,17 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		logger.Fatal("Failed to create controller manager", zap.Error(err))
 	}
 
+	// Initialize subdomain poller
+	subdomainPoller := services.NewSubdomainPoller(&cfg.Installation, k8sClient.RuntimeClient, logger)
+
 	// Setup router with dependencies
 	router := setupRouter(cfg, logger, servicesManager)
 
 	// Create cancellable context for controller manager
 	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
+
+	// Create cancellable context for subdomain poller
+	pollerCtx, pollerCtxCancel := context.WithCancel(context.Background())
 
 	return &Server{
 		httpServer: &http.Server{
@@ -82,8 +91,11 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		repositoryManager:   repoManager,
 		servicesManager:     servicesManager,
 		controllerManager:   controllerManager,
+		subdomainPoller:     subdomainPoller,
 		controllerCtx:       controllerCtx,
 		controllerCtxCancel: controllerCtxCancel,
+		pollerCtx:           pollerCtx,
+		pollerCtxCancel:     pollerCtxCancel,
 	}
 }
 
@@ -112,6 +124,19 @@ func (s *Server) Start() error {
 		}
 	}()
 
+	// Start subdomain poller in goroutine with panic recovery
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				s.logger.Error("Subdomain poller panicked",
+					zap.Any("panic", r),
+					zap.Stack("stack"))
+			}
+		}()
+
+		s.subdomainPoller.Start(s.pollerCtx)
+	}()
+
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
@@ -125,6 +150,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// Stop controller manager first
 	s.logger.Info("Stopping controller manager...")
 	s.controllerCtxCancel()
+
+	// Stop subdomain poller
+	s.logger.Info("Stopping subdomain poller...")
+	s.pollerCtxCancel()
+	s.subdomainPoller.Stop()
 
 	// Graceful shutdown with timeout for HTTP server
 	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
