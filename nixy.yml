@@ -1,6 +1,17 @@
-nixpkgs: 554be6495561ff07b6c724047bdd7e0716aa7b46
+nixpkgs:
+  default: 554be6495561ff07b6c724047bdd7e0716aa7b46
 env:
-  KUBECONFIG: "$PWD/devenv/k3s-config/k3s.yaml"
+  # KUBECONFIG: "$PWD/devenv/k3s-config/k3s.yaml"
+  KUBECONFIG: "$PWD/.secrets/kl-aws.yml"
+# mounts:
+#   - source: /home/nxtcoder17/.config/simple.nvim
+#     dest: "/tmp/simple.nvim"
+#   - source: /tmp/.X11-unix
+#     dest: /tmp/.X11-unix
+#     readonly: true
+#   - source: /var/home/nxtcoder17/.Xauthority
+#     dest: /var/home/nxtcoder17/.Xauthority
+#     readonly: true
 packages:
   - go
   - nodejs
@@ -10,3 +21,4 @@ packages:
   - kubectl
   - kubernetes-helm
   - k9s
+  - upx

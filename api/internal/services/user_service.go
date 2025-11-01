@@ -244,7 +244,7 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 			OwnedBy:         user.Spec.Email,
 			MachineType:     "standard-2vcpu-4gb", // Default machine type
 			TargetNamespace: targetNamespace,
-			DesiredState:    machinesv1.MachineStateStopped,
+			State:    machinesv1.MachineStateStopped,
 		},
 	}
 

@@ -106,7 +106,9 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 			TargetNamespace: "test-namespace",
 		},
 		Status: machinesv1.WorkMachineStatus{
-			State: "Ready",
+			MachineInfo: machinesv1.MachineInfo{
+				State: "Ready",
+			},
 		},
 	}
 
@@ -920,7 +922,7 @@ func TestDeleteHostDirectory(t *testing.T) {
 
 				// Create a file inside
 				testFile := filepath.Join(tempDir, "test.txt")
-				err = os.WriteFile(testFile, []byte("test content"), 0644)
+				err = os.WriteFile(testFile, []byte("test content"), 0o644)
 				require.NoError(t, err)
 
 				// Return correct workspace path format
@@ -1445,6 +1447,7 @@ func TestUpdateDNSConfigInRunningPod(t *testing.T) {
 		})
 	}
 }
+
 func TestCollectActiveIntercepts(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 

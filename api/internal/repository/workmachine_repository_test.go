@@ -94,7 +94,7 @@ func TestWorkMachineRepository_StartMachine(t *testing.T) {
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:      "test-user",
 			MachineType:  "standard-4",
-			DesiredState: machinesv1.MachineStateStopped,
+			State: machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestWorkMachineRepository_StartMachine(t *testing.T) {
 	// Verify state was updated
 	updated, err := repo.Get(context.Background(), "test-machine")
 	assert.NoError(t, err)
-	assert.Equal(t, machinesv1.MachineStateRunning, updated.Spec.DesiredState)
+	assert.Equal(t, machinesv1.MachineStateRunning, updated.Spec.State)
 }
 
 func TestWorkMachineRepository_StopMachine(t *testing.T) {
@@ -121,7 +121,7 @@ func TestWorkMachineRepository_StopMachine(t *testing.T) {
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:      "test-user",
 			MachineType:  "standard-4",
-			DesiredState: machinesv1.MachineStateRunning,
+			State: machinesv1.MachineStateRunning,
 		},
 	}
 
@@ -134,7 +134,7 @@ func TestWorkMachineRepository_StopMachine(t *testing.T) {
 	// Verify state was updated
 	updated, err := repo.Get(context.Background(), "test-machine")
 	assert.NoError(t, err)
-	assert.Equal(t, machinesv1.MachineStateStopped, updated.Spec.DesiredState)
+	assert.Equal(t, machinesv1.MachineStateStopped, updated.Spec.State)
 }
 
 func TestWorkMachineRepository_ListByMachineType(t *testing.T) {

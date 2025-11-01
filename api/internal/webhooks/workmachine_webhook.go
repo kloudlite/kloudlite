@@ -25,7 +25,9 @@ type WorkMachineWebhook struct {
 	config    *config.Config
 }
 
-func NewWorkMachineWebhook(logger logger.Logger, k8sClient client.Client, cfg *config.Config) *WorkMachineWebhook {
+func NewWorkMachineWebhook(
+	logger logger.Logger, k8sClient client.Client, cfg *config.Config,
+) *WorkMachineWebhook {
 	return &WorkMachineWebhook{
 		logger:    logger,
 		k8sClient: k8sClient,
@@ -85,7 +87,9 @@ func (w *WorkMachineWebhook) MutateWorkMachine(c *gin.Context) {
 	c.JSON(http.StatusOK, admissionReview)
 }
 
-func (w *WorkMachineWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+func (w *WorkMachineWebhook) handleValidation(
+	req *admissionv1.AdmissionRequest,
+) *admissionv1.AdmissionResponse {
 	// Parse the work machine object
 	var machine machinesv1.WorkMachine
 	if err := json.Unmarshal(req.Object.Raw, &machine); err != nil {
@@ -114,7 +118,9 @@ func (w *WorkMachineWebhook) handleValidation(req *admissionv1.AdmissionRequest)
 	}
 }
 
-func (w *WorkMachineWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+func (w *WorkMachineWebhook) handleMutation(
+	req *admissionv1.AdmissionRequest,
+) *admissionv1.AdmissionResponse {
 	// Parse the work machine object
 	var machine machinesv1.WorkMachine
 	if err := json.Unmarshal(req.Object.Raw, &machine); err != nil {
@@ -252,7 +258,9 @@ func (w *WorkMachineWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	}
 }
 
-func (w *WorkMachineWebhook) validateWorkMachine(machine *machinesv1.WorkMachine, operation admissionv1.Operation) error {
+func (w *WorkMachineWebhook) validateWorkMachine(
+	machine *machinesv1.WorkMachine, operation admissionv1.Operation,
+) error {
 	ctx := context.Background()
 
 	// Validate owner exists
