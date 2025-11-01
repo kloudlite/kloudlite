@@ -375,16 +375,18 @@ func (r *WorkspaceReconciler) getWorkMachineNodeSelector(ctx context.Context, ow
 		return nil, nil // Return nil selector, not an error (WorkMachine might not exist yet)
 	}
 
-	// Return the nodeSelector from WorkMachine (may be nil if not set)
-	if len(workMachine.Spec.NodeSelector) > 0 {
-		r.Logger.Info("Found nodeSelector from WorkMachine",
-			zap.String("owner", owner),
-			zap.String("workMachineName", workMachineName),
-			zap.Any("nodeSelector", workMachine.Spec.NodeSelector),
-		)
-	}
+	return nil, nil
 
-	return workMachine.Spec.NodeSelector, nil
+	// Return the nodeSelector from WorkMachine (may be nil if not set)
+	// if len(workMachine.Spec.NodeSelector) > 0 {
+	// 	r.Logger.Info("Found nodeSelector from WorkMachine",
+	// 		zap.String("owner", owner),
+	// 		zap.String("workMachineName", workMachineName),
+	// 		zap.Any("nodeSelector", workMachine.Spec.NodeSelector),
+	// 	)
+	// }
+	//
+	// return workMachine.Spec.NodeSelector, nil
 }
 
 // createWorkspacePod creates a pod with multiple containers for different access methods
@@ -787,7 +789,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							SecretName:  "ssh-host-keys",
-							DefaultMode: func() *int32 { m := int32(0600); return &m }(),
+							DefaultMode: func() *int32 { m := int32(0o600); return &m }(),
 						},
 					},
 				},

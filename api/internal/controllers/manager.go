@@ -94,14 +94,8 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 		return nil, fmt.Errorf("unable to create Environment controller: %w", err)
 	}
 
-	// Setup WorkMachine controller
-	workMachineReconciler := &workmachine.WorkMachineReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}
-
-	if err = workMachineReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create WorkMachine controller: %w", err)
+	if err := workmachine.Register(mgr); err != nil {
+		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
 	}
 
 	// Setup Composition controller

@@ -130,7 +130,7 @@ func TestStartMyWorkMachine(t *testing.T) {
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:      "test-user",
 				MachineType:  "standard-4",
-				DesiredState: machinesv1.MachineStateStopped,
+				State: machinesv1.MachineStateStopped,
 			},
 		}
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
@@ -149,7 +149,7 @@ func TestStartMyWorkMachine(t *testing.T) {
 
 		// Verify machine state changed
 		updated, _ := handlers.manager.WorkMachineRepository.Get(context.Background(), "test-machine-start")
-		assert.Equal(t, machinesv1.MachineStateRunning, updated.Spec.DesiredState)
+		assert.Equal(t, machinesv1.MachineStateRunning, updated.Spec.State)
 	})
 
 	t.Run("should return 401 when user not authenticated", func(t *testing.T) {
@@ -192,7 +192,7 @@ func TestStopMyWorkMachine(t *testing.T) {
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:      "test-user",
 				MachineType:  "standard-4",
-				DesiredState: machinesv1.MachineStateRunning,
+				State: machinesv1.MachineStateRunning,
 			},
 		}
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
@@ -211,7 +211,7 @@ func TestStopMyWorkMachine(t *testing.T) {
 
 		// Verify machine state changed
 		updated, _ := handlers.manager.WorkMachineRepository.Get(context.Background(), "test-machine-stop")
-		assert.Equal(t, machinesv1.MachineStateStopped, updated.Spec.DesiredState)
+		assert.Equal(t, machinesv1.MachineStateStopped, updated.Spec.State)
 	})
 
 	t.Run("should return 401 when user not authenticated", func(t *testing.T) {
@@ -501,7 +501,7 @@ func TestDeleteMyWorkMachine(t *testing.T) {
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:      "test-user",
 				MachineType:  "standard-4",
-				DesiredState: machinesv1.MachineStateStopped,
+				State: machinesv1.MachineStateStopped,
 			},
 		}
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)

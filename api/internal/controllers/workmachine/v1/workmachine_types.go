@@ -1,6 +1,8 @@
 package v1
 
 import (
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,8 +27,18 @@ type WorkMachine struct {
 	Status WorkMachineStatus `json:"status,omitempty"`
 }
 
+func (wm *WorkMachine) GetStatus() *reconciler.Status {
+	return &wm.Status.Status
+}
+
 // WorkMachineSpec defines the desired state of WorkMachine
 type WorkMachineSpec struct {
+	// DisplayName is the human-readable name for the work machine
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=100
+	DisplayName string `json:"displayName"`
+
 	// OwnedBy is the username/email of the user who owns this machine
 	// +kubebuilder:validation:Required
 	OwnedBy string `json:"ownedBy"`
@@ -40,40 +52,40 @@ type WorkMachineSpec struct {
 	// +kubebuilder:validation:Required
 	TargetNamespace string `json:"targetNamespace"`
 
-	// DesiredState indicates whether the machine should be running or stopped
+	// State indicates whether the machine should be running or stopped
 	// +kubebuilder:validation:Enum=running;stopped;disabled
 	// +kubebuilder:default=stopped
-	DesiredState MachineState `json:"desiredState"`
+	State MachineState `json:"state"`
 
 	// SSHPublicKeys for SSH access to the VM
 	// +optional
 	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
 
-	// NodeSelector constrains this WorkMachine and all its workspaces to specific nodes
-	// All workspaces and environments created by this user will inherit this nodeSelector
+	// +kubebuilder:default="0.0.0.0/0"
+	AllowedCIDR string `json:"allowedCIDR,omitempty"`
+
+	// AWSProvider contains AWS-specific configuration
 	// +optional
+	AWSProvider *AWSProviderConfig `json:"aws,omitempty"`
+
+	// AutoShutdown configures automatic instance shutdown when idle
+	// Only applicable for cloud providers (AWS, GCP, Azure)
+	// +optional
+	AutoShutdown *AutoShutdownConfig `json:"autoShutdown,omitempty"`
+
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
+type CloudProvider string
+
+const (
+	AWS   CloudProvider = "aws"
+	GCP   CloudProvider = "gcp"
+	Azure CloudProvider = "azure"
+)
+
 // MachineConfiguration defines configuration options for the WorkMachine
 type MachineConfiguration struct {
-	// Image to use for the machine container
-	// +kubebuilder:default="kloudlite/workspace:latest"
-	Image string `json:"image,omitempty"`
-
-	// Shell to use (bash, zsh, fish)
-	// +kubebuilder:validation:Enum=bash;zsh;fish
-	// +kubebuilder:default=bash
-	Shell string `json:"shell,omitempty"`
-
-	// DotfilesRepo to clone and apply
-	// +optional
-	DotfilesRepo string `json:"dotfilesRepo,omitempty"`
-
-	// IDESettings for code-server or other IDEs
-	// +optional
-	IDESettings *IDESettings `json:"ideSettings,omitempty"`
-
 	// AutoStop configuration
 	// +optional
 	AutoStop *AutoStopConfig `json:"autoStop,omitempty"`
@@ -81,26 +93,6 @@ type MachineConfiguration struct {
 	// Timezone for the machine
 	// +kubebuilder:default="UTC"
 	Timezone string `json:"timezone,omitempty"`
-}
-
-// IDESettings defines IDE configuration
-type IDESettings struct {
-	// Type of IDE (code-server, theia, jupyter)
-	// +kubebuilder:validation:Enum=code-server;theia;jupyter;none
-	// +kubebuilder:default=code-server
-	Type string `json:"type"`
-
-	// Extensions to install (for code-server)
-	// +optional
-	Extensions []string `json:"extensions,omitempty"`
-
-	// Settings JSON (for code-server)
-	// +optional
-	Settings string `json:"settings,omitempty"`
-
-	// Password for IDE access (if not using OAuth)
-	// +optional
-	Password string `json:"password,omitempty"`
 }
 
 // AutoStopConfig defines auto-stop behavior
@@ -116,28 +108,54 @@ type AutoStopConfig struct {
 	IdleMinutes int32 `json:"idleMinutes"`
 }
 
-// VolumeMount defines a volume to mount in the machine
-type VolumeMount struct {
-	// Name of the volume
-	// +kubebuilder:validation:Required
-	Name string `json:"name"`
+// AutoShutdownConfig configures automatic EC2 instance shutdown when idle
+// for cost optimization
+type AutoShutdownConfig struct {
+	// Enabled determines if auto-shutdown is active
+	// +kubebuilder:default=true
+	Enabled bool `json:"enabled"`
 
-	// MountPath in the container
-	// +kubebuilder:validation:Required
-	MountPath string `json:"mountPath"`
+	// IdleThresholdMinutes is how long to wait after all workspaces are suspended
+	// before shutting down the WorkMachine EC2 instance
+	// +kubebuilder:default=30
+	// +kubebuilder:validation:Minimum=5
+	// +kubebuilder:validation:Maximum=1440
+	IdleThresholdMinutes int32 `json:"idleThresholdMinutes"`
 
-	// Type of volume (pvc, configmap, secret)
-	// +kubebuilder:validation:Enum=pvc;configmap;secret
-	// +kubebuilder:validation:Required
-	Type string `json:"type"`
+	// CheckIntervalMinutes is how often to check workspace activity
+	// +kubebuilder:default=5
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=60
+	CheckIntervalMinutes int32 `json:"checkIntervalMinutes"`
+}
 
-	// Source name (PVC name, ConfigMap name, or Secret name)
+// AWSProviderConfig contains AWS-specific configuration for WorkMachine
+type AWSProviderConfig struct {
+	// MachineType is the EC2 instance type (e.g., m5.large, t3.medium)
 	// +kubebuilder:validation:Required
-	Source string `json:"source"`
+	MachineType ec2types.InstanceType `json:"machineType"`
 
-	// ReadOnly mount
-	// +kubebuilder:default=false
-	ReadOnly bool `json:"readOnly,omitempty"`
+	// VolumeSize is the size of the root EBS volume in GB
+	// +kubebuilder:default=50
+	// +kubebuilder:validation:Minimum=20
+	// +kubebuilder:validation:Maximum=1000
+	VolumeSize int32 `json:"volumeSize"`
+
+	// VolumeType is the EBS volume type (gp3, gp2, io1, io2)
+	// +kubebuilder:default=gp3
+	// +kubebuilder:validation:Enum=gp3;gp2;io1;io2
+	VolumeType ec2types.VolumeType `json:"volumeType"`
+
+	DeleteVolumePostTermination bool `json:"deleteVolumePostTermination,omitempty"`
+
+	// IAMRole is the IAM role name to attach to the instance
+	// +optional
+	IAMRole *string `json:"iamRole,omitempty"`
+
+	// DomainName is the base domain for WorkMachine DNS records
+	// (e.g., "workmachines.example.com" → "<machine-name>.workmachines.example.com")
+	// +kubebuilder:validation:Required
+	DomainName string `json:"domainName"`
 }
 
 // MachineState represents the state of a WorkMachine
@@ -157,7 +175,7 @@ const (
 	MachineStateStopping MachineState = "stopping"
 
 	// MachineStateError means there was an error
-	MachineStateError MachineState = "error"
+	MachineStateErrored MachineState = "errored"
 
 	// MachineStateDisabled means the machine is disabled (user inactive)
 	MachineStateDisabled MachineState = "disabled"
@@ -165,24 +183,9 @@ const (
 
 // WorkMachineStatus defines the observed state of WorkMachine
 type WorkMachineStatus struct {
-	// State is the current state of the machine
-	State MachineState `json:"state,omitempty"`
+	reconciler.Status `json:",inline"`
 
-	// Message provides human-readable information about the current state
-	// +optional
-	Message string `json:"message,omitempty"`
-
-	// PodName is the name of the pod running this machine
-	// +optional
-	PodName string `json:"podName,omitempty"`
-
-	// PodIP is the IP address of the pod
-	// +optional
-	PodIP string `json:"podIP,omitempty"`
-
-	// NodeName where the pod is running
-	// +optional
-	NodeName string `json:"nodeName,omitempty"`
+	MachineInfo `json:",inline"`
 
 	// StartedAt timestamp when the machine was last started
 	// +optional
@@ -204,62 +207,57 @@ type WorkMachineStatus struct {
 	// +optional
 	AllocatedResources *MachineResources `json:"allocatedResources,omitempty"`
 
-	// Conditions represent the latest available observations
-	// +optional
-	Conditions []WorkMachineCondition `json:"conditions,omitempty"`
-
-	// ObservedGeneration is the generation observed by the controller
-	// +optional
-	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
-
 	// SSHPublicKey is the WorkMachine's public SSH key for all workspaces
 	// This key is shared across all workspaces in the WorkMachine
 	// Users can copy this key to add to other systems' authorized_keys
 	// The corresponding private key is stored in a Secret
 	// +optional
 	SSHPublicKey string `json:"sshPublicKey,omitempty"`
+
+	DNSHost string `json:"dnsHost,omitempty"`
+
+	// --- Auto-shutdown fields ---
+
+	// LastWorkspaceActivity is the last time any workspace was active on this WorkMachine
+	// Used for auto-shutdown logic
+	// +optional
+	LastWorkspaceActivity *metav1.Time `json:"lastWorkspaceActivity,omitempty"`
+
+	// ActiveWorkspaceCount is the number of active (non-suspended) workspaces
+	// +optional
+	ActiveWorkspaceCount int32 `json:"activeWorkspaceCount,omitempty"`
+
+	// IsAutoStopped when set means machine was auto-stopped by kloudlite
+	IsAutoStopped bool `json:"isAutoStopped,omitempty"`
 }
 
-// WorkMachineCondition represents a condition of the WorkMachine
-type WorkMachineCondition struct {
-	// Type of condition
-	Type WorkMachineConditionType `json:"type"`
+// MachineInfo contains information about a cloud instance
+type MachineInfo struct {
+	// MachineID is the cloud provider's unique identifier for the instance
+	MachineID string `json:"machineID,omitempty"`
 
-	// Status of the condition (True, False, Unknown)
-	Status metav1.ConditionStatus `json:"status"`
+	// State is the current state of the instance
+	State MachineState `json:"state,omitempty"`
 
-	// LastTransitionTime is the last time the condition changed
-	// +optional
-	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
+	// RootVolumeSize is size in GBs for the root volume.
+	// It is used while processing request for increasing volume size
+	RootVolumeSize int32 `json:"rootVolumeSize,omitempty"`
 
-	// Reason is a unique, one-word, CamelCase reason for the condition's last transition
-	// +optional
-	Reason string `json:"reason,omitempty"`
+	// PublicIP is the public IP address of the instance (if available)
+	PublicIP string `json:"publicIP,omitempty"`
 
-	// Message is a human-readable message about the last transition
-	// +optional
+	// PrivateIP is the private IP address of the instance
+	PrivateIP string `json:"privateIP,omitempty"`
+
+	// Region is the cloud region where the instance is running
+	Region string `json:"region,omitempty"`
+
+	// AvailabilityZone is the availability zone within the region
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
+
+	// Message provides additional information about the instance state
 	Message string `json:"message,omitempty"`
 }
-
-// WorkMachineConditionType represents types of WorkMachine conditions
-type WorkMachineConditionType string
-
-const (
-	// WorkMachineConditionReady indicates the machine is ready
-	WorkMachineConditionReady WorkMachineConditionType = "Ready"
-
-	// WorkMachineConditionPodCreated indicates the pod has been created
-	WorkMachineConditionPodCreated WorkMachineConditionType = "PodCreated"
-
-	// WorkMachineConditionAccessible indicates the machine is accessible
-	WorkMachineConditionAccessible WorkMachineConditionType = "Accessible"
-
-	// WorkMachineConditionAutoStopScheduled indicates auto-stop is scheduled
-	WorkMachineConditionAutoStopScheduled WorkMachineConditionType = "AutoStopScheduled"
-
-	// WorkMachineConditionDeletionBlocked indicates deletion is blocked due to active resources
-	WorkMachineConditionDeletionBlocked WorkMachineConditionType = "DeletionBlocked"
-)
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

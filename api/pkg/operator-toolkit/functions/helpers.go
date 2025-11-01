@@ -2,8 +2,11 @@ package functions
 
 import (
 	"maps"
+	"strings"
 
+	"github.com/gobuffalo/flect"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -58,6 +61,11 @@ func MapFilter[K comparable, V any](input map[K]V, filter func(k K, v V) bool) m
 	return result
 }
 
+func MapHasKey[K comparable, T any](m map[K]T, k K) bool {
+	_, ok := m[k]
+	return ok
+}
+
 func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
 	ctrler := false
 	if len(controller) > 0 {
@@ -90,4 +98,23 @@ func ContainsFinalizers(obj client.Object, finalizers ...string) bool {
 		}
 	}
 	return true
+}
+
+func GVK(obj client.Object) metav1.GroupVersionKind {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	return metav1.GroupVersionKind{
+		Group:   gvk.Group,
+		Version: gvk.Version,
+		Kind:    gvk.Kind,
+	}
+}
+
+func NN(namespace, name string) types.NamespacedName {
+	return types.NamespacedName{Namespace: namespace, Name: name}
+}
+
+// RegularPlural is used to pluralize group of k8s CRDs from kind
+// It is copied from https://github.com/kubernetes-sigs/kubebuilder/blob/afce6a0e8c2a6d5682be07bbe502e728dd619714/pkg/model/resource/utils.go#L71
+func RegularPlural(singular string) string {
+	return flect.Pluralize(strings.ToLower(singular))
 }

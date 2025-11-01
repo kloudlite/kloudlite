@@ -39,10 +39,10 @@ func UpdateStatusWithRetry(
 			lastErr = err
 			if apierrors.IsConflict(err) {
 				// Resource version conflict - fetch the latest version and retry
-				logger.Debug("Status update conflict, refetching and retrying",
-					zap.String("name", obj.GetName()),
-					zap.String("namespace", obj.GetNamespace()),
-					zap.Error(err))
+				logger.Sugar().Debug("Status update conflict, refetching and retrying",
+					"name", obj.GetName(),
+					"namespace", obj.GetNamespace(),
+					"error", err)
 
 				// Refetch the latest version
 				key := types.NamespacedName{
@@ -50,10 +50,10 @@ func UpdateStatusWithRetry(
 					Namespace: obj.GetNamespace(),
 				}
 				if err := c.Get(ctx, key, obj); err != nil {
-					logger.Error("Failed to refetch resource after conflict",
-						zap.String("name", obj.GetName()),
-						zap.String("namespace", obj.GetNamespace()),
-						zap.Error(err))
+					logger.Sugar().Error("Failed to refetch resource after conflict",
+						"name", obj.GetName(),
+						"namespace", obj.GetNamespace(),
+						"error", err)
 					return false, err
 				}
 
@@ -62,30 +62,29 @@ func UpdateStatusWithRetry(
 				return false, nil
 			}
 			// For non-conflict errors, don't retry
-			logger.Error("Failed to update status",
-				zap.String("name", obj.GetName()),
-				zap.String("namespace", obj.GetNamespace()),
-				zap.Error(err))
+			logger.Sugar().Error("Failed to update status",
+				"name", obj.GetName(),
+				"namespace", obj.GetNamespace(),
+				"error", err)
 			return false, err
 		}
 		// Success
 		return true, nil
 	})
-
 	if err != nil {
 		if err == wait.ErrWaitTimeout {
-			logger.Error("Failed to update status after maximum retries",
-				zap.String("name", obj.GetName()),
-				zap.String("namespace", obj.GetNamespace()),
-				zap.Error(lastErr))
+			logger.Sugar().Error("Failed to update status after maximum retries",
+				"name", obj.GetName(),
+				"namespace", obj.GetNamespace(),
+				"error", lastErr)
 			return lastErr
 		}
 		return err
 	}
 
-	logger.Debug("Successfully updated status",
-		zap.String("name", obj.GetName()),
-		zap.String("namespace", obj.GetNamespace()))
+	logger.Sugar().Debug("Successfully updated status",
+		"name", obj.GetName(),
+		"namespace", obj.GetNamespace())
 
 	return nil
 }

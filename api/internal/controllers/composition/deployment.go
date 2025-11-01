@@ -297,15 +297,5 @@ func (r *CompositionReconciler) getWorkMachineNodeSelector(ctx context.Context, 
 		return nil
 	}
 
-	// Return the nodeSelector from WorkMachine (may be nil if not set)
-	if len(workMachine.Spec.NodeSelector) > 0 {
-		logger.Info("Found nodeSelector from WorkMachine for environment",
-			zap.String("environment", environment.Name),
-			zap.String("creator", environment.Spec.CreatedBy),
-			zap.String("workMachineName", workMachineName),
-			zap.Any("nodeSelector", workMachine.Spec.NodeSelector),
-		)
-	}
-
 	return workMachine.Spec.NodeSelector
 }
