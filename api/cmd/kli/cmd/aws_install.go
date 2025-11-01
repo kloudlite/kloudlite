@@ -74,10 +74,10 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	var createdResources struct {
 		sync.Mutex
-		instanceID  string
-		sgID        string
-		iamCreated  bool
-		bucketName  string
+		instanceID string
+		sgID       string
+		iamCreated bool
+		bucketName string
 	}
 
 	go func() {

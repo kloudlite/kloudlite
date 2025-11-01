@@ -13,8 +13,8 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -53,17 +53,17 @@ type configureIPResponse struct {
 
 // generateCertificateRequest represents the request body for /api/installations/generate-certificates
 type generateCertificateRequest struct {
-	InstallationKey            string `json:"installationKey"`
-	Scope                      string `json:"scope"`
-	ScopeIdentifier            string `json:"scopeIdentifier,omitempty"`
-	ParentScopeIdentifier      string `json:"parentScopeIdentifier,omitempty"`
+	InstallationKey       string `json:"installationKey"`
+	Scope                 string `json:"scope"`
+	ScopeIdentifier       string `json:"scopeIdentifier,omitempty"`
+	ParentScopeIdentifier string `json:"parentScopeIdentifier,omitempty"`
 }
 
 // generateCertificateResponse represents the response from /api/installations/generate-certificates
 type generateCertificateResponse struct {
-	Success     bool      `json:"success"`
-	ID          string    `json:"id"`
-	ExpiresAt   time.Time `json:"expiresAt"`
+	Success   bool      `json:"success"`
+	ID        string    `json:"id"`
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 // downloadCertificatesResponse represents the response from /api/installations/download-certificates
@@ -143,9 +143,9 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 			Name:      podName,
 			Namespace: "kloudlite",
 			Labels: map[string]string{
-				"app":                        "haproxy",
-				"domain-request":             domainRequest.Name,
-				"kloudlite.io/managed-by":    "domainrequest-controller",
+				"app":                     "haproxy",
+				"domain-request":          domainRequest.Name,
+				"kloudlite.io/managed-by": "domainrequest-controller",
 			},
 		},
 	}
@@ -805,8 +805,8 @@ func (r *DomainRequestReconciler) callConsoleAPI(ctx context.Context, path, meth
 func (r *DomainRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&domainrequestsv1.DomainRequest{}).
-		Owns(&corev1.Secret{}).     // Watch Secrets owned by DomainRequest
-		Owns(&corev1.Pod{}).        // Watch HAProxy Pods owned by DomainRequest
+		Owns(&corev1.Secret{}).    // Watch Secrets owned by DomainRequest
+		Owns(&corev1.Pod{}).       // Watch HAProxy Pods owned by DomainRequest
 		Owns(&corev1.ConfigMap{}). // Watch HAProxy ConfigMaps owned by DomainRequest
 		Complete(r)
 }
