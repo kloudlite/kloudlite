@@ -157,36 +157,19 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]*unstru
 
 		prevLastApplied, ok := cobj.GetAnnotations()[LastAppliedHashKey]
 		if ok {
-			logger.Debug("prev last applied", "value", prevLastApplied)
-			logger.Debug("new last applied", "value", ann[LastAppliedHashKey])
+			logger.Debug("resource hash", "prev", prevLastApplied, "current", ann[LastAppliedHashKey])
 			if prevLastApplied == ann[LastAppliedHashKey] {
 				logger.Info("No changes for resource")
 				continue
 			}
 
-			var prevAppliedObj unstructured.Unstructured
-			if err := json.Unmarshal([]byte(prevLastApplied), &prevAppliedObj); err != nil {
-				return nil, err
-			}
-
-			prevAnn := prevAppliedObj.GetAnnotations()
-
-			for k, v := range cobj.GetAnnotations() {
-				if !fn.MapHasKey(ann, k) && !fn.MapHasKey(prevAnn, k) {
-					ann[k] = v
-				}
-			}
-
-			prevLabels := prevAppliedObj.GetLabels()
-
 			for k, v := range cobj.GetLabels() {
-				if !fn.MapHasKey(labels, k) && !fn.MapHasKey(prevLabels, k) {
+				if !fn.MapHasKey(labels, k) {
 					labels[k] = v
 				}
 			}
 		}
 		obj.Object["metadata"] = cobj.Object["metadata"]
-
 		obj.SetAnnotations(ann)
 		obj.SetLabels(labels)
 
@@ -212,8 +195,21 @@ func parseResourceRef(obj client.Object) ResourceRef {
 
 func (yc *yamlClient) DeleteResource(ctx context.Context, obj client.Object) error {
 	gvk := obj.GetObjectKind().GroupVersionKind()
-	gvr := gvk.GroupVersion().WithResource(fn.RegularPlural(gvk.Kind))
-	return yc.dynamicClient.Resource(gvr).Namespace(obj.GetNamespace()).Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
+	mapping, err := yc.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return err
+	}
+	var dri dynamic.ResourceInterface
+	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+		ns := obj.GetNamespace()
+		if ns == "" {
+			ns = "default"
+		}
+		dri = yc.dynamicClient.Resource(mapping.Resource).Namespace(ns)
+	} else {
+		dri = yc.dynamicClient.Resource(mapping.Resource)
+	}
+	return dri.Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
 }
 
 func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
@@ -308,9 +304,10 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 				return err
 			}
 			for _, d := range dl.Items {
-				if d.Annotations == nil {
-					d.Annotations = map[string]string{}
+				if d.Spec.Template.Annotations == nil {
+					d.Spec.Template.Annotations = map[string]string{}
 				}
+
 				d.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
 				if _, err := yc.k8sClient.AppsV1().Deployments(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {
 					return err
@@ -328,8 +325,8 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 				return err
 			}
 			for _, d := range sl.Items {
-				if d.Annotations == nil {
-					d.Annotations = map[string]string{}
+				if d.Spec.Template.Annotations == nil {
+					d.Spec.Template.Annotations = map[string]string{}
 				}
 				d.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
 				if _, err := yc.k8sClient.AppsV1().StatefulSets(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {

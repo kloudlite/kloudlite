@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
       ip,
       workMachineName: type === 'workmachine' ? workMachineName : undefined,
       totalRecords,
-      subdomain: `installation.subdomain.${CLOUDFLARE_DNS_DOMAIN}`,
+      subdomain: `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
       dnsRecordsCreated: dnsRecordIds.length,
       dnsSuccess: dnsCreated,
     })
