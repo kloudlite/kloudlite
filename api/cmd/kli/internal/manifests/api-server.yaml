@@ -6,10 +6,10 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-server-lb
+  name: api-server
   namespace: kloudlite
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: api-server
   ports:
