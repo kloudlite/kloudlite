@@ -114,7 +114,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		}
 
 		// Public OAuth providers endpoint (for signin page)
-		namespace := "default"
+		namespace := "kloudlite"
 		k8sClient := servicesManager.RepositoryManager.K8sClient
 		oauthHandlers := handlers.NewOAuthHandlers(k8sClient, namespace)
 		v1.GET("/providers", oauthHandlers.GetPublicOAuthProviders)
