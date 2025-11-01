@@ -64,8 +64,10 @@ apt-get install -y curl wget git
 echo "Fetching instance metadata..."
 METADATA_TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
 PRIVATE_IP=$(curl -H "X-aws-ec2-metadata-token: $METADATA_TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null || echo "")
+PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $METADATA_TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "")
 
 echo "Instance Private IP: $PRIVATE_IP"
+echo "Instance Public IP: $PUBLIC_IP"
 
 # K3s configuration from Go
 K3S_VERSION="%s"
@@ -137,6 +139,7 @@ data:
   AWS_REGION: "%s"
   AWS_AMI_ID: "%s"
   AWS_PRIVATE_IP: "$PRIVATE_IP"
+  AWS_PUBLIC_IP: "$PUBLIC_IP"
   K3S_VERSION: "$K3S_VERSION"
   K3S_SERVER_URL: "$K3S_SERVER_URL"
 EOF
