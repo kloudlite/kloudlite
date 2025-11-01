@@ -73,6 +73,7 @@ func EnsureIAMRole(ctx context.Context, cfg aws.Config, installationKey, bucketN
 					"ec2:RunInstances",
 					"ec2:TerminateInstances",
 					"ec2:DescribeInstances",
+					"ec2:DescribeInstanceStatus",
 					"ec2:ModifyInstanceAttribute",
 					"ec2:DescribeInstanceTypes",
 					"ec2:DescribeImages",

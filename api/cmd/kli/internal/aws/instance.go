@@ -149,7 +149,7 @@ data:
   K3S_SERVER_URL: "$K3S_SERVER_URL"
 EOF
 
-# Create API Server Service and Deployment
+# Create API Server Service and StatefulSet
 echo "Creating API Server manifest..."
 cat <<EOF > /var/lib/rancher/k3s/server/manifests/api-server.yaml
 apiVersion: v1
@@ -167,11 +167,12 @@ spec:
       targetPort: 8080
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: api-server
   namespace: kloudlite
 spec:
+  serviceName: api-server
   replicas: 1
   selector:
     matchLabels:
@@ -181,6 +182,7 @@ spec:
       labels:
         app: api-server
     spec:
+      serviceAccountName: api-server
       containers:
         - name: api-server
           image: ghcr.io/kloudlite/kloudlite/api-server:development
