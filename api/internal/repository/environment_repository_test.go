@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -63,7 +64,14 @@ func TestEnvironmentRepository_GetByNamespace(t *testing.T) {
 				objects[i] = env
 			}
 
-			k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+			k8sClient := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithRuntimeObjects(objects...).
+				WithIndex(&environmentsv1.Environment{}, "spec.targetNamespace", func(obj client.Object) []string {
+					env := obj.(*environmentsv1.Environment)
+					return []string{env.Spec.TargetNamespace}
+				}).
+				Build()
 			repo := NewEnvironmentRepository(k8sClient)
 
 			env, err := repo.GetByNamespace(context.Background(), tt.namespace)
@@ -121,16 +129,24 @@ func TestEnvironmentRepository_ListActive(t *testing.T) {
 		objects[i] = env
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(objects...).
+		WithIndex(&environmentsv1.Environment{}, "spec.activated", func(obj client.Object) []string {
+			env := obj.(*environmentsv1.Environment)
+			if env.Spec.Activated {
+				return []string{"true"}
+			}
+			return []string{"false"}
+		}).
+		Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	// Note: Field selectors don't work with fake client
 	envs, err := repo.ListActive(context.Background())
 
 	assert.NoError(t, err)
 	assert.NotNil(t, envs)
-	// Fake client doesn't support field selectors, so it returns all environments
-	assert.GreaterOrEqual(t, len(envs.Items), 2)
+	assert.Len(t, envs.Items, 2)
 }
 
 func TestEnvironmentRepository_ListInactive(t *testing.T) {
@@ -172,16 +188,24 @@ func TestEnvironmentRepository_ListInactive(t *testing.T) {
 		objects[i] = env
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(objects...).
+		WithIndex(&environmentsv1.Environment{}, "spec.activated", func(obj client.Object) []string {
+			env := obj.(*environmentsv1.Environment)
+			if env.Spec.Activated {
+				return []string{"true"}
+			}
+			return []string{"false"}
+		}).
+		Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	// Note: Field selectors don't work with fake client
 	envs, err := repo.ListInactive(context.Background())
 
 	assert.NoError(t, err)
 	assert.NotNil(t, envs)
-	// Fake client doesn't support field selectors, so it returns all environments
-	assert.GreaterOrEqual(t, len(envs.Items), 2)
+	assert.Len(t, envs.Items, 2)
 }
 
 func TestEnvironmentRepository_ActivateEnvironment(t *testing.T) {

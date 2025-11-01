@@ -98,17 +98,17 @@ func TestGetOAuthProviders(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]OAuthProvider
+		// Use OAuthProviderResponse instead of OAuthProvider since secrets are not returned
+		var response map[string]OAuthProviderResponse
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
 		assert.Len(t, response, 3) // google, github, microsoft (default added)
 
-		// Check google provider
+		// Check google provider - ClientSecret should NOT be returned
 		assert.Equal(t, "google", response["google"].Type)
 		assert.True(t, response["google"].Enabled)
 		assert.Equal(t, "test-google-client-id", response["google"].ClientID)
-		assert.Equal(t, "test-google-secret", response["google"].ClientSecret)
 
 		// Check github provider
 		assert.Equal(t, "github", response["github"].Type)
