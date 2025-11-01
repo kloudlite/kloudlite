@@ -20,6 +20,9 @@ type Config struct {
 
 	// Connection Token configuration
 	ConnectionToken ConnectionTokenConfig `envconfig:"CONNECTION_TOKEN"`
+
+	// Installation configuration
+	Installation InstallationConfig `envconfig:"INSTALLATION"`
 }
 
 type AuthConfig struct {
@@ -62,6 +65,23 @@ type ConnectionTokenConfig struct {
 
 	// API URL for Kloudlite API
 	APIURL string `envconfig:"API_URL" default:"http://localhost:8080"`
+}
+
+type InstallationConfig struct {
+	// InstallationKey is the unique key for this Kloudlite installation
+	InstallationKey string `envconfig:"KEY"`
+
+	// InstallationSecret is the secret key for authentication
+	InstallationSecret string `envconfig:"SECRET"`
+
+	// ConsoleURL is the URL of the console web application
+	ConsoleURL string `envconfig:"CONSOLE_URL" default:"https://console.kloudlite.io"`
+
+	// PublicIP is the public IP address for the installation (from AWS_PUBLIC_IP env var)
+	PublicIP string `envconfig:"PUBLIC_IP"`
+
+	// PollingIntervalSeconds is the interval to poll for subdomain configuration
+	PollingIntervalSeconds int `envconfig:"POLLING_INTERVAL_SECONDS" default:"30"`
 }
 
 func Load() (*Config, error) {
