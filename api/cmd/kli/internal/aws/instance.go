@@ -99,12 +99,17 @@ kubectl create namespace kloudlite || true
 # Create K3s manifests directory
 mkdir -p /var/lib/rancher/k3s/server/manifests
 
-# Download and install Kloudlite manifests from GitHub
-echo "Downloading Kloudlite manifests..."
-MANIFEST_BASE_URL="https://raw.githubusercontent.com/kloudlite/kloudlite/development/api/cmd/kli/internal/manifests"
+# Download and install Kloudlite CLI
+echo "Downloading Kloudlite CLI binary..."
+curl -fsSL "https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64" -o /usr/local/bin/kli
+chmod +x /usr/local/bin/kli
 
-curl -fsSL "${MANIFEST_BASE_URL}/crds.yaml" -o /var/lib/rancher/k3s/server/manifests/kloudlite-crds.yaml
-curl -fsSL "${MANIFEST_BASE_URL}/api-server-rbac.yaml" -o /var/lib/rancher/k3s/server/manifests/api-server-rbac.yaml
+# Install manifests using embedded CRDs
+echo "Installing Kloudlite manifests..."
+if ! kli install-manifests; then
+  echo "ERROR: Failed to install Kloudlite manifests"
+  exit 1
+fi
 
 echo "CRDs and RBAC will be auto-applied by K3s"
 
