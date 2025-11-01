@@ -783,7 +783,7 @@ func (r *WorkMachineReconciler) registerDNSHost(check *reconciler.Check[*v1.Work
 		return check.Failed(err)
 	}
 
-	obj.Status.DNSHost = obj.Name + result.SubDomain
+	obj.Status.DNSHost = obj.Name + "." + result.SubDomain
 	return check.Passed()
 }
 
