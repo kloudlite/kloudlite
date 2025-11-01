@@ -232,8 +232,8 @@ func (h *OAuthHandlers) GetPublicOAuthProviders(c *gin.Context) {
 		if isTLSError(err) {
 			// Log at debug level for development environments
 			fmt.Printf("TLS error when getting OAuth providers (development mode): %v\n", err)
-		} else {
-			// Log actual errors at error level
+		} else if !errors.IsNotFound(err) {
+			// Only log if it's NOT a "not found" error (ConfigMap not existing is expected)
 			fmt.Printf("Error getting OAuth providers ConfigMap: %v\n", err)
 		}
 
