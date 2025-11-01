@@ -33,81 +33,62 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: |-
-          DomainRequest represents a request to register an IP address with console.kloudlite.io
-          and fetch TLS certificates for the domain
         properties:
           apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: DomainRequestSpec defines the desired state of DomainRequest
             properties:
               certificateParentScopeIdentifier:
-                description: |-
-                  CertificateParentScopeIdentifier is the parent scope identifier
-                  (e.g., workmachine name for workspace certificates)
                 type: string
               certificateScope:
                 default: installation
-                description: CertificateScope defines the scope for certificate generation
                 enum:
                 - installation
                 - workmachine
                 - workspace
                 type: string
               certificateScopeIdentifier:
-                description: |-
-                  CertificateScopeIdentifier is the identifier for the certificate scope
-                  (e.g., workmachine name or workspace name)
                 type: string
+              ingressBackend:
+                properties:
+                  serviceName:
+                    type: string
+                  serviceNamespace:
+                    type: string
+                  servicePort:
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                required:
+                - serviceName
+                - serviceNamespace
+                - servicePort
+                type: object
               installationKey:
-                description: InstallationKey is the unique key for this Kloudlite
-                  installation
                 type: string
               installationSecret:
-                description: InstallationSecret is the secret key for authentication
-                  with console.kloudlite.io
                 type: string
               ipAddress:
-                description: |-
-                  IPAddress is the IP address to register
-                  If not provided, will be auto-detected from the LoadBalancer service
                 type: string
               loadBalancerServiceName:
-                description: |-
-                  LoadBalancerServiceName is the name of the LoadBalancer service to watch for IP
-                  Used for auto-detecting the IP address
                 type: string
               loadBalancerServiceNamespace:
-                description: LoadBalancerServiceNamespace is the namespace of the
-                  LoadBalancer service
                 type: string
+              sshProxyEnabled:
+                default: false
+                type: boolean
               type:
                 default: installation
-                description: 'Type indicates the type of registration: "installation"
-                  or "workmachine"'
                 enum:
                 - installation
                 - workmachine
                 type: string
               workMachineName:
-                description: WorkMachineName is the name of the workmachine (required
-                  if type=workmachine)
                 type: string
             required:
             - certificateScope
@@ -116,52 +97,44 @@ spec:
             - type
             type: object
           status:
-            description: DomainRequestStatus defines the observed state of DomainRequest
             properties:
               certificateExpiresAt:
-                description: CertificateExpiresAt is the expiration time of the certificate
                 format: date-time
                 type: string
               certificateId:
-                description: CertificateID is the ID of the generated certificate
                 type: string
               certificateSecretName:
-                description: CertificateSecretName is the name of the Kubernetes Secret
-                  containing the certificate
                 type: string
               dnsRecordIds:
-                description: DNSRecordIDs contains the Cloudflare DNS record IDs created
                 items:
                   type: string
                 type: array
               domain:
-                description: Domain is the registered domain name
                 type: string
+              haProxyPodName:
+                type: string
+              haProxyReady:
+                type: boolean
               lastCertificateGenerationTime:
-                description: LastCertificateGenerationTime is when the certificate
-                  was last generated
                 format: date-time
                 type: string
               lastIPRegistrationTime:
-                description: LastIPRegistrationTime is when the IP was last registered
                 format: date-time
                 type: string
               message:
-                description: Message provides additional information about the current
-                  state
                 type: string
               state:
                 default: Pending
-                description: State represents the current state of the DomainRequest
                 enum:
                 - Pending
                 - IPRegistered
                 - CertificateGenerated
                 - Ready
+                - HAProxyCreating
+                - HAProxyReady
                 - Failed
                 type: string
               subdomain:
-                description: Subdomain is the subdomain assigned to this registration
                 type: string
             required:
             - state
