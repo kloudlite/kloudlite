@@ -73,12 +73,39 @@ type DomainRequestSpec struct {
 	// (e.g., workmachine name for workspace certificates)
 	// +optional
 	CertificateParentScopeIdentifier string `json:"certificateParentScopeIdentifier,omitempty"`
+
+	// SSHProxyEnabled enables SSH proxy functionality (port 22)
+	// Will be handled by a sidecar container in future implementation
+	// +kubebuilder:default=false
+	// +optional
+	SSHProxyEnabled bool `json:"sshProxyEnabled,omitempty"`
+
+	// IngressBackend defines the backend service to route traffic to
+	// +optional
+	IngressBackend *IngressBackendConfig `json:"ingressBackend,omitempty"`
+}
+
+// IngressBackendConfig defines a simple service:port mapping for traffic routing
+type IngressBackendConfig struct {
+	// ServiceName is the name of the backend service
+	// +kubebuilder:validation:Required
+	ServiceName string `json:"serviceName"`
+
+	// ServiceNamespace is the namespace of the backend service
+	// +kubebuilder:validation:Required
+	ServiceNamespace string `json:"serviceNamespace"`
+
+	// ServicePort is the port of the backend service
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	ServicePort int32 `json:"servicePort"`
 }
 
 // DomainRequestStatus defines the observed state of DomainRequest
 type DomainRequestStatus struct {
 	// State represents the current state of the DomainRequest
-	// +kubebuilder:validation:Enum=Pending;IPRegistered;CertificateGenerated;Ready;Failed
+	// +kubebuilder:validation:Enum=Pending;IPRegistered;CertificateGenerated;Ready;HAProxyCreating;HAProxyReady;Failed
 	// +kubebuilder:default=Pending
 	State string `json:"state"`
 
@@ -117,6 +144,14 @@ type DomainRequestStatus struct {
 	// LastCertificateGenerationTime is when the certificate was last generated
 	// +optional
 	LastCertificateGenerationTime *metav1.Time `json:"lastCertificateGenerationTime,omitempty"`
+
+	// HAProxyPodName is the name of the HAProxy pod created for this domain
+	// +optional
+	HAProxyPodName string `json:"haProxyPodName,omitempty"`
+
+	// HAProxyReady indicates if the HAProxy pod is ready and serving traffic
+	// +optional
+	HAProxyReady bool `json:"haProxyReady,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
