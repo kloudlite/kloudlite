@@ -1729,7 +1729,7 @@ func TestPackageManagerReconciler_Reconcile_InstallFailureUpdatesStatus(t *testi
 			}
 			// All nix install commands fail
 			if (strings.Contains(script, "nix-env") && strings.Contains(script, "-iA")) ||
-			   (strings.Contains(script, "nix --extra-experimental-features") && strings.Contains(script, "profile install")) {
+				(strings.Contains(script, "nix --extra-experimental-features") && strings.Contains(script, "profile install")) {
 				return nil, fmt.Errorf("nix install failed: network error")
 			}
 			return nil, fmt.Errorf("unexpected script")
