@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/dto"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +25,9 @@ func setupServiceHandlerTest() (*ServiceHandlers, *gin.Engine) {
 	scheme := runtime.NewScheme()
 	_ = corev1.AddToScheme(scheme)
 
+	// Add apps/v1 scheme for Deployments
+	_ = appsv1.AddToScheme(scheme)
+
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 	logger, _ := zap.NewDevelopment()
 
@@ -36,7 +40,72 @@ func setupServiceHandlerTest() (*ServiceHandlers, *gin.Engine) {
 func TestListServices(t *testing.T) {
 	handlers, router := setupServiceHandlerTest()
 
-	// Create test services
+	// Create test deployments (service handler looks for deployments with kloudlite.io/managed label)
+	deployment1 := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "service-1",
+			Namespace: "test-ns",
+			Labels: map[string]string{
+				"kloudlite.io/managed": "true",
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "web",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "web",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "web",
+							Image: "nginx",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	deployment2 := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "service-2",
+			Namespace: "test-ns",
+			Labels: map[string]string{
+				"kloudlite.io/managed": "true",
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "api",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "api",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "api",
+							Image: "api:latest",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create matching services
 	service1 := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service-1",
@@ -81,6 +150,8 @@ func TestListServices(t *testing.T) {
 		},
 	}
 
+	_ = handlers.k8sClient.Create(context.Background(), deployment1)
+	_ = handlers.k8sClient.Create(context.Background(), deployment2)
 	_ = handlers.k8sClient.Create(context.Background(), service1)
 	_ = handlers.k8sClient.Create(context.Background(), service2)
 
@@ -148,6 +219,40 @@ func TestListServices(t *testing.T) {
 	})
 
 	t.Run("should handle service with multiple ports", func(t *testing.T) {
+		multiPortDeployment := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "multi-port-service",
+				Namespace: "test-ns-2",
+				Labels: map[string]string{
+					"kloudlite.io/managed": "true",
+				},
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app":  "multi",
+						"tier": "backend",
+					},
+				},
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"app":  "multi",
+							"tier": "backend",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "multi",
+								Image: "multi:latest",
+							},
+						},
+					},
+				},
+			},
+		}
+
 		multiPortService := &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "multi-port-service",
@@ -183,6 +288,7 @@ func TestListServices(t *testing.T) {
 			},
 		}
 
+		_ = handlers.k8sClient.Create(context.Background(), multiPortDeployment)
 		_ = handlers.k8sClient.Create(context.Background(), multiPortService)
 
 		router.GET("/namespaces/:namespace/services-multi", handlers.ListServices)

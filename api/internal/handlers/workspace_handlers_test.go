@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -27,7 +28,17 @@ func setupWorkspaceHandlerTest() (*WorkspaceHandlers, *gin.Engine) {
 	_ = workspacesv1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithIndex(&workspacesv1.Workspace{}, "spec.owner", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Owner}
+		}).
+		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Status}
+		}).
+		Build()
 	wsRepo := repository.NewWorkspaceRepository(k8sClient)
 	userRepo := repository.NewUserRepository(k8sClient)
 	wmRepo := repository.NewWorkMachineRepository(k8sClient)

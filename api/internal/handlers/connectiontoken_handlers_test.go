@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -36,7 +37,10 @@ func setupConnectionTokenHandlerTest() (*ConnectionTokenHandlers, *gin.Engine) {
 	scheme := runtime.NewScheme()
 	_ = connectiontokenv1.AddToScheme(scheme)
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(&connectiontokenv1.ConnectionToken{}).
+		Build()
 	logger, _ := zap.NewDevelopment()
 
 	handlers := NewConnectionTokenHandlers(k8sClient, logger, testJWTSecret, testSSHJumpHost, testAPIURL, testSSHPort)
@@ -48,7 +52,7 @@ func setupConnectionTokenHandlerTest() (*ConnectionTokenHandlers, *gin.Engine) {
 // addUserContext adds test user to gin context (simulating JWT middleware)
 func addUserContext(c *gin.Context, email string) {
 	c.Set("user_email", email)
-	c.Set("user_roles", []string{"user"})
+	c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 }
 
 func TestCreateConnectionToken(t *testing.T) {

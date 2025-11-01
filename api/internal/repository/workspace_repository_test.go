@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -51,16 +52,23 @@ func TestWorkspaceRepository_GetByOwner(t *testing.T) {
 		objects[i] = ws
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(objects...).
+		WithIndex(&workspacesv1.Workspace{}, "spec.owner", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Owner}
+		}).
+		Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
-	// Note: Field selectors don't work with fake client
 	list, err := repo.GetByOwner(context.Background(), "test-user", "test-ns")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, list)
-	// Fake client doesn't support field selectors, so it returns all workspaces
-	assert.GreaterOrEqual(t, len(list.Items), 1)
+	// With the field index, should only return workspaces for test-user
+	assert.Equal(t, 1, len(list.Items))
+	assert.Equal(t, "test-user", list.Items[0].Spec.Owner)
 }
 
 func TestWorkspaceRepository_GetByWorkMachine(t *testing.T) {
@@ -410,20 +418,37 @@ func TestWorkspaceRepository_ListActive(t *testing.T) {
 		objects[i] = ws
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(objects...).
+		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Status}
+		}).
+		Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
-	// Note: Fake client doesn't support field selectors, so it returns all workspaces
 	list, err := repo.ListActive(context.Background(), "test-ns")
 	assert.NoError(t, err)
 	assert.NotNil(t, list)
+	// With the field index, should only return active workspaces
+	assert.Equal(t, 2, len(list.Items))
+	for _, ws := range list.Items {
+		assert.Equal(t, "active", ws.Spec.Status)
+	}
 }
 
 func TestWorkspaceRepository_ListActive_Empty(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = workspacesv1.AddToScheme(scheme)
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Status}
+		}).
+		Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
 	list, err := repo.ListActive(context.Background(), "test-ns")
@@ -477,20 +502,37 @@ func TestWorkspaceRepository_ListSuspended(t *testing.T) {
 		objects[i] = ws
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(objects...).
+		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Status}
+		}).
+		Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
-	// Note: Fake client doesn't support field selectors, so it returns all workspaces
 	list, err := repo.ListSuspended(context.Background(), "test-ns")
 	assert.NoError(t, err)
 	assert.NotNil(t, list)
+	// With the field index, should only return suspended workspaces
+	assert.Equal(t, 2, len(list.Items))
+	for _, ws := range list.Items {
+		assert.Equal(t, "suspended", ws.Spec.Status)
+	}
 }
 
 func TestWorkspaceRepository_ListSuspended_Empty(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = workspacesv1.AddToScheme(scheme)
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Status}
+		}).
+		Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
 	list, err := repo.ListSuspended(context.Background(), "test-ns")
@@ -544,20 +586,37 @@ func TestWorkspaceRepository_ListArchived(t *testing.T) {
 		objects[i] = ws
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRuntimeObjects(objects...).
+		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Status}
+		}).
+		Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
-	// Note: Fake client doesn't support field selectors, so it returns all workspaces
 	list, err := repo.ListArchived(context.Background(), "test-ns")
 	assert.NoError(t, err)
 	assert.NotNil(t, list)
+	// With the field index, should only return archived workspaces
+	assert.Equal(t, 2, len(list.Items))
+	for _, ws := range list.Items {
+		assert.Equal(t, "archived", ws.Spec.Status)
+	}
 }
 
 func TestWorkspaceRepository_ListArchived_Empty(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = workspacesv1.AddToScheme(scheme)
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
+			workspace := obj.(*workspacesv1.Workspace)
+			return []string{workspace.Spec.Status}
+		}).
+		Build()
 	repo := NewWorkspaceRepository(k8sClient)
 
 	list, err := repo.ListArchived(context.Background(), "test-ns")

@@ -16,7 +16,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 func setupWorkMachineHandlerTest() (*WorkMachineHandlers, *gin.Engine) {
@@ -25,7 +27,21 @@ func setupWorkMachineHandlerTest() (*WorkMachineHandlers, *gin.Engine) {
 	scheme := runtime.NewScheme()
 	_ = machinesv1.AddToScheme(scheme)
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	// Add a simple interceptor to generate names for WorkMachines (simulating webhook behavior)
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithInterceptorFuncs(interceptor.Funcs{
+			Create: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
+				if wm, ok := obj.(*machinesv1.WorkMachine); ok {
+					if wm.Name == "" {
+						// Generate a name based on the owner (simulating webhook)
+						wm.Name = "wm-" + wm.Spec.OwnedBy
+					}
+				}
+				return client.Create(ctx, obj, opts...)
+			},
+		}).
+		Build()
 
 	wmRepo := repository.NewWorkMachineRepository(k8sClient)
 	mtRepo := repository.NewMachineTypeRepository(k8sClient)
@@ -257,6 +273,9 @@ func TestCreateMyWorkMachine(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
+		if w.Code != http.StatusCreated {
+			t.Logf("Response body: %s", w.Body.String())
+		}
 		assert.Equal(t, http.StatusCreated, w.Code)
 	})
 
