@@ -1390,7 +1390,7 @@ func TestUpdateDNSConfigInRunningPod(t *testing.T) {
 			name:        "valid DNS update",
 			workspace:   workspace,
 			expectError: true, // Will fail due to fake clientset limitations
-			errorMsg:    "", // Connection error varies by environment
+			errorMsg:    "",   // Connection error varies by environment
 			setupFunc:   nil,
 		},
 		{
