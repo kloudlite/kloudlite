@@ -128,9 +128,9 @@ func TestStartMyWorkMachine(t *testing.T) {
 				Name: "test-machine-start",
 			},
 			Spec: machinesv1.WorkMachineSpec{
-				OwnedBy:      "test-user",
-				MachineType:  "standard-4",
-				State: machinesv1.MachineStateStopped,
+				OwnedBy:     "test-user",
+				MachineType: "standard-4",
+				State:       machinesv1.MachineStateStopped,
 			},
 		}
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
@@ -190,9 +190,9 @@ func TestStopMyWorkMachine(t *testing.T) {
 				Name: "test-machine-stop",
 			},
 			Spec: machinesv1.WorkMachineSpec{
-				OwnedBy:      "test-user",
-				MachineType:  "standard-4",
-				State: machinesv1.MachineStateRunning,
+				OwnedBy:     "test-user",
+				MachineType: "standard-4",
+				State:       machinesv1.MachineStateRunning,
 			},
 		}
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
@@ -499,9 +499,9 @@ func TestDeleteMyWorkMachine(t *testing.T) {
 				Name: "test-machine-delete",
 			},
 			Spec: machinesv1.WorkMachineSpec{
-				OwnedBy:      "test-user",
-				MachineType:  "standard-4",
-				State: machinesv1.MachineStateStopped,
+				OwnedBy:     "test-user",
+				MachineType: "standard-4",
+				State:       machinesv1.MachineStateStopped,
 			},
 		}
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
