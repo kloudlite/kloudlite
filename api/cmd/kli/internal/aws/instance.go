@@ -139,7 +139,6 @@ metadata:
 data:
   PORT: "8080"
   INSTALLATION_KEY: "%s"
-  INSTALLATION_AWS_PUBLIC_IP: "$PUBLIC_IP"
   AWS_VPC_ID: "%s"
   AWS_SECURITY_GROUP_ID: "%s"
   AWS_REGION: "%s"
