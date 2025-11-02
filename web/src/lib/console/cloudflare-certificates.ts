@@ -5,7 +5,6 @@
  * These certificates are trusted by Cloudflare's edge for origin connections
  */
 
-import { generateKeyPairSync } from 'crypto'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import { writeFile, unlink } from 'fs/promises'
