@@ -77,8 +77,8 @@ type InstallationConfig struct {
 	// ConsoleURL is the URL of the console web application
 	ConsoleURL string `envconfig:"CONSOLE_URL" default:"https://console.kloudlite.io"`
 
-	// PublicIP is the public IP address for the installation (from AWS_PUBLIC_IP env var)
-	PublicIP string `envconfig:"PUBLIC_IP"`
+	// PublicIP is the public IP address for the installation (from INSTALLATION_AWS_PUBLIC_IP env var)
+	PublicIP string `envconfig:"INSTALLATION_AWS_PUBLIC_IP"`
 
 	// PollingIntervalSeconds is the interval to poll for subdomain configuration
 	PollingIntervalSeconds int `envconfig:"POLLING_INTERVAL_SECONDS" default:"30"`
