@@ -18,11 +18,12 @@ spec:
       targetPort: 8080
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: api-server
   namespace: kloudlite
 spec:
+  serviceName: api-server
   replicas: 1
   selector:
     matchLabels:
@@ -39,13 +40,11 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          env:
-            - name: PORT
-              value: "8080"
-            - name: DOMAIN_REGISTRATION_API
-              value: "https://console.kloudlite.io/api/v1/domain-registration"
-            - name: CLOUD_PROVIDER
-              value: "aws"
+          envFrom:
+            - configMapRef:
+                name: api-server-config
+            - secretRef:
+                name: api-server-secret
           resources:
             requests:
               memory: "256Mi"
