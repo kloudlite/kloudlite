@@ -92,9 +92,9 @@ func TestWorkMachineRepository_StartMachine(t *testing.T) {
 			Name: "test-machine",
 		},
 		Spec: machinesv1.WorkMachineSpec{
-			OwnedBy:      "test-user",
-			MachineType:  "standard-4",
-			State: machinesv1.MachineStateStopped,
+			OwnedBy:     "test-user",
+			MachineType: "standard-4",
+			State:       machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -119,9 +119,9 @@ func TestWorkMachineRepository_StopMachine(t *testing.T) {
 			Name: "test-machine",
 		},
 		Spec: machinesv1.WorkMachineSpec{
-			OwnedBy:      "test-user",
-			MachineType:  "standard-4",
-			State: machinesv1.MachineStateRunning,
+			OwnedBy:     "test-user",
+			MachineType: "standard-4",
+			State:       machinesv1.MachineStateRunning,
 		},
 	}
 

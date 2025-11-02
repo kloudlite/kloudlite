@@ -75,7 +75,7 @@ func TestUserReconciler_Reconcile_ExistingWorkMachine(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			State:    machinesv1.MachineStateStopped,
+			State:           machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -133,7 +133,7 @@ func TestUserReconciler_Reconcile_UserDeactivation(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			State:    machinesv1.MachineStateStopped,
+			State:           machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -201,7 +201,7 @@ func TestUserReconciler_Reconcile_UserActivation(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			State:    machinesv1.MachineStateDisabled,
+			State:           machinesv1.MachineStateDisabled,
 		},
 	}
 
@@ -573,7 +573,7 @@ func TestUserReconciler_Reconcile_WorkMachineOwnedByDifferentUser(t *testing.T) 
 			OwnedBy:         "different@example.com", // Different owner
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			State:    machinesv1.MachineStateStopped,
+			State:           machinesv1.MachineStateStopped,
 		},
 	}
 
@@ -629,7 +629,7 @@ func TestUserReconciler_Reconcile_UserStatusConditions(t *testing.T) {
 			OwnedBy:         "test@example.com",
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
-			State:    machinesv1.MachineStateStopped,
+			State:           machinesv1.MachineStateStopped,
 		},
 	}
 
