@@ -5,7 +5,7 @@
  * These certificates are trusted by Cloudflare's edge for origin connections
  */
 
-const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!
+const CLOUDFLARE_ORIGIN_CA_KEY = process.env.CLOUDFLARE_ORIGIN_CA_KEY!
 const CLOUDFLARE_ORIGIN_CA_API = 'https://api.cloudflare.com/client/v4/certificates'
 
 interface CloudflareCertificateResponse {
@@ -46,7 +46,7 @@ export async function generateCertificate(
     const response = await fetch(CLOUDFLARE_ORIGIN_CA_API, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        'X-Auth-User-Service-Key': CLOUDFLARE_ORIGIN_CA_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -99,7 +99,7 @@ export async function revokeCertificate(certificateId: string): Promise<boolean>
     const response = await fetch(`${CLOUDFLARE_ORIGIN_CA_API}/${certificateId}`, {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        'X-Auth-User-Service-Key': CLOUDFLARE_ORIGIN_CA_KEY,
       },
     })
 
@@ -124,7 +124,7 @@ export async function getCertificate(certificateId: string): Promise<TLSCertific
   try {
     const response = await fetch(`${CLOUDFLARE_ORIGIN_CA_API}/${certificateId}`, {
       headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        'X-Auth-User-Service-Key': CLOUDFLARE_ORIGIN_CA_KEY,
       },
     })
 
