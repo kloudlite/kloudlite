@@ -5,6 +5,15 @@
  * These certificates are trusted by Cloudflare's edge for origin connections
  */
 
+import { generateKeyPairSync } from 'crypto'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+import { writeFile, unlink } from 'fs/promises'
+import { join } from 'path'
+import { tmpdir } from 'os'
+
+const execAsync = promisify(exec)
+
 const CLOUDFLARE_ORIGIN_CA_KEY = process.env.CLOUDFLARE_ORIGIN_CA_KEY!
 const CLOUDFLARE_ORIGIN_CA_API = 'https://api.cloudflare.com/client/v4/certificates'
 
@@ -15,7 +24,6 @@ interface CloudflareCertificateResponse {
   result: {
     id: string
     certificate: string
-    private_key: string
     hostnames: string[]
     expires_on: string
     request_type: string
@@ -33,8 +41,58 @@ export interface TLSCertificate {
 }
 
 /**
- * Generate a private key and CSR (Certificate Signing Request)
- * For simplicity, we'll let Cloudflare generate both the key and certificate
+ * Generate a private key and CSR (Certificate Signing Request) using openssl
+ */
+async function generateCSR(hostnames: string[]): Promise<{ privateKey: string; csr: string }> {
+  const keyFile = join(tmpdir(), `key-${Date.now()}.pem`)
+  const csrFile = join(tmpdir(), `csr-${Date.now()}.pem`)
+  const configFile = join(tmpdir(), `config-${Date.now()}.cnf`)
+
+  try {
+    // Create OpenSSL config with SANs
+    const sanList = hostnames.map((h, i) => `DNS.${i + 1} = ${h}`).join('\n')
+    const config = `[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+CN = ${hostnames[0]}
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+${sanList}`
+
+    await writeFile(configFile, config)
+
+    // Generate private key
+    await execAsync(`openssl genrsa -out ${keyFile} 2048`)
+
+    // Generate CSR
+    await execAsync(`openssl req -new -key ${keyFile} -out ${csrFile} -config ${configFile}`)
+
+    // Read the generated files
+    const { readFile } = await import('fs/promises')
+    const privateKey = await readFile(keyFile, 'utf-8')
+    const csr = await readFile(csrFile, 'utf-8')
+
+    // Clean up temp files
+    await Promise.all([unlink(keyFile), unlink(csrFile), unlink(configFile)])
+
+    return { privateKey, csr }
+  } catch (error) {
+    // Clean up on error
+    try {
+      await Promise.all([unlink(keyFile), unlink(csrFile), unlink(configFile)])
+    } catch {}
+    throw error
+  }
+}
+
+/**
+ * Generate a certificate using Cloudflare Origin CA API
  */
 export async function generateCertificate(
   hostnames: string[],
@@ -43,6 +101,9 @@ export async function generateCertificate(
   try {
     console.log(`Generating Cloudflare Origin CA certificate for hostnames:`, hostnames)
 
+    // Generate private key and CSR
+    const { privateKey, csr } = await generateCSR(hostnames)
+
     const response = await fetch(CLOUDFLARE_ORIGIN_CA_API, {
       method: 'POST',
       headers: {
@@ -50,6 +111,7 @@ export async function generateCertificate(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        csr,
         hostnames,
         requested_validity: validityDays,
         request_type: 'origin-rsa', // RSA 2048-bit key
@@ -72,7 +134,7 @@ export async function generateCertificate(
     const cert: TLSCertificate = {
       id: result.result.id,
       certificate: result.result.certificate,
-      privateKey: result.result.private_key,
+      privateKey, // Use our generated private key
       hostnames: result.result.hostnames,
       validFrom: new Date().toISOString(),
       validUntil: new Date(result.result.expires_on).toISOString(),
