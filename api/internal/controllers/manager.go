@@ -14,7 +14,6 @@ import (
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/user"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workspace"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -94,9 +93,10 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 		return nil, fmt.Errorf("unable to create Environment controller: %w", err)
 	}
 
-	if err := workmachine.Register(mgr); err != nil {
-		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
-	}
+	// DISABLED: WorkMachine controller not needed for KLI installations
+	// if err := workmachine.Register(mgr); err != nil {
+	// 	return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
+	// }
 
 	// Setup Composition controller
 	compositionReconciler := &composition.CompositionReconciler{
