@@ -202,7 +202,7 @@ export async function getCertificate(certificateId: string): Promise<TLSCertific
     return {
       id: result.result.id,
       certificate: result.result.certificate,
-      privateKey: result.result.private_key,
+      privateKey: '', // Private key not available when retrieving existing certificates
       hostnames: result.result.hostnames,
       validFrom: new Date().toISOString(),
       validUntil: new Date(result.result.expires_on).toISOString(),
