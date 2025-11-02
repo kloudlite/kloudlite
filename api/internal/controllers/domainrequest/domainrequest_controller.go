@@ -31,8 +31,10 @@ const (
 // DomainRequestReconciler reconciles DomainRequest objects
 type DomainRequestReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	Logger *zap.Logger
+	Scheme             *runtime.Scheme
+	Logger             *zap.Logger
+	InstallationKey    string
+	InstallationSecret string
 }
 
 // configureIPRequest represents the request body for /api/installations/configure-ips
@@ -391,9 +393,23 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 		logger.Info("DomainRequest with HAProxy is ready, no action needed")
 		return reconcile.Result{RequeueAfter: 24 * time.Hour}, nil
 	case "Failed":
-		// Retry after some time
-		logger.Info("DomainRequest failed, retrying after 5 minutes")
-		return reconcile.Result{RequeueAfter: 5 * time.Minute}, nil
+		// Retry the failed operation after 30 seconds
+		logger.Info("DomainRequest failed, determining which step to retry")
+
+		// Determine which step failed based on what's been completed
+		if domainRequest.Status.CertificateID != "" && domainRequest.Status.CertificateSecretName == "" {
+			// Certificate was generated but not downloaded
+			logger.Info("Retrying certificate download")
+			return r.handleCertificateDownload(ctx, domainRequest, logger)
+		} else if domainRequest.Status.LastIPRegistrationTime != nil && domainRequest.Status.CertificateID == "" {
+			// IP was registered but certificate generation failed
+			logger.Info("Retrying certificate generation")
+			return r.handleCertificateGeneration(ctx, domainRequest, logger)
+		} else {
+			// IP registration failed or unknown state
+			logger.Info("Retrying IP registration")
+			return r.handleIPRegistration(ctx, domainRequest, logger)
+		}
 	}
 
 	return reconcile.Result{}, nil
@@ -450,13 +466,13 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 
 	// Call console API to register IP
 	reqBody := configureIPRequest{
-		InstallationKey: domainRequest.Spec.InstallationKey,
+		InstallationKey: r.InstallationKey,
 		Type:            domainRequest.Spec.Type,
 		IP:              ipAddress,
 		WorkMachineName: domainRequest.Spec.WorkMachineName,
 	}
 
-	resp, err := r.callConsoleAPI(ctx, "/api/installations/configure-ips", "POST", reqBody, domainRequest.Spec.InstallationSecret, logger)
+	resp, err := r.callConsoleAPI(ctx, "/api/installations/configure-ips", "POST", reqBody, r.InstallationSecret, logger)
 	if err != nil {
 		logger.Error("Failed to register IP", zap.Error(err))
 		return r.updateStatus(ctx, domainRequest, "Failed", fmt.Sprintf("Failed to register IP: %v", err), logger)
@@ -501,13 +517,13 @@ func (r *DomainRequestReconciler) handleCertificateGeneration(ctx context.Contex
 
 	// Call console API to generate certificate
 	reqBody := generateCertificateRequest{
-		InstallationKey:       domainRequest.Spec.InstallationKey,
+		InstallationKey:       r.InstallationKey,
 		Scope:                 domainRequest.Spec.CertificateScope,
 		ScopeIdentifier:       domainRequest.Spec.CertificateScopeIdentifier,
 		ParentScopeIdentifier: domainRequest.Spec.CertificateParentScopeIdentifier,
 	}
 
-	resp, err := r.callConsoleAPI(ctx, "/api/installations/generate-certificates", "POST", reqBody, domainRequest.Spec.InstallationSecret, logger)
+	resp, err := r.callConsoleAPI(ctx, "/api/installations/generate-certificates", "POST", reqBody, r.InstallationSecret, logger)
 	if err != nil {
 		logger.Error("Failed to generate certificate", zap.Error(err))
 		return r.updateStatus(ctx, domainRequest, "Failed", fmt.Sprintf("Failed to generate certificate: %v", err), logger)
@@ -552,7 +568,7 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 
 	// Build download URL with query parameters
 	downloadURL := fmt.Sprintf("/api/installations/download-certificates?installationKey=%s&format=json&scope=%s",
-		domainRequest.Spec.InstallationKey,
+		r.InstallationKey,
 		domainRequest.Spec.CertificateScope)
 
 	if domainRequest.Spec.CertificateScopeIdentifier != "" {
@@ -563,7 +579,7 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 	}
 
 	// Call console API to download certificate
-	resp, err := r.callConsoleAPI(ctx, downloadURL, "GET", nil, domainRequest.Spec.InstallationSecret, logger)
+	resp, err := r.callConsoleAPI(ctx, downloadURL, "GET", nil, r.InstallationSecret, logger)
 	if err != nil {
 		logger.Error("Failed to download certificate", zap.Error(err))
 		return r.updateStatus(ctx, domainRequest, "Failed", fmt.Sprintf("Failed to download certificate: %v", err), logger)
@@ -580,7 +596,7 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: domainRequest.Namespace,
+			Namespace: "kloudlite",
 		},
 	}
 
