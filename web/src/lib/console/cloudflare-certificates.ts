@@ -46,7 +46,7 @@ export async function generateCertificate(
     const response = await fetch(CLOUDFLARE_ORIGIN_CA_API, {
       method: 'POST',
       headers: {
-        'X-Auth-User-Service-Key': CLOUDFLARE_API_TOKEN,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -99,7 +99,7 @@ export async function revokeCertificate(certificateId: string): Promise<boolean>
     const response = await fetch(`${CLOUDFLARE_ORIGIN_CA_API}/${certificateId}`, {
       method: 'DELETE',
       headers: {
-        'X-Auth-User-Service-Key': CLOUDFLARE_API_TOKEN,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
     })
 
@@ -124,7 +124,7 @@ export async function getCertificate(certificateId: string): Promise<TLSCertific
   try {
     const response = await fetch(`${CLOUDFLARE_ORIGIN_CA_API}/${certificateId}`, {
       headers: {
-        'X-Auth-User-Service-Key': CLOUDFLARE_API_TOKEN,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
     })
 
