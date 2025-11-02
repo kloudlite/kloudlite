@@ -44,6 +44,8 @@ spec:
               value: "8080"
             - name: DOMAIN_REGISTRATION_API
               value: "https://console.kloudlite.io/api/v1/domain-registration"
+            - name: CLOUD_PROVIDER
+              value: "aws"
           resources:
             requests:
               memory: "256Mi"
