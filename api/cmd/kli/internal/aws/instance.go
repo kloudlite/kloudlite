@@ -138,7 +138,7 @@ metadata:
   namespace: kloudlite
 data:
   PORT: "8080"
-  INSTALLATION_ID: "%s"
+  INSTALLATION_KEY: "%s"
   AWS_VPC_ID: "%s"
   AWS_SECURITY_GROUP_ID: "%s"
   AWS_REGION: "%s"
