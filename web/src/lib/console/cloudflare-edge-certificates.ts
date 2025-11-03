@@ -166,3 +166,23 @@ export async function createInstallationEdgeCertificate(
 
   return orderEdgeCertificate(hosts)
 }
+
+/**
+ * Create edge certificate for workmachine subdomain
+ * @param workMachineName - Workmachine name (e.g., "node1")
+ * @param subdomain - User's subdomain (e.g., "karthik")
+ * @param baseDomain - Base domain (e.g., "khost.dev")
+ * @returns Certificate pack ID or null if failed
+ */
+export async function createWorkmachineEdgeCertificate(
+  workMachineName: string,
+  subdomain: string,
+  baseDomain: string,
+): Promise<string | null> {
+  const hosts = [
+    `${workMachineName}.${subdomain}.${baseDomain}`,
+    `*.${workMachineName}.${subdomain}.${baseDomain}`,
+  ]
+
+  return orderEdgeCertificate(hosts)
+}

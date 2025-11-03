@@ -3,7 +3,8 @@ import {
   getInstallationByKey,
   addOrUpdateIpRecord,
   markDeploymentReady,
-  updateInstallation,
+  getEdgeCertificate,
+  saveEdgeCertificate,
 } from '@/lib/console/supabase-storage-service'
 import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
@@ -12,7 +13,10 @@ import {
   createWorkmachineDnsRecords,
   updateDnsRecords,
 } from '@/lib/console/cloudflare-dns'
-import { createInstallationEdgeCertificate } from '@/lib/console/cloudflare-edge-certificates'
+import {
+  createInstallationEdgeCertificate,
+  createWorkmachineEdgeCertificate,
+} from '@/lib/console/cloudflare-edge-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
@@ -131,22 +135,38 @@ export async function POST(request: NextRequest) {
             console.log(`Created ${dnsRecordIds.length} DNS records for installation`)
 
             // Create edge certificate for wildcard subdomain if it doesn't exist
-            if (dnsCreated && !installation.edgeCertificatePackId) {
-              const edgeCertId = await createInstallationEdgeCertificate(
-                installation.subdomain,
-                CLOUDFLARE_DNS_DOMAIN,
+            if (dnsCreated) {
+              const existingEdgeCert = await getEdgeCertificate(
+                installation.id,
+                'installation',
               )
-              if (edgeCertId) {
-                console.log(`Edge certificate ordered: ${edgeCertId}`)
-                // Store edge certificate ID
-                await updateInstallation(installation.id, { edgeCertificatePackId: edgeCertId })
+              if (!existingEdgeCert) {
+                const edgeCertId = await createInstallationEdgeCertificate(
+                  installation.subdomain,
+                  CLOUDFLARE_DNS_DOMAIN,
+                )
+                if (edgeCertId) {
+                  console.log(`Edge certificate ordered: ${edgeCertId}`)
+                  // Store edge certificate in new table
+                  await saveEdgeCertificate({
+                    installationId: installation.id,
+                    cloudflareCertPackId: edgeCertId,
+                    hostnames: [
+                      `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                      `*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                    ],
+                    scope: 'installation',
+                    scopeIdentifier: null,
+                    status: 'pending',
+                  })
+                } else {
+                  console.warn('Failed to order edge certificate, but continuing')
+                }
               } else {
-                console.warn('Failed to order edge certificate, but continuing')
+                console.log(
+                  `Edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
+                )
               }
-            } else if (installation.edgeCertificatePackId) {
-              console.log(
-                `Edge certificate already exists: ${installation.edgeCertificatePackId}`,
-              )
             }
           } else if (type === 'workmachine') {
             dnsRecordIds = await createWorkmachineDnsRecords(
@@ -158,6 +178,43 @@ export async function POST(request: NextRequest) {
             console.log(
               `Created ${dnsRecordIds.length} DNS records for workmachine: ${workMachineName}`,
             )
+
+            // Create edge certificate for workmachine wildcard subdomain if it doesn't exist
+            if (dnsCreated) {
+              const existingEdgeCert = await getEdgeCertificate(
+                installation.id,
+                'workmachine',
+                workMachineName,
+              )
+              if (!existingEdgeCert) {
+                const edgeCertId = await createWorkmachineEdgeCertificate(
+                  workMachineName!,
+                  installation.subdomain,
+                  CLOUDFLARE_DNS_DOMAIN,
+                )
+                if (edgeCertId) {
+                  console.log(`Edge certificate ordered for workmachine: ${edgeCertId}`)
+                  // Store edge certificate in new table
+                  await saveEdgeCertificate({
+                    installationId: installation.id,
+                    cloudflareCertPackId: edgeCertId,
+                    hostnames: [
+                      `${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                      `*.${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                    ],
+                    scope: 'workmachine',
+                    scopeIdentifier: workMachineName,
+                    status: 'pending',
+                  })
+                } else {
+                  console.warn('Failed to order workmachine edge certificate, but continuing')
+                }
+              } else {
+                console.log(
+                  `Workmachine edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
+                )
+              }
+            }
           }
         } else {
           // IP didn't change, keep existing DNS record IDs
@@ -172,22 +229,35 @@ export async function POST(request: NextRequest) {
           console.log(`Created ${dnsRecordIds.length} DNS records for new installation`)
 
           // Create edge certificate for wildcard subdomain if it doesn't exist
-          if (dnsCreated && !installation.edgeCertificatePackId) {
-            const edgeCertId = await createInstallationEdgeCertificate(
-              installation.subdomain,
-              CLOUDFLARE_DNS_DOMAIN,
-            )
-            if (edgeCertId) {
-              console.log(`Edge certificate ordered: ${edgeCertId}`)
-              // Store edge certificate ID
-              await updateInstallation(installation.id, { edgeCertificatePackId: edgeCertId })
+          if (dnsCreated) {
+            const existingEdgeCert = await getEdgeCertificate(installation.id, 'installation')
+            if (!existingEdgeCert) {
+              const edgeCertId = await createInstallationEdgeCertificate(
+                installation.subdomain,
+                CLOUDFLARE_DNS_DOMAIN,
+              )
+              if (edgeCertId) {
+                console.log(`Edge certificate ordered: ${edgeCertId}`)
+                // Store edge certificate in new table
+                await saveEdgeCertificate({
+                  installationId: installation.id,
+                  cloudflareCertPackId: edgeCertId,
+                  hostnames: [
+                    `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                    `*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                  ],
+                  scope: 'installation',
+                  scopeIdentifier: null,
+                  status: 'pending',
+                })
+              } else {
+                console.warn('Failed to order edge certificate, but continuing')
+              }
             } else {
-              console.warn('Failed to order edge certificate, but continuing')
+              console.log(
+                `Edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
+              )
             }
-          } else if (installation.edgeCertificatePackId) {
-            console.log(
-              `Edge certificate already exists: ${installation.edgeCertificatePackId}`,
-            )
           }
         } else if (type === 'workmachine') {
           dnsRecordIds = await createWorkmachineDnsRecords(
@@ -199,6 +269,43 @@ export async function POST(request: NextRequest) {
           console.log(
             `Created ${dnsRecordIds.length} DNS records for new workmachine: ${workMachineName}`,
           )
+
+          // Create edge certificate for workmachine wildcard subdomain if it doesn't exist
+          if (dnsCreated) {
+            const existingEdgeCert = await getEdgeCertificate(
+              installation.id,
+              'workmachine',
+              workMachineName,
+            )
+            if (!existingEdgeCert) {
+              const edgeCertId = await createWorkmachineEdgeCertificate(
+                workMachineName!,
+                installation.subdomain,
+                CLOUDFLARE_DNS_DOMAIN,
+              )
+              if (edgeCertId) {
+                console.log(`Edge certificate ordered for workmachine: ${edgeCertId}`)
+                // Store edge certificate in new table
+                await saveEdgeCertificate({
+                  installationId: installation.id,
+                  cloudflareCertPackId: edgeCertId,
+                  hostnames: [
+                    `${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                    `*.${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+                  ],
+                  scope: 'workmachine',
+                  scopeIdentifier: workMachineName,
+                  status: 'pending',
+                })
+              } else {
+                console.warn('Failed to order workmachine edge certificate, but continuing')
+              }
+            } else {
+              console.log(
+                `Workmachine edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
+              )
+            }
+          }
         }
       }
     } catch (dnsError) {

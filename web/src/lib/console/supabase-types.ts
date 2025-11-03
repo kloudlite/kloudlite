@@ -178,6 +178,38 @@ export type Database = {
           generated_at?: string
         }
       }
+      edge_certificates: {
+        Row: {
+          id: number
+          installation_id: string
+          cloudflare_cert_pack_id: string
+          hostnames: string[]
+          scope: 'installation' | 'workmachine'
+          scope_identifier: string | null
+          ordered_at: string
+          status: 'pending' | 'active' | 'failed'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          installation_id: string
+          cloudflare_cert_pack_id: string
+          hostnames: string[]
+          scope: 'installation' | 'workmachine'
+          scope_identifier?: string | null
+          ordered_at?: string
+          status?: 'pending' | 'active' | 'failed'
+        }
+        Update: {
+          installation_id?: string
+          cloudflare_cert_pack_id?: string
+          hostnames?: string[]
+          scope?: 'installation' | 'workmachine'
+          scope_identifier?: string | null
+          ordered_at?: string
+          status?: 'pending' | 'active' | 'failed'
+        }
+      }
     }
   }
 }
