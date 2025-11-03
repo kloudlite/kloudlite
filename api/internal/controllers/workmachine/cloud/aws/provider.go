@@ -41,6 +41,8 @@ type ProviderArgs struct {
 	K3sVersion string
 	K3sURL     string
 	K3sToken   string
+
+	WorkMachineInstanceProfile *string
 }
 
 func NewProvider(ctx context.Context, args ProviderArgs) (cloud.Provider, error) {
@@ -62,11 +64,27 @@ func handleDryRunError(err error, action string) error {
 		return fmt.Errorf("dry-run for %s should have failed with DryRunOperation", action)
 	}
 
+	errStr := err.Error()
+
 	// Check if it's a DryRunOperation error (indicates permission is granted)
-	if strings.Contains(err.Error(), "DryRunOperation") || strings.Contains(err.Error(), "Request would have succeeded") {
+	if strings.Contains(errStr, "DryRunOperation") || strings.Contains(errStr, "Request would have succeeded") {
 		return nil
 	}
 
+	// For dry-run with dummy/non-existent resource IDs, AWS may return resource-not-found errors
+	// These are acceptable because they mean permissions were validated successfully
+	// The actual operation would fail due to missing resource, not missing permissions
+	if strings.Contains(errStr, "InvalidInstanceID.NotFound") ||
+		strings.Contains(errStr, "InvalidInstanceID.Malformed") ||
+		strings.Contains(errStr, "InvalidVolumeID.NotFound") ||
+		strings.Contains(errStr, "InvalidVolumeID.Malformed") ||
+		strings.Contains(errStr, "InvalidParameterValue") ||
+		strings.Contains(errStr, "does not exist") {
+		// Permission check passed - resource validation failed (which is expected with dummy IDs)
+		return nil
+	}
+
+	// Any other error (like UnauthorizedOperation) indicates permission issues
 	return err
 }
 
@@ -115,21 +133,27 @@ func (p *provider) getRootVolume(ctx context.Context, instance *ec2types.Instanc
 func (p *provider) ValidatePermissions(ctx context.Context) error {
 	g, errctx := errgroup.WithContext(ctx)
 	dryRunChecks := []func(context.Context) error{
+		// Instance lifecycle operations
 		p.dryRunCreateInstance,
 		p.dryRunTerminateInstance,
-		// p.dryRunCreateSecurityGroup,
-		// p.dryRunAuthorizeSecurityGroupIngress,
-		// p.dryRunAuthorizeSecurityGroupEgress,
-		// p.dryRunDeleteSecurityGroup,
-		p.dryRunDescribeVolumes,
-		p.dryRunDescribeInstanceStatus,
-		// p.dryRunDescribeSecurityGroups,
+		p.dryRunStartInstance,
+		p.dryRunStopInstances,
+		p.dryRunRebootInstances,
 		p.dryRunDescribeInstances,
+		p.dryRunDescribeInstanceStatus,
+
+		// Volume operations
+		p.dryRunDescribeVolumes,
+		p.dryRunModifyVolume, // Critical: needed for volume size increase
+
+		// Instance modifications
+		p.dryRunModifyInstanceAttribute, // Critical: needed for instance type changes
 	}
 
 	for i := range dryRunChecks {
+		check := dryRunChecks[i]
 		g.Go(func() error {
-			if err := dryRunChecks[i](errctx); err != nil {
+			if err := check(errctx); err != nil {
 				return err
 			}
 			return nil
@@ -140,7 +164,7 @@ func (p *provider) ValidatePermissions(ctx context.Context) error {
 		return errors.Wrap("failed to validate permissions", err)
 	}
 
-	slog.Info("[AWS Provider] Dry Run check passed")
+	slog.Info("[AWS Provider] All permission checks passed")
 	return nil
 }
 
@@ -191,7 +215,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 			{
 				DeviceName: amiInfo.Images[0].RootDeviceName,
 				Ebs: &ec2types.EbsBlockDevice{
-					VolumeSize:          &wm.Spec.VolumeSize,
+					VolumeSize:          wm.Spec.VolumeSize,
 					VolumeType:          volumeType,
 					DeleteOnTermination: &wm.Spec.DeleteVolumePostTermination,
 				},
@@ -203,9 +227,15 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		},
 	}
 
+	iamInstanceProfile := p.WorkMachineInstanceProfile
 	if wm.Spec.AWSProviderExtras != nil && wm.Spec.AWSProviderExtras.IAMRole != nil {
+		iamInstanceProfile = wm.Spec.AWSProviderExtras.IAMRole
+	}
+
+	// Use provider-level WorkMachine instance profile if configured, otherwise fall back to spec
+	if iamInstanceProfile != nil {
 		runInput.IamInstanceProfile = &ec2types.IamInstanceProfileSpecification{
-			Name: wm.Spec.AWSProviderExtras.IAMRole,
+			Name: iamInstanceProfile,
 		}
 	}
 
@@ -229,7 +259,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		AvailabilityZone: aws.ToString(instance.Placement.AvailabilityZone),
 		Message:          "Instance created successfully",
 		Region:           p.Region,
-		RootVolumeSize:   wm.Spec.VolumeSize,
+		RootVolumeSize:   *wm.Spec.VolumeSize,
 	}, nil
 }
 
@@ -275,7 +305,7 @@ func (p *provider) StopMachine(ctx context.Context, machineID string) error {
 	if _, err := p.ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{
 		InstanceIds: []string{machineID},
 	}); err != nil {
-		return fmt.Errorf("failed to start machine: %w", err)
+		return fmt.Errorf("failed to stop machine: %w", err)
 	}
 	return nil
 }
@@ -288,7 +318,7 @@ func (p *provider) RebootMachine(ctx context.Context, machineID string) error {
 	if _, err := p.ec2Client.RebootInstances(ctx, &ec2.RebootInstancesInput{
 		InstanceIds: []string{machineID},
 	}); err != nil {
-		return fmt.Errorf("failed to start machine: %w", err)
+		return fmt.Errorf("failed to reboot machine: %w", err)
 	}
 	return nil
 }

@@ -25,12 +25,19 @@ type DomainRequest struct {
 	Status DomainRequestStatus `json:"status,omitempty"`
 }
 
+type RequestType string
+
+const (
+	RequestTypeInstallation RequestType = "installation"
+	RequestTypeWorkspace    RequestType = "workspace"
+)
+
 // DomainRequestSpec defines the desired state of DomainRequest
 type DomainRequestSpec struct {
 	// Type indicates the type of registration: "installation" or "workmachine"
 	// +kubebuilder:validation:Enum=installation;workmachine
 	// +kubebuilder:default=installation
-	Type string `json:"type"`
+	Type RequestType `json:"type"`
 
 	// IPAddress is the IP address to register
 	// If not provided, will be auto-detected from the LoadBalancer service

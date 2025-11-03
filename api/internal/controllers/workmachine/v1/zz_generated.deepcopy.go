@@ -336,6 +336,11 @@ func (in *WorkMachineSpec) DeepCopyInto(out *WorkMachineSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.VolumeSize != nil {
+		in, out := &in.VolumeSize, &out.VolumeSize
+		*out = new(int32)
+		**out = **in
+	}
 	if in.AWSProviderExtras != nil {
 		in, out := &in.AWSProviderExtras, &out.AWSProviderExtras
 		*out = new(AWSProviderExtras)

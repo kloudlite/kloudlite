@@ -63,10 +63,10 @@ type WorkMachineSpec struct {
 	MachineType string `json:"machineType"`
 
 	// VolumeSize is the size of the root EBS volume in GB
-	// +kubebuilder:default=100
-	// +kubebuilder:validation:Minimum=100
-	// +kubebuilder:validation:Maximum=1000
-	VolumeSize int32 `json:"volumeSize"`
+	//+kubebuilder:default=100
+	//+kubebuilder:validation:Minimum=100
+	//+kubebuilder:validation:Maximum=1000
+	VolumeSize *int32 `json:"volumeSize"`
 
 	// VolumeType is the volume type
 	// eg. for AWS (gp3, gp2, io1, io2)
