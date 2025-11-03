@@ -168,12 +168,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnCreate: r.setupCloudMachine,
 			OnDelete: r.cleanupCloudMachine,
 		},
-		// {
-		// 	Name:     "setup DNS Host",
-		// 	Title:    "Setup DNS Host",
-		// 	OnCreate: r.registerDNSHost,
-		// 	OnDelete: r.deRegisterDNSHost,
-		// },
 	})
 }
 
@@ -695,39 +689,6 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 	}
 	obj.Status.NodeTaints = kloudliteTaints
 
-	return check.Passed()
-}
-
-func (r *WorkMachineReconciler) registerDNSHost(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	dr := &drv1.DomainRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "wm-" + obj.Name,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, dr, func() error {
-		dr.Spec = drv1.DomainRequestSpec{
-			Type:                             drv1.RequestTypeWorkspace,
-			IPAddress:                        obj.Status.PublicIP,
-			LoadBalancerServiceName:          "",
-			LoadBalancerServiceNamespace:     "",
-			WorkMachineName:                  obj.Name,
-			CertificateScope:                 "",
-			CertificateScopeIdentifier:       "",
-			CertificateParentScopeIdentifier: "",
-			SSHProxyEnabled:                  false,
-			IngressBackend:                   &drv1.IngressBackendConfig{},
-		}
-
-		return nil
-	}); err != nil {
-		return check.Failed(err)
-	}
-
-	return check.Passed()
-}
-
-func (r *WorkMachineReconciler) deRegisterDNSHost(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	return check.Passed()
 }
 

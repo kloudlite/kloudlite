@@ -70,11 +70,11 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
   const [isRestarting, setIsRestarting] = useState(false)
 
   const handleStart = () => {
-    console.log('Starting machine:', machine.id)
+    // TODO: Implement machine start logic
   }
 
   const handleStop = () => {
-    console.log('Stopping machine:', machine.id)
+    // TODO: Implement machine stop logic
   }
 
   const handleRestart = async () => {

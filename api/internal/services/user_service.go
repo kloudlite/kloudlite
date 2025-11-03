@@ -58,8 +58,6 @@ func NewUserService(
 func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.User) (*platformv1alpha1.User, error) {
 	// Users are cluster-scoped resources, no namespace needed
 
-	slog.Info("HERE createUser")
-
 	// All validations and mutations are handled by webhooks
 	// Just create the user in repository
 	if err := s.userRepo.Create(ctx, user); err != nil {
@@ -69,12 +67,11 @@ func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.Use
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	slog.Info("checking user has role", "condition", s.hasUserRole(user))
 	// Create WorkMachine only if user has 'user' role
 	if s.hasUserRole(user) {
 		if err := s.createWorkMachineForUser(ctx, user); err != nil {
 			// Log error but don't fail user creation
-			fmt.Printf("Warning: Failed to create WorkMachine for user %s: %v\n", user.Spec.Email, err)
+			slog.Warn("failed to create WorkMachine for user", "email", user.Spec.Email, "error", err)
 		}
 	}
 
@@ -153,12 +150,12 @@ func (s *userService) UpdateUser(ctx context.Context, user *platformv1alpha1.Use
 	if !hadUserRole && hasUserRole {
 		// Role added: create WorkMachine
 		if err := s.createWorkMachineForUser(ctx, existing); err != nil {
-			fmt.Printf("Warning: Failed to create WorkMachine for user %s: %v\n", existing.Spec.Email, err)
+			slog.Warn("failed to create WorkMachine for user", "email", existing.Spec.Email, "error", err)
 		}
 	} else if hadUserRole && !hasUserRole {
 		// Role removed: delete WorkMachine
 		if err := s.deleteWorkMachineForUser(ctx, existing); err != nil {
-			fmt.Printf("Warning: Failed to delete WorkMachine for user %s: %v\n", existing.Spec.Email, err)
+			slog.Warn("failed to delete WorkMachine for user", "email", existing.Spec.Email, "error", err)
 		}
 	}
 
@@ -180,14 +177,14 @@ func (s *userService) DeleteUser(ctx context.Context, name string) error {
 	if s.hasUserRole(user) {
 		if err := s.deleteWorkMachineForUser(ctx, user); err != nil {
 			if !apiErrors.IsNotFound(err) {
-				fmt.Printf("Warning: Failed to delete WorkMachine for user %s: %v\n", user.Spec.Email, err)
+				slog.Warn("failed to delete WorkMachine for user", "email", user.Spec.Email, "error", err)
 			}
 		}
 	}
 
 	// Delete all environments created by this user
 	if err := s.deleteEnvironmentsForUser(ctx, user); err != nil {
-		fmt.Printf("Warning: Failed to delete environments for user %s: %v\n", user.Spec.Email, err)
+		slog.Warn("failed to delete environments for user", "email", user.Spec.Email, "error", err)
 	}
 
 	// Delete the user
@@ -285,17 +282,12 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 		},
 	}
 
-	slog.Info("creating workmachine for user")
-
 	// Check if WorkMachine already exists
 	existing, err := s.workMachineRepo.Get(ctx, workMachineName)
 	if err == nil && existing != nil {
-		slog.Info("inside if", "user", *existing, "err", err)
 		// WorkMachine already exists, skip creation
 		return nil
 	}
-
-	slog.Info("going to create new workmachine")
 
 	workMachine.Spec = machinesv1.WorkMachineSpec{
 		DisplayName:     username + "'s workmachine",

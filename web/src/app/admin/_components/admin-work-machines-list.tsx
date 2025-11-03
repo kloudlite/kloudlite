@@ -85,8 +85,7 @@ export function AdminWorkMachinesList({ workMachines, isSuperAdmin }: AdminWorkM
   }
 
   const handleAction = (action: string, machineId: string) => {
-    console.log(`${action} machine ${machineId}`)
-    // Implement actual actions here
+    // TODO: Implement actual machine actions
   }
 
   return (
