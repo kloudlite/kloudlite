@@ -174,10 +174,15 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		return nil, errors.Wrap("failed to render k3s user data script", err)
 	}
 
+	volumeType := ec2types.VolumeType(wm.Spec.VolumeType)
+	if volumeType == "" {
+		volumeType = ec2types.VolumeTypeGp3
+	}
+
 	// Step 6: Build RunInstances input
 	runInput := &ec2.RunInstancesInput{
 		ImageId:          fn.Ptr(p.AMI),
-		InstanceType:     wm.Spec.AWSProvider.MachineType,
+		InstanceType:     ec2types.InstanceType(wm.Spec.MachineType),
 		MinCount:         fn.Ptr[int32](1),
 		MaxCount:         fn.Ptr[int32](1),
 		SecurityGroupIds: []string{p.SecurityGroupID},
@@ -186,9 +191,9 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 			{
 				DeviceName: amiInfo.Images[0].RootDeviceName,
 				Ebs: &ec2types.EbsBlockDevice{
-					VolumeSize:          &wm.Spec.AWSProvider.VolumeSize,
-					VolumeType:          wm.Spec.AWSProvider.VolumeType,
-					DeleteOnTermination: &wm.Spec.AWSProvider.DeleteVolumePostTermination,
+					VolumeSize:          &wm.Spec.VolumeSize,
+					VolumeType:          volumeType,
+					DeleteOnTermination: &wm.Spec.DeleteVolumePostTermination,
 				},
 			},
 		},
@@ -198,9 +203,9 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		},
 	}
 
-	if wm.Spec.AWSProvider.IAMRole != nil {
+	if wm.Spec.AWSProviderExtras != nil && wm.Spec.AWSProviderExtras.IAMRole != nil {
 		runInput.IamInstanceProfile = &ec2types.IamInstanceProfileSpecification{
-			Name: wm.Spec.AWSProvider.IAMRole,
+			Name: wm.Spec.AWSProviderExtras.IAMRole,
 		}
 	}
 
@@ -224,7 +229,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		AvailabilityZone: aws.ToString(instance.Placement.AvailabilityZone),
 		Message:          "Instance created successfully",
 		Region:           p.Region,
-		RootVolumeSize:   wm.Spec.AWSProvider.VolumeSize,
+		RootVolumeSize:   wm.Spec.VolumeSize,
 	}, nil
 }
 

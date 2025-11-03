@@ -33,13 +33,19 @@ type UserService interface {
 type userService struct {
 	userRepo        repository.UserRepository
 	workMachineRepo repository.WorkMachineRepository
+	machineTypeRepo repository.MachineTypeRepository
 }
 
 // NewUserService creates a new UserService
-func NewUserService(userRepo repository.UserRepository, workMachineRepo repository.WorkMachineRepository) UserService {
+func NewUserService(
+	userRepo repository.UserRepository,
+	workMachineRepo repository.WorkMachineRepository,
+	machineTypeRepo repository.MachineTypeRepository,
+) UserService {
 	return &userService{
 		userRepo:        userRepo,
 		workMachineRepo: workMachineRepo,
+		machineTypeRepo: machineTypeRepo,
 	}
 }
 
@@ -231,6 +237,11 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 	workMachineName := fmt.Sprintf("wm-%s", username)
 	targetNamespace := fmt.Sprintf("wm-%s", username)
 
+	mt, err := s.machineTypeRepo.GetDefault(ctx)
+	if err == nil {
+		return err
+	}
+
 	// Create WorkMachine object
 	workMachine := &machinesv1.WorkMachine{
 		ObjectMeta: metav1.ObjectMeta{
@@ -242,9 +253,9 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 		},
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:         user.Spec.Email,
-			MachineType:     "standard-2vcpu-4gb", // Default machine type
 			TargetNamespace: targetNamespace,
 			State:           machinesv1.MachineStateStopped,
+			MachineType:     mt.Name,
 		},
 	}
 

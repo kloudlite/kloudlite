@@ -56,7 +56,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	}
 
 	// Create individual services
-	userService := NewUserService(opts.RepositoryManager.Users, opts.RepositoryManager.WorkMachines)
+	userService := NewUserService(opts.RepositoryManager.Users, opts.RepositoryManager.WorkMachines, opts.RepositoryManager.MachineTypes)
 
 	// Create auth service
 	tokenExpiry := time.Duration(opts.Config.Auth.TokenExpiryHours) * time.Hour

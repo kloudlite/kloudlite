@@ -48,11 +48,13 @@ type Env struct {
 	K3sAgentToken string `env:"K3S_AGENT_TOKEN" required:"true"`
 
 	CloudProvider v1.CloudProvider `env:"CLOUD_PROVIDER" required:"true"`
+}
 
-	AWS_AMI_ID            string `env:"AWS_AMI_ID"`
-	AWS_VPC_ID            string `env:"AWS_VPC_ID"`
-	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID"`
-	AWS_REGION            string `env:"AWS_REGION"`
+type awsProviderEnv struct {
+	AWS_AMI_ID            string `env:"AWS_AMI_ID" required:"true"`
+	AWS_VPC_ID            string `env:"AWS_VPC_ID" required:"true"`
+	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
+	AWS_REGION            string `env:"AWS_REGION" required:"true"`
 }
 
 // WorkMachineReconciler reconciles a WorkMachine object
@@ -725,29 +727,27 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 	obj.Status.State = machineInfo.State
 
-	// if obj.Spec.AWSProvider.VolumeSize > obj.Status.RootVolumeSize {
-	// 	check.Logger().Info("increasing volume size", "from", obj.Status.RootVolumeSize, "to", obj.Spec.AWSProvider.VolumeSize)
-	//
-	// 	if err := r.cloudProviderAPI.IncreaseVolumeSize(check.Context(), obj.Status.MachineID, obj.Spec.AWSProvider.VolumeSize); err != nil {
-	// 		return check.Failed(errors.Wrap("failed to increase volume size", err))
-	// 	}
-	//
-	// 	obj.Status.RootVolumeSize = obj.Spec.AWSProvider.VolumeSize
-	// 	if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
-	// 		return check.Errored(errors.Wrap(fmt.Sprintf("failed to reboot machine(ID: %s)", obj.Status.MachineID), err))
-	// 	}
-	//
-	// 	return check.UpdateMsg("waiting for volume size to be increased").RequeueAfter(10 * time.Second)
-	// }
+	if obj.Spec.VolumeSize > obj.Status.RootVolumeSize {
+		check.Logger().Info("increasing volume size", "from", obj.Status.RootVolumeSize, "to", obj.Spec.VolumeSize)
+
+		if err := r.cloudProviderAPI.IncreaseVolumeSize(check.Context(), obj.Status.MachineID, obj.Spec.VolumeSize); err != nil {
+			return check.Failed(errors.Wrap("failed to increase volume size", err))
+		}
+
+		obj.Status.RootVolumeSize = obj.Spec.VolumeSize
+		if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
+			return check.Errored(errors.Wrap(fmt.Sprintf("failed to reboot machine(ID: %s)", obj.Status.MachineID), err))
+		}
+
+		return check.UpdateMsg("waiting for volume size to be increased").RequeueAfter(10 * time.Second)
+	}
 
 	// // Update status with current machine info
 	obj.Status.State = machineInfo.State
 	obj.Status.Message = machineInfo.Message
 	obj.Status.PublicIP = machineInfo.PublicIP
 	obj.Status.PrivateIP = machineInfo.PrivateIP
-	// obj.Status.Region = machineInfo.Region
-	obj.Status.RootVolumeSize = obj.Spec.AWSProvider.VolumeSize
-	// obj.Status.AvailabilityZone = machineInfo.AvailabilityZone
+	obj.Status.RootVolumeSize = obj.Spec.VolumeSize
 
 	return check.Passed()
 }
@@ -813,13 +813,19 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	switch r.env.CloudProvider {
 	case v1.AWS:
 		{
+
+			var awsEnv awsProviderEnv
+			if err := env.Set(&awsEnv); err != nil {
+				return errors.Wrap("failed to load env vars", err)
+			}
+
 			ctx, cf := context.WithTimeout(context.TODO(), 5*time.Second)
 			defer cf()
 			p, err := aws.NewProvider(ctx, aws.ProviderArgs{
-				AMI:             r.env.AWS_AMI_ID,
-				Region:          r.env.AWS_REGION,
-				VPC:             r.env.AWS_VPC_ID,
-				SecurityGroupID: r.env.AWS_SECURITY_GROUP_ID,
+				AMI:             awsEnv.AWS_AMI_ID,
+				Region:          awsEnv.AWS_REGION,
+				VPC:             awsEnv.AWS_VPC_ID,
+				SecurityGroupID: awsEnv.AWS_SECURITY_GROUP_ID,
 				ResourceTags: []aws.Tag{
 					{
 						Key:   "kloudlite.io/installation-id",
