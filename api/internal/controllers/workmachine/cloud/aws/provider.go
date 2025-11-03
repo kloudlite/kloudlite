@@ -41,8 +41,6 @@ type ProviderArgs struct {
 	K3sVersion string
 	K3sURL     string
 	K3sToken   string
-
-	WorkMachineInstanceProfile *string
 }
 
 func NewProvider(ctx context.Context, args ProviderArgs) (cloud.Provider, error) {
@@ -203,7 +201,6 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		volumeType = ec2types.VolumeTypeGp3
 	}
 
-	// Step 6: Build RunInstances input
 	runInput := &ec2.RunInstancesInput{
 		ImageId:          fn.Ptr(p.AMI),
 		InstanceType:     ec2types.InstanceType(wm.Spec.MachineType),
@@ -227,19 +224,6 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		},
 	}
 
-	iamInstanceProfile := p.WorkMachineInstanceProfile
-	if wm.Spec.AWSProviderExtras != nil && wm.Spec.AWSProviderExtras.IAMRole != nil {
-		iamInstanceProfile = wm.Spec.AWSProviderExtras.IAMRole
-	}
-
-	// Use provider-level WorkMachine instance profile if configured, otherwise fall back to spec
-	if iamInstanceProfile != nil {
-		runInput.IamInstanceProfile = &ec2types.IamInstanceProfileSpecification{
-			Name: iamInstanceProfile,
-		}
-	}
-
-	// Step 7: Create instance
 	runOutput, err := p.ec2Client.RunInstances(ctx, runInput)
 	if err != nil {
 		return nil, errors.Wrap("failed to create AWS instance", err)

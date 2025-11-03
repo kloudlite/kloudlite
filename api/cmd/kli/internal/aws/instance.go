@@ -148,7 +148,6 @@ data:
   AWS_SECURITY_GROUP_ID: "%s"
   AWS_REGION: "%s"
   AWS_AMI_ID: "%s"
-  AWS_WORKMACHINE_INSTANCE_PROFILE: "kl-%s-workmachine-role"
   AWS_PRIVATE_IP: "$PRIVATE_IP"
   AWS_PUBLIC_IP: "$PUBLIC_IP"
   K3S_VERSION: "$K3S_VERSION"
@@ -163,6 +162,82 @@ if ! kli install-manifests; then
 fi
 
 echo "CRDs and RBAC will be auto-applied by K3s"
+
+# Create default MachineTypes
+echo "Creating default MachineTypes..."
+cat <<EOF | kubectl apply -f -
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: dev-light
+spec:
+  displayName: Light Development
+  description: For simple projects and learning - runs lightweight IDEs and basic services
+  category: development
+  active: true
+  priority: 10
+  resources:
+    cpu: "4"
+    memory: 8Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: dev-standard
+spec:
+  displayName: Standard Development
+  description: For typical full-stack development - runs IDEs and multiple backend services
+  category: general
+  active: true
+  priority: 20
+  resources:
+    cpu: "8"
+    memory: 16Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: dev-heavy
+spec:
+  displayName: Heavy Development
+  description: For microservices and complex projects - runs multiple IDEs and heavy processes
+  category: compute-optimized
+  active: true
+  priority: 30
+  resources:
+    cpu: "12"
+    memory: 24Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: dev-intensive
+spec:
+  displayName: Intensive Development
+  description: For large-scale projects with many services - maximum development capacity
+  category: memory-optimized
+  active: true
+  priority: 40
+  resources:
+    cpu: "16"
+    memory: 32Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: dev-ml
+spec:
+  displayName: ML/Data Development
+  description: For machine learning and data science - includes GPU acceleration
+  category: gpu
+  active: true
+  priority: 50
+  resources:
+    cpu: "8"
+    memory: 32Gi
+    gpu: "1"
+EOF
 
 # API Server deployment is handled by kli install-manifests
 # Wait for API Server to be ready
