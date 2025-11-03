@@ -240,7 +240,7 @@ export async function listAllCertificates(): Promise<Array<{ id: string; hostnam
       return []
     }
 
-    return result.result.map((cert: any) => ({
+    return result.result.map((cert: { id: string; hostnames: string[] }) => ({
       id: cert.id,
       hostnames: cert.hostnames,
     }))
