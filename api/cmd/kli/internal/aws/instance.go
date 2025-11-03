@@ -104,16 +104,7 @@ echo "Downloading Kloudlite CLI binary..."
 curl -fsSL "https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64" -o /usr/local/bin/kli
 chmod +x /usr/local/bin/kli
 
-# Install manifests using embedded CRDs
-echo "Installing Kloudlite manifests..."
-if ! kli install-manifests; then
-  echo "ERROR: Failed to install Kloudlite manifests"
-  exit 1
-fi
-
-echo "CRDs and RBAC will be auto-applied by K3s"
-
-# Apply Secret directly (secrets should not be in manifests folder)
+# Apply Secrets directly (secrets should not be in manifests folder)
 echo "Creating API Server Secret..."
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -126,6 +117,19 @@ stringData:
   INSTALLATION_SECRET: "%s"
   K3S_AGENT_TOKEN: "$K3S_AGENT_TOKEN"
   JWT_SECRET: "%s"
+EOF
+
+echo "Creating Frontend Secret..."
+NEXTAUTH_SECRET=$(openssl rand -base64 32)
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: frontend-secrets
+  namespace: kloudlite
+type: Opaque
+stringData:
+  nextauth-secret: "$NEXTAUTH_SECRET"
 EOF
 
 # Save ConfigMap to manifests folder for auto-apply
@@ -151,81 +155,21 @@ data:
   K3S_SERVER_URL: "$K3S_SERVER_URL"
 EOF
 
-# Create API Server Service and StatefulSet
-echo "Creating API Server manifest..."
-cat <<EOF > /var/lib/rancher/k3s/server/manifests/api-server.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-server
-  namespace: kloudlite
-spec:
-  type: ClusterIP
-  selector:
-    app: api-server
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: api-server
-  namespace: kloudlite
-spec:
-  serviceName: api-server
-  replicas: 1
-  selector:
-    matchLabels:
-      app: api-server
-  template:
-    metadata:
-      labels:
-        app: api-server
-    spec:
-      serviceAccountName: api-server
-      containers:
-        - name: api-server
-          image: ghcr.io/kloudlite/kloudlite/api-server:development
-          ports:
-            - containerPort: 8080
-              name: http
-          envFrom:
-            - configMapRef:
-                name: api-server-config
-            - secretRef:
-                name: api-server-secret
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "100m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
-EOF
+# Install manifests using embedded CRDs
+echo "Installing Kloudlite manifests..."
+if ! kli install-manifests; then
+  echo "ERROR: Failed to install Kloudlite manifests"
+  exit 1
+fi
 
+echo "CRDs and RBAC will be auto-applied by K3s"
+
+# API Server deployment is handled by kli install-manifests
 # Wait for API Server to be ready
 echo "Waiting for API Server to be ready..."
 kubectl wait --for=condition=ready pod -l app=api-server -n kloudlite --timeout=300s || true
 
-# Apply Frontend Deployment
-echo "Deploying Frontend..."
-curl -fsSL "${MANIFEST_BASE_URL}/frontend.yaml" | kubectl apply -f -
-
-# Wait for Frontend to be ready
+# Wait for Frontend to be ready (deployed via kli install-manifests)
 echo "Waiting for Frontend to be ready..."
 kubectl wait --for=condition=ready pod -l app=frontend -n kloudlite --timeout=300s || true
 
