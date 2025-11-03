@@ -27,7 +27,6 @@ var awsInstallCmd = &cobra.Command{
 This command will:
   - Find Ubuntu 24.04 LTS AMD64 AMI in the region
   - Create IAM role 'kl-{installation-key}-role' with required permissions (including S3)
-  - Create IAM role 'kl-{installation-key}-workmachine-role' with SSM-only access for WorkMachines
   - Create S3 bucket 'kl-{installation-key}-backups' for K3s database backups
   - Create security group 'kl-{installation-key}-sg' with required ports
   - Create SSH key pair 'kl-{installation-key}-key' and save to ~/.kl/kl-{installation-key}-key.pem
@@ -191,10 +190,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	var wg sync.WaitGroup
 	var sgID, bucketName string
-	var sgErr, iamErr, s3Err, wmIAMErr error
+	var sgErr, iamErr, s3Err error
 	sgName := fmt.Sprintf("kl-%s-sg", installationKey)
 	roleName := fmt.Sprintf("kl-%s-role", installationKey)
-	wmRoleName := fmt.Sprintf("kl-%s-workmachine-role", installationKey)
 	bucketName = fmt.Sprintf("kl-%s-backups", installationKey)
 
 	startTime := time.Now()
@@ -231,19 +229,6 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	// WorkMachine IAM Role (parallel)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		fmt.Printf("    [%s] Starting: WorkMachine IAM Role creation\n", time.Now().Format("15:04:05"))
-		_, wmIAMErr = awsinternal.EnsureWorkmachineIAMRole(ctx, cfg, installationKey)
-		if wmIAMErr != nil {
-			fmt.Printf("    [%s] Failed: WorkMachine IAM Role - %v\n", time.Now().Format("15:04:05"), wmIAMErr)
-		} else {
-			fmt.Printf("    [%s] Completed: WorkMachine IAM Role\n", time.Now().Format("15:04:05"))
-		}
-	}()
-
 	// S3 Bucket (parallel)
 	wg.Add(1)
 	go func() {
@@ -275,11 +260,6 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		yellow.Printf("    IAM Role Error: %v\n\n", iamErr)
 		os.Exit(1)
 	}
-	if wmIAMErr != nil {
-		red.Printf(" ✗\n")
-		yellow.Printf("    WorkMachine IAM Role Error: %v\n\n", wmIAMErr)
-		os.Exit(1)
-	}
 	if s3Err != nil {
 		red.Printf(" ✗\n")
 		yellow.Printf("    S3 Bucket Error: %v\n\n", s3Err)
@@ -287,10 +267,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	}
 
 	green.Printf(" ✓\n")
-	fmt.Printf("    Security Group:       %s\n", sgName)
-	fmt.Printf("    IAM Role:             %s\n", roleName)
-	fmt.Printf("    WorkMachine IAM Role: %s\n", wmRoleName)
-	fmt.Printf("    S3 Bucket:            %s\n", bucketName)
+	fmt.Printf("    Security Group: %s\n", sgName)
+	fmt.Printf("    IAM Role:       %s\n", roleName)
+	fmt.Printf("    S3 Bucket:      %s\n", bucketName)
 
 	// Pace API calls to prevent rate limiting (longer delay after parallel operations)
 	time.Sleep(2 * time.Second)
@@ -306,16 +285,6 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	green.Printf(" ✓\n")
-
-	fmt.Printf("  ○ Creating WorkMachine instance profile...")
-	wmInstanceProfile, err := awsinternal.EnsureWorkmachineInstanceProfile(ctx, cfg, installationKey)
-	if err != nil {
-		red.Printf(" ✗\n")
-		yellow.Printf("    Error: %v\n\n", err)
-		os.Exit(1)
-	}
-	green.Printf(" ✓\n")
-	fmt.Printf("    %s\n", wmInstanceProfile)
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)

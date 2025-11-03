@@ -76,10 +76,6 @@ type WorkMachineSpec struct {
 	// +kubebuilder:default=true
 	DeleteVolumePostTermination bool `json:"deleteVolumePostTermination,omitempty"`
 
-	// AWSProviderExtras contains AWS-specific configuration
-	// +optional
-	AWSProviderExtras *AWSProviderExtras `json:"aws,omitempty"`
-
 	// AutoShutdown configures automatic instance shutdown when idle
 	// Only applicable for cloud providers (AWS, GCP, Azure)
 	// +optional
@@ -139,13 +135,6 @@ type AutoShutdownConfig struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=60
 	CheckIntervalMinutes int32 `json:"checkIntervalMinutes"`
-}
-
-// AWSProviderExtras contains AWS-specific configuration for WorkMachine
-type AWSProviderExtras struct {
-	// IAMRole is the IAM role name to attach to the instance
-	// +optional
-	IAMRole *string `json:"iamRole,omitempty"`
 }
 
 // MachineState represents the state of a WorkMachine

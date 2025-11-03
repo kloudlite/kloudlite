@@ -1603,13 +1603,6 @@ spec:
                 - enabled
                 - idleThresholdMinutes
                 type: object
-              aws:
-                description: AWSProviderExtras contains AWS-specific configuration
-                properties:
-                  iamRole:
-                    description: IAMRole is the IAM role name to attach to the instance
-                    type: string
-                type: object
               deleteVolumePostTermination:
                 default: true
                 description: DeleteVolumePostTermination controls whether root volume

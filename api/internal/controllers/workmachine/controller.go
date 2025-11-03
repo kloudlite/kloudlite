@@ -46,11 +46,10 @@ type Env struct {
 }
 
 type awsProviderEnv struct {
-	AWS_AMI_ID                       string `env:"AWS_AMI_ID" required:"true"`
-	AWS_VPC_ID                       string `env:"AWS_VPC_ID" required:"true"`
-	AWS_SECURITY_GROUP_ID            string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
-	AWS_REGION                       string `env:"AWS_REGION" required:"true"`
-	AWS_WORKMACHINE_INSTANCE_PROFILE string `env:"AWS_WORKMACHINE_INSTANCE_PROFILE" required:"false"`
+	AWS_AMI_ID            string `env:"AWS_AMI_ID" required:"true"`
+	AWS_VPC_ID            string `env:"AWS_VPC_ID" required:"true"`
+	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
+	AWS_REGION            string `env:"AWS_REGION" required:"true"`
 }
 
 // WorkMachineReconciler reconciles a WorkMachine object
@@ -749,8 +748,6 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				K3sVersion: r.env.K3sVersion,
 				K3sURL:     r.env.K3sServerURL,
 				K3sToken:   r.env.K3sAgentToken,
-
-				WorkMachineInstanceProfile: &awsEnv.AWS_WORKMACHINE_INSTANCE_PROFILE,
 			})
 			if err != nil {
 				return errors.Wrap("failed to create aws provider client", err)
