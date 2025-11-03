@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/codingconcepts/env"
-	drv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"

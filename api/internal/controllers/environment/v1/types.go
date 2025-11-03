@@ -184,7 +184,7 @@ type EnvironmentStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations  []corev1.Toleration `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 // EnvironmentState represents the state of an environment
