@@ -223,20 +223,6 @@ func (w *WorkMachineWebhook) handleMutation(
 	}
 	patches = append(patches, machineTypeLabelPatch)
 
-	// Set default nodeSelector based on WorkMachine name if not provided
-	// This ensures each WorkMachine (and its workspaces/environments) targets specific nodes
-	if len(machine.Spec.NodeSelector) == 0 {
-		defaultNodeSelector := map[string]string{
-			"kloudlite.io/workmachine": machine.Name,
-		}
-		patches = append(patches, map[string]interface{}{
-			"op":    "add",
-			"path":  "/spec/nodeSelector",
-			"value": defaultNodeSelector,
-		})
-		w.logger.Info(fmt.Sprintf("Applied default nodeSelector to WorkMachine %s: %v", machine.Name, defaultNodeSelector))
-	}
-
 	// Convert patches to JSON
 	patchBytes, err := json.Marshal(patches)
 	if err != nil {

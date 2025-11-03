@@ -190,7 +190,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		K3sURL:        p.K3sURL,
 		K3sAgentToken: p.K3sToken,
 		MachineName:   wm.Name,
-		MachineOwner:  wm.Spec.OwnedBy,
+		MachineOwner:  fn.LabelValueEncoder(wm.Spec.OwnedBy),
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)

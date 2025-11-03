@@ -1,6 +1,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -60,6 +61,9 @@ type EnvironmentSpec struct {
 	// This field is automatically cleared after successful cloning
 	// +optional
 	CloneFrom string `json:"cloneFrom,omitempty"`
+
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 // ResourceQuotas defines resource quotas for the environment
@@ -178,6 +182,9 @@ type EnvironmentStatus struct {
 	// ObservedGeneration is the generation observed by the controller
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"nodeSelector,omitempty"`
 }
 
 // EnvironmentState represents the state of an environment

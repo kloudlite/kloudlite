@@ -125,3 +125,11 @@ func NN(namespace, name string) types.NamespacedName {
 func RegularPlural(singular string) string {
 	return flect.Pluralize(strings.ToLower(singular))
 }
+
+func LabelValueEncoder(value string) string {
+	return strings.ReplaceAll(value, "@", "-at-")
+}
+
+func LabelValueDecoder(value string) string {
+	return strings.ReplaceAll(value, "-at-", "@")
+}

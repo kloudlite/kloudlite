@@ -71,30 +71,55 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		// Continue with deployment even if we can't get environment
 	}
 
-	// Check if we need to reconcile:
-	// 1. Always reconcile if composition spec changed (ObservedGeneration != Generation)
-	// 2. Always reconcile if environment activation state changed
-	// 3. Skip reconciliation only if already running, up to date, AND activation state matches
-	needsReconciliation := composition.Status.ObservedGeneration != composition.Generation ||
-		composition.Status.State != compositionsv1.CompositionStateRunning
+	// Check if reconciliation is actually needed
+	// This prevents unnecessary reconciliation loops
+	shouldReconcile := false
 
-	// Also check if environment activation state changed (stored in status vs current)
-	if environment != nil && !needsReconciliation {
-		// If activation state changed, we need to reconcile
-		if composition.Status.EnvironmentActivated != environment.Spec.Activated {
-			needsReconciliation = true
-			zapLogger.Info("Environment activation state changed, triggering reconciliation",
-				zap.Bool("previousActivated", composition.Status.EnvironmentActivated),
-				zap.Bool("currentActivated", environment.Spec.Activated))
+	// Case 1: Composition spec changed
+	if composition.Status.ObservedGeneration != composition.Generation {
+		zapLogger.Info("Reconciling: spec changed",
+			zap.Int64("observedGeneration", composition.Status.ObservedGeneration),
+			zap.Int64("generation", composition.Generation))
+		shouldReconcile = true
+	}
+
+	// Case 2: Environment activation state changed
+	if environment != nil && composition.Status.EnvironmentActivated != environment.Spec.Activated {
+		zapLogger.Info("Reconciling: environment activation changed",
+			zap.Bool("statusActivated", composition.Status.EnvironmentActivated),
+			zap.Bool("envActivated", environment.Spec.Activated))
+		shouldReconcile = true
+	}
+
+	// Case 3: Status is not running (need to deploy/fix)
+	if composition.Status.State != compositionsv1.CompositionStateRunning {
+		zapLogger.Info("Reconciling: status not running",
+			zap.String("currentState", string(composition.Status.State)))
+		shouldReconcile = true
+	}
+
+	// Case 4: Drift detection - check if deployed resources still exist
+	// This handles manual deletions or resources being removed outside of the controller
+	if !shouldReconcile && composition.Status.DeployedResources != nil {
+		drifted, err := r.checkResourceDrift(ctx, composition, zapLogger)
+		if err != nil {
+			zapLogger.Error("Failed to check resource drift", zap.Error(err))
+			// Continue with reconciliation if we can't determine drift
+			shouldReconcile = true
+		} else if drifted {
+			zapLogger.Info("Reconciling: resource drift detected")
+			shouldReconcile = true
 		}
 	}
 
-	if !needsReconciliation {
-		zapLogger.Debug("Composition already running and up to date, skipping reconciliation")
+	// Skip reconciliation if nothing changed
+	// This prevents infinite reconciliation loops
+	if !shouldReconcile {
+		zapLogger.Debug("Skipping reconciliation: nothing changed")
 		return reconcile.Result{}, nil
 	}
 
-	// Deploy the composition (reconcile on Composition changes OR env-config/env-secret changes OR environment activation changes)
+	// Deploy the composition
 	if err := r.deployComposition(ctx, composition, zapLogger); err != nil {
 		zapLogger.Error("Failed to deploy composition", zap.Error(err))
 		return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateFailed, err.Error(), zapLogger)
@@ -102,6 +127,49 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 
 	// Update status to running
 	return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateRunning, "Composition deployed successfully", zapLogger)
+}
+
+// checkResourceDrift checks if deployed resources still exist in the cluster
+func (r *CompositionReconciler) checkResourceDrift(ctx context.Context, composition *compositionsv1.Composition, logger *zap.Logger) (bool, error) {
+	if composition.Status.DeployedResources == nil {
+		return false, nil
+	}
+
+	// Check deployments
+	for _, deploymentName := range composition.Status.DeployedResources.Deployments {
+		deployment := &appsv1.Deployment{}
+		err := r.Get(ctx, client.ObjectKey{
+			Namespace: composition.Namespace,
+			Name:      deploymentName,
+		}, deployment)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info("Drift detected: deployment not found",
+					zap.String("deployment", deploymentName))
+				return true, nil
+			}
+			return false, err
+		}
+	}
+
+	// Check services
+	for _, serviceName := range composition.Status.DeployedResources.Services {
+		service := &corev1.Service{}
+		err := r.Get(ctx, client.ObjectKey{
+			Namespace: composition.Namespace,
+			Name:      serviceName,
+		}, service)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info("Drift detected: service not found",
+					zap.String("service", serviceName))
+				return true, nil
+			}
+			return false, err
+		}
+	}
+
+	return false, nil
 }
 
 // SetupWithManager sets up the controller with the Manager

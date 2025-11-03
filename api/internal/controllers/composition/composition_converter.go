@@ -40,6 +40,7 @@ func ConvertComposeToK8s(
 	composition *compositionsv1.Composition,
 	namespace string,
 	envData *EnvironmentData,
+	environment *compositionsv1.Environment,
 ) (*ComposeResources, error) {
 	resources := &ComposeResources{
 		Deployments:  make([]*appsv1.Deployment, 0),
@@ -74,6 +75,7 @@ func ConvertComposeToK8s(
 			namespace,
 			commonLabels,
 			envData,
+			environment,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert service %s: %w", serviceName, err)
@@ -102,6 +104,7 @@ func convertServiceToDeployment(
 	namespace string,
 	commonLabels map[string]string,
 	envData *EnvironmentData,
+	environment *compositionsv1.Environment,
 ) (*appsv1.Deployment, error) {
 	// Service-specific labels
 	labels := make(map[string]string)
@@ -257,6 +260,22 @@ func convertServiceToDeployment(
 
 	container.VolumeMounts = volumeMounts
 
+	// Build PodSpec
+	podSpec := corev1.PodSpec{
+		Containers: []corev1.Container{container},
+		Volumes:    volumes,
+	}
+
+	// Apply nodeSelector and tolerations from environment if available
+	if environment != nil {
+		if len(environment.Spec.NodeSelector) > 0 {
+			podSpec.NodeSelector = environment.Spec.NodeSelector
+		}
+		if len(environment.Spec.Tolerations) > 0 {
+			podSpec.Tolerations = environment.Spec.Tolerations
+		}
+	}
+
 	// Create deployment
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -273,10 +292,7 @@ func convertServiceToDeployment(
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
 				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{container},
-					Volumes:    volumes,
-				},
+				Spec: podSpec,
 			},
 		},
 	}

@@ -106,10 +106,6 @@ spec:
                 description: MachineType is the EC2 instance type (e.g., m5.large,
                   t3.medium)
                 type: string
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
               ownedBy:
                 description: OwnedBy is the username/email of the user who owns this
                   machine
@@ -248,6 +244,38 @@ spec:
                 description: Message provides additional information about the instance
                   state
                 type: string
+              nodeLabels:
+                additionalProperties:
+                  type: string
+                type: object
+              nodeTaints:
+                items:
+                  description: |-
+                    The node this Taint is attached to has the "effect" on
+                    any pod that does not tolerate the Taint.
+                  properties:
+                    effect:
+                      description: |-
+                        Required. The effect of the taint on pods
+                        that do not tolerate the taint.
+                        Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Required. The taint key to be applied to a node.
+                      type: string
+                    timeAdded:
+                      description: TimeAdded represents the time at which the taint
+                        was added.
+                      format: date-time
+                      type: string
+                    value:
+                      description: The taint value corresponding to the taint key.
+                      type: string
+                  required:
+                  - effect
+                  - key
+                  type: object
+                type: array
               privateIP:
                 description: PrivateIP is the private IP address of the instance
                 type: string

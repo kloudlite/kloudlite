@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
 	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -71,7 +71,7 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 		zap.Int("service_volume_mounts", totalVolumeMounts))
 
 	// Convert to Kubernetes resources
-	resources, err := ConvertComposeToK8s(project, composition, composition.Namespace, envData)
+	resources, err := ConvertComposeToK8s(project, composition, composition.Namespace, envData, environment)
 	if err != nil {
 		logger.Error("Failed to convert to Kubernetes resources", zap.Error(err))
 		return fmt.Errorf("conversion error: %w", err)
@@ -81,10 +81,6 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 		zap.Int("deployments", len(resources.Deployments)),
 		zap.Int("services", len(resources.Services)),
 		zap.Int("pvcs", len(resources.PVCs)))
-
-	// Get nodeSelector from the environment creator's WorkMachine
-	// This ensures all environment deployments run on the same node as the user's WorkMachine
-	nodeSelector := r.getWorkMachineNodeSelector(ctx, environment, logger)
 
 	// Apply PVCs first
 	for _, pvc := range resources.PVCs {
@@ -96,21 +92,25 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	// Apply Deployments (scale to 0 if environment is inactive)
 	deployedDeployments := make([]string, 0)
 	for _, deployment := range resources.Deployments {
-		// Apply nodeSelector from WorkMachine to ensure deployment runs on the same node
-		if len(nodeSelector) > 0 {
-			deployment.Spec.Template.Spec.NodeSelector = nodeSelector
-			logger.Info("Applied nodeSelector to deployment",
-				zap.String("deployment", deployment.Name),
-				zap.Any("nodeSelector", nodeSelector))
-		}
+		// Apply nodeSelector and tolerations from environment
+		deployment.Spec.Template.Spec.NodeSelector = environment.Spec.NodeSelector
+		deployment.Spec.Template.Spec.Tolerations = environment.Spec.Tolerations
+
 		// If environment is not activated, scale deployment to 0 replicas
 		if !environmentActivated {
 			if deployment.Spec.Replicas != nil && *deployment.Spec.Replicas > 0 {
-				// Store original replica count in annotation
+				// Store original replica count in annotation (only if not already set)
 				if deployment.Annotations == nil {
 					deployment.Annotations = make(map[string]string)
 				}
-				deployment.Annotations[originalReplicasAnnotation] = fmt.Sprintf("%d", *deployment.Spec.Replicas)
+				// Only set the annotation if it doesn't already exist
+				// This prevents re-adding it every reconciliation
+				if _, exists := deployment.Annotations[originalReplicasAnnotation]; !exists {
+					deployment.Annotations[originalReplicasAnnotation] = fmt.Sprintf("%d", *deployment.Spec.Replicas)
+					logger.Info("Storing original replica count",
+						zap.String("deployment", deployment.Name),
+						zap.Int32("replicas", *deployment.Spec.Replicas))
+				}
 
 				// Scale to 0
 				zero := int32(0)
@@ -251,10 +251,55 @@ func (r *CompositionReconciler) applyResource(ctx context.Context, resource clie
 		svc.Spec.IPFamilies = existingSvc.Spec.IPFamilies
 		svc.Spec.IPFamilyPolicy = existingSvc.Spec.IPFamilyPolicy
 
-		logger.Info("Updating Service spec",
+		// Check if specs are equal - if so, skip the update
+		if equality.Semantic.DeepEqual(svc.Spec, existingSvc.Spec) {
+			logger.Info("Service spec unchanged, skipping update",
+				zap.String("name", svc.Name))
+			return nil
+		}
+
+		logger.Info("Updating Service spec (specs differ)",
 			zap.String("name", svc.Name),
 			zap.Int("ports", len(svc.Spec.Ports)),
 			zap.String("type", string(svc.Spec.Type)))
+	}
+
+	// Handle Deployment updates - check if spec has changed
+	if deploy, ok := resource.(*appsv1.Deployment); ok {
+		existingDeploy := existing.(*appsv1.Deployment)
+
+		// Preserve existing annotations that are not in the new deployment
+		// This prevents annotation changes from triggering unnecessary updates
+		if existingDeploy.Annotations != nil && deploy.Annotations == nil {
+			deploy.Annotations = make(map[string]string)
+		}
+		for k, v := range existingDeploy.Annotations {
+			// Only preserve kloudlite.io annotations that don't exist in new deployment
+			if _, exists := deploy.Annotations[k]; !exists && len(k) >= len("kloudlite.io/") && k[:len("kloudlite.io/")] == "kloudlite.io/" {
+				deploy.Annotations[k] = v
+			}
+		}
+
+		specsEqual := equality.Semantic.DeepEqual(deploy.Spec, existingDeploy.Spec)
+		annotationsEqual := equality.Semantic.DeepEqual(deploy.Annotations, existingDeploy.Annotations)
+
+		// Check if specs are equal - if so, skip the update
+		if specsEqual && annotationsEqual {
+			logger.Info("Deployment spec and annotations unchanged, skipping update",
+				zap.String("name", deploy.Name))
+			return nil
+		}
+
+		logger.Info("Deployment will be updated",
+			zap.String("name", deploy.Name),
+			zap.Bool("specsEqual", specsEqual),
+			zap.Bool("annotationsEqual", annotationsEqual),
+			zap.Int("newAnnotations", len(deploy.Annotations)),
+			zap.Int("existingAnnotations", len(existingDeploy.Annotations)),
+			zap.Any("newReplicas", deploy.Spec.Replicas),
+			zap.Any("existingReplicas", existingDeploy.Spec.Replicas),
+			zap.Any("newAnnotationsMap", deploy.Annotations),
+			zap.Any("existingAnnotationsMap", existingDeploy.Annotations))
 	}
 
 	// Copy resource version for update
@@ -269,33 +314,4 @@ func getPVCNames(pvcs []*corev1.PersistentVolumeClaim) []string {
 		names[i] = pvc.Name
 	}
 	return names
-}
-
-// getWorkMachineNodeSelector retrieves the nodeSelector from the environment creator's WorkMachine
-// Returns nil if environment is nil, has no creator, or WorkMachine doesn't exist
-func (r *CompositionReconciler) getWorkMachineNodeSelector(ctx context.Context, environment *compositionsv1.Environment, logger *zap.Logger) map[string]string {
-	if environment == nil || environment.Spec.CreatedBy == "" {
-		return nil
-	}
-
-	// Sanitize creator email/username to generate WorkMachine name (same logic as webhook)
-	// Replace @ with -at- and . with -
-	sanitizedCreator := strings.ReplaceAll(environment.Spec.CreatedBy, "@", "-at-")
-	sanitizedCreator = strings.ReplaceAll(sanitizedCreator, ".", "-")
-	workMachineName := fmt.Sprintf("wm-%s", sanitizedCreator)
-
-	// WorkMachine is cluster-scoped, so we don't need a namespace
-	workMachine := &machinesv1.WorkMachine{}
-	err := r.Get(ctx, client.ObjectKey{Name: workMachineName}, workMachine)
-	if err != nil {
-		// WorkMachine doesn't exist or error fetching it - this is normal if user doesn't have one yet
-		logger.Info("WorkMachine not found for environment creator",
-			zap.String("creator", environment.Spec.CreatedBy),
-			zap.String("workMachineName", workMachineName),
-			zap.Error(err),
-		)
-		return nil
-	}
-
-	return workMachine.Spec.NodeSelector
 }

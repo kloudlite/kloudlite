@@ -660,12 +660,40 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 		return check.UpdateMsg("waiting for volume size to be increased").RequeueAfter(10 * time.Second)
 	}
 
-	// // Update status with current machine info
+	// Update status with current machine info
 	obj.Status.State = machineInfo.State
 	obj.Status.Message = machineInfo.Message
 	obj.Status.PublicIP = machineInfo.PublicIP
 	obj.Status.PrivateIP = machineInfo.PrivateIP
 	obj.Status.RootVolumeSize = specVolume
+
+	// Fetch node information to populate nodeLabels and nodeTaints
+	node := &corev1.Node{}
+	if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Errored(err)
+		}
+		// Node not yet registered, that's ok
+		return check.UpdateMsg("Waiting for node to register").RequeueAfter(10 * time.Second)
+	}
+
+	// Filter and update only kloudlite.io/ prefixed labels
+	kloudliteLabels := make(map[string]string)
+	for k, v := range node.Labels {
+		if strings.HasPrefix(k, "kloudlite.io/") {
+			kloudliteLabels[k] = v
+		}
+	}
+	obj.Status.NodeLabels = kloudliteLabels
+
+	// Filter and update only kloudlite.io/ prefixed taints
+	var kloudliteTaints []corev1.Taint
+	for _, taint := range node.Spec.Taints {
+		if strings.HasPrefix(taint.Key, "kloudlite.io/") {
+			kloudliteTaints = append(kloudliteTaints, taint)
+		}
+	}
+	obj.Status.NodeTaints = kloudliteTaints
 
 	return check.Passed()
 }
