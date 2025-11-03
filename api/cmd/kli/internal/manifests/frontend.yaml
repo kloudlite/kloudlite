@@ -1,4 +1,15 @@
 apiVersion: v1
+kind: Secret
+metadata:
+  name: frontend-secrets
+  namespace: kloudlite
+type: Opaque
+stringData:
+  # Generate a secure secret with: openssl rand -base64 32
+  # This is a placeholder - should be replaced with actual secret in production
+  nextauth-secret: "REPLACE_WITH_SECURE_RANDOM_SECRET"
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: frontend
@@ -40,6 +51,13 @@ spec:
               value: "3000"
             - name: APP_MODE
               value: "dashboard"
+            - name: AUTH_TRUST_HOST
+              value: "true"
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: frontend-secrets
+                  key: nextauth-secret
           resources:
             requests:
               memory: "256Mi"
