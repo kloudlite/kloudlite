@@ -206,9 +206,9 @@ export async function createInstallationDnsRecords(
 ): Promise<string[]> {
   const recordIds: string[] = []
 
-  // Create: {subdomain}.{domain} → IP
+  // Create: {subdomain}.{domain} → IP (proxied through CloudFlare for Origin CA certificates)
   const fullDomain = `${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
-  const recordId = await createDnsRecord(fullDomain, ip)
+  const recordId = await createDnsRecord(fullDomain, ip, true)
 
   if (recordId) {
     recordIds.push(recordId)
@@ -255,17 +255,19 @@ export async function createWorkmachineDnsRecords(
  * @param recordIds - Existing DNS record IDs
  * @param name - Domain name (for logging)
  * @param ip - New IP address
+ * @param proxied - Whether to proxy through Cloudflare (default: false)
  * @returns Success status
  */
 export async function updateDnsRecords(
   recordIds: string[],
   name: string,
   ip: string,
+  proxied: boolean = false,
 ): Promise<boolean> {
   let allSucceeded = true
 
   for (const recordId of recordIds) {
-    const success = await updateDnsRecord(recordId, name, ip)
+    const success = await updateDnsRecord(recordId, name, ip, proxied)
     if (!success) {
       allSucceeded = false
     }

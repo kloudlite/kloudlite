@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
               ? `${installation.subdomain}`
               : `${workMachineName}.${installation.subdomain}`
 
-          await updateDnsRecords(existingRecord.dnsRecordIds, domainName, ip)
+          await updateDnsRecords(existingRecord.dnsRecordIds, domainName, ip, true)
           dnsRecordIds = existingRecord.dnsRecordIds
           dnsCreated = true
           console.log(`Updated DNS records for ${type}: ${domainName}`)
