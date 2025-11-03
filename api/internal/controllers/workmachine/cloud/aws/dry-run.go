@@ -19,11 +19,11 @@ import (
 // - Volume IDs: vol-{17 hex chars} (e.g., vol-0123456789abcdef0)
 //
 // AWS Dry-Run Behavior:
-// 1. If IAM permissions are missing: Returns "UnauthorizedOperation" error
-// 2. If IAM permissions are granted: Returns one of:
-//    a) "DryRunOperation" error (permission check passed, would have succeeded)
-//    b) "InvalidInstanceID.NotFound" error (permission check passed, but resource doesn't exist)
-//    c) "InvalidVolumeID.NotFound" error (permission check passed, but resource doesn't exist)
+//  1. If IAM permissions are missing: Returns "UnauthorizedOperation" error
+//  2. If IAM permissions are granted: Returns one of:
+//     a) "DryRunOperation" error (permission check passed, would have succeeded)
+//     b) "InvalidInstanceID.NotFound" error (permission check passed, but resource doesn't exist)
+//     c) "InvalidVolumeID.NotFound" error (permission check passed, but resource doesn't exist)
 //
 // For permission validation, both (a) and (b)/(c) are acceptable outcomes - they confirm
 // the IAM role has the required permissions. The handleDryRunError function treats both as success.
