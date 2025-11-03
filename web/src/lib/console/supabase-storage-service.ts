@@ -37,7 +37,6 @@ export interface Installation {
   ipRecords?: IPRecord[]
   deploymentReady?: boolean
   lastHealthCheck?: string
-  edgeCertificatePackId?: string
   createdAt: string
   updatedAt: string
 }
@@ -205,7 +204,6 @@ export async function getInstallationById(installationId: string): Promise<Insta
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
-    edgeCertificatePackId: data.edge_certificate_pack_id || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords:
@@ -275,7 +273,6 @@ export async function getUserInstallations(userId: string): Promise<Installation
         reservedAt: inst.reserved_at || undefined,
         deploymentReady: inst.deployment_ready || undefined,
         lastHealthCheck: inst.last_health_check || undefined,
-        edgeCertificatePackId: inst.edge_certificate_pack_id || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
         ipRecords:
@@ -338,7 +335,6 @@ export async function createInstallation(
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
-    edgeCertificatePackId: data.edge_certificate_pack_id || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords: [],
@@ -365,8 +361,6 @@ export async function updateInstallation(
     updateData.deployment_ready = updates.deploymentReady || null
   if (updates.lastHealthCheck !== undefined)
     updateData.last_health_check = updates.lastHealthCheck || null
-  if (updates.edgeCertificatePackId !== undefined)
-    updateData.edge_certificate_pack_id = updates.edgeCertificatePackId || null
 
   const { error } = await supabase
     .from('installations')
@@ -824,6 +818,189 @@ export async function deleteCertificates(installationId: string): Promise<string
   }
 
   return certIds
+}
+
+/**
+ * Edge Certificate Management (CloudFlare Advanced Certificate Manager)
+ */
+export type EdgeCertificateScope = 'installation' | 'workmachine'
+type EdgeCertificateRow = Database['public']['Tables']['edge_certificates']['Row']
+
+export interface EdgeCertificate {
+  id?: number
+  installationId: string
+  cloudflareCertPackId: string
+  hostnames: string[]
+  scope: EdgeCertificateScope
+  scopeIdentifier?: string | null
+  orderedAt?: string
+  status?: 'pending' | 'active' | 'failed'
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
+ * Save or update edge certificate (idempotent)
+ */
+export async function saveEdgeCertificate(cert: EdgeCertificate): Promise<void> {
+  const { error } = await supabase
+    .from('edge_certificates')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .upsert(
+      {
+        installation_id: cert.installationId,
+        cloudflare_cert_pack_id: cert.cloudflareCertPackId,
+        hostnames: cert.hostnames,
+        scope: cert.scope,
+        scope_identifier: cert.scopeIdentifier || null,
+        ordered_at: cert.orderedAt || new Date().toISOString(),
+        status: cert.status || 'pending',
+      },
+      {
+        onConflict: 'installation_id,scope,scope_identifier',
+      },
+    )
+
+  if (error) {
+    throw new Error(`Failed to save edge certificate: ${error.message}`)
+  }
+}
+
+/**
+ * Get edge certificate by scope
+ */
+export async function getEdgeCertificate(
+  installationId: string,
+  scope: EdgeCertificateScope,
+  scopeIdentifier?: string,
+): Promise<EdgeCertificate | null> {
+  let query = supabase
+    .from('edge_certificates')
+    .select('*')
+    .eq('installation_id', installationId)
+    .eq('scope', scope)
+
+  if (scopeIdentifier !== undefined) {
+    query = query.eq('scope_identifier', scopeIdentifier)
+  } else {
+    query = query.is('scope_identifier', null)
+  }
+
+  const result = await query.single()
+
+  if (result.error) {
+    if (result.error.code === 'PGRST116') return null
+    console.error('Error getting edge certificate:', result.error)
+    return null
+  }
+
+  const data = result.data as EdgeCertificateRow | null
+  if (!data) return null
+
+  return {
+    id: data.id,
+    installationId: data.installation_id,
+    cloudflareCertPackId: data.cloudflare_cert_pack_id,
+    hostnames: data.hostnames,
+    scope: data.scope,
+    scopeIdentifier: data.scope_identifier,
+    orderedAt: data.ordered_at,
+    status: data.status,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }
+}
+
+/**
+ * Get all edge certificates for an installation
+ */
+export async function getEdgeCertificates(installationId: string): Promise<EdgeCertificate[]> {
+  const result = await supabase
+    .from('edge_certificates')
+    .select('*')
+    .eq('installation_id', installationId)
+    .order('created_at', { ascending: false })
+
+  if (result.error) {
+    console.error('Error getting edge certificates:', result.error)
+    return []
+  }
+
+  const data = (result.data || []) as EdgeCertificateRow[]
+
+  return data.map((cert) => ({
+    id: cert.id,
+    installationId: cert.installation_id,
+    cloudflareCertPackId: cert.cloudflare_cert_pack_id,
+    hostnames: cert.hostnames,
+    scope: cert.scope,
+    scopeIdentifier: cert.scope_identifier,
+    orderedAt: cert.ordered_at,
+    status: cert.status,
+    createdAt: cert.created_at,
+    updatedAt: cert.updated_at,
+  }))
+}
+
+/**
+ * Update edge certificate status
+ */
+export async function updateEdgeCertificateStatus(
+  installationId: string,
+  scope: EdgeCertificateScope,
+  scopeIdentifier: string | null,
+  status: 'pending' | 'active' | 'failed',
+): Promise<void> {
+  let query = supabase
+    .from('edge_certificates')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update({ status })
+    .eq('installation_id', installationId)
+    .eq('scope', scope)
+
+  if (scopeIdentifier !== null) {
+    query = query.eq('scope_identifier', scopeIdentifier)
+  } else {
+    query = query.is('scope_identifier', null)
+  }
+
+  const { error } = await query
+
+  if (error) {
+    throw new Error(`Failed to update edge certificate status: ${error.message}`)
+  }
+}
+
+/**
+ * Delete all edge certificates for an installation
+ */
+export async function deleteEdgeCertificates(installationId: string): Promise<string[]> {
+  // Get all certificate pack IDs first
+  const { data } = await supabase
+    .from('edge_certificates')
+    .select('cloudflare_cert_pack_id')
+    .eq('installation_id', installationId)
+
+  const certPackIds: string[] = []
+  if (data) {
+    for (const record of data as Pick<EdgeCertificateRow, 'cloudflare_cert_pack_id'>[]) {
+      if (record.cloudflare_cert_pack_id) {
+        certPackIds.push(record.cloudflare_cert_pack_id)
+      }
+    }
+  }
+
+  // Delete from database
+  const { error } = await supabase
+    .from('edge_certificates')
+    .delete()
+    .eq('installation_id', installationId)
+
+  if (error) {
+    console.error('Error deleting edge certificates:', error)
+  }
+
+  return certPackIds
 }
 
 /**
