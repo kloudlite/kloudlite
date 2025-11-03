@@ -42,7 +42,7 @@ func TestConvertServiceToDeployment_WithFilesVolumes(t *testing.T) {
 		"app": "test",
 	}
 
-	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, deployment)
 
@@ -93,7 +93,7 @@ func TestConvertServiceToDeployment_WithFilesVolumes_DotInFilename(t *testing.T)
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 
 	// Volume name should have dots replaced with dashes
@@ -137,7 +137,7 @@ func TestConvertServiceToDeployment_WithFilesVolumes_MissingConfigFile(t *testin
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 
 	// Volume should NOT be created if ConfigFile doesn't exist
@@ -180,7 +180,7 @@ func TestConvertServiceToDeployment_MixedVolumes(t *testing.T) {
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("web", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 
 	// Should have 2 volumes: ConfigMap + PVC
@@ -243,7 +243,7 @@ func TestConvertComposeToK8s_WithFilesVolumes(t *testing.T) {
 		},
 	}
 
-	resources, err := ConvertComposeToK8s(project, composition, "test-ns", envData)
+	resources, err := ConvertComposeToK8s(project, composition, "test-ns", envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, resources)
 
@@ -343,7 +343,7 @@ func TestConvertServiceToDeployment_WithResourceLimits(t *testing.T) {
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, deployment)
 
@@ -395,7 +395,7 @@ func TestConvertServiceToDeployment_WithResourceOverrides(t *testing.T) {
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, deployment)
 
@@ -434,7 +434,7 @@ func TestConvertServiceToDeployment_WithReplicas(t *testing.T) {
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, deployment)
 
@@ -476,7 +476,7 @@ func TestConvertServiceToDeployment_WithReplicasOverride(t *testing.T) {
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, deployment)
 
@@ -515,7 +515,7 @@ func TestConvertServiceToDeployment_WithCompositionEnvVars(t *testing.T) {
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, deployment)
 
@@ -557,7 +557,7 @@ func TestConvertServiceToDeployment_WithCommandAndEntrypoint(t *testing.T) {
 
 	commonLabels := map[string]string{}
 
-	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData)
+	deployment, err := convertServiceToDeployment("app", service, composition, "test-ns", commonLabels, envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, deployment)
 
@@ -602,7 +602,7 @@ func TestConvertComposeToK8s_WithNamedVolumes(t *testing.T) {
 		ConfigFiles: make(map[string]string),
 	}
 
-	resources, err := ConvertComposeToK8s(project, composition, "test-ns", envData)
+	resources, err := ConvertComposeToK8s(project, composition, "test-ns", envData, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, resources)
 

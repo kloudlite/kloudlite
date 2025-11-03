@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -80,8 +81,6 @@ type WorkMachineSpec struct {
 	// Only applicable for cloud providers (AWS, GCP, Azure)
 	// +optional
 	AutoShutdown *AutoShutdownConfig `json:"autoShutdown,omitempty"`
-
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 type CloudProvider string
@@ -208,6 +207,9 @@ type WorkMachineStatus struct {
 
 	// IsAutoStopped when set means machine was auto-stopped by kloudlite
 	IsAutoStopped bool `json:"isAutoStopped,omitempty"`
+
+	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	NodeTaints []corev1.Taint    `json:"nodeTaints,omitempty"`
 }
 
 // MachineInfo contains information about a cloud instance

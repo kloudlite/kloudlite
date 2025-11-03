@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	envV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,8 +12,8 @@ import (
 )
 
 // getEnvironmentForNamespace finds the environment that owns the given namespace
-func (r *CompositionReconciler) getEnvironmentForNamespace(ctx context.Context, namespace string, logger *zap.Logger) (*compositionsv1.Environment, error) {
-	envList := &compositionsv1.EnvironmentList{}
+func (r *CompositionReconciler) getEnvironmentForNamespace(ctx context.Context, namespace string, logger *zap.Logger) (*envV1.Environment, error) {
+	envList := &envV1.EnvironmentList{}
 	if err := r.List(ctx, envList); err != nil {
 		logger.Error("Failed to list environments", zap.Error(err))
 		return nil, err

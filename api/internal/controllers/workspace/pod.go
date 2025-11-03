@@ -599,8 +599,8 @@ chmod 644 /tmp-writable/kloudlite-context.json
 				// Comprehensive workspace container with all services
 				{
 					Name:            "workspace",
-					Image:           "kloudlite/workspace-comprehensive:latest",
-					ImagePullPolicy: corev1.PullNever,
+					Image:           "ghcr.io/kloudlite/kloudlite/workspace-comprehensive:dev",
+					ImagePullPolicy: corev1.PullIfNotPresent,
 					Resources:       defaultResources,
 					Env:             envVars,
 					Ports: []corev1.ContainerPort{

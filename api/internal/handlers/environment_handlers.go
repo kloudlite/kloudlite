@@ -10,16 +10,18 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // EnvironmentHandlers handles HTTP requests for Environment resources
 type EnvironmentHandlers struct {
-	envRepo   repository.EnvironmentRepository
-	userRepo  repository.UserRepository
-	k8sClient client.Client
-	logger    *zap.Logger
+	envRepo         repository.EnvironmentRepository
+	userRepo        repository.UserRepository
+	workmachineRepo repository.WorkMachineRepository
+	k8sClient       client.Client
+	logger          *zap.Logger
 }
 
 // NewEnvironmentHandlers creates a new EnvironmentHandlers
@@ -69,9 +71,11 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	}
 
 	userFound := false
+
 	for _, u := range userList.Items {
 		if u.Spec.Email == userEmail {
 			userFound = true
+			userEmail = u.Spec.Email
 			break
 		}
 	}
@@ -82,6 +86,12 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 			"error":   "User not authorized",
 			"details": fmt.Sprintf("User with email %s does not exist or is not authorized to create environments", userEmail),
 		})
+		return
+	}
+
+	wm, err := h.workmachineRepo.GetByOwner(c, userEmail)
+	if err != nil {
+		c.Error(err)
 		return
 	}
 
@@ -96,6 +106,17 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	// Set the CreatedBy field with the user email from JWT token
 	// The webhook will handle adding ownership labels and metadata
 	env.Spec.CreatedBy = userEmail
+	env.Spec.NodeSelector = wm.Status.NodeLabels
+	env.Spec.Tolerations = make([]corev1.Toleration, 0, len(wm.Status.NodeTaints))
+
+	for _, t := range wm.Status.NodeTaints {
+		env.Spec.Tolerations = append(env.Spec.Tolerations, corev1.Toleration{
+			Key:      t.Key,
+			Operator: corev1.TolerationOpEqual,
+			Value:    t.Value,
+			Effect:   t.Effect,
+		})
+	}
 
 	// Create the environment (cluster-scoped)
 	if err := h.envRepo.Create(c.Request.Context(), env); err != nil {
