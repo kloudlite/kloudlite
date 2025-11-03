@@ -42,6 +42,7 @@ export type Database = {
           reserved_at: string | null
           deployment_ready: boolean | null
           last_health_check: string | null
+          edge_certificate_pack_id: string | null
           created_at: string
           updated_at: string
         }
@@ -57,6 +58,7 @@ export type Database = {
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
+          edge_certificate_pack_id?: string | null
         }
         Update: {
           user_id?: string
@@ -69,6 +71,7 @@ export type Database = {
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
+          edge_certificate_pack_id?: string | null
         }
       }
       ip_records: {

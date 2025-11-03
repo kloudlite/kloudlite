@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getInstallationByKey,
   saveCertificate,
+  getCertificateByScope,
   type CertificateScope,
 } from '@/lib/console/supabase-storage-service'
 import { generateCertificate, generateHostnames } from '@/lib/console/cloudflare-certificates'
@@ -111,6 +112,38 @@ export async function POST(request: NextRequest) {
       parentScopeIdentifier,
     )
     console.log(`Certificate will cover hostnames:`, hostnames)
+
+    // Check if certificate already exists for this scope
+    const existingCert = await getCertificateByScope(
+      installation.id,
+      scope,
+      scopeIdentifier || null,
+      parentScopeIdentifier || null,
+    )
+
+    if (existingCert) {
+      console.log(
+        `Certificate already exists for ${scope} scope, reusing existing certificate ID: ${existingCert.cloudflareCertId}`,
+      )
+      const response = NextResponse.json({
+        success: true,
+        certificateId: existingCert.cloudflareCertId,
+        hostnames: existingCert.hostnames,
+        scope,
+        scopeIdentifier: scopeIdentifier || null,
+        parentScopeIdentifier: parentScopeIdentifier || null,
+        validFrom: existingCert.validFrom,
+        validUntil: existingCert.validUntil,
+        message: `Existing certificate returned for ${scope} scope`,
+      })
+
+      // Disable all caching
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+
+      return response
+    }
 
     // Generate certificate via Cloudflare Origin CA
     const cert = await generateCertificate(hostnames)

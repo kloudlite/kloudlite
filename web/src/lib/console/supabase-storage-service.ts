@@ -37,6 +37,7 @@ export interface Installation {
   ipRecords?: IPRecord[]
   deploymentReady?: boolean
   lastHealthCheck?: string
+  edgeCertificatePackId?: string
   createdAt: string
   updatedAt: string
 }
@@ -204,6 +205,7 @@ export async function getInstallationById(installationId: string): Promise<Insta
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
+    edgeCertificatePackId: data.edge_certificate_pack_id || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords:
@@ -273,6 +275,7 @@ export async function getUserInstallations(userId: string): Promise<Installation
         reservedAt: inst.reserved_at || undefined,
         deploymentReady: inst.deployment_ready || undefined,
         lastHealthCheck: inst.last_health_check || undefined,
+        edgeCertificatePackId: inst.edge_certificate_pack_id || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
         ipRecords:
@@ -335,6 +338,7 @@ export async function createInstallation(
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
+    edgeCertificatePackId: data.edge_certificate_pack_id || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords: [],
@@ -361,6 +365,8 @@ export async function updateInstallation(
     updateData.deployment_ready = updates.deploymentReady || null
   if (updates.lastHealthCheck !== undefined)
     updateData.last_health_check = updates.lastHealthCheck || null
+  if (updates.edgeCertificatePackId !== undefined)
+    updateData.edge_certificate_pack_id = updates.edgeCertificatePackId || null
 
   const { error } = await supabase
     .from('installations')

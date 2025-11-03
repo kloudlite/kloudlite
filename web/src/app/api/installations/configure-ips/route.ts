@@ -3,6 +3,7 @@ import {
   getInstallationByKey,
   addOrUpdateIpRecord,
   markDeploymentReady,
+  updateInstallation,
 } from '@/lib/console/supabase-storage-service'
 import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
@@ -129,17 +130,23 @@ export async function POST(request: NextRequest) {
             dnsCreated = dnsRecordIds.length > 0
             console.log(`Created ${dnsRecordIds.length} DNS records for installation`)
 
-            // Create edge certificate for wildcard subdomain
-            if (dnsCreated) {
+            // Create edge certificate for wildcard subdomain if it doesn't exist
+            if (dnsCreated && !installation.edgeCertificatePackId) {
               const edgeCertId = await createInstallationEdgeCertificate(
                 installation.subdomain,
                 CLOUDFLARE_DNS_DOMAIN,
               )
               if (edgeCertId) {
                 console.log(`Edge certificate ordered: ${edgeCertId}`)
+                // Store edge certificate ID
+                await updateInstallation(installation.id, { edgeCertificatePackId: edgeCertId })
               } else {
                 console.warn('Failed to order edge certificate, but continuing')
               }
+            } else if (installation.edgeCertificatePackId) {
+              console.log(
+                `Edge certificate already exists: ${installation.edgeCertificatePackId}`,
+              )
             }
           } else if (type === 'workmachine') {
             dnsRecordIds = await createWorkmachineDnsRecords(
@@ -164,17 +171,23 @@ export async function POST(request: NextRequest) {
           dnsCreated = dnsRecordIds.length > 0
           console.log(`Created ${dnsRecordIds.length} DNS records for new installation`)
 
-          // Create edge certificate for wildcard subdomain
-          if (dnsCreated) {
+          // Create edge certificate for wildcard subdomain if it doesn't exist
+          if (dnsCreated && !installation.edgeCertificatePackId) {
             const edgeCertId = await createInstallationEdgeCertificate(
               installation.subdomain,
               CLOUDFLARE_DNS_DOMAIN,
             )
             if (edgeCertId) {
               console.log(`Edge certificate ordered: ${edgeCertId}`)
+              // Store edge certificate ID
+              await updateInstallation(installation.id, { edgeCertificatePackId: edgeCertId })
             } else {
               console.warn('Failed to order edge certificate, but continuing')
             }
+          } else if (installation.edgeCertificatePackId) {
+            console.log(
+              `Edge certificate already exists: ${installation.edgeCertificatePackId}`,
+            )
           }
         } else if (type === 'workmachine') {
           dnsRecordIds = await createWorkmachineDnsRecords(
