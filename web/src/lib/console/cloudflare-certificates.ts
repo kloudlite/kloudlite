@@ -213,6 +213,43 @@ export async function getCertificate(certificateId: string): Promise<TLSCertific
   }
 }
 
+/**
+ * List all origin certificates
+ */
+export async function listAllCertificates(): Promise<Array<{ id: string; hostnames: string[] }>> {
+  try {
+    console.log('Fetching all origin certificates from CloudFlare')
+
+    const response = await fetch(CLOUDFLARE_ORIGIN_CA_API, {
+      method: 'GET',
+      headers: {
+        'X-Auth-User-Service-Key': CLOUDFLARE_ORIGIN_CA_KEY,
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Failed to list certificates:', error)
+      return []
+    }
+
+    const result = await response.json()
+
+    if (!result.success) {
+      console.error('Failed to list certificates:', result.errors)
+      return []
+    }
+
+    return result.result.map((cert: any) => ({
+      id: cert.id,
+      hostnames: cert.hostnames,
+    }))
+  } catch (error) {
+    console.error('List certificates error:', error)
+    return []
+  }
+}
+
 export type CertificateScope = 'installation' | 'workmachine' | 'workspace'
 
 /**

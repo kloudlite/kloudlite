@@ -22,11 +22,10 @@ const (
 
 // VerifyKeyResponse represents the response from the console verify-key API
 type VerifyKeyResponse struct {
-	Success         bool     `json:"success"`
-	SecretKey       string   `json:"secretKey"`
-	Subdomain       string   `json:"subdomain"`
-	DeploymentReady bool     `json:"deploymentReady"`
-	IPRecords       []string `json:"ipRecords"`
+	Success         bool   `json:"success"`
+	SecretKey       string `json:"secretKey"`
+	Subdomain       string `json:"subdomain"`
+	DeploymentReady bool   `json:"deploymentReady"`
 }
 
 // SubdomainPoller periodically polls for subdomain configuration
@@ -64,6 +63,11 @@ func (sp *SubdomainPoller) Start(ctx context.Context) {
 		zap.String("console_url", sp.config.ConsoleURL),
 		zap.Int("interval_seconds", sp.config.PollingIntervalSeconds))
 
+	// Ensure DomainRequest is created/updated idempotently on startup
+	if err := sp.ensureDomainRequestOnStartup(ctx); err != nil {
+		sp.logger.Error("Failed to ensure DomainRequest on startup", zap.Error(err))
+	}
+
 	ticker := time.NewTicker(time.Duration(sp.config.PollingIntervalSeconds) * time.Second)
 	defer ticker.Stop()
 
@@ -95,6 +99,35 @@ func (sp *SubdomainPoller) Start(ctx context.Context) {
 func (sp *SubdomainPoller) Stop() {
 	sp.stopped = true
 	close(sp.stopCh)
+}
+
+// ensureDomainRequestOnStartup ensures the DomainRequest is created/updated on API server startup
+func (sp *SubdomainPoller) ensureDomainRequestOnStartup(ctx context.Context) error {
+	sp.logger.Info("Ensuring DomainRequest on startup")
+
+	// Call verify-key API to get subdomain
+	verifyResp, err := sp.verifyInstallationKey(ctx)
+	if err != nil {
+		sp.logger.Debug("Failed to verify installation key on startup", zap.Error(err))
+		// Don't fail startup if verify-key fails, just log and continue
+		return nil
+	}
+
+	// Check if subdomain is set and valid
+	if verifyResp.Subdomain == "" || verifyResp.Subdomain == "0.0.0.0" {
+		sp.logger.Debug("Subdomain not yet configured on startup")
+		return nil
+	}
+
+	sp.logger.Info("Subdomain detected on startup, ensuring DomainRequest", zap.String("subdomain", verifyResp.Subdomain))
+
+	// Create or update DomainRequest
+	if err := sp.createOrUpdateDomainRequest(ctx, verifyResp.Subdomain); err != nil {
+		return fmt.Errorf("failed to create/update domain request on startup: %w", err)
+	}
+
+	sp.logger.Info("DomainRequest ensured successfully on startup")
+	return nil
 }
 
 // poll performs a single poll attempt
@@ -166,15 +199,13 @@ func (sp *SubdomainPoller) verifyInstallationKey(ctx context.Context) (*VerifyKe
 func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subdomain string) error {
 	// Check if DomainRequest already exists
 	existingDR := &domainrequestv1.DomainRequest{}
-	err := sp.k8sClient.Get(ctx, client.ObjectKey{Name: domainRequestName}, existingDR)
+	err := sp.k8sClient.Get(ctx, client.ObjectKey{Name: domainRequestName, Namespace: "kloudlite"}, existingDR)
 
 	if err == nil {
 		// DomainRequest exists, update it
 		sp.logger.Info("Updating existing DomainRequest", zap.String("name", domainRequestName))
 
 		existingDR.Spec.IPAddress = sp.config.PublicIP
-		existingDR.Spec.InstallationKey = sp.config.InstallationKey
-		existingDR.Spec.InstallationSecret = sp.config.InstallationSecret
 
 		if err := sp.k8sClient.Update(ctx, existingDR); err != nil {
 			return fmt.Errorf("failed to update domain request: %w", err)
@@ -193,14 +224,21 @@ func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subd
 
 	domainRequest := &domainrequestv1.DomainRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: domainRequestName,
+			Name:      domainRequestName,
+			Namespace: "kloudlite",
 		},
 		Spec: domainrequestv1.DomainRequestSpec{
-			InstallationKey:    sp.config.InstallationKey,
-			InstallationSecret: sp.config.InstallationSecret,
-			Type:               "installation",
-			IPAddress:          sp.config.PublicIP,
-			CertificateScope:   "installation",
+			Type:             "installation",
+			IPAddress:        sp.config.PublicIP,
+			CertificateScope: "installation",
+			DomainRoutes: []domainrequestv1.DomainRoute{
+				{
+					Domain:           fmt.Sprintf("%s.khost.dev", subdomain),
+					ServiceName:      "frontend",
+					ServiceNamespace: "kloudlite",
+					ServicePort:      80,
+				},
+			},
 		},
 	}
 

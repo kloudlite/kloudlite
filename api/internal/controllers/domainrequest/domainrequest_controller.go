@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/internal/cloud"
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -75,8 +76,8 @@ type downloadCertificatesResponse struct {
 }
 
 // generateHAProxyConfig generates HAProxy configuration for routing traffic
-func (r *DomainRequestReconciler) generateHAProxyConfig(serviceName, serviceNamespace string, servicePort int32) string {
-	return fmt.Sprintf(`global
+func (r *DomainRequestReconciler) generateHAProxyConfig(domainRequest *domainrequestsv1.DomainRequest) string {
+	config := `global
     maxconn 4096
     stats socket /var/run/haproxy.sock mode 660 level admin expose-fd listeners
 
@@ -88,24 +89,62 @@ defaults
     option forwardfor
     option http-server-close
 
+frontend http_frontend
+    bind *:80
+    redirect scheme https code 301
+
 frontend https_frontend
     bind *:443 ssl crt /etc/haproxy/certs/tls.pem
-    default_backend service_backend
+`
 
-backend service_backend
-    server backend1 %s.%s.svc.cluster.local:%d check
-`, serviceName, serviceNamespace, servicePort)
+	// Add domain-based routing if DomainRoutes are configured
+	if len(domainRequest.Spec.DomainRoutes) > 0 {
+		for i, route := range domainRequest.Spec.DomainRoutes {
+			aclName := fmt.Sprintf("is_domain_%d", i)
+			backendName := fmt.Sprintf("domain_backend_%d", i)
+			config += fmt.Sprintf("\n    # Route for domain: %s\n", route.Domain)
+			config += fmt.Sprintf("    acl %s hdr(host) -i %s\n", aclName, route.Domain)
+			config += fmt.Sprintf("    use_backend %s if %s\n", backendName, aclName)
+		}
+		// Use first domain route as default backend
+		config += fmt.Sprintf("\n    default_backend domain_backend_0\n")
+	} else if domainRequest.Spec.IngressBackend != nil {
+		// Use IngressBackend as default if no domain routes
+		config += "\n    default_backend service_backend\n"
+	} else {
+		// Fallback to default backend
+		config += "\n    default_backend default_backend\n"
+	}
+
+	// Add backends for domain routes
+	for i, route := range domainRequest.Spec.DomainRoutes {
+		backendName := fmt.Sprintf("domain_backend_%d", i)
+		config += fmt.Sprintf("\nbackend %s\n", backendName)
+		config += fmt.Sprintf("    server backend%d %s.%s.svc.cluster.local:%d check\n",
+			i, route.ServiceName, route.ServiceNamespace, route.ServicePort)
+	}
+
+	// Add IngressBackend if configured
+	if domainRequest.Spec.IngressBackend != nil {
+		backend := domainRequest.Spec.IngressBackend
+		config += "\nbackend service_backend\n"
+		config += fmt.Sprintf("    server backend1 %s.%s.svc.cluster.local:%d check\n",
+			backend.ServiceName, backend.ServiceNamespace, backend.ServicePort)
+	}
+
+	// Add default backend if no other backends configured
+	if len(domainRequest.Spec.DomainRoutes) == 0 && domainRequest.Spec.IngressBackend == nil {
+		config += "\nbackend default_backend\n"
+		config += "    server default1 frontend.kloudlite.svc.cluster.local:3000 check\n"
+	}
+
+	return config
 }
 
 // createHAProxyConfigMap creates or updates the HAProxy ConfigMap
 func (r *DomainRequestReconciler) createHAProxyConfigMap(ctx context.Context, domainRequest *domainrequestsv1.DomainRequest, logger *zap.Logger) error {
-	if domainRequest.Spec.IngressBackend == nil {
-		return fmt.Errorf("ingressBackend is not configured")
-	}
-
-	backend := domainRequest.Spec.IngressBackend
 	configMapName := fmt.Sprintf("%s-haproxy-config", domainRequest.Name)
-	haproxyConfig := r.generateHAProxyConfig(backend.ServiceName, backend.ServiceNamespace, backend.ServicePort)
+	haproxyConfig := r.generateHAProxyConfig(domainRequest)
 
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -140,6 +179,105 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 	podName := fmt.Sprintf("%s-haproxy", domainRequest.Name)
 	configMapName := fmt.Sprintf("%s-haproxy-config", domainRequest.Name)
 
+	// Check if pod already exists
+	existingPod := &corev1.Pod{}
+	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: "kloudlite"}, existingPod)
+	if err == nil {
+		// Pod exists, delete it to force recreate (pods are immutable)
+		logger.Info("Deleting existing HAProxy pod to recreate with new configuration")
+		if err := r.Delete(ctx, existingPod); err != nil && !errors.IsNotFound(err) {
+			return fmt.Errorf("failed to delete existing HAProxy pod: %w", err)
+		}
+		// Return and let the next reconcile create the new pod
+		return nil
+	} else if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to check if HAProxy pod exists: %w", err)
+	}
+
+	// Create new pod
+	podSpec := corev1.PodSpec{
+		HostNetwork: true,
+		DNSPolicy:   corev1.DNSClusterFirstWithHostNet,
+		Containers: []corev1.Container{
+			{
+				Name:  "haproxy",
+				Image: "haproxy:2.8-alpine",
+				SecurityContext: &corev1.SecurityContext{
+					RunAsUser:  pointerInt64(0),
+					RunAsGroup: pointerInt64(0),
+					Capabilities: &corev1.Capabilities{
+						Add: []corev1.Capability{
+							"NET_BIND_SERVICE",
+						},
+					},
+				},
+				Ports: []corev1.ContainerPort{
+					{
+						Name:          "http",
+						ContainerPort: 80,
+						HostPort:      80,
+						Protocol:      corev1.ProtocolTCP,
+					},
+					{
+						Name:          "https",
+						ContainerPort: 443,
+						HostPort:      443,
+						Protocol:      corev1.ProtocolTCP,
+					},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "haproxy-config",
+						MountPath: "/usr/local/etc/haproxy",
+						ReadOnly:  true,
+					},
+					{
+						Name:      "tls-certs",
+						MountPath: "/etc/haproxy/certs",
+						ReadOnly:  true,
+					},
+				},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    *NewQuantity("100m"),
+						corev1.ResourceMemory: *NewQuantity("128Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    *NewQuantity("500m"),
+						corev1.ResourceMemory: *NewQuantity("256Mi"),
+					},
+				},
+			},
+		},
+		Volumes: []corev1.Volume{
+			{
+				Name: "haproxy-config",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: configMapName,
+						},
+					},
+				},
+			},
+			{
+				Name: "tls-certs",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: domainRequest.Status.CertificateSecretName,
+					},
+				},
+			},
+		},
+	}
+
+	// Add nodeSelector if NodeName is specified
+	if domainRequest.Spec.NodeName != "" {
+		podSpec.NodeSelector = map[string]string{
+			"kubernetes.io/hostname": domainRequest.Spec.NodeName,
+		}
+	}
+
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
@@ -150,113 +288,21 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 				"kloudlite.io/managed-by": "domainrequest-controller",
 			},
 		},
+		Spec: podSpec,
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, pod, func() error {
-		pod.Spec = corev1.PodSpec{
-			HostNetwork: true,
-			DNSPolicy:   corev1.DNSClusterFirst,
-			Containers: []corev1.Container{
-				{
-					Name:  "haproxy",
-					Image: "haproxy:2.8-alpine",
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          "https",
-							ContainerPort: 443,
-							HostPort:      443,
-							Protocol:      corev1.ProtocolTCP,
-						},
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "haproxy-config",
-							MountPath: "/usr/local/etc/haproxy",
-							ReadOnly:  true,
-						},
-						{
-							Name:      "tls-certs",
-							MountPath: "/etc/haproxy/certs",
-							ReadOnly:  true,
-						},
-					},
-					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    *NewQuantity("100m"),
-							corev1.ResourceMemory: *NewQuantity("128Mi"),
-						},
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    *NewQuantity("500m"),
-							corev1.ResourceMemory: *NewQuantity("256Mi"),
-						},
-					},
-				},
-				// Cert watcher sidecar for auto-reload on certificate changes
-				{
-					Name:  "cert-watcher",
-					Image: "alpine:latest",
-					Command: []string{
-						"/bin/sh",
-						"-c",
-						`
-apk add --no-cache inotify-tools
-while true; do
-  inotifywait -e modify,create,delete /etc/haproxy/certs/
-  echo "Certificate changed, reloading HAProxy..."
-  kill -HUP 1
-done
-`,
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "tls-certs",
-							MountPath: "/etc/haproxy/certs",
-							ReadOnly:  true,
-						},
-					},
-					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    *NewQuantity("50m"),
-							corev1.ResourceMemory: *NewQuantity("32Mi"),
-						},
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    *NewQuantity("100m"),
-							corev1.ResourceMemory: *NewQuantity("64Mi"),
-						},
-					},
-				},
-			},
-			Volumes: []corev1.Volume{
-				{
-					Name: "haproxy-config",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: configMapName,
-							},
-						},
-					},
-				},
-				{
-					Name: "tls-certs",
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: domainRequest.Status.CertificateSecretName,
-						},
-					},
-				},
-			},
-		}
+	// Set owner reference so pod is automatically cleaned up when DomainRequest is deleted
+	if err := controllerutil.SetControllerReference(domainRequest, pod, r.Scheme); err != nil {
+		return fmt.Errorf("failed to set owner reference: %w", err)
+	}
 
-		// Set owner reference
-		if err := controllerutil.SetControllerReference(domainRequest, pod, r.Scheme); err != nil {
-			return err
-		}
+	// Create the pod (cannot use CreateOrUpdate because pods are immutable)
+	if err := r.Create(ctx, pod); err != nil {
+		return fmt.Errorf("failed to create HAProxy pod: %w", err)
+	}
 
-		return nil
-	})
-
-	return err
+	logger.Info("HAProxy pod created successfully", zap.String("podName", podName))
+	return nil
 }
 
 // checkHAProxyReady checks if the HAProxy pod is ready
@@ -293,7 +339,7 @@ func (r *DomainRequestReconciler) deleteHAProxyResources(ctx context.Context, do
 			Namespace: "kloudlite",
 		},
 	}
-	if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
+	if err := r.Delete(ctx, pod); err != nil && !errors.IsNotFound(err) {
 		logger.Error("Failed to delete HAProxy pod", zap.Error(err))
 		return err
 	}
@@ -305,7 +351,7 @@ func (r *DomainRequestReconciler) deleteHAProxyResources(ctx context.Context, do
 			Namespace: "kloudlite",
 		},
 	}
-	if err := r.Delete(ctx, configMap); err != nil && !apierrors.IsNotFound(err) {
+	if err := r.Delete(ctx, configMap); err != nil && !errors.IsNotFound(err) {
 		logger.Error("Failed to delete HAProxy ConfigMap", zap.Error(err))
 		return err
 	}
@@ -317,6 +363,11 @@ func (r *DomainRequestReconciler) deleteHAProxyResources(ctx context.Context, do
 func NewQuantity(value string) *resource.Quantity {
 	q, _ := resource.ParseQuantity(value)
 	return &q
+}
+
+// pointerInt64 returns a pointer to an int64 value
+func pointerInt64(i int64) *int64 {
+	return &i
 }
 
 // Reconcile handles DomainRequest reconciliation
@@ -331,7 +382,7 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 	// Fetch the DomainRequest instance
 	domainRequest := &domainrequestsv1.DomainRequest{}
 	if err := r.Get(ctx, req.NamespacedName, domainRequest); err != nil {
-		if apierrors.IsNotFound(err) {
+		if errors.IsNotFound(err) {
 			logger.Info("DomainRequest resource not found, ignoring")
 			return reconcile.Result{}, nil
 		}
@@ -363,8 +414,8 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 	case "CertificateGenerated":
 		return r.handleCertificateDownload(ctx, domainRequest, logger)
 	case "Ready":
-		// After certificate is ready, create HAProxy if IngressBackend is configured
-		if domainRequest.Spec.IngressBackend != nil {
+		// After certificate is ready, create HAProxy if DomainRoutes or IngressBackend is configured
+		if len(domainRequest.Spec.DomainRoutes) > 0 || domainRequest.Spec.IngressBackend != nil {
 			return r.handleHAProxyCreation(ctx, domainRequest, logger)
 		}
 		// Check if certificate needs renewal (e.g., within 30 days of expiry)
@@ -381,7 +432,193 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 	case "HAProxyCreating":
 		return r.handleHAProxyStatusCheck(ctx, domainRequest, logger)
 	case "HAProxyReady":
-		// HAProxy is running, check for certificate renewal
+		// Verify HAProxy pod actually exists
+		if domainRequest.Status.HAProxyPodName != "" {
+			pod := &corev1.Pod{}
+			err := r.Get(ctx, client.ObjectKey{
+				Name:      domainRequest.Status.HAProxyPodName,
+				Namespace: domainRequest.Namespace,
+			}, pod)
+
+			if err != nil {
+				if errors.IsNotFound(err) {
+					// Pod doesn't exist, need to recreate it
+					logger.Info("HAProxy pod not found, recreating",
+						zap.String("podName", domainRequest.Status.HAProxyPodName))
+
+					// Reset HAProxy status
+					domainRequest.Status.HAProxyPodName = ""
+					domainRequest.Status.HAProxyReady = false
+					domainRequest.Status.State = "Ready"
+					domainRequest.Status.Message = "HAProxy pod was deleted, will recreate"
+
+					if err := r.Status().Update(ctx, domainRequest); err != nil {
+						logger.Error("Failed to update status after pod deletion", zap.Error(err))
+						return reconcile.Result{}, err
+					}
+
+					// Trigger recreation
+					return r.handleHAProxyCreation(ctx, domainRequest, logger)
+				}
+				logger.Error("Failed to check HAProxy pod", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			// Check if pod is still ready
+			isReady := false
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
+					isReady = true
+					break
+				}
+			}
+
+			if !isReady {
+				logger.Info("HAProxy pod is not ready anymore",
+					zap.String("podName", domainRequest.Status.HAProxyPodName),
+					zap.String("phase", string(pod.Status.Phase)))
+
+				domainRequest.Status.HAProxyReady = false
+				domainRequest.Status.State = "HAProxyCreating"
+				domainRequest.Status.Message = fmt.Sprintf("HAProxy pod not ready: %s", pod.Status.Phase)
+
+				if err := r.Status().Update(ctx, domainRequest); err != nil {
+					logger.Error("Failed to update status", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+		}
+
+		// Check if HAProxy configuration needs to be updated
+		// This happens when domainRoutes or ingressBackend changes
+		configMapName := fmt.Sprintf("%s-haproxy-config", domainRequest.Name)
+		existingConfigMap := &corev1.ConfigMap{}
+		err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: domainRequest.Namespace}, existingConfigMap)
+
+		if err == nil {
+			// ConfigMap exists, check if it needs updating
+			currentConfig := r.generateHAProxyConfig(domainRequest)
+			existingConfig := existingConfigMap.Data["haproxy.cfg"]
+			if currentConfig != existingConfig {
+				logger.Info("HAProxy configuration has changed, updating ConfigMap and restarting pod")
+
+				// Delete the ConfigMap to force recreation with new config
+				if err := r.Delete(ctx, existingConfigMap); err != nil {
+					logger.Error("Failed to delete ConfigMap", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+
+				// Delete the HAProxy pod to force recreation
+				if domainRequest.Status.HAProxyPodName != "" {
+					existingPod := &corev1.Pod{}
+					err := r.Get(ctx, client.ObjectKey{Name: domainRequest.Status.HAProxyPodName, Namespace: domainRequest.Namespace}, existingPod)
+					if err == nil {
+						if err := r.Delete(ctx, existingPod); err != nil {
+							logger.Error("Failed to delete HAProxy pod", zap.Error(err))
+							return reconcile.Result{}, err
+						}
+					}
+				}
+
+				// Reset HAProxy status to trigger recreation
+				domainRequest.Status.HAProxyPodName = ""
+				domainRequest.Status.HAProxyReady = false
+				domainRequest.Status.State = "Ready"
+				domainRequest.Status.Message = "HAProxy configuration changed, recreating"
+
+				if err := r.Status().Update(ctx, domainRequest); err != nil {
+					logger.Error("Failed to update status after config change", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+
+				return reconcile.Result{}, nil
+			}
+		} else if errors.IsNotFound(err) {
+			// ConfigMap doesn't exist, need to recreate it
+			logger.Info("HAProxy ConfigMap not found, recreating HAProxy setup")
+
+			// Delete the HAProxy pod if it exists
+			if domainRequest.Status.HAProxyPodName != "" {
+				existingPod := &corev1.Pod{}
+				err := r.Get(ctx, client.ObjectKey{Name: domainRequest.Status.HAProxyPodName, Namespace: domainRequest.Namespace}, existingPod)
+				if err == nil {
+					if err := r.Delete(ctx, existingPod); err != nil {
+						logger.Error("Failed to delete HAProxy pod", zap.Error(err))
+						return reconcile.Result{}, err
+					}
+				}
+			}
+
+			// Reset HAProxy status to trigger recreation
+			domainRequest.Status.HAProxyPodName = ""
+			domainRequest.Status.HAProxyReady = false
+			domainRequest.Status.State = "Ready"
+			domainRequest.Status.Message = "HAProxy ConfigMap missing, recreating"
+
+			if err := r.Status().Update(ctx, domainRequest); err != nil {
+				logger.Error("Failed to update status after ConfigMap deletion", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			return reconcile.Result{}, nil
+		}
+
+		// Check if IP address has changed
+		currentIP := domainRequest.Spec.IPAddress
+		if currentIP == "" && domainRequest.Spec.LoadBalancerServiceName != "" {
+			// Fetch current IP from LoadBalancer service
+			svc := &corev1.Service{}
+			serviceKey := client.ObjectKey{
+				Name:      domainRequest.Spec.LoadBalancerServiceName,
+				Namespace: domainRequest.Spec.LoadBalancerServiceNamespace,
+			}
+			if err := r.Get(ctx, serviceKey, svc); err == nil {
+				if len(svc.Status.LoadBalancer.Ingress) > 0 {
+					currentIP = svc.Status.LoadBalancer.Ingress[0].IP
+				}
+			}
+		}
+
+		// If we still don't have current IP, try to get it from cloud metadata
+		if currentIP == "" {
+			metadataProvider := cloud.NewAWSMetadataProvider()
+			if ip, err := metadataProvider.GetPublicIP(ctx); err == nil {
+				currentIP = ip
+			}
+		}
+
+		// Check if IP has changed from what was registered
+		if currentIP != "" && domainRequest.Status.LastIPRegistrationTime != nil {
+			// We need to compare with the IP that was actually registered
+			// For now, we'll check if the IP in spec is different from current
+			if domainRequest.Spec.IPAddress != "" && currentIP != domainRequest.Spec.IPAddress {
+				logger.Info("IP address has changed, triggering re-registration",
+					zap.String("oldIP", domainRequest.Spec.IPAddress),
+					zap.String("newIP", currentIP))
+
+				// Update spec with new IP
+				domainRequest.Spec.IPAddress = currentIP
+				if err := r.Update(ctx, domainRequest); err != nil {
+					logger.Error("Failed to update spec with new IP", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+
+				// Reset to re-register
+				domainRequest.Status.State = "Pending"
+				domainRequest.Status.Message = "IP address changed, re-registering"
+
+				if err := r.Status().Update(ctx, domainRequest); err != nil {
+					logger.Error("Failed to update status for IP change", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+
+				return reconcile.Result{}, nil
+			}
+		}
+
+		// HAProxy is running and everything is good, check for certificate renewal
 		if domainRequest.Status.CertificateExpiresAt != nil {
 			timeUntilExpiry := time.Until(domainRequest.Status.CertificateExpiresAt.Time)
 			if timeUntilExpiry < 30*24*time.Hour {
@@ -390,8 +627,9 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 				return r.handleCertificateGeneration(ctx, domainRequest, logger)
 			}
 		}
-		logger.Info("DomainRequest with HAProxy is ready, no action needed")
-		return reconcile.Result{RequeueAfter: 24 * time.Hour}, nil
+
+		logger.Info("DomainRequest with HAProxy is ready, all checks passed")
+		return reconcile.Result{RequeueAfter: 5 * time.Minute}, nil
 	case "Failed":
 		// Retry the failed operation after 30 seconds
 		logger.Info("DomainRequest failed, determining which step to retry")
@@ -432,7 +670,7 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 			Namespace: domainRequest.Spec.LoadBalancerServiceNamespace,
 		}
 		if err := r.Get(ctx, serviceKey, svc); err != nil {
-			if apierrors.IsNotFound(err) {
+			if errors.IsNotFound(err) {
 				logger.Error("LoadBalancer service not found", zap.Error(err))
 				return r.updateStatus(ctx, domainRequest, "Failed", "LoadBalancer service not found", logger)
 			}
@@ -609,6 +847,9 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 		}
 		secret.Data["tls.crt"] = []byte(downloadResp.Certificate)
 		secret.Data["tls.key"] = []byte(downloadResp.PrivateKey)
+		// Add combined PEM file for HAProxy
+		combinedPEM := downloadResp.Certificate + "\n" + downloadResp.PrivateKey
+		secret.Data["tls.pem"] = []byte(combinedPEM)
 
 		// Set owner reference
 		if err := controllerutil.SetControllerReference(domainRequest, secret, r.Scheme); err != nil {
@@ -689,8 +930,13 @@ func (r *DomainRequestReconciler) handleHAProxyStatusCheck(ctx context.Context, 
 	// Check if HAProxy pod is ready
 	ready, err := r.checkHAProxyReady(ctx, domainRequest.Status.HAProxyPodName, logger)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Warn("HAProxy pod not found, will retry")
+		if errors.IsNotFound(err) {
+			logger.Warn("HAProxy pod not found, recreating it")
+			// Pod was deleted or never created, recreate it
+			if err := r.createHAProxyPod(ctx, domainRequest, logger); err != nil {
+				logger.Error("Failed to recreate HAProxy pod", zap.Error(err))
+				return reconcile.Result{}, err
+			}
 			return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 		logger.Error("Failed to check HAProxy pod status", zap.Error(err))

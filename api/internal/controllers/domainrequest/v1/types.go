@@ -5,11 +5,10 @@ import (
 )
 
 // +genclient
-// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:printcolumn:name="IP Address",type=string,JSONPath=`.spec.ipAddress`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 // +kubebuilder:printcolumn:name="Domain",type=string,JSONPath=`.status.domain`
@@ -28,14 +27,6 @@ type DomainRequest struct {
 
 // DomainRequestSpec defines the desired state of DomainRequest
 type DomainRequestSpec struct {
-	// InstallationKey is the unique key for this Kloudlite installation
-	// +kubebuilder:validation:Required
-	InstallationKey string `json:"installationKey"`
-
-	// InstallationSecret is the secret key for authentication with console.kloudlite.io
-	// +kubebuilder:validation:Required
-	InstallationSecret string `json:"installationSecret"`
-
 	// Type indicates the type of registration: "installation" or "workmachine"
 	// +kubebuilder:validation:Enum=installation;workmachine
 	// +kubebuilder:default=installation
@@ -45,6 +36,11 @@ type DomainRequestSpec struct {
 	// If not provided, will be auto-detected from the LoadBalancer service
 	// +optional
 	IPAddress string `json:"ipAddress,omitempty"`
+
+	// NodeName is the name of the node where HAProxy pod should be scheduled
+	// The node should have the public IP address
+	// +optional
+	NodeName string `json:"nodeName,omitempty"`
 
 	// LoadBalancerServiceName is the name of the LoadBalancer service to watch for IP
 	// Used for auto-detecting the IP address
@@ -83,11 +79,36 @@ type DomainRequestSpec struct {
 	// IngressBackend defines the backend service to route traffic to
 	// +optional
 	IngressBackend *IngressBackendConfig `json:"ingressBackend,omitempty"`
+
+	// DomainRoutes defines domain-based routing rules for HAProxy
+	// +optional
+	DomainRoutes []DomainRoute `json:"domainRoutes,omitempty"`
 }
 
 // IngressBackendConfig defines a simple service:port mapping for traffic routing
 type IngressBackendConfig struct {
 	// ServiceName is the name of the backend service
+	// +kubebuilder:validation:Required
+	ServiceName string `json:"serviceName"`
+
+	// ServiceNamespace is the namespace of the backend service
+	// +kubebuilder:validation:Required
+	ServiceNamespace string `json:"serviceNamespace"`
+
+	// ServicePort is the port of the backend service
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	ServicePort int32 `json:"servicePort"`
+}
+
+// DomainRoute defines a domain-based routing rule
+type DomainRoute struct {
+	// Domain is the domain name to match (e.g., "example.khost.dev")
+	// +kubebuilder:validation:Required
+	Domain string `json:"domain"`
+
+	// ServiceName is the name of the backend service for this domain
 	// +kubebuilder:validation:Required
 	ServiceName string `json:"serviceName"`
 

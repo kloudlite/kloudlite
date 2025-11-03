@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kloudlite/kloudlite/api/internal/config"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest"
@@ -36,7 +37,7 @@ type Manager struct {
 }
 
 // NewManager creates a new controller manager with all controllers
-func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
+func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, logger *zap.Logger) (*Manager, error) {
 	// Setup scheme
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -140,9 +141,11 @@ func NewManager(cfg *rest.Config, logger *zap.Logger) (*Manager, error) {
 
 	// Setup DomainRequest controller
 	domainRequestReconciler := &domainrequest.DomainRequestReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "domainrequest")),
+		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
+		Logger:             logger.With(zap.String("controller", "domainrequest")),
+		InstallationKey:    installationCfg.InstallationKey,
+		InstallationSecret: installationCfg.InstallationSecret,
 	}
 
 	if err = domainRequestReconciler.SetupWithManager(mgr); err != nil {
