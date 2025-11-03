@@ -11,6 +11,7 @@ import {
   createWorkmachineDnsRecords,
   updateDnsRecords,
 } from '@/lib/console/cloudflare-dns'
+import { createInstallationEdgeCertificate } from '@/lib/console/cloudflare-edge-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
@@ -127,6 +128,19 @@ export async function POST(request: NextRequest) {
             dnsRecordIds = await createInstallationDnsRecords(installation.subdomain, ip)
             dnsCreated = dnsRecordIds.length > 0
             console.log(`Created ${dnsRecordIds.length} DNS records for installation`)
+
+            // Create edge certificate for wildcard subdomain
+            if (dnsCreated) {
+              const edgeCertId = await createInstallationEdgeCertificate(
+                installation.subdomain,
+                CLOUDFLARE_DNS_DOMAIN,
+              )
+              if (edgeCertId) {
+                console.log(`Edge certificate ordered: ${edgeCertId}`)
+              } else {
+                console.warn('Failed to order edge certificate, but continuing')
+              }
+            }
           } else if (type === 'workmachine') {
             dnsRecordIds = await createWorkmachineDnsRecords(
               workMachineName!,
@@ -149,6 +163,19 @@ export async function POST(request: NextRequest) {
           dnsRecordIds = await createInstallationDnsRecords(installation.subdomain, ip)
           dnsCreated = dnsRecordIds.length > 0
           console.log(`Created ${dnsRecordIds.length} DNS records for new installation`)
+
+          // Create edge certificate for wildcard subdomain
+          if (dnsCreated) {
+            const edgeCertId = await createInstallationEdgeCertificate(
+              installation.subdomain,
+              CLOUDFLARE_DNS_DOMAIN,
+            )
+            if (edgeCertId) {
+              console.log(`Edge certificate ordered: ${edgeCertId}`)
+            } else {
+              console.warn('Failed to order edge certificate, but continuing')
+            }
+          }
         } else if (type === 'workmachine') {
           dnsRecordIds = await createWorkmachineDnsRecords(
             workMachineName!,
