@@ -76,7 +76,7 @@ K3S_SERVER_URL="https://$PRIVATE_IP:6443"
 
 # Install K3s server with predefined token
 echo "Installing K3s server..."
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" K3S_TOKEN="$K3S_AGENT_TOKEN" sh -s - server \
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" K3S_AGENT_TOKEN="$K3S_AGENT_TOKEN" sh -s - server \
   --disable traefik \
   --write-kubeconfig-mode 644
 
@@ -138,11 +138,13 @@ metadata:
   namespace: kloudlite
 data:
   PORT: "8080"
+  CLOUD_PROVIDER: "aws"
   INSTALLATION_KEY: "%s"
   AWS_VPC_ID: "%s"
   AWS_SECURITY_GROUP_ID: "%s"
   AWS_REGION: "%s"
   AWS_AMI_ID: "%s"
+  AWS_WORKMACHINE_INSTANCE_PROFILE: "kl-%s-workmachine-role"
   AWS_PRIVATE_IP: "$PRIVATE_IP"
   AWS_PUBLIC_IP: "$PUBLIC_IP"
   K3S_VERSION: "$K3S_VERSION"
@@ -358,7 +360,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, installationKey, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))

@@ -15,6 +15,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled
+      type: date
     - jsonPath: .spec.ownedBy
       name: Owner
       type: string
@@ -27,6 +30,9 @@ spec:
     - jsonPath: .status.startedAt
       name: Started At
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -55,9 +61,6 @@ spec:
           spec:
             description: WorkMachineSpec defines the desired state of WorkMachine
             properties:
-              allowedCIDR:
-                default: 0.0.0.0/0
-                type: string
               autoShutdown:
                 description: |-
                   AutoShutdown configures automatic instance shutdown when idle
@@ -90,54 +93,25 @@ spec:
                 - idleThresholdMinutes
                 type: object
               aws:
-                description: AWSProvider contains AWS-specific configuration
+                description: AWSProviderExtras contains AWS-specific configuration
                 properties:
-                  deleteVolumePostTermination:
-                    type: boolean
-                  domainName:
-                    description: |-
-                      DomainName is the base domain for WorkMachine DNS records
-                      (e.g., "workmachines.example.com" → "<machine-name>.workmachines.example.com")
-                    type: string
                   iamRole:
                     description: IAMRole is the IAM role name to attach to the instance
                     type: string
-                  machineType:
-                    description: MachineType is the EC2 instance type (e.g., m5.large,
-                      t3.medium)
-                    type: string
-                  volumeSize:
-                    default: 50
-                    description: VolumeSize is the size of the root EBS volume in
-                      GB
-                    format: int32
-                    maximum: 1000
-                    minimum: 20
-                    type: integer
-                  volumeType:
-                    default: gp3
-                    description: VolumeType is the EBS volume type (gp3, gp2, io1,
-                      io2)
-                    enum:
-                    - gp3
-                    - gp2
-                    - io1
-                    - io2
-                    type: string
-                required:
-                - domainName
-                - machineType
-                - volumeSize
-                - volumeType
                 type: object
+              deleteVolumePostTermination:
+                default: true
+                description: DeleteVolumePostTermination controls whether root volume
+                  is cleaned up post deletion
+                type: boolean
               displayName:
                 description: DisplayName is the human-readable name for the work machine
                 maxLength: 100
                 minLength: 1
                 type: string
               machineType:
-                description: MachineType references the MachineType to use for this
-                  machine
+                description: MachineType is the EC2 instance type (e.g., m5.large,
+                  t3.medium)
                 type: string
               nodeSelector:
                 additionalProperties:
@@ -166,12 +140,25 @@ spec:
                   TargetNamespace is the namespace where the WorkMachine workloads will run
                   Defaults to wm-{username}
                 type: string
+              volumeSize:
+                default: 100
+                description: VolumeSize is the size of the root EBS volume in GB
+                format: int32
+                maximum: 1000
+                minimum: 100
+                type: integer
+              volumeType:
+                description: |-
+                  VolumeType is the volume type
+                  eg. for AWS (gp3, gp2, io1, io2)
+                type: string
             required:
             - displayName
             - machineType
             - ownedBy
             - state
             - targetNamespace
+            - volumeSize
             type: object
           status:
             description: WorkMachineStatus defines the observed state of WorkMachine

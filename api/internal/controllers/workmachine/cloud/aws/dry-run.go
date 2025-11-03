@@ -9,17 +9,43 @@ import (
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 )
 
+// Dry-run Permission Validation Approach
+//
+// These dry-run checks validate IAM permissions without affecting actual resources.
+// We use dummy resource IDs that follow AWS format requirements but don't reference real resources.
+//
+// AWS Resource ID Formats (must be strictly followed):
+// - Instance IDs: i-{17 hex chars} (e.g., i-0123456789abcdef0)
+// - Volume IDs: vol-{17 hex chars} (e.g., vol-0123456789abcdef0)
+//
+// AWS Dry-Run Behavior:
+// 1. If IAM permissions are missing: Returns "UnauthorizedOperation" error
+// 2. If IAM permissions are granted: Returns one of:
+//    a) "DryRunOperation" error (permission check passed, would have succeeded)
+//    b) "InvalidInstanceID.NotFound" error (permission check passed, but resource doesn't exist)
+//    c) "InvalidVolumeID.NotFound" error (permission check passed, but resource doesn't exist)
+//
+// For permission validation, both (a) and (b)/(c) are acceptable outcomes - they confirm
+// the IAM role has the required permissions. The handleDryRunError function treats both as success.
+//
+// Why dummy IDs work:
+// - AWS validates IAM permissions BEFORE checking if resources exist
+// - Permission errors (UnauthorizedOperation) are returned immediately
+// - Resource-not-found errors only occur AFTER permission validation passes
 const (
-	dryRunAMI_ID        = "ami-06fa3f12191aa3337"
-	dryRunInstance_ID   = "i-0f325ce07e90c9f42"
-	dryRunSecurityGroup = "sg-08a3d6add69722a8c"
-	dryRunVolumeID      = "vol-056ed4fd0c3697e3d"
+	// Using valid format instance ID that is extremely unlikely to exist
+	// Format: i-{17 hex chars} - using pattern with zeros and 'd' (hex digit)
+	dryRunInstanceID = "i-0000000000000d111" // Exactly 17 hex chars after 'i-'
+
+	// Using valid format volume ID that is extremely unlikely to exist
+	// Format: vol-{17 hex chars}
+	dryRunVolumeID = "vol-0000000000000d111" // Exactly 17 hex chars after 'vol-'
 )
 
 func (p *provider) dryRunCreateInstance(ctx context.Context) error {
 	_, err := p.ec2Client.RunInstances(ctx, &ec2.RunInstancesInput{
 		DryRun:       fn.Ptr(true),
-		ImageId:      fn.Ptr(dryRunAMI_ID),
+		ImageId:      fn.Ptr(p.AMI), // Use configured AMI from provider
 		InstanceType: ec2types.InstanceTypeT3Micro,
 		MinCount:     fn.Ptr[int32](1),
 		MaxCount:     fn.Ptr[int32](1),
@@ -30,7 +56,7 @@ func (p *provider) dryRunCreateInstance(ctx context.Context) error {
 func (p *provider) dryRunTerminateInstance(ctx context.Context) error {
 	_, err := p.ec2Client.TerminateInstances(ctx, &ec2.TerminateInstancesInput{
 		DryRun:      fn.Ptr(true),
-		InstanceIds: []string{dryRunInstance_ID},
+		InstanceIds: []string{dryRunInstanceID},
 	})
 	return handleDryRunError(err, "ec2:TerminateInstances")
 }
@@ -38,7 +64,7 @@ func (p *provider) dryRunTerminateInstance(ctx context.Context) error {
 func (p *provider) dryRunStartInstance(ctx context.Context) error {
 	_, err := p.ec2Client.StartInstances(ctx, &ec2.StartInstancesInput{
 		DryRun:      fn.Ptr(true),
-		InstanceIds: []string{dryRunInstance_ID},
+		InstanceIds: []string{dryRunInstanceID},
 	})
 	return handleDryRunError(err, "ec2:StartInstances")
 }
@@ -46,9 +72,17 @@ func (p *provider) dryRunStartInstance(ctx context.Context) error {
 func (p *provider) dryRunStopInstances(ctx context.Context) error {
 	_, err := p.ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{
 		DryRun:      fn.Ptr(true),
-		InstanceIds: []string{dryRunInstance_ID},
+		InstanceIds: []string{dryRunInstanceID},
 	})
 	return handleDryRunError(err, "ec2:StopInstances")
+}
+
+func (p *provider) dryRunRebootInstances(ctx context.Context) error {
+	_, err := p.ec2Client.RebootInstances(ctx, &ec2.RebootInstancesInput{
+		DryRun:      fn.Ptr(true),
+		InstanceIds: []string{dryRunInstanceID},
+	})
+	return handleDryRunError(err, "ec2:RebootInstances")
 }
 
 func (p *provider) dryRunDescribeInstances(ctx context.Context) error {
@@ -85,27 +119,10 @@ func (p *provider) dryRunModifyVolume(ctx context.Context) error {
 func (p *provider) dryRunModifyInstanceAttribute(ctx context.Context) error {
 	_, err := p.ec2Client.ModifyInstanceAttribute(ctx, &ec2.ModifyInstanceAttributeInput{
 		DryRun:       fn.Ptr(true),
-		InstanceId:   fn.Ptr(dryRunInstance_ID),
+		InstanceId:   fn.Ptr(dryRunInstanceID),
 		InstanceType: &ec2types.AttributeValue{Value: fn.Ptr("t3.micro")},
 	})
 	return handleDryRunError(err, "ec2:ModifyInstanceAttribute")
-}
-
-func (p *provider) dryRunCreateSecurityGroup(ctx context.Context) error {
-	_, err := p.ec2Client.CreateSecurityGroup(ctx, &ec2.CreateSecurityGroupInput{
-		DryRun:      fn.Ptr(true),
-		GroupName:   fn.Ptr(dryRunSecurityGroup),
-		Description: fn.Ptr("test"),
-	})
-	return handleDryRunError(err, "ec2:CreateSecurityGroup")
-}
-
-func (p *provider) dryRunDeleteSecurityGroup(ctx context.Context) error {
-	_, err := p.ec2Client.DeleteSecurityGroup(ctx, &ec2.DeleteSecurityGroupInput{
-		DryRun:  fn.Ptr(true),
-		GroupId: fn.Ptr(dryRunSecurityGroup),
-	})
-	return handleDryRunError(err, "ec2:DeleteSecurityGroup")
 }
 
 func (p *provider) dryRunDescribeSecurityGroups(ctx context.Context) error {
@@ -113,49 +130,4 @@ func (p *provider) dryRunDescribeSecurityGroups(ctx context.Context) error {
 		MaxResults: fn.Ptr(int32(5)),
 	})
 	return err
-}
-
-func (p *provider) dryRunAuthorizeSecurityGroupIngress(ctx context.Context) error {
-	_, err := p.ec2Client.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
-		DryRun:  fn.Ptr(true),
-		GroupId: fn.Ptr(dryRunSecurityGroup),
-		IpPermissions: []ec2types.IpPermission{
-			{
-				IpProtocol: fn.Ptr("tcp"),
-				FromPort:   fn.Ptr(int32(443)),
-				ToPort:     fn.Ptr(int32(443)),
-				IpRanges: []ec2types.IpRange{
-					{CidrIp: fn.Ptr("0.0.0.0/0")},
-				},
-			},
-		},
-	})
-	return handleDryRunError(err, "ec2:AuthorizeSecurityGroupIngress")
-}
-
-func (p *provider) dryRunAuthorizeSecurityGroupEgress(ctx context.Context) error {
-	_, err := p.ec2Client.AuthorizeSecurityGroupEgress(ctx, &ec2.AuthorizeSecurityGroupEgressInput{
-		DryRun:  fn.Ptr(true),
-		GroupId: fn.Ptr(dryRunSecurityGroup),
-		IpPermissions: []ec2types.IpPermission{
-			{
-				IpProtocol: fn.Ptr("-1"),
-				IpRanges: []ec2types.IpRange{
-					{CidrIp: fn.Ptr("0.0.0.0/0")},
-				},
-			},
-		},
-	})
-	return handleDryRunError(err, "ec2:AuthorizeSecurityGroupEgress")
-}
-
-func (p *provider) dryRunCreateTags(ctx context.Context) error {
-	_, err := p.ec2Client.CreateTags(ctx, &ec2.CreateTagsInput{
-		DryRun:    fn.Ptr(true),
-		Resources: []string{dryRunInstance_ID},
-		Tags: []ec2types.Tag{
-			{Key: fn.Ptr("test"), Value: fn.Ptr("test")},
-		},
-	})
-	return handleDryRunError(err, "ec2:CreateTags")
 }

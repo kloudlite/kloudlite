@@ -12,7 +12,7 @@ spec:
     listKind: DomainRequestList
     plural: domainrequests
     singular: domainrequest
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.ipAddress
@@ -75,6 +75,35 @@ spec:
                   CertificateScopeIdentifier is the identifier for the certificate scope
                   (e.g., workmachine name or workspace name)
                 type: string
+              domainRoutes:
+                description: DomainRoutes defines domain-based routing rules for HAProxy
+                items:
+                  description: DomainRoute defines a domain-based routing rule
+                  properties:
+                    domain:
+                      description: Domain is the domain name to match (e.g., "example.khost.dev")
+                      type: string
+                    serviceName:
+                      description: ServiceName is the name of the backend service
+                        for this domain
+                      type: string
+                    serviceNamespace:
+                      description: ServiceNamespace is the namespace of the backend
+                        service
+                      type: string
+                    servicePort:
+                      description: ServicePort is the port of the backend service
+                      format: int32
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
+                  required:
+                  - domain
+                  - serviceName
+                  - serviceNamespace
+                  - servicePort
+                  type: object
+                type: array
               ingressBackend:
                 description: IngressBackend defines the backend service to route traffic
                   to
@@ -97,14 +126,6 @@ spec:
                 - serviceNamespace
                 - servicePort
                 type: object
-              installationKey:
-                description: InstallationKey is the unique key for this Kloudlite
-                  installation
-                type: string
-              installationSecret:
-                description: InstallationSecret is the secret key for authentication
-                  with console.kloudlite.io
-                type: string
               ipAddress:
                 description: |-
                   IPAddress is the IP address to register
@@ -118,6 +139,11 @@ spec:
               loadBalancerServiceNamespace:
                 description: LoadBalancerServiceNamespace is the namespace of the
                   LoadBalancer service
+                type: string
+              nodeName:
+                description: |-
+                  NodeName is the name of the node where HAProxy pod should be scheduled
+                  The node should have the public IP address
                 type: string
               sshProxyEnabled:
                 default: false
@@ -139,8 +165,6 @@ spec:
                 type: string
             required:
             - certificateScope
-            - installationKey
-            - installationSecret
             - type
             type: object
           status:

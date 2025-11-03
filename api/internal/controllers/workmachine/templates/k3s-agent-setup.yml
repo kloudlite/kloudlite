@@ -9,6 +9,21 @@ function log() {
   echo "[$(date -Iseconds)] $*"
 }
 
+# # --- Install and start SSM Agent for remote access ---
+# log "Setting up AWS SSM Agent..."
+#
+# # Ubuntu 24.04 comes with snap-based SSM agent, but we'll use the deb package for better compatibility
+# snap remove amazon-ssm-agent || true
+#
+# # Install SSM agent via snap (recommended for Ubuntu 24.04)
+# snap install amazon-ssm-agent --classic || true
+#
+# # Start and enable SSM agent
+# systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+# systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+
+# log "SSM Agent installation completed"
+
 # --- System tuning ---
 log "Disabling swap and preparing system..."
 

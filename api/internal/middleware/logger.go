@@ -15,6 +15,11 @@ func Logger(logger *zap.Logger) gin.HandlerFunc {
 
 		c.Next()
 
+		// Skip logging for health probe endpoints
+		if path == "/health" || path == "/ready" {
+			return
+		}
+
 		end := time.Now()
 		latency := end.Sub(start)
 

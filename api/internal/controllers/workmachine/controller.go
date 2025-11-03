@@ -1,19 +1,18 @@
 package workmachine
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/codingconcepts/env"
+	drv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
+	environmentV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/templates"
@@ -37,22 +36,21 @@ import (
 )
 
 type Env struct {
-	KloudliteInstallationID     string `env:"INSTALLATION_ID" required:"true"`
-	KloudliteInstallationSecret string `env:"INSTALLATION_SECRET" required:"true"`
-
-	DomainRegistrationAPI string `env:"DOMAIN_REGISTRATION_API" required:"true"`
-	// KloudliteInstallationSecret string `env:"KLOUDLITE_INSTALLATION_SECRET" required:"true"`
+	KloudliteInstallationID string `env:"INSTALLATION_KEY" required:"true"`
 
 	K3sVersion    string `env:"K3S_VERSION" required:"true"`
 	K3sServerURL  string `env:"K3S_SERVER_URL" required:"true"`
 	K3sAgentToken string `env:"K3S_AGENT_TOKEN" required:"true"`
 
 	CloudProvider v1.CloudProvider `env:"CLOUD_PROVIDER" required:"true"`
+}
 
-	AWS_AMI_ID            string `env:"AWS_AMI_ID"`
-	AWS_VPC_ID            string `env:"AWS_VPC_ID"`
-	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID"`
-	AWS_REGION            string `env:"AWS_REGION"`
+type awsProviderEnv struct {
+	AWS_AMI_ID                       string `env:"AWS_AMI_ID" required:"true"`
+	AWS_VPC_ID                       string `env:"AWS_VPC_ID" required:"true"`
+	AWS_SECURITY_GROUP_ID            string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
+	AWS_REGION                       string `env:"AWS_REGION" required:"true"`
+	AWS_WORKMACHINE_INSTANCE_PROFILE string `env:"AWS_WORKMACHINE_INSTANCE_PROFILE" required:"false"`
 }
 
 // WorkMachineReconciler reconciles a WorkMachine object
@@ -136,12 +134,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "ensure-job-rbac",
-			Title:    "Ensure RBAC resources for AWS Job runner",
-			OnCreate: r.createJobRBAC,
-			OnDelete: nil,
-		},
-		{
 			Name:     "ensure-ssh-host-keys",
 			Title:    "Ensure SSH host keys secret",
 			OnCreate: r.createSSHHostKeysSecret,
@@ -177,12 +169,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnCreate: r.setupCloudMachine,
 			OnDelete: r.cleanupCloudMachine,
 		},
-		{
-			Name:     "setup DNS Host",
-			Title:    "Setup DNS Host",
-			OnCreate: r.registerDNSHost,
-			OnDelete: r.deRegisterDNSHost,
-		},
+		// {
+		// 	Name:     "setup DNS Host",
+		// 	Title:    "Setup DNS Host",
+		// 	OnCreate: r.registerDNSHost,
+		// 	OnDelete: r.deRegisterDNSHost,
+		// },
 	})
 }
 
@@ -197,6 +189,10 @@ func (r *WorkMachineReconciler) createNamespace(check *reconciler.Check[*v1.Work
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
 		}))
+
+		if !fn.IsOwner(ns, obj) {
+			ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
 		if !controllerutil.ContainsFinalizer(ns, WorkMachineFinalizerName) {
 			ns.SetFinalizers(append(ns.GetFinalizers(), WorkMachineFinalizerName))
 		}
@@ -211,6 +207,14 @@ func (r *WorkMachineReconciler) createNamespace(check *reconciler.Check[*v1.Work
 // deleteNamespace handles namespace deletion when WorkMachine is being deleted
 func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespaceName := obj.Spec.TargetNamespace
+
+	// Check for active Workspaces in the target namespace
+	var envList environmentV1.EnvironmentList
+	if err := r.List(check.Context(), &envList); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Errored(err)
+		}
+	}
 
 	// Check for active Workspaces in the target namespace
 	workspaceList := &workspacev1.WorkspaceList{}
@@ -344,91 +348,6 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 
 	existingRB := &rbacv1.RoleBinding{}
 	if err := r.Get(check.Context(), client.ObjectKey{Name: rb.Name, Namespace: namespace}, existingRB); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Errored(err)
-		}
-
-		// Create role binding
-		if err := r.Create(check.Context(), rb); err != nil && !apiErrors.IsAlreadyExists(err) {
-			return check.Failed(err)
-		}
-	}
-
-	return check.Passed()
-}
-
-// createJobRBAC ensures RBAC resources for AWS Job runner
-func (r *WorkMachineReconciler) createJobRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	// Create ServiceAccount for Jobs
-	sa := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workmachine-job-runner",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}
-
-	if err := r.Get(check.Context(), client.ObjectKey{Name: sa.Name, Namespace: obj.Spec.TargetNamespace}, sa); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Errored(err)
-		}
-
-		// Create service account
-		if err := r.Create(check.Context(), sa); err != nil && !apiErrors.IsAlreadyExists(err) {
-			return check.Failed(err)
-		}
-	}
-
-	// Create Role with ConfigMap permissions
-	role := &rbacv1.Role{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workmachine-job-runner",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{""},
-				Resources: []string{"configmaps"},
-				Verbs:     []string{"get", "list", "create", "update", "patch", "delete"},
-			},
-		},
-	}
-
-	existingRole := &rbacv1.Role{}
-	if err := r.Get(check.Context(), client.ObjectKey{Name: role.Name, Namespace: obj.Spec.TargetNamespace}, existingRole); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Errored(err)
-		}
-
-		// Create role
-		if err := r.Create(check.Context(), role); err != nil && !apiErrors.IsAlreadyExists(err) {
-			return check.Failed(err)
-		}
-	}
-
-	// Create RoleBinding
-	rb := &rbacv1.RoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workmachine-job-runner",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      "ServiceAccount",
-				Name:      "workmachine-job-runner",
-				Namespace: obj.Spec.TargetNamespace,
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "Role",
-			Name:     "workmachine-job-runner",
-		},
-	}
-
-	// controllerutil.CreateOrUpdate(check.Context(), r.Client)
-
-	existingRB := &rbacv1.RoleBinding{}
-	if err := r.Get(check.Context(), client.ObjectKey{Name: rb.Name, Namespace: obj.Spec.TargetNamespace}, existingRB); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return check.Errored(err)
 		}
@@ -725,65 +644,59 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 	obj.Status.State = machineInfo.State
 
-	// if obj.Spec.AWSProvider.VolumeSize > obj.Status.RootVolumeSize {
-	// 	check.Logger().Info("increasing volume size", "from", obj.Status.RootVolumeSize, "to", obj.Spec.AWSProvider.VolumeSize)
-	//
-	// 	if err := r.cloudProviderAPI.IncreaseVolumeSize(check.Context(), obj.Status.MachineID, obj.Spec.AWSProvider.VolumeSize); err != nil {
-	// 		return check.Failed(errors.Wrap("failed to increase volume size", err))
-	// 	}
-	//
-	// 	obj.Status.RootVolumeSize = obj.Spec.AWSProvider.VolumeSize
-	// 	if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
-	// 		return check.Errored(errors.Wrap(fmt.Sprintf("failed to reboot machine(ID: %s)", obj.Status.MachineID), err))
-	// 	}
-	//
-	// 	return check.UpdateMsg("waiting for volume size to be increased").RequeueAfter(10 * time.Second)
-	// }
+	specVolume := fn.ValueOf(obj.Spec.VolumeSize)
+
+	if specVolume > obj.Status.RootVolumeSize {
+		check.Logger().Info("increasing volume size", "from", obj.Status.RootVolumeSize, "to", obj.Spec.VolumeSize)
+
+		if err := r.cloudProviderAPI.IncreaseVolumeSize(check.Context(), obj.Status.MachineID, specVolume); err != nil {
+			return check.Failed(errors.Wrap("failed to increase volume size", err))
+		}
+
+		obj.Status.RootVolumeSize = specVolume
+		if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
+			return check.Errored(errors.Wrap(fmt.Sprintf("failed to reboot machine(ID: %s)", obj.Status.MachineID), err))
+		}
+
+		return check.UpdateMsg("waiting for volume size to be increased").RequeueAfter(10 * time.Second)
+	}
 
 	// // Update status with current machine info
 	obj.Status.State = machineInfo.State
 	obj.Status.Message = machineInfo.Message
 	obj.Status.PublicIP = machineInfo.PublicIP
 	obj.Status.PrivateIP = machineInfo.PrivateIP
-	// obj.Status.Region = machineInfo.Region
-	obj.Status.RootVolumeSize = obj.Spec.AWSProvider.VolumeSize
-	// obj.Status.AvailabilityZone = machineInfo.AvailabilityZone
+	obj.Status.RootVolumeSize = specVolume
 
 	return check.Passed()
 }
 
 func (r *WorkMachineReconciler) registerDNSHost(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	b, err := json.Marshal(map[string]any{
-		"installationKey": r.env.KloudliteInstallationID,
-		"type":            "workmachine",
-		"ip":              obj.Status.PublicIP,
-		"workMachineName": obj.Name,
-	})
-	if err != nil {
+	dr := &drv1.DomainRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "wm-" + obj.Name,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, dr, func() error {
+		dr.Spec = drv1.DomainRequestSpec{
+			Type:                             drv1.RequestTypeWorkspace,
+			IPAddress:                        obj.Status.PublicIP,
+			LoadBalancerServiceName:          "",
+			LoadBalancerServiceNamespace:     "",
+			WorkMachineName:                  obj.Name,
+			CertificateScope:                 "",
+			CertificateScopeIdentifier:       "",
+			CertificateParentScopeIdentifier: "",
+			SSHProxyEnabled:                  false,
+			IngressBackend:                   &drv1.IngressBackendConfig{},
+		}
+
+		return nil
+	}); err != nil {
 		return check.Failed(err)
 	}
 
-	hreq, err := http.NewRequestWithContext(check.Context(), http.MethodPost, r.env.DomainRegistrationAPI, bytes.NewReader(b))
-	hreq.Header.Add("Content-Type", "application/json")
-	hreq.Header.Add("Authorization", "Bearer "+r.env.KloudliteInstallationSecret)
-
-	resp, err := http.DefaultClient.Do(hreq)
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return check.Failed(fmt.Errorf("register DNS Host API failed with status code (%d)", resp.StatusCode))
-	}
-
-	var result struct {
-		SubDomain string `json:"subdomain"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return check.Failed(err)
-	}
-
-	obj.Status.DNSHost = obj.Name + "." + result.SubDomain
 	return check.Passed()
 }
 
@@ -813,13 +726,19 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	switch r.env.CloudProvider {
 	case v1.AWS:
 		{
+
+			var awsEnv awsProviderEnv
+			if err := env.Set(&awsEnv); err != nil {
+				return errors.Wrap("failed to load env vars", err)
+			}
+
 			ctx, cf := context.WithTimeout(context.TODO(), 5*time.Second)
 			defer cf()
 			p, err := aws.NewProvider(ctx, aws.ProviderArgs{
-				AMI:             r.env.AWS_AMI_ID,
-				Region:          r.env.AWS_REGION,
-				VPC:             r.env.AWS_VPC_ID,
-				SecurityGroupID: r.env.AWS_SECURITY_GROUP_ID,
+				AMI:             awsEnv.AWS_AMI_ID,
+				Region:          awsEnv.AWS_REGION,
+				VPC:             awsEnv.AWS_VPC_ID,
+				SecurityGroupID: awsEnv.AWS_SECURITY_GROUP_ID,
 				ResourceTags: []aws.Tag{
 					{
 						Key:   "kloudlite.io/installation-id",
@@ -830,6 +749,8 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				K3sVersion: r.env.K3sVersion,
 				K3sURL:     r.env.K3sServerURL,
 				K3sToken:   r.env.K3sAgentToken,
+
+				WorkMachineInstanceProfile: &awsEnv.AWS_WORKMACHINE_INSTANCE_PROFILE,
 			})
 			if err != nil {
 				return errors.Wrap("failed to create aws provider client", err)
@@ -843,11 +764,12 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 	default:
 		{
-			return errors.New(fmt.Sprintf("unsupport cloud provider (%s)", r.env.CloudProvider))
+			return errors.New(fmt.Sprintf("unsupported cloud provider (%s)", r.env.CloudProvider))
 		}
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine")
+	builder.Owns(&corev1.Namespace{})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor("workmachine")))
 	return builder.Complete(r)
 }

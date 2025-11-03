@@ -1,7 +1,6 @@
 package v1
 
 import (
-	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -12,10 +11,12 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled,type=date
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.ownedBy`
 // +kubebuilder:printcolumn:name="Machine Type",type=string,JSONPath=`.spec.machineType`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Started At",type=date,JSONPath=`.status.startedAt`
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // WorkMachine represents a user's personal development machine
@@ -43,10 +44,6 @@ type WorkMachineSpec struct {
 	// +kubebuilder:validation:Required
 	OwnedBy string `json:"ownedBy"`
 
-	// MachineType references the MachineType to use for this machine
-	// +kubebuilder:validation:Required
-	MachineType string `json:"machineType"`
-
 	// TargetNamespace is the namespace where the WorkMachine workloads will run
 	// Defaults to wm-{username}
 	// +kubebuilder:validation:Required
@@ -61,12 +58,27 @@ type WorkMachineSpec struct {
 	// +optional
 	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
 
-	// +kubebuilder:default="0.0.0.0/0"
-	AllowedCIDR string `json:"allowedCIDR,omitempty"`
+	// MachineType is the EC2 instance type (e.g., m5.large, t3.medium)
+	// +kubebuilder:validation:Required
+	MachineType string `json:"machineType"`
 
-	// AWSProvider contains AWS-specific configuration
+	// VolumeSize is the size of the root EBS volume in GB
+	//+kubebuilder:default=100
+	//+kubebuilder:validation:Minimum=100
+	//+kubebuilder:validation:Maximum=1000
+	VolumeSize *int32 `json:"volumeSize"`
+
+	// VolumeType is the volume type
+	// eg. for AWS (gp3, gp2, io1, io2)
+	VolumeType string `json:"volumeType,omitempty"`
+
+	// DeleteVolumePostTermination controls whether root volume is cleaned up post deletion
+	// +kubebuilder:default=true
+	DeleteVolumePostTermination bool `json:"deleteVolumePostTermination,omitempty"`
+
+	// AWSProviderExtras contains AWS-specific configuration
 	// +optional
-	AWSProvider *AWSProviderConfig `json:"aws,omitempty"`
+	AWSProviderExtras *AWSProviderExtras `json:"aws,omitempty"`
 
 	// AutoShutdown configures automatic instance shutdown when idle
 	// Only applicable for cloud providers (AWS, GCP, Azure)
@@ -129,33 +141,11 @@ type AutoShutdownConfig struct {
 	CheckIntervalMinutes int32 `json:"checkIntervalMinutes"`
 }
 
-// AWSProviderConfig contains AWS-specific configuration for WorkMachine
-type AWSProviderConfig struct {
-	// MachineType is the EC2 instance type (e.g., m5.large, t3.medium)
-	// +kubebuilder:validation:Required
-	MachineType ec2types.InstanceType `json:"machineType"`
-
-	// VolumeSize is the size of the root EBS volume in GB
-	// +kubebuilder:default=50
-	// +kubebuilder:validation:Minimum=20
-	// +kubebuilder:validation:Maximum=1000
-	VolumeSize int32 `json:"volumeSize"`
-
-	// VolumeType is the EBS volume type (gp3, gp2, io1, io2)
-	// +kubebuilder:default=gp3
-	// +kubebuilder:validation:Enum=gp3;gp2;io1;io2
-	VolumeType ec2types.VolumeType `json:"volumeType"`
-
-	DeleteVolumePostTermination bool `json:"deleteVolumePostTermination,omitempty"`
-
+// AWSProviderExtras contains AWS-specific configuration for WorkMachine
+type AWSProviderExtras struct {
 	// IAMRole is the IAM role name to attach to the instance
 	// +optional
 	IAMRole *string `json:"iamRole,omitempty"`
-
-	// DomainName is the base domain for WorkMachine DNS records
-	// (e.g., "workmachines.example.com" → "<machine-name>.workmachines.example.com")
-	// +kubebuilder:validation:Required
-	DomainName string `json:"domainName"`
 }
 
 // MachineState represents the state of a WorkMachine

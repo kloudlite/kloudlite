@@ -3,11 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,19 +35,30 @@ type UserService interface {
 type userService struct {
 	userRepo        repository.UserRepository
 	workMachineRepo repository.WorkMachineRepository
+	machineTypeRepo repository.MachineTypeRepository
+	envRepo         repository.EnvironmentRepository
 }
 
 // NewUserService creates a new UserService
-func NewUserService(userRepo repository.UserRepository, workMachineRepo repository.WorkMachineRepository) UserService {
+func NewUserService(
+	userRepo repository.UserRepository,
+	workMachineRepo repository.WorkMachineRepository,
+	machineTypeRepo repository.MachineTypeRepository,
+	envRepo repository.EnvironmentRepository,
+) UserService {
 	return &userService{
 		userRepo:        userRepo,
 		workMachineRepo: workMachineRepo,
+		machineTypeRepo: machineTypeRepo,
+		envRepo:         envRepo,
 	}
 }
 
 // CreateUser creates a new user
 func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.User) (*platformv1alpha1.User, error) {
 	// Users are cluster-scoped resources, no namespace needed
+
+	slog.Info("HERE createUser")
 
 	// All validations and mutations are handled by webhooks
 	// Just create the user in repository
@@ -56,6 +69,7 @@ func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.Use
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
+	slog.Info("checking user has role", "condition", s.hasUserRole(user))
 	// Create WorkMachine only if user has 'user' role
 	if s.hasUserRole(user) {
 		if err := s.createWorkMachineForUser(ctx, user); err != nil {
@@ -151,8 +165,32 @@ func (s *userService) UpdateUser(ctx context.Context, user *platformv1alpha1.Use
 	return existing, nil
 }
 
-// DeleteUser deletes a user
+// DeleteUser deletes a user and their associated WorkMachine and Environments
 func (s *userService) DeleteUser(ctx context.Context, name string) error {
+	// Get the user first to access their details
+	user, err := s.userRepo.Get(ctx, name)
+	if err != nil {
+		if repository.IsNotFound(err) {
+			return fmt.Errorf("user not found: %s", name)
+		}
+		return fmt.Errorf("failed to get user for deletion: %w", err)
+	}
+
+	// Delete associated WorkMachine if user has 'user' role
+	if s.hasUserRole(user) {
+		if err := s.deleteWorkMachineForUser(ctx, user); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				fmt.Printf("Warning: Failed to delete WorkMachine for user %s: %v\n", user.Spec.Email, err)
+			}
+		}
+	}
+
+	// Delete all environments created by this user
+	if err := s.deleteEnvironmentsForUser(ctx, user); err != nil {
+		fmt.Printf("Warning: Failed to delete environments for user %s: %v\n", user.Spec.Email, err)
+	}
+
+	// Delete the user
 	if err := s.userRepo.Delete(ctx, name); err != nil {
 		if repository.IsNotFound(err) {
 			return fmt.Errorf("user not found: %s", name)
@@ -231,6 +269,11 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 	workMachineName := fmt.Sprintf("wm-%s", username)
 	targetNamespace := fmt.Sprintf("wm-%s", username)
 
+	mt, err := s.machineTypeRepo.GetDefault(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Create WorkMachine object
 	workMachine := &machinesv1.WorkMachine{
 		ObjectMeta: metav1.ObjectMeta{
@@ -240,19 +283,26 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 				"kloudlite.io/managed":    "true",
 			},
 		},
-		Spec: machinesv1.WorkMachineSpec{
-			OwnedBy:         user.Spec.Email,
-			MachineType:     "standard-2vcpu-4gb", // Default machine type
-			TargetNamespace: targetNamespace,
-			State:           machinesv1.MachineStateStopped,
-		},
 	}
+
+	slog.Info("creating workmachine for user")
 
 	// Check if WorkMachine already exists
 	existing, err := s.workMachineRepo.Get(ctx, workMachineName)
 	if err == nil && existing != nil {
+		slog.Info("inside if", "user", *existing, "err", err)
 		// WorkMachine already exists, skip creation
 		return nil
+	}
+
+	slog.Info("going to create new workmachine")
+
+	workMachine.Spec = machinesv1.WorkMachineSpec{
+		DisplayName:     username + "'s workmachine",
+		OwnedBy:         user.Spec.Email,
+		TargetNamespace: targetNamespace,
+		State:           machinesv1.MachineStateRunning,
+		MachineType:     mt.Name,
 	}
 
 	// Create the WorkMachine
@@ -309,6 +359,35 @@ func (s *userService) deleteWorkMachineForUser(ctx context.Context, user *platfo
 			return nil
 		}
 		return fmt.Errorf("failed to delete WorkMachine: %w", err)
+	}
+
+	return nil
+}
+
+// deleteEnvironmentsForUser deletes all environments created by a user
+func (s *userService) deleteEnvironmentsForUser(ctx context.Context, user *platformv1alpha1.User) error {
+	// List all environments
+	envList, err := s.envRepo.List(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list environments: %w", err)
+	}
+
+	// Filter environments created by this user and delete them
+	var deletionErrors []string
+	for i := range envList.Items {
+		env := &envList.Items[i]
+		if env.Spec.CreatedBy == user.Spec.Email {
+			if err := s.envRepo.Delete(ctx, env.Name); err != nil {
+				if !repository.IsNotFound(err) {
+					deletionErrors = append(deletionErrors, fmt.Sprintf("environment %s: %v", env.Name, err))
+				}
+			}
+		}
+	}
+
+	// If there were any deletion errors, return them
+	if len(deletionErrors) > 0 {
+		return fmt.Errorf("failed to delete some environments: %s", strings.Join(deletionErrors, "; "))
 	}
 
 	return nil

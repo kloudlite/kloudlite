@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -70,19 +71,22 @@ func (r *machineTypeRepository) GetByCategory(ctx context.Context, category stri
 	return categoryList, nil
 }
 
+const labelDefaultMachineType = "kloudlite.io/machinetype.default"
+
 // GetDefault returns the default machine type
 func (r *machineTypeRepository) GetDefault(ctx context.Context) (*machinesv1.MachineType, error) {
 	list := &machinesv1.MachineTypeList{}
-	if err := r.k8sClient.List(ctx, list); err != nil {
+	if err := r.k8sClient.List(ctx, list, &client.ListOptions{
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+			labelDefaultMachineType: "true",
+		}),
+	}); err != nil {
 		return nil, err
 	}
 
-	// Find the default machine type
-	for _, mt := range list.Items {
-		if mt.Spec.IsDefault && mt.Spec.Active {
-			return &mt, nil
-		}
+	if len(list.Items) == 0 {
+		return nil, fmt.Errorf("no default machine type found")
 	}
 
-	return nil, fmt.Errorf("no default machine type found")
+	return &list.Items[0], nil
 }

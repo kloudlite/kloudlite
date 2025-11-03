@@ -2,6 +2,7 @@ package functions
 
 import (
 	"maps"
+	"slices"
 	"strings"
 
 	"github.com/gobuffalo/flect"
@@ -66,6 +67,18 @@ func MapHasKey[K comparable, T any](m map[K]T, k K) bool {
 	return ok
 }
 
+func IsOwner(obj client.Object, owner client.Object) bool {
+	for _, ref := range obj.GetOwnerReferences() {
+		if ref.Name == owner.GetName() &&
+			ref.UID == owner.GetUID() &&
+			ref.Kind == owner.GetObjectKind().GroupVersionKind().Kind &&
+			ref.APIVersion == owner.GetObjectKind().GroupVersionKind().GroupVersion().String() {
+			return true
+		}
+	}
+	return false
+}
+
 func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
 	ctrler := false
 	if len(controller) > 0 {
@@ -86,13 +99,7 @@ func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
 func ContainsFinalizers(obj client.Object, finalizers ...string) bool {
 	objFinalizers := obj.GetFinalizers()
 	for _, f := range finalizers {
-		found := false
-		for _, of := range objFinalizers {
-			if of == f {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(objFinalizers, f)
 		if !found {
 			return false
 		}

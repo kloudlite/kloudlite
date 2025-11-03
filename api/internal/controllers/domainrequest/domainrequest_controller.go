@@ -40,10 +40,10 @@ type DomainRequestReconciler struct {
 
 // configureIPRequest represents the request body for /api/installations/configure-ips
 type configureIPRequest struct {
-	InstallationKey string `json:"installationKey"`
-	Type            string `json:"type"`
-	IP              string `json:"ip"`
-	WorkMachineName string `json:"workMachineName,omitempty"`
+	InstallationKey string                       `json:"installationKey"`
+	Type            domainrequestsv1.RequestType `json:"type"`
+	IP              string                       `json:"ip"`
+	WorkMachineName string                       `json:"workMachineName,omitempty"`
 }
 
 // configureIPResponse represents the response from /api/installations/configure-ips
@@ -107,7 +107,7 @@ frontend https_frontend
 			config += fmt.Sprintf("    use_backend %s if %s\n", backendName, aclName)
 		}
 		// Use first domain route as default backend
-		config += fmt.Sprintf("\n    default_backend domain_backend_0\n")
+		config += "\n    default_backend domain_backend_0\n"
 	} else if domainRequest.Spec.IngressBackend != nil {
 		// Use IngressBackend as default if no domain routes
 		config += "\n    default_backend service_backend\n"
@@ -439,7 +439,6 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 				Name:      domainRequest.Status.HAProxyPodName,
 				Namespace: domainRequest.Namespace,
 			}, pod)
-
 			if err != nil {
 				if errors.IsNotFound(err) {
 					// Pod doesn't exist, need to recreate it
@@ -1038,9 +1037,7 @@ func (r *DomainRequestReconciler) callConsoleAPI(ctx context.Context, path, meth
 		zap.String("method", method),
 		zap.String("url", url))
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	resp, err := client.Do(req)
 	if err != nil {
