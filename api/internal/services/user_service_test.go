@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
@@ -160,6 +161,138 @@ func (m *mockWorkMachineRepo) ListByMachineType(ctx context.Context, machineType
 	return nil, errors.New("not implemented")
 }
 
+// Mock EnvironmentRepository
+type mockEnvironmentRepo struct {
+	createFunc func(ctx context.Context, env *environmentsv1.Environment) error
+	getFunc    func(ctx context.Context, name string) (*environmentsv1.Environment, error)
+	updateFunc func(ctx context.Context, env *environmentsv1.Environment) error
+	deleteFunc func(ctx context.Context, name string) error
+	listFunc   func(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error)
+}
+
+func (m *mockEnvironmentRepo) Create(ctx context.Context, env *environmentsv1.Environment) error {
+	if m.createFunc != nil {
+		return m.createFunc(ctx, env)
+	}
+	return errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) Get(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+	if m.getFunc != nil {
+		return m.getFunc(ctx, name)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) Update(ctx context.Context, env *environmentsv1.Environment) error {
+	if m.updateFunc != nil {
+		return m.updateFunc(ctx, env)
+	}
+	return errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) Delete(ctx context.Context, name string) error {
+	if m.deleteFunc != nil {
+		return m.deleteFunc(ctx, name)
+	}
+	return errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) List(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
+	if m.listFunc != nil {
+		return m.listFunc(ctx, opts...)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*environmentsv1.Environment, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*environmentsv1.Environment], error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) ActivateEnvironment(ctx context.Context, name string) error {
+	return errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) DeactivateEnvironment(ctx context.Context, name string) error {
+	return errors.New("not implemented")
+}
+
+func (m *mockEnvironmentRepo) UpdateStatus(ctx context.Context, env *environmentsv1.Environment) error {
+	return errors.New("not implemented")
+}
+
+// Mock MachineTypeRepository
+type mockMachineTypeRepo struct {
+	getDefaultFunc func(ctx context.Context) (*machinesv1.MachineType, error)
+}
+
+func (m *mockMachineTypeRepo) Create(ctx context.Context, mt *machinesv1.MachineType) error {
+	return errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) Get(ctx context.Context, name string) (*machinesv1.MachineType, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) Update(ctx context.Context, mt *machinesv1.MachineType) error {
+	return errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) Delete(ctx context.Context, name string) error {
+	return errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) List(ctx context.Context, opts ...repository.ListOption) (*machinesv1.MachineTypeList, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*machinesv1.MachineType, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*machinesv1.MachineType], error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) ListActive(ctx context.Context) (*machinesv1.MachineTypeList, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) GetByCategory(ctx context.Context, category string) (*machinesv1.MachineTypeList, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockMachineTypeRepo) GetDefault(ctx context.Context) (*machinesv1.MachineType, error) {
+	if m.getDefaultFunc != nil {
+		return m.getDefaultFunc(ctx)
+	}
+	return &machinesv1.MachineType{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "default-machine-type",
+		},
+	}, nil
+}
+
+func (m *mockMachineTypeRepo) UpdateStatus(ctx context.Context, mt *machinesv1.MachineType) error {
+	return errors.New("not implemented")
+}
+
 func TestCreateUser(t *testing.T) {
 	ctx := context.Background()
 	activeTrue := true
@@ -183,7 +316,9 @@ func TestCreateUser(t *testing.T) {
 			},
 		}
 
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user := &platformv1alpha1.User{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
@@ -208,7 +343,9 @@ func TestCreateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user := &platformv1alpha1.User{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
@@ -239,7 +376,9 @@ func TestCreateUser(t *testing.T) {
 			},
 		}
 
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user := &platformv1alpha1.User{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
@@ -272,7 +411,9 @@ func TestCreateUser(t *testing.T) {
 			},
 		}
 
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user := &platformv1alpha1.User{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
@@ -305,7 +446,9 @@ func TestGetUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.GetUser(ctx, "test-user")
 		assert.NoError(t, err)
@@ -322,7 +465,9 @@ func TestGetUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.GetUser(ctx, "nonexistent")
 		assert.Error(t, err)
@@ -360,7 +505,9 @@ func TestGetUserByEmail(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.GetUserByEmail(ctx, "user2@example.com")
 		assert.NoError(t, err)
@@ -387,7 +534,9 @@ func TestGetUserByEmail(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.GetUserByEmail(ctx, "nonexistent@example.com")
 		assert.Error(t, err)
@@ -403,7 +552,9 @@ func TestGetUserByEmail(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.GetUserByEmail(ctx, "test@example.com")
 		assert.Error(t, err)
@@ -441,7 +592,9 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user := &platformv1alpha1.User{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
@@ -465,7 +618,9 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user := &platformv1alpha1.User{
 			ObjectMeta: metav1.ObjectMeta{Name: "nonexistent"},
@@ -500,7 +655,9 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user := &platformv1alpha1.User{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
@@ -522,14 +679,33 @@ func TestDeleteUser(t *testing.T) {
 
 	t.Run("should delete user successfully", func(t *testing.T) {
 		userRepo := &mockUserRepo{
+			getFunc: func(ctx context.Context, name string) (*platformv1alpha1.User, error) {
+				return &platformv1alpha1.User{
+					ObjectMeta: metav1.ObjectMeta{Name: name},
+					Spec: platformv1alpha1.UserSpec{
+						Email: "test@example.com",
+						Roles: []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
+					},
+				}, nil
+			},
 			deleteFunc: func(ctx context.Context, name string) error {
 				assert.Equal(t, "test-user", name)
 				return nil
 			},
 		}
 
-		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		wmRepo := &mockWorkMachineRepo{
+			getFunc: func(ctx context.Context, name string) (*machinesv1.WorkMachine, error) {
+				return nil, repository.ErrNotFound("not found")
+			},
+		}
+		envRepo := &mockEnvironmentRepo{
+			listFunc: func(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
+				return &environmentsv1.EnvironmentList{}, nil
+			},
+		}
+		machineTypeRepo := &mockMachineTypeRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.DeleteUser(ctx, "test-user")
 		assert.NoError(t, err)
@@ -537,13 +713,18 @@ func TestDeleteUser(t *testing.T) {
 
 	t.Run("should return error for non-existent user", func(t *testing.T) {
 		userRepo := &mockUserRepo{
+			getFunc: func(ctx context.Context, name string) (*platformv1alpha1.User, error) {
+				return nil, repository.ErrNotFound("user not found")
+			},
 			deleteFunc: func(ctx context.Context, name string) error {
 				return repository.ErrNotFound("user not found")
 			},
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.DeleteUser(ctx, "nonexistent")
 		assert.Error(t, err)
@@ -574,7 +755,9 @@ func TestListUsers(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		userList, err := service.ListUsers(ctx)
 		assert.NoError(t, err)
@@ -590,7 +773,9 @@ func TestListUsers(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		userList, err := service.ListUsers(ctx)
 		assert.Error(t, err)
@@ -622,7 +807,9 @@ func TestResetUserPassword(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.ResetUserPassword(ctx, "test-user", "newpassword123")
 		assert.NoError(t, err)
@@ -636,7 +823,9 @@ func TestResetUserPassword(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.ResetUserPassword(ctx, "nonexistent", "newpassword123")
 		assert.Error(t, err)
@@ -660,7 +849,9 @@ func TestResetUserPassword(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.ResetUserPassword(ctx, "test-user", "newpassword123")
 		assert.Error(t, err)
@@ -690,7 +881,9 @@ func TestUpdateUserLastLogin(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.UpdateUserLastLogin(ctx, "test-user")
 		assert.NoError(t, err)
@@ -704,7 +897,9 @@ func TestUpdateUserLastLogin(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.UpdateUserLastLogin(ctx, "nonexistent")
 		assert.Error(t, err)
@@ -728,7 +923,9 @@ func TestUpdateUserLastLogin(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		err := service.UpdateUserLastLogin(ctx, "test-user")
 		assert.Error(t, err)
@@ -758,7 +955,9 @@ func TestActivateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.ActivateUser(ctx, "test-user")
 		assert.NoError(t, err)
@@ -774,7 +973,9 @@ func TestActivateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.ActivateUser(ctx, "nonexistent")
 		assert.Error(t, err)
@@ -790,7 +991,9 @@ func TestActivateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.ActivateUser(ctx, "test-user")
 		assert.Error(t, err)
@@ -821,7 +1024,9 @@ func TestDeactivateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.DeactivateUser(ctx, "test-user")
 		assert.NoError(t, err)
@@ -837,7 +1042,9 @@ func TestDeactivateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.DeactivateUser(ctx, "nonexistent")
 		assert.Error(t, err)
@@ -853,7 +1060,9 @@ func TestDeactivateUser(t *testing.T) {
 		}
 
 		wmRepo := &mockWorkMachineRepo{}
-		service := NewUserService(userRepo, wmRepo)
+		machineTypeRepo := &mockMachineTypeRepo{}
+		envRepo := &mockEnvironmentRepo{}
+		service := NewUserService(userRepo, wmRepo, machineTypeRepo, envRepo)
 
 		user, err := service.DeactivateUser(ctx, "test-user")
 		assert.Error(t, err)

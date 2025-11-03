@@ -184,6 +184,19 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 		})
 	}
 
+	if machineType.Spec.IsDefault {
+		patches = append(patches, map[string]any{
+			"op":    "add",
+			"path":  "/metadata/labels/kloudlite.io~1machinetype.default",
+			"value": "true",
+		})
+	} else {
+		patches = append(patches, map[string]any{
+			"op":   "remove",
+			"path": "/metadata/labels/kloudlite.io~1machinetype.default",
+		})
+	}
+
 	// If no patches needed, return allowed without patch
 	if len(patches) == 0 {
 		return &admissionv1.AdmissionResponse{
