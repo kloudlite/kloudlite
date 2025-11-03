@@ -40,6 +40,13 @@ spec:
               value: "3000"
             - name: APP_MODE
               value: "dashboard"
+            - name: AUTH_TRUST_HOST
+              value: "true"
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: frontend-secrets
+                  key: nextauth-secret
           resources:
             requests:
               memory: "256Mi"
