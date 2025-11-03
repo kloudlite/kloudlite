@@ -93,8 +93,10 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	deployedDeployments := make([]string, 0)
 	for _, deployment := range resources.Deployments {
 		// Apply nodeSelector and tolerations from environment
-		deployment.Spec.Template.Spec.NodeSelector = environment.Spec.NodeSelector
-		deployment.Spec.Template.Spec.Tolerations = environment.Spec.Tolerations
+		if environment != nil {
+			deployment.Spec.Template.Spec.NodeSelector = environment.Spec.NodeSelector
+			deployment.Spec.Template.Spec.Tolerations = environment.Spec.Tolerations
+		}
 
 		// If environment is not activated, scale deployment to 0 replicas
 		if !environmentActivated {
