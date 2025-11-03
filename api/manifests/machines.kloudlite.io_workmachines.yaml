@@ -139,6 +139,10 @@ spec:
                 description: MachineType references the MachineType to use for this
                   machine
                 type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
               ownedBy:
                 description: OwnedBy is the username/email of the user who owns this
                   machine
@@ -196,6 +200,10 @@ spec:
                 - cpu
                 - memory
                 type: object
+              availabilityZone:
+                description: AvailabilityZone is the availability zone within the
+                  region
+                type: string
               checkList:
                 items:
                   properties:
@@ -228,6 +236,8 @@ spec:
                       type: string
                   type: object
                 type: object
+              dnsHost:
+                type: string
               isAutoStopped:
                 description: IsAutoStopped when set means machine was auto-stopped
                   by kloudlite
@@ -250,6 +260,30 @@ spec:
                   Used for auto-shutdown logic
                 format: date-time
                 type: string
+              machineID:
+                description: MachineID is the cloud provider's unique identifier for
+                  the instance
+                type: string
+              message:
+                description: Message provides additional information about the instance
+                  state
+                type: string
+              privateIP:
+                description: PrivateIP is the private IP address of the instance
+                type: string
+              publicIP:
+                description: PublicIP is the public IP address of the instance (if
+                  available)
+                type: string
+              region:
+                description: Region is the cloud region where the instance is running
+                type: string
+              rootVolumeSize:
+                description: |-
+                  RootVolumeSize is size in GBs for the root volume.
+                  It is used while processing request for increasing volume size
+                format: int32
+                type: integer
               sshPublicKey:
                 description: |-
                   SSHPublicKey is the WorkMachine's public SSH key for all workspaces
@@ -260,6 +294,9 @@ spec:
               startedAt:
                 description: StartedAt timestamp when the machine was last started
                 format: date-time
+                type: string
+              state:
+                description: State is the current state of the instance
                 type: string
               stoppedAt:
                 description: StoppedAt timestamp when the machine was last stopped
