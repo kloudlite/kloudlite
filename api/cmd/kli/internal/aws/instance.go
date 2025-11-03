@@ -104,6 +104,8 @@ echo "Downloading Kloudlite CLI binary..."
 curl -fsSL "https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64" -o /usr/local/bin/kli
 chmod +x /usr/local/bin/kli
 
+K3S_AGENT_TOKEN=$(cat /var/lib/rancher/k3s/server/agent-token)
+
 # Apply Secrets directly (secrets should not be in manifests folder)
 echo "Creating API Server Secret..."
 cat <<EOF | kubectl apply -f -
@@ -379,7 +381,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, installationKey, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))

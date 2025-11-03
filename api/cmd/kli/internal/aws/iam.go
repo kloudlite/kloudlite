@@ -91,6 +91,7 @@ func EnsureIAMRole(ctx context.Context, cfg aws.Config, installationKey, bucketN
 
 					// Image operations
 					"ec2:DescribeImages",
+					"ec2:CreateTags",
 				},
 				"Resource": "*",
 			},
