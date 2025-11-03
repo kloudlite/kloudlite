@@ -11,5 +11,8 @@ var APIServerRBAC string
 //go:embed api-server.yaml
 var APIServer string
 
+//go:embed webhooks.yaml
+var Webhooks string
+
 //go:embed frontend.yaml
 var Frontend string

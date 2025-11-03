@@ -1,0 +1,357 @@
+# Validating Webhook Configurations
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: kloudlite-validating-webhook
+webhooks:
+  # User validation
+  - name: users.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/users
+        port: 443
+      caBundle: ""  # Will be populated during installation
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["platform.kloudlite.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["users"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # Environment validation
+  - name: environments.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/environments
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["environments.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["environments"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # MachineType validation
+  - name: machinetypes.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/machinetypes
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["machines.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["machinetypes"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # WorkMachine validation
+  - name: workmachines.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/workmachines
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["machines.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["workmachines"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # Workspace validation
+  - name: workspaces.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/workspaces
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["workspaces.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["workspaces"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # Composition validation
+  - name: compositions.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/compositions
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["compositions.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["compositions"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # ConfigMap validation (for environment variables)
+  - name: configmaps.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/configmaps
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["configmaps"]
+    namespaceSelector:
+      matchExpressions:
+        - key: kloudlite.io/managed
+          operator: In
+          values: ["true"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Don't fail on configmap validation errors
+
+  # Secret validation (for environment variables)
+  - name: secrets.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/secrets
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["secrets"]
+    namespaceSelector:
+      matchExpressions:
+        - key: kloudlite.io/managed
+          operator: In
+          values: ["true"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Don't fail on secret validation errors
+
+  # ServiceIntercept validation
+  - name: serviceintercepts.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/serviceintercepts
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["intercepts.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["serviceintercepts"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+---
+# Mutating Webhook Configurations
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: kloudlite-mutating-webhook
+webhooks:
+  # User mutation
+  - name: users.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/users
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["platform.kloudlite.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["users"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # Environment mutation
+  - name: environments.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/environments
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["environments.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["environments"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # MachineType mutation
+  - name: machinetypes.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/machinetypes
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["machines.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["machinetypes"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # WorkMachine mutation
+  - name: workmachines.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/workmachines
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["machines.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["workmachines"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # Workspace mutation
+  - name: workspaces.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/workspaces
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["workspaces.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["workspaces"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # Composition mutation
+  - name: compositions.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/compositions
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["compositions.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["compositions"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # ServiceIntercept mutation
+  - name: serviceintercepts.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/serviceintercepts
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["intercepts.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["serviceintercepts"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # Service mutation (for service intercepts)
+  - name: services.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/services
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["services"]
+    namespaceSelector:
+      matchExpressions:
+        - key: kloudlite.io/managed
+          operator: In
+          values: ["true"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Don't fail on service mutation errors
+
+  # Pod mutation (for injecting environment variables)
+  - name: pods.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/pods
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchExpressions:
+        - key: kloudlite.io/managed
+          operator: In
+          values: ["true"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Don't fail on pod mutation errors
