@@ -66,14 +66,12 @@ export default function InstallPage() {
 
           if (!data.installationKey) {
             // No installation key, redirect to create installation page
-            console.log('No installationKey in session, redirecting to /installations/new')
             router.push('/installations/new')
             return
           }
 
           setSession(data)
         } else {
-          console.log('Session check failed, redirecting to /installations/login')
           router.push('/installations/login')
         }
       } catch (error) {
@@ -124,7 +122,6 @@ export default function InstallPage() {
   // Redirect if no session after loading completes
   useEffect(() => {
     if (!loading && (!session || !session.installationKey)) {
-      console.log('No session or installationKey, redirecting')
       router.push('/installations/new')
     }
   }, [loading, session, router])
