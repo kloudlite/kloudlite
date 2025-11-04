@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ExternalLink, Loader2, Copy, PartyPopper } from 'lucide-react'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
 
@@ -79,18 +78,16 @@ export default function CompletePage() {
   }
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-8">
-      <div className="w-full max-w-2xl">
-        <div className="mb-8 text-center">
-          <KloudliteLogo className="mx-auto mb-6" />
-          <div className="mb-4 flex justify-center">
-            <div className="flex size-16 items-center justify-center rounded-full bg-green-100">
-              <PartyPopper className="size-8 text-green-600" />
-            </div>
+    <div className="w-full">
+      <div className="mb-8 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-green-100">
+            <PartyPopper className="size-8 text-green-600" />
           </div>
-          <h1 className="text-foreground mb-2 text-3xl font-semibold">Installation Complete!</h1>
-          <p className="text-muted-foreground">Your Kloudlite installation is ready to use</p>
         </div>
+        <h1 className="text-foreground mb-2 text-3xl font-semibold">Installation Complete!</h1>
+        <p className="text-muted-foreground">Your Kloudlite installation is ready to use</p>
+      </div>
 
         <InstallationProgress currentStep={4} />
 
@@ -195,7 +192,6 @@ export default function CompletePage() {
             </CardContent>
           </Card>
         </div>
-      </div>
     </div>
   )
 }
