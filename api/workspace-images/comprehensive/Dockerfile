@@ -1,5 +1,12 @@
+# Build arguments that need to be available globally
+ARG BASE_IMAGE=kloudlite/workspace-base:latest
+ARG VERSION=dev
+
 # Build stage for kl binary
 FROM golang:1.24-alpine AS kl-builder
+
+# Re-declare VERSION in this stage
+ARG VERSION
 
 WORKDIR /build
 
@@ -11,7 +18,6 @@ RUN go mod download
 COPY ../../ ./
 
 # Build kl binary with version info
-ARG VERSION=dev
 RUN CGO_ENABLED=0 go build \
   -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/kli/cmd.Version=${VERSION}" \
   -o kl \
@@ -19,7 +25,6 @@ RUN CGO_ENABLED=0 go build \
 
 
 # Final workspace image
-ARG BASE_IMAGE=kloudlite/workspace-base:latest
 FROM ${BASE_IMAGE}
 
 USER root
