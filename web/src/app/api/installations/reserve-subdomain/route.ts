@@ -5,7 +5,11 @@ import {
   reserveSubdomain,
   getUserInstallations,
   createInstallation,
+  updateInstallation,
 } from '@/lib/console/supabase-storage-service'
+import { generateCertificate } from '@/lib/console/cloudflare-certificates'
+
+const CLOUDFLARE_DNS_DOMAIN = process.env.CLOUDFLARE_DNS_DOMAIN!
 
 /**
  * Reserve subdomain for user's installation
@@ -77,6 +81,34 @@ export async function POST(request: NextRequest) {
       userEmail,
       userName,
     )
+
+    // Generate origin certificate for all wildcard levels
+    // This certificate will be used by ALL HAProxy instances for this installation
+    console.log(`Generating origin certificate for installation: ${installationId}`)
+    const originCertHostnames = [
+      `${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+      `*.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+      `*.*.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+      `*.*.*.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+    ]
+
+    const originCert = await generateCertificate(originCertHostnames)
+
+    if (originCert) {
+      console.log(`Origin certificate generated: ${originCert.id}`)
+      // Store origin certificate in installation
+      await updateInstallation(installationId, {
+        originCertificate: originCert.certificate,
+        originPrivateKey: originCert.privateKey,
+        originCertId: originCert.id,
+        originCertValidFrom: originCert.validFrom,
+        originCertValidUntil: originCert.validUntil,
+      })
+      console.log(`Origin certificate saved to installation`)
+    } else {
+      console.error(`Failed to generate origin certificate for installation: ${installationId}`)
+      // Continue anyway - certificate can be generated later
+    }
 
     const response = NextResponse.json({
       success: true,

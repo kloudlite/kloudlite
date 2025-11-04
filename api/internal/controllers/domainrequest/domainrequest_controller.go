@@ -75,6 +75,16 @@ type downloadCertificatesResponse struct {
 	PrivateKey  string `json:"privateKey"`
 }
 
+// getOriginCertificateResponse represents the response from /api/installations/get-origin-certificate
+type getOriginCertificateResponse struct {
+	Success       bool   `json:"success"`
+	Certificate   string `json:"certificate"`
+	PrivateKey    string `json:"privateKey"`
+	CertificateID string `json:"certificateId"`
+	ValidFrom     string `json:"validFrom"`
+	ValidUntil    string `json:"validUntil"`
+}
+
 // generateHAProxyConfig generates HAProxy configuration for routing traffic
 func (r *DomainRequestReconciler) generateHAProxyConfig(domainRequest *domainrequestsv1.DomainRequest) string {
 	config := `global
@@ -172,8 +182,8 @@ func (r *DomainRequestReconciler) createHAProxyConfigMap(ctx context.Context, do
 
 // createHAProxyPod creates or updates the HAProxy pod with hostNetwork
 func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRequest *domainrequestsv1.DomainRequest, logger *zap.Logger) error {
-	if domainRequest.Status.CertificateSecretName == "" {
-		return fmt.Errorf("certificate secret not yet created")
+	if domainRequest.Status.OriginCertificateSecretName == "" {
+		return fmt.Errorf("origin certificate secret not yet created")
 	}
 
 	podName := fmt.Sprintf("%s-haproxy", domainRequest.Name)
@@ -264,7 +274,7 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 				Name: "tls-certs",
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: domainRequest.Status.CertificateSecretName,
+						SecretName: domainRequest.Status.OriginCertificateSecretName,
 					},
 				},
 			},
@@ -408,227 +418,23 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 	// Reconcile based on current state
 	switch domainRequest.Status.State {
 	case "", "Pending":
-		return r.handleIPRegistration(ctx, domainRequest, logger)
-	case "IPRegistered":
-		return r.handleCertificateGeneration(ctx, domainRequest, logger)
-	case "CertificateGenerated":
-		return r.handleCertificateDownload(ctx, domainRequest, logger)
-	case "Ready":
-		// After certificate is ready, create HAProxy if DomainRoutes or IngressBackend is configured
-		if len(domainRequest.Spec.DomainRoutes) > 0 || domainRequest.Spec.IngressBackend != nil {
-			return r.handleHAProxyCreation(ctx, domainRequest, logger)
-		}
-		// Check if certificate needs renewal (e.g., within 30 days of expiry)
-		if domainRequest.Status.CertificateExpiresAt != nil {
-			timeUntilExpiry := time.Until(domainRequest.Status.CertificateExpiresAt.Time)
-			if timeUntilExpiry < 30*24*time.Hour {
-				logger.Info("Certificate expiring soon, regenerating",
-					zap.Duration("timeUntilExpiry", timeUntilExpiry))
-				return r.handleCertificateGeneration(ctx, domainRequest, logger)
-			}
-		}
-		logger.Info("DomainRequest is ready, no action needed")
-		return reconcile.Result{RequeueAfter: 24 * time.Hour}, nil
+		// New flow: Download installation's origin certificate first
+		return r.handleOriginCertificateDownload(ctx, domainRequest, logger)
+	case "CertificateDownloading":
+		return r.handleOriginCertificateDownload(ctx, domainRequest, logger)
+	case "CertificateReady":
+		// Create HAProxy with landing page (or configured backend)
+		return r.handleHAProxyCreation(ctx, domainRequest, logger)
 	case "HAProxyCreating":
 		return r.handleHAProxyStatusCheck(ctx, domainRequest, logger)
 	case "HAProxyReady":
-		// Verify HAProxy pod actually exists
-		if domainRequest.Status.HAProxyPodName != "" {
-			pod := &corev1.Pod{}
-			err := r.Get(ctx, client.ObjectKey{
-				Name:      domainRequest.Status.HAProxyPodName,
-				Namespace: domainRequest.Namespace,
-			}, pod)
-			if err != nil {
-				if errors.IsNotFound(err) {
-					// Pod doesn't exist, need to recreate it
-					logger.Info("HAProxy pod not found, recreating",
-						zap.String("podName", domainRequest.Status.HAProxyPodName))
-
-					// Reset HAProxy status
-					domainRequest.Status.HAProxyPodName = ""
-					domainRequest.Status.HAProxyReady = false
-					domainRequest.Status.State = "Ready"
-					domainRequest.Status.Message = "HAProxy pod was deleted, will recreate"
-
-					if err := r.Status().Update(ctx, domainRequest); err != nil {
-						logger.Error("Failed to update status after pod deletion", zap.Error(err))
-						return reconcile.Result{}, err
-					}
-
-					// Trigger recreation
-					return r.handleHAProxyCreation(ctx, domainRequest, logger)
-				}
-				logger.Error("Failed to check HAProxy pod", zap.Error(err))
-				return reconcile.Result{}, err
-			}
-
-			// Check if pod is still ready
-			isReady := false
-			for _, cond := range pod.Status.Conditions {
-				if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
-					isReady = true
-					break
-				}
-			}
-
-			if !isReady {
-				logger.Info("HAProxy pod is not ready anymore",
-					zap.String("podName", domainRequest.Status.HAProxyPodName),
-					zap.String("phase", string(pod.Status.Phase)))
-
-				domainRequest.Status.HAProxyReady = false
-				domainRequest.Status.State = "HAProxyCreating"
-				domainRequest.Status.Message = fmt.Sprintf("HAProxy pod not ready: %s", pod.Status.Phase)
-
-				if err := r.Status().Update(ctx, domainRequest); err != nil {
-					logger.Error("Failed to update status", zap.Error(err))
-					return reconcile.Result{}, err
-				}
-
-				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
-			}
-		}
-
-		// Check if HAProxy configuration needs to be updated
-		// This happens when domainRoutes or ingressBackend changes
-		configMapName := fmt.Sprintf("%s-haproxy-config", domainRequest.Name)
-		existingConfigMap := &corev1.ConfigMap{}
-		err := r.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: domainRequest.Namespace}, existingConfigMap)
-
-		if err == nil {
-			// ConfigMap exists, check if it needs updating
-			currentConfig := r.generateHAProxyConfig(domainRequest)
-			existingConfig := existingConfigMap.Data["haproxy.cfg"]
-			if currentConfig != existingConfig {
-				logger.Info("HAProxy configuration has changed, updating ConfigMap and restarting pod")
-
-				// Delete the ConfigMap to force recreation with new config
-				if err := r.Delete(ctx, existingConfigMap); err != nil {
-					logger.Error("Failed to delete ConfigMap", zap.Error(err))
-					return reconcile.Result{}, err
-				}
-
-				// Delete the HAProxy pod to force recreation
-				if domainRequest.Status.HAProxyPodName != "" {
-					existingPod := &corev1.Pod{}
-					err := r.Get(ctx, client.ObjectKey{Name: domainRequest.Status.HAProxyPodName, Namespace: domainRequest.Namespace}, existingPod)
-					if err == nil {
-						if err := r.Delete(ctx, existingPod); err != nil {
-							logger.Error("Failed to delete HAProxy pod", zap.Error(err))
-							return reconcile.Result{}, err
-						}
-					}
-				}
-
-				// Reset HAProxy status to trigger recreation
-				domainRequest.Status.HAProxyPodName = ""
-				domainRequest.Status.HAProxyReady = false
-				domainRequest.Status.State = "Ready"
-				domainRequest.Status.Message = "HAProxy configuration changed, recreating"
-
-				if err := r.Status().Update(ctx, domainRequest); err != nil {
-					logger.Error("Failed to update status after config change", zap.Error(err))
-					return reconcile.Result{}, err
-				}
-
-				return reconcile.Result{}, nil
-			}
-		} else if errors.IsNotFound(err) {
-			// ConfigMap doesn't exist, need to recreate it
-			logger.Info("HAProxy ConfigMap not found, recreating HAProxy setup")
-
-			// Delete the HAProxy pod if it exists
-			if domainRequest.Status.HAProxyPodName != "" {
-				existingPod := &corev1.Pod{}
-				err := r.Get(ctx, client.ObjectKey{Name: domainRequest.Status.HAProxyPodName, Namespace: domainRequest.Namespace}, existingPod)
-				if err == nil {
-					if err := r.Delete(ctx, existingPod); err != nil {
-						logger.Error("Failed to delete HAProxy pod", zap.Error(err))
-						return reconcile.Result{}, err
-					}
-				}
-			}
-
-			// Reset HAProxy status to trigger recreation
-			domainRequest.Status.HAProxyPodName = ""
-			domainRequest.Status.HAProxyReady = false
-			domainRequest.Status.State = "Ready"
-			domainRequest.Status.Message = "HAProxy ConfigMap missing, recreating"
-
-			if err := r.Status().Update(ctx, domainRequest); err != nil {
-				logger.Error("Failed to update status after ConfigMap deletion", zap.Error(err))
-				return reconcile.Result{}, err
-			}
-
-			return reconcile.Result{}, nil
-		}
-
-		// Check if IP address has changed
-		currentIP := domainRequest.Spec.IPAddress
-		if currentIP == "" && domainRequest.Spec.LoadBalancerServiceName != "" {
-			// Fetch current IP from LoadBalancer service
-			svc := &corev1.Service{}
-			serviceKey := client.ObjectKey{
-				Name:      domainRequest.Spec.LoadBalancerServiceName,
-				Namespace: domainRequest.Spec.LoadBalancerServiceNamespace,
-			}
-			if err := r.Get(ctx, serviceKey, svc); err == nil {
-				if len(svc.Status.LoadBalancer.Ingress) > 0 {
-					currentIP = svc.Status.LoadBalancer.Ingress[0].IP
-				}
-			}
-		}
-
-		// If we still don't have current IP, try to get it from cloud metadata
-		if currentIP == "" {
-			metadataProvider := cloud.NewAWSMetadataProvider()
-			if ip, err := metadataProvider.GetPublicIP(ctx); err == nil {
-				currentIP = ip
-			}
-		}
-
-		// Check if IP has changed from what was registered
-		if currentIP != "" && domainRequest.Status.LastIPRegistrationTime != nil {
-			// We need to compare with the IP that was actually registered
-			// For now, we'll check if the IP in spec is different from current
-			if domainRequest.Spec.IPAddress != "" && currentIP != domainRequest.Spec.IPAddress {
-				logger.Info("IP address has changed, triggering re-registration",
-					zap.String("oldIP", domainRequest.Spec.IPAddress),
-					zap.String("newIP", currentIP))
-
-				// Update spec with new IP
-				domainRequest.Spec.IPAddress = currentIP
-				if err := r.Update(ctx, domainRequest); err != nil {
-					logger.Error("Failed to update spec with new IP", zap.Error(err))
-					return reconcile.Result{}, err
-				}
-
-				// Reset to re-register
-				domainRequest.Status.State = "Pending"
-				domainRequest.Status.Message = "IP address changed, re-registering"
-
-				if err := r.Status().Update(ctx, domainRequest); err != nil {
-					logger.Error("Failed to update status for IP change", zap.Error(err))
-					return reconcile.Result{}, err
-				}
-
-				return reconcile.Result{}, nil
-			}
-		}
-
-		// HAProxy is running and everything is good, check for certificate renewal
-		if domainRequest.Status.CertificateExpiresAt != nil {
-			timeUntilExpiry := time.Until(domainRequest.Status.CertificateExpiresAt.Time)
-			if timeUntilExpiry < 30*24*time.Hour {
-				logger.Info("Certificate expiring soon, regenerating",
-					zap.Duration("timeUntilExpiry", timeUntilExpiry))
-				return r.handleCertificateGeneration(ctx, domainRequest, logger)
-			}
-		}
-
-		logger.Info("DomainRequest with HAProxy is ready, all checks passed")
-		return reconcile.Result{RequeueAfter: 5 * time.Minute}, nil
+		// HAProxy is ready, now configure DNS/IP
+		return r.handleIPRegistration(ctx, domainRequest, logger)
+	case "IPRegistering":
+		return r.handleIPRegistration(ctx, domainRequest, logger)
+	case "Ready":
+		logger.Info("DomainRequest is ready, no action needed")
+		return reconcile.Result{RequeueAfter: 24 * time.Hour}, nil
 	case "Failed":
 		// Retry the failed operation after 30 seconds
 		logger.Info("DomainRequest failed, determining which step to retry")
@@ -727,9 +533,10 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 	}
 
 	// Update status with registration details
+	// New flow: Transition to Ready state after IP registration (certificate and HAProxy already set up)
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
-		domainRequest.Status.State = "IPRegistered"
-		domainRequest.Status.Message = "IP address registered successfully"
+		domainRequest.Status.State = "Ready"
+		domainRequest.Status.Message = "DomainRequest is ready - certificate downloaded, HAProxy created, DNS configured"
 		domainRequest.Status.Domain = configResp.Domain
 		domainRequest.Status.Subdomain = configResp.Subdomain
 		domainRequest.Status.DNSRecordIDs = configResp.DNSRecordIDs
@@ -741,7 +548,7 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("IP registration successful",
+	logger.Info("IP registration successful - DomainRequest is now ready",
 		zap.String("domain", configResp.Domain),
 		zap.String("subdomain", configResp.Subdomain))
 
@@ -878,6 +685,97 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 
 	// Requeue after 24 hours to check for certificate renewal
 	return reconcile.Result{RequeueAfter: 24 * time.Hour}, nil
+}
+
+// handleOriginCertificateDownload downloads the installation's origin certificate
+func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Context, domainRequest *domainrequestsv1.DomainRequest, logger *zap.Logger) (reconcile.Result, error) {
+	logger.Info("Downloading installation origin certificate")
+
+	// Call console API to get origin certificate
+	url := fmt.Sprintf("%s/api/installations/get-origin-certificate?installationKey=%s",
+		consoleAPIBaseURL, r.InstallationKey)
+
+	resp, err := r.callConsoleAPI(ctx, url, "GET", nil, r.InstallationSecret, logger)
+	if err != nil {
+		logger.Error("Failed to download origin certificate", zap.Error(err))
+		domainRequest.Status.State = "Failed"
+		domainRequest.Status.Message = fmt.Sprintf("Failed to download origin certificate: %v", err)
+		if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
+			logger.Error("Failed to update status", zap.Error(updateErr))
+			return reconcile.Result{}, updateErr
+		}
+		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
+	}
+
+	var certResp getOriginCertificateResponse
+	if err := json.Unmarshal(resp, &certResp); err != nil {
+		logger.Error("Failed to parse origin certificate response", zap.Error(err))
+		domainRequest.Status.State = "Failed"
+		domainRequest.Status.Message = "Failed to parse origin certificate response"
+		if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
+			logger.Error("Failed to update status", zap.Error(updateErr))
+			return reconcile.Result{}, updateErr
+		}
+		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
+	}
+
+	// Create a secret to store the origin certificate
+	secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: domainRequest.Namespace,
+		},
+		Type: corev1.SecretTypeTLS,
+		Data: map[string][]byte{
+			"tls.crt": []byte(certResp.Certificate),
+			"tls.key": []byte(certResp.PrivateKey),
+		},
+	}
+
+	// Set owner reference
+	if err := controllerutil.SetControllerReference(domainRequest, secret, r.Scheme); err != nil {
+		logger.Error("Failed to set owner reference on Secret", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Create or update secret
+	existingSecret := &corev1.Secret{}
+	err = r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Namespace}, existingSecret)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Create new secret
+			if err := r.Create(ctx, secret); err != nil {
+				logger.Error("Failed to create Secret", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+			logger.Info("Created origin certificate Secret", zap.String("secretName", secretName))
+		} else {
+			logger.Error("Failed to check for existing Secret", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+	} else {
+		// Update existing secret
+		existingSecret.Data = secret.Data
+		if err := r.Update(ctx, existingSecret); err != nil {
+			logger.Error("Failed to update Secret", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		logger.Info("Updated origin certificate Secret", zap.String("secretName", secretName))
+	}
+
+	// Update status
+	domainRequest.Status.State = "CertificateReady"
+	domainRequest.Status.Message = "Origin certificate downloaded and stored"
+	domainRequest.Status.OriginCertificateSecretName = secretName
+
+	if err := r.Status().Update(ctx, domainRequest); err != nil {
+		logger.Error("Failed to update status", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Origin certificate download successful", zap.String("secretName", secretName))
+	return reconcile.Result{Requeue: true}, nil
 }
 
 // handleHAProxyCreation creates HAProxy pod and ConfigMap for traffic routing

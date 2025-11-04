@@ -133,7 +133,7 @@ type DomainRoute struct {
 // DomainRequestStatus defines the observed state of DomainRequest
 type DomainRequestStatus struct {
 	// State represents the current state of the DomainRequest
-	// +kubebuilder:validation:Enum=Pending;IPRegistered;CertificateGenerated;Ready;HAProxyCreating;HAProxyReady;Failed
+	// +kubebuilder:validation:Enum=Pending;CertificateDownloading;CertificateReady;HAProxyCreating;HAProxyReady;IPRegistering;Ready;Failed
 	// +kubebuilder:default=Pending
 	State string `json:"state"`
 
@@ -153,25 +153,14 @@ type DomainRequestStatus struct {
 	// +optional
 	DNSRecordIDs []string `json:"dnsRecordIds,omitempty"`
 
-	// CertificateID is the ID of the generated certificate
+	// OriginCertificateSecretName is the name of the Kubernetes Secret containing the installation's origin certificate
+	// This certificate is shared across all DomainRequests for the same installation
 	// +optional
-	CertificateID string `json:"certificateId,omitempty"`
-
-	// CertificateExpiresAt is the expiration time of the certificate
-	// +optional
-	CertificateExpiresAt *metav1.Time `json:"certificateExpiresAt,omitempty"`
-
-	// CertificateSecretName is the name of the Kubernetes Secret containing the certificate
-	// +optional
-	CertificateSecretName string `json:"certificateSecretName,omitempty"`
+	OriginCertificateSecretName string `json:"originCertificateSecretName,omitempty"`
 
 	// LastIPRegistrationTime is when the IP was last registered
 	// +optional
 	LastIPRegistrationTime *metav1.Time `json:"lastIPRegistrationTime,omitempty"`
-
-	// LastCertificateGenerationTime is when the certificate was last generated
-	// +optional
-	LastCertificateGenerationTime *metav1.Time `json:"lastCertificateGenerationTime,omitempty"`
 
 	// HAProxyPodName is the name of the HAProxy pod created for this domain
 	// +optional
