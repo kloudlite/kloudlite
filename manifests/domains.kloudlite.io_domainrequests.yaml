@@ -145,41 +145,40 @@ spec:
                   NodeName is the name of the node where HAProxy pod should be scheduled
                   The node should have the public IP address
                 type: string
+              originCertificateHostnames:
+                description: |-
+                  OriginCertificateHostnames specifies the hostnames to include in the origin certificate
+                  If not provided, defaults to ["subdomain.domain", "*.subdomain.domain"]
+                  Note: Cloudflare only allows ONE wildcard per hostname at the beginning
+                  Valid: ["example.com", "*.example.com"]
+                  Invalid: ["*.*.example.com", "test.*.example.com"]
+                items:
+                  type: string
+                type: array
               sshProxyEnabled:
                 default: false
                 description: |-
                   SSHProxyEnabled enables SSH proxy functionality (port 22)
                   Will be handled by a sidecar container in future implementation
                 type: boolean
-              type:
-                default: installation
-                description: 'Type indicates the type of registration: "installation"
-                  or "workmachine"'
-                enum:
-                - installation
-                - workmachine
-                type: string
-              workMachineName:
-                description: WorkMachineName is the name of the workmachine (required
-                  if type=workmachine)
-                type: string
             required:
             - certificateScope
-            - type
             type: object
           status:
             description: DomainRequestStatus defines the observed state of DomainRequest
             properties:
               certificateExpiresAt:
-                description: CertificateExpiresAt is the expiration time of the certificate
+                description: CertificateExpiresAt is when the certificate expires
+                  (deprecated - kept for backward compatibility)
                 format: date-time
                 type: string
               certificateId:
                 description: CertificateID is the ID of the generated certificate
+                  (deprecated - kept for backward compatibility)
                 type: string
               certificateSecretName:
                 description: CertificateSecretName is the name of the Kubernetes Secret
-                  containing the certificate
+                  containing the certificate (deprecated - kept for backward compatibility)
                 type: string
               dnsRecordIds:
                 description: DNSRecordIDs contains the Cloudflare DNS record IDs created
@@ -199,7 +198,7 @@ spec:
                 type: boolean
               lastCertificateGenerationTime:
                 description: LastCertificateGenerationTime is when the certificate
-                  was last generated
+                  was last generated (deprecated - kept for backward compatibility)
                 format: date-time
                 type: string
               lastIPRegistrationTime:
@@ -210,16 +209,23 @@ spec:
                 description: Message provides additional information about the current
                   state
                 type: string
+              originCertificateSecretName:
+                description: |-
+                  OriginCertificateSecretName is the name of the Kubernetes Secret containing the installation's origin certificate
+                  This certificate is shared across all DomainRequests for the same installation
+                type: string
               state:
                 default: Pending
                 description: State represents the current state of the DomainRequest
                 enum:
                 - Pending
-                - IPRegistered
+                - CertificateDownloading
                 - CertificateGenerated
-                - Ready
+                - CertificateReady
                 - HAProxyCreating
                 - HAProxyReady
+                - IPRegistering
+                - Ready
                 - Failed
                 type: string
               subdomain:
