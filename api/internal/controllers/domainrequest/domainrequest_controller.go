@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kloudlite/kloudlite/api/internal/cloud"
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
