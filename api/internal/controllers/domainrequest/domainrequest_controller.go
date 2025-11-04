@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
@@ -709,14 +710,38 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 
 	resp, err := r.callConsoleAPI(ctx, path, "GET", nil, r.InstallationSecret, logger)
 	if err != nil {
-		logger.Error("Failed to download origin certificate", zap.Error(err))
-		domainRequest.Status.State = "Failed"
-		domainRequest.Status.Message = fmt.Sprintf("Failed to download origin certificate: %v", err)
-		if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
-			logger.Error("Failed to update status", zap.Error(updateErr))
-			return reconcile.Result{}, updateErr
+		// Check if certificate doesn't exist (404 error)
+		if strings.Contains(err.Error(), "status 404") {
+			logger.Info("Origin certificate not found, creating it automatically")
+
+			// Call create-origin-certificate endpoint
+			createPath := fmt.Sprintf("/api/installations/create-origin-certificate?installationKey=%s", r.InstallationKey)
+			createResp, createErr := r.callConsoleAPI(ctx, createPath, "POST", nil, r.InstallationSecret, logger)
+			if createErr != nil {
+				logger.Error("Failed to create origin certificate", zap.Error(createErr))
+				domainRequest.Status.State = "Failed"
+				domainRequest.Status.Message = fmt.Sprintf("Failed to create origin certificate: %v", createErr)
+				if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
+					logger.Error("Failed to update status", zap.Error(updateErr))
+					return reconcile.Result{}, updateErr
+				}
+				return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
+			}
+
+			logger.Info("Origin certificate created successfully, using it")
+			// Use the response from create endpoint instead of making another GET call
+			resp = createResp
+		} else {
+			// Other error, not 404
+			logger.Error("Failed to download origin certificate", zap.Error(err))
+			domainRequest.Status.State = "Failed"
+			domainRequest.Status.Message = fmt.Sprintf("Failed to download origin certificate: %v", err)
+			if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
+				logger.Error("Failed to update status", zap.Error(updateErr))
+				return reconcile.Result{}, updateErr
+			}
+			return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
 		}
-		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
 	var certResp getOriginCertificateResponse
