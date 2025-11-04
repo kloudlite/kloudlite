@@ -16,6 +16,7 @@ import (
 
 type Server struct {
 	httpServer          *http.Server
+	httpsServer         *http.Server
 	logger              *zap.Logger
 	config              *config.Config
 	k8sClient           *k8s.Client
@@ -85,6 +86,10 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 			Addr:    ":8080",
 			Handler: router,
 		},
+		httpsServer: &http.Server{
+			Addr:    ":8443",
+			Handler: router,
+		},
 		logger:              logger,
 		config:              cfg,
 		k8sClient:           k8sClient,
@@ -135,10 +140,16 @@ func (s *Server) Start() error {
 		s.subdomainPoller.Start(s.pollerCtx)
 	}()
 
+	// Start HTTPS server on port 8443 in goroutine
+	go func() {
+		s.logger.Info("Starting HTTPS webhook server", zap.String("addr", s.httpsServer.Addr))
+		if err := s.httpsServer.ListenAndServeTLS("/etc/webhook/certs/tls.crt", "/etc/webhook/certs/tls.key"); err != nil && err != http.ErrServerClosed {
+			s.logger.Error("HTTPS server stopped with error", zap.Error(err))
+		}
+	}()
+
 	// Start HTTP server on port 8080
-	// Note: Port 8443 is reserved for the controller-runtime webhook server
 	s.logger.Info("Starting HTTP server", zap.String("addr", s.httpServer.Addr))
-	s.logger.Info("Webhook server will be started by controller-runtime on port 8443")
 
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("failed to start HTTP server: %w", err)
@@ -166,6 +177,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// Shutdown HTTP server
 	if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
 		s.logger.Error("Failed to shutdown HTTP server", zap.Error(err))
+	}
+
+	// Shutdown HTTPS server
+	if err := s.httpsServer.Shutdown(shutdownCtx); err != nil {
+		s.logger.Error("Failed to shutdown HTTPS server", zap.Error(err))
 	}
 
 	// Clean up managers
