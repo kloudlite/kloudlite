@@ -5,6 +5,7 @@ import { getInstallationById } from '@/lib/console/supabase-storage-service'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { InstallationsHeader } from '@/components/installations-header'
+import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
@@ -95,6 +96,14 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
             domain={domain}
             installationUrl={installationUrl}
           />
+
+          {/* Super Admin Login Card */}
+          {installation.secretKey && installation.subdomain && (
+            <SuperAdminLoginCard
+              installationId={installation.id}
+              isActive={status.label === 'Active'}
+            />
+          )}
 
           {/* Danger Zone */}
           <Card className="border-destructive">
