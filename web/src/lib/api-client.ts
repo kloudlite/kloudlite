@@ -1,5 +1,5 @@
 import { env } from '@/lib/env'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 
 // API client configuration
 export class ApiClient {
@@ -15,7 +15,7 @@ export class ApiClient {
     // Get authentication session (only works in server components/actions)
     const authHeaders: Record<string, string> = {}
     try {
-      const session = await auth()
+      const session = await getSession()
       if (session?.user?.backendToken) {
         authHeaders.Authorization = `Bearer ${session.user.backendToken}`
       }
