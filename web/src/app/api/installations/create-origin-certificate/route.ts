@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getInstallationByKey,
-  updateInstallation,
+  getLatestCertificate,
+  saveCertificate,
 } from '@/lib/console/supabase-storage-service'
 import { generateCertificate } from '@/lib/console/cloudflare-certificates'
 
@@ -56,18 +57,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
-    // Check if origin certificate already exists
-    if (installation.originCertificate && installation.originPrivateKey) {
+    // Check if origin certificate already exists in tls_certificates table
+    const existingCert = await getLatestCertificate(installation.id, 'installation')
+
+    if (existingCert) {
       console.log(
-        `Origin certificate already exists for installation: ${installation.id}, cert ID: ${installation.originCertId}`,
+        `Origin certificate already exists for installation: ${installation.id}, cert ID: ${existingCert.cloudflareCertId}`,
       )
       return NextResponse.json({
         success: true,
-        certificate: installation.originCertificate,
-        privateKey: installation.originPrivateKey,
-        certificateId: installation.originCertId,
-        validFrom: installation.originCertValidFrom,
-        validUntil: installation.originCertValidUntil,
+        certificate: existingCert.certificate,
+        privateKey: existingCert.privateKey,
+        certificateId: existingCert.cloudflareCertId,
+        validFrom: existingCert.validFrom,
+        validUntil: existingCert.validUntil,
         message: 'Origin certificate already exists',
       })
     }
@@ -107,16 +110,21 @@ export async function POST(request: NextRequest) {
 
     console.log(`Origin certificate generated: ${originCert.id}`)
 
-    // Store origin certificate in installation
-    await updateInstallation(installation.id, {
-      originCertificate: originCert.certificate,
-      originPrivateKey: originCert.privateKey,
-      originCertId: originCert.id,
-      originCertValidFrom: originCert.validFrom,
-      originCertValidUntil: originCert.validUntil,
+    // Store origin certificate in tls_certificates table with installation scope
+    await saveCertificate({
+      installationId: installation.id,
+      cloudflareCertId: originCert.id,
+      certificate: originCert.certificate,
+      privateKey: originCert.privateKey,
+      hostnames: originCert.hostnames,
+      scope: 'installation',
+      scopeIdentifier: null,
+      parentScopeIdentifier: null,
+      validFrom: originCert.validFrom,
+      validUntil: originCert.validUntil,
     })
 
-    console.log(`Origin certificate saved to installation: ${installation.id}`)
+    console.log(`Origin certificate saved to tls_certificates table for installation: ${installation.id}`)
 
     const response = NextResponse.json({
       success: true,
