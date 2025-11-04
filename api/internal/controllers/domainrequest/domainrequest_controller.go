@@ -187,8 +187,14 @@ func (r *DomainRequestReconciler) createHAProxyConfigMap(ctx context.Context, do
 
 // createHAProxyPod creates or updates the HAProxy pod with hostNetwork
 func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRequest *domainrequestsv1.DomainRequest, logger *zap.Logger) error {
-	if domainRequest.Status.OriginCertificateSecretName == "" {
-		return fmt.Errorf("origin certificate secret not yet created")
+	// Check if origin certificate secret exists
+	secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
+	secret := &corev1.Secret{}
+	if err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: "kloudlite"}, secret); err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("origin certificate secret not yet created")
+		}
+		return fmt.Errorf("failed to check origin certificate secret: %w", err)
 	}
 
 	podName := fmt.Sprintf("%s-haproxy", domainRequest.Name)
@@ -444,12 +450,17 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 		// Retry the failed operation after 30 seconds
 		logger.Info("DomainRequest failed, determining which step to retry")
 
+		// Check if origin certificate secret exists
+		secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
+		secret := &corev1.Secret{}
+		secretExists := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: "kloudlite"}, secret) == nil
+
 		// Determine which step failed based on what's been completed
-		if domainRequest.Status.OriginCertificateSecretName == "" {
+		if !secretExists {
 			// Origin certificate not downloaded yet
 			logger.Info("Retrying origin certificate download")
 			return r.handleOriginCertificateDownload(ctx, domainRequest, logger)
-		} else if domainRequest.Status.OriginCertificateSecretName != "" && domainRequest.Status.HAProxyPodName == "" {
+		} else if secretExists && domainRequest.Status.HAProxyPodName == "" {
 			// Origin cert exists but HAProxy not created
 			logger.Info("Origin cert exists but HAProxy not created, retrying HAProxy creation")
 			return r.handleHAProxyCreation(ctx, domainRequest, logger)
