@@ -49,4 +49,4 @@ test-*.yaml
 test-workspaces/
 
 # Generated CRD configuration
-config/
+config/devenv/manifests/kli
