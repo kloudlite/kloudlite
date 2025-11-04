@@ -145,6 +145,16 @@ spec:
                   NodeName is the name of the node where HAProxy pod should be scheduled
                   The node should have the public IP address
                 type: string
+              originCertificateHostnames:
+                description: |-
+                  OriginCertificateHostnames specifies the hostnames to include in the origin certificate
+                  If not provided, defaults to ["subdomain.domain", "*.subdomain.domain"]
+                  Note: Cloudflare only allows ONE wildcard per hostname at the beginning
+                  Valid: ["example.com", "*.example.com"]
+                  Invalid: ["*.*.example.com", "test.*.example.com"]
+                items:
+                  type: string
+                type: array
               sshProxyEnabled:
                 default: false
                 description: |-
