@@ -91,18 +91,18 @@ USER root
 
 # Create kloudlite config directory with shell initialization scripts
 RUN mkdir -p /etc/kloudlite
-COPY starship.toml /etc/kloudlite/starship.toml
-COPY kl-shell-init.sh /etc/kloudlite/shell-init.sh
-COPY kl-shell-init.zsh /etc/kloudlite/shell-init.zsh
-COPY kl-shell-init.fish /etc/kloudlite/shell-init.fish
-COPY kloudlite-context.sh /etc/kloudlite/kloudlite-context.sh
-COPY init-shell-configs.sh /etc/kloudlite/init-shell-configs.sh
+COPY workspace-images/comprehensive/starship.toml /etc/kloudlite/starship.toml
+COPY workspace-images/comprehensive/kl-shell-init.sh /etc/kloudlite/shell-init.sh
+COPY workspace-images/comprehensive/kl-shell-init.zsh /etc/kloudlite/shell-init.zsh
+COPY workspace-images/comprehensive/kl-shell-init.fish /etc/kloudlite/shell-init.fish
+COPY workspace-images/comprehensive/kloudlite-context.sh /etc/kloudlite/kloudlite-context.sh
+COPY workspace-images/comprehensive/init-shell-configs.sh /etc/kloudlite/init-shell-configs.sh
 RUN chmod +x /etc/kloudlite/kloudlite-context.sh /etc/kloudlite/init-shell-configs.sh
 
 # Disable Ubuntu's default MOTD scripts and install custom Kloudlite MOTD
 RUN chmod -x /etc/update-motd.d/* && \
   rm -f /etc/legal /etc/update-motd.d/60-unminimize
-COPY kloudlite-motd.sh /etc/update-motd.d/00-kloudlite-motd
+COPY workspace-images/comprehensive/kloudlite-motd.sh /etc/update-motd.d/00-kloudlite-motd
 RUN chmod +x /etc/update-motd.d/00-kloudlite-motd
 
 # Note: Shell configurations (.bashrc, .zshrc, config.fish) are managed by
@@ -111,7 +111,7 @@ RUN chmod +x /etc/update-motd.d/00-kloudlite-motd
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY workspace-images/comprehensive/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose all required ports
 EXPOSE 22 8080 7681 7682 7683 7684
