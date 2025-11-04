@@ -65,6 +65,17 @@ func (sp *SubdomainPoller) Start(ctx context.Context) {
 		zap.String("console_url", sp.config.ConsoleURL),
 		zap.Int("interval_seconds", sp.config.PollingIntervalSeconds))
 
+	// Wait for service endpoints to be ready before making webhook calls
+	// This prevents "no endpoints available" errors during startup
+	sp.logger.Debug("Waiting 10 seconds for service endpoints to be ready")
+	select {
+	case <-time.After(10 * time.Second):
+		// Continue after delay
+	case <-ctx.Done():
+		sp.logger.Info("Subdomain poller stopped during startup delay")
+		return
+	}
+
 	// Ensure DomainRequest is created/updated idempotently on startup
 	if err := sp.ensureDomainRequestOnStartup(ctx); err != nil {
 		sp.logger.Error("Failed to ensure DomainRequest on startup", zap.Error(err))
