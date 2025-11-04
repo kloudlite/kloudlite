@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { apiClient } from '@/lib/api-client'
 
 interface Provider {
@@ -12,7 +12,7 @@ interface Provider {
 
 export async function updateProvider(type: string, provider: Provider) {
   // Check authentication using NextAuth
-  const session = await auth()
+  const session = await getSession()
 
   if (!session || !session.user?.roles?.includes('super-admin')) {
     return { success: false, error: 'Not authenticated or insufficient permissions' }

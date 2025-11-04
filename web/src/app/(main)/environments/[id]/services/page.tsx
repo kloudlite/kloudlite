@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
 import { serviceService } from '@/lib/services/service.service'
 import { environmentService } from '@/lib/services/environment.service'
@@ -16,7 +16,7 @@ interface PageProps {
 }
 
 export default async function ServicesPage({ params }: PageProps) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session) {
     redirect('/auth/signin')

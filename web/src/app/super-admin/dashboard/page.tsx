@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { apiClient } from '@/lib/api-client'
 import { LogoutButton } from './components/logout-button'
 import { ProviderCard } from './components/provider-card'
@@ -15,7 +15,7 @@ interface Provider {
 
 export default async function SuperAdminDashboard() {
   // Check authentication
-  const session = await auth()
+  const session = await getSession()
   if (!session || !session.user?.roles?.includes('super-admin')) {
     redirect('/auth/signin')
   }

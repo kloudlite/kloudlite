@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { Package, XCircle, Loader2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ interface PageProps {
 }
 
 export default async function WorkspaceDetailPage({ params }: PageProps) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session) {
     redirect('/auth/signin')

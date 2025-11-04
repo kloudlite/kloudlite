@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
 import { environmentService } from '@/lib/services/environment.service'
@@ -34,7 +34,7 @@ function formatTimeAgo(timestamp?: string): string {
 }
 
 export default async function EnvironmentLayout({ children, params }: LayoutProps) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session) {
     redirect('/auth/signin')

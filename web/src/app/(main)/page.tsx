@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { WorkMachinesContent } from './workspaces/_components/work-machines-content'
 import { getMyWorkMachine, listAllWorkMachines } from '@/app/actions/work-machine.actions'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
@@ -216,7 +216,7 @@ export default async function HomePage() {
   }
 
   // Otherwise, show dashboard (for dashboard mode)
-  const session = await auth()
+  const session = await getSession()
 
   // Session is guaranteed to exist due to middleware checks
   const currentUser = session!.user?.email || 'user@example.com'

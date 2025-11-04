@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { WorkspacesList } from './_components/workspaces-list'
 import { workspaceService } from '@/lib/services/workspace.service'
 import { workMachineService } from '@/lib/services/work-machine.service'
 import type { Workspace } from '@/types/workspace'
 
 export default async function WorkspacesPage() {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session) {
     redirect('/auth/signin')

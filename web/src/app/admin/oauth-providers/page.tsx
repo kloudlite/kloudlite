@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { ProviderCard } from './provider-card'
 import { getOAuthProviders } from './oauth-actions'
 import type { OAuthProvider } from '@/lib/services/oauth-provider.service'
@@ -8,7 +8,7 @@ const PROVIDER_TYPES = ['google', 'github', 'microsoft'] as const
 
 export default async function OAuthProvidersPage() {
   // Check authentication
-  const session = await auth()
+  const session = await getSession()
   if (!session || !session.user?.email) {
     redirect('/auth/signin')
   }
