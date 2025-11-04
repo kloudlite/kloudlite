@@ -61,6 +61,14 @@ type DomainRequestSpec struct {
 	// +optional
 	CertificateParentScopeIdentifier string `json:"certificateParentScopeIdentifier,omitempty"`
 
+	// OriginCertificateHostnames specifies the hostnames to include in the origin certificate
+	// If not provided, defaults to ["subdomain.domain", "*.subdomain.domain"]
+	// Note: Cloudflare only allows ONE wildcard per hostname at the beginning
+	// Valid: ["example.com", "*.example.com"]
+	// Invalid: ["*.*.example.com", "test.*.example.com"]
+	// +optional
+	OriginCertificateHostnames []string `json:"originCertificateHostnames,omitempty"`
+
 	// SSHProxyEnabled enables SSH proxy functionality (port 22)
 	// Will be handled by a sidecar container in future implementation
 	// +kubebuilder:default=false
