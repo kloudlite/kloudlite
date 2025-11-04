@@ -427,7 +427,7 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 		return r.handleOriginCertificateDownload(ctx, domainRequest, logger)
 	case "CertificateDownloading":
 		return r.handleOriginCertificateDownload(ctx, domainRequest, logger)
-	case "CertificateReady":
+	case "CertificateGenerated":
 		// Create HAProxy with landing page (or configured backend)
 		return r.handleHAProxyCreation(ctx, domainRequest, logger)
 	case "HAProxyCreating":
