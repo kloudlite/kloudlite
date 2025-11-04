@@ -17,11 +17,11 @@ RUN go mod download
 # Copy the entire API source code
 COPY ../../ ./
 
-# Build kl binary with version info
+# Build kl binary
 RUN CGO_ENABLED=0 go build \
-  -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/kli/cmd.Version=${VERSION}" \
+  -ldflags="-s -w" \
   -o kl \
-  ./cmd/kli
+  ./cmd/kl
 
 
 # Final workspace image
