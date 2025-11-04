@@ -11,7 +11,6 @@ import (
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -235,42 +234,19 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 		}, env)
 		if err == nil && env.Spec.Activated {
 			// Validate environment namespace for security
-			if err := utils.ValidateKubernetesNamespace(env.Spec.TargetNamespace); err != nil {
-				logger.Warn("Invalid environment namespace, skipping DNS update",
-					zap.String("environment", env.Name),
-					zap.String("targetNamespace", env.Spec.TargetNamespace),
-					zap.Error(err))
-				domains = []string{"svc.cluster.local", "cluster.local"}
-			} else {
-				// Include validated environment namespace in search domains
-				envDomain := fmt.Sprintf("%s.svc.cluster.local", env.Spec.TargetNamespace)
-				domains = []string{envDomain, "svc.cluster.local", "cluster.local"}
-				logger.Info("Environment connection detected for DNS update",
-					zap.String("environment", env.Name),
-					zap.String("targetNamespace", env.Spec.TargetNamespace))
-			}
-		} else {
-			// Environment not found or not activated
-			domains = []string{"svc.cluster.local", "cluster.local"}
-			logger.Info("Environment reference exists but not active for DNS update")
+			// Include validated environment namespace in search domains
+			envDomain := fmt.Sprintf("%s.svc.cluster.local", env.Spec.TargetNamespace)
+			domains = []string{envDomain}
+			logger.Info("Environment connection detected for DNS update",
+				zap.String("environment", env.Name),
+				zap.String("targetNamespace", env.Spec.TargetNamespace))
 		}
-	} else {
-		// No environment connection
-		domains = []string{"svc.cluster.local", "cluster.local"}
-		logger.Info("No environment connection for DNS update")
 	}
 
-	// Sanitize search domains to prevent DNS injection
-	searchDomains, err := utils.SanitizeSearchDomains(domains)
-	if err != nil {
-		logger.Warn("Failed to sanitize search domains, using defaults",
-			zap.Strings("domains", domains),
-			zap.Error(err))
-		searchDomains = "svc.cluster.local cluster.local"
-	}
+	domains = append(domains, "svc.cluster.local", "cluster.local")
 
 	// Build new resolv.conf content with validated domains
-	resolvConf := fmt.Sprintf("nameserver 10.43.0.10\nsearch %s\noptions ndots:5\n", searchDomains)
+	resolvConf := fmt.Sprintf("nameserver 10.43.0.10\nsearch %s\noptions ndots:5\n", strings.Join(domains, " "))
 
 	// Exec into pod and update /etc/resolv.conf
 	// Note: /etc/resolv.conf is mounted from EmptyDir with ReadOnly: false, so it's writable
@@ -280,9 +256,7 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 		return fmt.Errorf("failed to update DNS config: %w", err)
 	}
 
-	logger.Info("Successfully updated DNS configuration in running pod",
-		zap.String("workspace", workspace.Name),
-		zap.String("searchDomains", searchDomains))
+	logger.Info("Successfully updated DNS configuration in running pod", zap.String("workspace", workspace.Name))
 
 	return nil
 }
@@ -748,7 +722,8 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					},
 				},
 			},
-			RestartPolicy: corev1.RestartPolicyAlways,
+			ServiceAccountName: "workspace-user",
+			RestartPolicy:      corev1.RestartPolicyAlways,
 		},
 	}
 

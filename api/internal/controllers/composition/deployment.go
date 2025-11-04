@@ -3,6 +3,7 @@ package composition
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strconv"
 
 	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -94,7 +95,7 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	for _, deployment := range resources.Deployments {
 		// Apply nodeSelector and tolerations from environment
 		if environment != nil {
-			deployment.Spec.Template.Spec.NodeSelector = environment.Spec.NodeSelector
+			maps.Copy(deployment.Spec.Template.Spec.NodeSelector, environment.Spec.NodeSelector)
 			deployment.Spec.Template.Spec.Tolerations = environment.Spec.Tolerations
 		}
 

@@ -129,6 +129,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
+			Name:     "setup-workspace-RBAC",
+			Title:    "Setup RBAC resources for workspace pods",
+			OnCreate: r.createWorkspaceRBAC,
+			OnDelete: nil,
+		},
+		{
 			Name:     "ensure-ssh-host-keys",
 			Title:    "Ensure SSH host keys secret",
 			OnCreate: r.createSSHHostKeysSecret,
@@ -345,6 +351,165 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 		if err := r.Create(check.Context(), rb); err != nil && !apiErrors.IsAlreadyExists(err) {
 			return check.Failed(err)
 		}
+	}
+
+	return check.Passed()
+}
+
+// createWorkspaceRBAC ensures RBAC resources for workspace pods
+func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	namespace := obj.Spec.TargetNamespace
+
+	// Create ServiceAccount for workspace pods
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workspace-user",
+			Namespace: namespace,
+		},
+	}
+
+	if err := r.Get(check.Context(), client.ObjectKey{Name: sa.Name, Namespace: namespace}, sa); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Errored(err)
+		}
+
+		// Create service account
+		if err := r.Create(check.Context(), sa); err != nil && !apiErrors.IsAlreadyExists(err) {
+			return check.Failed(err)
+		}
+	}
+
+	// Create Role with Workspace, PackageRequest, and Environment permissions
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workspace-user",
+			Namespace: namespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, role, func() error {
+		role.Rules = []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"workspaces"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"workspaces/status"},
+				Verbs:     []string{"get"},
+			},
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"packagerequests"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+			},
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"packagerequests/status"},
+				Verbs:     []string{"get"},
+			},
+			{
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"environments"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"environments/status"},
+				Verbs:     []string{"get"},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	// Create RoleBinding
+	rb := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workspace-user-binding",
+			Namespace: namespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, rb, func() error {
+		rb.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "workspace-user",
+				Namespace: namespace,
+			},
+		}
+
+		rb.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     "workspace-user",
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	// Create ClusterRole for cluster-wide Environment access
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "workspace-user-cluster-access",
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRole, func() error {
+		clusterRole.Rules = []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"environments"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"environments/status"},
+				Verbs:     []string{"get"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"configmaps", "secrets", "services"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	// Create ClusterRoleBinding for this WorkMachine's namespace
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("workspace-user-%s", namespace),
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRoleBinding, func() error {
+		clusterRoleBinding.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "workspace-user",
+				Namespace: namespace,
+			},
+		}
+
+		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     "workspace-user-cluster-access",
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(err)
 	}
 
 	return check.Passed()
