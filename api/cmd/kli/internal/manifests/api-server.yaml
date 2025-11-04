@@ -18,7 +18,7 @@ spec:
       targetPort: 8080
     - name: https
       port: 443
-      targetPort: 8443
+      targetPort: 8080
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -43,18 +43,11 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-            - containerPort: 8443
-              name: https
           envFrom:
             - configMapRef:
                 name: api-server-config
             - secretRef:
                 name: api-server-secret
-          env:
-            - name: WEBHOOK_TLS_CERT_PATH
-              value: /etc/webhook/certs/tls.crt
-            - name: WEBHOOK_TLS_KEY_PATH
-              value: /etc/webhook/certs/tls.key
           volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs
