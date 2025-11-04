@@ -78,6 +78,57 @@ export async function createDnsRecord(
 }
 
 /**
+ * Create a DNS CNAME record
+ * @param name - Full domain name (e.g., "api.example.com")
+ * @param target - Target domain name (e.g., "ssh.dr-name.subdomain.khost.dev")
+ * @param proxied - Whether to proxy through Cloudflare (default: true for route domains)
+ * @returns DNS record ID
+ */
+export async function createCnameRecord(
+  name: string,
+  target: string,
+  proxied: boolean = true,
+): Promise<string | null> {
+  try {
+    console.log(`Creating DNS CNAME record: ${name} → ${target}`)
+
+    const response = await fetch(DNS_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'CNAME',
+        name,
+        content: target,
+        ttl: 120, // 2 minutes for faster propagation
+        proxied,
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error(`DNS CNAME CREATE failed for ${name}:`, error)
+      return null
+    }
+
+    const result: CloudflareDnsResponse<DnsRecord> = await response.json()
+
+    if (!result.success) {
+      console.error(`DNS CNAME CREATE failed for ${name}:`, result.errors)
+      return null
+    }
+
+    console.log(`DNS CNAME record created successfully: ${name} → ${target} (ID: ${result.result.id})`)
+    return result.result.id
+  } catch (error) {
+    console.error(`DNS CNAME CREATE error for ${name}:`, error)
+    return null
+  }
+}
+
+/**
  * Update an existing DNS A record
  * @param recordId - DNS record ID
  * @param name - Full domain name
@@ -292,4 +343,49 @@ export async function deleteDnsRecords(recordIds: string[]): Promise<boolean> {
   }
 
   return allSucceeded
+}
+
+/**
+ * Create DNS records for a DomainRequest
+ * Creates an A record for SSH access and CNAME records for domain routes
+ *
+ * @param domainRequestName - Name of the DomainRequest resource
+ * @param subdomain - Installation subdomain (e.g., "test")
+ * @param ip - Public IP address
+ * @param domainRoutes - Array of domain routes to create CNAME records for
+ * @returns Object containing SSH A record ID and array of route CNAME record IDs
+ */
+export async function createDomainRequestDnsRecords(
+  domainRequestName: string,
+  subdomain: string,
+  ip: string,
+  domainRoutes?: Array<{ domain: string }>,
+): Promise<{ sshRecordId: string | null; routeRecordIds: string[] }> {
+  const routeRecordIds: string[] = []
+
+  // Create A record for SSH access: ssh.{domainrequest-name}.{subdomain}.{domain} → IP (no proxy)
+  const sshDomain = `ssh.${domainRequestName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
+  const sshRecordId = await createDnsRecord(sshDomain, ip, false)
+
+  if (!sshRecordId) {
+    console.error(`Failed to create SSH A record for ${sshDomain}`)
+    return { sshRecordId: null, routeRecordIds: [] }
+  }
+
+  console.log(`Created SSH A record: ${sshDomain} → ${ip}`)
+
+  // Create CNAME records for domain routes pointing to SSH domain (with proxy)
+  if (domainRoutes && domainRoutes.length > 0) {
+    for (const route of domainRoutes) {
+      const cnameRecordId = await createCnameRecord(route.domain, sshDomain, true)
+      if (cnameRecordId) {
+        routeRecordIds.push(cnameRecordId)
+        console.log(`Created route CNAME: ${route.domain} → ${sshDomain}`)
+      } else {
+        console.error(`Failed to create CNAME for ${route.domain}`)
+      }
+    }
+  }
+
+  return { sshRecordId, routeRecordIds }
 }

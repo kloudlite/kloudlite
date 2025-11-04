@@ -17,11 +17,12 @@ type TLSCertificateRow = Database['public']['Tables']['tls_certificates']['Row']
 type DomainReservationRow = Database['public']['Tables']['domain_reservations']['Row']
 
 export interface IPRecord {
-  type: 'installation' | 'workmachine'
+  domainRequestName: string
   ip: string
-  workMachineName?: string
   configuredAt: string
-  dnsRecordIds?: string[]
+  sshRecordId?: string | null
+  routeRecordIds?: string[]
+  domainRoutes?: Array<{ domain: string }>
 }
 
 export interface Installation {
