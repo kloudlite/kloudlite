@@ -734,9 +734,23 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 		if strings.Contains(err.Error(), "status 404") {
 			logger.Info("Origin certificate not found, creating it automatically")
 
+			// Prepare request body with hostnames
+			reqBody := map[string]interface{}{
+				"installationKey": r.InstallationKey,
+			}
+
+			// Include hostnames if specified in DomainRequest spec
+			if len(domainRequest.Spec.OriginCertificateHostnames) > 0 {
+				reqBody["hostnames"] = domainRequest.Spec.OriginCertificateHostnames
+				logger.Info("Using custom origin certificate hostnames",
+					zap.Strings("hostnames", domainRequest.Spec.OriginCertificateHostnames))
+			} else {
+				logger.Info("No custom hostnames specified, API will use defaults")
+			}
+
 			// Call create-origin-certificate endpoint
-			createPath := fmt.Sprintf("/api/installations/create-origin-certificate?installationKey=%s", r.InstallationKey)
-			createResp, createErr := r.callConsoleAPI(ctx, createPath, "POST", nil, r.InstallationSecret, logger)
+			createPath := "/api/installations/create-origin-certificate"
+			createResp, createErr := r.callConsoleAPI(ctx, createPath, "POST", reqBody, r.InstallationSecret, logger)
 			if createErr != nil {
 				logger.Error("Failed to create origin certificate", zap.Error(createErr))
 				domainRequest.Status.State = "Failed"

@@ -14,9 +14,10 @@ const CLOUDFLARE_DNS_DOMAIN = process.env.CLOUDFLARE_DNS_DOMAIN!
  * Create origin certificate for an installation
  * Called by the DomainRequest controller when origin certificate doesn't exist
  *
- * Request format (Query parameters):
+ * Request format (JSON body):
  * {
- *   "installationKey": "abc-123"
+ *   "installationKey": "abc-123",
+ *   "hostnames": ["example.com", "*.example.com"] // Optional, defaults to ["subdomain.domain", "*.subdomain.domain"]
  * }
  *
  * Requires Authorization: Bearer <secret-key>
@@ -34,9 +35,10 @@ export async function POST(request: NextRequest) {
 
     const secretKey = authHeader.substring(7) // Remove "Bearer " prefix
 
-    // Get installationKey from query parameters
-    const { searchParams } = new URL(request.url)
-    const installationKey = searchParams.get('installationKey')
+    // Parse request body
+    const body = await request.json()
+    const installationKey = body.installationKey
+    const customHostnames = body.hostnames as string[] | undefined
 
     if (!installationKey) {
       return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
@@ -78,14 +80,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate origin certificate for all wildcard levels
-    console.log(`Generating origin certificate for installation: ${installation.id}`)
-    const originCertHostnames = [
-      `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-      `*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-      `*.*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-      `*.*.*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-    ]
+    // Determine hostnames for certificate
+    let originCertHostnames: string[]
+    if (customHostnames && customHostnames.length > 0) {
+      // Use custom hostnames provided by DomainRequest
+      originCertHostnames = customHostnames
+      console.log(`Using custom origin certificate hostnames for installation: ${installation.id}`, customHostnames)
+    } else {
+      // Default to valid single-wildcard pattern (Cloudflare only allows ONE wildcard per hostname)
+      originCertHostnames = [
+        `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+        `*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
+      ]
+      console.log(`Using default origin certificate hostnames for installation: ${installation.id}`, originCertHostnames)
+    }
 
     const originCert = await generateCertificate(originCertHostnames)
 
