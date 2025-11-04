@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { EnvironmentsList } from './_components/environments-list'
 import { environmentService } from '@/lib/services/environment.service'
 import { environmentToUIModel, type EnvironmentUIModel } from '@/types/environment'
 
 export default async function EnvironmentsPage() {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session) {
     redirect('/auth/signin')

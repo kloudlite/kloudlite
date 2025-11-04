@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import {
   connectionTokenService,
   type ConnectionToken,
@@ -7,7 +7,7 @@ import {
 import { ConnectionTokensList } from './_components/connection-tokens-list'
 
 export default async function ConnectionTokensPage() {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session) {
     redirect('/auth/signin')

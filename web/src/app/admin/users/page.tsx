@@ -2,7 +2,7 @@ import { UserManagementList } from '../_components/user-management-list'
 import { getAllUsers } from '@/lib/actions/user-actions'
 import { UserDisplay } from '@/types/user'
 import { AlertCircle } from 'lucide-react'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { redirect } from 'next/navigation'
 
 // Error component
@@ -26,7 +26,7 @@ function UsersError({ error }: { error: string }) {
 
 export default async function UsersPage() {
   // Check authentication and permissions
-  const session = await auth()
+  const session = await getSession()
   if (!session || !session.user?.email) {
     redirect('/auth/signin')
   }

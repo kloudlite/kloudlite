@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { MachineConfigsList } from '../_components/machine-configs-list'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import type { MachineType } from '@/types/machine'
@@ -36,7 +36,7 @@ function transformMachineTypes(machineTypes: MachineType[]) {
 
 export default async function MachineConfigsPage() {
   // Check authentication and permissions
-  const session = await auth()
+  const session = await getSession()
   if (!session || !session.user?.email) {
     redirect('/auth/signin')
   }

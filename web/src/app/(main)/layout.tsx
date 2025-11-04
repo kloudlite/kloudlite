@@ -1,6 +1,6 @@
 import { NavigationWrapper } from '@/components/navigation-wrapper'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { redirect } from 'next/navigation'
 import { isSystemReady, SystemSetupPage } from '@/lib/system-check'
 import { APP_MODE } from '@/lib/app-mode'
@@ -17,7 +17,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   }
 
   // Dashboard mode: Full layout with navigation
-  const session = await auth()
+  const session = await getSession()
   const userRoles = session?.user?.roles || []
   const isSuperAdmin = userRoles.includes('super-admin')
 

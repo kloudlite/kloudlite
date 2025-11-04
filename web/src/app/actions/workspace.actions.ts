@@ -160,10 +160,10 @@ export async function archiveWorkspace(name: string, namespace: string = 'defaul
 export async function getWorkspaceMetrics(name: string, namespace: string = 'default') {
   try {
     // Import auth and env dynamically to ensure this only runs on server
-    const { auth } = await import('@/lib/auth')
+    // Removed unused auth import
     const { env } = await import('@/lib/env')
 
-    const session = await auth()
+    const session = await getSession()
     if (!session?.user?.backendToken) {
       return {
         success: false,
@@ -206,10 +206,10 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
 export async function getNodeMetrics(nodeName: string = 'master') {
   try {
     // Import auth and env dynamically to ensure this only runs on server
-    const { auth } = await import('@/lib/auth')
+    // Removed unused auth import
     const { env } = await import('@/lib/env')
 
-    const session = await auth()
+    const session = await getSession()
     if (!session?.user?.backendToken) {
       return {
         success: false,
