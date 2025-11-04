@@ -142,11 +142,11 @@ func (h *SuperAdminLoginHandlers) ValidateSuperAdminLogin(c *gin.Context) {
 	}
 
 	// Token is valid - generate JWT for super admin access
-	// Use a fixed email for super admin
-	superAdminEmail := "admin@kloudlite.io"
+	// Use "root" as the username - this is a virtual user not stored in user repo
+	superAdminUsername := "root"
 	roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleSuperAdmin}
 
-	jwtToken, err := h.authService.GenerateToken(c.Request.Context(), superAdminEmail, roles)
+	jwtToken, err := h.authService.GenerateToken(c.Request.Context(), superAdminUsername, roles)
 	if err != nil {
 		h.logger.Error("Failed to generate JWT token for super admin", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
@@ -163,8 +163,8 @@ func (h *SuperAdminLoginHandlers) ValidateSuperAdminLogin(c *gin.Context) {
 		Valid: true,
 		Token: jwtToken,
 		User: UserInfo{
-			Email:       superAdminEmail,
-			DisplayName: "Super Admin",
+			Email:       superAdminUsername,
+			DisplayName: "root",
 			IsActive:    true,
 		},
 		Roles: roles,
