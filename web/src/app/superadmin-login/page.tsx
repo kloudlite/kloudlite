@@ -15,6 +15,7 @@ export default function SuperAdminLoginPage() {
   const validateToken = useCallback(async (token: string) => {
     try {
       // Call our Next.js API route which will validate with the Go API server
+      // and create a NextAuth session cookie
       const response = await fetch('/api/superadmin-login/validate', {
         method: 'POST',
         headers: {
@@ -30,20 +31,16 @@ export default function SuperAdminLoginPage() {
 
       const data = await response.json()
 
-      if (!data.valid) {
+      if (!data.success) {
         throw new Error('Invalid token')
       }
 
-      // Store JWT token in localStorage/sessionStorage
-      localStorage.setItem('auth_token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      localStorage.setItem('roles', JSON.stringify(data.roles))
-
+      // Session cookie is already set by the API route
       setStatus('success')
 
       // Redirect to dashboard after short delay
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push('/')
       }, 1500)
     } catch (error) {
       console.error('Token validation error:', error)
