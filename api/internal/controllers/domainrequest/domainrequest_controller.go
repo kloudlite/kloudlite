@@ -285,7 +285,7 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 				Name: "tls-certs",
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: domainRequest.Status.OriginCertificateSecretName,
+						SecretName: secretName,
 					},
 				},
 			},
