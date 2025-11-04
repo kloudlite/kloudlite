@@ -3,7 +3,6 @@ import {
   getInstallationByKey,
   addOrUpdateIpRecord,
   markDeploymentReady,
-  getEdgeCertificate,
   saveEdgeCertificate,
 } from '@/lib/console/supabase-storage-service'
 import type { IPRecord } from '@/lib/console/supabase-storage-service'
@@ -148,8 +147,7 @@ export async function POST(request: NextRequest) {
                   installationId: installation.id,
                   cloudflareCertPackId: certId,
                   hostnames: [domain],
-                  scope: 'domainrequest',
-                  scopeIdentifier: domainRequestName,
+                  domainRequestName,
                   status: 'pending',
                 })
               }
@@ -191,8 +189,7 @@ export async function POST(request: NextRequest) {
               installationId: installation.id,
               cloudflareCertPackId: certId,
               hostnames: [domain],
-              scope: 'domainrequest',
-              scopeIdentifier: domainRequestName,
+              domainRequestName,
               status: 'pending',
             })
           }

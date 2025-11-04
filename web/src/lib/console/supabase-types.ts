@@ -43,6 +43,11 @@ export type Database = {
           deployment_ready: boolean | null
           last_health_check: string | null
           edge_certificate_pack_id: string | null
+          origin_certificate: string | null
+          origin_private_key: string | null
+          origin_cert_id: string | null
+          origin_cert_valid_from: string | null
+          origin_cert_valid_until: string | null
           created_at: string
           updated_at: string
         }
@@ -59,6 +64,11 @@ export type Database = {
           deployment_ready?: boolean | null
           last_health_check?: string | null
           edge_certificate_pack_id?: string | null
+          origin_certificate?: string | null
+          origin_private_key?: string | null
+          origin_cert_id?: string | null
+          origin_cert_valid_from?: string | null
+          origin_cert_valid_until?: string | null
         }
         Update: {
           user_id?: string
@@ -72,35 +82,43 @@ export type Database = {
           deployment_ready?: boolean | null
           last_health_check?: string | null
           edge_certificate_pack_id?: string | null
+          origin_certificate?: string | null
+          origin_private_key?: string | null
+          origin_cert_id?: string | null
+          origin_cert_valid_from?: string | null
+          origin_cert_valid_until?: string | null
         }
       }
       ip_records: {
         Row: {
           id: number
           installation_id: string
-          type: 'installation' | 'workmachine'
+          domain_request_name: string
           ip: string
-          work_machine_name: string | null
           configured_at: string
-          dns_record_ids: string[]
+          ssh_record_id: string | null
+          route_record_ids: string[]
+          domain_routes: Array<{ domain: string }>
           created_at: string
           updated_at: string
         }
         Insert: {
           installation_id: string
-          type: 'installation' | 'workmachine'
+          domain_request_name: string
           ip: string
-          work_machine_name?: string | null
           configured_at?: string
-          dns_record_ids?: string[]
+          ssh_record_id?: string | null
+          route_record_ids?: string[]
+          domain_routes?: Array<{ domain: string }>
         }
         Update: {
           installation_id?: string
-          type?: 'installation' | 'workmachine'
+          domain_request_name?: string
           ip?: string
-          work_machine_name?: string | null
           configured_at?: string
-          dns_record_ids?: string[]
+          ssh_record_id?: string | null
+          route_record_ids?: string[]
+          domain_routes?: Array<{ domain: string }>
         }
       }
       domain_reservations: {
@@ -184,8 +202,7 @@ export type Database = {
           installation_id: string
           cloudflare_cert_pack_id: string
           hostnames: string[]
-          scope: 'installation' | 'workmachine'
-          scope_identifier: string | null
+          domain_request_name: string
           ordered_at: string
           status: 'pending' | 'active' | 'failed'
           created_at: string
@@ -195,8 +212,7 @@ export type Database = {
           installation_id: string
           cloudflare_cert_pack_id: string
           hostnames: string[]
-          scope: 'installation' | 'workmachine'
-          scope_identifier?: string | null
+          domain_request_name: string
           ordered_at?: string
           status?: 'pending' | 'active' | 'failed'
         }
@@ -204,8 +220,7 @@ export type Database = {
           installation_id?: string
           cloudflare_cert_pack_id?: string
           hostnames?: string[]
-          scope?: 'installation' | 'workmachine'
-          scope_identifier?: string | null
+          domain_request_name?: string
           ordered_at?: string
           status?: 'pending' | 'active' | 'failed'
         }

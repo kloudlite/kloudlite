@@ -220,11 +220,12 @@ export async function getInstallationById(installationId: string): Promise<Insta
     updatedAt: data.updated_at,
     ipRecords:
       ((ipResult.data || []) as IPRecordRow[]).map((ip) => ({
-        type: ip.type,
+        domainRequestName: ip.domain_request_name,
         ip: ip.ip,
-        workMachineName: ip.work_machine_name || undefined,
         configuredAt: ip.configured_at,
-        dnsRecordIds: ip.dns_record_ids || undefined,
+        sshRecordId: ip.ssh_record_id || undefined,
+        routeRecordIds: ip.route_record_ids || undefined,
+        domainRoutes: ip.domain_routes || undefined,
       })) || [],
   }
 }
@@ -294,11 +295,12 @@ export async function getUserInstallations(userId: string): Promise<Installation
         updatedAt: inst.updated_at,
         ipRecords:
           ((ipResult.data || []) as IPRecordRow[]).map((ip) => ({
-            type: ip.type,
+            domainRequestName: ip.domain_request_name,
             ip: ip.ip,
-            workMachineName: ip.work_machine_name || undefined,
             configuredAt: ip.configured_at,
-            dnsRecordIds: ip.dns_record_ids || undefined,
+            sshRecordId: ip.ssh_record_id || undefined,
+            routeRecordIds: ip.route_record_ids || undefined,
+            domainRoutes: ip.domain_routes || undefined,
           })) || [],
       }
     }),
@@ -479,14 +481,15 @@ export async function addOrUpdateIpRecord(
     .upsert(
       {
         installation_id: installationId,
-        type: ipRecord.type,
+        domain_request_name: ipRecord.domainRequestName,
         ip: ipRecord.ip,
-        work_machine_name: ipRecord.workMachineName || null,
         configured_at: ipRecord.configuredAt,
-        dns_record_ids: ipRecord.dnsRecordIds || [],
+        ssh_record_id: ipRecord.sshRecordId || null,
+        route_record_ids: ipRecord.routeRecordIds || [],
+        domain_routes: ipRecord.domainRoutes || [],
       },
       {
-        onConflict: 'installation_id,type,work_machine_name',
+        onConflict: 'installation_id,domain_request_name',
       },
     )
 
@@ -517,8 +520,13 @@ export async function deleteIpRecords(installationId: string): Promise<string[]>
 
   if (ipData) {
     for (const record of ipData as IPRecordRow[]) {
-      if (record.dns_record_ids && Array.isArray(record.dns_record_ids)) {
-        dnsRecordIds.push(...record.dns_record_ids)
+      // Collect SSH record ID
+      if (record.ssh_record_id) {
+        dnsRecordIds.push(record.ssh_record_id)
+      }
+      // Collect route record IDs
+      if (record.route_record_ids && Array.isArray(record.route_record_ids)) {
+        dnsRecordIds.push(...record.route_record_ids)
       }
     }
   }
@@ -854,7 +862,6 @@ export async function deleteCertificates(installationId: string): Promise<string
 /**
  * Edge Certificate Management (CloudFlare Advanced Certificate Manager)
  */
-export type EdgeCertificateScope = 'installation' | 'workmachine'
 type EdgeCertificateRow = Database['public']['Tables']['edge_certificates']['Row']
 
 export interface EdgeCertificate {
@@ -862,8 +869,7 @@ export interface EdgeCertificate {
   installationId: string
   cloudflareCertPackId: string
   hostnames: string[]
-  scope: EdgeCertificateScope
-  scopeIdentifier?: string | null
+  domainRequestName: string
   orderedAt?: string
   status?: 'pending' | 'active' | 'failed'
   createdAt?: string
@@ -882,13 +888,12 @@ export async function saveEdgeCertificate(cert: EdgeCertificate): Promise<void> 
         installation_id: cert.installationId,
         cloudflare_cert_pack_id: cert.cloudflareCertPackId,
         hostnames: cert.hostnames,
-        scope: cert.scope,
-        scope_identifier: cert.scopeIdentifier || null,
+        domain_request_name: cert.domainRequestName,
         ordered_at: cert.orderedAt || new Date().toISOString(),
         status: cert.status || 'pending',
       },
       {
-        onConflict: 'installation_id,scope,scope_identifier',
+        onConflict: 'installation_id,domain_request_name',
       },
     )
 
@@ -898,26 +903,18 @@ export async function saveEdgeCertificate(cert: EdgeCertificate): Promise<void> 
 }
 
 /**
- * Get edge certificate by scope
+ * Get edge certificate by domain request name
  */
 export async function getEdgeCertificate(
   installationId: string,
-  scope: EdgeCertificateScope,
-  scopeIdentifier?: string,
+  domainRequestName: string,
 ): Promise<EdgeCertificate | null> {
-  let query = supabase
+  const result = await supabase
     .from('edge_certificates')
     .select('*')
     .eq('installation_id', installationId)
-    .eq('scope', scope)
-
-  if (scopeIdentifier !== undefined) {
-    query = query.eq('scope_identifier', scopeIdentifier)
-  } else {
-    query = query.is('scope_identifier', null)
-  }
-
-  const result = await query.single()
+    .eq('domain_request_name', domainRequestName)
+    .single()
 
   if (result.error) {
     if (result.error.code === 'PGRST116') return null
@@ -933,8 +930,7 @@ export async function getEdgeCertificate(
     installationId: data.installation_id,
     cloudflareCertPackId: data.cloudflare_cert_pack_id,
     hostnames: data.hostnames,
-    scope: data.scope,
-    scopeIdentifier: data.scope_identifier,
+    domainRequestName: data.domain_request_name,
     orderedAt: data.ordered_at,
     status: data.status,
     createdAt: data.created_at,
@@ -964,8 +960,7 @@ export async function getEdgeCertificates(installationId: string): Promise<EdgeC
     installationId: cert.installation_id,
     cloudflareCertPackId: cert.cloudflare_cert_pack_id,
     hostnames: cert.hostnames,
-    scope: cert.scope,
-    scopeIdentifier: cert.scope_identifier,
+    domainRequestName: cert.domain_request_name,
     orderedAt: cert.ordered_at,
     status: cert.status,
     createdAt: cert.created_at,
@@ -978,24 +973,15 @@ export async function getEdgeCertificates(installationId: string): Promise<EdgeC
  */
 export async function updateEdgeCertificateStatus(
   installationId: string,
-  scope: EdgeCertificateScope,
-  scopeIdentifier: string | null,
+  domainRequestName: string,
   status: 'pending' | 'active' | 'failed',
 ): Promise<void> {
-  let query = supabase
+  const { error } = await supabase
     .from('edge_certificates')
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({ status })
     .eq('installation_id', installationId)
-    .eq('scope', scope)
-
-  if (scopeIdentifier !== null) {
-    query = query.eq('scope_identifier', scopeIdentifier)
-  } else {
-    query = query.is('scope_identifier', null)
-  }
-
-  const { error } = await query
+    .eq('domain_request_name', domainRequestName)
 
   if (error) {
     throw new Error(`Failed to update edge certificate status: ${error.message}`)
