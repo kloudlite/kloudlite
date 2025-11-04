@@ -183,7 +183,7 @@ webhooks:
       service:
         name: api-server
         namespace: kloudlite
-        path: /validate/domainrequests
+        path: /webhooks/validate/domainrequests
         port: 443
       caBundle: ""
     rules:
