@@ -14,6 +14,7 @@ import (
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -101,7 +102,7 @@ func (w *EnvironmentWebhook) handleValidation(req *admissionv1.AdmissionRequest)
 	}
 
 	// Perform validation
-	if err := w.validateEnvironment(&env, req.Operation, req.UserInfo.Username); err != nil {
+	if err := w.validateEnvironment(&env, req.Operation, fn.LabelValueDecoder(env.Labels["kloudlite.io/owned-by"])); err != nil {
 		w.logger.Warn("Environment validation failed: " + err.Error())
 		return &admissionv1.AdmissionResponse{
 			Allowed: false,

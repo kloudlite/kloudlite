@@ -39,7 +39,7 @@ function getStateDisplay(currentState: string, desiredState: string) {
     starting: 'text-info',
     stopping: 'text-warning',
     disabled: 'text-destructive',
-    error: 'text-destructive',
+    errored: 'text-destructive',
   }
 
   const stateLabels: Record<string, string> = {
@@ -48,7 +48,7 @@ function getStateDisplay(currentState: string, desiredState: string) {
     starting: 'Starting',
     stopping: 'Stopping',
     disabled: 'Disabled',
-    error: 'Error',
+    errored: 'Error',
   }
 
   return {

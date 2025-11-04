@@ -9,6 +9,7 @@ import (
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,12 +25,13 @@ type EnvironmentHandlers struct {
 }
 
 // NewEnvironmentHandlers creates a new EnvironmentHandlers
-func NewEnvironmentHandlers(envRepo repository.EnvironmentRepository, userRepo repository.UserRepository, k8sClient client.Client, logger *zap.Logger) *EnvironmentHandlers {
+func NewEnvironmentHandlers(envRepo repository.EnvironmentRepository, userRepo repository.UserRepository, workmachineRepo repository.WorkMachineRepository, k8sClient client.Client, logger *zap.Logger) *EnvironmentHandlers {
 	return &EnvironmentHandlers{
-		envRepo:   envRepo,
-		userRepo:  userRepo,
-		k8sClient: k8sClient,
-		logger:    logger,
+		envRepo:         envRepo,
+		userRepo:        userRepo,
+		workmachineRepo: workmachineRepo,
+		k8sClient:       k8sClient,
+		logger:          logger,
 	}
 }
 
@@ -98,6 +100,9 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: req.Name,
+			Labels: map[string]string{
+				"kloudlite.io/owned-by": fn.LabelValueEncoder(userEmail),
+			},
 		},
 		Spec: req.Spec,
 	}

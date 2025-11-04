@@ -126,6 +126,10 @@ func RegularPlural(singular string) string {
 	return flect.Pluralize(strings.ToLower(singular))
 }
 
+func LabelKeyEncoder(value string) string {
+	return strings.ReplaceAll(value, "/", "~1")
+}
+
 func LabelValueEncoder(value string) string {
 	return strings.ReplaceAll(value, "@", "-at-")
 }

@@ -190,7 +190,7 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 			"path":  "/metadata/labels/kloudlite.io~1machinetype.default",
 			"value": "true",
 		})
-	} else {
+	} else if _, ok := machineType.Labels["kloudlite.io/machinetype.default"]; ok {
 		patches = append(patches, map[string]any{
 			"op":   "remove",
 			"path": "/metadata/labels/kloudlite.io~1machinetype.default",

@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/api/internal/constants"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -95,12 +97,17 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Name,
 			Namespace: workMachineNamespace,
+			Labels: map[string]string{
+				constants.LabelKeyOwnedBy: fn.LabelKeyEncoder(userEmail),
+			},
 		},
 		Spec: req.Spec,
 	}
 
 	// Ensure the owner is set to the authenticated user
 	workspace.Spec.Owner = userEmail
+	// FIXME(nxtcoder17): move it to workmachine name, and even better if frontend set's it directly
+	workspace.Spec.WorkmachineName = workspace.Namespace
 
 	// Note: Default values are set by the admission webhook
 
@@ -426,7 +433,6 @@ func (h *WorkspaceHandlers) GetMetrics(c *gin.Context) {
 		Namespace: namespace,
 		Name:      podName,
 	}, &podMetrics)
-
 	if err != nil {
 		h.logger.Warn("Failed to get pod metrics", zap.Error(err), zap.String("pod", podName))
 		c.JSON(http.StatusOK, &WorkspaceMetrics{
@@ -441,7 +447,6 @@ func (h *WorkspaceHandlers) GetMetrics(c *gin.Context) {
 		Namespace: namespace,
 		Name:      podName,
 	}, &pod)
-
 	if err != nil {
 		h.logger.Warn("Failed to get pod", zap.Error(err), zap.String("pod", podName))
 	}
@@ -503,9 +508,19 @@ type NodeMetrics struct {
 
 // GetNodeMetrics handles GET /api/v1/nodes/:nodeName/metrics
 func (h *WorkspaceHandlers) GetNodeMetrics(c *gin.Context) {
-	nodeName := c.Param("nodeName")
-	if nodeName == "" {
-		nodeName = "master" // default to master node
+	userEmail, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	wm, err := h.wmRepo.GetByOwner(c, userEmail)
+	if err != nil {
+		c.Error(err)
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
@@ -513,9 +528,8 @@ func (h *WorkspaceHandlers) GetNodeMetrics(c *gin.Context) {
 
 	// Get node metrics from Kubernetes metrics API
 	var nodeMetrics metricsv1beta1.NodeMetrics
-	err := h.k8sClient.Get(ctx, client.ObjectKey{Name: nodeName}, &nodeMetrics)
-	if err != nil {
-		h.logger.Warn("Failed to get node metrics", zap.Error(err), zap.String("node", nodeName))
+	if err := h.k8sClient.Get(ctx, client.ObjectKey{Name: wm.Name}, &nodeMetrics); err != nil {
+		h.logger.Warn("Failed to get node metrics", zap.Error(err), zap.String("node", wm.Name))
 		c.JSON(http.StatusOK, &NodeMetrics{
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
 		})
@@ -524,9 +538,9 @@ func (h *WorkspaceHandlers) GetNodeMetrics(c *gin.Context) {
 
 	// Get node to read capacity and allocatable resources
 	var node corev1.Node
-	err = h.k8sClient.Get(ctx, client.ObjectKey{Name: nodeName}, &node)
+	err = h.k8sClient.Get(ctx, client.ObjectKey{Name: wm.Name}, &node)
 	if err != nil {
-		h.logger.Warn("Failed to get node", zap.Error(err), zap.String("node", nodeName))
+		h.logger.Warn("Failed to get node", zap.Error(err), zap.String("node", wm.Name))
 		c.JSON(http.StatusOK, &NodeMetrics{
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
 		})
