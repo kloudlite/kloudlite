@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -141,6 +142,8 @@ func (sp *SubdomainPoller) ensureDomainRequestOnStartup(ctx context.Context) err
 		return fmt.Errorf("failed to create/update domain request on startup: %w", err)
 	}
 
+	os.Setenv("HOSTED_SUBDOMAIN", verifyResp.Subdomain)
+
 	sp.logger.Info("DomainRequest ensured successfully on startup")
 	return nil
 }
@@ -243,6 +246,7 @@ func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subd
 			Namespace: "kloudlite",
 		},
 		Spec: domainrequestv1.DomainRequestSpec{
+			NodeName:         os.Getenv("NODE_NAME"),
 			IPAddress:        sp.config.PublicIP,
 			CertificateScope: "installation",
 			DomainRoutes: []domainrequestv1.DomainRoute{
