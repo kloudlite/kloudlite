@@ -18,7 +18,7 @@ func (r *DomainRequest) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/validate-domains-kloudlite-io-v1-domainrequest,mutating=false,failurePolicy=fail,sideEffects=None,groups=domains.kloudlite.io,resources=domainrequests,verbs=create;update,versions=v1,name=domainrequests.kloudlite.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate/domainrequests,mutating=false,failurePolicy=fail,sideEffects=None,groups=domains.kloudlite.io,resources=domainrequests,verbs=create;update,versions=v1,name=domainrequests.kloudlite.io,admissionReviewVersions=v1
 
 var _ webhook.CustomValidator = &DomainRequest{}
 
