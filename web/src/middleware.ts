@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateRouteAccess, APP_MODE } from '@/lib/app-mode'
 import { jwtVerify } from 'jose'
+import type { Session } from 'next-auth'
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -71,7 +72,7 @@ async function handleDashboardMode(req: NextRequest, pathname: string): Promise<
               roles: userRoles,
             },
             expires: new Date(payload.exp! * 1000).toISOString(),
-          } as any
+          } as Session
         }
       } catch (error) {
         console.error('Failed to verify superadmin token:', error)
