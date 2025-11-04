@@ -792,6 +792,10 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 
 	// Create a secret to store the origin certificate
 	secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
+
+	// Create combined PEM file for HAProxy (certificate + key)
+	combinedPEM := certResp.Certificate + "\n" + certResp.PrivateKey
+
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
@@ -801,6 +805,7 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 		Data: map[string][]byte{
 			"tls.crt": []byte(certResp.Certificate),
 			"tls.key": []byte(certResp.PrivateKey),
+			"tls.pem": []byte(combinedPEM), // HAProxy requires combined PEM
 		},
 	}
 
