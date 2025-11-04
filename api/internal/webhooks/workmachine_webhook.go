@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +13,7 @@ import (
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -199,17 +199,17 @@ func (w *WorkMachineWebhook) handleMutation(
 	// Add owned-by label
 	ownerLabelPatch := map[string]interface{}{
 		"op":    "add",
-		"path":  "/metadata/labels/kloudlite.io~1owned-by",
+		"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/owned-by"),
 		"value": userID,
 	}
 	patches = append(patches, ownerLabelPatch)
 
 	// Add owner-email label (base64 encoded)
 	if userEmail != "" {
-		encodedEmail := base64.URLEncoding.EncodeToString([]byte(userEmail))
+		encodedEmail := fn.LabelValueEncoder(userEmail)
 		emailLabelPatch := map[string]interface{}{
 			"op":    "add",
-			"path":  "/metadata/labels/kloudlite.io~1owner-email",
+			"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/owner-email"),
 			"value": encodedEmail,
 		}
 		patches = append(patches, emailLabelPatch)
@@ -218,7 +218,7 @@ func (w *WorkMachineWebhook) handleMutation(
 	// Add machine-type label
 	machineTypeLabelPatch := map[string]interface{}{
 		"op":    "add",
-		"path":  "/metadata/labels/kloudlite.io~1machine-type",
+		"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/machine-type"),
 		"value": machine.Spec.MachineType,
 	}
 	patches = append(patches, machineTypeLabelPatch)

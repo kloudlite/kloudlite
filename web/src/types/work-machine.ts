@@ -15,11 +15,11 @@ export interface WorkMachineSpec {
   ownedBy: string
   machineType: string
   targetNamespace: string
-  desiredState: MachineState
+  state: MachineState
   sshPublicKeys?: string[]
 }
 
-export type MachineState = 'starting' | 'running' | 'stopping' | 'stopped' | 'disabled' | 'error'
+export type MachineState = 'starting' | 'running' | 'stopping' | 'stopped' | 'disabled' | 'errored'
 
 export interface WorkMachineStatus {
   state?: MachineState

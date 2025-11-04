@@ -30,7 +30,7 @@ interface TransformedWorkMachine {
 
 // Helper to map work machine CR to display format
 function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
-  const desiredState = wm.spec.desiredState
+  const desiredState = wm.spec.state
 
   // Use status.state if it exists, otherwise use desiredState
   // Note: Transitions will only be visible once the controller starts updating status
