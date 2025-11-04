@@ -161,22 +161,6 @@ type DomainRequestStatus struct {
 	// HAProxyReady indicates if the HAProxy pod is ready and serving traffic
 	// +optional
 	HAProxyReady bool `json:"haProxyReady,omitempty"`
-
-	// CertificateID is the ID of the generated certificate (deprecated - kept for backward compatibility)
-	// +optional
-	CertificateID string `json:"certificateId,omitempty"`
-
-	// CertificateSecretName is the name of the Kubernetes Secret containing the certificate (deprecated - kept for backward compatibility)
-	// +optional
-	CertificateSecretName string `json:"certificateSecretName,omitempty"`
-
-	// LastCertificateGenerationTime is when the certificate was last generated (deprecated - kept for backward compatibility)
-	// +optional
-	LastCertificateGenerationTime *metav1.Time `json:"lastCertificateGenerationTime,omitempty"`
-
-	// CertificateExpiresAt is when the certificate expires (deprecated - kept for backward compatibility)
-	// +optional
-	CertificateExpiresAt *metav1.Time `json:"certificateExpiresAt,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
