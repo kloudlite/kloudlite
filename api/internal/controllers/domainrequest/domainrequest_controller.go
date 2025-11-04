@@ -472,10 +472,10 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 			// HAProxy ready but IP not registered
 			logger.Info("HAProxy ready but IP not registered, retrying IP registration")
 			return r.handleIPRegistration(ctx, domainRequest, logger)
-		} else if domainRequest.Status.CertificateID != "" && domainRequest.Status.CertificateSecretName == "" {
-			// Edge certificate was generated but not downloaded (legacy flow)
-			logger.Info("Retrying edge certificate download")
-			return r.handleCertificateDownload(ctx, domainRequest, logger)
+		} else if domainRequest.Status.OriginCertificateSecretName == "" {
+			// Origin certificate not yet downloaded
+			logger.Info("Origin certificate not downloaded, downloading now")
+			return r.handleOriginCertificateDownload(ctx, domainRequest, logger)
 		} else {
 			// Unknown state or IP registration failed
 			logger.Info("Unknown failed state, retrying IP registration")
@@ -633,11 +633,6 @@ func (r *DomainRequestReconciler) handleCertificateGeneration(ctx context.Contex
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
 		domainRequest.Status.State = "CertificateGenerated"
 		domainRequest.Status.Message = "Certificate generated successfully"
-		domainRequest.Status.CertificateID = certResp.ID
-		expiresAt := metav1.NewTime(certResp.ExpiresAt)
-		domainRequest.Status.CertificateExpiresAt = &expiresAt
-		now := metav1.Now()
-		domainRequest.Status.LastCertificateGenerationTime = &now
 		return nil
 	}, logger); err != nil {
 		logger.Error("Failed to update status", zap.Error(err))
@@ -718,7 +713,6 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
 		domainRequest.Status.State = "Ready"
 		domainRequest.Status.Message = "Domain and certificate ready"
-		domainRequest.Status.CertificateSecretName = secretName
 		return nil
 	}, logger); err != nil {
 		logger.Error("Failed to update status", zap.Error(err))
