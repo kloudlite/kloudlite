@@ -1,5 +1,11 @@
 {{- $namespace := .Namespace }}
 {{- $workmachineName := .WorkMachineName }}
+{{- $nodeSelector := .NodeSelector }}
+{{- $tolerations := .Tolerations }}
+{{- $sshUsername := .SSHUsername }}
+
+{{- $sshUserUID := 1000 }}
+{{- $sshUserGID := 1000 }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -33,9 +39,11 @@ spec:
           - name: ndots
             value: "5"
       serviceAccountName: workmachine-node-manager
+      nodeSelector: {{ $nodeSelector | toJson }}
+      tolerations: {{ $tolerations | toJson }}
       initContainers:
         - name: setup-nix
-          image: kloudlite/workmachine-node-manager:latest
+          image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
@@ -77,23 +85,23 @@ spec:
             - name: nix-store
               mountPath: /nix-shared
 
-        - name: setup-ssh-key
-          image: busybox:latest
-          imagePullPolicy: IfNotPresent
-          command:
-            - sh
-            - -c
-            - cp /ssh-key-source/private-key /ssh-key-target/id_ed25519 && chown {{ .SSHUserUID }}:{{ .SSHUserGID }} /ssh-key-target/id_ed25519 && chmod 600 /ssh-key-target/id_ed25519
-          volumeMounts:
-            - name: ssh-proxy-key
-              mountPath: /ssh-key-source
-              readOnly: true
-            - name: ssh-key-volume
-              mountPath: /ssh-key-target
+        {{- /* - name: setup-ssh-key */}}
+        {{- /*   image: busybox:latest */}}
+        {{- /*   imagePullPolicy: IfNotPresent */}}
+        {{- /*   command: */}}
+        {{- /*     - sh */}}
+        {{- /*     - -c */}}
+        {{- /*     - cp /ssh-key-source/private-key /ssh-key-target/id_ed25519 && chown {{ $sshUserUID }}:{{ $sshUserGID }} /ssh-key-target/id_ed25519 && chmod 600 /ssh-key-target/id_ed25519 */}}
+        {{- /*   volumeMounts: */}}
+        {{- /*     - name: ssh-proxy-key */}}
+        {{- /*       mountPath: /ssh-key-source */}}
+        {{- /*       readOnly: true */}}
+        {{- /*     - name: ssh-key-volume */}}
+        {{- /*       mountPath: /ssh-key-target */}}
 
       containers:
         - name: workmachine-node-manager
-          image: kloudlite/workmachine-node-manager:latest
+          image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
@@ -113,15 +121,15 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: PUID
-              value: "{{ .SSHUserUID }}"
+              value: "{{ $sshUserUID }}"
             - name: PGID
-              value: "{{ .SSHUserGID }}"
+              value: "{{ $sshUserGID }}"
             - name: PASSWORD_ACCESS
               value: "false"
             - name: USER_PASSWORD
               value: kloudlite123
             - name: USER_NAME
-              value: {{ .SSHUserName }}
+              value: {{ $sshUsername }}
             - name: SUDO_ACCESS
               value: "false"
             - name: TCP_FORWARDING
@@ -137,13 +145,16 @@ spec:
               mountPath: /config/.ssh/id_ed25519
               subPath: id_ed25519
               readOnly: true
+
             - name: ssh-config
               mountPath: /var/lib/kloudlite/ssh-config
               readOnly: false
+
             - name: sshd-config
               mountPath: /etc/ssh/sshd_config
               subPath: sshd_config
               readOnly: true
+
             - name: ssh-host-keys
               mountPath: /etc/ssh/ssh_host_rsa_key
               subPath: ssh_host_rsa_key
@@ -167,7 +178,7 @@ spec:
             type: DirectoryOrCreate
         - name: ssh-proxy-key
           secret:
-            secretName: ssh-proxy-key
+            secretName: ssh-host-keys
         - name: ssh-key-volume
           emptyDir: {}
         - name: sshd-config

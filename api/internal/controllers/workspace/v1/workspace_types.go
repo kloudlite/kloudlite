@@ -90,14 +90,12 @@ type WorkspaceSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	Owner string `json:"owner"`
 
+	WorkmachineName string `json:"workmachine"`
+
 	// EnvironmentConnection defines the environment to connect to and associated intercepts
 	// When set to nil, workspace is disconnected and all intercepts are removed
 	// +optional
 	EnvironmentConnection *EnvironmentConnectionSpec `json:"environmentConnection,omitempty"`
-
-	// MachineTypeRef references the default machine type for this workspace
-	// +optional
-	MachineTypeRef *corev1.ObjectReference `json:"machineTypeRef,omitempty"`
 
 	// Settings contains workspace-specific settings
 	// +optional

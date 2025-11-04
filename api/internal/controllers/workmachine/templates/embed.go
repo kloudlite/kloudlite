@@ -4,6 +4,7 @@ import (
 	"embed"
 
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/template"
+	corev1 "k8s.io/api/core/v1"
 )
 
 //go:embed *
@@ -36,4 +37,12 @@ type K3sAgentSetupArgs struct {
 	K3sAgentToken string
 	MachineName   string
 	MachineOwner  string
+}
+
+type WorkspaceHostManagerValues struct {
+	Namespace       string
+	WorkMachineName string
+	SSHUsername string
+	NodeSelector    map[string]string
+	Tolerations     []corev1.Toleration
 }

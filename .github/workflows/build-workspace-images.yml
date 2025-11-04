@@ -128,7 +128,8 @@ jobs:
       - name: Build and push comprehensive image
         uses: docker/build-push-action@v5
         with:
-          context: ./api/workspace-images/comprehensive
+          context: ./api
+          file: ./api/workspace-images/comprehensive/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -137,6 +138,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             BASE_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:${{ github.ref == 'refs/heads/master' && 'latest' || 'dev' }}
+            VERSION=${{ github.ref_name }}-${{ github.sha }}
 
       - name: Build summary
         run: |
