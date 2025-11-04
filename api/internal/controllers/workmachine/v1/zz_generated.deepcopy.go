@@ -372,9 +372,9 @@ func (in *WorkMachineStatus) DeepCopyInto(out *WorkMachineStatus) {
 			(*out)[key] = val
 		}
 	}
-	if in.NodeTaints != nil {
-		in, out := &in.NodeTaints, &out.NodeTaints
-		*out = make([]corev1.Taint, len(*in))
+	if in.PodTolerations != nil {
+		in, out := &in.PodTolerations, &out.PodTolerations
+		*out = make([]corev1.Toleration, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

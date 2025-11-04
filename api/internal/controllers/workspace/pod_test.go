@@ -801,7 +801,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_SSHHostKeys(t *testing.T) {
 		}
 	}
 
-	// Should have RSA, ECDSA, and Ed25519 keys mounted
+	// Should have RSA keys mounted
 	assert.Contains(t, sshKeyMounts, "/etc/ssh/ssh_host_rsa_key")
 	assert.Contains(t, sshKeyMounts, "/etc/ssh/ssh_host_rsa_key.pub")
 }

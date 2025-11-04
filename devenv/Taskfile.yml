@@ -203,12 +203,11 @@ tasks:
 
   workspace:build:
     desc: Build workspace Docker images
-    dir: ../api/workspace-images
     cmds:
       - echo "Building workspace base image..."
-      - docker build -t kloudlite/workspace-base:latest ./base
+      - docker build -t kloudlite/workspace-base:latest ./api/workspace-images/base
       - echo "Building workspace comprehensive image..."
-      - docker build -t kloudlite/workspace-comprehensive:latest ./comprehensive
+      - docker build -f ./api/workspace-images/comprehensive/Dockerfile -t kloudlite/workspace-comprehensive:latest --build-arg VERSION=dev ./api
       - echo "Workspace images built successfully"
 
   workspace:import:

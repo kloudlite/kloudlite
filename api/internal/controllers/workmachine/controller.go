@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/yaml"
 )
 
 type Env struct {
@@ -67,10 +68,6 @@ const WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
 
 // SSH Configuration Constants
 const (
-	// SSHUserUID is the UID for the SSH server user
-	SSHUserUID = "1000"
-	// SSHUserGID is the GID for the SSH server user
-	SSHUserGID = "1000"
 	// SSHUserName is the username for the SSH server
 	SSHUserName = "kloudlite"
 )
@@ -156,16 +153,16 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "ensure-deployment",
-			Title:    "Ensure workmachine-host-manager deployment",
-			OnCreate: r.ensurePackageManagerDeploymentStep,
-			OnDelete: nil,
-		},
-		{
 			Name:     "setup cloud machine",
 			Title:    "Setup Cloud Machine",
 			OnCreate: r.setupCloudMachine,
 			OnDelete: r.cleanupCloudMachine,
+		},
+		{
+			Name:     "ensure-deployment",
+			Title:    "Ensure workmachine-host-manager deployment",
+			OnCreate: r.ensurePackageManagerDeploymentStep,
+			OnDelete: nil,
 		},
 	})
 }
@@ -289,12 +286,12 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
-				APIGroups: []string{"packages.kloudlite.io"},
+				APIGroups: []string{"workspaces.kloudlite.io"},
 				Resources: []string{"packagerequests"},
 				Verbs:     []string{"get", "list", "watch", "update", "patch"},
 			},
 			{
-				APIGroups: []string{"packages.kloudlite.io"},
+				APIGroups: []string{"workspaces.kloudlite.io"},
 				Resources: []string{"packagerequests/status"},
 				Verbs:     []string{"get", "update", "patch"},
 			},
@@ -560,34 +557,59 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 	namespace := obj.Spec.TargetNamespace
 	deploymentName := "workmachine-host-manager"
 
-	deployment := &appsv1.Deployment{}
-	err := r.Get(check.Context(), client.ObjectKey{Name: deploymentName, Namespace: namespace}, deployment)
-
-	if err == nil {
-		// Deployment already exists
-		return check.Passed()
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deploymentName,
+			Namespace: obj.Spec.TargetNamespace,
+		},
 	}
 
-	if !apiErrors.IsNotFound(err) {
-		return check.Errored(err)
-	}
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, deployment, func() error {
+		// Render deployment from template
+		b, err := templates.WorkMachineHostManagerDeployment.Render(
+			templates.WorkspaceHostManagerValues{
+				Namespace:       namespace,
+				WorkMachineName: obj.Name,
+				SSHUsername:     SSHUserName,
+				NodeSelector:    obj.Status.NodeLabels,
+				Tolerations:     obj.Status.PodTolerations,
+			},
+		)
+		if err != nil {
+			return errors.Wrap("failed to render workmachine host manager deployment template", err)
+		}
 
-	// Render deployment from template
-	b, err := templates.WorkMachineHostManagerDeployment.Render(map[string]any{
-		"Namespace":       namespace,
-		"WorkMachineName": obj.Name,
-		"SSHUserUID":      SSHUserUID,
-		"SSHUserGID":      SSHUserGID,
-		"SSHUserName":     SSHUserName,
-	})
-	if err != nil {
-		return check.Failed(fmt.Errorf("failed to render deployment template: %w", err))
-	}
+		deployment.SetLabels(fn.MapMerge(deployment.GetLabels(), map[string]string{
+			"app":                       deployment.Name,
+			"kloudlite.io/package-mgmt": "true",
+			"kloudlite.io/workmachine":  obj.Name,
+		}))
 
-	if _, err := r.YAMLClient.ApplyYAML(check.Context(), b); err != nil {
+		if err := yaml.Unmarshal(b, &deployment); err != nil {
+			return errors.Wrap("failed to unmarshal into deployment", err)
+		}
+
+		return nil
+	}); err != nil {
 		return check.Failed(err)
 	}
 
+	// deployment := &appsv1.Deployment{}
+	// err := r.Get(check.Context(), client.ObjectKey{Name: deploymentName, Namespace: namespace}, deployment)
+	//
+	// if err == nil {
+	// 	// Deployment already exists
+	// 	return check.Passed()
+	// }
+	//
+	// if !apiErrors.IsNotFound(err) {
+	// 	return check.Errored(err)
+	// }
+	//
+	// if _, err := r.YAMLClient.ApplyYAML(check.Context(), b); err != nil {
+	// 	return check.Failed(err)
+	// }
+	//
 	return check.Passed()
 }
 
@@ -671,22 +693,23 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 	}
 
 	// Filter and update only kloudlite.io/ prefixed labels
-	kloudliteLabels := make(map[string]string)
-	for k, v := range node.Labels {
-		if strings.HasPrefix(k, "kloudlite.io/") {
-			kloudliteLabels[k] = v
-		}
-	}
-	obj.Status.NodeLabels = kloudliteLabels
+	obj.Status.NodeLabels = fn.MapFilter(node.Labels, func(k, v string) bool {
+		return strings.HasPrefix(k, "kloudlite.io/")
+	})
 
 	// Filter and update only kloudlite.io/ prefixed taints
-	var kloudliteTaints []corev1.Taint
+	var podTolerations []corev1.Toleration
 	for _, taint := range node.Spec.Taints {
 		if strings.HasPrefix(taint.Key, "kloudlite.io/") {
-			kloudliteTaints = append(kloudliteTaints, taint)
+			podTolerations = append(podTolerations, corev1.Toleration{
+				Key:      taint.Key,
+				Operator: corev1.TolerationOpEqual,
+				Value:    taint.Value,
+				Effect:   taint.Effect,
+			})
 		}
 	}
-	obj.Status.NodeTaints = kloudliteTaints
+	obj.Status.PodTolerations = podTolerations
 
 	return check.Passed()
 }

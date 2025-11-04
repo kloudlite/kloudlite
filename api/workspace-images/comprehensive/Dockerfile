@@ -1,7 +1,31 @@
+# Build stage for kl binary
+FROM golang:1.24-alpine AS kl-builder
+
+WORKDIR /build
+
+# Copy go.mod and go.sum first for better caching
+COPY ../../go.mod ../../go.sum ./
+RUN go mod download
+
+# Copy the entire API source code
+COPY ../../ ./
+
+# Build kl binary with version info
+ARG VERSION=dev
+RUN CGO_ENABLED=0 go build \
+    -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/kli/cmd.Version=${VERSION}" \
+    -o kl \
+    ./cmd/kli
+
+# Final workspace image
 ARG BASE_IMAGE=kloudlite/workspace-base:latest
 FROM ${BASE_IMAGE}
 
 USER root
+
+# Copy kl binary from builder
+COPY --from=kl-builder /build/kl /usr/local/bin/kl
+RUN chmod +x /usr/local/bin/kl
 
 # Install system dependencies including shells first
 RUN apt-get update && apt-get install -y \

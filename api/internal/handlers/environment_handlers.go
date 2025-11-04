@@ -10,7 +10,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -107,16 +106,7 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	// The webhook will handle adding ownership labels and metadata
 	env.Spec.CreatedBy = userEmail
 	env.Spec.NodeSelector = wm.Status.NodeLabels
-	env.Spec.Tolerations = make([]corev1.Toleration, 0, len(wm.Status.NodeTaints))
-
-	for _, t := range wm.Status.NodeTaints {
-		env.Spec.Tolerations = append(env.Spec.Tolerations, corev1.Toleration{
-			Key:      t.Key,
-			Operator: corev1.TolerationOpEqual,
-			Value:    t.Value,
-			Effect:   t.Effect,
-		})
-	}
+	env.Spec.Tolerations = wm.Status.PodTolerations
 
 	// Create the environment (cluster-scoped)
 	if err := h.envRepo.Create(c.Request.Context(), env); err != nil {

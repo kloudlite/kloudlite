@@ -10,10 +10,10 @@ import (
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -355,38 +355,17 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 
 // getWorkMachineNodeSelector retrieves the nodeSelector from the user's WorkMachine
 // Returns nil if WorkMachine doesn't exist or has no nodeSelector configured
-func (r *WorkspaceReconciler) getWorkMachineNodeSelector(ctx context.Context, owner string) (map[string]string, error) {
-	// Sanitize owner to generate WorkMachine name (same logic as webhook)
-	// Replace @ with -at- and . with -
-	sanitizedOwner := strings.ReplaceAll(owner, "@", "-at-")
-	sanitizedOwner = strings.ReplaceAll(sanitizedOwner, ".", "-")
-	workMachineName := fmt.Sprintf("wm-%s", sanitizedOwner)
-
+func (r *WorkspaceReconciler) getWorkMachine(ctx context.Context, name string) (*machinesv1.WorkMachine, error) {
 	// WorkMachine is cluster-scoped, so we don't need a namespace
 	workMachine := &machinesv1.WorkMachine{}
-	err := r.Get(ctx, client.ObjectKey{Name: workMachineName}, workMachine)
+	err := r.Get(ctx, fn.NN("", name), workMachine)
 	if err != nil {
 		// WorkMachine doesn't exist or error fetching it
-		r.Logger.Info("WorkMachine not found for owner",
-			zap.String("owner", owner),
-			zap.String("workMachineName", workMachineName),
-			zap.Error(err),
-		)
-		return nil, nil // Return nil selector, not an error (WorkMachine might not exist yet)
+		r.Logger.Info("WorkMachine not found", zap.String("name", name))
+		return nil, err
 	}
 
-	return nil, nil
-
-	// Return the nodeSelector from WorkMachine (may be nil if not set)
-	// if len(workMachine.Spec.NodeSelector) > 0 {
-	// 	r.Logger.Info("Found nodeSelector from WorkMachine",
-	// 		zap.String("owner", owner),
-	// 		zap.String("workMachineName", workMachineName),
-	// 		zap.Any("nodeSelector", workMachine.Spec.NodeSelector),
-	// 	)
-	// }
-	//
-	// return workMachine.Spec.NodeSelector, nil
+	return workMachine, nil
 }
 
 // createWorkspacePod creates a pod with multiple containers for different access methods
@@ -395,13 +374,14 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 
 	// Get nodeSelector from the user's WorkMachine to ensure workspace runs on the same node
 	// This is important for shared Nix store access via hostPath volumes
-	nodeSelector, err := r.getWorkMachineNodeSelector(context.Background(), workspace.Spec.Owner)
+	wm, err := r.getWorkMachine(context.Background(), workspace.Spec.WorkmachineName)
 	if err != nil {
 		r.Logger.Warn("Failed to get WorkMachine nodeSelector, proceeding without it",
 			zap.String("workspace", workspace.Name),
 			zap.String("owner", workspace.Spec.Owner),
 			zap.Error(err),
 		)
+		return nil, err
 	}
 
 	// Check if workspace has an environment connection and get target namespace
@@ -419,28 +399,6 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 				zap.String("environment", env.Name),
 				zap.String("targetNamespace", envTargetNamespace),
 			)
-		}
-	}
-
-	// Default resource requirements per container
-	defaultResources := corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("256Mi"),
-		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("1Gi"),
-		},
-	}
-
-	// Override with custom resource quota if provided (divided among containers)
-	if workspace.Spec.ResourceQuota != nil {
-		if workspace.Spec.ResourceQuota.CPU != "" {
-			defaultResources.Limits[corev1.ResourceCPU] = resource.MustParse(workspace.Spec.ResourceQuota.CPU)
-		}
-		if workspace.Spec.ResourceQuota.Memory != "" {
-			defaultResources.Limits[corev1.ResourceMemory] = resource.MustParse(workspace.Spec.ResourceQuota.Memory)
 		}
 	}
 
@@ -601,7 +559,6 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					Name:            "workspace",
 					Image:           "ghcr.io/kloudlite/kloudlite/workspace-comprehensive:dev",
 					ImagePullPolicy: corev1.PullIfNotPresent,
-					Resources:       defaultResources,
 					Env:             envVars,
 					Ports: []corev1.ContainerPort{
 						{
@@ -668,30 +625,6 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							ReadOnly:  true,
 						},
 						{
-							Name:      "ssh-host-keys",
-							MountPath: "/etc/ssh/ssh_host_ecdsa_key",
-							SubPath:   "ssh_host_ecdsa_key",
-							ReadOnly:  true,
-						},
-						{
-							Name:      "ssh-host-keys",
-							MountPath: "/etc/ssh/ssh_host_ecdsa_key.pub",
-							SubPath:   "ssh_host_ecdsa_key.pub",
-							ReadOnly:  true,
-						},
-						{
-							Name:      "ssh-host-keys",
-							MountPath: "/etc/ssh/ssh_host_ed25519_key",
-							SubPath:   "ssh_host_ed25519_key",
-							ReadOnly:  true,
-						},
-						{
-							Name:      "ssh-host-keys",
-							MountPath: "/etc/ssh/ssh_host_ed25519_key.pub",
-							SubPath:   "ssh_host_ed25519_key.pub",
-							ReadOnly:  true,
-						},
-						{
 							Name:      "etc-environment",
 							MountPath: "/etc/environment",
 							SubPath:   "environment",
@@ -743,10 +676,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
 							Path: "/var/lib/kloudlite/nix-store",
-							Type: func() *corev1.HostPathType {
-								t := corev1.HostPathDirectoryOrCreate
-								return &t
-							}(),
+							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
 					},
 				},
@@ -754,11 +684,8 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					Name: "kl-home",
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/home/kl",
-							Type: func() *corev1.HostPathType {
-								t := corev1.HostPathDirectoryOrCreate
-								return &t
-							}(),
+							Path: "/var/lib/kloudlite/home",
+							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
 					},
 				},
@@ -767,10 +694,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
 							Path: "/var/lib/kloudlite/ssh-config",
-							Type: func() *corev1.HostPathType {
-								t := corev1.HostPathDirectoryOrCreate
-								return &t
-							}(),
+							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
 					},
 				},
@@ -789,7 +713,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							SecretName:  "ssh-host-keys",
-							DefaultMode: func() *int32 { m := int32(0o600); return &m }(),
+							DefaultMode: fn.Ptr[int32](0o600),
 						},
 					},
 				},
@@ -798,10 +722,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
 							Path: "/var/lib/kloudlite/etc-environment",
-							Type: func() *corev1.HostPathType {
-								t := corev1.HostPathDirectoryOrCreate
-								return &t
-							}(),
+							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
 					},
 				},
@@ -822,10 +743,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
 							Path: "/kloudlite/bin",
-							Type: func() *corev1.HostPathType {
-								t := corev1.HostPathDirectoryOrCreate
-								return &t
-							}(),
+							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
 					},
 				},
@@ -845,13 +763,8 @@ chmod 644 /tmp-writable/kloudlite-context.json
 
 	// Apply nodeSelector from WorkMachine to ensure workspace runs on the same node
 	// This is critical for shared Nix store access via hostPath volumes
-	if len(nodeSelector) > 0 {
-		pod.Spec.NodeSelector = nodeSelector
-		r.Logger.Info("Applied nodeSelector to workspace pod",
-			zap.String("workspace", workspace.Name),
-			zap.Any("nodeSelector", nodeSelector),
-		)
-	}
+	pod.Spec.NodeSelector = wm.Status.NodeLabels
+	pod.Spec.Tolerations = wm.Status.PodTolerations
 
 	// Set owner reference
 	if err := controllerutil.SetControllerReference(workspace, pod, r.Scheme); err != nil {

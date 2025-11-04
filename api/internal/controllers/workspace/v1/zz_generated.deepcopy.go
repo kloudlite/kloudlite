@@ -6,7 +6,6 @@ package v1
 
 import (
 	serviceinterceptv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -371,11 +370,6 @@ func (in *WorkspaceSpec) DeepCopyInto(out *WorkspaceSpec) {
 		in, out := &in.EnvironmentConnection, &out.EnvironmentConnection
 		*out = new(EnvironmentConnectionSpec)
 		(*in).DeepCopyInto(*out)
-	}
-	if in.MachineTypeRef != nil {
-		in, out := &in.MachineTypeRef, &out.MachineTypeRef
-		*out = new(corev1.ObjectReference)
-		**out = **in
 	}
 	if in.Settings != nil {
 		in, out := &in.Settings, &out.Settings

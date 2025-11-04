@@ -208,8 +208,8 @@ type WorkMachineStatus struct {
 	// IsAutoStopped when set means machine was auto-stopped by kloudlite
 	IsAutoStopped bool `json:"isAutoStopped,omitempty"`
 
-	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
-	NodeTaints []corev1.Taint    `json:"nodeTaints,omitempty"`
+	NodeLabels     map[string]string   `json:"nodeLabels,omitempty"`
+	PodTolerations []corev1.Toleration `json:"podTolerations,omitempty"`
 }
 
 // MachineInfo contains information about a cloud instance
