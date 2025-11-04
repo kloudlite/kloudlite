@@ -1,0 +1,154 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: packagerequests.packages.kloudlite.io
+spec:
+  group: packages.kloudlite.io
+  names:
+    categories:
+    - kloudlite
+    - packages
+    kind: PackageRequest
+    listKind: PackageRequestList
+    plural: packagerequests
+    singular: packagerequest
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.workspaceRef
+      name: Workspace
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.installedPackages[*].name
+      name: Installed
+      type: integer
+    - jsonPath: .status.failedPackages[*]
+      name: Failed
+      type: integer
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: PackageRequest is the Schema for the packagerequests API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PackageRequestSpec defines the desired packages to install
+            properties:
+              packages:
+                description: Packages list of packages to install
+                items:
+                  description: PackageSpec defines a Nix package to install
+                  properties:
+                    channel:
+                      description: |-
+                        Channel specifies the nixpkgs channel/release to use (e.g., "nixos-24.05", "nixos-23.11", "unstable")
+                        Use this for stable, well-known package versions from official releases
+                      type: string
+                    name:
+                      description: Name of the package (e.g., nodejs_22, vim, git)
+                      minLength: 1
+                      type: string
+                    nixpkgsCommit:
+                      description: |-
+                        NixpkgsCommit specifies an exact nixpkgs commit hash for precise version control
+                        Use this when you need a specific historical package version
+                        Takes precedence over Channel if both are specified
+                      type: string
+                  required:
+                  - name
+                  type: object
+                minItems: 1
+                type: array
+              profileName:
+                description: ProfileName is the Nix profile name to use
+                type: string
+              workspaceRef:
+                description: WorkspaceRef references the workspace this package request
+                  belongs to
+                type: string
+            required:
+            - packages
+            - profileName
+            - workspaceRef
+            type: object
+          status:
+            description: PackageRequestStatus defines the observed state of PackageRequest
+            properties:
+              failedPackages:
+                description: FailedPackages list of packages that failed to install
+                items:
+                  type: string
+                type: array
+              installedPackages:
+                description: InstalledPackages list of successfully installed packages
+                items:
+                  description: InstalledPackage represents a successfully installed
+                    package
+                  properties:
+                    binPath:
+                      description: BinPath where binaries are located
+                      type: string
+                    installedAt:
+                      description: InstalledAt timestamp
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name of the package
+                      type: string
+                    storePath:
+                      description: StorePath in the Nix store
+                      type: string
+                    version:
+                      description: Version of the installed package
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              lastUpdated:
+                description: LastUpdated timestamp of last status update
+                format: date-time
+                type: string
+              message:
+                description: Message provides additional information about the current
+                  state
+                type: string
+              phase:
+                description: Phase represents the current phase (Pending, Installing,
+                  Ready, Failed)
+                enum:
+                - Pending
+                - Installing
+                - Ready
+                - Failed
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
