@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateRouteAccess, APP_MODE } from '@/lib/app-mode'
+import { jwtVerify } from 'jose'
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -29,8 +30,6 @@ export async function middleware(req: NextRequest) {
  * This is for users inside their Kloudlite installation managing workspaces/workmachines
  */
 async function handleDashboardMode(req: NextRequest, pathname: string): Promise<NextResponse> {
-  const session = await auth()
-
   // Skip auth checks for auth pages, installation scripts, superadmin login, and public assets
   if (
     pathname.startsWith('/auth') ||
@@ -44,13 +43,49 @@ async function handleDashboardMode(req: NextRequest, pathname: string): Promise<
     return NextResponse.next()
   }
 
+  // Try to get session from NextAuth
+  let session = await auth()
+  let userRoles: string[] = []
+
+  // If no NextAuth session, check for superadmin JWT token
+  if (!session) {
+    const cookieName = process.env.NODE_ENV === 'production'
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token'
+
+    const token = req.cookies.get(cookieName)?.value
+
+    if (token) {
+      try {
+        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+        const { payload } = await jwtVerify(token, secret)
+
+        // Check if this is a superadmin token
+        if (payload.provider === 'superadmin-login' && payload.roles) {
+          // Create a mock session for superadmin
+          userRoles = payload.roles as string[]
+          session = {
+            user: {
+              email: payload.email as string,
+              name: payload.name as string,
+              roles: userRoles,
+            },
+            expires: new Date(payload.exp! * 1000).toISOString(),
+          } as any
+        }
+      } catch (error) {
+        console.error('Failed to verify superadmin token:', error)
+      }
+    }
+  }
+
   // Redirect to login if not authenticated
   if (!session) {
     return NextResponse.redirect(new URL('/auth/signin', req.url))
   }
 
   // Get user roles
-  const userRoles = session?.user?.roles || []
+  userRoles = session?.user?.roles || []
   const hasUserRole = userRoles.includes('user')
   const hasAdminRole = userRoles.includes('admin') || userRoles.includes('super-admin')
 
