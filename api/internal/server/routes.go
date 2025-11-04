@@ -83,6 +83,11 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		cfg.ConnectionToken.APIURL,
 		cfg.ConnectionToken.SSHPort,
 	)
+	superAdminLoginHandlers := handlers.NewSuperAdminLoginHandlers(
+		servicesManager.Auth,
+		cfg.Installation.InstallationSecret,
+		logger,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
@@ -112,6 +117,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			auth.POST("/token", authHandlers.GenerateToken)
 			auth.POST("/validate", authHandlers.ValidateToken)
 		}
+
+		// Super admin login route (public - token validation provides authentication)
+		v1.POST("/superadmin-login/validate", superAdminLoginHandlers.ValidateSuperAdminLogin)
 
 		// Public OAuth providers endpoint (for signin page)
 		namespace := "kloudlite"
