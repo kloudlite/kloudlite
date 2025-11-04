@@ -49,9 +49,9 @@ type ValidateSuperAdminLoginRequest struct {
 
 // ValidateSuperAdminLoginResponse represents the response for valid superadmin login
 type ValidateSuperAdminLoginResponse struct {
-	Valid bool         `json:"valid"`
-	Token string       `json:"token"` // JWT token for API access
-	User  UserInfo     `json:"user"`
+	Valid bool                        `json:"valid"`
+	Token string                      `json:"token"` // JWT token for API access
+	User  UserInfo                    `json:"user"`
 	Roles []platformv1alpha1.RoleType `json:"roles"`
 }
 
