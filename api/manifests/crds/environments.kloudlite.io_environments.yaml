@@ -1,0 +1,360 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: environments.environments.kloudlite.io
+spec:
+  group: environments.kloudlite.io
+  names:
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.targetNamespace
+      name: Namespace
+      type: string
+    - jsonPath: .spec.activated
+      name: Activated
+      type: boolean
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .status.lastActivatedTime
+      name: Last Activated
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Environment represents a deployment environment with its own
+          namespace
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EnvironmentSpec defines the desired state of Environment
+            properties:
+              activated:
+                default: false
+                description: |-
+                  Activated determines whether the environment is active (true) or inactive (false)
+                  When deactivated, all deployments and statefulsets are scaled to 0
+                type: boolean
+              annotations:
+                additionalProperties:
+                  type: string
+                description: Annotations to apply to the namespace
+                type: object
+              cloneFrom:
+                description: |-
+                  CloneFrom specifies the source environment name to clone resources from
+                  This field is automatically cleared after successful cloning
+                type: string
+              createdBy:
+                description: CreatedBy is the username/email of the user who created
+                  this environment
+                type: string
+              labels:
+                additionalProperties:
+                  type: string
+                description: Labels to apply to the namespace
+                type: object
+              networkPolicies:
+                description: NetworkPolicies defines network policies for the environment
+                properties:
+                  allowedNamespaces:
+                    description: List of namespaces allowed to communicate with this
+                      environment
+                    items:
+                      type: string
+                    type: array
+                  enabled:
+                    default: false
+                    description: Whether to enable network policies
+                    type: boolean
+                  ingressRules:
+                    description: Custom ingress rules
+                    items:
+                      description: IngressRule defines a network policy ingress rule
+                      properties:
+                        from:
+                          description: From defines the source of the traffic
+                          items:
+                            description: NetworkPolicyPeer defines a peer for network
+                              policy
+                            properties:
+                              namespaceSelector:
+                                description: NamespaceSelector selects namespaces
+                                properties:
+                                  matchLabels:
+                                    additionalProperties:
+                                      type: string
+                                    description: MatchLabels is a map of labels
+                                    type: object
+                                type: object
+                              podSelector:
+                                description: PodSelector selects pods
+                                properties:
+                                  matchLabels:
+                                    additionalProperties:
+                                      type: string
+                                    description: MatchLabels is a map of labels
+                                    type: object
+                                type: object
+                            type: object
+                          type: array
+                        ports:
+                          description: Ports defines the destination ports
+                          items:
+                            description: NetworkPolicyPort defines a port for network
+                              policy
+                            properties:
+                              port:
+                                description: Port number
+                                format: int32
+                                type: integer
+                              protocol:
+                                description: Protocol (TCP or UDP)
+                                enum:
+                                - TCP
+                                - UDP
+                                type: string
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                required:
+                - enabled
+                type: object
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              resourceQuotas:
+                description: ResourceQuotas defines resource quotas for the environment
+                  namespace
+                properties:
+                  limits.cpu:
+                    description: Maximum CPU limit for all pods in namespace
+                    type: string
+                  limits.memory:
+                    description: Maximum memory limit for all pods in namespace
+                    type: string
+                  persistentvolumeclaims:
+                    description: Maximum number of PVCs
+                    type: string
+                  requests.cpu:
+                    description: Maximum CPU requests for all pods in namespace
+                    type: string
+                  requests.memory:
+                    description: Maximum memory requests for all pods in namespace
+                    type: string
+                  services.loadbalancers:
+                    description: Maximum number of LoadBalancer services
+                    type: string
+                  services.nodeports:
+                    description: Maximum number of NodePort services
+                    type: string
+                type: object
+              targetNamespace:
+                description: TargetNamespace is the namespace where all environment
+                  resources will be deployed
+                type: string
+              tolerations:
+                items:
+                  description: |-
+                    The pod this Toleration is attached to tolerates any taint that matches
+                    the triple <key,value,effect> using the matching operator <operator>.
+                  properties:
+                    effect:
+                      description: |-
+                        Effect indicates the taint effect to match. Empty means match all taint effects.
+                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: |-
+                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                      type: string
+                    operator:
+                      description: |-
+                        Operator represents a key's relationship to the value.
+                        Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod can
+                        tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: |-
+                        TolerationSeconds represents the period of time the toleration (which must be
+                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                        it is not set, which means tolerate the taint forever (do not evict). Zero and
+                        negative values will be treated as 0 (evict immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: |-
+                        Value is the taint value the toleration matches to.
+                        If the operator is Exists, the value should be empty, otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
+            required:
+            - activated
+            - createdBy
+            - targetNamespace
+            type: object
+          status:
+            description: EnvironmentStatus defines the observed state of Environment
+            properties:
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the environment's state
+                items:
+                  description: EnvironmentCondition represents a condition of the
+                    environment
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time the condition
+                        changed
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message is a human-readable message about the last
+                        transition
+                      type: string
+                    reason:
+                      description: Reason is a unique, one-word, CamelCase reason
+                        for the condition's last transition
+                      type: string
+                    status:
+                      description: Status of the condition (True, False, Unknown)
+                      type: string
+                    type:
+                      description: Type of condition
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              lastActivatedTime:
+                description: LastActivatedTime is the last time the environment was
+                  activated
+                format: date-time
+                type: string
+              lastDeactivatedTime:
+                description: LastDeactivatedTime is the last time the environment
+                  was deactivated
+                format: date-time
+                type: string
+              message:
+                description: Message provides human-readable information about the
+                  current state
+                type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              observedGeneration:
+                description: ObservedGeneration is the generation observed by the
+                  controller
+                format: int64
+                type: integer
+              resourceCount:
+                description: ResourceCount tracks the number of resources in the namespace
+                properties:
+                  configmaps:
+                    format: int32
+                    type: integer
+                  deployments:
+                    format: int32
+                    type: integer
+                  pvcs:
+                    format: int32
+                    type: integer
+                  secrets:
+                    format: int32
+                    type: integer
+                  services:
+                    format: int32
+                    type: integer
+                  statefulsets:
+                    format: int32
+                    type: integer
+                type: object
+              state:
+                description: State represents the current state of the environment
+                enum:
+                - active
+                - inactive
+                - activating
+                - deactivating
+                - deleting
+                - error
+                type: string
+              tolerations:
+                items:
+                  description: |-
+                    The pod this Toleration is attached to tolerates any taint that matches
+                    the triple <key,value,effect> using the matching operator <operator>.
+                  properties:
+                    effect:
+                      description: |-
+                        Effect indicates the taint effect to match. Empty means match all taint effects.
+                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: |-
+                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                      type: string
+                    operator:
+                      description: |-
+                        Operator represents a key's relationship to the value.
+                        Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod can
+                        tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: |-
+                        TolerationSeconds represents the period of time the toleration (which must be
+                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                        it is not set, which means tolerate the taint forever (do not evict). Zero and
+                        negative values will be treated as 0 (evict immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: |-
+                        Value is the taint value the toleration matches to.
+                        If the operator is Exists, the value should be empty, otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
