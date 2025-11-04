@@ -201,9 +201,12 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		volumeType = ec2types.VolumeTypeGp3
 	}
 
+	// Convert Kubernetes-friendly machine type name (e.g., "m5-xlarge") to AWS instance type (e.g., "m5.xlarge")
+	awsInstanceType := strings.ReplaceAll(wm.Spec.MachineType, "-", ".")
+
 	runInput := &ec2.RunInstancesInput{
 		ImageId:          fn.Ptr(p.AMI),
-		InstanceType:     ec2types.InstanceType(wm.Spec.MachineType),
+		InstanceType:     ec2types.InstanceType(awsInstanceType),
 		MinCount:         fn.Ptr[int32](1),
 		MaxCount:         fn.Ptr[int32](1),
 		SecurityGroupIds: []string{p.SecurityGroupID},
@@ -352,6 +355,9 @@ func (p *provider) ChangeMachine(ctx context.Context, machineID string, newInsta
 		return errors.New("must provide machineID and newInstanceType")
 	}
 
+	// Convert Kubernetes-friendly machine type name (e.g., "m5-xlarge") to AWS instance type (e.g., "m5.xlarge")
+	awsInstanceType := strings.ReplaceAll(newInstanceType, "-", ".")
+
 	// Stop instance
 	if _, err := p.ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{
 		InstanceIds: []string{machineID},
@@ -370,7 +376,7 @@ func (p *provider) ChangeMachine(ctx context.Context, machineID string, newInsta
 	// Modify instance type
 	if _, err := p.ec2Client.ModifyInstanceAttribute(ctx, &ec2.ModifyInstanceAttributeInput{
 		InstanceId:   aws.String(machineID),
-		InstanceType: &ec2types.AttributeValue{Value: aws.String(newInstanceType)},
+		InstanceType: &ec2types.AttributeValue{Value: aws.String(awsInstanceType)},
 	}); err != nil {
 		return fmt.Errorf("failed to modify instance type: %w", err)
 	}

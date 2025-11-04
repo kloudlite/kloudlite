@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/manifests"
 )
 
 // GenerateK3sToken generates a random 64-character hexadecimal token for K3s agent authentication
@@ -165,81 +166,11 @@ fi
 
 echo "CRDs and RBAC will be auto-applied by K3s"
 
-# Create default MachineTypes
-echo "Creating default MachineTypes..."
-cat <<EOF | kubectl apply -f -
----
-apiVersion: machines.kloudlite.io/v1
-kind: MachineType
-metadata:
-  name: dev-light
-spec:
-  displayName: Light Development
-  description: For simple projects and learning - runs lightweight IDEs and basic services
-  category: development
-  active: true
-  priority: 10
-  resources:
-    cpu: "4"
-    memory: 8Gi
----
-apiVersion: machines.kloudlite.io/v1
-kind: MachineType
-metadata:
-  name: dev-standard
-spec:
-  displayName: Standard Development
-  description: For typical full-stack development - runs IDEs and multiple backend services
-  category: general
-  active: true
-  priority: 20
-  resources:
-    cpu: "8"
-    memory: 16Gi
----
-apiVersion: machines.kloudlite.io/v1
-kind: MachineType
-metadata:
-  name: dev-heavy
-spec:
-  displayName: Heavy Development
-  description: For microservices and complex projects - runs multiple IDEs and heavy processes
-  category: compute-optimized
-  active: true
-  priority: 30
-  resources:
-    cpu: "12"
-    memory: 24Gi
----
-apiVersion: machines.kloudlite.io/v1
-kind: MachineType
-metadata:
-  name: dev-intensive
-spec:
-  displayName: Intensive Development
-  description: For large-scale projects with many services - maximum development capacity
-  category: memory-optimized
-  active: true
-  priority: 40
-  resources:
-    cpu: "16"
-    memory: 32Gi
----
-apiVersion: machines.kloudlite.io/v1
-kind: MachineType
-metadata:
-  name: dev-ml
-spec:
-  displayName: ML/Data Development
-  description: For machine learning and data science - includes GPU acceleration
-  category: gpu
-  active: true
-  priority: 50
-  resources:
-    cpu: "8"
-    memory: 32Gi
-    gpu: "1"
-EOF
+# Create AWS-specific MachineTypes
+echo "Creating AWS MachineTypes..."
+cat <<'MACHINEEOF' | kubectl apply -f -
+%s
+MACHINEEOF
 
 # API Server deployment is handled by kli install-manifests
 # Wait for API Server to be ready
@@ -381,7 +312,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, manifests.AWSMachineTypes, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))

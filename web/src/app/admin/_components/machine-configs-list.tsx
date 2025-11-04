@@ -89,6 +89,12 @@ const categoryLabels: Record<string, string> = {
   memory: 'Memory',
 }
 
+// Helper to convert Kubernetes-friendly names back to AWS instance type format
+// e.g., "m5-xlarge" -> "m5.xlarge"
+function toDisplayName(k8sName: string): string {
+  return k8sName.replace(/-/g, '.')
+}
+
 export function MachineConfigsList({
   configs: initialConfigs,
   isReadOnly = false,
@@ -152,8 +158,12 @@ export function MachineConfigsList({
   const handleSave = async (formData: FormData) => {
     setIsLoading(true)
     try {
+      const rawName = formData.get('name') as string
+      // Convert dots to hyphens for Kubernetes-friendly resource names (e.g., "m5.xlarge" -> "m5-xlarge")
+      const k8sName = rawName.replace(/\./g, '-')
+
       const data = {
-        name: formData.get('name') as string,
+        name: k8sName,
         displayName: formData.get('displayName') as string,
         description: formData.get('description') as string,
         cpu: parseInt(formData.get('cpu') as string),
@@ -229,7 +239,7 @@ export function MachineConfigsList({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Server className="text-muted-foreground h-4 w-4" />
-                        <span className="text-foreground text-sm font-medium">{config.name}</span>
+                        <span className="text-foreground text-sm font-medium">{toDisplayName(config.name)}</span>
                       </div>
                       <code className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 font-mono text-xs">
                         {config.id}
