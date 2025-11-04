@@ -100,8 +100,6 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 }
 
 func (s *Server) Start() error {
-	s.logger.Info("Starting server", zap.String("port", s.config.Port))
-
 	// Start controller manager in goroutine with panic recovery
 	go func() {
 		defer func() {
@@ -137,8 +135,20 @@ func (s *Server) Start() error {
 		s.subdomainPoller.Start(s.pollerCtx)
 	}()
 
-	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("failed to start server: %w", err)
+	// Start HTTP or HTTPS server based on TLS configuration
+	if s.config.TLS.Enabled {
+		s.logger.Info("Starting HTTPS server",
+			zap.String("port", s.config.Port),
+			zap.String("certFile", s.config.TLS.CertFile),
+			zap.String("keyFile", s.config.TLS.KeyFile))
+		if err := s.httpServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
+			return fmt.Errorf("failed to start HTTPS server: %w", err)
+		}
+	} else {
+		s.logger.Info("Starting HTTP server", zap.String("port", s.config.Port))
+		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			return fmt.Errorf("failed to start HTTP server: %w", err)
+		}
 	}
 
 	return nil
