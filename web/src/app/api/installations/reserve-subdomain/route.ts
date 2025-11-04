@@ -5,7 +5,7 @@ import {
   reserveSubdomain,
   getUserInstallations,
   createInstallation,
-  updateInstallation,
+  saveCertificate,
 } from '@/lib/console/supabase-storage-service'
 import { generateCertificate } from '@/lib/console/cloudflare-certificates'
 
@@ -96,15 +96,20 @@ export async function POST(request: NextRequest) {
 
     if (originCert) {
       console.log(`Origin certificate generated: ${originCert.id}`)
-      // Store origin certificate in installation
-      await updateInstallation(installationId, {
-        originCertificate: originCert.certificate,
-        originPrivateKey: originCert.privateKey,
-        originCertId: originCert.id,
-        originCertValidFrom: originCert.validFrom,
-        originCertValidUntil: originCert.validUntil,
+      // Store origin certificate in tls_certificates table with installation scope
+      await saveCertificate({
+        installationId,
+        cloudflareCertId: originCert.id,
+        certificate: originCert.certificate,
+        privateKey: originCert.privateKey,
+        hostnames: originCert.hostnames,
+        scope: 'installation',
+        scopeIdentifier: null,
+        parentScopeIdentifier: null,
+        validFrom: originCert.validFrom,
+        validUntil: originCert.validUntil,
       })
-      console.log(`Origin certificate saved to installation`)
+      console.log(`Origin certificate saved to tls_certificates table`)
     } else {
       console.error(`Failed to generate origin certificate for installation: ${installationId}`)
       // Continue anyway - certificate can be generated later

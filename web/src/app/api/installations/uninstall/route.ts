@@ -74,11 +74,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Delete TLS certificates (legacy edge certificates)
+    // Step 3: Delete and revoke all TLS certificates from tls_certificates table
+    // This includes origin certificates (scope='installation'), workmachine certificates, and workspace certificates
     let certRevokeCount = 0
     try {
       const certIds = await deleteCertificates(installation.id)
-      console.log(`Found ${certIds.length} legacy certificates to revoke`)
+      console.log(`Found ${certIds.length} certificates to revoke from tls_certificates table`)
 
       for (const certId of certIds) {
         const revoked = await revokeCertificate(certId)
@@ -86,13 +87,13 @@ export async function POST(request: NextRequest) {
           certRevokeCount++
         }
       }
-      console.log(`Revoked ${certRevokeCount} legacy certificates from Cloudflare`)
+      console.log(`Revoked ${certRevokeCount} certificates from Cloudflare`)
     } catch (error) {
-      console.error('Failed to delete/revoke legacy certificates:', error)
+      console.error('Failed to delete/revoke certificates:', error)
       // Continue anyway - other cleanup is done
     }
 
-    // Step 3b: Delete edge certificates (new flow)
+    // Step 3b: Delete edge certificates
     let edgeCertDeleteCount = 0
     let edgeCertFailCount = 0
     try {
@@ -116,21 +117,6 @@ export async function POST(request: NextRequest) {
       // Continue anyway
     }
 
-    // Step 3c: Revoke origin certificate
-    let originCertRevoked = false
-    if (installation.originCertId) {
-      try {
-        const revoked = await revokeCertificate(installation.originCertId)
-        if (revoked) {
-          originCertRevoked = true
-          console.log(`Revoked origin certificate: ${installation.originCertId}`)
-        }
-      } catch (error) {
-        console.error('Failed to revoke origin certificate:', error)
-        // Continue anyway
-      }
-    }
-
     // Step 4: Delete domain reservation
     try {
       await deleteDomainReservation(installation.id)
@@ -151,9 +137,8 @@ export async function POST(request: NextRequest) {
       subdomain: installation.subdomain,
       dnsRecordsDeleted: dnsDeleteCount,
       ipRecordsDeleted: dnsRecordIds.length,
-      legacyCertificatesRevoked: certRevokeCount,
+      certificatesRevoked: certRevokeCount,
       edgeCertificatesDeleted: edgeCertDeleteCount,
-      originCertificateRevoked: originCertRevoked,
     })
 
     // Disable all caching
