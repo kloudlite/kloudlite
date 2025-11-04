@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, Shield, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,20 +12,7 @@ export default function SuperAdminLoginPage() {
   const [status, setStatus] = useState<'validating' | 'success' | 'error'>('validating')
   const [errorMessage, setErrorMessage] = useState('')
 
-  useEffect(() => {
-    const token = searchParams.get('token')
-
-    if (!token) {
-      setStatus('error')
-      setErrorMessage('Missing authentication token')
-      return
-    }
-
-    // Validate token with API server
-    validateToken(token)
-  }, [searchParams])
-
-  const validateToken = async (token: string) => {
+  const validateToken = useCallback(async (token: string) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1'
       const response = await fetch(`${apiUrl}/superadmin-login/validate`, {
@@ -65,7 +52,20 @@ export default function SuperAdminLoginPage() {
         error instanceof Error ? error.message : 'Failed to validate authentication token'
       )
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    const token = searchParams.get('token')
+
+    if (!token) {
+      setStatus('error')
+      setErrorMessage('Missing authentication token')
+      return
+    }
+
+    // Validate token with API server
+    validateToken(token)
+  }, [searchParams, validateToken])
 
   return (
     <div className="bg-background flex min-h-screen items-center justify-center p-4">

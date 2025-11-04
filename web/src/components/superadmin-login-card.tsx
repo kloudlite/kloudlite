@@ -14,8 +14,8 @@ interface SuperAdminLoginCardProps {
 export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLoginCardProps) {
   const [loading, setLoading] = useState(false)
   const [loginUrl, setLoginUrl] = useState<string | null>(null)
-  const [expiresAt, setExpiresAt] = useState<string | null>(null)
-  const [validForSeconds, setValidForSeconds] = useState<number | null>(null)
+  const [_expiresAt, setExpiresAt] = useState<string | null>(null)
+  const [_validForSeconds, setValidForSeconds] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
