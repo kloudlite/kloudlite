@@ -9,27 +9,28 @@ import {
 import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
   CLOUDFLARE_DNS_DOMAIN,
-  createInstallationDnsRecords,
-  createWorkmachineDnsRecords,
-  updateDnsRecords,
+  createDomainRequestDnsRecords,
+  updateDnsRecord,
+  deleteDnsRecord,
 } from '@/lib/console/cloudflare-dns'
-import {
-  createInstallationEdgeCertificate,
-  createWorkmachineEdgeCertificate,
-} from '@/lib/console/cloudflare-edge-certificates'
+import { createDomainRequestEdgeCertificates } from '@/lib/console/cloudflare-edge-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
+
 /**
- * Configure IP for deployment
- * Called by the installed deployment to send individual IP configurations
+ * Configure IP for DomainRequest
+ * Called by the DomainRequest controller after HAProxy is ready
  *
  * Request format:
  * {
  *   "installationKey": "abc-123",
- *   "type": "installation" | "workmachine",
  *   "ip": "1.2.3.4",
- *   "workMachineName": "user1" (optional, for workmachine type only)
+ *   "domainRequestName": "my-domain-request",
+ *   "domainRoutes": [
+ *     { "domain": "api.example.com" },
+ *     { "domain": "app.example.com" }
+ *   ]
  * }
  */
 export async function POST(request: NextRequest) {
@@ -46,29 +47,22 @@ export async function POST(request: NextRequest) {
     const secretKey = authHeader.substring(7) // Remove "Bearer " prefix
 
     const body = await request.json()
-    const { installationKey, type, ip, workMachineName } = body
+    const { installationKey, ip, domainRequestName, domainRoutes } = body
 
     if (!installationKey) {
       return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
-    }
-
-    if (!type || (type !== 'installation' && type !== 'workmachine')) {
-      return NextResponse.json(
-        { error: 'Type must be "installation" or "workmachine"' },
-        { status: 400 },
-      )
     }
 
     if (!ip || typeof ip !== 'string') {
       return NextResponse.json({ error: 'IP address is required' }, { status: 400 })
     }
 
-    if (type === 'workmachine' && !workMachineName) {
-      return NextResponse.json(
-        { error: 'workMachineName is required for workmachine type' },
-        { status: 400 },
-      )
+    if (!domainRequestName || typeof domainRequestName !== 'string') {
+      return NextResponse.json({ error: 'domainRequestName is required' }, { status: 400 })
     }
+
+    // domainRoutes is optional (can be empty array or undefined)
+    const routes = domainRoutes || []
 
     // Look up installation by key
     const installation = await getInstallationByKey(installationKey)
@@ -90,242 +84,137 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get existing IP record to check if we need to update DNS
-    const existingRecord = installation.ipRecords?.find((r) => {
-      if (r.type === 'installation' && type === 'installation') {
-        return true
-      }
-      if (
-        r.type === 'workmachine' &&
-        type === 'workmachine' &&
-        r.workMachineName === workMachineName
-      ) {
-        return true
-      }
-      return false
-    })
+    // Get existing IP record for this domain request
+    const existingRecord = installation.ipRecords?.find(
+      (r) => r.domainRequestName === domainRequestName,
+    )
 
-    let dnsRecordIds: string[] = []
+    let sshRecordId: string | null = null
+    let routeRecordIds: string[] = []
+    let edgeCertificateIds: string[] = []
     let dnsCreated = false
+
+    const sshDomain = `ssh.${domainRequestName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
 
     // Create or update DNS records
     try {
       if (existingRecord) {
-        // Update existing record
-        // If IP changed and we have DNS record IDs, update them
-        if (
-          existingRecord.ip !== ip &&
-          existingRecord.dnsRecordIds &&
-          existingRecord.dnsRecordIds.length > 0
-        ) {
-          const domainName =
-            type === 'installation'
-              ? `${installation.subdomain}`
-              : `${workMachineName}.${installation.subdomain}`
+        // Check if IP changed or routes changed
+        const ipChanged = existingRecord.ip !== ip
+        const routesChanged = JSON.stringify(existingRecord.domainRoutes || []) !== JSON.stringify(routes)
 
-          await updateDnsRecords(existingRecord.dnsRecordIds, domainName, ip, true)
-          dnsRecordIds = existingRecord.dnsRecordIds
-          dnsCreated = true
-          console.log(`Updated DNS records for ${type}: ${domainName}`)
-        } else if (!existingRecord.dnsRecordIds || existingRecord.dnsRecordIds.length === 0) {
-          // No DNS records exist, create them
-          if (type === 'installation') {
-            dnsRecordIds = await createInstallationDnsRecords(installation.subdomain, ip)
-            dnsCreated = dnsRecordIds.length > 0
-            console.log(`Created ${dnsRecordIds.length} DNS records for installation`)
+        if (ipChanged && existingRecord.sshRecordId) {
+          // Update SSH A record with new IP
+          console.log(`Updating SSH A record for ${sshDomain} with new IP: ${ip}`)
+          await updateDnsRecord(existingRecord.sshRecordId, sshDomain, ip, false)
+          sshRecordId = existingRecord.sshRecordId
+        } else {
+          sshRecordId = existingRecord.sshRecordId || null
+        }
 
-            // Create edge certificate for wildcard subdomain if it doesn't exist
-            if (dnsCreated) {
-              const existingEdgeCert = await getEdgeCertificate(
-                installation.id,
-                'installation',
-              )
-              if (!existingEdgeCert) {
-                const edgeCertId = await createInstallationEdgeCertificate(
-                  installation.subdomain,
-                  CLOUDFLARE_DNS_DOMAIN,
-                )
-                if (edgeCertId) {
-                  console.log(`Edge certificate ordered: ${edgeCertId}`)
-                  // Store edge certificate in new table
-                  await saveEdgeCertificate({
-                    installationId: installation.id,
-                    cloudflareCertPackId: edgeCertId,
-                    hostnames: [
-                      `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                      `*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                    ],
-                    scope: 'installation',
-                    scopeIdentifier: null,
-                    status: 'pending',
-                  })
-                } else {
-                  console.warn('Failed to order edge certificate, but continuing')
-                }
-              } else {
-                console.log(
-                  `Edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
-                )
-              }
+        if (routesChanged) {
+          // Delete old route CNAME records
+          if (existingRecord.routeRecordIds && existingRecord.routeRecordIds.length > 0) {
+            console.log(`Deleting old route CNAME records`)
+            for (const recordId of existingRecord.routeRecordIds) {
+              await deleteDnsRecord(recordId)
             }
-          } else if (type === 'workmachine') {
-            dnsRecordIds = await createWorkmachineDnsRecords(
-              workMachineName!,
+          }
+
+          // Create new route CNAME records
+          if (routes.length > 0) {
+            console.log(`Creating ${routes.length} new route CNAME records`)
+            const result = await createDomainRequestDnsRecords(
+              domainRequestName,
               installation.subdomain,
               ip,
-            )
-            dnsCreated = dnsRecordIds.length > 0
-            console.log(
-              `Created ${dnsRecordIds.length} DNS records for workmachine: ${workMachineName}`,
+              routes,
             )
 
-            // Create edge certificate for workmachine wildcard subdomain if it doesn't exist
-            if (dnsCreated) {
-              const existingEdgeCert = await getEdgeCertificate(
-                installation.id,
-                'workmachine',
-                workMachineName,
-              )
-              if (!existingEdgeCert) {
-                const edgeCertId = await createWorkmachineEdgeCertificate(
-                  workMachineName!,
-                  installation.subdomain,
-                  CLOUDFLARE_DNS_DOMAIN,
-                )
-                if (edgeCertId) {
-                  console.log(`Edge certificate ordered for workmachine: ${edgeCertId}`)
-                  // Store edge certificate in new table
-                  await saveEdgeCertificate({
-                    installationId: installation.id,
-                    cloudflareCertPackId: edgeCertId,
-                    hostnames: [
-                      `${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                      `*.${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                    ],
-                    scope: 'workmachine',
-                    scopeIdentifier: workMachineName,
-                    status: 'pending',
-                  })
-                } else {
-                  console.warn('Failed to order workmachine edge certificate, but continuing')
-                }
-              } else {
-                console.log(
-                  `Workmachine edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
-                )
+            // Use existing SSH record or the new one
+            sshRecordId = sshRecordId || result.sshRecordId
+            routeRecordIds = result.routeRecordIds
+
+            // Create edge certificates for new routes
+            if (routeRecordIds.length > 0) {
+              console.log(`Creating edge certificates for ${routes.length} route domains`)
+              edgeCertificateIds = await createDomainRequestEdgeCertificates(routes)
+
+              // Store edge certificates
+              for (let i = 0; i < edgeCertificateIds.length; i++) {
+                const certId = edgeCertificateIds[i]
+                const domain = routes[i].domain
+                await saveEdgeCertificate({
+                  installationId: installation.id,
+                  cloudflareCertPackId: certId,
+                  hostnames: [domain],
+                  scope: 'domainrequest',
+                  scopeIdentifier: domainRequestName,
+                  status: 'pending',
+                })
               }
             }
           }
         } else {
-          // IP didn't change, keep existing DNS record IDs
-          dnsRecordIds = existingRecord.dnsRecordIds
-          dnsCreated = true
+          // Routes didn't change, keep existing records
+          routeRecordIds = existingRecord.routeRecordIds || []
         }
+
+        dnsCreated = sshRecordId !== null
       } else {
-        // Create new DNS records for new IP record
-        if (type === 'installation') {
-          dnsRecordIds = await createInstallationDnsRecords(installation.subdomain, ip)
-          dnsCreated = dnsRecordIds.length > 0
-          console.log(`Created ${dnsRecordIds.length} DNS records for new installation`)
+        // Create new DNS records for new domain request
+        console.log(`Creating DNS records for new domain request: ${domainRequestName}`)
 
-          // Create edge certificate for wildcard subdomain if it doesn't exist
-          if (dnsCreated) {
-            const existingEdgeCert = await getEdgeCertificate(installation.id, 'installation')
-            if (!existingEdgeCert) {
-              const edgeCertId = await createInstallationEdgeCertificate(
-                installation.subdomain,
-                CLOUDFLARE_DNS_DOMAIN,
-              )
-              if (edgeCertId) {
-                console.log(`Edge certificate ordered: ${edgeCertId}`)
-                // Store edge certificate in new table
-                await saveEdgeCertificate({
-                  installationId: installation.id,
-                  cloudflareCertPackId: edgeCertId,
-                  hostnames: [
-                    `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                    `*.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                  ],
-                  scope: 'installation',
-                  scopeIdentifier: null,
-                  status: 'pending',
-                })
-              } else {
-                console.warn('Failed to order edge certificate, but continuing')
-              }
-            } else {
-              console.log(
-                `Edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
-              )
-            }
-          }
-        } else if (type === 'workmachine') {
-          dnsRecordIds = await createWorkmachineDnsRecords(
-            workMachineName!,
-            installation.subdomain,
-            ip,
-          )
-          dnsCreated = dnsRecordIds.length > 0
-          console.log(
-            `Created ${dnsRecordIds.length} DNS records for new workmachine: ${workMachineName}`,
-          )
+        const result = await createDomainRequestDnsRecords(
+          domainRequestName,
+          installation.subdomain,
+          ip,
+          routes,
+        )
 
-          // Create edge certificate for workmachine wildcard subdomain if it doesn't exist
-          if (dnsCreated) {
-            const existingEdgeCert = await getEdgeCertificate(
-              installation.id,
-              'workmachine',
-              workMachineName,
-            )
-            if (!existingEdgeCert) {
-              const edgeCertId = await createWorkmachineEdgeCertificate(
-                workMachineName!,
-                installation.subdomain,
-                CLOUDFLARE_DNS_DOMAIN,
-              )
-              if (edgeCertId) {
-                console.log(`Edge certificate ordered for workmachine: ${edgeCertId}`)
-                // Store edge certificate in new table
-                await saveEdgeCertificate({
-                  installationId: installation.id,
-                  cloudflareCertPackId: edgeCertId,
-                  hostnames: [
-                    `${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                    `*.${workMachineName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-                  ],
-                  scope: 'workmachine',
-                  scopeIdentifier: workMachineName,
-                  status: 'pending',
-                })
-              } else {
-                console.warn('Failed to order workmachine edge certificate, but continuing')
-              }
-            } else {
-              console.log(
-                `Workmachine edge certificate already exists: ${existingEdgeCert.cloudflareCertPackId}`,
-              )
-            }
+        sshRecordId = result.sshRecordId
+        routeRecordIds = result.routeRecordIds
+        dnsCreated = sshRecordId !== null
+
+        console.log(`Created SSH A record and ${routeRecordIds.length} route CNAME records`)
+
+        // Create edge certificates for route domains
+        if (dnsCreated && routes.length > 0) {
+          console.log(`Creating edge certificates for ${routes.length} route domains`)
+          edgeCertificateIds = await createDomainRequestEdgeCertificates(routes)
+
+          // Store edge certificates
+          for (let i = 0; i < edgeCertificateIds.length; i++) {
+            const certId = edgeCertificateIds[i]
+            const domain = routes[i].domain
+            await saveEdgeCertificate({
+              installationId: installation.id,
+              cloudflareCertPackId: certId,
+              hostnames: [domain],
+              scope: 'domainrequest',
+              scopeIdentifier: domainRequestName,
+              status: 'pending',
+            })
           }
         }
       }
     } catch (dnsError) {
       console.error('DNS record creation/update failed:', dnsError)
       // Continue even if DNS fails - use existing DNS record IDs if available
-      if (existingRecord?.dnsRecordIds) {
-        dnsRecordIds = existingRecord.dnsRecordIds
+      if (existingRecord) {
+        sshRecordId = existingRecord.sshRecordId || null
+        routeRecordIds = existingRecord.routeRecordIds || []
       }
     }
 
-    // Create new IP record with DNS record IDs
+    // Create new IP record with DNS record IDs and domain routes
     const newRecord: IPRecord = {
-      type,
+      domainRequestName,
       ip,
       configuredAt: new Date().toISOString(),
-      dnsRecordIds,
-    }
-
-    if (type === 'workmachine') {
-      newRecord.workMachineName = workMachineName
+      sshRecordId,
+      routeRecordIds,
+      domainRoutes: routes,
     }
 
     // Atomically add or update IP record
@@ -336,12 +225,14 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      type,
+      domainRequestName,
       ip,
-      workMachineName: type === 'workmachine' ? workMachineName : undefined,
+      sshDomain,
       totalRecords,
       subdomain: `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-      dnsRecordsCreated: dnsRecordIds.length,
+      sshRecordCreated: sshRecordId !== null,
+      routeRecordsCreated: routeRecordIds.length,
+      edgeCertificatesCreated: edgeCertificateIds.length,
       dnsSuccess: dnsCreated,
     })
 

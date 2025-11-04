@@ -232,7 +232,6 @@ func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subd
 			Namespace: "kloudlite",
 		},
 		Spec: domainrequestv1.DomainRequestSpec{
-			Type:             "installation",
 			IPAddress:        sp.config.PublicIP,
 			CertificateScope: "installation",
 			DomainRoutes: []domainrequestv1.DomainRoute{

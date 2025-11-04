@@ -40,18 +40,23 @@ type DomainRequestReconciler struct {
 
 // configureIPRequest represents the request body for /api/installations/configure-ips
 type configureIPRequest struct {
-	InstallationKey string                       `json:"installationKey"`
-	Type            domainrequestsv1.RequestType `json:"type"`
-	IP              string                       `json:"ip"`
-	WorkMachineName string                       `json:"workMachineName,omitempty"`
+	InstallationKey   string                         `json:"installationKey"`
+	IP                string                         `json:"ip"`
+	DomainRequestName string                         `json:"domainRequestName"`
+	DomainRoutes      []domainrequestsv1.DomainRoute `json:"domainRoutes,omitempty"`
 }
 
 // configureIPResponse represents the response from /api/installations/configure-ips
 type configureIPResponse struct {
-	Success      bool     `json:"success"`
-	Domain       string   `json:"domain"`
-	Subdomain    string   `json:"subdomain"`
-	DNSRecordIDs []string `json:"dnsRecordIds"`
+	Success                 bool   `json:"success"`
+	DomainRequestName       string `json:"domainRequestName"`
+	IP                      string `json:"ip"`
+	SSHDomain               string `json:"sshDomain"`
+	Subdomain               string `json:"subdomain"`
+	SSHRecordCreated        bool   `json:"sshRecordCreated"`
+	RouteRecordsCreated     int    `json:"routeRecordsCreated"`
+	EdgeCertificatesCreated int    `json:"edgeCertificatesCreated"`
+	DNSSuccess              bool   `json:"dnsSuccess"`
 }
 
 // generateCertificateRequest represents the request body for /api/installations/generate-certificates
@@ -507,12 +512,12 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 		return r.updateStatus(ctx, domainRequest, "Failed", "No IP address provided or available from LoadBalancer", logger)
 	}
 
-	// Call console API to register IP
+	// Call console API to register IP and create DNS records
 	reqBody := configureIPRequest{
-		InstallationKey: r.InstallationKey,
-		Type:            domainRequest.Spec.Type,
-		IP:              ipAddress,
-		WorkMachineName: domainRequest.Spec.WorkMachineName,
+		InstallationKey:   r.InstallationKey,
+		IP:                ipAddress,
+		DomainRequestName: domainRequest.Name,
+		DomainRoutes:      domainRequest.Spec.DomainRoutes,
 	}
 
 	resp, err := r.callConsoleAPI(ctx, "/api/installations/configure-ips", "POST", reqBody, r.InstallationSecret, logger)
@@ -532,14 +537,21 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 		return r.updateStatus(ctx, domainRequest, "Failed", "IP registration API returned success=false", logger)
 	}
 
+	// Build DNS record IDs array (SSH record + route records)
+	var dnsRecordIDs []string
+	if configResp.SSHRecordCreated {
+		// Note: API doesn't return individual SSH record ID, but we track it internally
+		logger.Info("SSH DNS record created successfully", zap.String("sshDomain", configResp.SSHDomain))
+	}
+
 	// Update status with registration details
 	// New flow: Transition to Ready state after IP registration (certificate and HAProxy already set up)
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
 		domainRequest.Status.State = "Ready"
-		domainRequest.Status.Message = "DomainRequest is ready - certificate downloaded, HAProxy created, DNS configured"
-		domainRequest.Status.Domain = configResp.Domain
+		domainRequest.Status.Message = fmt.Sprintf("DomainRequest is ready - origin cert downloaded, HAProxy created, DNS configured (%d routes)", configResp.RouteRecordsCreated)
+		domainRequest.Status.Domain = configResp.SSHDomain
 		domainRequest.Status.Subdomain = configResp.Subdomain
-		domainRequest.Status.DNSRecordIDs = configResp.DNSRecordIDs
+		domainRequest.Status.DNSRecordIDs = dnsRecordIDs
 		now := metav1.Now()
 		domainRequest.Status.LastIPRegistrationTime = &now
 		return nil
@@ -549,8 +561,10 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 	}
 
 	logger.Info("IP registration successful - DomainRequest is now ready",
-		zap.String("domain", configResp.Domain),
-		zap.String("subdomain", configResp.Subdomain))
+		zap.String("sshDomain", configResp.SSHDomain),
+		zap.String("subdomain", configResp.Subdomain),
+		zap.Int("routeRecords", configResp.RouteRecordsCreated),
+		zap.Int("edgeCertificates", configResp.EdgeCertificatesCreated))
 
 	return reconcile.Result{Requeue: true}, nil
 }

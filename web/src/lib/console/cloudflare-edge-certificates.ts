@@ -186,3 +186,43 @@ export async function createWorkmachineEdgeCertificate(
 
   return orderEdgeCertificate(hosts)
 }
+
+/**
+ * Create edge certificates for DomainRequest route domains
+ * Creates edge certificates for domains that are proxied through CloudFlare
+ *
+ * Note: SSH domain (ssh.{name}.{subdomain}.{domain}) doesn't need an edge certificate
+ * because it's not proxied through CloudFlare (direct A record)
+ *
+ * @param domainRoutes - Array of domain routes to create certificates for
+ * @returns Array of certificate pack IDs
+ */
+export async function createDomainRequestEdgeCertificates(
+  domainRoutes: Array<{ domain: string }>,
+): Promise<string[]> {
+  const certificateIds: string[] = []
+
+  // Create individual edge certificate for each route domain
+  // These domains are proxied via CNAME and need edge certificates for TLS termination
+  for (const route of domainRoutes) {
+    console.log(`Creating edge certificate for route domain: ${route.domain}`)
+
+    const certId = await orderEdgeCertificate([route.domain])
+
+    if (certId) {
+      certificateIds.push(certId)
+      console.log(`Edge certificate created for ${route.domain}: ${certId}`)
+    } else {
+      console.error(`Failed to create edge certificate for ${route.domain}`)
+      // Continue with other domains even if one fails
+    }
+  }
+
+  if (certificateIds.length > 0) {
+    console.log(`Created ${certificateIds.length} edge certificates for domain routes`)
+  } else {
+    console.log('No edge certificates created (no domain routes or all failed)')
+  }
+
+  return certificateIds
+}
