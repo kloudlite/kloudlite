@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { signOutAction } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +17,7 @@ import { isSystemReady, SystemSetupPage } from '@/lib/system-check'
 
 // Admin layout - middleware ensures only users with admin/super-admin roles (and no 'user' role) can access this
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
+  const session = await getSession()
 
   // Session and role access is guaranteed by middleware
   const userRoles = session!.user?.roles || []
