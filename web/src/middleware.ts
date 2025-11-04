@@ -31,12 +31,13 @@ export async function middleware(req: NextRequest) {
 async function handleDashboardMode(req: NextRequest, pathname: string): Promise<NextResponse> {
   const session = await auth()
 
-  // Skip auth checks for auth pages, installation scripts, and public assets
+  // Skip auth checks for auth pages, installation scripts, superadmin login, and public assets
   if (
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/install') ||
     pathname.startsWith('/uninstall') ||
+    pathname.startsWith('/superadmin-login') ||
     pathname.startsWith('/_next') ||
     pathname.includes('.')
   ) {

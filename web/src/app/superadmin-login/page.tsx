@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, Shield, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { env } from '@/lib/env'
 
 export default function SuperAdminLoginPage() {
   const router = useRouter()
@@ -15,7 +14,8 @@ export default function SuperAdminLoginPage() {
 
   const validateToken = useCallback(async (token: string) => {
     try {
-      const response = await fetch(`${env.apiUrl}/api/v1/superadmin-login/validate`, {
+      // Call our Next.js API route which will validate with the Go API server
+      const response = await fetch('/api/superadmin-login/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
