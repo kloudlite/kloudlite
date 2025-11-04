@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/config"
@@ -36,6 +37,7 @@ type SubdomainPoller struct {
 	httpClient *http.Client
 	stopCh     chan struct{}
 	stopped    bool
+	stopOnce   sync.Once
 }
 
 // NewSubdomainPoller creates a new subdomain poller
@@ -95,10 +97,12 @@ func (sp *SubdomainPoller) Start(ctx context.Context) {
 	}
 }
 
-// Stop stops the poller
+// Stop stops the poller (safe to call multiple times)
 func (sp *SubdomainPoller) Stop() {
-	sp.stopped = true
-	close(sp.stopCh)
+	sp.stopOnce.Do(func() {
+		sp.stopped = true
+		close(sp.stopCh)
+	})
 }
 
 // ensureDomainRequestOnStartup ensures the DomainRequest is created/updated on API server startup
