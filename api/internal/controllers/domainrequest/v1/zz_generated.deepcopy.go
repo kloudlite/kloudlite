@@ -100,16 +100,16 @@ func (in *DomainRequestStatus) DeepCopyInto(out *DomainRequestStatus) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.CertificateExpiresAt != nil {
-		in, out := &in.CertificateExpiresAt, &out.CertificateExpiresAt
-		*out = (*in).DeepCopy()
-	}
 	if in.LastIPRegistrationTime != nil {
 		in, out := &in.LastIPRegistrationTime, &out.LastIPRegistrationTime
 		*out = (*in).DeepCopy()
 	}
 	if in.LastCertificateGenerationTime != nil {
 		in, out := &in.LastCertificateGenerationTime, &out.LastCertificateGenerationTime
+		*out = (*in).DeepCopy()
+	}
+	if in.CertificateExpiresAt != nil {
+		in, out := &in.CertificateExpiresAt, &out.CertificateExpiresAt
 		*out = (*in).DeepCopy()
 	}
 }
