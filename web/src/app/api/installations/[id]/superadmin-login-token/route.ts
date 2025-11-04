@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, randomBytes } from 'crypto'
-import { getInstallationSession } from '@/lib/console-auth'
-import { createClient } from '@/lib/console/supabase-server'
+import { getRegistrationSession } from '@/lib/console-auth'
+import { getInstallationById } from '@/lib/console/supabase-storage-service'
 
 // Super admin login token validity (5 minutes)
 const TOKEN_VALIDITY_MS = 5 * 60 * 1000
@@ -22,30 +22,27 @@ interface SuperAdminLoginTokenPayload {
  * to the installation dashboard. Token is valid for 5 minutes.
  */
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+
     // Verify user is logged in and has access to this installation
-    const session = await getInstallationSession()
-    if (!session || !session.userId) {
+    const session = await getRegistrationSession()
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized - please log in' },
         { status: 401 }
       )
     }
 
-    const installationId = params.id
+    const installationId = id
 
     // Verify installation exists and user has access
-    const supabase = createClient()
-    const { data: installation, error: installationError } = await supabase
-      .from('installations')
-      .select('id, installation_key, user_id, secret_key, subdomain')
-      .eq('id', installationId)
-      .single()
+    const installation = await getInstallationById(installationId)
 
-    if (installationError || !installation) {
+    if (!installation) {
       return NextResponse.json(
         { error: 'Installation not found' },
         { status: 404 }
@@ -53,7 +50,7 @@ export async function POST(
     }
 
     // Verify user owns this installation
-    if (installation.user_id !== session.userId) {
+    if (installation.userId !== session.user.id) {
       return NextResponse.json(
         { error: 'Forbidden - you do not own this installation' },
         { status: 403 }
@@ -61,7 +58,7 @@ export async function POST(
     }
 
     // Use installation secret as signing key
-    const installationSecret = installation.secret_key
+    const installationSecret = installation.secretKey
     if (!installationSecret) {
       return NextResponse.json(
         { error: 'Installation secret not available - complete installation first' },
@@ -77,7 +74,7 @@ export async function POST(
     const payload: SuperAdminLoginTokenPayload = {
       type: 'superadmin-login',
       installationId: installation.id,
-      installationKey: installation.installation_key,
+      installationKey: installation.installationKey,
       timestamp: now,
       nonce,
       expiresAt,
