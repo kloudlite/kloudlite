@@ -94,17 +94,23 @@ export async function POST(request: NextRequest) {
 
     // Step 3b: Delete edge certificates (new flow)
     let edgeCertDeleteCount = 0
+    let edgeCertFailCount = 0
     try {
       const edgeCertPackIds = await deleteEdgeCertificates(installation.id)
       console.log(`Found ${edgeCertPackIds.length} edge certificates to delete`)
 
       for (const certPackId of edgeCertPackIds) {
+        console.log(`Attempting to delete edge certificate: ${certPackId}`)
         const deleted = await deleteEdgeCertificate(certPackId)
         if (deleted) {
           edgeCertDeleteCount++
+          console.log(`Successfully deleted edge certificate: ${certPackId}`)
+        } else {
+          edgeCertFailCount++
+          console.error(`Failed to delete edge certificate: ${certPackId}`)
         }
       }
-      console.log(`Deleted ${edgeCertDeleteCount} edge certificates from Cloudflare`)
+      console.log(`Deleted ${edgeCertDeleteCount} edge certificates from Cloudflare (${edgeCertFailCount} failed)`)
     } catch (error) {
       console.error('Failed to delete edge certificates:', error)
       // Continue anyway
