@@ -16,3 +16,6 @@ var Webhooks string
 
 //go:embed frontend.yaml
 var Frontend string
+
+//go:embed aws-machine-types.yaml
+var AWSMachineTypes string
