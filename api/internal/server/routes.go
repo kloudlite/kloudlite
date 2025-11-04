@@ -101,6 +101,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	serviceInterceptWebhook := webhooks.NewServiceInterceptWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	domainRequestWebhook := webhooks.NewDomainRequestWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 
 	// JWT middleware
 	jwtMiddleware := middleware.JWTMiddleware(servicesManager.Auth, logger, cfg.Auth.SkipAuthentication)
@@ -311,6 +312,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/mutate/serviceintercepts", serviceInterceptWebhook.MutateServiceIntercept)
 		webhooksGroup.POST("/mutate/services", serviceMutationWebhook.MutateService)
 		webhooksGroup.POST("/mutate/pods", podMutationWebhook.MutatePod)
+		webhooksGroup.POST("/validate/domainrequests", domainRequestWebhook.ValidateDomainRequest)
 	}
 
 	return router
