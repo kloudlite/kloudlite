@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	zaplog "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 type Manager struct {
@@ -66,6 +67,12 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		},
 		LeaderElection:   false,
 		LeaderElectionID: "kloudlite-api-controller-manager",
+		WebhookServer: &webhook.DefaultServer{
+			Options: webhook.Options{
+				Port:    8443,
+				CertDir: "/etc/webhook/certs",
+			},
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create manager: %w", err)
@@ -150,6 +157,11 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 
 	if err = domainRequestReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create DomainRequest controller: %w", err)
+	}
+
+	// Setup DomainRequest validation webhook
+	if err = (&domainrequestsv1.DomainRequest{}).SetupWebhookWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create DomainRequest webhook: %w", err)
 	}
 
 	logger.Info("Controllers initialized successfully")
