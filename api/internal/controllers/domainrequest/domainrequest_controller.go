@@ -445,17 +445,29 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 		logger.Info("DomainRequest failed, determining which step to retry")
 
 		// Determine which step failed based on what's been completed
-		if domainRequest.Status.CertificateID != "" && domainRequest.Status.CertificateSecretName == "" {
-			// Certificate was generated but not downloaded
-			logger.Info("Retrying certificate download")
+		if domainRequest.Status.OriginCertificateSecretName == "" {
+			// Origin certificate not downloaded yet
+			logger.Info("Retrying origin certificate download")
+			return r.handleOriginCertificateDownload(ctx, domainRequest, logger)
+		} else if domainRequest.Status.OriginCertificateSecretName != "" && domainRequest.Status.HAProxyPodName == "" {
+			// Origin cert exists but HAProxy not created
+			logger.Info("Origin cert exists but HAProxy not created, retrying HAProxy creation")
+			return r.handleHAProxyCreation(ctx, domainRequest, logger)
+		} else if domainRequest.Status.HAProxyPodName != "" && !domainRequest.Status.HAProxyReady {
+			// HAProxy exists but not ready
+			logger.Info("HAProxy exists but not ready, checking status")
+			return r.handleHAProxyStatusCheck(ctx, domainRequest, logger)
+		} else if domainRequest.Status.HAProxyReady && domainRequest.Status.LastIPRegistrationTime == nil {
+			// HAProxy ready but IP not registered
+			logger.Info("HAProxy ready but IP not registered, retrying IP registration")
+			return r.handleIPRegistration(ctx, domainRequest, logger)
+		} else if domainRequest.Status.CertificateID != "" && domainRequest.Status.CertificateSecretName == "" {
+			// Edge certificate was generated but not downloaded (legacy flow)
+			logger.Info("Retrying edge certificate download")
 			return r.handleCertificateDownload(ctx, domainRequest, logger)
-		} else if domainRequest.Status.LastIPRegistrationTime != nil && domainRequest.Status.CertificateID == "" {
-			// IP was registered but certificate generation failed
-			logger.Info("Retrying certificate generation")
-			return r.handleCertificateGeneration(ctx, domainRequest, logger)
 		} else {
-			// IP registration failed or unknown state
-			logger.Info("Retrying IP registration")
+			// Unknown state or IP registration failed
+			logger.Info("Unknown failed state, retrying IP registration")
 			return r.handleIPRegistration(ctx, domainRequest, logger)
 		}
 	}
@@ -547,8 +559,16 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 	// Update status with registration details
 	// New flow: Transition to Ready state after IP registration (certificate and HAProxy already set up)
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
+		// Build accurate status message based on actual HAProxy state
+		haproxyStatus := "not created"
+		if domainRequest.Status.HAProxyReady {
+			haproxyStatus = "created and ready"
+		} else if domainRequest.Status.HAProxyPodName != "" {
+			haproxyStatus = "creating"
+		}
+
 		domainRequest.Status.State = "Ready"
-		domainRequest.Status.Message = fmt.Sprintf("DomainRequest is ready - origin cert downloaded, HAProxy created, DNS configured (%d routes)", configResp.RouteRecordsCreated)
+		domainRequest.Status.Message = fmt.Sprintf("DomainRequest is ready - origin cert downloaded, HAProxy %s, DNS configured (%d routes)", haproxyStatus, configResp.RouteRecordsCreated)
 		domainRequest.Status.Domain = configResp.SSHDomain
 		domainRequest.Status.Subdomain = configResp.Subdomain
 		domainRequest.Status.DNSRecordIDs = dnsRecordIDs
@@ -896,8 +916,8 @@ func (r *DomainRequestReconciler) handleHAProxyStatusCheck(ctx context.Context, 
 	logger.Info("HAProxy pod is ready and serving traffic",
 		zap.String("podName", domainRequest.Status.HAProxyPodName))
 
-	// Requeue after 24 hours to check for certificate renewal
-	return reconcile.Result{RequeueAfter: 24 * time.Hour}, nil
+	// Requeue immediately to proceed to IP registration
+	return reconcile.Result{Requeue: true}, nil
 }
 
 // updateStatus is a helper to update DomainRequest status
