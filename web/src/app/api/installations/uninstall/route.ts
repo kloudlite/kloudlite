@@ -5,9 +5,11 @@ import {
   deleteDomainReservation,
   resetInstallation,
   deleteCertificates,
+  deleteEdgeCertificates,
 } from '@/lib/console/supabase-storage-service'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 import { revokeCertificate } from '@/lib/console/cloudflare-certificates'
+import { deleteEdgeCertificate } from '@/lib/console/cloudflare-edge-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
@@ -72,11 +74,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Delete TLS certificates
+    // Step 3: Delete TLS certificates (legacy edge certificates)
     let certRevokeCount = 0
     try {
       const certIds = await deleteCertificates(installation.id)
-      console.log(`Found ${certIds.length} certificates to revoke`)
+      console.log(`Found ${certIds.length} legacy certificates to revoke`)
 
       for (const certId of certIds) {
         const revoked = await revokeCertificate(certId)
@@ -84,10 +86,43 @@ export async function POST(request: NextRequest) {
           certRevokeCount++
         }
       }
-      console.log(`Revoked ${certRevokeCount} certificates from Cloudflare`)
+      console.log(`Revoked ${certRevokeCount} legacy certificates from Cloudflare`)
     } catch (error) {
-      console.error('Failed to delete/revoke certificates:', error)
+      console.error('Failed to delete/revoke legacy certificates:', error)
       // Continue anyway - other cleanup is done
+    }
+
+    // Step 3b: Delete edge certificates (new flow)
+    let edgeCertDeleteCount = 0
+    try {
+      const edgeCertPackIds = await deleteEdgeCertificates(installation.id)
+      console.log(`Found ${edgeCertPackIds.length} edge certificates to delete`)
+
+      for (const certPackId of edgeCertPackIds) {
+        const deleted = await deleteEdgeCertificate(certPackId)
+        if (deleted) {
+          edgeCertDeleteCount++
+        }
+      }
+      console.log(`Deleted ${edgeCertDeleteCount} edge certificates from Cloudflare`)
+    } catch (error) {
+      console.error('Failed to delete edge certificates:', error)
+      // Continue anyway
+    }
+
+    // Step 3c: Revoke origin certificate
+    let originCertRevoked = false
+    if (installation.originCertId) {
+      try {
+        const revoked = await revokeCertificate(installation.originCertId)
+        if (revoked) {
+          originCertRevoked = true
+          console.log(`Revoked origin certificate: ${installation.originCertId}`)
+        }
+      } catch (error) {
+        console.error('Failed to revoke origin certificate:', error)
+        // Continue anyway
+      }
     }
 
     // Step 4: Delete domain reservation
@@ -110,7 +145,9 @@ export async function POST(request: NextRequest) {
       subdomain: installation.subdomain,
       dnsRecordsDeleted: dnsDeleteCount,
       ipRecordsDeleted: dnsRecordIds.length,
-      certificatesRevoked: certRevokeCount,
+      legacyCertificatesRevoked: certRevokeCount,
+      edgeCertificatesDeleted: edgeCertDeleteCount,
+      originCertificateRevoked: originCertRevoked,
     })
 
     // Disable all caching
