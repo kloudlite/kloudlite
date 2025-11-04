@@ -42,7 +42,7 @@ type K3sAgentSetupArgs struct {
 type WorkspaceHostManagerValues struct {
 	Namespace       string
 	WorkMachineName string
-	SSHUsername string
+	SSHUsername     string
 	NodeSelector    map[string]string
 	Tolerations     []corev1.Toleration
 }
