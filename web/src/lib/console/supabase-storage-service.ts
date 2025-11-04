@@ -38,12 +38,6 @@ export interface Installation {
   ipRecords?: IPRecord[]
   deploymentReady?: boolean
   lastHealthCheck?: string
-  // Origin certificate fields (for HAProxy TLS)
-  originCertificate?: string
-  originPrivateKey?: string
-  originCertId?: string
-  originCertValidFrom?: string
-  originCertValidUntil?: string
   createdAt: string
   updatedAt: string
 }
@@ -211,11 +205,6 @@ export async function getInstallationById(installationId: string): Promise<Insta
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
-    originCertificate: data.origin_certificate || undefined,
-    originPrivateKey: data.origin_private_key || undefined,
-    originCertId: data.origin_cert_id || undefined,
-    originCertValidFrom: data.origin_cert_valid_from || undefined,
-    originCertValidUntil: data.origin_cert_valid_until || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords:
@@ -286,11 +275,6 @@ export async function getUserInstallations(userId: string): Promise<Installation
         reservedAt: inst.reserved_at || undefined,
         deploymentReady: inst.deployment_ready || undefined,
         lastHealthCheck: inst.last_health_check || undefined,
-        originCertificate: inst.origin_certificate || undefined,
-        originPrivateKey: inst.origin_private_key || undefined,
-        originCertId: inst.origin_cert_id || undefined,
-        originCertValidFrom: inst.origin_cert_valid_from || undefined,
-        originCertValidUntil: inst.origin_cert_valid_until || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
         ipRecords:
@@ -354,11 +338,6 @@ export async function createInstallation(
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
-    originCertificate: data.origin_certificate || undefined,
-    originPrivateKey: data.origin_private_key || undefined,
-    originCertId: data.origin_cert_id || undefined,
-    originCertValidFrom: data.origin_cert_valid_from || undefined,
-    originCertValidUntil: data.origin_cert_valid_until || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords: [],
@@ -385,15 +364,6 @@ export async function updateInstallation(
     updateData.deployment_ready = updates.deploymentReady || null
   if (updates.lastHealthCheck !== undefined)
     updateData.last_health_check = updates.lastHealthCheck || null
-  if (updates.originCertificate !== undefined)
-    updateData.origin_certificate = updates.originCertificate || null
-  if (updates.originPrivateKey !== undefined)
-    updateData.origin_private_key = updates.originPrivateKey || null
-  if (updates.originCertId !== undefined) updateData.origin_cert_id = updates.originCertId || null
-  if (updates.originCertValidFrom !== undefined)
-    updateData.origin_cert_valid_from = updates.originCertValidFrom || null
-  if (updates.originCertValidUntil !== undefined)
-    updateData.origin_cert_valid_until = updates.originCertValidUntil || null
 
   const { error } = await supabase
     .from('installations')
