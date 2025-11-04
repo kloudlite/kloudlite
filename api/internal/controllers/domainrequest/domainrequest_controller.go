@@ -841,7 +841,7 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 	}
 
 	// Update status
-	domainRequest.Status.State = "CertificateReady"
+	domainRequest.Status.State = "CertificateGenerated"
 	domainRequest.Status.Message = "Origin certificate downloaded and stored"
 	domainRequest.Status.OriginCertificateSecretName = secretName
 
