@@ -172,7 +172,7 @@ func (h *SuperAdminLoginHandlers) ValidateSuperAdminLogin(c *gin.Context) {
 }
 
 // computeSignature computes HMAC-SHA256 signature for the payload
-func (h *AdminLoginHandlers) computeSignature(payload []byte) string {
+func (h *SuperAdminLoginHandlers) computeSignature(payload []byte) string {
 	mac := hmac.New(sha256.New, []byte(h.installationSecret))
 	mac.Write(payload)
 	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
