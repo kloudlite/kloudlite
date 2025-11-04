@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, Shield, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { env } from '@/lib/env'
 
 export default function SuperAdminLoginPage() {
   const router = useRouter()
@@ -14,8 +15,7 @@ export default function SuperAdminLoginPage() {
 
   const validateToken = useCallback(async (token: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1'
-      const response = await fetch(`${apiUrl}/superadmin-login/validate`, {
+      const response = await fetch(`${env.apiUrl}/api/v1/superadmin-login/validate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
