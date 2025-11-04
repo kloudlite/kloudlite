@@ -312,41 +312,40 @@ spec:
                   NodeName is the name of the node where HAProxy pod should be scheduled
                   The node should have the public IP address
                 type: string
+              originCertificateHostnames:
+                description: |-
+                  OriginCertificateHostnames specifies the hostnames to include in the origin certificate
+                  If not provided, defaults to ["subdomain.domain", "*.subdomain.domain"]
+                  Note: Cloudflare only allows ONE wildcard per hostname at the beginning
+                  Valid: ["example.com", "*.example.com"]
+                  Invalid: ["*.*.example.com", "test.*.example.com"]
+                items:
+                  type: string
+                type: array
               sshProxyEnabled:
                 default: false
                 description: |-
                   SSHProxyEnabled enables SSH proxy functionality (port 22)
                   Will be handled by a sidecar container in future implementation
                 type: boolean
-              type:
-                default: installation
-                description: 'Type indicates the type of registration: "installation"
-                  or "workmachine"'
-                enum:
-                - installation
-                - workmachine
-                type: string
-              workMachineName:
-                description: WorkMachineName is the name of the workmachine (required
-                  if type=workmachine)
-                type: string
             required:
             - certificateScope
-            - type
             type: object
           status:
             description: DomainRequestStatus defines the observed state of DomainRequest
             properties:
               certificateExpiresAt:
-                description: CertificateExpiresAt is the expiration time of the certificate
+                description: CertificateExpiresAt is when the certificate expires
+                  (deprecated - kept for backward compatibility)
                 format: date-time
                 type: string
               certificateId:
                 description: CertificateID is the ID of the generated certificate
+                  (deprecated - kept for backward compatibility)
                 type: string
               certificateSecretName:
                 description: CertificateSecretName is the name of the Kubernetes Secret
-                  containing the certificate
+                  containing the certificate (deprecated - kept for backward compatibility)
                 type: string
               dnsRecordIds:
                 description: DNSRecordIDs contains the Cloudflare DNS record IDs created
@@ -366,7 +365,7 @@ spec:
                 type: boolean
               lastCertificateGenerationTime:
                 description: LastCertificateGenerationTime is when the certificate
-                  was last generated
+                  was last generated (deprecated - kept for backward compatibility)
                 format: date-time
                 type: string
               lastIPRegistrationTime:
@@ -377,16 +376,23 @@ spec:
                 description: Message provides additional information about the current
                   state
                 type: string
+              originCertificateSecretName:
+                description: |-
+                  OriginCertificateSecretName is the name of the Kubernetes Secret containing the installation's origin certificate
+                  This certificate is shared across all DomainRequests for the same installation
+                type: string
               state:
                 default: Pending
                 description: State represents the current state of the DomainRequest
                 enum:
                 - Pending
-                - IPRegistered
+                - CertificateDownloading
                 - CertificateGenerated
-                - Ready
+                - CertificateReady
                 - HAProxyCreating
                 - HAProxyReady
+                - IPRegistering
+                - Ready
                 - Failed
                 type: string
               subdomain:
@@ -1010,43 +1016,9 @@ spec:
                   current state
                 type: string
               nodeSelector:
-                items:
-                  description: |-
-                    The pod this Toleration is attached to tolerates any taint that matches
-                    the triple <key,value,effect> using the matching operator <operator>.
-                  properties:
-                    effect:
-                      description: |-
-                        Effect indicates the taint effect to match. Empty means match all taint effects.
-                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: |-
-                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
-                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
-                      type: string
-                    operator:
-                      description: |-
-                        Operator represents a key's relationship to the value.
-                        Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod can
-                        tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: |-
-                        TolerationSeconds represents the period of time the toleration (which must be
-                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
-                        it is not set, which means tolerate the taint forever (do not evict). Zero and
-                        negative values will be treated as 0 (evict immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: |-
-                        Value is the taint value the toleration matches to.
-                        If the operator is Exists, the value should be empty, otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
+                additionalProperties:
+                  type: string
+                type: object
               observedGeneration:
                 description: ObservedGeneration is the generation observed by the
                   controller
@@ -1084,6 +1056,44 @@ spec:
                 - deleting
                 - error
                 type: string
+              tolerations:
+                items:
+                  description: |-
+                    The pod this Toleration is attached to tolerates any taint that matches
+                    the triple <key,value,effect> using the matching operator <operator>.
+                  properties:
+                    effect:
+                      description: |-
+                        Effect indicates the taint effect to match. Empty means match all taint effects.
+                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: |-
+                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                      type: string
+                    operator:
+                      description: |-
+                        Operator represents a key's relationship to the value.
+                        Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod can
+                        tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: |-
+                        TolerationSeconds represents the period of time the toleration (which must be
+                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                        it is not set, which means tolerate the taint forever (do not evict). Zero and
+                        negative values will be treated as 0 (evict immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: |-
+                        Value is the taint value the toleration matches to.
+                        If the operator is Exists, the value should be empty, otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
             type: object
         type: object
     served: true
