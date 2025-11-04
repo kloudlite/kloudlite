@@ -16,7 +16,6 @@ import (
 
 type Server struct {
 	httpServer          *http.Server
-	httpsServer         *http.Server
 	logger              *zap.Logger
 	config              *config.Config
 	k8sClient           *k8s.Client
@@ -86,10 +85,6 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 			Addr:    ":8080",
 			Handler: router,
 		},
-		httpsServer: &http.Server{
-			Addr:    ":8443",
-			Handler: router,
-		},
 		logger:              logger,
 		config:              cfg,
 		k8sClient:           k8sClient,
@@ -141,26 +136,12 @@ func (s *Server) Start() error {
 	}()
 
 	// Start HTTP server on port 8080
-	go func() {
-		s.logger.Info("Starting HTTP server", zap.String("addr", s.httpServer.Addr))
-		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			s.logger.Error("HTTP server failed", zap.Error(err))
-		}
-	}()
+	// Note: Port 8443 is reserved for the controller-runtime webhook server
+	s.logger.Info("Starting HTTP server", zap.String("addr", s.httpServer.Addr))
+	s.logger.Info("Webhook server will be started by controller-runtime on port 8443")
 
-	// Start HTTPS server on port 8443
-	if s.config.TLS.Enabled {
-		s.logger.Info("Starting HTTPS server",
-			zap.String("addr", s.httpsServer.Addr),
-			zap.String("certFile", s.config.TLS.CertFile),
-			zap.String("keyFile", s.config.TLS.KeyFile))
-		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
-			return fmt.Errorf("failed to start HTTPS server: %w", err)
-		}
-	} else {
-		s.logger.Info("TLS disabled, HTTPS server not started")
-		// Block forever since we're running HTTP in background
-		select {}
+	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("failed to start HTTP server: %w", err)
 	}
 
 	return nil
@@ -185,11 +166,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// Shutdown HTTP server
 	if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
 		s.logger.Error("Failed to shutdown HTTP server", zap.Error(err))
-	}
-
-	// Shutdown HTTPS server
-	if err := s.httpsServer.Shutdown(shutdownCtx); err != nil {
-		s.logger.Error("Failed to shutdown HTTPS server", zap.Error(err))
 	}
 
 	// Clean up managers
