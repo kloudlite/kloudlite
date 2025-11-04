@@ -705,10 +705,9 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 	logger.Info("Downloading installation origin certificate")
 
 	// Call console API to get origin certificate
-	url := fmt.Sprintf("%s/api/installations/get-origin-certificate?installationKey=%s",
-		consoleAPIBaseURL, r.InstallationKey)
+	path := fmt.Sprintf("/api/installations/get-origin-certificate?installationKey=%s", r.InstallationKey)
 
-	resp, err := r.callConsoleAPI(ctx, url, "GET", nil, r.InstallationSecret, logger)
+	resp, err := r.callConsoleAPI(ctx, path, "GET", nil, r.InstallationSecret, logger)
 	if err != nil {
 		logger.Error("Failed to download origin certificate", zap.Error(err))
 		domainRequest.Status.State = "Failed"
