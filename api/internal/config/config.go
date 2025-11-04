@@ -12,6 +12,9 @@ type Config struct {
 	Environment string `envconfig:"ENVIRONMENT" default:"development"`
 	LogLevel    string `envconfig:"LOG_LEVEL" default:"info"`
 
+	// TLS configuration for HTTPS
+	TLS TLSConfig `envconfig:"TLS"`
+
 	// JWT Authentication configuration
 	Auth AuthConfig `envconfig:"AUTH"`
 
@@ -82,6 +85,17 @@ type InstallationConfig struct {
 
 	// PollingIntervalSeconds is the interval to poll for subdomain configuration
 	PollingIntervalSeconds int `envconfig:"POLLING_INTERVAL_SECONDS" default:"30"`
+}
+
+type TLSConfig struct {
+	// CertFile is the path to the TLS certificate file
+	CertFile string `envconfig:"CERT_FILE" default:"/etc/webhook/certs/tls.crt"`
+
+	// KeyFile is the path to the TLS private key file
+	KeyFile string `envconfig:"KEY_FILE" default:"/etc/webhook/certs/tls.key"`
+
+	// Enable TLS/HTTPS (default true for webhook support)
+	Enabled bool `envconfig:"ENABLED" default:"true"`
 }
 
 func Load() (*Config, error) {
