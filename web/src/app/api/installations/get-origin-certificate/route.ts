@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getInstallationByKey } from '@/lib/console/supabase-storage-service'
+import {
+  getInstallationByKey,
+  getLatestCertificate,
+} from '@/lib/console/supabase-storage-service'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
@@ -48,8 +51,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
-    // Check if origin certificate exists
-    if (!installation.originCertificate || !installation.originPrivateKey) {
+    // Get installation-scoped certificate from tls_certificates table
+    const cert = await getLatestCertificate(installation.id, 'installation')
+
+    if (!cert) {
       return NextResponse.json(
         { error: 'Origin certificate not found for this installation' },
         { status: 404 },
@@ -57,16 +62,16 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `Serving origin certificate for installation: ${installation.id}, cert ID: ${installation.originCertId}`,
+      `Serving origin certificate for installation: ${installation.id}, cert ID: ${cert.cloudflareCertId}`,
     )
 
     const response = NextResponse.json({
       success: true,
-      certificate: installation.originCertificate,
-      privateKey: installation.originPrivateKey,
-      certificateId: installation.originCertId,
-      validFrom: installation.originCertValidFrom,
-      validUntil: installation.originCertValidUntil,
+      certificate: cert.certificate,
+      privateKey: cert.privateKey,
+      certificateId: cert.cloudflareCertId,
+      validFrom: cert.validFrom,
+      validUntil: cert.validUntil,
     })
 
     // Disable all caching
