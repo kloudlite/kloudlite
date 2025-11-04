@@ -163,23 +163,11 @@ spec:
                 type: boolean
             required:
             - certificateScope
+            - nodeName
             type: object
           status:
             description: DomainRequestStatus defines the observed state of DomainRequest
             properties:
-              certificateExpiresAt:
-                description: CertificateExpiresAt is when the certificate expires
-                  (deprecated - kept for backward compatibility)
-                format: date-time
-                type: string
-              certificateId:
-                description: CertificateID is the ID of the generated certificate
-                  (deprecated - kept for backward compatibility)
-                type: string
-              certificateSecretName:
-                description: CertificateSecretName is the name of the Kubernetes Secret
-                  containing the certificate (deprecated - kept for backward compatibility)
-                type: string
               dnsRecordIds:
                 description: DNSRecordIDs contains the Cloudflare DNS record IDs created
                 items:
@@ -196,11 +184,6 @@ spec:
                 description: HAProxyReady indicates if the HAProxy pod is ready and
                   serving traffic
                 type: boolean
-              lastCertificateGenerationTime:
-                description: LastCertificateGenerationTime is when the certificate
-                  was last generated (deprecated - kept for backward compatibility)
-                format: date-time
-                type: string
               lastIPRegistrationTime:
                 description: LastIPRegistrationTime is when the IP was last registered
                 format: date-time

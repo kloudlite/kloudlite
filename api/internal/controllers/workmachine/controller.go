@@ -7,10 +7,12 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/codingconcepts/env"
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
@@ -169,6 +171,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			Title:    "Ensure workmachine-host-manager deployment",
 			OnCreate: r.ensurePackageManagerDeploymentStep,
 			OnDelete: nil,
+		},
+		{
+			Name:     "setup domain request",
+			Title:    "Sets up Domain Request Settings for the workmachine",
+			OnCreate: r.createDomainRequest,
+			OnDelete: r.deleteDomainRequest,
 		},
 	})
 }
@@ -775,6 +783,52 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 	// 	return check.Failed(err)
 	// }
 	//
+	return check.Passed()
+}
+
+func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	subDomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if subDomain == "" {
+		return check.Errored(fmt.Errorf("HOSTED_SUBDOMAIN env var must be set")).RequeueAfter(5 * time.Second)
+	}
+
+	domainRequest := &domainrequestv1.DomainRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      obj.Name,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, domainRequest, func() error {
+		domainRequest.Spec = domainrequestv1.DomainRequestSpec{
+			NodeName:         obj.Name,
+			IPAddress:        obj.Status.PublicIP,
+			CertificateScope: "workmachine",
+			OriginCertificateHostnames: []string{
+				fmt.Sprintf("%s.%s.khost.dev", obj.Name, subDomain),
+				fmt.Sprintf("*.%s.%s.khost.dev", obj.Name, subDomain),
+			},
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Passed()
+}
+
+func (r *WorkMachineReconciler) deleteDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	domainRequest := &domainrequestv1.DomainRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      obj.Name,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if err := r.Delete(check.Context(), domainRequest); err != nil {
+		return check.Failed(err)
+	}
+
 	return check.Passed()
 }
 

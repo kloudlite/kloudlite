@@ -34,8 +34,7 @@ type DomainRequestSpec struct {
 
 	// NodeName is the name of the node where HAProxy pod should be scheduled
 	// The node should have the public IP address
-	// +optional
-	NodeName string `json:"nodeName,omitempty"`
+	NodeName string `json:"nodeName"`
 
 	// LoadBalancerServiceName is the name of the LoadBalancer service to watch for IP
 	// Used for auto-detecting the IP address
