@@ -440,6 +440,38 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 	case "IPRegistering":
 		return r.handleIPRegistration(ctx, domainRequest, logger)
 	case "Ready":
+		// Check if HAProxy pod still exists
+		if domainRequest.Status.HAProxyPodName != "" {
+			pod := &corev1.Pod{}
+			err := r.Get(ctx, client.ObjectKey{
+				Name:      domainRequest.Status.HAProxyPodName,
+				Namespace: domainRequest.Namespace,
+			}, pod)
+
+			if errors.IsNotFound(err) {
+				// HAProxy pod was deleted, need to recreate it
+				logger.Warn("HAProxy pod deleted while DomainRequest is Ready, recreating",
+					zap.String("podName", domainRequest.Status.HAProxyPodName))
+
+				// Reset HAProxyReady status and trigger recreation
+				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
+					domainRequest.Status.State = "HAProxyCreating"
+					domainRequest.Status.Message = "HAProxy pod was deleted, recreating"
+					domainRequest.Status.HAProxyReady = false
+					return nil
+				}, logger); err != nil {
+					logger.Error("Failed to update status for HAProxy recreation", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+
+				// Requeue immediately to recreate the pod
+				return reconcile.Result{Requeue: true}, nil
+			} else if err != nil {
+				logger.Error("Failed to check HAProxy pod existence", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+		}
+
 		logger.Info("DomainRequest is ready, no action needed")
 		return reconcile.Result{RequeueAfter: 24 * time.Hour}, nil
 	case "Failed":
