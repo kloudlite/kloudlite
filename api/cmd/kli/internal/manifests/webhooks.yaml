@@ -177,6 +177,24 @@ webhooks:
     sideEffects: None
     failurePolicy: Fail
 
+  # DomainRequest validation
+  - name: domainrequests.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/domainrequests
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["domains.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["domainrequests"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
 ---
 # Mutating Webhook Configurations
 apiVersion: admissionregistration.k8s.io/v1
