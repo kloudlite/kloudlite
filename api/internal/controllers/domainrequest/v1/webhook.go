@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -19,20 +20,25 @@ func (r *DomainRequest) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // +kubebuilder:webhook:path=/validate-domains-kloudlite-io-v1-domainrequest,mutating=false,failurePolicy=fail,sideEffects=None,groups=domains.kloudlite.io,resources=domainrequests,verbs=create;update,versions=v1,name=vdomainrequest.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &DomainRequest{}
+var _ webhook.CustomValidator = &DomainRequest{}
 
-// ValidateCreate implements webhook.Validator
-func (r *DomainRequest) ValidateCreate() (admission.Warnings, error) {
+// ValidateCreate implements webhook.CustomValidator
+func (r *DomainRequest) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return r.validateDomainRequest()
 }
 
-// ValidateUpdate implements webhook.Validator
-func (r *DomainRequest) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	return r.validateDomainRequest()
+// ValidateUpdate implements webhook.CustomValidator
+func (r *DomainRequest) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	// Use newObj which is the updated DomainRequest
+	req, ok := newObj.(*DomainRequest)
+	if !ok {
+		return nil, fmt.Errorf("expected DomainRequest but got %T", newObj)
+	}
+	return req.validateDomainRequest()
 }
 
-// ValidateDelete implements webhook.Validator
-func (r *DomainRequest) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator
+func (r *DomainRequest) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	// No validation needed for deletion
 	return nil, nil
 }
