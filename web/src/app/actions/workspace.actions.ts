@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getSession } from '@/lib/get-session'
 import { workspaceService } from '@/lib/services/workspace.service'
 import type {
   WorkspaceCreateRequest,
