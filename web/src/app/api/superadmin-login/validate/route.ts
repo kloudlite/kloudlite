@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { cookies } from 'next/headers'
+import { SignJWT } from 'jose'
 
 /**
  * Server-side validation of superadmin login token
  *
  * This proxies the validation request to the Go API server
- * and handles the response to set up the session securely
+ * and creates a NextAuth-compatible session cookie
  */
 export async function POST(request: NextRequest) {
   try {
@@ -28,19 +30,80 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ token }),
     })
 
+    const responseText = await response.text()
+
     if (!response.ok) {
-      const error = await response.json()
+      console.error('Token validation failed:', response.status, responseText)
+      try {
+        const error = JSON.parse(responseText)
+        return NextResponse.json(
+          { error: error.error || 'Token validation failed' },
+          { status: response.status }
+        )
+      } catch {
+        return NextResponse.json(
+          { error: 'Token validation failed' },
+          { status: response.status }
+        )
+      }
+    }
+
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (e) {
+      console.error('Failed to parse response:', responseText)
       return NextResponse.json(
-        { error: error.error || 'Token validation failed' },
-        { status: response.status }
+        { error: 'Invalid response from server' },
+        { status: 500 }
       )
     }
 
-    const data = await response.json()
+    if (!data.valid || !data.token) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
 
-    // Return the validation response
-    // The client will handle storing the JWT and user data
-    return NextResponse.json(data)
+    // Create NextAuth-compatible JWT session
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+
+    // Create a session token that mimics NextAuth's JWT structure
+    const sessionToken = await new SignJWT({
+      email: data.user.email,
+      name: data.user.displayName || data.user.email,
+      sub: data.user.email, // Subject (user ID)
+      roles: data.roles,
+      backendToken: data.token, // The JWT from Go API
+      isActive: true,
+      provider: 'superadmin-login',
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('8h') // Same as typical NextAuth session
+      .sign(secret)
+
+    // Set the NextAuth session cookie
+    const cookieStore = await cookies()
+    const cookieName = process.env.NODE_ENV === 'production'
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token'
+
+    cookieStore.set(cookieName, sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60, // 8 hours
+      path: '/',
+    })
+
+    // Return success
+    return NextResponse.json({
+      success: true,
+      user: data.user,
+      roles: data.roles,
+    })
   } catch (error) {
     console.error('Error validating superadmin login token:', error)
     return NextResponse.json(
