@@ -80,6 +80,11 @@ func (in *DomainRequestSpec) DeepCopyInto(out *DomainRequestSpec) {
 		*out = new(IngressBackendConfig)
 		**out = **in
 	}
+	if in.SSHBackend != nil {
+		in, out := &in.SSHBackend, &out.SSHBackend
+		*out = new(IngressBackendConfig)
+		**out = **in
+	}
 	if in.DomainRoutes != nil {
 		in, out := &in.DomainRoutes, &out.DomainRoutes
 		*out = make([]DomainRoute, len(*in))
@@ -107,6 +112,10 @@ func (in *DomainRequestStatus) DeepCopyInto(out *DomainRequestStatus) {
 	}
 	if in.LastIPRegistrationTime != nil {
 		in, out := &in.LastIPRegistrationTime, &out.LastIPRegistrationTime
+		*out = (*in).DeepCopy()
+	}
+	if in.LastReconciledRoutesHashUpdated != nil {
+		in, out := &in.LastReconciledRoutesHashUpdated, &out.LastReconciledRoutesHashUpdated
 		*out = (*in).DeepCopy()
 	}
 }

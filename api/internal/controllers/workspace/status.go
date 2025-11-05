@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -49,13 +51,47 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	workspace.Status.PodIP = pod.Status.PodIP
 	workspace.Status.NodeName = pod.Spec.NodeName
 
+	var domainRequest domainrequestv1.DomainRequest
+	if err := r.Get(ctx, fn.NN(workspace.Namespace, workspace.Spec.WorkmachineName), &domainRequest); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// Build access URLs for all services if pod is running
 	if pod.Status.PodIP != "" && phase == "Running" {
 		accessURLs := make(map[string]string)
-		accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
-		accessURLs["code-server"] = fmt.Sprintf("http://%s:8080", pod.Status.PodIP)
-		accessURLs["ttyd"] = fmt.Sprintf("http://%s:7681", pod.Status.PodIP)
-		accessURLs["vscode-tunnel"] = fmt.Sprintf("http://%s:8000", pod.Status.PodIP)
+
+		// Try to use public domain URLs if available
+		if domainRequest.Status.Subdomain != "" {
+			// Get WorkMachine to construct domain URLs
+			wm, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
+			if err == nil && wm.Status.PublicIP != "" {
+				baseDomain := fmt.Sprintf("%s.%s.%s", workspace.Name, workspace.Spec.WorkmachineName, domainRequest.Status.Subdomain)
+				// Use public HTTPS domain URLs
+				accessURLs["code-server"] = fmt.Sprintf("https://vscode-%s", baseDomain)
+				accessURLs["ttyd"] = fmt.Sprintf("https://tty-%s", baseDomain)
+				accessURLs["claude-ttyd"] = fmt.Sprintf("https://claude-%s", baseDomain)
+				accessURLs["opencode-ttyd"] = fmt.Sprintf("https://opencode-%s", baseDomain)
+				accessURLs["codex-ttyd"] = fmt.Sprintf("https://codex-%s", baseDomain)
+				// SSH is still via pod IP (not routed through HAProxy)
+				accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
+			} else {
+				// Fallback to internal pod IPs
+				logger.Warn("Failed to get WorkMachine for domain URLs, using pod IPs",
+					zap.String("workmachine", workspace.Spec.WorkmachineName),
+					zap.Error(err))
+				accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
+				accessURLs["code-server"] = fmt.Sprintf("http://%s:8080", pod.Status.PodIP)
+				accessURLs["ttyd"] = fmt.Sprintf("http://%s:7681", pod.Status.PodIP)
+				accessURLs["vscode-tunnel"] = fmt.Sprintf("http://%s:8000", pod.Status.PodIP)
+			}
+		} else {
+			// Fallback to internal pod IPs
+			accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
+			accessURLs["code-server"] = fmt.Sprintf("http://%s:8080", pod.Status.PodIP)
+			accessURLs["ttyd"] = fmt.Sprintf("http://%s:7681", pod.Status.PodIP)
+			accessURLs["vscode-tunnel"] = fmt.Sprintf("http://%s:8000", pod.Status.PodIP)
+		}
+
 		workspace.Status.AccessURLs = accessURLs
 
 		// Keep AccessURL for backward compatibility (default to code-server)

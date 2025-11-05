@@ -30,9 +30,11 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 )
@@ -725,14 +727,15 @@ StrictModes no
 	return check.Passed()
 }
 
+const workmachineHostManager = "workmachine-host-manager"
+
 // ensurePackageManagerDeploymentStep ensures the workmachine-host-manager deployment exists
 func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespace := obj.Spec.TargetNamespace
-	deploymentName := "workmachine-host-manager"
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deploymentName,
+			Name:      workmachineHostManager,
 			Namespace: obj.Spec.TargetNamespace,
 		},
 	}
@@ -767,22 +770,38 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 		return check.Failed(err)
 	}
 
-	// deployment := &appsv1.Deployment{}
-	// err := r.Get(check.Context(), client.ObjectKey{Name: deploymentName, Namespace: namespace}, deployment)
-	//
-	// if err == nil {
-	// 	// Deployment already exists
-	// 	return check.Passed()
-	// }
-	//
-	// if !apiErrors.IsNotFound(err) {
-	// 	return check.Errored(err)
-	// }
-	//
-	// if _, err := r.YAMLClient.ApplyYAML(check.Context(), b); err != nil {
-	// 	return check.Failed(err)
-	// }
-	//
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workmachineHostManager,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svc, func() error {
+		svc.SetLabels(fn.MapMerge(svc.GetLabels(), map[string]string{
+			"app":                       workmachineHostManager,
+			"kloudlite.io/package-mgmt": "true",
+			"kloudlite.io/workmachine":  obj.Name,
+		}))
+
+		svc.Spec.Selector = map[string]string{
+			"app": workmachineHostManager,
+		}
+
+		svc.Spec.Ports = []corev1.ServicePort{
+			{
+				Name:       "ssh",
+				Protocol:   corev1.ProtocolTCP,
+				Port:       22,
+				TargetPort: intstr.FromInt32(2222),
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
 	return check.Passed()
 }
 
@@ -790,6 +809,48 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 	subDomain := os.Getenv("HOSTED_SUBDOMAIN")
 	if subDomain == "" {
 		return check.Errored(fmt.Errorf("HOSTED_SUBDOMAIN env var must be set")).RequeueAfter(5 * time.Second)
+	}
+
+	var wsList workspacev1.WorkspaceList
+	if err := r.List(check.Context(), &wsList, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
+		return check.Failed(err)
+	}
+
+	var domainRoutes []domainrequestv1.DomainRoute
+	for _, ws := range wsList.Items {
+		serviceName := "workspace-" + ws.Name + "-headless"
+		domainRoutes = append(domainRoutes,
+			domainrequestv1.DomainRoute{
+				Domain:           fmt.Sprintf("vscode-%s.%s.%s", ws.Name, obj.Name, subDomain),
+				ServiceName:      serviceName,
+				ServiceNamespace: obj.Spec.TargetNamespace,
+				ServicePort:      8080,
+			},
+			domainrequestv1.DomainRoute{
+				Domain:           fmt.Sprintf("tty-%s.%s.%s", ws.Name, obj.Name, subDomain),
+				ServiceName:      serviceName,
+				ServiceNamespace: obj.Spec.TargetNamespace,
+				ServicePort:      7681,
+			},
+			domainrequestv1.DomainRoute{
+				Domain:           fmt.Sprintf("claude-%s.%s.%s", ws.Name, obj.Name, subDomain),
+				ServiceName:      serviceName,
+				ServiceNamespace: obj.Spec.TargetNamespace,
+				ServicePort:      7682,
+			},
+			domainrequestv1.DomainRoute{
+				Domain:           fmt.Sprintf("opencode-%s.%s.%s", ws.Name, obj.Name, subDomain),
+				ServiceName:      serviceName,
+				ServiceNamespace: obj.Spec.TargetNamespace,
+				ServicePort:      7683,
+			},
+			domainrequestv1.DomainRoute{
+				Domain:           fmt.Sprintf("codex-%s.%s.%s", ws.Name, obj.Name, subDomain),
+				ServiceName:      serviceName,
+				ServiceNamespace: obj.Spec.TargetNamespace,
+				ServicePort:      7684,
+			},
+		)
 	}
 
 	domainRequest := &domainrequestv1.DomainRequest{
@@ -805,9 +866,15 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 			IPAddress:        obj.Status.PublicIP,
 			CertificateScope: "workmachine",
 			OriginCertificateHostnames: []string{
-				fmt.Sprintf("%s.%s.khost.dev", obj.Name, subDomain),
-				fmt.Sprintf("*.%s.%s.khost.dev", obj.Name, subDomain),
+				fmt.Sprintf("%s.%s", obj.Name, subDomain),
+				fmt.Sprintf("*.%s.%s", obj.Name, subDomain),
 			},
+			SSHBackend: &domainrequestv1.IngressBackendConfig{
+				ServiceName:      workmachineHostManager,
+				ServiceNamespace: obj.Spec.TargetNamespace,
+				ServicePort:      22,
+			},
+			DomainRoutes: domainRoutes,
 		}
 		return nil
 	}); err != nil {
@@ -998,5 +1065,26 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine")
 	builder.Owns(&corev1.Namespace{})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor("workmachine")))
+
+	// Watch for workspaces and trigger reconciliation of their owning WorkMachine
+	builder.Watches(
+		&workspacev1.Workspace{},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			workspace, ok := obj.(*workspacev1.Workspace)
+			if !ok {
+				return nil
+			}
+
+			// Use the WorkmachineName directly from the workspace spec
+			if workspace.Spec.WorkmachineName == "" {
+				return nil
+			}
+
+			return []reconcile.Request{
+				{NamespacedName: client.ObjectKey{Name: workspace.Spec.WorkmachineName}},
+			}
+		}),
+	)
+
 	return builder.Complete(r)
 }

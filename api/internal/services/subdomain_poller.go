@@ -142,7 +142,7 @@ func (sp *SubdomainPoller) ensureDomainRequestOnStartup(ctx context.Context) err
 		return fmt.Errorf("failed to create/update domain request on startup: %w", err)
 	}
 
-	os.Setenv("HOSTED_SUBDOMAIN", verifyResp.Subdomain)
+	os.Setenv("HOSTED_SUBDOMAIN", verifyResp.Subdomain+".khost.dev")
 
 	sp.logger.Info("DomainRequest ensured successfully on startup")
 	return nil
