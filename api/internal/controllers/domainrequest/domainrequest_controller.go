@@ -42,10 +42,11 @@ type DomainRequestReconciler struct {
 
 // configureIPRequest represents the request body for /api/installations/configure-ips
 type configureIPRequest struct {
-	InstallationKey   string                         `json:"installationKey"`
-	IP                string                         `json:"ip"`
-	DomainRequestName string                         `json:"domainRequestName"`
-	DomainRoutes      []domainrequestsv1.DomainRoute `json:"domainRoutes,omitempty"`
+	InstallationKey   string   `json:"installationKey"`
+	IP                string   `json:"ip,omitempty"`
+	DomainRequestName string   `json:"domainRequestName"`
+	Domains           []string `json:"domains,omitempty"`
+	Deleted           bool     `json:"deleted,omitempty"` // Set to true to delete all DNS records
 }
 
 // configureIPResponse represents the response from /api/installations/configure-ips
@@ -612,12 +613,18 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 		return r.updateStatus(ctx, domainRequest, "Failed", "No IP address provided or available from LoadBalancer", logger)
 	}
 
+	// Extract domain names from DomainRoutes
+	domains := make([]string, 0, len(domainRequest.Spec.DomainRoutes))
+	for _, route := range domainRequest.Spec.DomainRoutes {
+		domains = append(domains, route.Domain)
+	}
+
 	// Call console API to register IP and create DNS records
 	reqBody := configureIPRequest{
 		InstallationKey:   r.InstallationKey,
 		IP:                ipAddress,
 		DomainRequestName: domainRequest.Name,
-		DomainRoutes:      domainRequest.Spec.DomainRoutes,
+		Domains:           domains,
 	}
 
 	resp, err := r.callConsoleAPI(ctx, "/api/installations/configure-ips", "POST", reqBody, r.InstallationSecret, logger)
@@ -1062,7 +1069,22 @@ func (r *DomainRequestReconciler) handleDeletion(ctx context.Context, domainRequ
 			}
 		}
 
-		// Perform cleanup here if needed (e.g., delete DNS records via API)
+		// Delete DNS records via console API
+		logger.Info("Deleting DNS records via console API")
+		deletionReqBody := configureIPRequest{
+			InstallationKey:   r.InstallationKey,
+			DomainRequestName: domainRequest.Name,
+			Deleted:           true,
+		}
+
+		_, err := r.callConsoleAPI(ctx, "/api/installations/configure-ips", "POST", deletionReqBody, r.InstallationSecret, logger)
+		if err != nil {
+			logger.Error("Failed to delete DNS records via console API", zap.Error(err))
+			// Continue with finalizer removal even if API call fails
+		} else {
+			logger.Info("Successfully deleted DNS records")
+		}
+
 		// TLS Secret cleanup is automatic via owner references
 
 		controllerutil.RemoveFinalizer(domainRequest, domainRequestFinalizer)

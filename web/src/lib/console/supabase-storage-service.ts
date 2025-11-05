@@ -21,8 +21,9 @@ export interface IPRecord {
   ip: string
   configuredAt: string
   sshRecordId?: string | null
-  routeRecordIds?: string[]
-  domainRoutes?: Array<{ domain: string }>
+  routeRecordIds?: string[] // Kept for backward compatibility
+  routeRecordMap?: Record<string, string> // domain -> CNAME record ID
+  domainRoutes?: Array<{ domain: string }> // List of domains
 }
 
 export interface Installation {
@@ -474,6 +475,25 @@ export async function addOrUpdateIpRecord(
     .eq('installation_id', installationId)
 
   return count || 0
+}
+
+/**
+ * Remove a specific IP record for a domain request
+ */
+export async function removeIpRecord(
+  installationId: string,
+  domainRequestName: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('ip_records')
+    .delete()
+    .eq('installation_id', installationId)
+    .eq('domain_request_name', domainRequestName)
+
+  if (error) {
+    console.error('Error removing IP record:', error)
+    throw new Error(`Failed to remove IP record: ${error.message}`)
+  }
 }
 
 /**
@@ -1028,36 +1048,41 @@ export async function deleteEdgeCertificatesForDomainRequest(
 }
 
 /**
- * Legacy Compatibility Functions
- * These maintain backwards compatibility with old email-based API
+ * Delete edge certificate for a specific domain within a domain request
  */
+export async function deleteEdgeCertificateForDomain(
+  installationId: string,
+  domainRequestName: string,
+  domain: string,
+): Promise<string | null> {
+  // Get certificate pack ID for this specific domain
+  const { data } = await supabase
+    .from('edge_certificates')
+    .select('cloudflare_cert_pack_id')
+    .eq('installation_id', installationId)
+    .eq('domain_request_name', domainRequestName)
+    .contains('hostnames', [domain])
+    .single()
 
-/**
- * @deprecated Use getUserInstallations instead
- * Get the first (or only) installation for a user by email
- */
-export async function getUserByEmailLegacy(email: string): Promise<unknown | null> {
-  const user = await getUserByEmail(email)
-  if (!user) return null
-
-  const installations = await getUserInstallations(user.userId)
-  if (installations.length === 0) return null
-
-  const installation = installations[0]
-
-  return {
-    userId: user.userId,
-    email: user.email,
-    name: user.name,
-    providers: user.providers,
-    registeredAt: user.registeredAt,
-    installationKey: installation.installationKey,
-    secretKey: installation.secretKey,
-    hasCompletedInstallation: installation.hasCompletedInstallation,
-    subdomain: installation.subdomain,
-    reservedAt: installation.reservedAt,
-    deploymentReady: installation.deploymentReady,
-    lastHealthCheck: installation.lastHealthCheck,
-    ipRecords: installation.ipRecords,
+  if (!data) {
+    return null
   }
+
+  const certPackId = (data as Pick<EdgeCertificateRow, 'cloudflare_cert_pack_id'>)
+    .cloudflare_cert_pack_id
+
+  // Delete from database
+  const { error } = await supabase
+    .from('edge_certificates')
+    .delete()
+    .eq('installation_id', installationId)
+    .eq('domain_request_name', domainRequestName)
+    .contains('hostnames', [domain])
+
+  if (error) {
+    console.error(`Error deleting edge certificate for domain ${domain}:`, error)
+  }
+
+  return certPackId
 }
+
