@@ -196,6 +196,11 @@ spec:
                 description: HAProxyReady indicates if the HAProxy pod is ready and
                   serving traffic
                 type: boolean
+              lastReconciledRoutesHash:
+                description: LastReconciledRoutesHash stores a hash of the last reconciled
+                  DomainRoutes to detect when routes have changed and need DNS record
+                  updates
+                type: string
               lastCertificateGenerationTime:
                 description: LastCertificateGenerationTime is when the certificate
                   was last generated (deprecated - kept for backward compatibility)
