@@ -105,13 +105,29 @@ export async function POST(request: NextRequest) {
 
     const sshDomain = `ssh.${domainRequestName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
 
+    // Helper function to normalize routes for comparison
+    const normalizeRoutes = (routes: any[]) => {
+      return routes
+        .map((r) => ({
+          domain: r.domain,
+          serviceName: r.serviceName,
+          serviceNamespace: r.serviceNamespace,
+          servicePort: r.servicePort,
+        }))
+        .sort((a, b) => a.domain.localeCompare(b.domain))
+    }
+
     // Create or update DNS records
     try {
       if (existingRecord) {
         // Check if IP changed or routes changed
         const ipChanged = existingRecord.ip !== ip
-        const existingRoutesJson = JSON.stringify(existingRecord.domainRoutes || [])
-        const newRoutesJson = JSON.stringify(routes)
+
+        // Normalize routes for comparison to avoid false positives from JSON serialization order
+        const existingRoutesNormalized = normalizeRoutes(existingRecord.domainRoutes || [])
+        const newRoutesNormalized = normalizeRoutes(routes)
+        const existingRoutesJson = JSON.stringify(existingRoutesNormalized)
+        const newRoutesJson = JSON.stringify(newRoutesNormalized)
         const routesChanged = existingRoutesJson !== newRoutesJson
 
         console.log(`Comparing routes - existing: ${existingRoutesJson}, new: ${newRoutesJson}, changed: ${routesChanged}`)
