@@ -459,6 +459,7 @@ export async function addOrUpdateIpRecord(
         configured_at: ipRecord.configuredAt,
         ssh_record_id: ipRecord.sshRecordId || null,
         route_record_ids: ipRecord.routeRecordIds || [],
+        route_record_map: ipRecord.routeRecordMap || {},
         domain_routes: ipRecord.domainRoutes || [],
       },
       {
