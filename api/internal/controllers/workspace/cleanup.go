@@ -117,20 +117,28 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		return reconcile.Result{}, nil
 	}
 
-	// Delete the workspace pod if it exists
-	podName := fmt.Sprintf("workspace-%s", workspace.Name)
-	pod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		logger.Warn("Failed to get target namespace during deletion, skipping pod cleanup", zap.Error(err))
+		// Continue with cleanup even if we can't get the namespace
+		// The workspace directory cleanup can still proceed
+	} else {
+		// Delete the workspace pod if it exists
+		podName := fmt.Sprintf("workspace-%s", workspace.Name)
+		pod := &corev1.Pod{}
+		err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
-	if err == nil {
-		logger.Info("Deleting workspace pod", zap.String("pod", podName))
-		if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
-			logger.Error("Failed to delete workspace pod", zap.Error(err))
+		if err == nil {
+			logger.Info("Deleting workspace pod", zap.String("pod", podName))
+			if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
+				logger.Error("Failed to delete workspace pod", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+		} else if !apierrors.IsNotFound(err) {
+			logger.Error("Failed to check workspace pod", zap.Error(err))
 			return reconcile.Result{}, err
 		}
-	} else if !apierrors.IsNotFound(err) {
-		logger.Error("Failed to check workspace pod", zap.Error(err))
-		return reconcile.Result{}, err
 	}
 
 	// Delete the workspace directory on the host
@@ -157,6 +165,16 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 
 // handleActiveWorkspace ensures the workspace pod is running
 func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		logger.Error("Failed to get target namespace", zap.Error(err))
+		workspace.Status.Phase = "Failed"
+		workspace.Status.Message = fmt.Sprintf("Failed to get target namespace: %v", err)
+		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		return reconcile.Result{}, err
+	}
+
 	// Check and suspend idle workspace if auto-stop is enabled
 	if err := r.checkAndSuspendIdleWorkspace(ctx, workspace, logger); err != nil {
 		logger.Warn("Failed to check idle workspace", zap.Error(err))
@@ -199,7 +217,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	// Check if pod already exists
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 	pod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
 	if err == nil {
 		// Pod exists
@@ -308,10 +326,26 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 
 // handleSuspendedWorkspace ensures the workspace pod is stopped
 func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		logger.Warn("Failed to get target namespace during suspension", zap.Error(err))
+		// Set to stopped state anyway since we can't manage the pod
+		workspace.Status.Phase = "Stopped"
+		workspace.Status.Message = fmt.Sprintf("Failed to get target namespace: %v", err)
+		workspace.Status.PodName = ""
+		workspace.Status.PodIP = ""
+		workspace.Status.NodeName = ""
+		now := metav1.Now()
+		workspace.Status.StopTime = &now
+		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		return reconcile.Result{}, err
+	}
+
 	// Check if pod exists
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 	pod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
 	if apierrors.IsNotFound(err) {
 		// Pod doesn't exist, workspace is already stopped

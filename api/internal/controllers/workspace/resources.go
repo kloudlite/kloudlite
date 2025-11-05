@@ -17,9 +17,15 @@ import (
 func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
 
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Check if PackageRequest exists
 	pkgReq := &workspacev1.PackageRequest{}
-	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: workspace.Namespace}, pkgReq)
+	err = r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: targetNamespace}, pkgReq)
 
 	if apierrors.IsNotFound(err) {
 		// PackageRequest doesn't exist
@@ -33,7 +39,7 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 		pkgReq = &workspacev1.PackageRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pkgReqName,
-				Namespace: workspace.Namespace,
+				Namespace: targetNamespace,
 			},
 			Spec: workspacev1.PackageRequestSpec{
 				WorkspaceRef: workspace.Name,
@@ -104,10 +110,16 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 		return nil
 	}
 
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Get the PackageRequest
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
 	pkgReq := &workspacev1.PackageRequest{}
-	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: workspace.Namespace}, pkgReq)
+	err = r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: targetNamespace}, pkgReq)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// PackageRequest not yet created
@@ -128,16 +140,22 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	serviceName := fmt.Sprintf("workspace-%s", workspace.Name)
 
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Check if Service exists
 	svc := &corev1.Service{}
-	err := r.Get(ctx, client.ObjectKey{Name: serviceName, Namespace: workspace.Namespace}, svc)
+	err = r.Get(ctx, client.ObjectKey{Name: serviceName, Namespace: targetNamespace}, svc)
 
 	if apierrors.IsNotFound(err) {
 		// Create new Service
 		svc = &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceName,
-				Namespace: workspace.Namespace,
+				Namespace: targetNamespace,
 				Labels: map[string]string{
 					"app":       "workspace",
 					"workspace": workspace.Name,
@@ -214,16 +232,22 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 func (r *WorkspaceReconciler) ensureWorkspaceHeadlessService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	headlessServiceName := fmt.Sprintf("workspace-%s-headless", workspace.Name)
 
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Check if headless Service exists
 	headlessSvc := &corev1.Service{}
-	err := r.Get(ctx, client.ObjectKey{Name: headlessServiceName, Namespace: workspace.Namespace}, headlessSvc)
+	err = r.Get(ctx, client.ObjectKey{Name: headlessServiceName, Namespace: targetNamespace}, headlessSvc)
 
 	if apierrors.IsNotFound(err) {
 		// Create new headless Service
 		headlessSvc = &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      headlessServiceName,
-				Namespace: workspace.Namespace,
+				Namespace: targetNamespace,
 				Labels: map[string]string{
 					"app":                               "workspace",
 					"workspace":                         workspace.Name,

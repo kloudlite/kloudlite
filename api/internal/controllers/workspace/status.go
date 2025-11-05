@@ -56,12 +56,12 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		accessURLs := make(map[string]string)
 
 		// Try to fetch DomainRequest - it may not exist yet if WorkMachine is still setting up
+		// DomainRequest is cluster-scoped, so lookup by name only
 		var domainRequest domainrequestv1.DomainRequest
 		domainRequestExists := false
-		if err := r.Get(ctx, fn.NN(workspace.Namespace, workspace.Spec.WorkmachineName), &domainRequest); err != nil {
+		if err := r.Get(ctx, fn.NN("", workspace.Spec.WorkmachineName), &domainRequest); err != nil {
 			logger.Warn("DomainRequest not found yet, using pod IP fallback URLs",
 				zap.String("workmachine", workspace.Spec.WorkmachineName),
-				zap.String("namespace", workspace.Namespace),
 				zap.Error(err))
 		} else {
 			domainRequestExists = true
@@ -109,8 +109,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
-			Namespace: workspace.Namespace,
+			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 
 		if err == nil && env.Status.State == environmentv1.EnvironmentStateActive {
@@ -168,8 +167,7 @@ func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, works
 	// Get environment to find target namespace
 	env := &environmentv1.Environment{}
 	err := r.Get(ctx, client.ObjectKey{
-		Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
-		Namespace: workspace.Namespace,
+		Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 	}, env)
 
 	if err != nil {
@@ -181,13 +179,12 @@ func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, works
 		return activeIntercepts
 	}
 
-	// List all ServiceIntercepts for this workspace in the environment namespace
+	// List all ServiceIntercepts for this workspace (cluster-scoped)
+	// Filter by workspace name and then check if they target services in the environment namespace
 	interceptList := &interceptsv1.ServiceInterceptList{}
 	err = r.List(ctx, interceptList,
-		client.InNamespace(env.Spec.TargetNamespace),
 		client.MatchingLabels{
-			"workspaces.kloudlite.io/workspace-name":      workspace.Name,
-			"workspaces.kloudlite.io/workspace-namespace": workspace.Namespace,
+			"workspaces.kloudlite.io/workspace-name": workspace.Name,
 		})
 
 	if err != nil {
@@ -199,14 +196,17 @@ func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, works
 		return activeIntercepts
 	}
 
-	// Collect status from each intercept
+	// Collect status from each intercept (filter by environment namespace)
 	for _, intercept := range interceptList.Items {
-		interceptStatus := workspacev1.InterceptStatus{
-			ServiceName: intercept.Spec.ServiceRef.Name,
-			Phase:       intercept.Status.Phase,
-			Message:     intercept.Status.Message,
+		// Only include intercepts that target services in this environment
+		if intercept.Spec.ServiceRef.Namespace == env.Spec.TargetNamespace {
+			interceptStatus := workspacev1.InterceptStatus{
+				ServiceName: intercept.Spec.ServiceRef.Name,
+				Phase:       intercept.Status.Phase,
+				Message:     intercept.Status.Message,
+			}
+			activeIntercepts = append(activeIntercepts, interceptStatus)
 		}
-		activeIntercepts = append(activeIntercepts, interceptStatus)
 	}
 
 	logger.Info("Collected active intercept statuses",
