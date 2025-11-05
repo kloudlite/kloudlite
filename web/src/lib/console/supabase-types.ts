@@ -98,6 +98,7 @@ export type Database = {
           configured_at: string
           ssh_record_id: string | null
           route_record_ids: string[]
+          route_record_map: Record<string, string> | null
           domain_routes: Array<{ domain: string }>
           created_at: string
           updated_at: string
@@ -109,6 +110,7 @@ export type Database = {
           configured_at?: string
           ssh_record_id?: string | null
           route_record_ids?: string[]
+          route_record_map?: Record<string, string> | null
           domain_routes?: Array<{ domain: string }>
         }
         Update: {
@@ -118,6 +120,7 @@ export type Database = {
           configured_at?: string
           ssh_record_id?: string | null
           route_record_ids?: string[]
+          route_record_map?: Record<string, string> | null
           domain_routes?: Array<{ domain: string }>
         }
       }
