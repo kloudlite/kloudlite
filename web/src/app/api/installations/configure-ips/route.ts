@@ -2,15 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getInstallationByKey,
   addOrUpdateIpRecord,
+  removeIpRecord,
   markDeploymentReady,
   saveEdgeCertificate,
   deleteEdgeCertificatesForDomainRequest,
+  deleteEdgeCertificateForDomain,
+  type IPRecord,
+  type Installation,
 } from '@/lib/console/supabase-storage-service'
-import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
   CLOUDFLARE_DNS_DOMAIN,
-  createDomainRequestDnsRecords,
-  createDomainRouteCnameRecords,
+  createDnsRecord,
+  createCnameRecord,
   updateDnsRecord,
   deleteDnsRecord,
 } from '@/lib/console/cloudflare-dns'
@@ -19,27 +22,96 @@ import {
   deleteEdgeCertificate,
 } from '@/lib/console/cloudflare-edge-certificates'
 
-// Use Node.js runtime for Supabase (uses Node.js APIs)
+// Use Node.js runtime for Supabase
 export const runtime = 'nodejs'
 
 /**
- * Configure IP for DomainRequest
- * Called by the DomainRequest controller after HAProxy is ready
+ * Configure IP and DNS records for DomainRequest
  *
  * Request format:
  * {
  *   "installationKey": "abc-123",
  *   "ip": "1.2.3.4",
  *   "domainRequestName": "my-domain-request",
- *   "domainRoutes": [
- *     { "domain": "api.example.com" },
- *     { "domain": "app.example.com" }
- *   ]
+ *   "domains": ["api.example.com", "app.example.com"],
+ *   "deleted": false  // Set to true to delete all records
  * }
  */
+
+// Calculate difference between old and new domain lists
+function calculateDomainDiff(oldDomains: string[], newDomains: string[]) {
+  const oldSet = new Set(oldDomains)
+  const newSet = new Set(newDomains)
+
+  const toAdd = newDomains.filter(d => !oldSet.has(d))
+  const toRemove = oldDomains.filter(d => !newSet.has(d))
+  const unchanged = newDomains.filter(d => oldSet.has(d))
+
+  return { toAdd, toRemove, unchanged }
+}
+
+// Handle deletion of domain request DNS records
+async function handleDeletion(
+  installation: Installation,
+  domainRequestName: string,
+): Promise<NextResponse> {
+  const existingRecord = installation.ipRecords?.find(
+    r => r.domainRequestName === domainRequestName
+  )
+
+  if (!existingRecord) {
+    return NextResponse.json({
+      success: true,
+      message: 'Already deleted'
+    })
+  }
+
+  console.log(`Deleting all DNS records for domain request: ${domainRequestName}`)
+
+  // Delete SSH A record
+  if (existingRecord.sshRecordId) {
+    await deleteDnsRecord(existingRecord.sshRecordId)
+    console.log(`Deleted SSH A record: ${existingRecord.sshRecordId}`)
+  }
+
+  // Delete all CNAME records
+  if (existingRecord.routeRecordIds) {
+    for (const recordId of existingRecord.routeRecordIds) {
+      await deleteDnsRecord(recordId)
+      console.log(`Deleted CNAME record: ${recordId}`)
+    }
+  }
+
+  // Delete edge certificates from database
+  const certPackIds = await deleteEdgeCertificatesForDomainRequest(
+    installation.id,
+    domainRequestName
+  )
+
+  // Delete edge certificates from Cloudflare
+  for (const certPackId of certPackIds) {
+    try {
+      await deleteEdgeCertificate(certPackId)
+      console.log(`Deleted edge certificate from Cloudflare: ${certPackId}`)
+    } catch (err) {
+      console.error(`Failed to delete edge certificate ${certPackId}:`, err)
+    }
+  }
+
+  // Remove IP record from database
+  await removeIpRecord(installation.id, domainRequestName)
+  console.log(`Removed IP record for: ${domainRequestName}`)
+
+  return NextResponse.json({
+    success: true,
+    deleted: true,
+    domainRequestName,
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Extract and validate bearer token
+    // Validate authorization
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -48,214 +120,178 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const secretKey = authHeader.substring(7) // Remove "Bearer " prefix
-
+    const secretKey = authHeader.substring(7)
     const body = await request.json()
-    const { installationKey, ip, domainRequestName, domainRoutes } = body
+    const { installationKey, ip, domainRequestName, domains, deleted } = body
 
+    // Validate required fields
     if (!installationKey) {
-      return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
+      return NextResponse.json({ error: 'installationKey is required' }, { status: 400 })
     }
 
-    if (!ip || typeof ip !== 'string') {
-      return NextResponse.json({ error: 'IP address is required' }, { status: 400 })
-    }
-
-    if (!domainRequestName || typeof domainRequestName !== 'string') {
+    if (!domainRequestName) {
       return NextResponse.json({ error: 'domainRequestName is required' }, { status: 400 })
     }
 
-    // domainRoutes is optional (can be empty array or undefined)
-    const routes = domainRoutes || []
-
-    // Look up installation by key
+    // Get installation
     const installation = await getInstallationByKey(installationKey)
-
     if (!installation) {
       return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
     }
 
-    // Verify secret key matches
+    // Verify secret key
     if (installation.secretKey !== secretKey) {
       return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
-    // Check if installation has subdomain assigned (required for DNS creation)
+    // Handle deletion
+    if (deleted) {
+      return await handleDeletion(installation, domainRequestName)
+    }
+
+    // For creation/update, require IP and subdomain
+    if (!ip) {
+      return NextResponse.json({ error: 'IP address is required' }, { status: 400 })
+    }
+
     if (!installation.subdomain) {
       return NextResponse.json(
-        { error: 'Installation must have a subdomain assigned before configuring IPs' },
+        { error: 'Installation must have a subdomain assigned' },
         { status: 400 },
       )
     }
 
-    // Get existing IP record for this domain request
+    const domainList: string[] = domains || []
+    const sshDomain = `ssh.${domainRequestName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
+
+    // Get existing record
     const existingRecord = installation.ipRecords?.find(
-      (r) => r.domainRequestName === domainRequestName,
+      r => r.domainRequestName === domainRequestName
     )
 
     let sshRecordId: string | null = null
-    let routeRecordIds: string[] = []
-    let edgeCertificateIds: string[] = []
-    let dnsCreated = false
+    const routeRecordMap: Record<string, string> = {}
+    let dnsSuccess = false
 
-    const sshDomain = `ssh.${domainRequestName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
-
-    // Helper function to normalize routes for comparison
-    const normalizeRoutes = (routes: any[]) => {
-      return routes
-        .map((r) => ({
-          domain: r.domain,
-          serviceName: r.serviceName,
-          serviceNamespace: r.serviceNamespace,
-          servicePort: r.servicePort,
-        }))
-        .sort((a, b) => a.domain.localeCompare(b.domain))
-    }
-
-    // Create or update DNS records
     try {
+      // Create or update SSH A record
       if (existingRecord) {
-        // Check if IP changed or routes changed
-        const ipChanged = existingRecord.ip !== ip
-
-        // Normalize routes for comparison to avoid false positives from JSON serialization order
-        const existingRoutesNormalized = normalizeRoutes(existingRecord.domainRoutes || [])
-        const newRoutesNormalized = normalizeRoutes(routes)
-        const existingRoutesJson = JSON.stringify(existingRoutesNormalized)
-        const newRoutesJson = JSON.stringify(newRoutesNormalized)
-        const routesChanged = existingRoutesJson !== newRoutesJson
-
-        console.log(`Comparing routes - existing: ${existingRoutesJson}, new: ${newRoutesJson}, changed: ${routesChanged}`)
-
-        if (ipChanged && existingRecord.sshRecordId) {
-          // Update SSH A record with new IP
-          console.log(`Updating SSH A record for ${sshDomain} with new IP: ${ip}`)
+        if (existingRecord.ip !== ip && existingRecord.sshRecordId) {
+          // Update existing A record with new IP
+          console.log(`Updating SSH A record ${existingRecord.sshRecordId}: ${sshDomain} → ${ip}`)
           await updateDnsRecord(existingRecord.sshRecordId, sshDomain, ip, false)
           sshRecordId = existingRecord.sshRecordId
         } else {
           sshRecordId = existingRecord.sshRecordId || null
         }
+      } else {
+        // Create new SSH A record
+        console.log(`Creating SSH A record: ${sshDomain} → ${ip}`)
+        sshRecordId = await createDnsRecord(sshDomain, ip, false)
+      }
 
-        if (routesChanged) {
-          // Delete old route CNAME records
-          if (existingRecord.routeRecordIds && existingRecord.routeRecordIds.length > 0) {
-            console.log(`Deleting old route CNAME records`)
-            for (const recordId of existingRecord.routeRecordIds) {
-              await deleteDnsRecord(recordId)
-            }
-          }
+      dnsSuccess = sshRecordId !== null
 
-          // Delete old edge certificates from database and Cloudflare
-          console.log(`Deleting old edge certificates for domain request: ${domainRequestName}`)
-          const oldCertPackIds = await deleteEdgeCertificatesForDomainRequest(
-            installation.id,
-            domainRequestName,
-          )
+      // Handle domain route changes (differential updates)
+      if (existingRecord) {
+        const oldDomains = (existingRecord.domainRoutes || []).map(r => r.domain)
+        const { toAdd, toRemove } = calculateDomainDiff(oldDomains, domainList)
 
-          // Delete edge certificates from Cloudflare
-          for (const certPackId of oldCertPackIds) {
-            try {
-              await deleteEdgeCertificate(certPackId)
-              console.log(`Deleted edge certificate from Cloudflare: ${certPackId}`)
-            } catch (err) {
-              console.error(`Failed to delete edge certificate ${certPackId} from Cloudflare:`, err)
-              // Continue even if Cloudflare deletion fails
-            }
-          }
+        console.log(`Domain changes: +${toAdd.length} -${toRemove.length}`)
 
-          // Create new route CNAME records (reuse existing SSH A record)
-          if (routes.length > 0) {
-            console.log(`Creating ${routes.length} new route CNAME records (reusing existing SSH record)`)
-            routeRecordIds = await createDomainRouteCnameRecords(
-              domainRequestName,
-              installation.subdomain,
-              routes,
-            )
-
-            // Create edge certificates for new routes
-            if (routeRecordIds.length > 0) {
-              console.log(`Creating edge certificates for ${routes.length} route domains`)
-              edgeCertificateIds = await createDomainRequestEdgeCertificates(routes)
-
-              // Store edge certificates
-              for (let i = 0; i < edgeCertificateIds.length; i++) {
-                const certId = edgeCertificateIds[i]
-                const domain = routes[i].domain
-                await saveEdgeCertificate({
-                  installationId: installation.id,
-                  cloudflareCertPackId: certId,
-                  hostnames: [domain],
-                  domainRequestName,
-                  status: 'pending',
-                })
-              }
-            }
-          }
-        } else {
-          // Routes didn't change, keep existing records
-          routeRecordIds = existingRecord.routeRecordIds || []
+        // Copy existing valid record mappings
+        if (existingRecord.routeRecordMap) {
+          Object.assign(routeRecordMap, existingRecord.routeRecordMap)
         }
 
-        dnsCreated = sshRecordId !== null
+        // Delete removed domains
+        for (const domain of toRemove) {
+          const recordId = routeRecordMap[domain]
+          if (recordId) {
+            await deleteDnsRecord(recordId)
+            console.log(`Deleted CNAME for removed domain: ${domain}`)
+            delete routeRecordMap[domain]
+          }
+
+          // Delete edge certificate
+          const certPackId = await deleteEdgeCertificateForDomain(
+            installation.id,
+            domainRequestName,
+            domain
+          )
+          if (certPackId) {
+            try {
+              await deleteEdgeCertificate(certPackId)
+              console.log(`Deleted edge certificate for ${domain}`)
+            } catch (err) {
+              console.error(`Failed to delete edge certificate for ${domain}:`, err)
+            }
+          }
+        }
+
+        // Create new domains
+        for (const domain of toAdd) {
+          const cnameRecordId = await createCnameRecord(domain, sshDomain, true)
+          if (cnameRecordId) {
+            routeRecordMap[domain] = cnameRecordId
+            console.log(`Created CNAME: ${domain} → ${sshDomain}`)
+
+            // Create edge certificate
+            const certIds = await createDomainRequestEdgeCertificates([{ domain }])
+            if (certIds.length > 0) {
+              await saveEdgeCertificate({
+                installationId: installation.id,
+                cloudflareCertPackId: certIds[0],
+                hostnames: [domain],
+                domainRequestName,
+                status: 'pending',
+              })
+              console.log(`Created edge certificate for ${domain}`)
+            }
+          }
+        }
       } else {
-        // Create new DNS records for new domain request
-        console.log(`Creating DNS records for new domain request: ${domainRequestName}`)
+        // New domain request - create all CNAMEs
+        console.log(`Creating ${domainList.length} new CNAME records`)
 
-        const result = await createDomainRequestDnsRecords(
-          domainRequestName,
-          installation.subdomain,
-          ip,
-          routes,
-        )
+        for (const domain of domainList) {
+          const cnameRecordId = await createCnameRecord(domain, sshDomain, true)
+          if (cnameRecordId) {
+            routeRecordMap[domain] = cnameRecordId
+            console.log(`Created CNAME: ${domain} → ${sshDomain}`)
 
-        sshRecordId = result.sshRecordId
-        routeRecordIds = result.routeRecordIds
-        dnsCreated = sshRecordId !== null
-
-        console.log(`Created SSH A record and ${routeRecordIds.length} route CNAME records`)
-
-        // Create edge certificates for route domains
-        if (dnsCreated && routes.length > 0) {
-          console.log(`Creating edge certificates for ${routes.length} route domains`)
-          edgeCertificateIds = await createDomainRequestEdgeCertificates(routes)
-
-          // Store edge certificates
-          for (let i = 0; i < edgeCertificateIds.length; i++) {
-            const certId = edgeCertificateIds[i]
-            const domain = routes[i].domain
-            await saveEdgeCertificate({
-              installationId: installation.id,
-              cloudflareCertPackId: certId,
-              hostnames: [domain],
-              domainRequestName,
-              status: 'pending',
-            })
+            // Create edge certificate
+            const certIds = await createDomainRequestEdgeCertificates([{ domain }])
+            if (certIds.length > 0) {
+              await saveEdgeCertificate({
+                installationId: installation.id,
+                cloudflareCertPackId: certIds[0],
+                hostnames: [domain],
+                domainRequestName,
+                status: 'pending',
+              })
+              console.log(`Created edge certificate for ${domain}`)
+            }
           }
         }
       }
     } catch (dnsError) {
-      console.error('DNS record creation/update failed:', dnsError)
-      // Continue even if DNS fails - use existing DNS record IDs if available
-      if (existingRecord) {
-        sshRecordId = existingRecord.sshRecordId || null
-        routeRecordIds = existingRecord.routeRecordIds || []
-      }
+      console.error('DNS record operation failed:', dnsError)
+      // Continue with partial state if some records were created
     }
 
-    // Create new IP record with DNS record IDs and domain routes
+    // Store updated state
     const newRecord: IPRecord = {
       domainRequestName,
       ip,
       configuredAt: new Date().toISOString(),
       sshRecordId,
-      routeRecordIds,
-      domainRoutes: routes,
+      routeRecordIds: Object.values(routeRecordMap),
+      routeRecordMap,
+      domainRoutes: domainList.map(domain => ({ domain })),
     }
 
-    // Atomically add or update IP record
     const totalRecords = await addOrUpdateIpRecord(installation.id, newRecord)
-
-    // Atomically mark deployment as ready
     await markDeploymentReady(installation.id, true)
 
     const response = NextResponse.json({
@@ -263,15 +299,14 @@ export async function POST(request: NextRequest) {
       domainRequestName,
       ip,
       sshDomain,
-      totalRecords,
       subdomain: `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
       sshRecordCreated: sshRecordId !== null,
-      routeRecordsCreated: routeRecordIds.length,
-      edgeCertificatesCreated: edgeCertificateIds.length,
-      dnsSuccess: dnsCreated,
+      routeRecordsCreated: Object.keys(routeRecordMap).length,
+      totalRecords,
+      dnsSuccess,
     })
 
-    // Disable all caching
+    // Disable caching
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
     response.headers.set('Pragma', 'no-cache')
     response.headers.set('Expires', '0')
