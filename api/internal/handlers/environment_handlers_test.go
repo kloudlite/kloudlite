@@ -155,7 +155,7 @@ func TestGetEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.GET("/environments/:name", handlers.GetEnvironment)
 
@@ -177,7 +177,7 @@ func TestGetEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.GET("/environments/:name", handlers.GetEnvironment)
 
@@ -189,7 +189,7 @@ func TestGetEnvironment(t *testing.T) {
 	})
 
 	t.Run("should return 400 when name is empty", func(t *testing.T) {
-		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.GET("/environments/:name", handlers.GetEnvironment)
 
@@ -217,7 +217,7 @@ func TestListEnvironments(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.GET("/environments", handlers.ListEnvironments)
 
@@ -243,7 +243,7 @@ func TestListEnvironments(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.GET("/environments", handlers.ListEnvironments)
 
@@ -265,7 +265,7 @@ func TestListEnvironments(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.GET("/environments", handlers.ListEnvironments)
 
@@ -300,7 +300,7 @@ func TestCreateEnvironment(t *testing.T) {
 			},
 		).Build()
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, k8sClient, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, k8sClient, logger)
 		router := gin.New()
 
 		// Add middleware to set user context
@@ -328,7 +328,7 @@ func TestCreateEnvironment(t *testing.T) {
 	})
 
 	t.Run("should reject creation without authentication", func(t *testing.T) {
-		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments", handlers.CreateEnvironment)
 
@@ -348,7 +348,7 @@ func TestCreateEnvironment(t *testing.T) {
 	})
 
 	t.Run("should reject invalid request body", func(t *testing.T) {
-		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments", handlers.CreateEnvironment)
 
@@ -381,7 +381,7 @@ func TestUpdateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PUT("/environments/:name", handlers.UpdateEnvironment)
 
@@ -406,7 +406,7 @@ func TestUpdateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PUT("/environments/:name", handlers.UpdateEnvironment)
 
@@ -444,7 +444,7 @@ func TestDeleteEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
 
@@ -467,7 +467,7 @@ func TestDeleteEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
 
@@ -494,7 +494,7 @@ func TestDeleteEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
 
@@ -525,7 +525,7 @@ func TestActivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
@@ -548,7 +548,7 @@ func TestActivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
@@ -567,7 +567,7 @@ func TestActivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
@@ -598,7 +598,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
@@ -621,7 +621,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
@@ -640,7 +640,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
@@ -670,7 +670,7 @@ func TestGetEnvironmentStatus(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.GET("/environments/:name/status", handlers.GetEnvironmentStatus)
 
@@ -706,7 +706,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -735,7 +735,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -755,7 +755,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should return 400 when name is empty", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{}
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -773,7 +773,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should return 400 with invalid JSON", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{}
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -792,7 +792,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -821,7 +821,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
