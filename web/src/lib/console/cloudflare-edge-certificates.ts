@@ -188,6 +188,83 @@ export async function createWorkmachineEdgeCertificate(
 }
 
 /**
+ * Extract subdomain pattern from a domain
+ * For example: "x.karthik.khost.dev" -> "karthik.khost.dev"
+ */
+function extractSubdomainPattern(domain: string): string | null {
+  const parts = domain.split('.')
+  if (parts.length < 3) {
+    return null // Need at least 3 parts: service.subdomain.domain
+  }
+  // Remove the first part (service name) to get the subdomain pattern
+  return parts.slice(1).join('.')
+}
+
+/**
+ * Create or reuse wildcard edge certificate for domain routes
+ * Checks if a wildcard certificate already exists before creating a new one
+ *
+ * @param installationId - Installation ID
+ * @param domainRoutes - Array of domain routes to create certificates for
+ * @param domainRequestName - Domain request name for tracking
+ * @returns Certificate pack ID (either existing or newly created)
+ */
+export async function createOrReuseWildcardEdgeCertificate(
+  installationId: string,
+  domainRoutes: Array<{ domain: string }>,
+  domainRequestName: string,
+): Promise<string | null> {
+  if (domainRoutes.length === 0) {
+    return null
+  }
+
+  // Extract subdomain pattern from the first domain
+  // All domains should have the same subdomain pattern
+  const subdomainPattern = extractSubdomainPattern(domainRoutes[0].domain)
+  if (!subdomainPattern) {
+    console.error(`Invalid domain format: ${domainRoutes[0].domain}`)
+    return null
+  }
+
+  const wildcardPattern = `*.${subdomainPattern}`
+  console.log(`Checking for wildcard certificate: ${wildcardPattern}`)
+
+  // Import storage service dynamically to avoid circular dependencies
+  const { findWildcardEdgeCertificate, saveEdgeCertificate } = await import(
+    './supabase-storage-service'
+  )
+
+  // Check if wildcard certificate already exists
+  const existingCert = await findWildcardEdgeCertificate(installationId, subdomainPattern)
+  if (existingCert) {
+    console.log(
+      `Reusing existing wildcard certificate for ${wildcardPattern}: ${existingCert.cloudflareCertPackId}`,
+    )
+    return existingCert.cloudflareCertPackId
+  }
+
+  // No wildcard certificate exists, create a new one
+  console.log(`No wildcard certificate found, creating new one for ${wildcardPattern}`)
+  const certId = await orderEdgeCertificate([wildcardPattern])
+
+  if (certId) {
+    // Save the wildcard certificate to database
+    await saveEdgeCertificate({
+      installationId,
+      cloudflareCertPackId: certId,
+      hostnames: [wildcardPattern],
+      domainRequestName,
+      status: 'pending',
+    })
+    console.log(`Created and saved wildcard edge certificate for ${wildcardPattern}: ${certId}`)
+    return certId
+  }
+
+  console.error(`Failed to create wildcard edge certificate for ${wildcardPattern}`)
+  return null
+}
+
+/**
  * Create edge certificates for DomainRequest route domains
  * Creates edge certificates for domains that are proxied through CloudFlare
  *
