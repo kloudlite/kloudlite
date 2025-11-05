@@ -188,6 +188,11 @@ spec:
                 description: LastIPRegistrationTime is when the IP was last registered
                 format: date-time
                 type: string
+              lastReconciledRoutesHash:
+                description: |-
+                  LastReconciledRoutesHash stores a hash of the last reconciled DomainRoutes
+                  Used to detect when routes have changed and need DNS record updates
+                type: string
               message:
                 description: Message provides additional information about the current
                   state
