@@ -36,6 +36,10 @@ type EnvironmentSpec struct {
 	// +kubebuilder:validation:Required
 	CreatedBy string `json:"createdBy"`
 
+	// WorkMachineName references the WorkMachine this environment belongs to
+	// +optional
+	WorkMachineName string `json:"workmachineName,omitempty"`
+
 	// Activated determines whether the environment is active (true) or inactive (false)
 	// When deactivated, all deployments and statefulsets are scaled to 0
 	// +kubebuilder:default=false

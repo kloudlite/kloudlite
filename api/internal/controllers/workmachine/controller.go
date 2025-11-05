@@ -118,6 +118,26 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 	req.PreReconcile()
 	defer req.PostReconcile()
 
+	// Check if DomainRequest exists, and if not, clear the check status to force re-run
+	obj := req.Object
+	if obj.Spec.TargetNamespace != "" {
+		domainRequest := &domainrequestv1.DomainRequest{}
+		if err := r.Get(ctx, client.ObjectKey{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}, domainRequest); err != nil {
+			if client.IgnoreNotFound(err) == nil {
+				// DomainRequest doesn't exist, clear the check status for "setup domain request" step
+				if obj.Status.Checks != nil {
+					if _, exists := obj.Status.Checks["create/setup domain request"]; exists {
+						delete(obj.Status.Checks, "create/setup domain request")
+						// Update the status on the API server
+						if updateErr := r.Status().Update(ctx, obj); updateErr != nil {
+							return reconcile.Result{}, updateErr
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return reconciler.ReconcileSteps(req, []reconciler.Step[*v1.WorkMachine]{
 		{
 			Name:     "setup-namespace",
