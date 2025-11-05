@@ -10,6 +10,7 @@ import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
   CLOUDFLARE_DNS_DOMAIN,
   createDomainRequestDnsRecords,
+  createDomainRouteCnameRecords,
   updateDnsRecord,
   deleteDnsRecord,
 } from '@/lib/console/cloudflare-dns'
@@ -142,19 +143,14 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Create new route CNAME records
+          // Create new route CNAME records (reuse existing SSH A record)
           if (routes.length > 0) {
-            console.log(`Creating ${routes.length} new route CNAME records`)
-            const result = await createDomainRequestDnsRecords(
+            console.log(`Creating ${routes.length} new route CNAME records (reusing existing SSH record)`)
+            routeRecordIds = await createDomainRouteCnameRecords(
               domainRequestName,
               installation.subdomain,
-              ip,
               routes,
             )
-
-            // Use existing SSH record or the new one
-            sshRecordId = sshRecordId || result.sshRecordId
-            routeRecordIds = result.routeRecordIds
 
             // Create edge certificates for new routes
             if (routeRecordIds.length > 0) {
