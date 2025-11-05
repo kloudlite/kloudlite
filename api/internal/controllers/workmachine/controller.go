@@ -806,9 +806,15 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 }
 
 func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	subDomain := os.Getenv("HOSTED_SUBDOMAIN")
+	// Fetch subdomain from installation DomainRequest instead of env var
+	installationDR := &domainrequestv1.DomainRequest{}
+	if err := r.Get(check.Context(), client.ObjectKey{Name: "installation-domain", Namespace: "kloudlite"}, installationDR); err != nil {
+		return check.Errored(fmt.Errorf("failed to get installation DomainRequest: %w", err)).RequeueAfter(5 * time.Second)
+	}
+
+	subDomain := installationDR.Status.Subdomain
 	if subDomain == "" {
-		return check.Errored(fmt.Errorf("HOSTED_SUBDOMAIN env var must be set")).RequeueAfter(5 * time.Second)
+		return check.Errored(fmt.Errorf("installation subdomain not yet configured")).RequeueAfter(5 * time.Second)
 	}
 
 	var wsList workspacev1.WorkspaceList
