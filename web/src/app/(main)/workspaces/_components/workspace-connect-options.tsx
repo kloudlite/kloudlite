@@ -43,6 +43,10 @@ export function WorkspaceConnectOptions({
   // Extract access URLs from workspace status
   const codeServerUrl = workspace.status?.accessUrls?.['code-server'] || workspace.status?.accessUrl
   const ttydUrl = workspace.status?.accessUrls?.['ttyd']
+  const claudeTtydUrl = workspace.status?.accessUrls?.['claude-ttyd']
+  const codexTtydUrl = workspace.status?.accessUrls?.['codex-ttyd']
+  const opencodeTtydUrl = workspace.status?.accessUrls?.['opencode-ttyd']
+  const sshUrl = workspace.status?.accessUrls?.['ssh']
   const workspaceName = workspace.metadata?.name || 'workspace'
 
   // SSH connection with jump host (port 2222 is the SSH gateway on localhost)
@@ -149,8 +153,8 @@ export function WorkspaceConnectOptions({
       name: 'Claude Code',
       description: 'AI coding assistant',
       icon: <SiAnthropic className="h-4 w-4 flex-shrink-0" />,
-      available: !!ttydUrl,
-      url: ttydUrl,
+      available: !!claudeTtydUrl,
+      url: claudeTtydUrl,
       category: 'Web Terminal & AI Assistants',
     },
     {
@@ -158,9 +162,8 @@ export function WorkspaceConnectOptions({
       name: 'OpenCode',
       description: 'AI coding assistant',
       icon: <OpenCodeIcon className="h-4 w-4 flex-shrink-0" />,
-      available: !!ttydUrl,
-      url: ttydUrl,
-      comingSoon: true,
+      available: !!opencodeTtydUrl,
+      url: opencodeTtydUrl,
       category: 'Web Terminal & AI Assistants',
     },
     {
@@ -168,8 +171,8 @@ export function WorkspaceConnectOptions({
       name: 'Codex',
       description: 'AI coding assistant',
       icon: <Sparkles className="h-4 w-4 flex-shrink-0" />,
-      available: !!ttydUrl,
-      url: ttydUrl,
+      available: !!codexTtydUrl,
+      url: codexTtydUrl,
       category: 'Web Terminal & AI Assistants',
     },
     {
