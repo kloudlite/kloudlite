@@ -68,15 +68,14 @@ type DomainRequestSpec struct {
 	// +optional
 	OriginCertificateHostnames []string `json:"originCertificateHostnames,omitempty"`
 
-	// SSHProxyEnabled enables SSH proxy functionality (port 22)
-	// Will be handled by a sidecar container in future implementation
-	// +kubebuilder:default=false
-	// +optional
-	SSHProxyEnabled bool `json:"sshProxyEnabled,omitempty"`
-
 	// IngressBackend defines the backend service to route traffic to
 	// +optional
 	IngressBackend *IngressBackendConfig `json:"ingressBackend,omitempty"`
+
+	// SSHBackend defines the SSH backend service for port 22 traffic
+	// If configured, HAProxy will route SSH protocol traffic to this backend
+	// +optional
+	SSHBackend *IngressBackendConfig `json:"sshBackend,omitempty"`
 
 	// DomainRoutes defines domain-based routing rules for HAProxy
 	// +optional

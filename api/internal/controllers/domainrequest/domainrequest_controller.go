@@ -106,11 +106,22 @@ defaults
     timeout server 50000ms
     option forwardfor
     option http-server-close
+`
 
-frontend http_frontend
-    bind *:80
-    redirect scheme https code 301
+	// Add SSH frontend if SSHBackend is configured
+	if domainRequest.Spec.SSHBackend != nil {
+		config += `
+# SSH Frontend (TCP mode for port 22)
+frontend ssh_frontend
+    mode tcp
+    bind *:22
+    default_backend ssh_backend
+    timeout client 1h
 
+`
+	}
+
+	config += `
 frontend https_frontend
     bind *:443 ssl crt /etc/haproxy/certs/tls.pem
 `
@@ -147,6 +158,17 @@ frontend https_frontend
 		backend := domainRequest.Spec.IngressBackend
 		config += "\nbackend service_backend\n"
 		config += fmt.Sprintf("    server backend1 %s.%s.svc.cluster.local:%d check\n",
+			backend.ServiceName, backend.ServiceNamespace, backend.ServicePort)
+	}
+
+	// Add SSH backend if configured
+	if domainRequest.Spec.SSHBackend != nil {
+		backend := domainRequest.Spec.SSHBackend
+		config += "\n# SSH Backend (TCP mode)\n"
+		config += "backend ssh_backend\n"
+		config += "    mode tcp\n"
+		config += "    timeout server 1h\n"
+		config += fmt.Sprintf("    server ssh1 %s.%s.svc.cluster.local:%d check\n",
 			backend.ServiceName, backend.ServiceNamespace, backend.ServicePort)
 	}
 
@@ -219,6 +241,27 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 	}
 
 	// Create new pod
+	// Build container ports list (only HTTPS, no HTTP)
+	containerPorts := []corev1.ContainerPort{
+		{
+			Name:          "https",
+			ContainerPort: 443,
+			HostPort:      443,
+			Protocol:      corev1.ProtocolTCP,
+		},
+	}
+
+	// Add SSH port if SSHBackend is configured
+	if domainRequest.Spec.SSHBackend != nil {
+		containerPorts = append(containerPorts, corev1.ContainerPort{
+			Name:          "ssh",
+			ContainerPort: 22,
+			HostPort:      22,
+			Protocol:      corev1.ProtocolTCP,
+		})
+		logger.Info("SSH backend configured, adding port 22 to HAProxy pod")
+	}
+
 	podSpec := corev1.PodSpec{
 		HostNetwork: true,
 		DNSPolicy:   corev1.DNSClusterFirstWithHostNet,
@@ -235,20 +278,7 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 						},
 					},
 				},
-				Ports: []corev1.ContainerPort{
-					{
-						Name:          "http",
-						ContainerPort: 80,
-						HostPort:      80,
-						Protocol:      corev1.ProtocolTCP,
-					},
-					{
-						Name:          "https",
-						ContainerPort: 443,
-						HostPort:      443,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
+				Ports: containerPorts,
 				VolumeMounts: []corev1.VolumeMount{
 					{
 						Name:      "haproxy-config",
