@@ -30,15 +30,13 @@ interface TransformedWorkMachine {
 
 // Helper to map work machine CR to display format
 function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
-  const desiredState = wm.spec.state
-
-  // Use status.state if it exists, otherwise use desiredState
-  // Note: Transitions will only be visible once the controller starts updating status
-  const currentState = wm.status?.state || desiredState
+  // Use status.state as the source of truth for machine state
+  // Controller updates status.state to reflect actual machine state
+  const state = wm.status?.state || wm.spec.state
 
   // Calculate uptime from startedAt timestamp
   let uptime = '0 minutes'
-  if (currentState === 'running' && wm.status?.startedAt) {
+  if (state === 'running' && wm.status?.startedAt) {
     const startTime = new Date(wm.status.startedAt)
     const now = new Date()
     const diffMs = now.getTime() - startTime.getTime()
@@ -57,13 +55,13 @@ function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
     id: wm.metadata.name,
     owner: wm.spec.ownedBy,
     name: wm.metadata.name,
-    currentState: currentState,
-    desiredState: desiredState,
+    currentState: state,
+    desiredState: state, // Both are the same now - no separate desired/current concept
     // Legacy status for backward compatibility
     status:
-      currentState === 'running'
+      state === 'running'
         ? ('active' as const)
-        : currentState === 'stopped'
+        : state === 'stopped'
           ? ('stopped' as const)
           : ('idle' as const),
     cpu: 0, // Will be updated by metrics
