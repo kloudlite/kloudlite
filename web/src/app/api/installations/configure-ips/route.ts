@@ -53,6 +53,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { installationKey, ip, domainRequestName, domainRoutes } = body
 
+    // Debug logging
+    console.log(`[configure-ips] Received request body:`, JSON.stringify(body, null, 2))
+    console.log(`[configure-ips] domainRoutes:`, JSON.stringify(domainRoutes, null, 2))
+
     if (!installationKey) {
       return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
     }
@@ -67,6 +71,7 @@ export async function POST(request: NextRequest) {
 
     // domainRoutes is optional (can be empty array or undefined)
     const routes = domainRoutes || []
+    console.log(`[configure-ips] Using routes:`, JSON.stringify(routes, null, 2))
 
     // Look up installation by key
     const installation = await getInstallationByKey(installationKey)

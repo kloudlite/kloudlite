@@ -165,6 +165,10 @@ type DomainRequestStatus struct {
 	// Used to detect when routes have changed and need DNS record updates
 	// +optional
 	LastReconciledRoutesHash string `json:"lastReconciledRoutesHash,omitempty"`
+
+	// LastReconciledRoutesHashUpdated is a timestamp to track hash updates
+	// +optional
+	LastReconciledRoutesHashUpdated *metav1.Time `json:"lastReconciledRoutesHashUpdated,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
