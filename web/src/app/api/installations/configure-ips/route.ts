@@ -197,20 +197,31 @@ export async function POST(request: NextRequest) {
         const oldDomains = (existingRecord.domainRoutes || []).map(r => r.domain)
         const { toAdd, toRemove } = calculateDomainDiff(oldDomains, domainList)
 
-        console.log(`Domain changes: +${toAdd.length} -${toRemove.length}`)
+        console.log(`[DEBUG] Domain changes: +${toAdd.length} -${toRemove.length}`)
+        console.log(`[DEBUG] Old domains:`, oldDomains)
+        console.log(`[DEBUG] New domains:`, domainList)
+        console.log(`[DEBUG] To add:`, toAdd)
+        console.log(`[DEBUG] To remove:`, toRemove)
 
         // Copy existing valid record mappings
+        console.log(`[DEBUG] Existing routeRecordMap:`, existingRecord.routeRecordMap)
         if (existingRecord.routeRecordMap) {
           Object.assign(routeRecordMap, existingRecord.routeRecordMap)
+          console.log(`[DEBUG] Copied routeRecordMap:`, routeRecordMap)
+        } else {
+          console.log(`[DEBUG] No existing routeRecordMap found`)
         }
 
         // Delete removed domains
         for (const domain of toRemove) {
           const recordId = routeRecordMap[domain]
+          console.log(`[DEBUG] Processing deletion for domain: ${domain}, recordId: ${recordId}`)
           if (recordId) {
             await deleteDnsRecord(recordId)
-            console.log(`Deleted CNAME for removed domain: ${domain}`)
+            console.log(`[DEBUG] Deleted CNAME DNS record for removed domain: ${domain} (ID: ${recordId})`)
             delete routeRecordMap[domain]
+          } else {
+            console.log(`[DEBUG] No DNS record ID found in routeRecordMap for domain: ${domain}`)
           }
 
           // Delete edge certificate
@@ -219,13 +230,16 @@ export async function POST(request: NextRequest) {
             domainRequestName,
             domain
           )
+          console.log(`[DEBUG] Edge certificate lookup for ${domain}: ${certPackId}`)
           if (certPackId) {
             try {
               await deleteEdgeCertificate(certPackId)
-              console.log(`Deleted edge certificate for ${domain}`)
+              console.log(`[DEBUG] Deleted edge certificate from Cloudflare for ${domain}: ${certPackId}`)
             } catch (err) {
-              console.error(`Failed to delete edge certificate for ${domain}:`, err)
+              console.error(`[DEBUG] Failed to delete edge certificate for ${domain}:`, err)
             }
+          } else {
+            console.log(`[DEBUG] No edge certificate found for domain: ${domain}`)
           }
         }
 
