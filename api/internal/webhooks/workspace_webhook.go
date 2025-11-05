@@ -500,20 +500,19 @@ func (w *WorkspaceWebhook) validateServiceIntercepts(ctx context.Context, worksp
 
 	envRef := workspace.Spec.EnvironmentConnection.EnvironmentRef
 
-	// Fetch the Environment to get its target namespace
+	// Fetch the Environment to get its target namespace (cluster-scoped)
 	env := &environmentv1.Environment{}
 	if err := w.k8sClient.Get(ctx, client.ObjectKey{
-		Name:      envRef.Name,
-		Namespace: envRef.Namespace,
+		Name: envRef.Name,
 	}, env); err != nil {
 		return fmt.Errorf("failed to get environment '%s': %w", envRef.Name, err)
 	}
 
 	targetNamespace := env.Spec.TargetNamespace
 
-	// List all existing ServiceIntercept CRs in the workspace namespace
+	// List all existing ServiceIntercept CRs (cluster-scoped, no namespace filter)
 	interceptList := &interceptsv1.ServiceInterceptList{}
-	if err := w.k8sClient.List(ctx, interceptList, client.InNamespace(workspace.Namespace)); err != nil {
+	if err := w.k8sClient.List(ctx, interceptList); err != nil {
 		return fmt.Errorf("failed to list existing service intercepts: %w", err)
 	}
 
