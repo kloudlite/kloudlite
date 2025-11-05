@@ -249,6 +249,12 @@ func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subd
 			NodeName:         os.Getenv("NODE_NAME"),
 			IPAddress:        sp.config.PublicIP,
 			CertificateScope: "installation",
+			// Specify origin certificate hostnames to include the base domain
+			// This ensures the certificate covers both {subdomain}.khost.dev and *.{subdomain}.khost.dev
+			OriginCertificateHostnames: []string{
+				fmt.Sprintf("%s.khost.dev", subdomain),
+				fmt.Sprintf("*.%s.khost.dev", subdomain),
+			},
 			DomainRoutes: []domainrequestv1.DomainRoute{
 				{
 					Domain:           fmt.Sprintf("%s.khost.dev", subdomain),
