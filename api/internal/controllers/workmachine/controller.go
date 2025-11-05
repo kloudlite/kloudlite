@@ -1086,5 +1086,22 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}),
 	)
 
+	// Watch for DomainRequests and trigger reconciliation to recreate if deleted
+	builder.Watches(
+		&domainrequestv1.DomainRequest{},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			domainRequest, ok := obj.(*domainrequestv1.DomainRequest)
+			if !ok {
+				return nil
+			}
+
+			// DomainRequest name matches WorkMachine name
+			// Trigger reconciliation of the WorkMachine to recreate DomainRequest if needed
+			return []reconcile.Request{
+				{NamespacedName: client.ObjectKey{Name: domainRequest.Name}},
+			}
+		}),
+	)
+
 	return builder.Complete(r)
 }
