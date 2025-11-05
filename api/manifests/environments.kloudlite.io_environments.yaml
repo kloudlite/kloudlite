@@ -220,6 +220,10 @@ spec:
                       type: string
                   type: object
                 type: array
+              workmachineName:
+                description: WorkMachineName references the WorkMachine this environment
+                  belongs to
+                type: string
             required:
             - activated
             - createdBy

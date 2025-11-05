@@ -6,6 +6,7 @@
 *.dylib
 /server
 /cmd/server/server
+Dockerfile.local
 
 # Test binary, built with `go test -c`
 *.test

@@ -15,7 +15,7 @@ spec:
     listKind: ServiceInterceptList
     plural: serviceintercepts
     singular: serviceintercept
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.workspaceRef.name
@@ -131,6 +131,12 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              targetNamespace:
+                description: |-
+                  TargetNamespace is the namespace where intercept workloads (SOCAT pod) run
+                  This is typically the Environment's targetNamespace where the service exists
+                minLength: 1
+                type: string
               workspaceRef:
                 description: WorkspaceRef references the workspace pod that will intercept
                   traffic
@@ -178,6 +184,7 @@ spec:
             required:
             - portMappings
             - serviceRef
+            - targetNamespace
             - workspaceRef
             type: object
           status:

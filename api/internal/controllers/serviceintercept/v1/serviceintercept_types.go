@@ -36,6 +36,12 @@ type ServiceInterceptSpec struct {
 	// +kubebuilder:validation:Required
 	ServiceRef corev1.ObjectReference `json:"serviceRef"`
 
+	// TargetNamespace is the namespace where intercept workloads (SOCAT pod) run
+	// This is typically the Environment's targetNamespace where the service exists
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	TargetNamespace string `json:"targetNamespace"`
+
 	// PortMappings defines how service ports map to workspace ports
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
@@ -87,7 +93,7 @@ type ServiceInterceptStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced,categories={kloudlite,intercepts}
+// +kubebuilder:resource:scope=Cluster,categories={kloudlite,intercepts}
 // +kubebuilder:printcolumn:name="Workspace",type=string,JSONPath=`.spec.workspaceRef.name`
 // +kubebuilder:printcolumn:name="Service",type=string,JSONPath=`.spec.serviceRef.name`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`

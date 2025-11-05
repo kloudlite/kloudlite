@@ -8,7 +8,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="IP Address",type=string,JSONPath=`.spec.ipAddress`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 // +kubebuilder:printcolumn:name="Domain",type=string,JSONPath=`.status.domain`
@@ -35,6 +35,13 @@ type DomainRequestSpec struct {
 	// NodeName is the name of the node where HAProxy pod should be scheduled
 	// The node should have the public IP address
 	NodeName string `json:"nodeName"`
+
+	// WorkloadNamespace is the namespace where DomainRequest workloads (HAProxy pod, configmap, secret) run
+	// All DomainRequests share a common workload namespace for centralized ingress management
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:default=kloudlite-ingress
+	WorkloadNamespace string `json:"workloadNamespace"`
 
 	// LoadBalancerServiceName is the name of the LoadBalancer service to watch for IP
 	// Used for auto-detecting the IP address
