@@ -100,33 +100,63 @@ func (r *DomainRequestReconciler) generateHAProxyConfig(domainRequest *domainreq
     stats socket /var/run/haproxy.sock mode 660 level admin expose-fd listeners
 
 defaults
-    mode http
+    mode tcp
     timeout connect 5000ms
     timeout client 50000ms
     timeout server 50000ms
+`
+
+	// Use a single frontend on port 443 that handles both HTTPS and SSH
+	if domainRequest.Spec.SSHBackend != nil {
+		// Multiplex HTTPS and SSH on port 443 using protocol detection
+		config += `
+# Unified frontend on port 443 for both HTTPS and SSH traffic
+frontend unified_frontend
+    mode tcp
+    bind *:443
+    tcp-request inspect-delay 5s
+    tcp-request content accept if { req.ssl_hello_type 1 } or { req.payload(0,7) -m str SSH-2.0 }
+
+    # Detect SSH protocol (starts with "SSH-2.0")
+    acl is_ssh req.payload(0,7) -m str SSH-2.0
+
+    # Detect TLS/HTTPS traffic (TLS handshake)
+    acl is_tls req.ssl_hello_type 1
+
+    # Route SSH traffic to SSH backend, TLS traffic to HTTPS backend
+    use_backend ssh_backend if is_ssh
+    use_backend https_backend if is_tls
+
+    # Default to HTTPS backend (shouldn't happen with proper detection)
+    default_backend https_backend
+
+# HTTPS backend - forwards to local SSL termination frontend
+backend https_backend
+    mode tcp
+    server https_processor 127.0.0.1:8443
+
+# Local HTTPS frontend for SSL termination and HTTP routing
+frontend https_processor
+    mode http
+    bind 127.0.0.1:8443 ssl crt /etc/haproxy/certs/tls.pem
+    timeout client 50000ms
     option forwardfor
     option http-server-close
 `
-
-	// Add SSH frontend if SSHBackend is configured
-	if domainRequest.Spec.SSHBackend != nil {
+	} else {
+		// No SSH backend, use simple HTTPS frontend
 		config += `
-# SSH Frontend (TCP mode for port 22)
-frontend ssh_frontend
-    mode tcp
-    bind *:22
-    default_backend ssh_backend
-    timeout client 1h
-
+frontend https_frontend
+    mode http
+    bind *:443 ssl crt /etc/haproxy/certs/tls.pem
+    option forwardfor
+    option http-server-close
 `
 	}
 
-	config += `
-frontend https_frontend
-    bind *:443 ssl crt /etc/haproxy/certs/tls.pem
-`
-
-	// Add domain-based routing if DomainRoutes are configured
+	// Add domain-based routing to the appropriate frontend
+	// Domain routing is added to the https_processor frontend when SSH is enabled,
+	// or to the https_frontend when SSH is not enabled
 	if len(domainRequest.Spec.DomainRoutes) > 0 {
 		for i, route := range domainRequest.Spec.DomainRoutes {
 			aclName := fmt.Sprintf("is_domain_%d", i)
@@ -149,6 +179,7 @@ frontend https_frontend
 	for i, route := range domainRequest.Spec.DomainRoutes {
 		backendName := fmt.Sprintf("domain_backend_%d", i)
 		config += fmt.Sprintf("\nbackend %s\n", backendName)
+		config += "    mode http\n"
 		config += fmt.Sprintf("    server backend%d %s.%s.svc.cluster.local:%d check\n",
 			i, route.ServiceName, route.ServiceNamespace, route.ServicePort)
 	}
@@ -157,6 +188,7 @@ frontend https_frontend
 	if domainRequest.Spec.IngressBackend != nil {
 		backend := domainRequest.Spec.IngressBackend
 		config += "\nbackend service_backend\n"
+		config += "    mode http\n"
 		config += fmt.Sprintf("    server backend1 %s.%s.svc.cluster.local:%d check\n",
 			backend.ServiceName, backend.ServiceNamespace, backend.ServicePort)
 	}
@@ -164,10 +196,11 @@ frontend https_frontend
 	// Add SSH backend if configured
 	if domainRequest.Spec.SSHBackend != nil {
 		backend := domainRequest.Spec.SSHBackend
-		config += "\n# SSH Backend (TCP mode)\n"
+		config += "\n# SSH Backend (TCP mode for raw SSH traffic)\n"
 		config += "backend ssh_backend\n"
 		config += "    mode tcp\n"
 		config += "    timeout server 1h\n"
+		config += "    timeout connect 10s\n"
 		config += fmt.Sprintf("    server ssh1 %s.%s.svc.cluster.local:%d check\n",
 			backend.ServiceName, backend.ServiceNamespace, backend.ServicePort)
 	}
@@ -175,6 +208,7 @@ frontend https_frontend
 	// Add default backend if no other backends configured
 	if len(domainRequest.Spec.DomainRoutes) == 0 && domainRequest.Spec.IngressBackend == nil {
 		config += "\nbackend default_backend\n"
+		config += "    mode http\n"
 		config += "    server default1 frontend.kloudlite.svc.cluster.local:3000 check\n"
 	}
 
@@ -241,7 +275,7 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 	}
 
 	// Create new pod
-	// Build container ports list (only HTTPS, no HTTP)
+	// Single port 443 for both HTTPS and SSH (multiplexed)
 	containerPorts := []corev1.ContainerPort{
 		{
 			Name:          "https",
@@ -251,15 +285,8 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 		},
 	}
 
-	// Add SSH port if SSHBackend is configured
 	if domainRequest.Spec.SSHBackend != nil {
-		containerPorts = append(containerPorts, corev1.ContainerPort{
-			Name:          "ssh",
-			ContainerPort: 22,
-			HostPort:      22,
-			Protocol:      corev1.ProtocolTCP,
-		})
-		logger.Info("SSH backend configured, adding port 22 to HAProxy pod")
+		logger.Info("SSH backend configured, SSH traffic will be multiplexed on port 443")
 	}
 
 	podSpec := corev1.PodSpec{

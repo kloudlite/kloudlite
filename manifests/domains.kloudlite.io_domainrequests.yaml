@@ -155,12 +155,29 @@ spec:
                 items:
                   type: string
                 type: array
-              sshProxyEnabled:
-                default: false
+              sshBackend:
                 description: |-
-                  SSHProxyEnabled enables SSH proxy functionality (port 22)
-                  Will be handled by a sidecar container in future implementation
-                type: boolean
+                  SSHBackend defines the SSH backend service for port 22 traffic
+                  If configured, HAProxy will route SSH protocol traffic to this backend
+                properties:
+                  serviceName:
+                    description: ServiceName is the name of the backend service
+                    type: string
+                  serviceNamespace:
+                    description: ServiceNamespace is the namespace of the backend
+                      service
+                    type: string
+                  servicePort:
+                    description: ServicePort is the port of the backend service
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                required:
+                - serviceName
+                - serviceNamespace
+                - servicePort
+                type: object
             required:
             - certificateScope
             - nodeName
@@ -192,6 +209,11 @@ spec:
                 description: |-
                   LastReconciledRoutesHash stores a hash of the last reconciled DomainRoutes
                   Used to detect when routes have changed and need DNS record updates
+                type: string
+              lastReconciledRoutesHashUpdated:
+                description: LastReconciledRoutesHashUpdated is a timestamp to track
+                  hash updates
+                format: date-time
                 type: string
               message:
                 description: Message provides additional information about the current
