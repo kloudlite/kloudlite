@@ -33,14 +33,9 @@ type ServiceInterceptSpec struct {
 	WorkspaceRef corev1.ObjectReference `json:"workspaceRef"`
 
 	// ServiceRef references the service to intercept
+	// The intercept will run in the service's namespace
 	// +kubebuilder:validation:Required
 	ServiceRef corev1.ObjectReference `json:"serviceRef"`
-
-	// TargetNamespace is the namespace where intercept workloads (SOCAT pod) run
-	// This is typically the Environment's targetNamespace where the service exists
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	TargetNamespace string `json:"targetNamespace"`
 
 	// PortMappings defines how service ports map to workspace ports
 	// +kubebuilder:validation:Required
