@@ -25,8 +25,14 @@ import (
 func (r *WorkspaceReconciler) hasActiveConnections(ctx context.Context, workspace *workspacev1.Workspace) (bool, int, error) {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 
+	// Get the target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return false, 0, fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	pod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 	if err != nil {
 		return false, 0, fmt.Errorf("failed to get pod: %w", err)
 	}
@@ -192,7 +198,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 
 		// Fetch the latest version to avoid conflict errors
 		latest := &workspacev1.Workspace{}
-		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name, Namespace: workspace.Namespace}, latest); err != nil {
+		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name}, latest); err != nil {
 			return fmt.Errorf("failed to fetch latest workspace: %w", err)
 		}
 
@@ -210,9 +216,15 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 
+	// Get the target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Get the pod
 	pod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 	if err != nil {
 		return fmt.Errorf("failed to get pod: %w", err)
 	}
@@ -229,8 +241,7 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
-			Namespace: workspace.Namespace,
+			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Spec.Activated {
 			// Validate environment namespace for security
@@ -266,9 +277,15 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	podName := fmt.Sprintf("workspace-%s", workspace.Name)
 
+	// Get the target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Get the pod
 	pod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: workspace.Namespace}, pod)
+	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 	if err != nil {
 		return fmt.Errorf("failed to get pod: %w", err)
 	}
@@ -286,8 +303,7 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 		// Fetch environment to validate it exists and is activated
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
-			Namespace: workspace.Namespace,
+			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Spec.Activated {
 			envName = env.Name
@@ -363,8 +379,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(context.Background(), client.ObjectKey{
-			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
-			Namespace: workspace.Namespace,
+			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Spec.Activated {
 			envTargetNamespace = env.Spec.TargetNamespace
@@ -381,10 +396,6 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		{
 			Name:  "WORKSPACE_NAME",
 			Value: workspace.Name,
-		},
-		{
-			Name:  "WORKSPACE_NAMESPACE",
-			Value: workspace.Namespace,
 		},
 		{
 			Name:  "WORKSPACE_OWNER",
@@ -419,10 +430,13 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		}
 	}
 
+	// Get target namespace from WorkMachine to create pod in correct namespace
+	targetNamespace := wm.Spec.TargetNamespace
+
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: workspace.Namespace,
+			Namespace: targetNamespace,
 			Labels: map[string]string{
 				"app":                                    "workspace",
 				"workspace":                              workspace.Name,
@@ -484,7 +498,6 @@ PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/workspace-%s
 KUBERNETES_SERVICE_HOST=10.43.0.1
 KUBERNETES_SERVICE_PORT=443
 WORKSPACE_NAME=%s
-WORKSPACE_NAMESPACE=%s
 EOF
 chmod 644 /etc-writable/environment
 
@@ -504,7 +517,7 @@ cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 %s
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
-`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, searchDomains, contextJSON)
+`, workspace.Name, workspace.Name, workspace.Name, searchDomains, contextJSON)
 						}(),
 					},
 					VolumeMounts: []corev1.VolumeMount{

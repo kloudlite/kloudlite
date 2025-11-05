@@ -109,21 +109,18 @@ func (r *WorkspaceReconciler) createServiceIntercept(ctx context.Context, worksp
 		return fmt.Errorf("failed to get service '%s': %w", interceptSpec.ServiceName, err)
 	}
 
-	// Build ServiceIntercept CR in the environment's namespace
+	// Build ServiceIntercept CR (cluster-scoped resource)
 	serviceIntercept := &interceptsv1.ServiceIntercept{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", interceptSpec.ServiceName, workspace.Name),
-			Namespace: env.Spec.TargetNamespace, // Create in environment namespace
+			Name: fmt.Sprintf("%s-%s", interceptSpec.ServiceName, workspace.Name),
 			Labels: map[string]string{
-				"workspaces.kloudlite.io/workspace-name":      workspace.Name,
-				"workspaces.kloudlite.io/workspace-namespace": workspace.Namespace,
-				"intercepts.kloudlite.io/service-name":        interceptSpec.ServiceName,
+				"workspaces.kloudlite.io/workspace-name": workspace.Name,
+				"intercepts.kloudlite.io/service-name":   interceptSpec.ServiceName,
 			},
 		},
 		Spec: interceptsv1.ServiceInterceptSpec{
 			WorkspaceRef: corev1.ObjectReference{
-				Name:      workspace.Name,
-				Namespace: workspace.Namespace,
+				Name: workspace.Name,
 			},
 			ServiceRef: corev1.ObjectReference{
 				Name:      interceptSpec.ServiceName,
@@ -152,11 +149,10 @@ func (r *WorkspaceReconciler) createServiceIntercept(ctx context.Context, worksp
 
 // cleanupServiceIntercepts deletes all ServiceIntercepts owned by the workspace
 func (r *WorkspaceReconciler) cleanupServiceIntercepts(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	// List all ServiceIntercepts across all namespaces that reference this workspace
+	// List all ServiceIntercepts that reference this workspace (cluster-scoped)
 	interceptList := &interceptsv1.ServiceInterceptList{}
 	if err := r.List(ctx, interceptList, client.MatchingLabels{
-		"workspaces.kloudlite.io/workspace-name":      workspace.Name,
-		"workspaces.kloudlite.io/workspace-namespace": workspace.Namespace,
+		"workspaces.kloudlite.io/workspace-name": workspace.Name,
 	}); err != nil {
 		return fmt.Errorf("failed to list service intercepts: %w", err)
 	}
@@ -166,7 +162,6 @@ func (r *WorkspaceReconciler) cleanupServiceIntercepts(ctx context.Context, work
 		logger.Info("Deleting service intercept during cleanup",
 			zap.String("workspace", workspace.Name),
 			zap.String("intercept", intercept.Name),
-			zap.String("namespace", intercept.Namespace),
 		)
 		if err := r.Delete(ctx, intercept); err != nil && !apierrors.IsNotFound(err) {
 			logger.Error("Failed to delete service intercept",
@@ -180,16 +175,16 @@ func (r *WorkspaceReconciler) cleanupServiceIntercepts(ctx context.Context, work
 	return nil
 }
 
-// getServiceInterceptsForWorkspace lists all ServiceIntercepts owned by the workspace in a specific namespace
-func (r *WorkspaceReconciler) getServiceInterceptsForWorkspace(ctx context.Context, workspace *workspacev1.Workspace, namespace string) ([]interceptsv1.ServiceIntercept, error) {
+// getServiceInterceptsForWorkspace lists all ServiceIntercepts owned by the workspace
+// ServiceIntercepts are now cluster-scoped, so we filter by workspace name label
+// and check if they target services in the specified environment namespace
+func (r *WorkspaceReconciler) getServiceInterceptsForWorkspace(ctx context.Context, workspace *workspacev1.Workspace, envTargetNamespace string) ([]interceptsv1.ServiceIntercept, error) {
 	interceptList := &interceptsv1.ServiceInterceptList{}
 
-	// List all ServiceIntercepts with workspace label in the specified namespace
+	// List all ServiceIntercepts with workspace label (cluster-scoped)
 	listOpts := []client.ListOption{
-		client.InNamespace(namespace),
 		client.MatchingLabels{
-			"workspaces.kloudlite.io/workspace-name":      workspace.Name,
-			"workspaces.kloudlite.io/workspace-namespace": workspace.Namespace,
+			"workspaces.kloudlite.io/workspace-name": workspace.Name,
 		},
 	}
 
@@ -197,7 +192,15 @@ func (r *WorkspaceReconciler) getServiceInterceptsForWorkspace(ctx context.Conte
 		return nil, err
 	}
 
-	return interceptList.Items, nil
+	// Filter intercepts that target services in the specified environment namespace
+	var filtered []interceptsv1.ServiceIntercept
+	for _, intercept := range interceptList.Items {
+		if intercept.Spec.ServiceRef.Namespace == envTargetNamespace {
+			filtered = append(filtered, intercept)
+		}
+	}
+
+	return filtered, nil
 }
 
 // portMappingsEqual compares two slices of port mappings for equality

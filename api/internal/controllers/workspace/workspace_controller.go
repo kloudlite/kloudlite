@@ -39,14 +39,13 @@ type WorkspaceReconciler struct {
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
 		zap.String("workspace", req.Name),
-		zap.String("namespace", req.Namespace),
 	)
 
 	logger.Info("Reconciling Workspace")
 
-	// Fetch the Workspace instance
+	// Fetch the Workspace instance (cluster-scoped, no namespace)
 	workspace := &workspacev1.Workspace{}
-	err := r.Get(ctx, req.NamespacedName, workspace)
+	err := r.Get(ctx, client.ObjectKey{Name: req.Name}, workspace)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Workspace not found, likely deleted")
@@ -120,21 +119,19 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&interceptsv1.ServiceIntercept{},
 			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-				// Extract workspace name and namespace from labels
+				// Extract workspace name from labels (cluster-scoped, no namespace needed)
 				labels := obj.GetLabels()
 				workspaceName := labels["workspaces.kloudlite.io/workspace-name"]
-				workspaceNamespace := labels["workspaces.kloudlite.io/workspace-namespace"]
 
-				if workspaceName == "" || workspaceNamespace == "" {
+				if workspaceName == "" {
 					return nil
 				}
 
-				// Trigger reconciliation for the workspace
+				// Trigger reconciliation for the workspace (cluster-scoped)
 				return []reconcile.Request{
 					{
 						NamespacedName: client.ObjectKey{
-							Name:      workspaceName,
-							Namespace: workspaceNamespace,
+							Name: workspaceName,
 						},
 					},
 				}
