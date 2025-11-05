@@ -357,6 +357,38 @@ export async function deleteDnsRecords(recordIds: string[]): Promise<boolean> {
 }
 
 /**
+ * Create only CNAME records for domain routes (reuses existing SSH A record)
+ * Used when routes change but SSH A record already exists
+ *
+ * @param domainRequestName - Name of the DomainRequest resource
+ * @param subdomain - Installation subdomain (e.g., "test")
+ * @param domainRoutes - Array of domain routes to create CNAME records for
+ * @returns Array of route CNAME record IDs
+ */
+export async function createDomainRouteCnameRecords(
+  domainRequestName: string,
+  subdomain: string,
+  domainRoutes: Array<{ domain: string }>,
+): Promise<string[]> {
+  const routeRecordIds: string[] = []
+  const sshDomain = `ssh.${domainRequestName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
+
+  console.log(`Creating ${domainRoutes.length} CNAME records pointing to ${sshDomain}`)
+
+  for (const route of domainRoutes) {
+    const cnameRecordId = await createCnameRecord(route.domain, sshDomain, true)
+    if (cnameRecordId) {
+      routeRecordIds.push(cnameRecordId)
+      console.log(`Created route CNAME: ${route.domain} → ${sshDomain}`)
+    } else {
+      console.error(`Failed to create CNAME for ${route.domain}`)
+    }
+  }
+
+  return routeRecordIds
+}
+
+/**
  * Create DNS records for a DomainRequest
  * Creates an A record for SSH access and CNAME records for domain routes
  *
