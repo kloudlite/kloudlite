@@ -103,6 +103,58 @@ export async function createCnameRecord(
   try {
     console.log(`Creating DNS CNAME record: ${name} → ${target}`)
 
+    // Check if record already exists
+    const url = new URL(DNS_API_BASE)
+    url.searchParams.set('name', name)
+    url.searchParams.set('type', 'CNAME')
+
+    const checkResponse = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+      },
+    })
+
+    if (checkResponse.ok) {
+      const checkResult: CloudflareDnsResponse<DnsRecord[]> = await checkResponse.json()
+
+      if (checkResult.success && checkResult.result.length > 0) {
+        const existingRecord = checkResult.result[0]
+        console.log(`DNS CNAME record already exists for ${name}: ${existingRecord.content} (ID: ${existingRecord.id})`)
+
+        // If the existing record points to the same target, return its ID
+        if (existingRecord.content === target) {
+          console.log(`Existing CNAME record matches desired target, reusing ID: ${existingRecord.id}`)
+          return existingRecord.id
+        }
+
+        // Otherwise, update the record
+        console.log(`Updating existing CNAME record to point to ${target}`)
+        const updateResponse = await fetch(`${DNS_API_BASE}/${existingRecord.id}`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'CNAME',
+            name,
+            content: target,
+            ttl: 120,
+            proxied,
+          }),
+        })
+
+        if (updateResponse.ok) {
+          const updateResult: CloudflareDnsResponse<DnsRecord> = await updateResponse.json()
+          if (updateResult.success) {
+            console.log(`DNS CNAME record updated successfully: ${name} → ${target}`)
+            return updateResult.result.id
+          }
+        }
+      }
+    }
+
+    // Create new record if it doesn't exist
     const response = await fetch(DNS_API_BASE, {
       method: 'POST',
       headers: {
