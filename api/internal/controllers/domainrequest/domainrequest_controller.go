@@ -223,7 +223,7 @@ func (r *DomainRequestReconciler) createHAProxyConfigMap(ctx context.Context, do
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: domainRequest.Namespace,
+			Namespace: domainRequest.Spec.WorkloadNamespace,
 		},
 	}
 
@@ -249,7 +249,7 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 	// Check if origin certificate secret exists
 	secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
 	secret := &corev1.Secret{}
-	if err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Namespace}, secret); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Spec.WorkloadNamespace}, secret); err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("origin certificate secret not yet created")
 		}
@@ -261,7 +261,7 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 
 	// Check if pod already exists
 	existingPod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: domainRequest.Namespace}, existingPod)
+	err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: domainRequest.Spec.WorkloadNamespace}, existingPod)
 	if err == nil {
 		// Pod exists, delete it to force recreate (pods are immutable)
 		logger.Info("Deleting existing HAProxy pod to recreate with new configuration")
@@ -358,7 +358,7 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: domainRequest.Namespace,
+			Namespace: domainRequest.Spec.WorkloadNamespace,
 			Labels: map[string]string{
 				"app":                     "haproxy",
 				"domain-request":          domainRequest.Name,
@@ -413,7 +413,7 @@ func (r *DomainRequestReconciler) deleteHAProxyResources(ctx context.Context, do
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: domainRequest.Namespace,
+			Namespace: domainRequest.Spec.WorkloadNamespace,
 		},
 	}
 	if err := r.Delete(ctx, pod); err != nil && !errors.IsNotFound(err) {
@@ -425,7 +425,7 @@ func (r *DomainRequestReconciler) deleteHAProxyResources(ctx context.Context, do
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: domainRequest.Namespace,
+			Namespace: domainRequest.Spec.WorkloadNamespace,
 		},
 	}
 	if err := r.Delete(ctx, configMap); err != nil && !errors.IsNotFound(err) {
@@ -464,14 +464,13 @@ func computeDomainRoutesHash(routes []domainrequestsv1.DomainRoute) (string, err
 func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
 		zap.String("name", req.Name),
-		zap.String("namespace", req.Namespace),
 	)
 
 	logger.Info("Reconciling DomainRequest")
 
-	// Fetch the DomainRequest instance
+	// Fetch the DomainRequest instance (cluster-scoped)
 	domainRequest := &domainrequestsv1.DomainRequest{}
-	if err := r.Get(ctx, req.NamespacedName, domainRequest); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: req.Name}, domainRequest); err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("DomainRequest resource not found, ignoring")
 			return reconcile.Result{}, nil
@@ -518,7 +517,7 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 			pod := &corev1.Pod{}
 			err := r.Get(ctx, client.ObjectKey{
 				Name:      domainRequest.Status.HAProxyPodName,
-				Namespace: domainRequest.Namespace,
+				Namespace: domainRequest.Spec.WorkloadNamespace,
 			}, pod)
 
 			if errors.IsNotFound(err) {
@@ -588,7 +587,7 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 		// Check if origin certificate secret exists
 		secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
 		secret := &corev1.Secret{}
-		secretExists := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Namespace}, secret) == nil
+		secretExists := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Spec.WorkloadNamespace}, secret) == nil
 
 		// Determine which step failed based on what's been completed
 		if !secretExists {
@@ -829,7 +828,7 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: domainRequest.Namespace,
+			Namespace: domainRequest.Spec.WorkloadNamespace,
 		},
 	}
 
@@ -953,7 +952,7 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: domainRequest.Namespace,
+			Namespace: domainRequest.Spec.WorkloadNamespace,
 		},
 		Type: corev1.SecretTypeTLS,
 		Data: map[string][]byte{
@@ -971,7 +970,7 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 
 	// Create or update secret
 	existingSecret := &corev1.Secret{}
-	err = r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Namespace}, existingSecret)
+	err = r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Spec.WorkloadNamespace}, existingSecret)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Create new secret
@@ -1055,7 +1054,7 @@ func (r *DomainRequestReconciler) handleHAProxyStatusCheck(ctx context.Context, 
 	}
 
 	// Check if HAProxy pod is ready
-	ready, err := r.checkHAProxyReady(ctx, domainRequest.Namespace, domainRequest.Status.HAProxyPodName, logger)
+	ready, err := r.checkHAProxyReady(ctx, domainRequest.Spec.WorkloadNamespace, domainRequest.Status.HAProxyPodName, logger)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Warn("HAProxy pod not found, recreating it")
