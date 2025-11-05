@@ -3,6 +3,8 @@ package domainrequest
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -387,6 +389,19 @@ func pointerInt64(i int64) *int64 {
 	return &i
 }
 
+// computeDomainRoutesHash computes a SHA256 hash of the DomainRoutes to detect changes
+func computeDomainRoutesHash(routes []domainrequestsv1.DomainRoute) (string, error) {
+	// Convert routes to JSON for consistent hashing
+	routesJSON, err := json.Marshal(routes)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal routes: %w", err)
+	}
+
+	// Compute SHA256 hash
+	hash := sha256.Sum256(routesJSON)
+	return hex.EncodeToString(hash[:]), nil
+}
+
 // Reconcile handles DomainRequest reconciliation
 func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
@@ -470,6 +485,40 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 				logger.Error("Failed to check HAProxy pod existence", zap.Error(err))
 				return reconcile.Result{}, err
 			}
+		}
+
+		// Check if DomainRoutes have changed and need DNS reconciliation
+		currentRoutesHash, err := computeDomainRoutesHash(domainRequest.Spec.DomainRoutes)
+		if err != nil {
+			logger.Error("Failed to compute DomainRoutes hash", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		if currentRoutesHash != domainRequest.Status.LastReconciledRoutesHash {
+			logger.Info("DomainRoutes have changed, updating HAProxy config and DNS records",
+				zap.String("previousHash", domainRequest.Status.LastReconciledRoutesHash),
+				zap.String("currentHash", currentRoutesHash))
+
+			// Update HAProxy ConfigMap with new routing rules
+			if err := r.createHAProxyConfigMap(ctx, domainRequest, logger); err != nil {
+				logger.Error("Failed to update HAProxy ConfigMap", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			logger.Info("HAProxy ConfigMap updated successfully, triggering DNS reconciliation")
+
+			// Transition to IPRegistering state to update DNS records
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
+				domainRequest.Status.State = "IPRegistering"
+				domainRequest.Status.Message = "DomainRoutes updated, reconciling DNS records and HAProxy config"
+				return nil
+			}, logger); err != nil {
+				logger.Error("Failed to update status for DNS reconciliation", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			// Requeue immediately to trigger IP registration (which handles DNS)
+			return reconcile.Result{Requeue: true}, nil
 		}
 
 		logger.Info("DomainRequest is ready, no action needed")
@@ -595,6 +644,13 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 		logger.Info("SSH DNS record created successfully", zap.String("sshDomain", configResp.SSHDomain))
 	}
 
+	// Compute hash of current routes to track for future reconciliation
+	routesHash, err := computeDomainRoutesHash(domainRequest.Spec.DomainRoutes)
+	if err != nil {
+		logger.Error("Failed to compute routes hash", zap.Error(err))
+		return r.updateStatus(ctx, domainRequest, "Failed", fmt.Sprintf("Failed to compute routes hash: %v", err), logger)
+	}
+
 	// Update status with registration details
 	// New flow: Transition to Ready state after IP registration (certificate and HAProxy already set up)
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, domainRequest, func() error {
@@ -613,6 +669,7 @@ func (r *DomainRequestReconciler) handleIPRegistration(ctx context.Context, doma
 		domainRequest.Status.DNSRecordIDs = dnsRecordIDs
 		now := metav1.Now()
 		domainRequest.Status.LastIPRegistrationTime = &now
+		domainRequest.Status.LastReconciledRoutesHash = routesHash
 		return nil
 	}, logger); err != nil {
 		logger.Error("Failed to update status", zap.Error(err))
