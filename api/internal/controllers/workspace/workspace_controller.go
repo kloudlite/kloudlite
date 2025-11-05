@@ -72,6 +72,47 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		return reconcile.Result{Requeue: true}, nil
 	}
 
+	// Set WorkMachine as owner if WorkmachineName is specified and owner reference not yet set
+	if workspace.Spec.WorkmachineName != "" {
+		needsOwnerUpdate := true
+		for _, ownerRef := range workspace.OwnerReferences {
+			if ownerRef.Kind == "WorkMachine" && ownerRef.Name == workspace.Spec.WorkmachineName {
+				needsOwnerUpdate = false
+				break
+			}
+		}
+
+		if needsOwnerUpdate {
+			logger.Info("Setting WorkMachine as owner of Workspace",
+				zap.String("workmachine", workspace.Spec.WorkmachineName))
+
+			// Fetch WorkMachine to set as owner
+			workmachine, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
+			if err != nil {
+				logger.Error("Failed to get WorkMachine for ownership",
+					zap.String("workmachine", workspace.Spec.WorkmachineName),
+					zap.Error(err))
+				// Don't fail reconciliation, just log the error
+				// The ownership will be set on next reconciliation
+			} else {
+				// Set WorkMachine as controller owner for cascading deletion
+				if err := controllerutil.SetControllerReference(workmachine, workspace, r.Scheme); err != nil {
+					logger.Error("Failed to set WorkMachine as owner",
+						zap.String("workmachine", workspace.Spec.WorkmachineName),
+						zap.Error(err))
+					// Don't fail reconciliation
+				} else {
+					if err := r.Update(ctx, workspace); err != nil {
+						logger.Error("Failed to update Workspace with owner reference", zap.Error(err))
+						return reconcile.Result{}, err
+					}
+					logger.Info("Successfully set WorkMachine as owner of Workspace")
+					return reconcile.Result{Requeue: true}, nil
+				}
+			}
+		}
+	}
+
 	// Set default workspace path if not provided
 	if workspace.Spec.WorkspacePath == "" {
 		workspace.Spec.WorkspacePath = "/workspace"

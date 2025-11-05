@@ -119,19 +119,18 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 	defer req.PostReconcile()
 
 	// Check if DomainRequest exists, and if not, clear the check status to force re-run
+	// DomainRequest is cluster-scoped
 	obj := req.Object
-	if obj.Spec.TargetNamespace != "" {
-		domainRequest := &domainrequestv1.DomainRequest{}
-		if err := r.Get(ctx, client.ObjectKey{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}, domainRequest); err != nil {
-			if client.IgnoreNotFound(err) == nil {
-				// DomainRequest doesn't exist, clear the check status for "setup domain request" step
-				if obj.Status.Checks != nil {
-					if _, exists := obj.Status.Checks["create/setup domain request"]; exists {
-						delete(obj.Status.Checks, "create/setup domain request")
-						// Update the status on the API server
-						if updateErr := r.Status().Update(ctx, obj); updateErr != nil {
-							return reconcile.Result{}, updateErr
-						}
+	domainRequest := &domainrequestv1.DomainRequest{}
+	if err := r.Get(ctx, client.ObjectKey{Name: obj.Name}, domainRequest); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			// DomainRequest doesn't exist, clear the check status for "setup domain request" step
+			if obj.Status.Checks != nil {
+				if _, exists := obj.Status.Checks["create/setup domain request"]; exists {
+					delete(obj.Status.Checks, "create/setup domain request")
+					// Update the status on the API server
+					if updateErr := r.Status().Update(ctx, obj); updateErr != nil {
+						return reconcile.Result{}, updateErr
 					}
 				}
 			}
@@ -240,23 +239,32 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 		}
 	}
 
-	// Check for active Workspaces in the target namespace
+	// Check for active Workspaces owned by this WorkMachine
+	// Workspaces are cluster-scoped, so list all and filter by WorkmachineName
 	workspaceList := &workspacev1.WorkspaceList{}
-	if err := r.List(check.Context(), workspaceList, client.InNamespace(namespaceName)); err != nil {
+	if err := r.List(check.Context(), workspaceList); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return check.Errored(err)
 		}
 	}
 
-	// Block deletion if there are active workspaces
-	if len(workspaceList.Items) > 0 {
-		workspaceNames := make([]string, len(workspaceList.Items))
-		for i, ws := range workspaceList.Items {
+	// Filter workspaces owned by this WorkMachine
+	var ownedWorkspaces []workspacev1.Workspace
+	for _, ws := range workspaceList.Items {
+		if ws.Spec.WorkmachineName == obj.Name {
+			ownedWorkspaces = append(ownedWorkspaces, ws)
+		}
+	}
+
+	// Block deletion if there are active workspaces owned by this WorkMachine
+	if len(ownedWorkspaces) > 0 {
+		workspaceNames := make([]string, len(ownedWorkspaces))
+		for i, ws := range ownedWorkspaces {
 			workspaceNames[i] = ws.Name
 		}
 
 		return check.UpdateMsg(fmt.Sprintf("Deletion blocked: %d active workspaces exist (%s)",
-			len(workspaceList.Items), strings.Join(workspaceNames, ", ")))
+			len(ownedWorkspaces), strings.Join(workspaceNames, ", ")))
 	}
 
 	// No workspaces, proceed with namespace deletion
@@ -826,8 +834,9 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 
 func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	// Fetch subdomain from installation DomainRequest instead of env var
+	// DomainRequest is cluster-scoped
 	installationDR := &domainrequestv1.DomainRequest{}
-	if err := r.Get(check.Context(), client.ObjectKey{Name: "installation-domain", Namespace: "kloudlite"}, installationDR); err != nil {
+	if err := r.Get(check.Context(), client.ObjectKey{Name: "installation-domain"}, installationDR); err != nil {
 		return check.Errored(fmt.Errorf("failed to get installation DomainRequest: %w", err)).RequeueAfter(5 * time.Second)
 	}
 
@@ -836,13 +845,22 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 		return check.Errored(fmt.Errorf("installation subdomain not yet configured")).RequeueAfter(5 * time.Second)
 	}
 
+	// List all cluster-scoped workspaces and filter by WorkmachineName
 	var wsList workspacev1.WorkspaceList
-	if err := r.List(check.Context(), &wsList, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
+	if err := r.List(check.Context(), &wsList); err != nil {
 		return check.Failed(err)
 	}
 
-	var domainRoutes []domainrequestv1.DomainRoute
+	// Filter workspaces owned by this WorkMachine
+	var ownedWorkspaces []workspacev1.Workspace
 	for _, ws := range wsList.Items {
+		if ws.Spec.WorkmachineName == obj.Name {
+			ownedWorkspaces = append(ownedWorkspaces, ws)
+		}
+	}
+
+	var domainRoutes []domainrequestv1.DomainRoute
+	for _, ws := range ownedWorkspaces {
 		serviceName := "workspace-" + ws.Name + "-headless"
 		domainRoutes = append(domainRoutes,
 			domainrequestv1.DomainRoute{
@@ -878,18 +896,19 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 		)
 	}
 
+	// DomainRequest is cluster-scoped, with workloads running in shared workloadNamespace
 	domainRequest := &domainrequestv1.DomainRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.Name,
-			Namespace: obj.Spec.TargetNamespace,
+			Name: obj.Name,
 		},
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, domainRequest, func() error {
 		domainRequest.Spec = domainrequestv1.DomainRequestSpec{
-			NodeName:         obj.Name,
-			IPAddress:        obj.Status.PublicIP,
-			CertificateScope: "workmachine",
+			NodeName:          obj.Name,
+			WorkloadNamespace: "kloudlite-ingress", // Shared namespace for all DomainRequest workloads
+			IPAddress:         obj.Status.PublicIP,
+			CertificateScope:  "workmachine",
 			OriginCertificateHostnames: []string{
 				fmt.Sprintf("%s.%s", obj.Name, subDomain),
 				fmt.Sprintf("*.%s.%s", obj.Name, subDomain),
@@ -910,15 +929,18 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 }
 
 func (r *WorkMachineReconciler) deleteDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	// DomainRequest is cluster-scoped
 	domainRequest := &domainrequestv1.DomainRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.Name,
-			Namespace: obj.Spec.TargetNamespace,
+			Name: obj.Name,
 		},
 	}
 
 	if err := r.Delete(check.Context(), domainRequest); err != nil {
-		return check.Failed(err)
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+		// Already deleted, that's fine
 	}
 
 	return check.Passed()
