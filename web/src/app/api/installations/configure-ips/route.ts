@@ -4,6 +4,7 @@ import {
   addOrUpdateIpRecord,
   markDeploymentReady,
   saveEdgeCertificate,
+  deleteEdgeCertificatesForDomainRequest,
 } from '@/lib/console/supabase-storage-service'
 import type { IPRecord } from '@/lib/console/supabase-storage-service'
 import {
@@ -12,7 +13,10 @@ import {
   updateDnsRecord,
   deleteDnsRecord,
 } from '@/lib/console/cloudflare-dns'
-import { createDomainRequestEdgeCertificates } from '@/lib/console/cloudflare-edge-certificates'
+import {
+  createDomainRequestEdgeCertificates,
+  deleteEdgeCertificate,
+} from '@/lib/console/cloudflare-edge-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
@@ -117,6 +121,24 @@ export async function POST(request: NextRequest) {
             console.log(`Deleting old route CNAME records`)
             for (const recordId of existingRecord.routeRecordIds) {
               await deleteDnsRecord(recordId)
+            }
+          }
+
+          // Delete old edge certificates from database and Cloudflare
+          console.log(`Deleting old edge certificates for domain request: ${domainRequestName}`)
+          const oldCertPackIds = await deleteEdgeCertificatesForDomainRequest(
+            installation.id,
+            domainRequestName,
+          )
+
+          // Delete edge certificates from Cloudflare
+          for (const certPackId of oldCertPackIds) {
+            try {
+              await deleteEdgeCertificate(certPackId)
+              console.log(`Deleted edge certificate from Cloudflare: ${certPackId}`)
+            } catch (err) {
+              console.error(`Failed to delete edge certificate ${certPackId} from Cloudflare:`, err)
+              // Continue even if Cloudflare deletion fails
             }
           }
 
