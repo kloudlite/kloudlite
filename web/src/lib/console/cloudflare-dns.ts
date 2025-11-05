@@ -65,6 +65,17 @@ export async function createDnsRecord(
     const result: CloudflareDnsResponse<DnsRecord> = await response.json()
 
     if (!result.success) {
+      // Check if error is "record already exists" (code 81058)
+      const alreadyExistsError = result.errors.find((err) => err.code === 81058)
+      if (alreadyExistsError) {
+        console.log(`DNS A record already exists for ${name}, fetching existing record`)
+        // Fetch the existing record to get its ID
+        const existingRecord = await getDnsRecord(name)
+        if (existingRecord) {
+          console.log(`Found existing DNS A record: ${name} → ${existingRecord.content} (ID: ${existingRecord.id})`)
+          return existingRecord.id
+        }
+      }
       console.error(`DNS CREATE failed for ${name}:`, result.errors)
       return null
     }
