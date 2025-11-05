@@ -215,6 +215,7 @@ export async function getInstallationById(installationId: string): Promise<Insta
         configuredAt: ip.configured_at,
         sshRecordId: ip.ssh_record_id || undefined,
         routeRecordIds: ip.route_record_ids || undefined,
+        routeRecordMap: ip.route_record_map || undefined,
         domainRoutes: ip.domain_routes || undefined,
       })) || [],
   }
@@ -285,6 +286,7 @@ export async function getUserInstallations(userId: string): Promise<Installation
             configuredAt: ip.configured_at,
             sshRecordId: ip.ssh_record_id || undefined,
             routeRecordIds: ip.route_record_ids || undefined,
+            routeRecordMap: ip.route_record_map || undefined,
             domainRoutes: ip.domain_routes || undefined,
           })) || [],
       }
