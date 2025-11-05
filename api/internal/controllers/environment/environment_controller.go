@@ -7,6 +7,7 @@ import (
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	serviceinterceptv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
@@ -124,9 +125,10 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 	deletedIntercepts := 0
 
 	// 1. Find and disconnect all workspaces connected to this environment
+	// Workspaces are cluster-scoped, so list without namespace filter
 	logger.Info("Finding workspaces connected to this environment")
 	workspaceList := &workspacev1.WorkspaceList{}
-	if err := r.List(ctx, workspaceList, client.InNamespace("")); err != nil {
+	if err := r.List(ctx, workspaceList); err != nil {
 		logger.Error("Failed to list workspaces", zap.Error(err))
 		return fmt.Errorf("failed to list workspaces: %w", err)
 	}
@@ -138,7 +140,6 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 		if workspace.Status.ConnectedEnvironment != nil && workspace.Status.ConnectedEnvironment.Name == environment.Name {
 			logger.Info("Disconnecting workspace from environment",
 				zap.String("workspace", workspace.Name),
-				zap.String("namespace", workspace.Namespace),
 				zap.String("environment", environment.Name))
 
 			// Clear the connected environment from workspace status
@@ -160,12 +161,13 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 		}
 	}
 
-	// 2. Find and delete all service intercepts in this environment's namespace
-	logger.Info("Finding service intercepts in environment namespace",
+	// 2. Find and delete all service intercepts targeting services in this environment's namespace
+	// ServiceIntercepts are cluster-scoped, so list all and filter by serviceRef.namespace
+	logger.Info("Finding service intercepts targeting services in environment namespace",
 		zap.String("targetNamespace", environment.Spec.TargetNamespace))
 
 	serviceInterceptList := &serviceinterceptv1.ServiceInterceptList{}
-	if err := r.List(ctx, serviceInterceptList, client.InNamespace(environment.Spec.TargetNamespace)); err != nil {
+	if err := r.List(ctx, serviceInterceptList); err != nil {
 		logger.Error("Failed to list service intercepts", zap.Error(err))
 		return fmt.Errorf("failed to list service intercepts: %w", err)
 	}
@@ -173,10 +175,15 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 	for i := range serviceInterceptList.Items {
 		intercept := &serviceInterceptList.Items[i]
 
+		// Only delete intercepts targeting services in this environment's namespace
+		if intercept.Spec.ServiceRef.Namespace != environment.Spec.TargetNamespace {
+			continue
+		}
+
 		logger.Info("Deleting service intercept",
 			zap.String("intercept", intercept.Name),
-			zap.String("namespace", intercept.Namespace),
-			zap.String("service", intercept.Spec.ServiceRef.Name))
+			zap.String("service", intercept.Spec.ServiceRef.Name),
+			zap.String("serviceNamespace", intercept.Spec.ServiceRef.Namespace))
 
 		if err := r.Delete(ctx, intercept); err != nil {
 			if !apierrors.IsNotFound(err) {
@@ -209,9 +216,9 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 
 	logger.Info("Reconciling Environment")
 
-	// Fetch the Environment instance
+	// Fetch the Environment instance (cluster-scoped)
 	environment := &environmentsv1.Environment{}
-	err := r.Get(ctx, req.NamespacedName, environment)
+	err := r.Get(ctx, client.ObjectKey{Name: req.Name}, environment)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Environment has been deleted, nothing to do
@@ -237,6 +244,47 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Set WorkMachine as owner if WorkMachineName is specified and owner reference not yet set
+	if environment.Spec.WorkMachineName != "" {
+		needsOwnerUpdate := true
+		for _, ownerRef := range environment.OwnerReferences {
+			if ownerRef.Kind == "WorkMachine" && ownerRef.Name == environment.Spec.WorkMachineName {
+				needsOwnerUpdate = false
+				break
+			}
+		}
+
+		if needsOwnerUpdate {
+			logger.Info("Setting WorkMachine as owner of Environment",
+				zap.String("workmachine", environment.Spec.WorkMachineName))
+
+			// Fetch WorkMachine to set as owner
+			workmachine := &workmachinevl.WorkMachine{}
+			if err := r.Get(ctx, client.ObjectKey{Name: environment.Spec.WorkMachineName}, workmachine); err != nil {
+				logger.Error("Failed to get WorkMachine for ownership",
+					zap.String("workmachine", environment.Spec.WorkMachineName),
+					zap.Error(err))
+				// Don't fail reconciliation, just log the error
+				// The ownership will be set on next reconciliation
+			} else {
+				// Set WorkMachine as controller owner for cascading deletion
+				if err := controllerutil.SetControllerReference(workmachine, environment, r.Scheme); err != nil {
+					logger.Error("Failed to set WorkMachine as owner",
+						zap.String("workmachine", environment.Spec.WorkMachineName),
+						zap.Error(err))
+					// Don't fail reconciliation
+				} else {
+					if err := r.Update(ctx, environment); err != nil {
+						logger.Error("Failed to update Environment with owner reference", zap.Error(err))
+						return reconcile.Result{}, err
+					}
+					logger.Info("Successfully set WorkMachine as owner of Environment")
+					return reconcile.Result{Requeue: true}, nil
+				}
+			}
+		}
 	}
 
 	// Check if cloning is requested
@@ -696,4 +744,6 @@ func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&environmentsv1.Environment{}).
 		Owns(&corev1.Namespace{}). // Watch Namespaces owned by Environments
 		Complete(r)
+	// Note: We don't watch WorkMachine here because Environment references WorkMachine by name
+	// The Environment controller will handle WorkMachine ownership during reconciliation
 }
