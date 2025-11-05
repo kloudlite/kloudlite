@@ -185,7 +185,7 @@ func (r *CompositionReconciler) deletePVCs(ctx context.Context, namespaceOpt cli
 }
 
 // cleanupRemovedResources deletes resources that were deployed before but are no longer in the compose file
-func (r *CompositionReconciler) cleanupRemovedResources(ctx context.Context, composition *compositionsv1.Composition, oldDeployedResources *compositionsv1.DeployedResources, currentDeployments, currentServices []string, logger *zap.Logger) error {
+func (r *CompositionReconciler) cleanupRemovedResources(ctx context.Context, composition *compositionsv1.Composition, oldDeployedResources *compositionsv1.DeployedResources, currentDeployments, currentServices, currentPVCs []string, logger *zap.Logger) error {
 	// Skip cleanup if this is the first deployment (no previous resources)
 	if oldDeployedResources == nil {
 		logger.Info("First deployment, skipping cleanup")
@@ -195,6 +195,7 @@ func (r *CompositionReconciler) cleanupRemovedResources(ctx context.Context, com
 	// Convert current resources to sets for efficient lookup
 	currentDeploymentSet := makeSet(currentDeployments)
 	currentServiceSet := makeSet(currentServices)
+	currentPVCSet := makeSet(currentPVCs)
 
 	// Find deployments to delete
 	for _, oldDeployment := range oldDeployedResources.Deployments {
@@ -225,6 +226,23 @@ func (r *CompositionReconciler) cleanupRemovedResources(ctx context.Context, com
 			}
 			if err := r.Delete(ctx, service); err != nil && !apierrors.IsNotFound(err) {
 				logger.Error("Failed to delete service", zap.String("name", oldService), zap.Error(err))
+				return err
+			}
+		}
+	}
+
+	// Find PVCs to delete
+	for _, oldPVC := range oldDeployedResources.PVCs {
+		if !currentPVCSet[oldPVC] {
+			logger.Info("Deleting removed PVC", zap.String("name", oldPVC))
+			pvc := &corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      oldPVC,
+					Namespace: composition.Namespace,
+				},
+			}
+			if err := r.Delete(ctx, pvc); err != nil && !apierrors.IsNotFound(err) {
+				logger.Error("Failed to delete PVC", zap.String("name", oldPVC), zap.Error(err))
 				return err
 			}
 		}

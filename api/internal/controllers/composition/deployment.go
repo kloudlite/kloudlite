@@ -153,8 +153,11 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 		deployedServices = append(deployedServices, service.Name)
 	}
 
+	// Get current PVC names
+	deployedPVCs := getPVCNames(resources.PVCs)
+
 	// Cleanup removed resources using OLD deployed resources
-	if err := r.cleanupRemovedResources(ctx, composition, oldDeployedResources, deployedDeployments, deployedServices, logger); err != nil {
+	if err := r.cleanupRemovedResources(ctx, composition, oldDeployedResources, deployedDeployments, deployedServices, deployedPVCs, logger); err != nil {
 		return fmt.Errorf("failed to cleanup removed resources: %w", err)
 	}
 
@@ -162,7 +165,7 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	composition.Status.DeployedResources = &compositionsv1.DeployedResources{
 		Deployments: deployedDeployments,
 		Services:    deployedServices,
-		PVCs:        getPVCNames(resources.PVCs),
+		PVCs:        deployedPVCs,
 	}
 	composition.Status.ServicesCount = int32(len(resources.ServiceNames))
 

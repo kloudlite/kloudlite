@@ -242,7 +242,7 @@ func TestCompositionReconciler_CleanupRemovedResources_FirstDeployment(t *testin
 		Logger: logger,
 	}
 
-	err := reconciler.cleanupRemovedResources(context.Background(), composition, nil, []string{"dep1"}, []string{"svc1"}, logger)
+	err := reconciler.cleanupRemovedResources(context.Background(), composition, nil, []string{"dep1"}, []string{"svc1"}, []string{"pvc1"}, logger)
 	assert.NoError(t, err)
 }
 
@@ -301,7 +301,7 @@ func TestCompositionReconciler_CleanupRemovedResources_RemoveDeployment(t *testi
 	}
 
 	// Current deployments only has "keep-dep", so "old-dep" should be deleted
-	err := reconciler.cleanupRemovedResources(context.Background(), composition, oldDeployedResources, []string{"keep-dep"}, []string{}, logger)
+	err := reconciler.cleanupRemovedResources(context.Background(), composition, oldDeployedResources, []string{"keep-dep"}, []string{}, []string{}, logger)
 	assert.NoError(t, err)
 
 	// Verify old-dep was deleted
@@ -349,7 +349,7 @@ func TestCompositionReconciler_CleanupRemovedResources_DeleteError(t *testing.T)
 	}
 
 	// Should handle not found errors gracefully
-	err := reconciler.cleanupRemovedResources(context.Background(), composition, oldDeployedResources, []string{}, []string{}, logger)
+	err := reconciler.cleanupRemovedResources(context.Background(), composition, oldDeployedResources, []string{}, []string{}, []string{}, logger)
 	assert.NoError(t, err)
 }
 
