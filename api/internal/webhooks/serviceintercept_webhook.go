@@ -96,9 +96,8 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 
 		// Check if this ServiceIntercept is managed by a workspace
 		workspaceName := intercept.Labels["workspaces.kloudlite.io/workspace-name"]
-		workspaceNamespace := intercept.Labels["workspaces.kloudlite.io/workspace-namespace"]
 
-		if workspaceName != "" && workspaceNamespace != "" {
+		if workspaceName != "" {
 			// Check if the deletion is coming from the workspace controller (service account)
 			// Service accounts have username format: system:serviceaccount:<namespace>:<name>
 			isController := strings.HasPrefix(req.UserInfo.Username, "system:serviceaccount:")
@@ -108,8 +107,8 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 				return &admissionv1.AdmissionResponse{
 					Allowed: false,
 					Result: &metav1.Status{
-						Message: fmt.Sprintf("Cannot delete ServiceIntercept '%s' directly - it is managed by workspace '%s/%s'. To remove this intercept, update the workspace's environmentConnection.intercepts field instead.",
-							intercept.Name, workspaceNamespace, workspaceName),
+						Message: fmt.Sprintf("Cannot delete ServiceIntercept '%s' directly - it is managed by workspace '%s'. To remove this intercept, update the workspace's environmentConnection.intercepts field instead.",
+							intercept.Name, workspaceName),
 					},
 				}
 			}
@@ -152,22 +151,16 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 		allowed = false
 		messages = append(messages, "WorkspaceRef.Name is required")
 	} else {
-		// Check if workspace exists and is running
+		// Check if workspace exists and is running (cluster-scoped)
 		workspace := &workspacesv1.Workspace{}
-		workspaceNamespace := intercept.Spec.WorkspaceRef.Namespace
-		if workspaceNamespace == "" {
-			workspaceNamespace = req.Namespace
-		}
-
 		err := w.client.Get(context.TODO(), client.ObjectKey{
-			Name:      intercept.Spec.WorkspaceRef.Name,
-			Namespace: workspaceNamespace,
+			Name: intercept.Spec.WorkspaceRef.Name,
 		}, workspace)
 
 		if err != nil {
 			allowed = false
-			messages = append(messages, fmt.Sprintf("Workspace '%s' not found in namespace '%s'",
-				intercept.Spec.WorkspaceRef.Name, workspaceNamespace))
+			messages = append(messages, fmt.Sprintf("Workspace '%s' not found",
+				intercept.Spec.WorkspaceRef.Name))
 		} else if workspace.Status.Phase != "Running" {
 			allowed = false
 			messages = append(messages, fmt.Sprintf("Workspace '%s' is not running (current phase: %s)",
@@ -179,13 +172,13 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 	if intercept.Spec.ServiceRef.Name == "" {
 		allowed = false
 		messages = append(messages, "ServiceRef.Name is required")
+	} else if intercept.Spec.ServiceRef.Namespace == "" {
+		allowed = false
+		messages = append(messages, "ServiceRef.Namespace is required for cluster-scoped ServiceIntercept")
 	} else {
 		// Check if service exists
 		service := &corev1.Service{}
 		serviceNamespace := intercept.Spec.ServiceRef.Namespace
-		if serviceNamespace == "" {
-			serviceNamespace = req.Namespace
-		}
 
 		err := w.client.Get(context.TODO(), client.ObjectKey{
 			Name:      intercept.Spec.ServiceRef.Name,
@@ -220,12 +213,12 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 			// and trust the user-provided port mappings
 		}
 
-		// Check if another ServiceIntercept is already intercepting this service
+		// Check if another ServiceIntercept is already intercepting this service (cluster-scoped)
 		existingIntercepts := &interceptsv1.ServiceInterceptList{}
 		err = w.client.List(context.TODO(), existingIntercepts,
-			client.InNamespace(serviceNamespace),
 			client.MatchingLabels{
-				"intercepts.kloudlite.io/service-name": intercept.Spec.ServiceRef.Name,
+				"intercepts.kloudlite.io/service-name":      intercept.Spec.ServiceRef.Name,
+				"intercepts.kloudlite.io/service-namespace": serviceNamespace,
 			})
 
 		if err != nil {
@@ -236,7 +229,7 @@ func (w *ServiceInterceptWebhook) handleValidation(req *admissionv1.AdmissionReq
 			// Check if any existing intercept (other than this one) exists
 			for _, existing := range existingIntercepts.Items {
 				// Skip checking against itself (for UPDATE operations)
-				if existing.Name == intercept.Name && existing.Namespace == req.Namespace {
+				if existing.Name == intercept.Name {
 					continue
 				}
 
@@ -310,14 +303,10 @@ func (w *ServiceInterceptWebhook) handleMutation(req *admissionv1.AdmissionReque
 	}
 
 	// Add service and workspace labels for fast lookups
-	serviceNamespace := intercept.Spec.ServiceRef.Namespace
-	if serviceNamespace == "" {
-		serviceNamespace = req.Namespace
-	}
-
+	// ServiceRef.Namespace is required and validated, no fallback needed
 	labelsToAdd := map[string]string{
 		"intercepts.kloudlite.io/service-name":      intercept.Spec.ServiceRef.Name,
-		"intercepts.kloudlite.io/service-namespace": serviceNamespace,
+		"intercepts.kloudlite.io/service-namespace": intercept.Spec.ServiceRef.Namespace,
 		"intercepts.kloudlite.io/workspace-name":    intercept.Spec.WorkspaceRef.Name,
 	}
 
