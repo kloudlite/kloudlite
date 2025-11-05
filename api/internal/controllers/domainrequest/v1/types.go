@@ -160,6 +160,11 @@ type DomainRequestStatus struct {
 	// HAProxyReady indicates if the HAProxy pod is ready and serving traffic
 	// +optional
 	HAProxyReady bool `json:"haProxyReady,omitempty"`
+
+	// LastReconciledRoutesHash stores a hash of the last reconciled DomainRoutes
+	// Used to detect when routes have changed and need DNS record updates
+	// +optional
+	LastReconciledRoutesHash string `json:"lastReconciledRoutesHash,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
