@@ -1089,3 +1089,45 @@ export async function deleteEdgeCertificateForDomain(
   return certPackId
 }
 
+/**
+ * Find wildcard edge certificate for a given subdomain pattern
+ * For example, if domain is "x.karthik.khost.dev", checks for "*.karthik.khost.dev"
+ */
+export async function findWildcardEdgeCertificate(
+  installationId: string,
+  subdomain: string,
+): Promise<EdgeCertificate | null> {
+  const wildcardPattern = `*.${subdomain}`
+
+  const result = await supabase
+    .from('edge_certificates')
+    .select('*')
+    .eq('installation_id', installationId)
+    .contains('hostnames', [wildcardPattern])
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (result.error) {
+    console.error('Error finding wildcard edge certificate:', result.error)
+    return null
+  }
+
+  if (!result.data || result.data.length === 0) {
+    return null
+  }
+
+  const data = result.data[0] as EdgeCertificateRow
+
+  return {
+    id: data.id,
+    installationId: data.installation_id,
+    cloudflareCertPackId: data.cloudflare_cert_pack_id,
+    hostnames: data.hostnames,
+    domainRequestName: data.domain_request_name,
+    orderedAt: data.ordered_at,
+    status: data.status,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }
+}
+
