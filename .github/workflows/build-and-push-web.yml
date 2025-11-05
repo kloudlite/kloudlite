@@ -41,42 +41,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: web/pnpm-lock.yaml
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            web/node_modules
-            ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            web/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/**/*.ts', 'web/**/*.tsx', 'web/**/*.js', 'web/**/*.jsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('web/pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Create environment file
+        id: env-file
         run: |
           cat > .env.local << EOF
           # Base URL
@@ -115,23 +81,6 @@ jobs:
           CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}
           EOF
 
-      - name: Build Next.js application
-        run: pnpm run build
-        env:
-          NODE_ENV: production
-
-      - name: Verify standalone output
-        run: |
-          if [ ! -d ".next/standalone" ]; then
-            echo "Error: .next/standalone directory not found"
-            echo "Make sure next.config.ts has output: 'standalone'"
-            exit 1
-          fi
-          echo "Standalone build size:"
-          du -sh .next/standalone
-          echo "Static files size:"
-          du -sh .next/static
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -166,9 +115,17 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          secrets: |
+            env_file=./web/.env.local
 
       - name: Build summary
         run: |

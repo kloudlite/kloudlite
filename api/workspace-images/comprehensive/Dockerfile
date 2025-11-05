@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # Build arguments that need to be available globally
 ARG BASE_IMAGE=kloudlite/workspace-base:latest
 ARG VERSION=dev
@@ -12,13 +14,19 @@ WORKDIR /build
 
 # Copy go.mod and go.sum first for better caching
 COPY ../../go.mod ../../go.sum ./
-RUN go mod download
+
+# Download dependencies with cache mount
+RUN --mount=type=cache,target=/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  go mod download
 
 # Copy the entire API source code
 COPY ../../ ./
 
-# Build kl binary
-RUN CGO_ENABLED=0 go build \
+# Build kl binary with cache mounts
+RUN --mount=type=cache,target=/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  CGO_ENABLED=0 go build \
   -ldflags="-s -w" \
   -o kl \
   ./cmd/kl
@@ -33,8 +41,10 @@ USER root
 COPY --from=kl-builder /build/kl /usr/local/bin/kl
 RUN chmod +x /usr/local/bin/kl
 
-# Install system dependencies including shells first
-RUN apt-get update && apt-get install -y \
+# Install system dependencies including shells first with apt cache mount
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y \
   openssh-server \
   python3 \
   supervisor \
@@ -54,8 +64,10 @@ RUN useradd -m -s /bin/bash -u 1001 kl && \
   mkdir -p /workspace && \
   chown -R kl:kl /workspace
 
-# Install Node.js 20.x (LTS)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+# Install Node.js 20.x (LTS) with apt cache mount
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y nodejs \
   && rm -rf /var/lib/apt/lists/*
 
@@ -68,24 +80,41 @@ RUN mkdir -p /run/sshd && \
   echo 'SetEnv TERM=xterm-256color' >> /etc/ssh/sshd_config && \
   echo 'AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys' >> /etc/ssh/sshd_config
 
-# Install code-server
-RUN curl -fsSL https://code-server.dev/install.sh | sh
+# Install code-server with cache mount
+RUN --mount=type=cache,target=/tmp/code-server-cache \
+  curl -fsSL https://code-server.dev/install.sh | sh
 
-# Install ttyd binary
-RUN curl -fsSL https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.aarch64 -o /usr/local/bin/ttyd && \
-  chmod +x /usr/local/bin/ttyd
+# Install ttyd binary (detect architecture and download appropriate version)
+# Use TARGETARCH which is automatically set by Docker Buildx for multi-platform builds
+ARG TARGETARCH
+RUN --mount=type=cache,target=/tmp/ttyd-cache \
+  if [ "$TARGETARCH" = "amd64" ]; then \
+  curl -fsSL https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64 -o /usr/local/bin/ttyd; \
+  elif [ "$TARGETARCH" = "arm64" ]; then \
+  curl -fsSL https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.aarch64 -o /usr/local/bin/ttyd; \
+  else \
+  echo "ERROR: Unsupported architecture: $TARGETARCH" && exit 1; \
+  fi && \
+  chmod +x /usr/local/bin/ttyd && \
+  /usr/local/bin/ttyd --version
 
-# Install Nerd Fonts (JetBrainsMono and FiraCode)
-RUN mkdir -p /usr/share/fonts/truetype/nerd-fonts && \
-  curl -fsSL https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip -o /tmp/JetBrainsMono.zip && \
-  curl -fsSL https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/FiraCode.zip -o /tmp/FiraCode.zip && \
-  unzip -qo /tmp/JetBrainsMono.zip -d /usr/share/fonts/truetype/nerd-fonts/ && \
-  unzip -qo /tmp/FiraCode.zip -d /usr/share/fonts/truetype/nerd-fonts/ && \
-  rm -f /tmp/JetBrainsMono.zip /tmp/FiraCode.zip && \
+# Install Nerd Fonts (JetBrainsMono and FiraCode) with persistent cache
+RUN --mount=type=cache,target=/tmp/fonts-cache \
+  mkdir -p /usr/share/fonts/truetype/nerd-fonts && \
+  cd /tmp/fonts-cache && \
+  if [ ! -f JetBrainsMono.zip ]; then \
+  curl -fsSL https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip -o JetBrainsMono.zip; \
+  fi && \
+  if [ ! -f FiraCode.zip ]; then \
+  curl -fsSL https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/FiraCode.zip -o FiraCode.zip; \
+  fi && \
+  unzip -qo JetBrainsMono.zip -d /usr/share/fonts/truetype/nerd-fonts/ && \
+  unzip -qo FiraCode.zip -d /usr/share/fonts/truetype/nerd-fonts/ && \
   fc-cache -f -v
 
-# Install starship prompt
-RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
+# Install starship prompt with cache mount
+RUN --mount=type=cache,target=/tmp/starship-cache \
+  curl -sS https://starship.rs/install.sh | sh -s -- -y
 
 USER root
 

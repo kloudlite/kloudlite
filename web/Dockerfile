@@ -1,6 +1,40 @@
 # syntax=docker/dockerfile:1
 
-# Runtime stage - just copy pre-built artifacts
+# Dependencies stage
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@9
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies with cache mount for pnpm store
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# Builder stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@9
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source code
+COPY . .
+
+# Build with cache mount for Next.js build cache
+RUN --mount=type=cache,target=/app/.next/cache \
+    --mount=type=secret,id=env_file,target=/app/.env.local \
+    pnpm run build
+
+# Runtime stage
 FROM node:20-alpine AS runner
 
 WORKDIR /app
@@ -12,10 +46,10 @@ RUN apk add --no-cache openssl
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy pre-built artifacts from CI
-COPY --chown=nextjs:nodejs .next/standalone ./
-COPY --chown=nextjs:nodejs .next/static ./.next/static
-COPY --chown=nextjs:nodejs public ./public
+# Copy built artifacts from builder stage
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 

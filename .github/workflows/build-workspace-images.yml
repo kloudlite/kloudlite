@@ -69,9 +69,15 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=workspace-base
-          cache-to: type=gha,mode=max,scope=workspace-base
+          cache-from: |
+            type=gha,scope=workspace-base
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:buildcache
+          cache-to: |
+            type=gha,mode=max,scope=workspace-base
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:buildcache,mode=max
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
 
       - name: Build summary
         run: |
@@ -133,12 +139,17 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=workspace-comprehensive
-          cache-to: type=gha,mode=max,scope=workspace-comprehensive
+          cache-from: |
+            type=gha,scope=workspace-comprehensive
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-comprehensive:buildcache
+          cache-to: |
+            type=gha,mode=max,scope=workspace-comprehensive
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-comprehensive:buildcache,mode=max
           platforms: linux/amd64,linux/arm64
           build-args: |
             BASE_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:${{ github.ref == 'refs/heads/master' && 'latest' || 'dev' }}
             VERSION=${{ github.ref_name }}-${{ github.sha }}
+            BUILDKIT_INLINE_CACHE=1
 
       - name: Build summary
         run: |
