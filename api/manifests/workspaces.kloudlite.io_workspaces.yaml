@@ -299,20 +299,15 @@ spec:
                 items:
                   type: string
                 type: array
-              targetNamespace:
-                description: |-
-                  TargetNamespace is the namespace where workspace workloads (pods, services) run
-                  This is typically the WorkMachine's targetNamespace
-                minLength: 1
-                type: string
               vscodeVersion:
                 default: latest
                 description: VSCodeVersion specifies the version of VS Code server
                   to use
                 type: string
               workmachine:
-                description: WorkmachineName references the WorkMachine this workspace
-                  belongs to
+                description: |-
+                  WorkmachineName references the WorkMachine this workspace belongs to
+                  The workspace will run in the WorkMachine's targetNamespace
                 minLength: 1
                 type: string
               workspacePath:
@@ -323,7 +318,6 @@ spec:
             required:
             - displayName
             - owner
-            - targetNamespace
             - workmachine
             type: object
           status:

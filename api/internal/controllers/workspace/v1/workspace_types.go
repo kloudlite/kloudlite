@@ -91,15 +91,10 @@ type WorkspaceSpec struct {
 	Owner string `json:"owner"`
 
 	// WorkmachineName references the WorkMachine this workspace belongs to
+	// The workspace will run in the WorkMachine's targetNamespace
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	WorkmachineName string `json:"workmachine"`
-
-	// TargetNamespace is the namespace where workspace workloads (pods, services) run
-	// This is typically the WorkMachine's targetNamespace
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	TargetNamespace string `json:"targetNamespace"`
 
 	// EnvironmentConnection defines the environment to connect to and associated intercepts
 	// When set to nil, workspace is disconnected and all intercepts are removed

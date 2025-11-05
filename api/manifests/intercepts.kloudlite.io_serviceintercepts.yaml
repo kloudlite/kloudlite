@@ -89,7 +89,9 @@ spec:
                 minItems: 1
                 type: array
               serviceRef:
-                description: ServiceRef references the service to intercept
+                description: |-
+                  ServiceRef references the service to intercept
+                  The intercept will run in the service's namespace
                 properties:
                   apiVersion:
                     description: API version of the referent.
@@ -131,12 +133,6 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
-              targetNamespace:
-                description: |-
-                  TargetNamespace is the namespace where intercept workloads (SOCAT pod) run
-                  This is typically the Environment's targetNamespace where the service exists
-                minLength: 1
-                type: string
               workspaceRef:
                 description: WorkspaceRef references the workspace pod that will intercept
                   traffic
@@ -184,7 +180,6 @@ spec:
             required:
             - portMappings
             - serviceRef
-            - targetNamespace
             - workspaceRef
             type: object
           status:
