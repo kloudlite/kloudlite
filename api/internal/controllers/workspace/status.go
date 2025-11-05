@@ -51,17 +51,24 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	workspace.Status.PodIP = pod.Status.PodIP
 	workspace.Status.NodeName = pod.Spec.NodeName
 
-	var domainRequest domainrequestv1.DomainRequest
-	if err := r.Get(ctx, fn.NN(workspace.Namespace, workspace.Spec.WorkmachineName), &domainRequest); err != nil {
-		return reconcile.Result{}, err
-	}
-
 	// Build access URLs for all services if pod is running
 	if pod.Status.PodIP != "" && phase == "Running" {
 		accessURLs := make(map[string]string)
 
-		// Try to use public domain URLs if available
-		if domainRequest.Status.Subdomain != "" {
+		// Try to fetch DomainRequest - it may not exist yet if WorkMachine is still setting up
+		var domainRequest domainrequestv1.DomainRequest
+		domainRequestExists := false
+		if err := r.Get(ctx, fn.NN(workspace.Namespace, workspace.Spec.WorkmachineName), &domainRequest); err != nil {
+			logger.Warn("DomainRequest not found yet, using pod IP fallback URLs",
+				zap.String("workmachine", workspace.Spec.WorkmachineName),
+				zap.String("namespace", workspace.Namespace),
+				zap.Error(err))
+		} else {
+			domainRequestExists = true
+		}
+
+		// Try to use public domain URLs if DomainRequest is available
+		if domainRequestExists && domainRequest.Status.Subdomain != "" {
 			// Get WorkMachine to construct domain URLs
 			wm, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
 			if err == nil && wm.Status.PublicIP != "" {
@@ -85,7 +92,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 				accessURLs["vscode-tunnel"] = fmt.Sprintf("http://%s:8000", pod.Status.PodIP)
 			}
 		} else {
-			// Fallback to internal pod IPs
+			// Fallback to internal pod IPs (DomainRequest not available or no subdomain)
 			accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
 			accessURLs["code-server"] = fmt.Sprintf("http://%s:8080", pod.Status.PodIP)
 			accessURLs["ttyd"] = fmt.Sprintf("http://%s:7681", pod.Status.PodIP)
