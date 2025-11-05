@@ -105,7 +105,11 @@ export async function POST(request: NextRequest) {
       if (existingRecord) {
         // Check if IP changed or routes changed
         const ipChanged = existingRecord.ip !== ip
-        const routesChanged = JSON.stringify(existingRecord.domainRoutes || []) !== JSON.stringify(routes)
+        const existingRoutesJson = JSON.stringify(existingRecord.domainRoutes || [])
+        const newRoutesJson = JSON.stringify(routes)
+        const routesChanged = existingRoutesJson !== newRoutesJson
+
+        console.log(`Comparing routes - existing: ${existingRoutesJson}, new: ${newRoutesJson}, changed: ${routesChanged}`)
 
         if (ipChanged && existingRecord.sshRecordId) {
           // Update SSH A record with new IP
