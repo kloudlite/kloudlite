@@ -215,9 +215,9 @@ func (sp *SubdomainPoller) verifyInstallationKey(ctx context.Context) (*VerifyKe
 
 // createOrUpdateDomainRequest creates or updates the DomainRequest resource
 func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subdomain string) error {
-	// Check if DomainRequest already exists
+	// Check if DomainRequest already exists (cluster-scoped)
 	existingDR := &domainrequestv1.DomainRequest{}
-	err := sp.k8sClient.Get(ctx, client.ObjectKey{Name: domainRequestName, Namespace: "kloudlite"}, existingDR)
+	err := sp.k8sClient.Get(ctx, client.ObjectKey{Name: domainRequestName}, existingDR)
 
 	if err == nil {
 		// DomainRequest exists, update it
@@ -240,15 +240,16 @@ func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subd
 	// DomainRequest doesn't exist, create it
 	sp.logger.Info("Creating new DomainRequest", zap.String("name", domainRequestName))
 
+	// DomainRequest is cluster-scoped with workloads in shared workloadNamespace
 	domainRequest := &domainrequestv1.DomainRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      domainRequestName,
-			Namespace: "kloudlite",
+			Name: domainRequestName,
 		},
 		Spec: domainrequestv1.DomainRequestSpec{
-			NodeName:         os.Getenv("NODE_NAME"),
-			IPAddress:        sp.config.PublicIP,
-			CertificateScope: "installation",
+			NodeName:          os.Getenv("NODE_NAME"),
+			WorkloadNamespace: "kloudlite-ingress", // Shared namespace for all DomainRequest workloads
+			IPAddress:         sp.config.PublicIP,
+			CertificateScope:  "installation",
 			// Specify origin certificate hostnames to include the base domain
 			// This ensures the certificate covers both {subdomain}.khost.dev and *.{subdomain}.khost.dev
 			OriginCertificateHostnames: []string{
