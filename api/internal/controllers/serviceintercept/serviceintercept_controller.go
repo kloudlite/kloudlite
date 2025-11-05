@@ -7,6 +7,7 @@ import (
 	"time"
 
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
@@ -35,14 +36,13 @@ type ServiceInterceptReconciler struct {
 func (r *ServiceInterceptReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
 		zap.String("serviceintercept", req.Name),
-		zap.String("namespace", req.Namespace),
 	)
 
 	logger.Info("Reconciling ServiceIntercept")
 
-	// Fetch the ServiceIntercept instance
+	// Fetch the ServiceIntercept instance (cluster-scoped)
 	intercept := &interceptsv1.ServiceIntercept{}
-	err := r.Get(ctx, req.NamespacedName, intercept)
+	err := r.Get(ctx, client.ObjectKey{Name: req.Name}, intercept)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("ServiceIntercept not found, likely deleted")
@@ -75,16 +75,10 @@ func (r *ServiceInterceptReconciler) Reconcile(ctx context.Context, req reconcil
 
 // reconcileIntercept sets up the service intercept by creating SOCAT pod and headless service
 func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, intercept *interceptsv1.ServiceIntercept, logger *zap.Logger) (reconcile.Result, error) {
-	// Step 1: Validate workspace
+	// Step 1: Validate workspace (cluster-scoped)
 	workspace := &workspacesv1.Workspace{}
-	workspaceNamespace := intercept.Spec.WorkspaceRef.Namespace
-	if workspaceNamespace == "" {
-		workspaceNamespace = intercept.Namespace
-	}
-
 	err := r.Get(ctx, client.ObjectKey{
-		Name:      intercept.Spec.WorkspaceRef.Name,
-		Namespace: workspaceNamespace,
+		Name: intercept.Spec.WorkspaceRef.Name,
 	}, workspace)
 
 	if err != nil {
@@ -111,11 +105,19 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 		return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
-	// Step 2: Get the service
+	// Step 2: Get the service (use serviceRef.namespace directly)
 	service := &corev1.Service{}
 	serviceNamespace := intercept.Spec.ServiceRef.Namespace
 	if serviceNamespace == "" {
-		serviceNamespace = intercept.Namespace
+		logger.Error("ServiceRef.Namespace is required but not set")
+		if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+			intercept.Status.Phase = "Failed"
+			intercept.Status.Message = "ServiceRef.Namespace is required but not set"
+			return nil
+		}, logger); statusErr != nil {
+			logger.Error("Failed to update status after namespace validation error", zap.Error(statusErr))
+		}
+		return reconcile.Result{}, fmt.Errorf("serviceRef.namespace is required")
 	}
 
 	err = r.Get(ctx, client.ObjectKey{
@@ -179,11 +181,28 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 	intercept.Status.WorkspacePodIP = workspace.Status.PodIP
 
 	// Step 5: Get workspace headless service (created by workspace controller)
+	// The headless service runs in the WorkMachine's targetNamespace
+	// We need to fetch the WorkMachine to get the targetNamespace
+	workmachine := &workmachinevl.WorkMachine{}
+	err = r.Get(ctx, client.ObjectKey{Name: workspace.Spec.WorkmachineName}, workmachine)
+	if err != nil {
+		logger.Error("Failed to get WorkMachine", zap.Error(err))
+		if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, intercept, func() error {
+			intercept.Status.Phase = "Failed"
+			intercept.Status.Message = fmt.Sprintf("Failed to get WorkMachine: %v", err)
+			return nil
+		}, logger); statusErr != nil {
+			logger.Error("Failed to update status after WorkMachine error", zap.Error(statusErr))
+		}
+		return reconcile.Result{RequeueAfter: 10 * time.Second}, err
+	}
+
+	workspaceTargetNamespace := workmachine.Spec.TargetNamespace
 	workspaceHeadlessSvcName := fmt.Sprintf("workspace-%s-headless", workspace.Name)
 	headlessSvc := &corev1.Service{}
 	err = r.Get(ctx, client.ObjectKey{
 		Name:      workspaceHeadlessSvcName,
-		Namespace: workspaceNamespace,
+		Namespace: workspaceTargetNamespace,
 	}, headlessSvc)
 
 	if err != nil {
@@ -208,7 +227,7 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 	for _, mapping := range intercept.Spec.PortMappings {
 		// SOCAT forwards from servicePort to workspace headless service + workspacePort
 		workspaceTarget := fmt.Sprintf("%s.%s.svc.cluster.local:%d",
-			workspaceHeadlessSvcName, workspaceNamespace, mapping.WorkspacePort)
+			workspaceHeadlessSvcName, workspaceTargetNamespace, mapping.WorkspacePort)
 
 		socatCmd := fmt.Sprintf("socat TCP-LISTEN:%d,fork,reuseaddr TCP:%s",
 			mapping.ServicePort, workspaceTarget)
@@ -369,14 +388,19 @@ func (r *ServiceInterceptReconciler) reconcileIntercept(ctx context.Context, int
 
 // handleDeletion handles the deletion of a ServiceIntercept and cleanup
 func (r *ServiceInterceptReconciler) handleDeletion(ctx context.Context, intercept *interceptsv1.ServiceIntercept, logger *zap.Logger) (reconcile.Result, error) {
+	// ServiceRef.Namespace is where the service and SOCAT pod live
 	serviceNamespace := intercept.Spec.ServiceRef.Namespace
 	if serviceNamespace == "" {
-		serviceNamespace = intercept.Namespace
-	}
-
-	workspaceNamespace := intercept.Spec.WorkspaceRef.Namespace
-	if workspaceNamespace == "" {
-		workspaceNamespace = intercept.Namespace
+		logger.Error("ServiceRef.Namespace is required but not set during deletion")
+		// Remove finalizer anyway to allow cleanup to proceed
+		if controllerutil.ContainsFinalizer(intercept, serviceInterceptFinalizer) {
+			controllerutil.RemoveFinalizer(intercept, serviceInterceptFinalizer)
+			if err := r.Update(ctx, intercept); err != nil {
+				logger.Error("Failed to remove finalizer", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+		}
+		return reconcile.Result{}, nil
 	}
 
 	// Step 1: Delete SOCAT pod
