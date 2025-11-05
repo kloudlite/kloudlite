@@ -991,6 +991,43 @@ export async function deleteEdgeCertificates(installationId: string): Promise<st
 }
 
 /**
+ * Delete edge certificates for a specific domain request
+ */
+export async function deleteEdgeCertificatesForDomainRequest(
+  installationId: string,
+  domainRequestName: string,
+): Promise<string[]> {
+  // Get certificate pack IDs for this domain request
+  const { data } = await supabase
+    .from('edge_certificates')
+    .select('cloudflare_cert_pack_id')
+    .eq('installation_id', installationId)
+    .eq('domain_request_name', domainRequestName)
+
+  const certPackIds: string[] = []
+  if (data) {
+    for (const record of data as Pick<EdgeCertificateRow, 'cloudflare_cert_pack_id'>[]) {
+      if (record.cloudflare_cert_pack_id) {
+        certPackIds.push(record.cloudflare_cert_pack_id)
+      }
+    }
+  }
+
+  // Delete from database
+  const { error } = await supabase
+    .from('edge_certificates')
+    .delete()
+    .eq('installation_id', installationId)
+    .eq('domain_request_name', domainRequestName)
+
+  if (error) {
+    console.error('Error deleting edge certificates for domain request:', error)
+  }
+
+  return certPackIds
+}
+
+/**
  * Legacy Compatibility Functions
  * These maintain backwards compatibility with old email-based API
  */
