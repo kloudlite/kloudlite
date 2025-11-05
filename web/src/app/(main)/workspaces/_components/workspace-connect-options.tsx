@@ -206,7 +206,7 @@ export function WorkspaceConnectOptions({
 
   const handleConnect = (method: AccessMethod) => {
     if (method.url) {
-      window.open(method.url, '_blank')
+      window.open(method.url, '_blank', 'noopener,noreferrer')
     } else if (method.id === 'ssh') {
       setSshDialogOpen(true)
     } else if (method.command) {
