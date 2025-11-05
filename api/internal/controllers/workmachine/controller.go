@@ -943,11 +943,10 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 		return check.UpdateMsg("Stopping Machine").RequeueAfter(10 * time.Second)
 	}
 
+	obj.Status.State = machineInfo.State
 	if currentState != obj.Spec.State {
 		return check.UpdateMsg("waiting for machine status to change").RequeueAfter(5 * time.Second)
 	}
-
-	obj.Status.State = machineInfo.State
 
 	specVolume := fn.ValueOf(obj.Spec.VolumeSize)
 
