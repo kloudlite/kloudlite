@@ -650,7 +650,7 @@ func writeAuthorizedKeys(logger *zap2.Logger, content string, fs FileSystem) err
 	return nil
 }
 
-// SSHConfigReconciler watches the ssh-authorized-keys ConfigMap and writes it to the host filesystem
+// SSHConfigReconciler watches the ssh-host-keys Secret and writes authorized_keys to the host filesystem
 type SSHConfigReconciler struct {
 	client.Client
 	Logger *zap2.Logger
@@ -659,55 +659,85 @@ type SSHConfigReconciler struct {
 
 func (r *SSHConfigReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
-		zap2.String("configMap", req.Name),
+		zap2.String("secret", req.Name),
 		zap2.String("namespace", req.Namespace),
 	)
 
-	logger.Info("Reconciling SSH authorized_keys ConfigMap")
+	logger.Info("Reconciling SSH config from Secret")
 
-	// Fetch ConfigMap
-	cm := &corev1.ConfigMap{}
-	if err := r.Get(ctx, req.NamespacedName, cm); err != nil {
+	// Fetch Secret
+	secret := &corev1.Secret{}
+	if err := r.Get(ctx, req.NamespacedName, secret); err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			logger.Info("ConfigMap deleted or not found")
+			logger.Info("Secret deleted or not found")
 			return reconcile.Result{}, nil
 		}
-		logger.Error("Failed to get ConfigMap", zap2.Error(err))
+		logger.Error("Failed to get Secret", zap2.Error(err))
 		return reconcile.Result{}, err
 	}
 
-	// Get authorized_keys content
-	authorizedKeys, ok := cm.Data["authorized_keys"]
-	if !ok {
-		logger.Warn("ConfigMap does not contain authorized_keys key")
-		return reconcile.Result{}, nil
+	// Write authorized_keys
+	if authorizedKeysBytes, ok := secret.Data["authorized_keys"]; ok {
+		if err := writeAuthorizedKeys(logger, string(authorizedKeysBytes), r.FS); err != nil {
+			logger.Error("Failed to write authorized_keys", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
 	}
 
-	// Write to host filesystem
-	if err := writeAuthorizedKeys(logger, authorizedKeys, r.FS); err != nil {
-		logger.Error("Failed to write authorized_keys", zap2.Error(err))
-		return reconcile.Result{}, err
+	// Write SSH host keys
+	if rsaKeyBytes, ok := secret.Data["ssh_host_rsa_key"]; ok {
+		targetPath := filepath.Join(sshConfigPath, "ssh_host_rsa_key")
+		tempPath := targetPath + ".tmp"
+
+		// Write to temp file
+		if err := r.FS.WriteFile(tempPath, rsaKeyBytes, 0o600); err != nil {
+			logger.Error("Failed to write ssh_host_rsa_key temp file", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		// Atomic rename
+		if err := r.FS.Rename(tempPath, targetPath); err != nil {
+			logger.Error("Failed to rename ssh_host_rsa_key", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
 	}
 
-	logger.Info("Successfully updated authorized_keys file")
+	if rsaPubKeyBytes, ok := secret.Data["ssh_host_rsa_key.pub"]; ok {
+		targetPath := filepath.Join(sshConfigPath, "ssh_host_rsa_key.pub")
+		tempPath := targetPath + ".tmp"
+
+		// Write to temp file
+		if err := r.FS.WriteFile(tempPath, rsaPubKeyBytes, 0o644); err != nil {
+			logger.Error("Failed to write ssh_host_rsa_key.pub temp file", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		// Atomic rename
+		if err := r.FS.Rename(tempPath, targetPath); err != nil {
+			logger.Error("Failed to rename ssh_host_rsa_key.pub", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
+	}
+
+	logger.Info("Successfully updated SSH config files")
 	return reconcile.Result{}, nil
 }
 
 func (r *SSHConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.ConfigMap{}).
+		For(&corev1.Secret{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				labels := e.Object.GetLabels()
-				return labels != nil && labels["kloudlite.io/ssh-config"] == "true"
+				return labels != nil && labels["kloudlite.io/ssh-host-keys"] == "true"
 			},
 			UpdateFunc: func(e event.UpdateEvent) bool {
 				labels := e.ObjectNew.GetLabels()
-				return labels != nil && labels["kloudlite.io/ssh-config"] == "true"
+				return labels != nil && labels["kloudlite.io/ssh-host-keys"] == "true"
 			},
 			DeleteFunc: func(e event.DeleteEvent) bool {
 				labels := e.Object.GetLabels()
-				return labels != nil && labels["kloudlite.io/ssh-config"] == "true"
+				return labels != nil && labels["kloudlite.io/ssh-host-keys"] == "true"
 			},
 		}).
 		Complete(r)

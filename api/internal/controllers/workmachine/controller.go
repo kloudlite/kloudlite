@@ -162,12 +162,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "ensure-ssh-authorized-keys",
-			Title:    "Ensure SSH authorized_keys ConfigMap",
-			OnCreate: r.createSSHAuthorizedKeysConfig,
-			OnDelete: nil,
-		},
-		{
 			Name:     "ensure-sshd-config",
 			Title:    "Ensure sshd_config ConfigMap",
 			OnCreate: r.ensureSSHDConfigMapStep,
@@ -769,45 +763,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 	}
 	rsaPublicBytes := ssh.MarshalAuthorizedKey(rsaSSHPublicKey)
 
-	// Create secret with all host keys
-	secret = &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				"kloudlite.io/ssh-host-keys": "true",
-			},
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: obj.APIVersion,
-					Kind:       obj.Kind,
-					Name:       obj.Name,
-					UID:        obj.UID,
-				},
-			},
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"ssh_host_rsa_key":     rsaPrivateBytes,
-			"ssh_host_rsa_key.pub": rsaPublicBytes,
-		},
-	}
-
-	if err := r.Create(check.Context(), secret); err != nil {
-		return check.Failed(err)
-	}
-
-	return check.Passed()
-}
-
-// createSSHAuthorizedKeysConfig ensures the SSH authorized_keys ConfigMap exists
-func (r *WorkMachineReconciler) createSSHAuthorizedKeysConfig(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	// Skip for cloud provider WorkMachines
-	namespace := hostManagerNamespace
-	configMapName := fmt.Sprintf("ssh-authorized-keys-%s", obj.Name)
-
-	// Build authorized_keys content with user keys from WorkMachine spec
-	// Validate each SSH key before adding to authorized_keys
+	// Build authorized_keys content from WorkMachine spec
 	var authorizedKeys strings.Builder
 	for _, key := range obj.Spec.SSHPublicKeys {
 		trimmedKey := strings.TrimSpace(key)
@@ -815,7 +771,7 @@ func (r *WorkMachineReconciler) createSSHAuthorizedKeysConfig(check *reconciler.
 			continue
 		}
 
-		// Validate SSH key format using golang.org/x/crypto/ssh
+		// Validate SSH key format
 		if _, _, _, _, err := ssh.ParseAuthorizedKey([]byte(trimmedKey)); err != nil {
 			// Skip invalid keys but don't fail the entire reconciliation
 			continue
@@ -825,18 +781,43 @@ func (r *WorkMachineReconciler) createSSHAuthorizedKeysConfig(check *reconciler.
 		authorizedKeys.WriteString("\n")
 	}
 
-	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
+	// Create or update secret with all host keys and authorized_keys
+	secret = &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+		},
+	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, cfgMap, func() error {
-		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
-			"kloudlite.io/ssh-config":    "true",
-			"kloudlite.io/workmachine":   obj.Name,
-		}))
-		if cfgMap.Data == nil {
-			cfgMap.Data = make(map[string]string, 1)
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, secret, func() error {
+		secret.Labels = fn.MapMerge(secret.Labels, map[string]string{
+			"kloudlite.io/ssh-host-keys": "true",
+		})
+
+		// Set owner reference for cascade deletion
+		secret.SetOwnerReferences([]metav1.OwnerReference{
+			{
+				APIVersion: obj.APIVersion,
+				Kind:       obj.Kind,
+				Name:       obj.Name,
+				UID:        obj.UID,
+			},
+		})
+
+		secret.Type = corev1.SecretTypeOpaque
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
 		}
 
-		cfgMap.Data["authorized_keys"] = authorizedKeys.String()
+		// Only set host keys if they don't exist (preserve existing keys)
+		if _, exists := secret.Data["ssh_host_rsa_key"]; !exists {
+			secret.Data["ssh_host_rsa_key"] = rsaPrivateBytes
+			secret.Data["ssh_host_rsa_key.pub"] = rsaPublicBytes
+		}
+
+		// Always update authorized_keys (can change when user updates SSH keys)
+		secret.Data["authorized_keys"] = []byte(authorizedKeys.String())
+
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -866,6 +847,9 @@ PasswordAuthentication no
 PermitEmptyPasswords no
 ChallengeResponseAuthentication no
 AuthorizedKeysFile /var/lib/kloudlite/ssh-config/authorized_keys
+
+# Host Keys
+HostKey /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
 
 # SSH Jump Host / Bastion Configuration
 AllowTcpForwarding yes
