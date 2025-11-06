@@ -888,6 +888,9 @@ func main() {
 	if err := workspacev1.AddToScheme(scheme); err != nil {
 		zapLogger.Fatal("Failed to add workspace v1 scheme", zap2.Error(err))
 	}
+	if err := packagesv1.AddToScheme(scheme); err != nil {
+		zapLogger.Fatal("Failed to add packages v1 scheme", zap2.Error(err))
+	}
 
 	// Get in-cluster config
 	config, err := rest.InClusterConfig()
