@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -389,7 +390,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -465,7 +466,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_KloudliteBinMount(t *testing.T) 
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -563,7 +564,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
