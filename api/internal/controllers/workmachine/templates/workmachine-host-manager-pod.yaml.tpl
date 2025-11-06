@@ -18,6 +18,9 @@ spec:
   restartPolicy: Never
   serviceAccountName: workmachine-node-manager
   nodeName: {{ $workmachineName }}
+  dnsConfig:
+    searches:
+      - {{ .TargetNamespace }}.svc.cluster.local
   initContainers:
     - name: setup-nix
       image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development

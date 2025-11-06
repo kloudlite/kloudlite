@@ -988,6 +988,7 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 		templates.WorkspaceHostManagerValues{
 			Namespace:       namespace,
 			WorkMachineName: obj.Name,
+			TargetNamespace: obj.Spec.TargetNamespace,
 			SSHUsername:     SSHUserName,
 		},
 	)

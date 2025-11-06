@@ -39,7 +39,8 @@ type K3sAgentSetupArgs struct {
 }
 
 type WorkspaceHostManagerValues struct {
-	Namespace       string
-	WorkMachineName string
-	SSHUsername     string
+	Namespace        string
+	WorkMachineName  string
+	TargetNamespace  string
+	SSHUsername      string
 }
