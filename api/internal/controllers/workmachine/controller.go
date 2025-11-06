@@ -1275,11 +1275,42 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 		return check.Passed()
 	}
 
-	// Force delete all pods running on this node FIRST (before deleting cloud machine)
+	// Step 1: Add NoExecute taint to the node to evict pods
+	node := &corev1.Node{}
+	if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			check.Logger().Warn("failed to get node for tainting", "error", err)
+		}
+	} else {
+		// Add NoExecute taint if not already present
+		taintExists := false
+		for _, taint := range node.Spec.Taints {
+			if taint.Key == "kloudlite.io/workmachine-deleting" && taint.Effect == corev1.TaintEffectNoExecute {
+				taintExists = true
+				break
+			}
+		}
+
+		if !taintExists {
+			node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
+				Key:    "kloudlite.io/workmachine-deleting",
+				Value:  "true",
+				Effect: corev1.TaintEffectNoExecute,
+			})
+			if err := r.Update(check.Context(), node); err != nil {
+				check.Logger().Warn("failed to add NoExecute taint to node", "error", err)
+			} else {
+				check.Logger().Info("added NoExecute taint to node, waiting for pod eviction")
+				return check.UpdateMsg("Added NoExecute taint to node").RequeueAfter(2 * time.Second)
+			}
+		}
+	}
+
+	// Step 2: Force delete any remaining pods on this node
 	podList := &corev1.PodList{}
 	if err := r.List(check.Context(), podList, client.MatchingFields{"spec.nodeName": obj.Name}); err != nil {
 		check.Logger().Warn("failed to list pods on node", "error", err)
-	} else {
+	} else if len(podList.Items) > 0 {
 		gracePeriod := int64(0)
 		deleteOptions := &client.DeleteOptions{
 			GracePeriodSeconds: &gracePeriod,
@@ -1291,23 +1322,18 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 				check.Logger().Warn("failed to force delete pod", "pod", pod.Name, "namespace", pod.Namespace, "error", err)
 			}
 		}
+		// Wait for pods to be deleted
+		return check.UpdateMsg("Waiting for pods to be deleted").RequeueAfter(2 * time.Second)
 	}
 
-	// Delete the Kubernetes Node object
-	// The node name matches the WorkMachine name
-	node := &corev1.Node{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: obj.Name,
-		},
-	}
+	// Step 3: Delete the Kubernetes Node object
 	if err := r.Delete(check.Context(), node); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return check.Failed(fmt.Errorf("failed to delete Kubernetes node: %w", err))
 		}
-		// Node already deleted, that's ok
 	}
 
-	// Delete the cloud machine (EC2 instance) LAST
+	// Step 4: Delete the cloud machine (EC2 instance)
 	if err := r.cloudProviderAPI.DeleteMachine(check.Context(), obj.Status.MachineID); err != nil {
 		return check.Failed(fmt.Errorf("failed to delete AWS machine: %w", err))
 	}
