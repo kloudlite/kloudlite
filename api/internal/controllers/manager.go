@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/zapr"
 	"github.com/kloudlite/kloudlite/api/internal/config"
-	// "github.com/kloudlite/kloudlite/api/internal/controllers/composition"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest"
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
-	// "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
-	// "github.com/kloudlite/kloudlite/api/internal/controllers/user"
-	"github.com/go-logr/zapr"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/user"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -73,18 +73,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		return nil, fmt.Errorf("unable to create manager: %w", err)
 	}
 
-	// Health checks disabled to avoid port conflicts
+	// Setup User controller
+	userReconciler := &user.UserReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "user")),
+	}
 
-	// // Setup User controller
-	// userReconciler := &user.UserReconciler{
-	// 	Client: mgr.GetClient(),
-	// 	Scheme: mgr.GetScheme(),
-	// 	Logger: logger.With(zap.String("controller", "user")),
-	// }
-
-	// if err = userReconciler.SetupWithManager(mgr); err != nil {
-	// 	return nil, fmt.Errorf("unable to create User controller: %w", err)
-	// }
+	if err = userReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create User controller: %w", err)
+	}
 
 	// Setup Environment controller
 	environmentReconciler := &environment.EnvironmentReconciler{
@@ -101,16 +99,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
 	}
 
-	// // Setup Composition controller
-	// compositionReconciler := &composition.CompositionReconciler{
-	// 	Client: mgr.GetClient(),
-	// 	Scheme: mgr.GetScheme(),
-	// 	Logger: logger.With(zap.String("controller", "composition")),
-	// }
+	// Setup Composition controller
+	compositionReconciler := &composition.CompositionReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "composition")),
+	}
 
-	// if err = compositionReconciler.SetupWithManager(mgr); err != nil {
-	// 	return nil, fmt.Errorf("unable to create Composition controller: %w", err)
-	// }
+	if err = compositionReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create Composition controller: %w", err)
+	}
 
 	// Setup Workspace controller
 	clientset, err := kubernetes.NewForConfig(cfg)
@@ -130,16 +128,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
 	}
 
-	// // Setup ServiceIntercept controller
-	// serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
-	// 	Client: mgr.GetClient(),
-	// 	Scheme: mgr.GetScheme(),
-	// 	Logger: logger.With(zap.String("controller", "serviceintercept")),
-	// }
+	// Setup ServiceIntercept controller
+	serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "serviceintercept")),
+	}
 
-	// if err = serviceInterceptReconciler.SetupWithManager(mgr); err != nil {
-	// 	return nil, fmt.Errorf("unable to create ServiceIntercept controller: %w", err)
-	// }
+	if err = serviceInterceptReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create ServiceIntercept controller: %w", err)
+	}
 
 	// Setup DomainRequest controller
 	domainRequestReconciler := &domainrequest.DomainRequestReconciler{
@@ -153,9 +151,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 	if err = domainRequestReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create DomainRequest controller: %w", err)
 	}
-
-	// DomainRequest webhook is handled by Gin server in routes.go
-	// No need to setup controller-runtime webhook since WebhookServer is nil
 
 	logger.Info("Controllers initialized successfully")
 
