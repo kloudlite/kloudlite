@@ -207,8 +207,9 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 
 	// Check if there are any default machine types
 	// If no default exists and this is not explicitly set to false, make it default
+	// Skip this logic if being updated by webhook to prevent race condition
 	ctx := context.Background()
-	if !machineType.Spec.IsDefault {
+	if !machineType.Spec.IsDefault && (machineType.Annotations == nil || machineType.Annotations["kloudlite.io/webhook-updating"] != "true") {
 		existingTypes := &machinesv1.MachineTypeList{}
 		if err := w.k8sClient.List(ctx, existingTypes); err == nil {
 			hasDefault := false
@@ -262,6 +263,14 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 		patches = append(patches, map[string]any{
 			"op":   "remove",
 			"path": "/metadata/labels/kloudlite.io~1machinetype.default",
+		})
+	}
+
+	// Remove webhook-updating annotation if it exists
+	if machineType.Annotations != nil && machineType.Annotations["kloudlite.io/webhook-updating"] == "true" {
+		patches = append(patches, map[string]any{
+			"op":   "remove",
+			"path": "/metadata/annotations/kloudlite.io~1webhook-updating",
 		})
 	}
 
@@ -512,6 +521,12 @@ func (w *MachineTypeGinWebhook) removeDefaultFromOthers(ctx context.Context, cur
 			if machineType.Labels != nil {
 				delete(machineType.Labels, "kloudlite.io/machinetype.default")
 			}
+
+			// Add annotation to skip auto-default logic in mutation webhook
+			if machineType.Annotations == nil {
+				machineType.Annotations = make(map[string]string)
+			}
+			machineType.Annotations["kloudlite.io/webhook-updating"] = "true"
 
 			// Update the machine type
 			if err := w.k8sClient.Update(ctx, machineType); err != nil {
