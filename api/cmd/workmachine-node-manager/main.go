@@ -28,13 +28,13 @@ import (
 )
 
 const (
-	nixStorePath            = "/nix"
-	workspaceHomePath       = "/var/lib/kloudlite/workspace-homes/kl"
-	workspaceUserUID        = 1001
-	workspaceUserGID        = 1001
-	sshConfigPath           = "/var/lib/kloudlite/ssh-config"
-	authorizedKeysFile      = "authorized_keys"
-	packageRequestFinalizer = "workspaces.kloudlite.io/package-cleanup"
+	nixStorePath              = "/nix"
+	workspaceHomePath         = "/var/lib/kloudlite/workspace-homes/kl"
+	workspaceUserUID          = 1001
+	workspaceUserGID          = 1001
+	sshConfigPath             = "/var/lib/kloudlite/ssh-config"
+	authorizedKeysFile        = "authorized_keys"
+	packageRequestFinalizer   = "workspaces.kloudlite.io/package-cleanup"
 	workspaceCleanupFinalizer = "workspaces.kloudlite.io/directory-cleanup"
 )
 
