@@ -160,7 +160,7 @@ spec:
       emptyDir: {}
     - name: sshd-config
       configMap:
-        name: sshd-config-{{.WorkMachineName}}
+        name: sshd-config
     - name: ssh-host-keys
       secret:
         secretName: ssh-host-keys-{{.WorkMachineName}}
