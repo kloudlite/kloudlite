@@ -803,7 +803,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 // createSSHAuthorizedKeysConfig ensures the SSH authorized_keys ConfigMap exists
 func (r *WorkMachineReconciler) createSSHAuthorizedKeysConfig(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	// Skip for cloud provider WorkMachines
-	namespace := obj.Spec.TargetNamespace
+	namespace := hostManagerNamespace
 	configMapName := "ssh-authorized-keys"
 
 	// Build authorized_keys content with user keys from WorkMachine spec
