@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/config"
@@ -113,10 +114,33 @@ func (s *Server) Start() error {
 		}
 	}()
 
-	// Give HTTPS server a moment to start listening
-	time.Sleep(500 * time.Millisecond)
+	// Start HTTP server in background
+	go func() {
+		s.logger.Info("Starting HTTP server", zap.String("addr", s.httpServer.Addr))
+		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			s.logger.Error("HTTP server stopped with error", zap.Error(err))
+		}
+	}()
 
-	// Start subdomain poller
+	// Give servers a moment to start listening
+	time.Sleep(2 * time.Second)
+
+	// Install webhook configurations now that the server is ready
+	s.logger.Info("Installing webhook configurations...")
+	caBundle, err := os.ReadFile("/etc/webhook/certs/tls.crt")
+	if err != nil {
+		s.logger.Error("Failed to read webhook CA certificate", zap.Error(err))
+		return fmt.Errorf("failed to read webhook CA certificate: %w", err)
+	}
+
+	webhookInstaller := services.NewWebhookInstaller(s.k8sClient.RuntimeClient, s.logger, caBundle)
+	if err := webhookInstaller.InstallWebhooks(context.Background()); err != nil {
+		s.logger.Error("Failed to install webhook configurations", zap.Error(err))
+		// Don't fail startup, just log the error
+		s.logger.Warn("Continuing without webhook configurations")
+	}
+
+	// Start subdomain poller after webhooks are installed
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -156,14 +180,8 @@ func (s *Server) Start() error {
 		}
 	}()
 
-	// Start HTTP server on port 8080
-	s.logger.Info("Starting HTTP server", zap.String("addr", s.httpServer.Addr))
-
-	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("failed to start HTTP server: %w", err)
-	}
-
-	return nil
+	// Keep the main goroutine alive
+	select {}
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
