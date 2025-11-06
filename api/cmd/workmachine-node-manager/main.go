@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -104,7 +105,7 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	logger.Info("Reconciling PackageRequest")
 
 	// Fetch PackageRequest
-	pkgReq := &workspacev1.PackageRequest{}
+	pkgReq := &packagesv1.PackageRequest{}
 	if err := r.Get(ctx, req.NamespacedName, pkgReq); err != nil {
 		logger.Error("Failed to get PackageRequest", zap2.Error(err))
 		return reconcile.Result{}, client.IgnoreNotFound(err)
@@ -218,7 +219,7 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 
 	// Set phase to Installing and clear old failed packages before starting installation
 	// This ensures old failures are cleared when we retry
-	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *workspacev1.PackageRequest) {
+	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
 		latest.Status.Phase = "Installing"
 		latest.Status.FailedPackages = []string{} // Clear old failed packages
 		latest.Status.Message = "Installing packages..."
@@ -295,7 +296,7 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	}
 
 	// Update status to reflect actual state
-	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *workspacev1.PackageRequest) {
+	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
 		latest.Status.InstalledPackages = installedPackages
 		latest.Status.FailedPackages = failedPackages
 		latest.Status.LastUpdated = metav1.Now()
@@ -389,13 +390,13 @@ func (r *PackageManagerReconciler) getInstalledPackagesFromProfile(profileName s
 func (r *PackageManagerReconciler) updateStatusWithRetry(
 	ctx context.Context,
 	namespacedName client.ObjectKey,
-	updateFn func(*workspacev1.PackageRequest),
+	updateFn func(*packagesv1.PackageRequest),
 	logger *zap2.Logger,
 ) error {
 	const maxRetries = 3
 	for i := 0; i < maxRetries; i++ {
 		// Fetch the latest version
-		latest := &workspacev1.PackageRequest{}
+		latest := &packagesv1.PackageRequest{}
 		if err := r.Get(ctx, namespacedName, latest); err != nil {
 			return fmt.Errorf("failed to fetch latest PackageRequest: %w", err)
 		}
@@ -561,13 +562,13 @@ func removeString(slice []string, s string) []string {
 
 func (r *PackageManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&workspacev1.PackageRequest{}).
+		For(&packagesv1.PackageRequest{}).
 		WithEventFilter(predicate.Funcs{
 			// Reconcile on Create and Update (spec changes)
 			// The Reconcile function itself will check if reconciliation is needed
 			UpdateFunc: func(e event.UpdateEvent) bool {
-				oldPR, okOld := e.ObjectOld.(*workspacev1.PackageRequest)
-				newPR, okNew := e.ObjectNew.(*workspacev1.PackageRequest)
+				oldPR, okOld := e.ObjectOld.(*packagesv1.PackageRequest)
+				newPR, okNew := e.ObjectNew.(*packagesv1.PackageRequest)
 				if !okOld || !okNew {
 					return false
 				}

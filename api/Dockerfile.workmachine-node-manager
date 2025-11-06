@@ -1,34 +1,10 @@
-# CI Dockerfile - expects pre-built binary at ./bin/workmachine-node-manager
-FROM debian:bookworm-slim
+FROM nixos/nix:latest
 
-# Install dependencies including nix with apt cache mount
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y \
-    curl \
-    xz-utils \
-    ca-certificates \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+# Copy the pre-built binary
+COPY bin/workmachine-node-manager /usr/local/bin/workmachine-node-manager
 
-# Create /nix directory for Nix installation
-RUN mkdir -m 0755 /nix && chown root /nix
+# Make it executable
+RUN chmod +x /usr/local/bin/workmachine-node-manager
 
-# Create nixbld group and build users
-RUN groupadd -g 30000 nixbld && \
-    for i in $(seq 1 10); do \
-        useradd -c "Nix build user $i" -d /var/empty -g nixbld -G nixbld -M -N -r -s "$(command -v nologin)" "nixbld$i"; \
-    done
-
-# Install Nix in single-user mode with cache mount for downloads
-RUN --mount=type=cache,target=/tmp/nix-install-cache \
-    curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
-
-# Source nix profile
-ENV PATH="/root/.nix-profile/bin:${PATH}"
-
-# Copy the pre-built binary from local filesystem
-COPY ./bin/workmachine-node-manager /usr/local/bin/workmachine-node-manager
-
-# Run workmachine-node-manager
-CMD ["/usr/local/bin/workmachine-node-manager"]
+# Run the node manager
+ENTRYPOINT ["/usr/local/bin/workmachine-node-manager"]
