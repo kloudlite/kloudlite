@@ -15,19 +15,7 @@ metadata:
     kloudlite.io/package-mgmt: "true"
     kloudlite.io/workmachine: {{ $workmachineName }}
 spec:
-  hostNetwork: true
   restartPolicy: Never
-  dnsPolicy: None
-  dnsConfig:
-    nameservers:
-      - 10.43.0.10
-    searches:
-      - {{ $namespace }}.svc.cluster.local
-      - svc.cluster.local
-      - cluster.local
-    options:
-      - name: ndots
-        value: "5"
   serviceAccountName: workmachine-node-manager
   nodeName: {{ $workmachineName }}
   initContainers:
