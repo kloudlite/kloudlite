@@ -2,9 +2,23 @@
 apiVersion: machines.kloudlite.io/v1
 kind: MachineType
 metadata:
+  name: t3-medium
+spec:
+  displayName: Starter (t3.medium)
+  description: For testing and small experiments - minimal resources for quick trials
+  category: development
+  active: true
+  priority: 5
+  resources:
+    cpu: "2"
+    memory: 4Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
   name: m5-xlarge
 spec:
-  displayName: Light Development (m5.xlarge)
+  displayName: Light (m5.xlarge)
   description: For simple projects and learning - runs lightweight IDEs and basic services
   category: development
   active: true
@@ -18,7 +32,7 @@ kind: MachineType
 metadata:
   name: m5-2xlarge
 spec:
-  displayName: Standard Development (m5.2xlarge)
+  displayName: Standard (m5.2xlarge)
   description: For typical full-stack development - runs IDEs and multiple backend services
   category: general
   active: true
@@ -33,7 +47,7 @@ kind: MachineType
 metadata:
   name: c5-3xlarge
 spec:
-  displayName: Heavy Development (c5.3xlarge)
+  displayName: Heavy (c5.3xlarge)
   description: For microservices and complex projects - runs multiple IDEs and heavy processes
   category: compute-optimized
   active: true
@@ -47,7 +61,7 @@ kind: MachineType
 metadata:
   name: r5-2xlarge
 spec:
-  displayName: Intensive Development (r5.2xlarge)
+  displayName: Intensive (r5.2xlarge)
   description: For large-scale projects with many services - maximum development capacity
   category: memory-optimized
   active: true
