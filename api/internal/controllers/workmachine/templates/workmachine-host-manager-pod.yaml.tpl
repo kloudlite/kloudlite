@@ -32,7 +32,7 @@ spec:
   nodeName: {{ $workmachineName }}
   initContainers:
     - name: setup-nix
-      image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development-local
+      image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
       imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true
@@ -90,7 +90,7 @@ spec:
 
   containers:
     - name: workmachine-node-manager
-      image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development-local
+      image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
       imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true
