@@ -749,10 +749,11 @@ chmod 644 /tmp-writable/kloudlite-context.json
 		Nameservers: []string{"10.43.0.10"}, // Required but will be overridden by mounted resolv.conf
 	}
 
-	// Apply nodeSelector from WorkMachine to ensure workspace runs on the same node
+	// Directly assign the pod to the WorkMachine node
+	// This bypasses the scheduler and taints, ensuring workspace runs on the correct node
 	// This is critical for shared Nix store access via hostPath volumes
-	pod.Spec.NodeSelector = wm.Status.NodeLabels
-	pod.Spec.Tolerations = wm.Status.PodTolerations
+	// Node name matches WorkMachine name
+	pod.Spec.NodeName = wm.Name
 
 	// Set owner reference
 	if err := controllerutil.SetControllerReference(workspace, pod, r.Scheme); err != nil {

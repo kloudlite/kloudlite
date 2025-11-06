@@ -17,15 +17,9 @@ import (
 func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
 
-	// Get target namespace from WorkMachine
-	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
-	if err != nil {
-		return fmt.Errorf("failed to get target namespace: %w", err)
-	}
-
-	// Check if PackageRequest exists
+	// Check if PackageRequest exists (cluster-scoped)
 	pkgReq := &workspacev1.PackageRequest{}
-	err = r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: targetNamespace}, pkgReq)
+	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq)
 
 	if apierrors.IsNotFound(err) {
 		// PackageRequest doesn't exist
@@ -35,11 +29,10 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 			return nil
 		}
 
-		// Create new PackageRequest
+		// Create new PackageRequest (cluster-scoped)
 		pkgReq = &workspacev1.PackageRequest{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      pkgReqName,
-				Namespace: targetNamespace,
+				Name: pkgReqName,
 			},
 			Spec: workspacev1.PackageRequestSpec{
 				WorkspaceRef: workspace.Name,
@@ -48,10 +41,16 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 			},
 		}
 
-		// Set owner reference
-		if err := controllerutil.SetControllerReference(workspace, pkgReq, r.Scheme); err != nil {
-			return fmt.Errorf("failed to set owner reference: %w", err)
+		// Set owner reference (Workspace owns PackageRequest) without blockOwnerDeletion
+		blockOwnerDeletion := false
+		ownerRef := metav1.OwnerReference{
+			APIVersion:         workspace.APIVersion,
+			Kind:               workspace.Kind,
+			Name:               workspace.Name,
+			UID:                workspace.UID,
+			BlockOwnerDeletion: &blockOwnerDeletion,
 		}
+		pkgReq.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
 
 		if err := r.Create(ctx, pkgReq); err != nil {
 			return fmt.Errorf("failed to create PackageRequest: %w", err)
@@ -110,16 +109,10 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 		return nil
 	}
 
-	// Get target namespace from WorkMachine
-	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
-	if err != nil {
-		return fmt.Errorf("failed to get target namespace: %w", err)
-	}
-
-	// Get the PackageRequest
+	// Get the PackageRequest (cluster-scoped)
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
 	pkgReq := &workspacev1.PackageRequest{}
-	err = r.Get(ctx, client.ObjectKey{Name: pkgReqName, Namespace: targetNamespace}, pkgReq)
+	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// PackageRequest not yet created

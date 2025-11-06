@@ -45,7 +45,7 @@ type PackageRequestStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced,categories={kloudlite,packages}
+// +kubebuilder:resource:scope=Cluster,categories={kloudlite,packages}
 // +kubebuilder:printcolumn:name="Workspace",type=string,JSONPath=`.spec.workspaceRef`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Installed",type=integer,JSONPath=`.status.installedPackages[*].name`

@@ -82,31 +82,12 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		return step.ReconcilerResponse()
 	}
 
-	forcedReconcile := req.Object.GetAnnotations()[AnnotationForceReconcileKey] == AnnotationForceReconcileValue
-
 	for i := range steps {
 		checkName := checkList[i].Name
-
-		// Skip if already passed in current generation (resumability)
-		if !forcedReconcile {
-			if existingCheck, exists := req.Object.GetStatus().Checks[checkName]; exists {
-				if existingCheck.State == PassedState && existingCheck.Generation == req.Object.GetGeneration() {
-					req.internalLogger.Info("⏭️  skipping passed check", "check.name", checkName)
-					continue
-				}
-			}
-		}
-
 		check := NewRunningCheck(checkName, req)
 		if result := steps[i].OnCreate(check, req.Object); !result.ShouldProceed() {
 			return result.ReconcilerResponse()
 		}
-	}
-
-	if forcedReconcile {
-		ann := req.Object.GetAnnotations()
-		delete(ann, AnnotationForceReconcileKey)
-		req.Object.SetAnnotations(ann)
 	}
 
 	req.Object.GetStatus().IsReady = true

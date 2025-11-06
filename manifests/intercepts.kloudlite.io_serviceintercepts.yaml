@@ -15,7 +15,7 @@ spec:
     listKind: ServiceInterceptList
     plural: serviceintercepts
     singular: serviceintercept
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.workspaceRef.name
@@ -89,7 +89,9 @@ spec:
                 minItems: 1
                 type: array
               serviceRef:
-                description: ServiceRef references the service to intercept
+                description: |-
+                  ServiceRef references the service to intercept
+                  The intercept will run in the service's namespace
                 properties:
                   apiVersion:
                     description: API version of the referent.

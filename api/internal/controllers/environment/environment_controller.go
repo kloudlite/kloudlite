@@ -269,20 +269,23 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 				// Don't fail reconciliation, just log the error
 				// The ownership will be set on next reconciliation
 			} else {
-				// Set WorkMachine as controller owner for cascading deletion
-				if err := controllerutil.SetControllerReference(workmachine, environment, r.Scheme); err != nil {
-					logger.Error("Failed to set WorkMachine as owner",
-						zap.String("workmachine", environment.Spec.WorkMachineName),
-						zap.Error(err))
-					// Don't fail reconciliation
-				} else {
-					if err := r.Update(ctx, environment); err != nil {
-						logger.Error("Failed to update Environment with owner reference", zap.Error(err))
-						return reconcile.Result{}, err
-					}
-					logger.Info("Successfully set WorkMachine as owner of Environment")
-					return reconcile.Result{Requeue: true}, nil
+				// Set WorkMachine as owner for cascading deletion (without blockOwnerDeletion)
+				blockOwnerDeletion := false
+				ownerRef := metav1.OwnerReference{
+					APIVersion:         workmachine.APIVersion,
+					Kind:               workmachine.Kind,
+					Name:               workmachine.Name,
+					UID:                workmachine.UID,
+					BlockOwnerDeletion: &blockOwnerDeletion,
 				}
+				environment.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+
+				if err := r.Update(ctx, environment); err != nil {
+					logger.Error("Failed to update Environment with owner reference", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+				logger.Info("Successfully set WorkMachine as owner of Environment")
+				return reconcile.Result{Requeue: true}, nil
 			}
 		}
 	}

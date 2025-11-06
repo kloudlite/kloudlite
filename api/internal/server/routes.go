@@ -13,9 +13,8 @@ import (
 )
 
 func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *services.Manager) *gin.Engine {
-	if cfg.IsProduction() {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	// Always use release mode to disable [GIN-debug] logs
+	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
 

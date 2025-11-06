@@ -12,6 +12,7 @@ import (
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Namespace",type=string,JSONPath=`.spec.targetNamespace`
+// +kubebuilder:printcolumn:name="WorkMachine",type=string,JSONPath=`.spec.workmachineName`
 // +kubebuilder:printcolumn:name="Activated",type=boolean,JSONPath=`.spec.activated`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Last Activated",type=date,JSONPath=`.status.lastActivatedTime`

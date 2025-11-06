@@ -12,7 +12,7 @@ spec:
     listKind: DomainRequestList
     plural: domainrequests
     singular: domainrequest
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.ipAddress
@@ -178,9 +178,17 @@ spec:
                 - serviceNamespace
                 - servicePort
                 type: object
+              workloadNamespace:
+                default: kloudlite-ingress
+                description: |-
+                  WorkloadNamespace is the namespace where DomainRequest workloads (HAProxy pod, configmap, secret) run
+                  All DomainRequests share a common workload namespace for centralized ingress management
+                minLength: 1
+                type: string
             required:
             - certificateScope
             - nodeName
+            - workloadNamespace
             type: object
           status:
             description: DomainRequestStatus defines the observed state of DomainRequest

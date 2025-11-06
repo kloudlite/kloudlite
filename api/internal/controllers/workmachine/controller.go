@@ -23,7 +23,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	"golang.org/x/crypto/ssh"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -181,12 +180,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "setup cloud machine",
-			Title:    "Setup Cloud Machine",
-			OnCreate: r.setupCloudMachine,
-			OnDelete: r.cleanupCloudMachine,
-		},
-		{
 			Name:     "ensure-deployment",
 			Title:    "Ensure workmachine-host-manager deployment",
 			OnCreate: r.ensurePackageManagerDeploymentStep,
@@ -195,8 +188,14 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 		{
 			Name:     "setup domain request",
 			Title:    "Sets up Domain Request Settings for the workmachine",
-			OnCreate: r.createDomainRequest,
+			OnCreate: r.syncDomainRequest,
 			OnDelete: r.deleteDomainRequest,
+		},
+		{
+			Name:     "setup cloud machine",
+			Title:    "Setup Cloud Machine",
+			OnCreate: r.setupCloudMachine,
+			OnDelete: r.cleanupCloudMachine,
 		},
 	})
 }
@@ -239,8 +238,8 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 		}
 	}
 
-	// Check for active Workspaces owned by this WorkMachine
-	// Workspaces are cluster-scoped, so list all and filter by WorkmachineName
+	// Delete workspace pods directly (bypass finalizers for faster cleanup)
+	// When WorkMachine is being deleted, we don't need graceful workspace cleanup
 	workspaceList := &workspacev1.WorkspaceList{}
 	if err := r.List(check.Context(), workspaceList); err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -256,18 +255,104 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 		}
 	}
 
-	// Block deletion if there are active workspaces owned by this WorkMachine
-	if len(ownedWorkspaces) > 0 {
-		workspaceNames := make([]string, len(ownedWorkspaces))
-		for i, ws := range ownedWorkspaces {
-			workspaceNames[i] = ws.Name
+	// Directly delete workspace pods to speed up cleanup
+	for _, ws := range ownedWorkspaces {
+		// Delete the workspace pod directly
+		podName := fmt.Sprintf("workspace-%s", ws.Name)
+		pod := &corev1.Pod{}
+		err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: namespaceName}, pod)
+		if err == nil {
+			// Pod exists, delete it
+			if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
+				return check.Failed(fmt.Errorf("failed to delete workspace pod %s: %w", podName, err))
+			}
+		} else if !apiErrors.IsNotFound(err) {
+			return check.Errored(err)
 		}
 
-		return check.UpdateMsg(fmt.Sprintf("Deletion blocked: %d active workspaces exist (%s)",
-			len(ownedWorkspaces), strings.Join(workspaceNames, ", ")))
+		// Remove finalizer from workspace to allow it to be deleted immediately
+		if ws.DeletionTimestamp == nil {
+			// Workspace not being deleted yet, delete it
+			if err := r.Delete(check.Context(), &ws); err != nil && !apiErrors.IsNotFound(err) {
+				return check.Failed(fmt.Errorf("failed to delete workspace %s: %w", ws.Name, err))
+			}
+		} else {
+			// Workspace is being deleted but stuck on finalizer, remove it
+			if controllerutil.ContainsFinalizer(&ws, "workspaces.kloudlite.io/finalizer") {
+				controllerutil.RemoveFinalizer(&ws, "workspaces.kloudlite.io/finalizer")
+				if err := r.Update(check.Context(), &ws); err != nil && !apiErrors.IsNotFound(err) {
+					return check.Failed(fmt.Errorf("failed to remove finalizer from workspace %s: %w", ws.Name, err))
+				}
+			}
+		}
 	}
 
-	// No workspaces, proceed with namespace deletion
+	// Delete environment namespaces directly (bypass finalizers for faster cleanup)
+	for _, env := range envList.Items {
+		if env.Spec.WorkMachineName == obj.Name {
+			// Delete the environment namespace directly if it exists
+			if env.Spec.TargetNamespace != "" {
+				envNs := &corev1.Namespace{}
+				err := r.Get(check.Context(), client.ObjectKey{Name: env.Spec.TargetNamespace}, envNs)
+				if err == nil {
+					// Namespace exists, delete it
+					if err := r.Delete(check.Context(), envNs); err != nil && !apiErrors.IsNotFound(err) {
+						return check.Failed(fmt.Errorf("failed to delete environment namespace %s: %w", env.Spec.TargetNamespace, err))
+					}
+				} else if !apiErrors.IsNotFound(err) {
+					return check.Errored(err)
+				}
+			}
+
+			// Remove finalizer from environment to allow it to be deleted immediately
+			if env.DeletionTimestamp == nil {
+				// Environment not being deleted yet, delete it
+				if err := r.Delete(check.Context(), &env); err != nil && !apiErrors.IsNotFound(err) {
+					return check.Failed(fmt.Errorf("failed to delete environment %s: %w", env.Name, err))
+				}
+			} else {
+				// Environment is being deleted but stuck on finalizer, remove it
+				if controllerutil.ContainsFinalizer(&env, "environments.kloudlite.io/finalizer") {
+					controllerutil.RemoveFinalizer(&env, "environments.kloudlite.io/finalizer")
+					if err := r.Update(check.Context(), &env); err != nil && !apiErrors.IsNotFound(err) {
+						return check.Failed(fmt.Errorf("failed to remove finalizer from environment %s: %w", env.Name, err))
+					}
+				}
+			}
+		}
+	}
+
+	// Delete host-manager pod and service in finalizer
+	// Cluster-scoped WorkMachine cannot own namespaced resources via owner references
+	hostManagerName := fmt.Sprintf("hm-%s", obj.Name)
+
+	// Delete pod
+	pod := &corev1.Pod{}
+	if err := r.Get(check.Context(), client.ObjectKey{
+		Name:      hostManagerName,
+		Namespace: hostManagerNamespace,
+	}, pod); err == nil {
+		if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete host manager pod: %w", err))
+		}
+	} else if !apiErrors.IsNotFound(err) {
+		return check.Errored(err)
+	}
+
+	// Delete service
+	service := &corev1.Service{}
+	if err := r.Get(check.Context(), client.ObjectKey{
+		Name:      hostManagerName,
+		Namespace: hostManagerNamespace,
+	}, service); err == nil {
+		if err := r.Delete(check.Context(), service); err != nil && !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete host manager service: %w", err))
+		}
+	} else if !apiErrors.IsNotFound(err) {
+		return check.Errored(err)
+	}
+
+	// Proceed with namespace deletion
 	namespace := &corev1.Namespace{}
 	err := r.Get(check.Context(), client.ObjectKey{Name: namespaceName}, namespace)
 	if err == nil {
@@ -300,8 +385,22 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 
 // createPackageManagerRBAC ensures RBAC resources for workmachine-node-manager
 func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	namespace := obj.Spec.TargetNamespace
+	// Create RBAC in both namespaces:
+	// 1. WorkMachine target namespace for workspace pods
+	// 2. Shared hostmanager namespace for host manager deployment
+	namespaces := []string{obj.Spec.TargetNamespace, hostManagerNamespace}
 
+	for _, namespace := range namespaces {
+		if err := r.createRBACInNamespace(check.Context(), namespace); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	return check.Passed()
+}
+
+// createRBACInNamespace creates RBAC resources for package management in the given namespace
+func (r *WorkMachineReconciler) createRBACInNamespace(ctx context.Context, namespace string) error {
 	// Create ServiceAccount
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -310,14 +409,14 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 		},
 	}
 
-	if err := r.Get(check.Context(), client.ObjectKey{Name: sa.Name, Namespace: namespace}, sa); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: sa.Name, Namespace: namespace}, sa); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Errored(err)
+			return err
 		}
 
 		// Create service account
-		if err := r.Create(check.Context(), sa); err != nil && !apiErrors.IsAlreadyExists(err) {
-			return check.Failed(err)
+		if err := r.Create(ctx, sa); err != nil && !apiErrors.IsAlreadyExists(err) {
+			return err
 		}
 	}
 
@@ -347,14 +446,14 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 	}
 
 	existingRole := &rbacv1.Role{}
-	if err := r.Get(check.Context(), client.ObjectKey{Name: role.Name, Namespace: namespace}, existingRole); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: role.Name, Namespace: namespace}, existingRole); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Errored(err)
+			return err
 		}
 
 		// Create role
-		if err := r.Create(check.Context(), role); err != nil && !apiErrors.IsAlreadyExists(err) {
-			return check.Failed(err)
+		if err := r.Create(ctx, role); err != nil && !apiErrors.IsAlreadyExists(err) {
+			return err
 		}
 	}
 
@@ -379,18 +478,18 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 	}
 
 	existingRB := &rbacv1.RoleBinding{}
-	if err := r.Get(check.Context(), client.ObjectKey{Name: rb.Name, Namespace: namespace}, existingRB); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: rb.Name, Namespace: namespace}, existingRB); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Errored(err)
+			return err
 		}
 
 		// Create role binding
-		if err := r.Create(check.Context(), rb); err != nil && !apiErrors.IsAlreadyExists(err) {
-			return check.Failed(err)
+		if err := r.Create(ctx, rb); err != nil && !apiErrors.IsAlreadyExists(err) {
+			return err
 		}
 	}
 
-	return check.Passed()
+	return nil
 }
 
 // createWorkspaceRBAC ensures RBAC resources for workspace pods
@@ -754,65 +853,92 @@ StrictModes no
 	return check.Passed()
 }
 
-const workmachineHostManager = "workmachine-host-manager"
+const hostManagerNamespace = "kloudlite-hostmanager"
 
-// ensurePackageManagerDeploymentStep ensures the workmachine-host-manager deployment exists
+// ensurePackageManagerDeploymentStep ensures the workmachine-host-manager pod exists
+// Pod will be recreated by the controller if it crashes
 func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	namespace := obj.Spec.TargetNamespace
+	namespace := hostManagerNamespace
+	// Use unique name per WorkMachine since all host managers share the same namespace
+	hostManagerName := fmt.Sprintf("hm-%s", obj.Name)
 
-	deployment := &appsv1.Deployment{
+	pod := &corev1.Pod{}
+	err := r.Get(check.Context(), client.ObjectKey{Name: hostManagerName, Namespace: hostManagerNamespace}, pod)
+
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return check.Errored(err)
+	}
+
+	// If pod exists, check its status
+	if err == nil {
+		// Check if pod is in a failed/completed state and needs recreation
+		if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodSucceeded {
+			// Delete the failed/completed pod so it will be recreated
+			if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
+				return check.Failed(fmt.Errorf("failed to delete failed/completed pod: %w", err))
+			}
+			// Pod deleted, will be recreated in next reconcile
+			return check.UpdateMsg("Recreating failed pod").RequeueAfter(2 * time.Second)
+		}
+
+		// Pod exists and is running/pending - all good
+		return check.Passed()
+	}
+
+	// Pod doesn't exist, create it
+	pod = &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      workmachineHostManager,
-			Namespace: obj.Spec.TargetNamespace,
+			Name:      hostManagerName,
+			Namespace: hostManagerNamespace,
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, deployment, func() error {
-		// Render deployment from template
-		b, err := templates.WorkMachineHostManagerDeployment.Render(
-			templates.WorkspaceHostManagerValues{
-				Namespace:       namespace,
-				WorkMachineName: obj.Name,
-				SSHUsername:     SSHUserName,
-				NodeSelector:    obj.Status.NodeLabels,
-				Tolerations:     obj.Status.PodTolerations,
-			},
-		)
-		if err != nil {
-			return errors.Wrap("failed to render workmachine host manager deployment template", err)
+	// Render pod from template
+	b, err := templates.WorkMachineHostManagerPod.Render(
+		templates.WorkspaceHostManagerValues{
+			Namespace:       namespace,
+			WorkMachineName: obj.Name,
+			SSHUsername:     SSHUserName,
+		},
+	)
+	if err != nil {
+		return check.Failed(errors.Wrap("failed to render workmachine host manager pod template", err))
+	}
+
+	if err := yaml.Unmarshal(b, &pod); err != nil {
+		return check.Failed(errors.Wrap("failed to unmarshal into pod", err))
+	}
+
+	// Set labels
+	pod.SetLabels(fn.MapMerge(pod.GetLabels(), map[string]string{
+		"app":                       hostManagerName,
+		"kloudlite.io/package-mgmt": "true",
+		"kloudlite.io/workmachine":  obj.Name,
+	}))
+
+	if err := r.Create(check.Context(), pod); err != nil {
+		if apiErrors.IsAlreadyExists(err) {
+			return check.Passed()
 		}
-
-		deployment.SetLabels(fn.MapMerge(deployment.GetLabels(), map[string]string{
-			"app":                       deployment.Name,
-			"kloudlite.io/package-mgmt": "true",
-			"kloudlite.io/workmachine":  obj.Name,
-		}))
-
-		if err := yaml.Unmarshal(b, &deployment); err != nil {
-			return errors.Wrap("failed to unmarshal into deployment", err)
-		}
-
-		return nil
-	}); err != nil {
 		return check.Failed(err)
 	}
 
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      workmachineHostManager,
-			Namespace: obj.Spec.TargetNamespace,
+			Name:      hostManagerName,
+			Namespace: hostManagerNamespace,
 		},
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svc, func() error {
 		svc.SetLabels(fn.MapMerge(svc.GetLabels(), map[string]string{
-			"app":                       workmachineHostManager,
+			"app":                       hostManagerName,
 			"kloudlite.io/package-mgmt": "true",
 			"kloudlite.io/workmachine":  obj.Name,
 		}))
 
 		svc.Spec.Selector = map[string]string{
-			"app": workmachineHostManager,
+			"app": hostManagerName,
 		}
 
 		svc.Spec.Ports = []corev1.ServicePort{
@@ -830,6 +956,35 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 	}
 
 	return check.Passed()
+}
+
+// syncDomainRequest creates or updates the DomainRequest with the latest WorkMachine IP
+// This runs on every reconcile to keep the DomainRequest in sync
+func (r *WorkMachineReconciler) syncDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	// First check if DomainRequest exists and has the correct IP
+	domainRequest := &domainrequestv1.DomainRequest{}
+	err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, domainRequest)
+
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return check.Errored(err)
+	}
+
+	// If DomainRequest exists, check if IP needs updating
+	if err == nil {
+		// If WorkMachine has a public IP and it doesn't match DomainRequest IP, update it
+		if obj.Status.PublicIP != "" && domainRequest.Spec.IPAddress != obj.Status.PublicIP {
+			check.Logger().Info("DomainRequest IP mismatch, updating",
+				"current", domainRequest.Spec.IPAddress,
+				"expected", obj.Status.PublicIP)
+			return r.createDomainRequest(check, obj)
+		}
+
+		// IPs match, all good
+		return check.Passed()
+	}
+
+	// DomainRequest doesn't exist, create it
+	return r.createDomainRequest(check, obj)
 }
 
 func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
@@ -903,7 +1058,19 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 		},
 	}
 
+	// Set WorkMachine as owner for cascading deletion
+	blockOwnerDeletion := false
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         obj.APIVersion,
+		Kind:               obj.Kind,
+		Name:               obj.Name,
+		UID:                obj.UID,
+		BlockOwnerDeletion: &blockOwnerDeletion,
+	}
+	domainRequest.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, domainRequest, func() error {
+		hostManagerName := fmt.Sprintf("hm-%s", obj.Name)
 		domainRequest.Spec = domainrequestv1.DomainRequestSpec{
 			NodeName:          obj.Name,
 			WorkloadNamespace: "kloudlite-ingress", // Shared namespace for all DomainRequest workloads
@@ -914,8 +1081,8 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 				fmt.Sprintf("*.%s.%s", obj.Name, subDomain),
 			},
 			SSHBackend: &domainrequestv1.IngressBackendConfig{
-				ServiceName:      workmachineHostManager,
-				ServiceNamespace: obj.Spec.TargetNamespace,
+				ServiceName:      hostManagerName,
+				ServiceNamespace: hostManagerNamespace,
 				ServicePort:      22,
 			},
 			DomainRoutes: domainRoutes,
@@ -1014,35 +1181,8 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 	obj.Status.PrivateIP = machineInfo.PrivateIP
 	obj.Status.RootVolumeSize = specVolume
 
-	// Fetch node information to populate nodeLabels and nodeTaints
-	node := &corev1.Node{}
-	if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Errored(err)
-		}
-		// Node not yet registered, that's ok
-		return check.UpdateMsg("Waiting for node to register").RequeueAfter(10 * time.Second)
-	}
-
-	// Filter and update only kloudlite.io/ prefixed labels
-	obj.Status.NodeLabels = fn.MapFilter(node.Labels, func(k, v string) bool {
-		return strings.HasPrefix(k, "kloudlite.io/")
-	})
-
-	// Filter and update only kloudlite.io/ prefixed taints
-	var podTolerations []corev1.Toleration
-	for _, taint := range node.Spec.Taints {
-		if strings.HasPrefix(taint.Key, "kloudlite.io/") {
-			podTolerations = append(podTolerations, corev1.Toleration{
-				Key:      taint.Key,
-				Operator: corev1.TolerationOpEqual,
-				Value:    taint.Value,
-				Effect:   taint.Effect,
-			})
-		}
-	}
-	obj.Status.PodTolerations = podTolerations
-
+	// No need to fetch node - we use nodeName directly for pod scheduling
+	// Node watch will trigger DomainRequest IP update when node joins
 	return check.Passed()
 }
 
@@ -1051,8 +1191,23 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 		return check.Passed()
 	}
 
+	// Delete the cloud machine (EC2 instance)
 	if err := r.cloudProviderAPI.DeleteMachine(check.Context(), obj.Status.MachineID); err != nil {
 		return check.Failed(fmt.Errorf("failed to delete AWS machine: %w", err))
+	}
+
+	// Delete the Kubernetes Node object
+	// The node name matches the WorkMachine name
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: obj.Name,
+		},
+	}
+	if err := r.Delete(check.Context(), node); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete Kubernetes node: %w", err))
+		}
+		// Node already deleted, that's ok
 	}
 
 	obj.Status.MachineInfo = v1.MachineInfo{}
@@ -1145,6 +1300,50 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			// Trigger reconciliation of the WorkMachine to recreate DomainRequest if needed
 			return []reconcile.Request{
 				{NamespacedName: client.ObjectKey{Name: domainRequest.Name}},
+			}
+		}),
+	)
+
+	// Watch for Nodes to trigger reconciliation when node joins/updates
+	builder.Watches(
+		&corev1.Node{},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			node, ok := obj.(*corev1.Node)
+			if !ok {
+				return nil
+			}
+
+			// Node name matches WorkMachine name
+			// Trigger reconciliation to update DomainRequest with node IP
+			return []reconcile.Request{
+				{NamespacedName: client.ObjectKey{Name: node.Name}},
+			}
+		}),
+	)
+
+	// Watch for host-manager Pods to recreate them if they crash
+	builder.Watches(
+		&corev1.Pod{},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			pod, ok := obj.(*corev1.Pod)
+			if !ok {
+				return nil
+			}
+
+			// Only watch pods in the host-manager namespace
+			if pod.Namespace != hostManagerNamespace {
+				return nil
+			}
+
+			// Get WorkMachine name from pod label
+			workmachineName, exists := pod.Labels["kloudlite.io/workmachine"]
+			if !exists {
+				return nil
+			}
+
+			// Trigger reconciliation to check and recreate pod if needed
+			return []reconcile.Request{
+				{NamespacedName: client.ObjectKey{Name: workmachineName}},
 			}
 		}),
 	)

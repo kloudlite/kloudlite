@@ -13,8 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
-	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -102,7 +102,7 @@ func (w *EnvironmentWebhook) handleValidation(req *admissionv1.AdmissionRequest)
 	}
 
 	// Perform validation
-	if err := w.validateEnvironment(&env, req.Operation, fn.LabelValueDecoder(env.Labels["kloudlite.io/owned-by"])); err != nil {
+	if err := w.validateEnvironment(&env, req.Operation); err != nil {
 		w.logger.Warn("Environment validation failed: " + err.Error())
 		return &admissionv1.AdmissionResponse{
 			Allowed: false,
@@ -205,7 +205,24 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		}
 	}
 
-	// Add owner label with the actual username
+	// Ensure metadata.labels exists
+	if env.Labels == nil {
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/metadata/labels",
+			"value": map[string]string{},
+		})
+	}
+
+	// Add created-by label to metadata with the actual username
+	createdByPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/metadata/labels/kloudlite.io~1created-by",
+		"value": userName,
+	}
+	patches = append(patches, createdByPatch)
+
+	// Also add to spec.labels for namespace labeling
 	ownerPatch := map[string]interface{}{
 		"op":    "add",
 		"path":  "/spec/labels/kloudlite.io~1owned-by",
@@ -213,15 +230,45 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	}
 	patches = append(patches, ownerPatch)
 
-	// Add base64 encoded email as a label
+	// Add base64 encoded email as a label in both metadata and spec
 	if userEmail != "" {
 		encodedEmail := base64.URLEncoding.EncodeToString([]byte(userEmail))
+
+		// Metadata label
+		metadataEmailPatch := map[string]interface{}{
+			"op":    "add",
+			"path":  "/metadata/labels/kloudlite.io~1owner-email",
+			"value": encodedEmail,
+		}
+		patches = append(patches, metadataEmailPatch)
+
+		// Spec label for namespace
 		emailPatch := map[string]interface{}{
 			"op":    "add",
 			"path":  "/spec/labels/kloudlite.io~1owner-email",
 			"value": encodedEmail,
 		}
 		patches = append(patches, emailPatch)
+	}
+
+	// Add targetNamespace label for easy validation and lookup
+	if env.Spec.TargetNamespace != "" {
+		targetNamespacePatch := map[string]interface{}{
+			"op":    "add",
+			"path":  "/metadata/labels/kloudlite.io~1target-namespace",
+			"value": env.Spec.TargetNamespace,
+		}
+		patches = append(patches, targetNamespacePatch)
+	}
+
+	// Add WorkMachine ownership label
+	if env.Spec.WorkMachineName != "" {
+		workMachineNamePatch := map[string]interface{}{
+			"op":    "add",
+			"path":  "/metadata/labels/kloudlite.io~1workmachine-name",
+			"value": env.Spec.WorkMachineName,
+		}
+		patches = append(patches, workMachineNamePatch)
 	}
 
 	// Add default annotations if not present
@@ -279,44 +326,56 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	}
 }
 
-func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment, operation admissionv1.Operation, username string) error {
-	// Validate that the user exists and is valid
-	if username == "" {
-		return fmt.Errorf("user information is missing")
-	}
-
-	// Extract user from username (format could be "user:name" or just "name")
-	userName := username
-	if strings.Contains(username, ":") {
-		parts := strings.Split(username, ":")
-		if len(parts) >= 2 {
-			userName = parts[1]
-		}
-	}
-
-	// Check if the user exists in the platform
+func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment, operation admissionv1.Operation) error {
 	ctx := context.Background()
-	var user platformv1alpha1.User
-	err := w.k8sClient.Get(ctx, client.ObjectKey{Name: userName}, &user)
-	if err != nil {
-		// Also check by email if the username looks like an email
-		if strings.Contains(userName, "@") {
-			userList := &platformv1alpha1.UserList{}
-			if listErr := w.k8sClient.List(ctx, userList); listErr == nil {
-				for _, u := range userList.Items {
-					if u.Spec.Email == userName {
-						user = u
-						err = nil
-						break
-					}
-				}
-			}
+
+	// Validate that WorkMachine reference exists (only for CREATE operations)
+	if operation == admissionv1.Create {
+		if env.Spec.WorkMachineName == "" {
+			return fmt.Errorf("WorkMachineName is required. Environment must be associated with a WorkMachine")
 		}
 
-		if err != nil {
-			return fmt.Errorf("user %s does not exist or is not authorized to create environments", userName)
+		// Check if the referenced WorkMachine exists
+		var workMachine machinesv1.WorkMachine
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.WorkMachineName}, &workMachine); err != nil {
+			return fmt.Errorf("referenced WorkMachine '%s' does not exist. Please create the WorkMachine first or provide a valid WorkMachine reference", env.Spec.WorkMachineName)
 		}
 	}
+
+	// Validate targetNamespace is unique across Environments and not used by WorkMachines
+	if env.Spec.TargetNamespace != "" && (operation == admissionv1.Create || operation == admissionv1.Update) {
+		// Check if any other Environment is using this targetNamespace (using label selector)
+		environmentList := &environmentsv1.EnvironmentList{}
+		if err := w.k8sClient.List(ctx, environmentList, client.MatchingLabels{
+			"kloudlite.io/target-namespace": env.Spec.TargetNamespace,
+		}); err != nil {
+			return fmt.Errorf("failed to list environments: %v", err)
+		}
+
+		for _, existingEnv := range environmentList.Items {
+			// Skip the current environment being created/updated
+			if existingEnv.Name == env.Name {
+				continue
+			}
+
+			return fmt.Errorf("targetNamespace '%s' is already used by Environment '%s'. Each Environment must have a unique targetNamespace",
+				env.Spec.TargetNamespace, existingEnv.Name)
+		}
+
+		// Check if any WorkMachine is using this namespace (using label selector)
+		workMachineList := &machinesv1.WorkMachineList{}
+		if err := w.k8sClient.List(ctx, workMachineList, client.MatchingLabels{
+			"kloudlite.io/target-namespace": env.Spec.TargetNamespace,
+		}); err != nil {
+			return fmt.Errorf("failed to list workmachines: %v", err)
+		}
+
+		if len(workMachineList.Items) > 0 {
+			return fmt.Errorf("targetNamespace '%s' is already used by WorkMachine '%s'. Environment cannot use a namespace owned by a WorkMachine",
+				env.Spec.TargetNamespace, workMachineList.Items[0].Name)
+		}
+	}
+
 	// Validate namespace name
 	if err := w.validateNamespaceName(env.Spec.TargetNamespace); err != nil {
 		return fmt.Errorf("invalid target namespace: %w", err)

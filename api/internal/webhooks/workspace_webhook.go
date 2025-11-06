@@ -215,7 +215,15 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 		}
 	}
 
-	// Add owned-by label with username
+	// Add created-by label with username
+	createdByLabelPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/metadata/labels/kloudlite.io~1created-by",
+		"value": userName,
+	}
+	patches = append(patches, createdByLabelPatch)
+
+	// Add owned-by label with username (for compatibility)
 	ownerLabelPatch := map[string]interface{}{
 		"op":    "add",
 		"path":  "/metadata/labels/kloudlite.io~1owned-by",
@@ -294,49 +302,14 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		return fmt.Errorf("workspace owner is required")
 	}
 
-	// Check if owner is an email or username and verify user exists
-	var foundUser *platformv1alpha1.User
-	if strings.Contains(owner, "@") {
-		// Check by email
-		userList := &platformv1alpha1.UserList{}
-		if err := w.k8sClient.List(ctx, userList); err != nil {
-			return fmt.Errorf("failed to list users: %v", err)
-		}
-
-		for _, user := range userList.Items {
-			if user.Spec.Email == owner {
-				foundUser = &user
-				break
-			}
-		}
-	} else {
-		// Check by username
-		user := &platformv1alpha1.User{}
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: owner}, user); err == nil {
-			foundUser = user
-		}
+	// Validate that the referenced WorkMachine exists
+	if workspace.Spec.WorkmachineName == "" {
+		return fmt.Errorf("workmachine field is required")
 	}
 
-	if foundUser == nil {
-		return fmt.Errorf("owner %s does not exist", owner)
-	}
-
-	// Validate that the user has a WorkMachine
-	workMachineList := &machinesv1.WorkMachineList{}
-	if err := w.k8sClient.List(ctx, workMachineList); err != nil {
-		return fmt.Errorf("failed to list work machines: %v", err)
-	}
-
-	hasWorkMachine := false
-	for _, wm := range workMachineList.Items {
-		if wm.Spec.OwnedBy == owner || wm.Spec.OwnedBy == foundUser.Spec.Email || wm.Spec.OwnedBy == foundUser.Name {
-			hasWorkMachine = true
-			break
-		}
-	}
-
-	if !hasWorkMachine {
-		return fmt.Errorf("user %s does not have a WorkMachine. Please create a WorkMachine first", owner)
+	var workMachine machinesv1.WorkMachine
+	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: workspace.Spec.WorkmachineName}, &workMachine); err != nil {
+		return fmt.Errorf("referenced WorkMachine '%s' does not exist. Please create the WorkMachine first or provide a valid WorkMachine reference", workspace.Spec.WorkmachineName)
 	}
 
 	// Validate displayName

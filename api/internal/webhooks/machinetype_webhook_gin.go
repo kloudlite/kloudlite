@@ -82,27 +82,40 @@ func (w *MachineTypeGinWebhook) MutateMachineType(c *gin.Context) {
 }
 
 func (w *MachineTypeGinWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
-	// Parse the machine type object
 	var machineType machinesv1.MachineType
-	if err := json.Unmarshal(req.Object.Raw, &machineType); err != nil {
-		w.logger.Error("Failed to unmarshal machine type: " + err.Error())
-		return &admissionv1.AdmissionResponse{
-			Allowed: false,
-			Result: &metav1.Status{
-				Message: "Failed to unmarshal machine type object",
-			},
-		}
-	}
-
-	// Perform validation based on operation
 	var err error
-	switch req.Operation {
-	case admissionv1.Create:
-		err = w.validateCreate(&machineType)
-	case admissionv1.Update:
-		err = w.validateUpdate(&machineType)
-	case admissionv1.Delete:
+
+	// For DELETE operations, the object is in OldObject, not Object
+	if req.Operation == admissionv1.Delete {
+		if err := json.Unmarshal(req.OldObject.Raw, &machineType); err != nil {
+			w.logger.Error("Failed to unmarshal machine type from OldObject: " + err.Error())
+			return &admissionv1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Message: "Failed to unmarshal machine type object",
+				},
+			}
+		}
 		err = w.validateDelete(&machineType)
+	} else {
+		// For CREATE and UPDATE, parse from Object
+		if err := json.Unmarshal(req.Object.Raw, &machineType); err != nil {
+			w.logger.Error("Failed to unmarshal machine type: " + err.Error())
+			return &admissionv1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Message: "Failed to unmarshal machine type object",
+				},
+			}
+		}
+
+		// Perform validation based on operation
+		switch req.Operation {
+		case admissionv1.Create:
+			err = w.validateCreate(&machineType)
+		case admissionv1.Update:
+			err = w.validateUpdate(&machineType)
+		}
 	}
 
 	if err != nil {
@@ -163,6 +176,14 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 	}
 	patches = append(patches, categoryLabelPatch)
 
+	// Add machine-type-name label
+	machineTypeNameLabelPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/metadata/labels/kloudlite.io~1machine-type-name",
+		"value": machineType.Name,
+	}
+	patches = append(patches, machineTypeNameLabelPatch)
+
 	// Add active label
 	activeValue := "false"
 	if machineType.Spec.Active {
@@ -184,13 +205,59 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 		})
 	}
 
+	// Check if there are any default machine types
+	// If no default exists and this is not explicitly set to false, make it default
+	ctx := context.Background()
+	if !machineType.Spec.IsDefault {
+		existingTypes := &machinesv1.MachineTypeList{}
+		if err := w.k8sClient.List(ctx, existingTypes); err == nil {
+			hasDefault := false
+			for _, mt := range existingTypes.Items {
+				// Skip the current machine type being created
+				if mt.Name == machineType.Name {
+					continue
+				}
+				if mt.Spec.IsDefault {
+					hasDefault = true
+					break
+				}
+			}
+
+			// If no default exists, make this one default
+			if !hasDefault {
+				w.logger.Info(fmt.Sprintf("No default machine type found, setting '%s' as default", machineType.Name))
+				patches = append(patches, map[string]interface{}{
+					"op":    "add",
+					"path":  "/spec/isDefault",
+					"value": true,
+				})
+				machineType.Spec.IsDefault = true // Update for label generation below
+			}
+		}
+	}
+
+	// Handle default machine type - ensure only one is default at a time
 	if machineType.Spec.IsDefault {
+		// Add default label to this machine type
 		patches = append(patches, map[string]any{
 			"op":    "add",
 			"path":  "/metadata/labels/kloudlite.io~1machinetype.default",
 			"value": "true",
 		})
+
+		// Remove default flag from all other machine types
+		ctx := context.Background()
+		if err := w.removeDefaultFromOthers(ctx, machineType.Name); err != nil {
+			w.logger.Error("Failed to remove default flag from other machine types: " + err.Error())
+			return &admissionv1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Message: fmt.Sprintf("Failed to update other machine types: %v", err),
+				},
+			}
+		}
 	} else if _, ok := machineType.Labels["kloudlite.io/machinetype.default"]; ok {
+		// Remove default label if isDefault is false but label exists
 		patches = append(patches, map[string]any{
 			"op":   "remove",
 			"path": "/metadata/labels/kloudlite.io~1machinetype.default",
@@ -353,15 +420,23 @@ func (w *MachineTypeGinWebhook) validateDelete(machineType *machinesv1.MachineTy
 		return fmt.Errorf("failed to list work machines: %v", err)
 	}
 
-	inUseCount := 0
+	var workMachinesUsing []string
 	for _, machine := range workMachines.Items {
 		if machine.Spec.MachineType == machineType.Name {
-			inUseCount++
+			workMachinesUsing = append(workMachinesUsing, machine.Name)
 		}
 	}
 
-	if inUseCount > 0 {
-		return fmt.Errorf("cannot delete machine type %s: %d work machines are using it", machineType.Name, inUseCount)
+	if len(workMachinesUsing) > 0 {
+		if len(workMachinesUsing) <= 5 {
+			// Show specific WorkMachine names if there are 5 or fewer
+			return fmt.Errorf("cannot delete machine type '%s': the following %d work machine(s) are using it: %v. Please delete or update these work machines first",
+				machineType.Name, len(workMachinesUsing), workMachinesUsing)
+		} else {
+			// If there are more than 5, just show the count and first few
+			return fmt.Errorf("cannot delete machine type '%s': %d work machines are using it (including: %v...). Please delete or update these work machines first",
+				machineType.Name, len(workMachinesUsing), workMachinesUsing[:5])
+		}
 	}
 
 	return nil
@@ -412,6 +487,45 @@ func (w *MachineTypeGinWebhook) validateSingleDefault(ctx context.Context, curre
 	for _, existing := range existingTypes.Items {
 		if existing.Spec.IsDefault && existing.Name != currentName {
 			return fmt.Errorf("another machine type '%s' is already marked as default; only one default machine type is allowed", existing.Name)
+		}
+	}
+
+	return nil
+}
+
+// removeDefaultFromOthers removes the default flag from all machine types except the specified one
+func (w *MachineTypeGinWebhook) removeDefaultFromOthers(ctx context.Context, currentName string) error {
+	existingTypes := &machinesv1.MachineTypeList{}
+	if err := w.k8sClient.List(ctx, existingTypes); err != nil {
+		return fmt.Errorf("failed to list machine types: %v", err)
+	}
+
+	for i := range existingTypes.Items {
+		machineType := &existingTypes.Items[i]
+
+		// Skip the current machine type being created/updated
+		if machineType.Name == currentName {
+			continue
+		}
+
+		// If this machine type is marked as default, update it
+		if machineType.Spec.IsDefault {
+			w.logger.Info(fmt.Sprintf("Removing default flag from machine type: %s", machineType.Name))
+
+			// Update the spec
+			machineType.Spec.IsDefault = false
+
+			// Remove the default label if it exists
+			if machineType.Labels != nil {
+				delete(machineType.Labels, "kloudlite.io/machinetype.default")
+			}
+
+			// Update the machine type
+			if err := w.k8sClient.Update(ctx, machineType); err != nil {
+				return fmt.Errorf("failed to update machine type '%s': %v", machineType.Name, err)
+			}
+
+			w.logger.Info(fmt.Sprintf("Successfully removed default flag from machine type: %s", machineType.Name))
 		}
 	}
 

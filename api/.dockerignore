@@ -51,4 +51,4 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
-bin/
+# bin/  # Commented out - we need bin/ for pre-built binaries
