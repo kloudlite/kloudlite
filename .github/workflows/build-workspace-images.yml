@@ -41,6 +41,10 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
 
       - name: Log in to Container Registry
         if: github.event_name != 'pull_request'
@@ -74,12 +78,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=gha,scope=workspace-base
-            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:buildcache
-          cache-to: |
-            type=gha,mode=max,scope=workspace-base
-            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:buildcache,mode=max
-          platforms: linux/amd64,linux/arm64
+            type=gha,scope=workspace-base-${{ github.ref_name }}
+            type=gha,scope=workspace-base-main
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:dev
+          cache-to: type=gha,mode=max,scope=workspace-base-${{ github.ref_name }}
+          platforms: linux/amd64
           build-args: |
             BUILDKIT_INLINE_CACHE=1
 
@@ -112,19 +115,35 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
+          cache: true
           cache-dependency-path: api/go.sum
+
+      - name: Cache Go build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('api/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Build kl binary for Linux
         run: |
           cd api
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
             -ldflags="-s -w" \
+            -trimpath \
             -o bin/kl-linux \
             cmd/kl/main.go
           ls -lh bin/kl-linux
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
 
       - name: Log in to Container Registry
         if: github.event_name != 'pull_request'
@@ -159,12 +178,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=gha,scope=workspace-comprehensive
-            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-comprehensive:buildcache
-          cache-to: |
-            type=gha,mode=max,scope=workspace-comprehensive
-            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-comprehensive:buildcache,mode=max
-          platforms: linux/amd64,linux/arm64
+            type=gha,scope=workspace-comprehensive-${{ github.ref_name }}
+            type=gha,scope=workspace-comprehensive-main
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/workspace-comprehensive:dev
+          cache-to: type=gha,mode=max,scope=workspace-comprehensive-${{ github.ref_name }}
+          platforms: linux/amd64
           build-args: |
             BASE_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:${{ github.ref == 'refs/heads/master' && 'latest' || 'dev' }}
             VERSION=${{ github.ref_name }}-${{ github.sha }}
