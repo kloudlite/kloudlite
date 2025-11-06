@@ -217,7 +217,8 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 				if mt.Name == machineType.Name {
 					continue
 				}
-				if mt.Spec.IsDefault {
+				// Check both spec.isDefault and the label to avoid race conditions
+				if mt.Spec.IsDefault || (mt.Labels != nil && mt.Labels["kloudlite.io/machinetype.default"] == "true") {
 					hasDefault = true
 					break
 				}
