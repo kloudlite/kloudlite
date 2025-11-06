@@ -141,16 +141,9 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		}
 	}
 
-	// Delete the workspace directory on the host
-	workspaceHostPath := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name)
-	if err := r.deleteHostDirectory(ctx, workspaceHostPath, workspace.Name, logger); err != nil {
-		logger.Warn("Failed to delete workspace host directory",
-			zap.String("path", workspaceHostPath),
-			zap.Error(err),
-		)
-		// Don't fail the deletion if we can't clean up the directory
-		// This allows workspace deletion to proceed even if cleanup fails
-	}
+	// Directory cleanup is now handled by workmachine-node-manager via the
+	// "workspaces.kloudlite.io/directory-cleanup" finalizer, so we don't need
+	// to create cleanup pods anymore
 
 	// Remove finalizer
 	controllerutil.RemoveFinalizer(workspace, workspaceFinalizer)
