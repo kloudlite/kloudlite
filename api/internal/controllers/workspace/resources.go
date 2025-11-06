@@ -3,6 +3,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -18,7 +19,7 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
 
 	// Check if PackageRequest exists (cluster-scoped)
-	pkgReq := &workspacev1.PackageRequest{}
+	pkgReq := &packagesv1.PackageRequest{}
 	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq)
 
 	if apierrors.IsNotFound(err) {
@@ -29,28 +30,32 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 			return nil
 		}
 
-		// Create new PackageRequest (cluster-scoped)
-		pkgReq = &workspacev1.PackageRequest{
+		// Create new PackageRequest (cluster-scoped, no namespace)
+		pkgReq = &packagesv1.PackageRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: pkgReqName,
+				// Do NOT set Namespace field for cluster-scoped resources
 			},
-			Spec: workspacev1.PackageRequestSpec{
+			Spec: packagesv1.PackageRequestSpec{
 				WorkspaceRef: workspace.Name,
 				Packages:     workspace.Spec.Packages,
 				ProfileName:  fmt.Sprintf("workspace-%s-packages", workspace.Name),
 			},
 		}
 
-		// Set owner reference (Workspace owns PackageRequest) without blockOwnerDeletion
+		// Set owner reference - use manual owner reference since both are cluster-scoped
+		// Cannot use controllerutil.SetControllerReference for cluster-scoped resources
 		blockOwnerDeletion := false
+		controller := true
 		ownerRef := metav1.OwnerReference{
 			APIVersion:         workspace.APIVersion,
 			Kind:               workspace.Kind,
 			Name:               workspace.Name,
 			UID:                workspace.UID,
+			Controller:         &controller,
 			BlockOwnerDeletion: &blockOwnerDeletion,
 		}
-		pkgReq.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+		pkgReq.OwnerReferences = []metav1.OwnerReference{ownerRef}
 
 		if err := r.Create(ctx, pkgReq); err != nil {
 			return fmt.Errorf("failed to create PackageRequest: %w", err)
@@ -111,7 +116,7 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 
 	// Get the PackageRequest (cluster-scoped)
 	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
-	pkgReq := &workspacev1.PackageRequest{}
+	pkgReq := &packagesv1.PackageRequest{}
 	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq)
 	if err != nil {
 		if apierrors.IsNotFound(err) {

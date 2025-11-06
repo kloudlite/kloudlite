@@ -11,6 +11,7 @@ import (
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	// "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	// "github.com/kloudlite/kloudlite/api/internal/controllers/user"
@@ -47,6 +48,7 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 	utilruntime.Must(machinesv1.AddToScheme(scheme))
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
+	utilruntime.Must(packagesv1.AddToScheme(scheme))
 	utilruntime.Must(interceptsv1.AddToScheme(scheme))
 	utilruntime.Must(connectiontokenv1.AddToScheme(scheme))
 	utilruntime.Must(domainrequestsv1.AddToScheme(scheme))

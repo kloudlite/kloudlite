@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
@@ -27,7 +28,7 @@ import (
 func TestWorkspaceReconciler_Reconcile_NotFound(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 	k8sClient := testutil.NewFakeClient(scheme).
-		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -65,7 +66,7 @@ func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace).
-		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
@@ -130,7 +131,7 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
-		WithStatusSubresource(&workspacev1.PackageRequest{}, &workspacev1.Workspace{}).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()

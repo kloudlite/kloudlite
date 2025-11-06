@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
@@ -286,7 +287,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
-		Owns(&workspacev1.PackageRequest{}).
+		Owns(&packagesv1.PackageRequest{}).
 		Watches(
 			&interceptsv1.ServiceIntercept{},
 			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
