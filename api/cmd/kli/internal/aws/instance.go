@@ -166,11 +166,25 @@ fi
 
 echo "CRDs and RBAC will be auto-applied by K3s"
 
+# Wait for MachineType CRD to be registered
+echo "Waiting for MachineType CRD to be registered..."
+until kubectl get crd machinetypes.machines.kloudlite.io 2>/dev/null; do
+  echo "  Waiting for CRD registration..."
+  sleep 2
+done
+echo "MachineType CRD registered successfully"
+
 # Create AWS-specific MachineTypes
 echo "Creating AWS MachineTypes..."
 cat <<'MACHINEEOF' | kubectl apply -f -
 %s
 MACHINEEOF
+
+if [ $? -eq 0 ]; then
+  echo "AWS MachineTypes created successfully"
+else
+  echo "ERROR: Failed to create AWS MachineTypes"
+fi
 
 # API Server deployment is handled by kli install-manifests
 # Wait for API Server to be ready
