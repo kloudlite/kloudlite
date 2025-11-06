@@ -20,12 +20,9 @@ RUN groupadd -g 30000 nixbld && \
         useradd -c "Nix build user $i" -d /var/empty -g nixbld -G nixbld -M -N -r -s "$(command -v nologin)" "nixbld$i"; \
     done
 
-# Install Nix in single-user mode
-# Disable sandbox during installation to avoid seccomp issues during Docker build
+# Install Nix in single-user mode with cache mount for downloads
 RUN --mount=type=cache,target=/tmp/nix-install-cache \
-    mkdir -p /root/.config/nix && \
-    echo "sandbox = false" > /root/.config/nix/nix.conf && \
-    curl -L https://nixos.org/nix/install | NIX_INSTALLER_NO_CHANNEL_ADD=1 sh -s -- --no-daemon --option sandbox false
+    curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
 
 # Source nix profile
 ENV PATH="/root/.nix-profile/bin:${PATH}"
