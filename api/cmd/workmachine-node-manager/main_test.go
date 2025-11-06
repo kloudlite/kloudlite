@@ -2270,7 +2270,7 @@ func TestReconcile_ChecksActualStateNotStatus(t *testing.T) {
 			},
 		},
 		Status: packagesv1.PackageRequestStatus{
-			Phase:             "Pending",                        // Status says pending
+			Phase:             "Pending",                       // Status says pending
 			InstalledPackages: []packagesv1.InstalledPackage{}, // Status says not installed
 		},
 	}
