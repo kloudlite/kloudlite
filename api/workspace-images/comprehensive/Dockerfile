@@ -35,7 +35,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN useradd -m -s /bin/bash -u 1001 kl && \
   echo "kl ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
   mkdir -p /workspace && \
-  chown -R kl:kl /workspace
+  chown -R kl:kl /workspace && \
+  usermod -p '*' kl
 
 # Install Node.js 20.x (LTS) with apt cache mount
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
