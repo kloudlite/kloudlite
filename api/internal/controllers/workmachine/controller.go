@@ -759,6 +759,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, secret, func() error {
 		secret.Labels = fn.MapMerge(secret.Labels, map[string]string{
 			"kloudlite.io/ssh-host-keys": "true",
+			"kloudlite.io/workmachine":   obj.Name,
 		})
 
 		// Set owner reference for cascade deletion
