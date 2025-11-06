@@ -72,12 +72,12 @@ func New() (*Client, error) {
 	}, nil
 }
 
-// Get retrieves the current workspace
+// Get retrieves the current workspace (cluster-scoped resource)
 func (c *Client) Get(ctx context.Context) (*workspacesv1.Workspace, error) {
 	workspace := &workspacesv1.Workspace{}
+	// Workspace is cluster-scoped, so we only use Name (no Namespace)
 	err := c.K8sClient.Get(ctx, types.NamespacedName{
-		Name:      c.Name,
-		Namespace: c.Namespace,
+		Name: c.Name,
 	}, workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workspace: %w", err)

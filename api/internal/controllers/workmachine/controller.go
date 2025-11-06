@@ -442,6 +442,11 @@ func (r *WorkMachineReconciler) createRBACInNamespace(ctx context.Context, names
 				Resources: []string{"configmaps"},
 				Verbs:     []string{"get", "list", "watch"},
 			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
 		},
 	}
 
@@ -593,7 +598,9 @@ func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.
 		}
 	}
 
-	// Create Role with Workspace, PackageRequest, and Environment permissions
+	// Create Role for future namespace-scoped permissions
+	// Note: PackageRequest permissions are now in workspace-specific ClusterRoles
+	// Note: Workspace permissions are now in workspace-specific ClusterRoles
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "workspace-user",
@@ -602,38 +609,8 @@ func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, role, func() error {
-		role.Rules = []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
-				Resources: []string{"workspaces"},
-				Verbs:     []string{"get", "list", "watch", "update", "patch"},
-			},
-			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
-				Resources: []string{"workspaces/status"},
-				Verbs:     []string{"get"},
-			},
-			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
-				Resources: []string{"packagerequests"},
-				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
-			},
-			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
-				Resources: []string{"packagerequests/status"},
-				Verbs:     []string{"get"},
-			},
-			{
-				APIGroups: []string{"environments.kloudlite.io"},
-				Resources: []string{"environments"},
-				Verbs:     []string{"get", "list", "watch"},
-			},
-			{
-				APIGroups: []string{"environments.kloudlite.io"},
-				Resources: []string{"environments/status"},
-				Verbs:     []string{"get"},
-			},
-		}
+		// Empty rules for now - reserved for future namespace-scoped resources
+		role.Rules = []rbacv1.PolicyRule{}
 
 		return nil
 	}); err != nil {
@@ -669,6 +646,7 @@ func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.
 	}
 
 	// Create ClusterRole for cluster-wide Environment access
+	// Note: Workspace permissions are now managed per-workspace by the Workspace controller
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "workspace-user-cluster-access",
@@ -733,19 +711,8 @@ func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.
 func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespace := hostManagerNamespace
 	secretName := fmt.Sprintf("ssh-host-keys-%s", obj.Name)
-	secret := &corev1.Secret{}
-	err := r.Get(check.Context(), client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
 
-	if err == nil {
-		// Secret already exists
-		return check.Passed()
-	}
-
-	if !apiErrors.IsNotFound(err) {
-		return check.Errored(err)
-	}
-
-	// Generate RSA 2048-bit key
+	// Generate RSA 2048-bit key (only used if Secret doesn't exist)
 	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return check.Failed(fmt.Errorf("failed to generate RSA key: %w", err))
@@ -782,7 +749,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 	}
 
 	// Create or update secret with all host keys and authorized_keys
-	secret = &corev1.Secret{
+	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: namespace,
@@ -913,10 +880,12 @@ func (r *WorkMachineReconciler) ensureWorkspaceSSHDConfigMapStep(check *reconcil
 	namespace := obj.Spec.TargetNamespace
 	configMapName := "workspace-sshd-config"
 
-	// SSHD drop-in config to override AuthorizedKeysFile location
+	// SSHD drop-in config to override AuthorizedKeysFile location and HostKey
 	sshdConfigOverride := `# Kloudlite Workspace SSH Configuration
 # Override authorized keys location to use mounted ConfigMap
 AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys
+# Use only Kloudlite-managed host keys from /var/lib/kloudlite/ssh-config/
+HostKey /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
 # Disable StrictModes to allow ConfigMap-mounted directories (owned by root)
 StrictModes no
 `

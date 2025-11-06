@@ -109,7 +109,7 @@ func (s *Server) Start() error {
 	// Start HTTPS webhook server first (needed for webhooks during subdomain setup)
 	go func() {
 		s.logger.Info("Starting HTTPS webhook server", zap.String("addr", s.httpsServer.Addr))
-		if err := s.httpsServer.ListenAndServeTLS("/etc/webhook/certs/tls.crt", "/etc/webhook/certs/tls.key"); err != nil && err != http.ErrServerClosed {
+		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
 			s.logger.Error("HTTPS server stopped with error", zap.Error(err))
 		}
 	}()
@@ -127,7 +127,7 @@ func (s *Server) Start() error {
 
 	// Install webhook configurations now that the server is ready
 	s.logger.Info("Installing webhook configurations...")
-	caBundle, err := os.ReadFile("/etc/webhook/certs/tls.crt")
+	caBundle, err := os.ReadFile(s.config.TLS.CertFile)
 	if err != nil {
 		s.logger.Error("Failed to read webhook CA certificate", zap.Error(err))
 		return fmt.Errorf("failed to read webhook CA certificate: %w", err)

@@ -29,16 +29,22 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	// Fetch public IP from cloud provider metadata service
-	metadataProvider := cloud.NewAWSMetadataProvider()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// Fetch public IP from cloud provider metadata service or environment
+	publicIP := os.Getenv("AWS_PUBLIC_IP")
+	if publicIP == "" {
+		metadataProvider := cloud.NewAWSMetadataProvider()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-	publicIP, err := metadataProvider.GetPublicIP(ctx)
-	if err != nil {
-		appLogger.Fatal("Failed to fetch public IP from cloud metadata service", zap.Error(err))
+		var err error
+		publicIP, err = metadataProvider.GetPublicIP(ctx)
+		if err != nil {
+			appLogger.Fatal("Failed to fetch public IP from cloud metadata service", zap.Error(err))
+		}
+		appLogger.Info("Detected public IP from cloud metadata service", zap.String("ip", publicIP))
+	} else {
+		appLogger.Info("Using public IP from environment variable", zap.String("ip", publicIP))
 	}
-	appLogger.Info("Detected public IP from cloud metadata service", zap.String("ip", publicIP))
 	cfg.Installation.PublicIP = publicIP
 
 	// Create and start server

@@ -601,14 +601,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 						},
 						{
 							Name:      "ssh-host-keys",
-							MountPath: "/etc/ssh/ssh_host_rsa_key",
-							SubPath:   "ssh_host_rsa_key",
-							ReadOnly:  true,
-						},
-						{
-							Name:      "ssh-host-keys",
-							MountPath: "/etc/ssh/ssh_host_rsa_key.pub",
-							SubPath:   "ssh_host_rsa_key.pub",
+							MountPath: "/var/lib/kloudlite/ssh-config",
 							ReadOnly:  true,
 						},
 						{
@@ -698,9 +691,9 @@ chmod 644 /tmp-writable/kloudlite-context.json
 				{
 					Name: "ssh-host-keys",
 					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName:  "ssh-host-keys",
-							DefaultMode: fn.Ptr[int32](0o600),
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/kloudlite/ssh-config",
+							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
 					},
 				},
