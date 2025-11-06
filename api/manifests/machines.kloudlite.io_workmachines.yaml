@@ -116,7 +116,7 @@ spec:
                   type: string
                 type: array
               state:
-                default: stopped
+                default: running
                 description: State indicates whether the machine should be running
                   or stopped
                 enum:

@@ -18,6 +18,9 @@ spec:
     - jsonPath: .spec.targetNamespace
       name: Namespace
       type: string
+    - jsonPath: .spec.workmachineName
+      name: WorkMachine
+      type: string
     - jsonPath: .spec.activated
       name: Activated
       type: boolean
