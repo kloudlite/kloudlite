@@ -894,7 +894,7 @@ PubkeyAuthentication yes
 PasswordAuthentication no
 PermitEmptyPasswords no
 ChallengeResponseAuthentication no
-AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys
+AuthorizedKeysFile /var/lib/kloudlite/ssh-config/authorized_keys
 
 # Host Keys
 HostKey /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
