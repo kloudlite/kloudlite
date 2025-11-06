@@ -106,12 +106,48 @@ webhooks:
       caBundle: ""
     rules:
       - operations: ["CREATE", "UPDATE"]
-        apiGroups: ["compositions.kloudlite.io"]
+        apiGroups: ["environments.kloudlite.io"]
         apiVersions: ["v1"]
         resources: ["compositions"]
     admissionReviewVersions: ["v1"]
     sideEffects: None
     failurePolicy: Fail
+
+  # PackageRequest validation
+  - name: packagerequests.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/packagerequests
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["packages.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["packagerequests"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Allow if webhook endpoint not implemented yet
+
+  # ConnectionToken validation
+  - name: connectiontokens.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/connectiontokens
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["auth.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["connectiontokens"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Allow if webhook endpoint not implemented yet
 
   # ConfigMap validation (for environment variables)
   - name: configmaps.kloudlite.io
@@ -303,12 +339,48 @@ webhooks:
       caBundle: ""
     rules:
       - operations: ["CREATE", "UPDATE"]
-        apiGroups: ["compositions.kloudlite.io"]
+        apiGroups: ["environments.kloudlite.io"]
         apiVersions: ["v1"]
         resources: ["compositions"]
     admissionReviewVersions: ["v1"]
     sideEffects: None
     failurePolicy: Fail
+
+  # PackageRequest mutation
+  - name: packagerequests.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/packagerequests
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["packages.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["packagerequests"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Allow if webhook endpoint not implemented yet
+
+  # ConnectionToken mutation
+  - name: connectiontokens.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/mutate/connectiontokens
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["auth.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["connectiontokens"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Ignore  # Allow if webhook endpoint not implemented yet
 
   # ServiceIntercept mutation
   - name: serviceintercepts.kloudlite.io
