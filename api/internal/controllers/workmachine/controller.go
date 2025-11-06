@@ -1275,12 +1275,7 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 		return check.Passed()
 	}
 
-	// Delete the cloud machine (EC2 instance)
-	if err := r.cloudProviderAPI.DeleteMachine(check.Context(), obj.Status.MachineID); err != nil {
-		return check.Failed(fmt.Errorf("failed to delete AWS machine: %w", err))
-	}
-
-	// Force delete all pods running on this node
+	// Force delete all pods running on this node FIRST (before deleting cloud machine)
 	podList := &corev1.PodList{}
 	if err := r.List(check.Context(), podList, client.MatchingFields{"spec.nodeName": obj.Name}); err != nil {
 		check.Logger().Warn("failed to list pods on node", "error", err)
@@ -1310,6 +1305,11 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 			return check.Failed(fmt.Errorf("failed to delete Kubernetes node: %w", err))
 		}
 		// Node already deleted, that's ok
+	}
+
+	// Delete the cloud machine (EC2 instance) LAST
+	if err := r.cloudProviderAPI.DeleteMachine(check.Context(), obj.Status.MachineID); err != nil {
+		return check.Failed(fmt.Errorf("failed to delete AWS machine: %w", err))
 	}
 
 	obj.Status.MachineInfo = v1.MachineInfo{}
