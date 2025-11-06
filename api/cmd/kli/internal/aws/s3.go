@@ -80,7 +80,7 @@ func EnsureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installatio
 				{Key: aws.String("ManagedBy"), Value: aws.String("kloudlite")},
 				{Key: aws.String("Project"), Value: aws.String("kloudlite")},
 				{Key: aws.String("Purpose"), Value: aws.String("k3s-backups")},
-				{Key: aws.String("InstallationKey"), Value: aws.String(installationKey)},
+				{Key: aws.String("kloudlite.io/installation-id"), Value: aws.String(installationKey)},
 			},
 		},
 	})

@@ -236,7 +236,7 @@ func findInstancesByKey(ctx context.Context, cfg aws.Config, installationKey str
 	result, err := ec2Client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
 		Filters: []types.Filter{
 			{
-				Name:   aws.String("tag:InstallationKey"),
+				Name:   aws.String("tag:kloudlite.io/installation-id"),
 				Values: []string{installationKey},
 			},
 			{
@@ -298,7 +298,7 @@ func deleteSecurityGroup(ctx context.Context, cfg aws.Config, installationKey st
 	ec2Client := ec2.NewFromConfig(cfg)
 	sgName := fmt.Sprintf("kl-%s-sg", installationKey)
 
-	// Find security group by name and installation key tag
+	// Find security group by name and installation ID tag
 	descResult, err := ec2Client.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: []types.Filter{
 			{
@@ -306,7 +306,7 @@ func deleteSecurityGroup(ctx context.Context, cfg aws.Config, installationKey st
 				Values: []string{sgName},
 			},
 			{
-				Name:   aws.String("tag:InstallationKey"),
+				Name:   aws.String("tag:kloudlite.io/installation-id"),
 				Values: []string{installationKey},
 			},
 		},
