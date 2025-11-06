@@ -296,6 +296,13 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, operation admissionv1.Operation) error {
 	ctx := context.Background()
 
+	// Skip validation if the workspace is being deleted (has deletionTimestamp set)
+	// This allows finalizer cleanup even if the WorkMachine no longer exists
+	if workspace.DeletionTimestamp != nil {
+		w.logger.Info("Skipping validation for workspace with deletionTimestamp", "workspace", workspace.Name)
+		return nil
+	}
+
 	// Validate that owner exists
 	owner := workspace.Spec.Owner
 	if owner == "" {
