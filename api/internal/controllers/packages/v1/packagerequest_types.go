@@ -4,6 +4,47 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// PackageSpec defines a Nix package to install
+type PackageSpec struct {
+	// Name of the package (e.g., nodejs_22, vim, git)
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Channel specifies the nixpkgs channel/release to use (e.g., "nixos-24.05", "nixos-23.11", "unstable")
+	// Use this for stable, well-known package versions from official releases
+	// +optional
+	Channel string `json:"channel,omitempty"`
+
+	// NixpkgsCommit specifies an exact nixpkgs commit hash for precise version control
+	// Use this when you need a specific historical package version
+	// Takes precedence over Channel if both are specified
+	// +optional
+	NixpkgsCommit string `json:"nixpkgsCommit,omitempty"`
+}
+
+// InstalledPackage represents a successfully installed package
+type InstalledPackage struct {
+	// Name of the package
+	Name string `json:"name"`
+
+	// Version of the installed package
+	// +optional
+	Version string `json:"version,omitempty"`
+
+	// BinPath where binaries are located
+	// +optional
+	BinPath string `json:"binPath,omitempty"`
+
+	// StorePath in the Nix store
+	// +optional
+	StorePath string `json:"storePath,omitempty"`
+
+	// InstalledAt timestamp
+	// +optional
+	InstalledAt metav1.Time `json:"installedAt,omitempty"`
+}
+
 // PackageRequestSpec defines the desired packages to install
 type PackageRequestSpec struct {
 	// WorkspaceRef references the workspace this package request belongs to

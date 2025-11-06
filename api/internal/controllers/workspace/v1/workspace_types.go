@@ -1,6 +1,7 @@
 package v1
 
 import (
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,46 +32,11 @@ type EnvironmentConnectionSpec struct {
 	Intercepts []InterceptSpec `json:"intercepts,omitempty"`
 }
 
-// PackageSpec defines a Nix package to install
-type PackageSpec struct {
-	// Name of the package (e.g., nodejs_22, vim, git)
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	Name string `json:"name"`
+// PackageSpec is an alias to packages.kloudlite.io/v1 PackageSpec
+type PackageSpec = packagesv1.PackageSpec
 
-	// Channel specifies the nixpkgs channel/release to use (e.g., "nixos-24.05", "nixos-23.11", "unstable")
-	// Use this for stable, well-known package versions from official releases
-	// +optional
-	Channel string `json:"channel,omitempty"`
-
-	// NixpkgsCommit specifies an exact nixpkgs commit hash for precise version control
-	// Use this when you need a specific historical package version
-	// Takes precedence over Channel if both are specified
-	// +optional
-	NixpkgsCommit string `json:"nixpkgsCommit,omitempty"`
-}
-
-// InstalledPackage represents a successfully installed package
-type InstalledPackage struct {
-	// Name of the package
-	Name string `json:"name"`
-
-	// Version of the installed package
-	// +optional
-	Version string `json:"version,omitempty"`
-
-	// BinPath where binaries are located
-	// +optional
-	BinPath string `json:"binPath,omitempty"`
-
-	// StorePath in the Nix store
-	// +optional
-	StorePath string `json:"storePath,omitempty"`
-
-	// InstalledAt timestamp
-	// +optional
-	InstalledAt metav1.Time `json:"installedAt,omitempty"`
-}
+// InstalledPackage is an alias to packages.kloudlite.io/v1 InstalledPackage
+type InstalledPackage = packagesv1.InstalledPackage
 
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
