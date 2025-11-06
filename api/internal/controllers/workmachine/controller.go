@@ -797,7 +797,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 func (r *WorkMachineReconciler) ensureSSHDConfigMapStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	// Skip for cloud provider WorkMachines
 	namespace := hostManagerNamespace
-	configMapName := fmt.Sprintf("sshd-config-%s", obj.Name)
+	configMapName := "sshd-config"
 
 	// Define secure sshd_config content
 	sshdConfig := `# OpenSSH Server Configuration for WorkMachine Jump Host
@@ -875,19 +875,51 @@ Subsystem sftp /usr/lib/ssh/sftp-server
 	return check.Passed()
 }
 
-// ensureWorkspaceSSHDConfigMapStep ensures the workspace-sshd-config ConfigMap exists
+// ensureWorkspaceSSHDConfigMapStep ensures the sshd-config ConfigMap exists in target namespace
 func (r *WorkMachineReconciler) ensureWorkspaceSSHDConfigMapStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespace := obj.Spec.TargetNamespace
-	configMapName := "workspace-sshd-config"
+	configMapName := "sshd-config"
 
-	// SSHD drop-in config to override AuthorizedKeysFile location and HostKey
-	sshdConfigOverride := `# Kloudlite Workspace SSH Configuration
-# Override authorized keys location to use mounted ConfigMap
+	// Full sshd_config for workspace pods
+	sshdConfig := `# Kloudlite Workspace SSH Configuration
+# This configuration provides secure SSH access to workspace containers
+
+# Network Configuration
+Port 22
+ListenAddress 0.0.0.0
+
+# Authentication
+PermitRootLogin no
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
 AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys
-# Use only Kloudlite-managed host keys from /var/lib/kloudlite/ssh-config/
+
+# Host Keys
 HostKey /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
-# Disable StrictModes to allow ConfigMap-mounted directories (owned by root)
+
+# SSH Configuration
+AllowTcpForwarding yes
+X11Forwarding no
+PermitTTY yes
+AllowAgentForwarding yes
+
+# Security
 StrictModes no
+MaxAuthTries 3
+MaxSessions 10
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Environment
+AcceptEnv LANG LC_*
+SetEnv TERM=xterm-256color
+
+# Subsystems
+Subsystem sftp /usr/lib/ssh/sftp-server
 `
 
 	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
@@ -901,7 +933,7 @@ StrictModes no
 			cfgMap.Data = make(map[string]string, 1)
 		}
 
-		cfgMap.Data["99-kl-authorized-keys.conf"] = sshdConfigOverride
+		cfgMap.Data["sshd_config"] = sshdConfig
 		return nil
 	}); err != nil {
 		return check.Failed(err)

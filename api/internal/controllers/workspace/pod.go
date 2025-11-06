@@ -596,7 +596,8 @@ chmod 644 /tmp-writable/kloudlite-context.json
 						},
 						{
 							Name:      "sshd-config",
-							MountPath: "/etc/ssh/sshd_config.d",
+							MountPath: "/etc/ssh/sshd_config",
+							SubPath:   "sshd_config",
 							ReadOnly:  true,
 						},
 						{
@@ -683,7 +684,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "workspace-sshd-config",
+								Name: "sshd-config",
 							},
 						},
 					},
