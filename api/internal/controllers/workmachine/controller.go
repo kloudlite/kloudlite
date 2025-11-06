@@ -818,6 +818,7 @@ AuthorizedKeysFile /var/lib/kloudlite/ssh-config/authorized_keys
 
 # Host Keys
 HostKey /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
+HostKeyAlgorithms rsa-sha2-512,rsa-sha2-256
 
 # SSH Jump Host / Bastion Configuration
 AllowTcpForwarding yes
@@ -899,6 +900,7 @@ AuthorizedKeysFile /var/lib/kloudlite/ssh-config/authorized_keys
 
 # Host Keys
 HostKey /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
+HostKeyAlgorithms rsa-sha2-512,rsa-sha2-256
 
 # SSH Configuration
 AllowTcpForwarding yes
