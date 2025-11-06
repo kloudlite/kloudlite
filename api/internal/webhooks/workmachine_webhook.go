@@ -333,6 +333,11 @@ func (w *WorkMachineWebhook) validateWorkMachine(
 		}
 	}
 
+	// On CREATE, prevent creating machine in stopped state (needs initial setup)
+	if operation == admissionv1.Create && machine.Spec.State == machinesv1.MachineStateStopped {
+		return fmt.Errorf("cannot create a WorkMachine in stopped state; machines must run initial setup on first start")
+	}
+
 	// Validate targetNamespace is unique across WorkMachines and not used by Environments
 	if machine.Spec.TargetNamespace != "" && (operation == admissionv1.Create || operation == admissionv1.Update) {
 		// Check if any other WorkMachine is using this targetNamespace (using label selector)
