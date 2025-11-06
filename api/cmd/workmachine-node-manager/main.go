@@ -653,8 +653,9 @@ func writeAuthorizedKeys(logger *zap2.Logger, content string, fs FileSystem) err
 // SSHConfigReconciler watches the ssh-host-keys Secret and writes authorized_keys to the host filesystem
 type SSHConfigReconciler struct {
 	client.Client
-	Logger *zap2.Logger
-	FS     FileSystem
+	Logger          *zap2.Logger
+	FS              FileSystem
+	WorkMachineName string
 }
 
 func (r *SSHConfigReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -729,15 +730,21 @@ func (r *SSHConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				labels := e.Object.GetLabels()
-				return labels != nil && labels["kloudlite.io/ssh-host-keys"] == "true"
+				return labels != nil &&
+					labels["kloudlite.io/ssh-host-keys"] == "true" &&
+					labels["kloudlite.io/workmachine"] == r.WorkMachineName
 			},
 			UpdateFunc: func(e event.UpdateEvent) bool {
 				labels := e.ObjectNew.GetLabels()
-				return labels != nil && labels["kloudlite.io/ssh-host-keys"] == "true"
+				return labels != nil &&
+					labels["kloudlite.io/ssh-host-keys"] == "true" &&
+					labels["kloudlite.io/workmachine"] == r.WorkMachineName
 			},
 			DeleteFunc: func(e event.DeleteEvent) bool {
 				labels := e.Object.GetLabels()
-				return labels != nil && labels["kloudlite.io/ssh-host-keys"] == "true"
+				return labels != nil &&
+					labels["kloudlite.io/ssh-host-keys"] == "true" &&
+					labels["kloudlite.io/workmachine"] == r.WorkMachineName
 			},
 		}).
 		Complete(r)
@@ -861,8 +868,15 @@ func main() {
 		select {} // Block forever
 	}
 
+	// Get WorkMachine name from environment
+	workmachineName := os.Getenv("WORKMACHINE_NAME")
+	if workmachineName == "" {
+		zapLogger.Fatal("WORKMACHINE_NAME environment variable not set")
+	}
+
 	zapLogger.Info("Starting Package Manager",
 		zap2.String("namespace", namespace),
+		zap2.String("workmachineName", workmachineName),
 		zap2.String("nixStorePath", nixStorePath))
 
 	// Setup scheme
@@ -912,9 +926,10 @@ func main() {
 
 	// Setup SSH config reconciler
 	sshConfigReconciler := &SSHConfigReconciler{
-		Client: mgr.GetClient(),
-		Logger: zapLogger,
-		FS:     fs,
+		Client:          mgr.GetClient(),
+		Logger:          zapLogger,
+		FS:              fs,
+		WorkMachineName: workmachineName,
 	}
 
 	if err := sshConfigReconciler.SetupWithManager(mgr); err != nil {

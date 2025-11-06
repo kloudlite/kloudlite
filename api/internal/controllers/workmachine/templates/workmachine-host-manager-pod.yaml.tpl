@@ -85,6 +85,8 @@ spec:
       env:
         - name: NAMESPACE
           value: {{ .Namespace }}
+        - name: WORKMACHINE_NAME
+          value: {{ $workmachineName }}
       volumeMounts:
         - name: nix-store
           mountPath: /nix
