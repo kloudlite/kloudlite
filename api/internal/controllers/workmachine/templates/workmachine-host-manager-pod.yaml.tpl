@@ -167,13 +167,13 @@ spec:
         type: DirectoryOrCreate
     - name: ssh-proxy-key
       secret:
-        secretName: ssh-host-keys
+        secretName: ssh-host-keys-{{.WorkMachineName}}
     - name: ssh-key-volume
       emptyDir: {}
     - name: sshd-config
       configMap:
-        name: sshd-config
+        name: sshd-config-{{.WorkMachineName}}
     - name: ssh-host-keys
       secret:
-        secretName: ssh-host-keys
+        secretName: ssh-host-keys-{{.WorkMachineName}}
         defaultMode: 0o600
