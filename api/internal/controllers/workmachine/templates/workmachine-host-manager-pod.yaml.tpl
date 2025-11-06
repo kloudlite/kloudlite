@@ -33,7 +33,7 @@ spec:
   initContainers:
     - name: setup-nix
       image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       securityContext:
         privileged: true
       command: ["sh", "-c"]
@@ -91,7 +91,7 @@ spec:
   containers:
     - name: workmachine-node-manager
       image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       securityContext:
         privileged: true
       env:
