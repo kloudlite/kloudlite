@@ -737,8 +737,8 @@ func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.
 
 // createSSHHostKeysSecret ensures the SSH host keys secret exists
 func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	namespace := obj.Spec.TargetNamespace
-	secretName := "ssh-host-keys"
+	namespace := hostManagerNamespace
+	secretName := fmt.Sprintf("ssh-host-keys-%s", obj.Name)
 	secret := &corev1.Secret{}
 	err := r.Get(check.Context(), client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
 
@@ -776,6 +776,14 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 			Namespace: namespace,
 			Labels: map[string]string{
 				"kloudlite.io/ssh-host-keys": "true",
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: obj.APIVersion,
+					Kind:       obj.Kind,
+					Name:       obj.Name,
+					UID:        obj.UID,
+				},
 			},
 		},
 		Type: corev1.SecretTypeOpaque,
@@ -839,8 +847,8 @@ func (r *WorkMachineReconciler) createSSHAuthorizedKeysConfig(check *reconciler.
 // ensureSSHDConfigMapStep ensures the sshd_config ConfigMap exists
 func (r *WorkMachineReconciler) ensureSSHDConfigMapStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	// Skip for cloud provider WorkMachines
-	namespace := obj.Spec.TargetNamespace
-	configMapName := "sshd-config"
+	namespace := hostManagerNamespace
+	configMapName := fmt.Sprintf("sshd-config-%s", obj.Name)
 
 	// Define secure sshd_config content
 	sshdConfig := `# OpenSSH Server Configuration for WorkMachine Jump Host
@@ -891,6 +899,17 @@ Subsystem sftp /usr/lib/ssh/sftp-server
 		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
 			"kloudlite.io/ssh-config": "true",
 		}))
+
+		// Set owner reference for cascade deletion
+		cfgMap.SetOwnerReferences([]metav1.OwnerReference{
+			{
+				APIVersion: obj.APIVersion,
+				Kind:       obj.Kind,
+				Name:       obj.Name,
+				UID:        obj.UID,
+			},
+		})
+
 		if cfgMap.Data == nil {
 			cfgMap.Data = make(map[string]string, 1)
 		}
