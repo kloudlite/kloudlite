@@ -140,29 +140,7 @@ func (s *Server) Start() error {
 		s.logger.Warn("Continuing without webhook configurations")
 	}
 
-	// Start subdomain poller after webhooks are installed
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				s.logger.Error("Subdomain poller panicked",
-					zap.Any("panic", r),
-					zap.Stack("stack"))
-			}
-		}()
-
-		s.subdomainPoller.Start(s.pollerCtx)
-	}()
-
-	// Wait for subdomain before starting controllers
-	waitCtx, waitCancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer waitCancel()
-
-	s.logger.Info("Waiting for subdomain before starting controllers...")
-	if err := s.subdomainPoller.WaitUntilReady(waitCtx); err != nil {
-		s.logger.Warn("Subdomain not ready, starting controllers anyway", zap.Error(err))
-	}
-
-	// Start controller manager after subdomain is ready
+	// Start controller manager first so webhook handlers are registered
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -179,6 +157,31 @@ func (s *Server) Start() error {
 			}
 		}
 	}()
+
+	// Give controller manager a moment to register webhook handlers
+	time.Sleep(2 * time.Second)
+
+	// Start subdomain poller after controller manager is ready
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				s.logger.Error("Subdomain poller panicked",
+					zap.Any("panic", r),
+					zap.Stack("stack"))
+			}
+		}()
+
+		s.subdomainPoller.Start(s.pollerCtx)
+	}()
+
+	// Wait for subdomain to be ready
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer waitCancel()
+
+	s.logger.Info("Waiting for subdomain...")
+	if err := s.subdomainPoller.WaitUntilReady(waitCtx); err != nil {
+		s.logger.Warn("Subdomain not ready, continuing anyway", zap.Error(err))
+	}
 
 	// Keep the main goroutine alive
 	select {}

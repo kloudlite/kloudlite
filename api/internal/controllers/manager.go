@@ -31,7 +31,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 type Manager struct {
@@ -59,6 +58,7 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 
 	// Create manager
 	// Disable metrics to avoid port conflict with main server
+	// Disable webhook server since webhooks are handled by main Gin server
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:                 scheme,
 		HealthProbeBindAddress: "", // Disable health probe
@@ -67,12 +67,7 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		},
 		LeaderElection:   false,
 		LeaderElectionID: "kloudlite-api-controller-manager",
-		WebhookServer: &webhook.DefaultServer{
-			Options: webhook.Options{
-				Port:    8443,
-				CertDir: "/etc/webhook/certs",
-			},
-		},
+		WebhookServer:    nil, // Disable - webhooks handled by main server
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create manager: %w", err)
@@ -159,10 +154,8 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		return nil, fmt.Errorf("unable to create DomainRequest controller: %w", err)
 	}
 
-	// Setup DomainRequest validation webhook
-	if err = (&domainrequestsv1.DomainRequest{}).SetupWebhookWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create DomainRequest webhook: %w", err)
-	}
+	// DomainRequest webhook is handled by Gin server in routes.go
+	// No need to setup controller-runtime webhook since WebhookServer is nil
 
 	logger.Info("Controllers initialized successfully")
 
