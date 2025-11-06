@@ -4,41 +4,14 @@
 ARG BASE_IMAGE=kloudlite/workspace-base:latest
 ARG VERSION=dev
 
-# Build stage for kl binary
-FROM golang:1.24-alpine AS kl-builder
-
-# Re-declare VERSION in this stage
-ARG VERSION
-
-WORKDIR /build
-
-# Copy go.mod and go.sum first for better caching
-COPY ../../go.mod ../../go.sum ./
-
-# Download dependencies with cache mount
-RUN --mount=type=cache,target=/go/pkg/mod \
-  --mount=type=cache,target=/root/.cache/go-build \
-  go mod download
-
-# Copy the entire API source code
-COPY ../../ ./
-
-# Build kl binary with cache mounts
-RUN --mount=type=cache,target=/go/pkg/mod \
-  --mount=type=cache,target=/root/.cache/go-build \
-  CGO_ENABLED=0 go build \
-  -ldflags="-s -w" \
-  -o kl \
-  ./cmd/kl
-
-
 # Final workspace image
 FROM ${BASE_IMAGE}
 
 USER root
 
-# Copy kl binary from builder
-COPY --from=kl-builder /build/kl /usr/local/bin/kl
+# Copy pre-built kl binary (built outside Docker)
+# Build the binary with: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/kl-linux cmd/kl/main.go
+COPY ../../bin/kl-linux /usr/local/bin/kl
 RUN chmod +x /usr/local/bin/kl
 
 # Install system dependencies including shells first with apt cache mount
