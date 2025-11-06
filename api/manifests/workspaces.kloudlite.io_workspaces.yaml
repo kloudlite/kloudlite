@@ -24,6 +24,9 @@ spec:
     - jsonPath: .spec.owner
       name: Owner
       type: string
+    - jsonPath: .spec.workmachine
+      name: WorkMachine
+      type: string
     - jsonPath: .spec.status
       name: Status
       type: string
