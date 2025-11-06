@@ -31,6 +31,13 @@ var installManifestsCmd = &cobra.Command{
 		}
 		fmt.Printf("✓ Written CRDs to %s\n", crdsPath)
 
+		// Write kloudlite-ingress namespace
+		ingressNsPath := filepath.Join(manifestsDir, "kloudlite-ingress-namespace.yaml")
+		if err := os.WriteFile(ingressNsPath, []byte(manifests.KloudliteIngressNamespace), 0644); err != nil {
+			return fmt.Errorf("failed to write kloudlite-ingress namespace: %w", err)
+		}
+		fmt.Printf("✓ Written kloudlite-ingress namespace to %s\n", ingressNsPath)
+
 		// Write RBAC
 		rbacPath := filepath.Join(manifestsDir, "api-server-rbac.yaml")
 		if err := os.WriteFile(rbacPath, []byte(manifests.APIServerRBAC), 0644); err != nil {

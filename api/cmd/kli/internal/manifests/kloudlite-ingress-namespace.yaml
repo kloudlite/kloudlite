@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kloudlite-ingress
+  labels:
+    kloudlite.io/managed: "true"
+    kloudlite.io/component: ingress
+  annotations:
+    kloudlite.io/description: "Shared namespace for all DomainRequest workloads (HAProxy pods)"
