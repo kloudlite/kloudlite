@@ -156,7 +156,7 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 	}
 
 	// Verify PackageRequest was created
-	pkgReq := &workspacev1.PackageRequest{}
+	pkgReq := &packagesv1.PackageRequest{}
 	err := k8sClient.Get(context.Background(), types.NamespacedName{
 		Name:      "test-workspace-packages",
 		Namespace: "test-namespace",
@@ -203,7 +203,7 @@ func TestReconcile_WithEnvironmentConnection(t *testing.T) {
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, env, workspace).
-		WithStatusSubresource(&workspacev1.Workspace{}, &workspacev1.PackageRequest{}).
+		WithStatusSubresource(&workspacev1.Workspace{}, &packagesv1.PackageRequest{}).
 		Build()
 
 	logger, _ := zap.NewDevelopment()
