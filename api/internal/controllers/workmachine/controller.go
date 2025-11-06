@@ -804,7 +804,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 func (r *WorkMachineReconciler) createSSHAuthorizedKeysConfig(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	// Skip for cloud provider WorkMachines
 	namespace := hostManagerNamespace
-	configMapName := "ssh-authorized-keys"
+	configMapName := fmt.Sprintf("ssh-authorized-keys-%s", obj.Name)
 
 	// Build authorized_keys content with user keys from WorkMachine spec
 	// Validate each SSH key before adding to authorized_keys
@@ -829,7 +829,8 @@ func (r *WorkMachineReconciler) createSSHAuthorizedKeysConfig(check *reconciler.
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, cfgMap, func() error {
 		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
-			"kloudlite.io/ssh-config": "true",
+			"kloudlite.io/ssh-config":    "true",
+			"kloudlite.io/workmachine":   obj.Name,
 		}))
 		if cfgMap.Data == nil {
 			cfgMap.Data = make(map[string]string, 1)

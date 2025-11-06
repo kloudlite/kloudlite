@@ -658,11 +658,6 @@ type SSHConfigReconciler struct {
 }
 
 func (r *SSHConfigReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	// Only reconcile the ssh-authorized-keys ConfigMap
-	if req.Name != "ssh-authorized-keys" {
-		return reconcile.Result{}, nil
-	}
-
 	logger := r.Logger.With(
 		zap2.String("configMap", req.Name),
 		zap2.String("namespace", req.Namespace),
@@ -703,13 +698,16 @@ func (r *SSHConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&corev1.ConfigMap{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
-				return e.Object.GetName() == "ssh-authorized-keys"
+				labels := e.Object.GetLabels()
+				return labels != nil && labels["kloudlite.io/ssh-config"] == "true"
 			},
 			UpdateFunc: func(e event.UpdateEvent) bool {
-				return e.ObjectNew.GetName() == "ssh-authorized-keys"
+				labels := e.ObjectNew.GetLabels()
+				return labels != nil && labels["kloudlite.io/ssh-config"] == "true"
 			},
 			DeleteFunc: func(e event.DeleteEvent) bool {
-				return e.Object.GetName() == "ssh-authorized-keys"
+				labels := e.Object.GetLabels()
+				return labels != nil && labels["kloudlite.io/ssh-config"] == "true"
 			},
 		}).
 		Complete(r)
