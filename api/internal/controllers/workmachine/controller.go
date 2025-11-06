@@ -396,6 +396,12 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 		}
 	}
 
+	// Create ClusterRole and ClusterRoleBinding for cluster-scoped resources
+	// This allows workmachine-node-manager to access Workspaces and PackageRequests
+	if err := r.createClusterRBAC(check.Context()); err != nil {
+		return check.Failed(err)
+	}
+
 	return check.Passed()
 }
 
@@ -485,6 +491,84 @@ func (r *WorkMachineReconciler) createRBACInNamespace(ctx context.Context, names
 
 		// Create role binding
 		if err := r.Create(ctx, rb); err != nil && !apiErrors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// createClusterRBAC creates ClusterRole and ClusterRoleBinding for workmachine-node-manager
+// to access cluster-scoped resources like Workspaces and PackageRequests
+func (r *WorkMachineReconciler) createClusterRBAC(ctx context.Context) error {
+	// Create ClusterRole
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "workmachine-node-manager",
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"workspaces"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"workspaces/status"},
+				Verbs:     []string{"get", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"packagerequests"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"packagerequests/status"},
+				Verbs:     []string{"get", "update", "patch"},
+			},
+		},
+	}
+
+	existingClusterRole := &rbacv1.ClusterRole{}
+	if err := r.Get(ctx, client.ObjectKey{Name: clusterRole.Name}, existingClusterRole); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
+		}
+
+		// Create cluster role
+		if err := r.Create(ctx, clusterRole); err != nil && !apiErrors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+
+	// Create ClusterRoleBinding
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "workmachine-node-manager",
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "workmachine-node-manager",
+				Namespace: hostManagerNamespace,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     "workmachine-node-manager",
+		},
+	}
+
+	existingCRB := &rbacv1.ClusterRoleBinding{}
+	if err := r.Get(ctx, client.ObjectKey{Name: clusterRoleBinding.Name}, existingCRB); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
+		}
+
+		// Create cluster role binding
+		if err := r.Create(ctx, clusterRoleBinding); err != nil && !apiErrors.IsAlreadyExists(err) {
 			return err
 		}
 	}
