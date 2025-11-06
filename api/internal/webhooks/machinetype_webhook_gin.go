@@ -344,12 +344,8 @@ func (w *MachineTypeGinWebhook) validateCreate(machineType *machinesv1.MachineTy
 		}
 	}
 
-	// Validate only one machine type is marked as default
-	if machineType.Spec.IsDefault {
-		if err := w.validateSingleDefault(ctx, machineType.Name); err != nil {
-			return err
-		}
-	}
+	// Note: We don't validate single default here because the mutation webhook
+	// will automatically remove the default flag from other machine types
 
 	return nil
 }
@@ -401,12 +397,8 @@ func (w *MachineTypeGinWebhook) validateUpdate(machineType *machinesv1.MachineTy
 		}
 	}
 
-	// Validate only one machine type is marked as default
-	if machineType.Spec.IsDefault {
-		if err := w.validateSingleDefault(ctx, machineType.Name); err != nil {
-			return err
-		}
-	}
+	// Note: We don't validate single default here because the mutation webhook
+	// will automatically remove the default flag from other machine types
 
 	return nil
 }
