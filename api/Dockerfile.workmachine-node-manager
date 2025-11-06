@@ -1,20 +1,10 @@
-FROM golang:1.24 AS builder
-
-# Copy source code
-WORKDIR /workspace
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-
-# Build the workmachine-node-manager binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o workmachine-node-manager ./cmd/workmachine-node-manager
-
-# Final image
+# CI Dockerfile - expects pre-built binary at ./bin/workmachine-node-manager
 FROM debian:bookworm-slim
 
-# Install dependencies including nix
-RUN apt-get update && apt-get install -y \
+# Install dependencies including nix with apt cache mount
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     curl \
     xz-utils \
     ca-certificates \
@@ -32,15 +22,16 @@ RUN groupadd -g 30000 nixbld && \
 
 # Install Nix in single-user mode
 # Disable sandbox during installation to avoid seccomp issues during Docker build
-RUN mkdir -p /root/.config/nix && \
+RUN --mount=type=cache,target=/tmp/nix-install-cache \
+    mkdir -p /root/.config/nix && \
     echo "sandbox = false" > /root/.config/nix/nix.conf && \
     curl -L https://nixos.org/nix/install | NIX_INSTALLER_NO_CHANNEL_ADD=1 sh -s -- --no-daemon --option sandbox false
 
 # Source nix profile
 ENV PATH="/root/.nix-profile/bin:${PATH}"
 
-# Copy the workmachine-node-manager binary
-COPY --from=builder /workspace/workmachine-node-manager /usr/local/bin/workmachine-node-manager
+# Copy the pre-built binary from local filesystem
+COPY ./bin/workmachine-node-manager /usr/local/bin/workmachine-node-manager
 
 # Run workmachine-node-manager
 CMD ["/usr/local/bin/workmachine-node-manager"]
