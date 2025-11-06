@@ -54,7 +54,25 @@ func (w *DomainRequestWebhook) ValidateDomainRequest(c *gin.Context) {
 }
 
 func (w *DomainRequestWebhook) handleValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
-	// Parse the DomainRequest object
+	// Handle DELETE operations separately
+	if req.Operation == admissionv1.Delete {
+		// For DELETE, the object is in OldObject, not Object
+		if req.Name == "installation-domain" {
+			w.logger.Warn("Attempted to delete protected installation-domain DomainRequest")
+			return &admissionv1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Message: "Cannot delete installation-domain: this DomainRequest is protected and managed by the installation",
+				},
+			}
+		}
+		// Allow deletion of other DomainRequests
+		return &admissionv1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
+
+	// Parse the DomainRequest object for CREATE/UPDATE operations
 	var domainRequest domainrequestv1.DomainRequest
 	if err := json.Unmarshal(req.Object.Raw, &domainRequest); err != nil {
 		w.logger.Error("Failed to unmarshal DomainRequest: " + err.Error())

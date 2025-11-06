@@ -35,6 +35,7 @@ const (
 	sshConfigPath           = "/var/lib/kloudlite/ssh-config"
 	authorizedKeysFile      = "authorized_keys"
 	packageRequestFinalizer = "workspaces.kloudlite.io/package-cleanup"
+	workspaceCleanupFinalizer = "workspaces.kloudlite.io/directory-cleanup"
 )
 
 // CommandExecutor defines an interface for executing shell commands
@@ -714,6 +715,87 @@ func (r *SSHConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// WorkspaceCleanupReconciler watches Workspace resources and cleans up workspace directories
+type WorkspaceCleanupReconciler struct {
+	client.Client
+	Logger *zap2.Logger
+	FS     FileSystem
+}
+
+func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+	logger := r.Logger.With(
+		zap2.String("workspace", req.Name),
+	)
+
+	logger.Info("Reconciling Workspace for directory cleanup")
+
+	// Fetch Workspace (cluster-scoped, no namespace)
+	workspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: req.Name}, workspace); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			logger.Info("Workspace deleted or not found")
+			return reconcile.Result{}, nil
+		}
+		logger.Error("Failed to get Workspace", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Check if workspace is being deleted
+	if workspace.DeletionTimestamp != nil {
+		// Workspace is being deleted
+		if containsString(workspace.Finalizers, workspaceCleanupFinalizer) {
+			logger.Info("Workspace is being deleted, cleaning up directory")
+
+			// Clean up workspace directory
+			workspaceDir := fmt.Sprintf("%s/workspaces/%s", workspaceHomePath, workspace.Name)
+			logger.Info("Removing workspace directory", zap2.String("path", workspaceDir))
+
+			// Use rm -rf to remove directory and all contents
+			removeScript := fmt.Sprintf("rm -rf %s", workspaceDir)
+			cmd := exec.Command("sh", "-c", removeScript)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				logger.Error("Failed to remove workspace directory",
+					zap2.String("path", workspaceDir),
+					zap2.Error(err),
+					zap2.String("output", string(output)))
+				return reconcile.Result{}, fmt.Errorf("failed to remove workspace directory: %w", err)
+			}
+
+			logger.Info("Successfully removed workspace directory", zap2.String("path", workspaceDir))
+
+			// Remove finalizer
+			workspace.Finalizers = removeString(workspace.Finalizers, workspaceCleanupFinalizer)
+			if err := r.Update(ctx, workspace); err != nil {
+				logger.Error("Failed to remove finalizer", zap2.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			logger.Info("Cleanup complete, finalizer removed")
+		}
+		return reconcile.Result{}, nil
+	}
+
+	// Add finalizer if not present
+	if !containsString(workspace.Finalizers, workspaceCleanupFinalizer) {
+		logger.Info("Adding cleanup finalizer to Workspace")
+		workspace.Finalizers = append(workspace.Finalizers, workspaceCleanupFinalizer)
+		if err := r.Update(ctx, workspace); err != nil {
+			logger.Error("Failed to add finalizer", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
+		logger.Info("Successfully added cleanup finalizer")
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func (r *WorkspaceCleanupReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&workspacev1.Workspace{}).
+		Complete(r)
+}
+
 func main() {
 	// Setup logger using controller-runtime's zap logger
 	opts := zap.Options{
@@ -809,6 +891,17 @@ func main() {
 
 	if err := sshConfigReconciler.SetupWithManager(mgr); err != nil {
 		zapLogger.Fatal("Failed to setup SSH config controller", zap2.Error(err))
+	}
+
+	// Setup workspace cleanup reconciler
+	workspaceCleanupReconciler := &WorkspaceCleanupReconciler{
+		Client: mgr.GetClient(),
+		Logger: zapLogger,
+		FS:     fs,
+	}
+
+	if err := workspaceCleanupReconciler.SetupWithManager(mgr); err != nil {
+		zapLogger.Fatal("Failed to setup workspace cleanup controller", zap2.Error(err))
 	}
 
 	ctx := ctrl.SetupSignalHandler()

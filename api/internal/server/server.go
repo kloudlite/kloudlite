@@ -105,29 +105,18 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 }
 
 func (s *Server) Start() error {
-	// Start controller manager in goroutine with panic recovery
+	// Start HTTPS webhook server first (needed for webhooks during subdomain setup)
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				s.logger.Error("Controller manager panicked",
-					zap.Any("panic", r),
-					zap.Stack("stack"))
-				// Optionally: could restart controller manager here
-			}
-		}()
-
-		s.logger.Info("Starting controller manager")
-		if err := s.controllerManager.Start(s.controllerCtx); err != nil {
-			// Only log error if it's not due to context cancellation
-			if s.controllerCtx.Err() == nil {
-				s.logger.Error("Controller manager stopped with error", zap.Error(err))
-			} else {
-				s.logger.Info("Controller manager stopped gracefully")
-			}
+		s.logger.Info("Starting HTTPS webhook server", zap.String("addr", s.httpsServer.Addr))
+		if err := s.httpsServer.ListenAndServeTLS("/etc/webhook/certs/tls.crt", "/etc/webhook/certs/tls.key"); err != nil && err != http.ErrServerClosed {
+			s.logger.Error("HTTPS server stopped with error", zap.Error(err))
 		}
 	}()
 
-	// Start subdomain poller in goroutine with panic recovery
+	// Give HTTPS server a moment to start listening
+	time.Sleep(500 * time.Millisecond)
+
+	// Start subdomain poller
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -140,11 +129,30 @@ func (s *Server) Start() error {
 		s.subdomainPoller.Start(s.pollerCtx)
 	}()
 
-	// Start HTTPS server on port 8443 in goroutine
+	// Wait for subdomain before starting controllers
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer waitCancel()
+
+	s.logger.Info("Waiting for subdomain before starting controllers...")
+	if err := s.subdomainPoller.WaitUntilReady(waitCtx); err != nil {
+		s.logger.Warn("Subdomain not ready, starting controllers anyway", zap.Error(err))
+	}
+
+	// Start controller manager after subdomain is ready
 	go func() {
-		s.logger.Info("Starting HTTPS webhook server", zap.String("addr", s.httpsServer.Addr))
-		if err := s.httpsServer.ListenAndServeTLS("/etc/webhook/certs/tls.crt", "/etc/webhook/certs/tls.key"); err != nil && err != http.ErrServerClosed {
-			s.logger.Error("HTTPS server stopped with error", zap.Error(err))
+		defer func() {
+			if r := recover(); r != nil {
+				s.logger.Error("Controller manager panicked",
+					zap.Any("panic", r),
+					zap.Stack("stack"))
+			}
+		}()
+
+		s.logger.Info("Starting controller manager")
+		if err := s.controllerManager.Start(s.controllerCtx); err != nil {
+			if s.controllerCtx.Err() == nil {
+				s.logger.Error("Controller manager stopped with error", zap.Error(err))
+			}
 		}
 	}()
 
@@ -161,30 +169,21 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down server...")
 
-	// Stop controller manager first
-	s.logger.Info("Stopping controller manager...")
 	s.controllerCtxCancel()
-
-	// Stop subdomain poller
-	s.logger.Info("Stopping subdomain poller...")
 	s.pollerCtxCancel()
 	s.subdomainPoller.Stop()
 
-	// Graceful shutdown with timeout for both servers
 	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	// Shutdown HTTP server
 	if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
 		s.logger.Error("Failed to shutdown HTTP server", zap.Error(err))
 	}
 
-	// Shutdown HTTPS server
 	if err := s.httpsServer.Shutdown(shutdownCtx); err != nil {
 		s.logger.Error("Failed to shutdown HTTPS server", zap.Error(err))
 	}
 
-	// Clean up managers
 	if err := s.servicesManager.Close(); err != nil {
 		s.logger.Error("Failed to close services manager", zap.Error(err))
 	}
@@ -193,6 +192,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		s.logger.Error("Failed to close repository manager", zap.Error(err))
 	}
 
-	s.logger.Info("Server exited")
+	s.logger.Info("Server shutdown complete")
 	return nil
 }

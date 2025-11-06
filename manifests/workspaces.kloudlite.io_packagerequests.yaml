@@ -15,7 +15,7 @@ spec:
     listKind: PackageRequestList
     plural: packagerequests
     singular: packagerequest
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.workspaceRef

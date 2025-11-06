@@ -15,7 +15,7 @@ spec:
     listKind: WorkspaceList
     plural: workspaces
     singular: workspace
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.displayName
@@ -23,6 +23,9 @@ spec:
       type: string
     - jsonPath: .spec.owner
       name: Owner
+      type: string
+    - jsonPath: .spec.workmachine
+      name: WorkMachine
       type: string
     - jsonPath: .spec.status
       name: Status
@@ -305,6 +308,10 @@ spec:
                   to use
                 type: string
               workmachine:
+                description: |-
+                  WorkmachineName references the WorkMachine this workspace belongs to
+                  The workspace will run in the WorkMachine's targetNamespace
+                minLength: 1
                 type: string
               workspacePath:
                 default: /workspace

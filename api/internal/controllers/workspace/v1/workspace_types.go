@@ -346,6 +346,7 @@ type ResourceUsage struct {
 // +kubebuilder:resource:scope=Cluster,categories={kloudlite,workspaces}
 // +kubebuilder:printcolumn:name="Display Name",type=string,JSONPath=`.spec.displayName`
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
+// +kubebuilder:printcolumn:name="WorkMachine",type=string,JSONPath=`.spec.workmachine`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.spec.status`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.status.connectedEnvironment.name`

@@ -5,20 +5,21 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kloudlite/api/internal/config"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
+	// "github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest"
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
+	// "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/user"
+	// "github.com/kloudlite/kloudlite/api/internal/controllers/user"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workspace"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -28,7 +29,6 @@ import (
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	zaplog "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
@@ -52,10 +52,8 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 	utilruntime.Must(domainrequestsv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
-	// Set controller-runtime logger
-	ctrl.SetLogger(zaplog.New(func(o *zaplog.Options) {
-		o.Development = true
-	}))
+	// Set controller-runtime logger to use our zap logger
+	ctrl.SetLogger(zapr.NewLogger(logger))
 
 	// Create manager
 	// Disable metrics to avoid port conflict with main server
@@ -80,16 +78,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 
 	// Health checks disabled to avoid port conflicts
 
-	// Setup User controller
-	userReconciler := &user.UserReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "user")),
-	}
+	// // Setup User controller
+	// userReconciler := &user.UserReconciler{
+	// 	Client: mgr.GetClient(),
+	// 	Scheme: mgr.GetScheme(),
+	// 	Logger: logger.With(zap.String("controller", "user")),
+	// }
 
-	if err = userReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create User controller: %w", err)
-	}
+	// if err = userReconciler.SetupWithManager(mgr); err != nil {
+	// 	return nil, fmt.Errorf("unable to create User controller: %w", err)
+	// }
 
 	// Setup Environment controller
 	environmentReconciler := &environment.EnvironmentReconciler{
@@ -106,16 +104,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
 	}
 
-	// Setup Composition controller
-	compositionReconciler := &composition.CompositionReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "composition")),
-	}
+	// // Setup Composition controller
+	// compositionReconciler := &composition.CompositionReconciler{
+	// 	Client: mgr.GetClient(),
+	// 	Scheme: mgr.GetScheme(),
+	// 	Logger: logger.With(zap.String("controller", "composition")),
+	// }
 
-	if err = compositionReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create Composition controller: %w", err)
-	}
+	// if err = compositionReconciler.SetupWithManager(mgr); err != nil {
+	// 	return nil, fmt.Errorf("unable to create Composition controller: %w", err)
+	// }
 
 	// Setup Workspace controller
 	clientset, err := kubernetes.NewForConfig(cfg)
@@ -135,16 +133,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
 	}
 
-	// Setup ServiceIntercept controller
-	serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "serviceintercept")),
-	}
+	// // Setup ServiceIntercept controller
+	// serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
+	// 	Client: mgr.GetClient(),
+	// 	Scheme: mgr.GetScheme(),
+	// 	Logger: logger.With(zap.String("controller", "serviceintercept")),
+	// }
 
-	if err = serviceInterceptReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create ServiceIntercept controller: %w", err)
-	}
+	// if err = serviceInterceptReconciler.SetupWithManager(mgr); err != nil {
+	// 	return nil, fmt.Errorf("unable to create ServiceIntercept controller: %w", err)
+	// }
 
 	// Setup DomainRequest controller
 	domainRequestReconciler := &domainrequest.DomainRequestReconciler{

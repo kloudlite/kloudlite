@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -95,20 +96,23 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 				// Don't fail reconciliation, just log the error
 				// The ownership will be set on next reconciliation
 			} else {
-				// Set WorkMachine as controller owner for cascading deletion
-				if err := controllerutil.SetControllerReference(workmachine, workspace, r.Scheme); err != nil {
-					logger.Error("Failed to set WorkMachine as owner",
-						zap.String("workmachine", workspace.Spec.WorkmachineName),
-						zap.Error(err))
-					// Don't fail reconciliation
-				} else {
-					if err := r.Update(ctx, workspace); err != nil {
-						logger.Error("Failed to update Workspace with owner reference", zap.Error(err))
-						return reconcile.Result{}, err
-					}
-					logger.Info("Successfully set WorkMachine as owner of Workspace")
-					return reconcile.Result{Requeue: true}, nil
+				// Set WorkMachine as owner for cascading deletion (without blockOwnerDeletion)
+				blockOwnerDeletion := false
+				ownerRef := metav1.OwnerReference{
+					APIVersion:         workmachine.APIVersion,
+					Kind:               workmachine.Kind,
+					Name:               workmachine.Name,
+					UID:                workmachine.UID,
+					BlockOwnerDeletion: &blockOwnerDeletion,
 				}
+				workspace.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+
+				if err := r.Update(ctx, workspace); err != nil {
+					logger.Error("Failed to update Workspace with owner reference", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+				logger.Info("Successfully set WorkMachine as owner of Workspace")
+				return reconcile.Result{Requeue: true}, nil
 			}
 		}
 	}
