@@ -52,7 +52,7 @@ type WorkMachineSpec struct {
 
 	// State indicates whether the machine should be running or stopped
 	// +kubebuilder:validation:Enum=running;stopped;disabled
-	// +kubebuilder:default=stopped
+	// +kubebuilder:default=running
 	State MachineState `json:"state"`
 
 	// SSHPublicKeys for SSH access to the VM
