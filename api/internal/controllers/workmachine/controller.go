@@ -1163,11 +1163,13 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 
 	// Set WorkMachine as owner for cascading deletion
 	blockOwnerDeletion := false
+	controller := true
 	ownerRef := metav1.OwnerReference{
 		APIVersion:         obj.APIVersion,
 		Kind:               obj.Kind,
 		Name:               obj.Name,
 		UID:                obj.UID,
+		Controller:         &controller,
 		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 	domainRequest.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
