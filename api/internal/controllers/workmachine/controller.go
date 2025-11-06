@@ -1196,6 +1196,24 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 		return check.Failed(fmt.Errorf("failed to delete AWS machine: %w", err))
 	}
 
+	// Force delete all pods running on this node
+	podList := &corev1.PodList{}
+	if err := r.List(check.Context(), podList, client.MatchingFields{"spec.nodeName": obj.Name}); err != nil {
+		check.Logger().Warn("failed to list pods on node", "error", err)
+	} else {
+		gracePeriod := int64(0)
+		deleteOptions := &client.DeleteOptions{
+			GracePeriodSeconds: &gracePeriod,
+		}
+		for i := range podList.Items {
+			pod := &podList.Items[i]
+			check.Logger().Info("force deleting pod", "pod", pod.Name, "namespace", pod.Namespace)
+			if err := r.Delete(check.Context(), pod, deleteOptions); err != nil && !apiErrors.IsNotFound(err) {
+				check.Logger().Warn("failed to force delete pod", "pod", pod.Name, "namespace", pod.Namespace, "error", err)
+			}
+		}
+	}
+
 	// Delete the Kubernetes Node object
 	// The node name matches the WorkMachine name
 	node := &corev1.Node{
@@ -1347,6 +1365,14 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 		}),
 	)
+
+	// Add indexer for pod.spec.nodeName to efficiently query pods by node name
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, "spec.nodeName", func(obj client.Object) []string {
+		pod := obj.(*corev1.Pod)
+		return []string{pod.Spec.NodeName}
+	}); err != nil {
+		return errors.Wrap("failed to setup field indexer for pod.spec.nodeName", err)
+	}
 
 	return builder.Complete(r)
 }
