@@ -172,6 +172,15 @@ func (c *Check[T]) Abort(msg string) StepResult {
 func (c *Check[T]) Passed() StepResult {
 	defer c.postCheck()
 
+	// Check if this check already passed with the same generation
+	// If so, skip status update to avoid reconciliation loops
+	if existingCheck, exists := c.request.Object.GetStatus().Checks[c.name]; exists {
+		if existingCheck.State == PassedState && existingCheck.Generation == c.Generation {
+			// Already passed with same generation, no need to update
+			return c.result().Continue(true)
+		}
+	}
+
 	c.State = PassedState
 	c.CompletedAt = &metav1.Time{Time: time.Now()}
 	c.request.Object.GetStatus().Checks[c.name] = c.CheckResult

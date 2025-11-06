@@ -2,12 +2,14 @@ package workspace
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -71,6 +73,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Set up workspace-specific RBAC
+	if err := r.setupWorkspaceRBAC(ctx, workspace, logger); err != nil {
+		logger.Error("Failed to setup workspace RBAC", zap.Error(err))
+		return reconcile.Result{}, err
 	}
 
 	// Set WorkMachine as owner if WorkmachineName is specified and owner reference not yet set
@@ -153,6 +161,124 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 	}
 
 	return result, err
+}
+
+// setupWorkspaceRBAC creates workspace-specific ClusterRole and ClusterRoleBinding
+// to restrict workspace users to only access their own workspace and intercepts
+func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
+	// Get the workspace namespace from WorkMachine
+	if workspace.Spec.WorkmachineName == "" {
+		return nil // Skip RBAC if no WorkMachine is specified
+	}
+
+	workmachine, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
+	if err != nil {
+		return fmt.Errorf("failed to get WorkMachine: %w", err)
+	}
+
+	namespace := workmachine.Spec.TargetNamespace
+	workspaceName := workspace.Name
+
+	// Create workspace-specific ClusterRole with ResourceNames restrictions
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("workspace-%s-access", workspaceName),
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac": "true",
+				"kloudlite.io/workspace-name": workspaceName,
+			},
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
+		// Set Workspace as owner for cascade deletion
+		if err := controllerutil.SetControllerReference(workspace, clusterRole, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference on ClusterRole: %w", err)
+		}
+
+		clusterRole.Rules = []rbacv1.PolicyRule{
+			{
+				// Allow access only to this specific workspace
+				APIGroups:     []string{"workspaces.kloudlite.io"},
+				Resources:     []string{"workspaces"},
+				ResourceNames: []string{workspaceName},
+				Verbs:         []string{"get", "list", "watch", "update", "patch"},
+			},
+			{
+				// Allow access to workspace status
+				APIGroups:     []string{"workspaces.kloudlite.io"},
+				Resources:     []string{"workspaces/status"},
+				ResourceNames: []string{workspaceName},
+				Verbs:         []string{"get"},
+			},
+			{
+				// Allow creating intercepts (cannot restrict by name beforehand)
+				// But list/get/delete will be restricted by label selector in application logic
+				APIGroups: []string{"intercepts.kloudlite.io"},
+				Resources: []string{"serviceintercepts"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+			},
+			{
+				// Allow managing PackageRequests (cluster-scoped, cannot use ResourceNames)
+				// Will be filtered by workspace ownership in application logic
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"packagerequests"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+			},
+			{
+				// Allow reading PackageRequest status
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"packagerequests/status"},
+				Verbs:     []string{"get"},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to create/update ClusterRole: %w", err)
+	}
+
+	// Create ClusterRoleBinding for the workspace service account
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("workspace-%s-binding", workspaceName),
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac": "true",
+				"kloudlite.io/workspace-name": workspaceName,
+			},
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
+		// Set Workspace as owner for cascade deletion
+		if err := controllerutil.SetControllerReference(workspace, clusterRoleBinding, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference on ClusterRoleBinding: %w", err)
+		}
+
+		clusterRoleBinding.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "workspace-user",
+				Namespace: namespace,
+			},
+		}
+
+		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     fmt.Sprintf("workspace-%s-access", workspaceName),
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to create/update ClusterRoleBinding: %w", err)
+	}
+
+	logger.Info("Successfully created workspace-specific RBAC",
+		zap.String("clusterRole", clusterRole.Name),
+		zap.String("clusterRoleBinding", clusterRoleBinding.Name))
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager
