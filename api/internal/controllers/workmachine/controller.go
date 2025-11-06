@@ -428,12 +428,12 @@ func (r *WorkMachineReconciler) createRBACInNamespace(ctx context.Context, names
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
+				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests"},
 				Verbs:     []string{"get", "list", "watch", "update", "patch"},
 			},
 			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
+				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests/status"},
 				Verbs:     []string{"get", "update", "patch"},
 			},
@@ -517,12 +517,12 @@ func (r *WorkMachineReconciler) createClusterRBAC(ctx context.Context) error {
 				Verbs:     []string{"get", "update", "patch"},
 			},
 			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
+				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests"},
 				Verbs:     []string{"get", "list", "watch", "update", "patch"},
 			},
 			{
-				APIGroups: []string{"workspaces.kloudlite.io"},
+				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests/status"},
 				Verbs:     []string{"get", "update", "patch"},
 			},
