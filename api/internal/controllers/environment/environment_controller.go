@@ -436,6 +436,12 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 		}
 	}
 
+	// Clean up workspace environment connections referencing this environment
+	if err := r.cleanupWorkspaceConnections(ctx, environment, logger); err != nil {
+		logger.Error("Failed to cleanup workspace connections", zap.Error(err))
+		// Continue with deletion even if cleanup fails
+	}
+
 	// Check if namespace exists
 	namespace := &corev1.Namespace{}
 	err := r.Get(ctx, client.ObjectKey{Name: environment.Spec.TargetNamespace}, namespace)
@@ -739,6 +745,57 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		zap.Int("totalResources", totalResources))
 
 	return reconcile.Result{Requeue: true}, nil
+}
+
+// cleanupWorkspaceConnections removes environment connections from all workspaces referencing this environment
+func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	// Get Workspace type to list workspaces
+	workspaceList := &workspacev1.WorkspaceList{}
+	if err := r.List(ctx, workspaceList); err != nil {
+		return fmt.Errorf("failed to list workspaces: %w", err)
+	}
+
+	environmentName := environment.Name
+	environmentNamespace := environment.Namespace
+	if environmentNamespace == "" {
+		environmentNamespace = "default"
+	}
+
+	cleanedCount := 0
+	for i := range workspaceList.Items {
+		workspace := &workspaceList.Items[i]
+
+		// Check if this workspace references the environment being deleted
+		if workspace.Spec.EnvironmentConnection == nil {
+			continue
+		}
+
+		envRef := workspace.Spec.EnvironmentConnection.EnvironmentRef
+		if envRef.Name == environmentName && envRef.Namespace == environmentNamespace {
+			logger.Info("Removing environment connection from workspace",
+				zap.String("workspace", workspace.Name),
+				zap.String("environment", environmentName))
+
+			// Remove the environment connection
+			workspace.Spec.EnvironmentConnection = nil
+
+			if err := r.Update(ctx, workspace); err != nil {
+				logger.Error("Failed to remove environment connection from workspace",
+					zap.String("workspace", workspace.Name),
+					zap.Error(err))
+				// Continue with other workspaces even if one fails
+				continue
+			}
+			cleanedCount++
+		}
+	}
+
+	if cleanedCount > 0 {
+		logger.Info("Cleaned up workspace environment connections",
+			zap.Int("count", cleanedCount))
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager
