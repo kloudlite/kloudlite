@@ -213,11 +213,30 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Verbs:         []string{"get"},
 			},
 			{
+				// Allow reading environments (needed for env connect command)
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"environments"},
+				Verbs:     []string{"get", "list"},
+			},
+			{
+				// Allow reading services in any namespace (needed for intercept command)
+				// The kl CLI will only access services in connected environment namespaces
+				APIGroups: []string{""},
+				Resources: []string{"services"},
+				Verbs:     []string{"get", "list"},
+			},
+			{
 				// Allow creating intercepts (cannot restrict by name beforehand)
 				// But list/get/delete will be restricted by label selector in application logic
 				APIGroups: []string{"intercepts.kloudlite.io"},
 				Resources: []string{"serviceintercepts"},
 				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+			},
+			{
+				// Allow reading ServiceIntercept status
+				APIGroups: []string{"intercepts.kloudlite.io"},
+				Resources: []string{"serviceintercepts/status"},
+				Verbs:     []string{"get"},
 			},
 			{
 				// Allow managing PackageRequests (cluster-scoped, cannot use ResourceNames)
