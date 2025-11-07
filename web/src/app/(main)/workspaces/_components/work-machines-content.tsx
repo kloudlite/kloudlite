@@ -38,7 +38,7 @@ function getStateDisplay(currentState: string, desiredState: string) {
     running: 'text-success',
     stopped: 'text-muted-foreground',
     starting: 'text-info',
-    stopping: 'text-warning',
+    stopping: 'text-destructive',
     disabled: 'text-destructive',
     errored: 'text-destructive',
   }
@@ -199,7 +199,9 @@ export function WorkMachinesContent({
                 <Server className="text-primary-foreground h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-semibold">{selectedMachine.name}</h2>
+                <h2 className="text-base font-semibold">
+                  {selectedMachine.owner.split('@')[0]}/{selectedMachine.name}
+                </h2>
                 <p className="text-muted-foreground text-xs">{selectedMachine.type}</p>
               </div>
             </div>
@@ -229,8 +231,11 @@ export function WorkMachinesContent({
                 Status
               </p>
               <div className="mt-2 flex items-center gap-2">
-                {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-                  .isTransitioning && <Loader2 className="text-info h-4 w-4 animate-spin" />}
+                {(selectedMachine.currentState === 'starting' || selectedMachine.currentState === 'stopping') && (
+                  <Loader2
+                    className={`h-4 w-4 animate-spin ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}
+                  />
+                )}
                 <p
                   className={`text-sm font-medium ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}
                 >
