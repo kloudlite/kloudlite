@@ -99,21 +99,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Cleanup stale status checks from previous versions
-	// Remove "create/setup domain request" check if it exists (changed to "setup domain request")
-	if req.Object.DeletionTimestamp == nil {
-		obj := req.Object
-		if obj.Status.Checks != nil {
-			if _, exists := obj.Status.Checks["create/setup domain request"]; exists {
-				delete(obj.Status.Checks, "create/setup domain request")
-				// Update the status on the API server
-				if updateErr := r.Status().Update(ctx, obj); updateErr != nil {
-					return reconcile.Result{}, updateErr
-				}
-			}
-		}
-	}
-
 	return reconciler.ReconcileSteps(req, []reconciler.Step[*v1.WorkMachine]{
 		{
 			Name:     "setup-namespace",
