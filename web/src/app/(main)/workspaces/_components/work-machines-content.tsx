@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 import { WorkMachineMetrics } from './work-machine-metrics'
 import { PinnedResources } from '../../environments/_components/pinned-resources'
 import { WorkMachineControls } from './work-machine-controls'
+import { WorkMachineSetup } from './work-machine-setup'
 import {
   updateMyWorkMachine,
   startMyWorkMachine,
   stopMyWorkMachine,
 } from '@/app/actions/work-machine.actions'
 import { toast } from 'sonner'
-import { Server, Loader2, ArrowRight } from 'lucide-react'
+import { Loader2, ArrowRight } from 'lucide-react'
 
 interface WorkMachine {
   id: string
@@ -119,26 +120,7 @@ export function WorkMachinesContent({
 
   // Handle case where user has no work machine
   if (!selectedMachine) {
-    return (
-      <main className="min-h-screen">
-        <div className="mx-auto max-w-7xl px-6 py-8">
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold">Dashboard</h1>
-            <p className="text-muted-foreground mt-1.5 text-sm">
-              Monitor and manage your development environment
-            </p>
-          </div>
-
-          <div className="bg-card border p-12 text-center">
-            <Server className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-            <h3 className="mb-2 text-base font-semibold">No work machine found</h3>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Your work machine is being created. Please refresh the page in a moment.
-            </p>
-          </div>
-        </div>
-      </main>
-    )
+    return <WorkMachineSetup availableMachineTypes={availableMachineTypes} />
   }
 
   const handleStart = async () => {

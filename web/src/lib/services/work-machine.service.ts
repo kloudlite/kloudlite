@@ -41,6 +41,13 @@ export class WorkMachineService {
   }
 
   /**
+   * Create current user's work machine
+   */
+  async createMyWorkMachine(machineType: string): Promise<WorkMachine> {
+    return apiClient.post<WorkMachine>(`${this.baseUrl}/my`, { machineType })
+  }
+
+  /**
    * Update current user's work machine
    */
   async updateMyWorkMachine(data: {

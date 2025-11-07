@@ -58,6 +58,20 @@ export async function stopMyWorkMachine() {
   }
 }
 
+export async function createMyWorkMachine(machineType: string) {
+  try {
+    const data = await workMachineService.createMyWorkMachine(machineType)
+    return { success: true, data }
+  } catch (err) {
+    console.error('Create work machine error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
 export async function updateMyWorkMachine(updateData: {
   machineType?: string
   sshPublicKeys?: string[]

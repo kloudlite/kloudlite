@@ -119,7 +119,7 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 		Spec: machinesv1.WorkMachineSpec{
 			OwnedBy:       userName,
 			MachineType:   machineType,
-			State:         machinesv1.MachineStateStopped,
+			State:         machinesv1.MachineStateRunning, // Start as running for initial setup
 			SSHPublicKeys: req.SSHPublicKeys,
 		},
 	}
