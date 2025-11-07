@@ -255,9 +255,11 @@ export function WorkMachinesContent({
             </div>
             <div>
               <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                Uptime
+                {selectedMachine.currentState === 'stopped' ? 'Status' : 'Uptime'}
               </p>
-              <p className="mt-2 text-sm font-medium">{selectedMachine.uptime}</p>
+              <p className="mt-2 text-sm font-medium">
+                {selectedMachine.currentState === 'stopped' ? 'Not consuming resources' : selectedMachine.uptime}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
@@ -309,19 +311,23 @@ export function WorkMachinesContent({
         {selectedMachine.currentState === 'stopped' &&
           !getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
             .isTransitioning && (
-            <div className="border-warning bg-warning/10 mb-6 border p-4 text-center">
-              <p className="text-foreground text-sm">
-                Machine is stopped. CPU and Memory are not consuming resources, but disk storage is
-                preserved.
+            <div className="border-info bg-info/10 mb-6 border p-4">
+              <p className="text-foreground text-sm font-medium">
+                💰 Machine is stopped - Saving costs while preserving your disk storage
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Click "Start Machine" above to resume. Your workspaces and environments are suspended and will activate when the machine starts.
               </p>
             </div>
           )}
 
-        {/* Metrics Section - Always show, but CPU/Memory are 0 when stopped */}
-        <div className="mb-6">
-          <h2 className="mb-4 text-base font-semibold">Resource Usage</h2>
-          <WorkMachineMetrics />
-        </div>
+        {/* Metrics Section - Only show when machine is running */}
+        {selectedMachine.currentState !== 'stopped' && (
+          <div className="mb-6">
+            <h2 className="mb-4 text-base font-semibold">Resource Usage</h2>
+            <WorkMachineMetrics machineState={selectedMachine.currentState} />
+          </div>
+        )}
 
         {/* Pinned Resources Section */}
         <div>

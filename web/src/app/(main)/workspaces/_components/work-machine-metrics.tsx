@@ -20,6 +20,7 @@ interface NodeMetrics {
 
 interface WorkMachineMetricsProps {
   nodeName?: string
+  machineState?: string
 }
 
 function formatBytes(bytes: number): string {
@@ -30,9 +31,14 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
 
-export function WorkMachineMetrics({ nodeName = 'master' }: WorkMachineMetricsProps) {
+export function WorkMachineMetrics({ nodeName = 'master', machineState }: WorkMachineMetricsProps) {
   const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Don't show metrics when machine is stopped
+  if (machineState === 'stopped') {
+    return null
+  }
 
   useEffect(() => {
     const fetchMetrics = async () => {
