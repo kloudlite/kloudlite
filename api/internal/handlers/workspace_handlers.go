@@ -14,6 +14,7 @@ import (
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -529,7 +530,10 @@ func (h *WorkspaceHandlers) GetNodeMetrics(c *gin.Context) {
 	// Get node metrics from Kubernetes metrics API
 	var nodeMetrics metricsv1beta1.NodeMetrics
 	if err := h.k8sClient.Get(ctx, client.ObjectKey{Name: wm.Name}, &nodeMetrics); err != nil {
-		h.logger.Warn("Failed to get node metrics", zap.Error(err), zap.String("node", wm.Name))
+		// Only log as warning if it's not a NotFound error (node might not be ready yet)
+		if !apiErrors.IsNotFound(err) {
+			h.logger.Warn("Failed to get node metrics", zap.Error(err), zap.String("node", wm.Name))
+		}
 		c.JSON(http.StatusOK, &NodeMetrics{
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
 		})
@@ -540,7 +544,10 @@ func (h *WorkspaceHandlers) GetNodeMetrics(c *gin.Context) {
 	var node corev1.Node
 	err = h.k8sClient.Get(ctx, client.ObjectKey{Name: wm.Name}, &node)
 	if err != nil {
-		h.logger.Warn("Failed to get node", zap.Error(err), zap.String("node", wm.Name))
+		// Only log as warning if it's not a NotFound error (node might not be ready yet)
+		if !apiErrors.IsNotFound(err) {
+			h.logger.Warn("Failed to get node", zap.Error(err), zap.String("node", wm.Name))
+		}
 		c.JSON(http.StatusOK, &NodeMetrics{
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
 		})
