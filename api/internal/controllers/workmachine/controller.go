@@ -1074,21 +1074,8 @@ func (r *WorkMachineReconciler) syncDomainRequest(check *reconciler.Check[*v1.Wo
 		return check.Errored(err)
 	}
 
-	// If DomainRequest exists, check if IP needs updating
-	if err == nil {
-		// If WorkMachine has a public IP and it doesn't match DomainRequest IP, update it
-		if obj.Status.PublicIP != "" && domainRequest.Spec.IPAddress != obj.Status.PublicIP {
-			check.Logger().Info("DomainRequest IP mismatch, updating",
-				"current", domainRequest.Spec.IPAddress,
-				"expected", obj.Status.PublicIP)
-			return r.createDomainRequest(check, obj)
-		}
-
-		// IPs match, all good
-		return check.Passed()
-	}
-
-	// DomainRequest doesn't exist, create it
+	// Always update/create DomainRequest to sync workspace routes
+	// CreateOrUpdate will handle both creation and updates efficiently
 	return r.createDomainRequest(check, obj)
 }
 
