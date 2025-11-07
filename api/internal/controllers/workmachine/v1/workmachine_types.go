@@ -210,6 +210,21 @@ type WorkMachineStatus struct {
 
 	NodeLabels     map[string]string   `json:"nodeLabels,omitempty"`
 	PodTolerations []corev1.Toleration `json:"podTolerations,omitempty"`
+
+	// --- Machine type change tracking ---
+
+	// CurrentMachineType is the actual instance type currently running
+	// Used to detect when spec.machineType changes and trigger instance type change
+	// +optional
+	CurrentMachineType string `json:"currentMachineType,omitempty"`
+
+	// MachineTypeChanging indicates a machine type change is in progress
+	// +optional
+	MachineTypeChanging bool `json:"machineTypeChanging,omitempty"`
+
+	// MachineTypeChangeMessage provides status updates during machine type change
+	// +optional
+	MachineTypeChangeMessage string `json:"machineTypeChangeMessage,omitempty"`
 }
 
 // MachineInfo contains information about a cloud instance

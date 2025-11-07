@@ -1,0 +1,210 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: machinetypes.machines.kloudlite.io
+spec:
+  group: machines.kloudlite.io
+  names:
+    kind: MachineType
+    listKind: MachineTypeList
+    plural: machinetypes
+    singular: machinetype
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.resources.cpu
+      name: CPU
+      type: string
+    - jsonPath: .spec.resources.memory
+      name: Memory
+      type: string
+    - jsonPath: .spec.resources.gpu
+      name: GPU
+      type: string
+    - jsonPath: .spec.active
+      name: Active
+      type: boolean
+    - jsonPath: .spec.category
+      name: Category
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: MachineType represents a predefined machine configuration that
+          users can select
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MachineTypeSpec defines the desired state of MachineType
+            properties:
+              active:
+                default: true
+                description: Active determines if this machine type can be selected
+                  by users
+                type: boolean
+              category:
+                default: general
+                description: Category groups machine types (e.g., "general", "compute-optimized",
+                  "memory-optimized", "gpu")
+                enum:
+                - general
+                - compute-optimized
+                - memory-optimized
+                - gpu
+                - development
+                type: string
+              description:
+                description: Description provides details about this machine type
+                type: string
+              displayName:
+                description: DisplayName is the human-friendly name shown to users
+                type: string
+              isDefault:
+                default: false
+                description: |-
+                  IsDefault marks this machine type as the default choice when none is specified
+                  Only one machine type can be marked as default at a time
+                type: boolean
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                description: NodeSelector for pod scheduling
+                type: object
+              podAnnotations:
+                additionalProperties:
+                  type: string
+                description: Annotations to apply to WorkMachine pods
+                type: object
+              podLabels:
+                additionalProperties:
+                  type: string
+                description: Labels to apply to WorkMachine pods
+                type: object
+              priority:
+                default: 100
+                description: Priority for sorting in UI (lower numbers appear first)
+                format: int32
+                type: integer
+              resources:
+                description: Resources defines the compute resources for this machine
+                  type
+                properties:
+                  cpu:
+                    description: CPU cores (e.g., "2", "4", "8")
+                    type: string
+                  gpu:
+                    description: GPU count (optional, e.g., "1", "2")
+                    type: string
+                  memory:
+                    description: Memory in Gi (e.g., "4Gi", "8Gi", "16Gi")
+                    type: string
+                required:
+                - cpu
+                - memory
+                type: object
+              tolerations:
+                description: Tolerations for pod scheduling
+                items:
+                  description: Toleration represents a pod toleration
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match
+                      enum:
+                      - NoSchedule
+                      - PreferNoSchedule
+                      - NoExecute
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value
+                      enum:
+                      - Exists
+                      - Equal
+                      type: string
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to
+                      type: string
+                  type: object
+                type: array
+            required:
+            - active
+            - category
+            - displayName
+            - isDefault
+            - resources
+            type: object
+          status:
+            description: MachineTypeStatus defines the observed state of MachineType
+            properties:
+              conditions:
+                description: Conditions represent the latest available observations
+                items:
+                  description: MachineTypeCondition represents a condition of the
+                    MachineType
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time the condition
+                        changed
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message is a human-readable message about the last
+                        transition
+                      type: string
+                    reason:
+                      description: Reason is a unique, one-word, CamelCase reason
+                        for the condition's last transition
+                      type: string
+                    status:
+                      description: Status of the condition (True, False, Unknown)
+                      type: string
+                    type:
+                      description: Type of condition
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              inUseCount:
+                description: InUseCount tracks how many WorkMachines are using this
+                  type
+                format: int32
+                type: integer
+              lastUpdated:
+                description: LastUpdated timestamp
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
