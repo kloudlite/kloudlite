@@ -46,7 +46,7 @@ func NewWorkspaceRepository(k8sClient client.Client) WorkspaceRepository {
 // GetByOwner retrieves all workspaces owned by a specific user
 func (r *workspaceRepository) GetByOwner(ctx context.Context, owner string, namespace string) (*workspacesv1.WorkspaceList, error) {
 	// Use field selector to find workspaces by owner
-	return r.List(ctx, namespace, WithFieldSelector("spec.owner="+owner))
+	return r.List(ctx, namespace, WithFieldSelector("spec.ownedBy="+owner))
 }
 
 // GetByWorkMachine retrieves all workspaces in a namespace
