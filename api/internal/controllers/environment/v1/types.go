@@ -43,7 +43,7 @@ type EnvironmentSpec struct {
 
 	// Activated determines whether the environment is active (true) or inactive (false)
 	// When deactivated, all deployments and statefulsets are scaled to 0
-	// +kubebuilder:default=false
+	// +kubebuilder:default=true
 	Activated bool `json:"activated"`
 
 	// ResourceQuotas defines resource quotas for the environment namespace
