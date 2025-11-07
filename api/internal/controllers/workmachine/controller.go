@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/codingconcepts/env"
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -143,12 +142,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "setup domain request",
-			Title:    "Sets up Domain Request Settings for the workmachine",
-			OnCreate: r.syncDomainRequest,
-			OnDelete: r.deleteDomainRequest,
-		},
-		{
 			Name:     "handle-machine-type-change",
 			Title:    "Handle machine type changes",
 			OnCreate: r.handleMachineTypeChange,
@@ -242,23 +235,6 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}),
 	)
 
-	// Watch for DomainRequests and trigger reconciliation to recreate if deleted
-	builder.Watches(
-		&domainrequestv1.DomainRequest{},
-		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-			domainRequest, ok := obj.(*domainrequestv1.DomainRequest)
-			if !ok {
-				return nil
-			}
-
-			// DomainRequest name matches WorkMachine name
-			// Trigger reconciliation of the WorkMachine to recreate DomainRequest if needed
-			return []reconcile.Request{
-				{NamespacedName: client.ObjectKey{Name: domainRequest.Name}},
-			}
-		}),
-	)
-
 	// Watch for Nodes to trigger reconciliation when node joins/updates
 	builder.Watches(
 		&corev1.Node{},
@@ -269,7 +245,7 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 
 			// Node name matches WorkMachine name
-			// Trigger reconciliation to update DomainRequest with node IP
+			// Trigger reconciliation to update WorkMachine status
 			return []reconcile.Request{
 				{NamespacedName: client.ObjectKey{Name: node.Name}},
 			}
