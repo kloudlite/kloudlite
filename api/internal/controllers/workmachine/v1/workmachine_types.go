@@ -192,8 +192,6 @@ type WorkMachineStatus struct {
 	// +optional
 	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 
-	DNSHost string `json:"dnsHost,omitempty"`
-
 	// --- Auto-shutdown fields ---
 
 	// LastWorkspaceActivity is the last time any workspace was active on this WorkMachine
