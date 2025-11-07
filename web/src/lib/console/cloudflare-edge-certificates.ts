@@ -265,41 +265,63 @@ export async function createOrReuseWildcardEdgeCertificate(
 }
 
 /**
- * Create edge certificates for DomainRequest route domains
- * Creates edge certificates for domains that are proxied through CloudFlare
+ * Create or reuse edge certificate for exact hostnames (e.g., origin certificate hostnames)
+ * Unlike createOrReuseWildcardEdgeCertificate, this doesn't extract patterns - it uses the exact hostnames provided
  *
- * Note: SSH domain (ssh.{name}.{subdomain}.{domain}) doesn't need an edge certificate
- * because it's not proxied through CloudFlare (direct A record)
- *
- * @param domainRoutes - Array of domain routes to create certificates for
- * @returns Array of certificate pack IDs
+ * @param installationId - Installation ID
+ * @param hostnames - Exact hostnames to create certificate for (e.g., ["wm-karthik.tentin.khost.dev", "*.wm-karthik.tentin.khost.dev"])
+ * @param domainRequestName - Domain request name for tracking
+ * @returns Certificate pack ID (either existing or newly created)
  */
-export async function createDomainRequestEdgeCertificates(
-  domainRoutes: Array<{ domain: string }>,
-): Promise<string[]> {
-  const certificateIds: string[] = []
+export async function createOrReuseEdgeCertificateForHostnames(
+  installationId: string,
+  hostnames: string[],
+  domainRequestName: string,
+): Promise<string | null> {
+  if (hostnames.length === 0) {
+    return null
+  }
 
-  // Create individual edge certificate for each route domain
-  // These domains are proxied via CNAME and need edge certificates for TLS termination
-  for (const route of domainRoutes) {
-    console.log(`Creating edge certificate for route domain: ${route.domain}`)
+  console.log(`Creating or reusing edge certificate for exact hostnames: ${hostnames.join(', ')}`)
 
-    const certId = await orderEdgeCertificate([route.domain])
+  // Import storage service dynamically to avoid circular dependencies
+  const { findWildcardEdgeCertificate, saveEdgeCertificate } = await import(
+    './supabase-storage-service'
+  )
 
-    if (certId) {
-      certificateIds.push(certId)
-      console.log(`Edge certificate created for ${route.domain}: ${certId}`)
-    } else {
-      console.error(`Failed to create edge certificate for ${route.domain}`)
-      // Continue with other domains even if one fails
+  // Find the wildcard hostname to check for existing certificate
+  const wildcardHostname = hostnames.find(h => h.startsWith('*.'))
+  if (wildcardHostname) {
+    // Extract pattern after the wildcard (e.g., "*.wm-karthik.tentin.khost.dev" -> "wm-karthik.tentin.khost.dev")
+    const subdomainPattern = wildcardHostname.substring(2) // Remove "*."
+
+    // Check if certificate already exists
+    const existingCert = await findWildcardEdgeCertificate(installationId, subdomainPattern)
+    if (existingCert) {
+      console.log(
+        `Reusing existing edge certificate for hostnames ${hostnames.join(', ')}: ${existingCert.cloudflareCertPackId}`,
+      )
+      return existingCert.cloudflareCertPackId
     }
   }
 
-  if (certificateIds.length > 0) {
-    console.log(`Created ${certificateIds.length} edge certificates for domain routes`)
-  } else {
-    console.log('No edge certificates created (no domain routes or all failed)')
+  // No certificate exists, create a new one for the exact hostnames
+  console.log(`No edge certificate found, creating new one for hostnames: ${hostnames.join(', ')}`)
+  const certId = await orderEdgeCertificate(hostnames)
+
+  if (certId) {
+    // Save the certificate to database
+    await saveEdgeCertificate({
+      installationId,
+      cloudflareCertPackId: certId,
+      hostnames,
+      domainRequestName,
+      status: 'pending',
+    })
+    console.log(`Created and saved edge certificate for hostnames ${hostnames.join(', ')}: ${certId}`)
+    return certId
   }
 
-  return certificateIds
+  console.error(`Failed to create edge certificate for hostnames: ${hostnames.join(', ')}`)
+  return null
 }

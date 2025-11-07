@@ -5,6 +5,7 @@ import {
   saveCertificate,
 } from '@/lib/console/supabase-storage-service'
 import { generateCertificate } from '@/lib/console/cloudflare-certificates'
+import { createOrReuseEdgeCertificateForHostnames } from '@/lib/console/cloudflare-edge-certificates'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
@@ -139,6 +140,19 @@ export async function POST(request: NextRequest) {
     console.log(
       `Origin certificate saved for domainRequest: ${domainRequestName}, installation: ${installation.id}`,
     )
+
+    // Create edge certificate for the same hostnames as the origin certificate
+    // This allows Cloudflare to terminate TLS for browser-to-Cloudflare connections
+    const edgeCertId = await createOrReuseEdgeCertificateForHostnames(
+      installation.id,
+      originCert.hostnames,
+      domainRequestName
+    )
+    if (edgeCertId) {
+      console.log(`Edge certificate created/reused for domainRequest: ${domainRequestName}, certId: ${edgeCertId}`)
+    } else {
+      console.warn(`Failed to create edge certificate for domainRequest: ${domainRequestName}`)
+    }
 
     const response = NextResponse.json({
       success: true,
