@@ -358,34 +358,14 @@ func (p *provider) ChangeMachine(ctx context.Context, machineID string, newInsta
 	// Convert Kubernetes-friendly machine type name (e.g., "m5-xlarge") to AWS instance type (e.g., "m5.xlarge")
 	awsInstanceType := strings.ReplaceAll(newInstanceType, "-", ".")
 
-	// Stop instance
-	if _, err := p.ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{
-		InstanceIds: []string{machineID},
-	}); err != nil {
-		return fmt.Errorf("failed to stop instance: %w", err)
-	}
-
-	// Wait for stopped
-	waiter := ec2.NewInstanceStoppedWaiter(p.ec2Client)
-	if err := waiter.Wait(ctx, &ec2.DescribeInstancesInput{
-		InstanceIds: []string{machineID},
-	}, 300); err != nil {
-		return fmt.Errorf("failed waiting for instance to stop: %w", err)
-	}
-
 	// Modify instance type
+	// NOTE: The instance must already be stopped by the controller before calling this function
+	// The controller handles the stop/start flow with proper status checks and requeuing
 	if _, err := p.ec2Client.ModifyInstanceAttribute(ctx, &ec2.ModifyInstanceAttributeInput{
 		InstanceId:   aws.String(machineID),
 		InstanceType: &ec2types.AttributeValue{Value: aws.String(awsInstanceType)},
 	}); err != nil {
 		return fmt.Errorf("failed to modify instance type: %w", err)
-	}
-
-	// Start instance
-	if _, err := p.ec2Client.StartInstances(ctx, &ec2.StartInstancesInput{
-		InstanceIds: []string{machineID},
-	}); err != nil {
-		return fmt.Errorf("failed to start instance: %w", err)
 	}
 
 	return nil
