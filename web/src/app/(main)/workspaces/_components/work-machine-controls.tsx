@@ -120,15 +120,27 @@ export function WorkMachineControls({
   const [newSSHKey, setNewSSHKey] = useState('')
   const [isAddingKey, setIsAddingKey] = useState(false)
   const [isDeletingKey, setIsDeletingKey] = useState<string | null>(null)
+  const [showStartConfirm, setShowStartConfirm] = useState(false)
+  const [showStopConfirm, setShowStopConfirm] = useState(false)
 
   const currentMachineType =
     availableMachineTypes.find((t) => t.id === currentType) || availableMachineTypes[0]
 
   const handleStart = () => {
+    setShowStartConfirm(true)
+  }
+
+  const confirmStart = () => {
+    setShowStartConfirm(false)
     if (onStart) onStart()
   }
 
   const handleStop = () => {
+    setShowStopConfirm(true)
+  }
+
+  const confirmStop = () => {
+    setShowStopConfirm(false)
     if (onStop) onStop()
   }
 
@@ -604,6 +616,53 @@ export function WorkMachineControls({
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Start Machine Confirmation Dialog */}
+      <Dialog open={showStartConfirm} onOpenChange={setShowStartConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start WorkMachine?</DialogTitle>
+            <DialogDescription>
+              This will start the WorkMachine &quot;{machineName}&quot;. The machine will begin consuming resources
+              and you will be charged according to your plan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStartConfirm(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmStart}>Start Machine</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Stop Machine Confirmation Dialog */}
+      <Dialog open={showStopConfirm} onOpenChange={setShowStopConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Stop WorkMachine?</DialogTitle>
+            <DialogDescription>
+              This will stop the WorkMachine &quot;{machineName}&quot;. All workspaces and environments will be
+              suspended. Your disk storage will be preserved, but the machine will stop consuming compute
+              resources.
+            </DialogDescription>
+          </DialogHeader>
+          <Alert className="border-warning bg-warning/10">
+            <AlertCircle className="text-warning h-4 w-4" />
+            <AlertDescription className="text-sm">
+              Active workspaces will be suspended and service intercepts will be disconnected.
+            </AlertDescription>
+          </Alert>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStopConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmStop}>
+              Stop Machine
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
