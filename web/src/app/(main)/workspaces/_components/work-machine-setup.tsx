@@ -72,7 +72,7 @@ export function WorkMachineSetup({ availableMachineTypes }: WorkMachineSetupProp
           </div>
           <h1 className="mb-3 text-3xl font-bold">Welcome to Kloudlite!</h1>
           <p className="text-muted-foreground text-lg">
-            Let's set up your development environment
+            Let&apos;s set up your development environment
           </p>
         </div>
 

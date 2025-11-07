@@ -46,7 +46,6 @@ export function WorkspaceConnectOptions({
   const claudeTtydUrl = workspace.status?.accessUrls?.['claude-ttyd']
   const codexTtydUrl = workspace.status?.accessUrls?.['codex-ttyd']
   const opencodeTtydUrl = workspace.status?.accessUrls?.['opencode-ttyd']
-  const sshUrl = workspace.status?.accessUrls?.['ssh']
   const workspaceName = workspace.metadata?.name || 'workspace'
 
   // SSH connection with jump host (port 2222 is the SSH gateway on localhost)
