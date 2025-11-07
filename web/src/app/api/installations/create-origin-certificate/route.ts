@@ -12,12 +12,13 @@ export const runtime = 'nodejs'
 const CLOUDFLARE_DNS_DOMAIN = process.env.CLOUDFLARE_DNS_DOMAIN!
 
 /**
- * Create origin certificate for an installation
- * Called by the DomainRequest controller when origin certificate doesn't exist
+ * Create origin certificate for a DomainRequest
+ * Called by the DomainRequest controller to get or create a certificate
  *
  * Request format (JSON body):
  * {
  *   "installationKey": "abc-123",
+ *   "domainRequestName": "wm-karthik", // Used as scopeIdentifier (composite key with installationId)
  *   "hostnames": ["example.com", "*.example.com"] // Optional, defaults to ["subdomain.domain", "*.subdomain.domain"]
  * }
  *
@@ -39,10 +40,15 @@ export async function POST(request: NextRequest) {
     // Parse request body
     const body = await request.json()
     const installationKey = body.installationKey
+    const domainRequestName = body.domainRequestName as string | undefined
     const customHostnames = body.hostnames as string[] | undefined
 
     if (!installationKey) {
       return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
+    }
+
+    if (!domainRequestName) {
+      return NextResponse.json({ error: 'domainRequestName is required' }, { status: 400 })
     }
 
     // Look up installation by installation key
@@ -57,12 +63,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
     }
 
-    // Check if origin certificate already exists in tls_certificates table
-    const existingCert = await getLatestCertificate(installation.id, 'installation')
+    // Check if origin certificate already exists for this (domainRequestName, installationId) composite key
+    // Using 'workmachine' scope for now, can be made dynamic later
+    const existingCert = await getLatestCertificate(
+      installation.id,
+      'workmachine',
+      domainRequestName,
+    )
 
     if (existingCert) {
       console.log(
-        `Origin certificate already exists for installation: ${installation.id}, cert ID: ${existingCert.cloudflareCertId}`,
+        `Origin certificate already exists for domainRequest: ${domainRequestName}, installation: ${installation.id}, cert ID: ${existingCert.cloudflareCertId}`,
       )
       return NextResponse.json({
         success: true,
@@ -71,7 +82,7 @@ export async function POST(request: NextRequest) {
         certificateId: existingCert.cloudflareCertId,
         validFrom: existingCert.validFrom,
         validUntil: existingCert.validUntil,
-        message: 'Origin certificate already exists',
+        message: 'Origin certificate already exists for this DomainRequest',
       })
     }
 
@@ -110,21 +121,24 @@ export async function POST(request: NextRequest) {
 
     console.log(`Origin certificate generated: ${originCert.id}`)
 
-    // Store origin certificate in tls_certificates table with installation scope
+    // Store origin certificate in tls_certificates table with domainRequest scope
+    // Key: (installationId, scope='workmachine', scopeIdentifier=domainRequestName)
     await saveCertificate({
       installationId: installation.id,
       cloudflareCertId: originCert.id,
       certificate: originCert.certificate,
       privateKey: originCert.privateKey,
       hostnames: originCert.hostnames,
-      scope: 'installation',
-      scopeIdentifier: null,
+      scope: 'workmachine', // Using workmachine scope for DomainRequest certificates
+      scopeIdentifier: domainRequestName, // DomainRequest name as identifier
       parentScopeIdentifier: null,
       validFrom: originCert.validFrom,
       validUntil: originCert.validUntil,
     })
 
-    console.log(`Origin certificate saved to tls_certificates table for installation: ${installation.id}`)
+    console.log(
+      `Origin certificate saved for domainRequest: ${domainRequestName}, installation: ${installation.id}`,
+    )
 
     const response = NextResponse.json({
       success: true,

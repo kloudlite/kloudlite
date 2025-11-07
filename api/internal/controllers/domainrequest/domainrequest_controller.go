@@ -876,59 +876,69 @@ func (r *DomainRequestReconciler) handleCertificateDownload(ctx context.Context,
 
 // handleOriginCertificateDownload downloads the installation's origin certificate
 func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Context, domainRequest *domainrequestsv1.DomainRequest, logger *zap.Logger) (reconcile.Result, error) {
-	logger.Info("Downloading installation origin certificate")
+	// Check if secret already exists (e.g., from previous reconciliation)
+	secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
+	existingSecret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Spec.WorkloadNamespace}, existingSecret)
+	if err == nil {
+		// Secret already exists, move to next state
+		logger.Info("Origin certificate secret already exists, skipping download", zap.String("secretName", secretName))
 
-	// Call console API to get origin certificate
-	path := fmt.Sprintf("/api/installations/get-origin-certificate?installationKey=%s", r.InstallationKey)
-
-	resp, err := r.callConsoleAPI(ctx, path, "GET", nil, r.InstallationSecret, logger)
-	if err != nil {
-		// Check if certificate doesn't exist (404 error)
-		if strings.Contains(err.Error(), "status 404") {
-			logger.Info("Origin certificate not found, creating it automatically")
-
-			// Prepare request body with hostnames
-			reqBody := map[string]interface{}{
-				"installationKey": r.InstallationKey,
-			}
-
-			// Include hostnames if specified in DomainRequest spec
-			if len(domainRequest.Spec.OriginCertificateHostnames) > 0 {
-				reqBody["hostnames"] = domainRequest.Spec.OriginCertificateHostnames
-				logger.Info("Using custom origin certificate hostnames",
-					zap.Strings("hostnames", domainRequest.Spec.OriginCertificateHostnames))
-			} else {
-				logger.Info("No custom hostnames specified, API will use defaults")
-			}
-
-			// Call create-origin-certificate endpoint
-			createPath := "/api/installations/create-origin-certificate"
-			createResp, createErr := r.callConsoleAPI(ctx, createPath, "POST", reqBody, r.InstallationSecret, logger)
-			if createErr != nil {
-				logger.Error("Failed to create origin certificate", zap.Error(createErr))
-				domainRequest.Status.State = "Failed"
-				domainRequest.Status.Message = fmt.Sprintf("Failed to create origin certificate: %v", createErr)
-				if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
-					logger.Error("Failed to update status", zap.Error(updateErr))
-					return reconcile.Result{}, updateErr
-				}
-				return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
-			}
-
-			logger.Info("Origin certificate created successfully, using it")
-			// Use the response from create endpoint instead of making another GET call
-			resp = createResp
-		} else {
-			// Other error, not 404
-			logger.Error("Failed to download origin certificate", zap.Error(err))
-			domainRequest.Status.State = "Failed"
-			domainRequest.Status.Message = fmt.Sprintf("Failed to download origin certificate: %v", err)
-			if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
-				logger.Error("Failed to update status", zap.Error(updateErr))
-				return reconcile.Result{}, updateErr
-			}
-			return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
+		// Update status to move to next state
+		latestDomainRequest := &domainrequestsv1.DomainRequest{}
+		if err := r.Get(ctx, client.ObjectKey{Name: domainRequest.Name}, latestDomainRequest); err != nil {
+			logger.Error("Failed to refetch DomainRequest", zap.Error(err))
+			return reconcile.Result{}, err
 		}
+
+		latestDomainRequest.Status.State = "CertificateGenerated"
+		latestDomainRequest.Status.Message = "Origin certificate already exists"
+		latestDomainRequest.Status.OriginCertificateSecretName = secretName
+
+		if err := r.Status().Update(ctx, latestDomainRequest); err != nil {
+			logger.Error("Failed to update status", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		return reconcile.Result{Requeue: true}, nil
+	} else if !errors.IsNotFound(err) {
+		logger.Error("Failed to check for existing secret", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Fetching or creating origin certificate",
+		zap.String("domainRequestName", domainRequest.Name),
+		zap.Strings("hostnames", domainRequest.Spec.OriginCertificateHostnames))
+
+	// Prepare request body with identifier (domainRequestName) and hostnames
+	// Console API will check Supabase for certificate with key (domainRequestName, installationKey):
+	// - If exists -> return it
+	// - If not -> create via Cloudflare API, store in Supabase with this key, return it
+	reqBody := map[string]interface{}{
+		"installationKey":   r.InstallationKey,
+		"domainRequestName": domainRequest.Name, // Used as identifier in Supabase
+	}
+
+	// Include hostnames if specified in DomainRequest spec
+	if len(domainRequest.Spec.OriginCertificateHostnames) > 0 {
+		reqBody["hostnames"] = domainRequest.Spec.OriginCertificateHostnames
+	} else {
+		logger.Info("No custom hostnames specified, API will use defaults")
+	}
+
+	// Call create-origin-certificate endpoint
+	// Idempotent - returns existing certificate for (domainRequestName, installationKey) if found in Supabase
+	createPath := "/api/installations/create-origin-certificate"
+	resp, createErr := r.callConsoleAPI(ctx, createPath, "POST", reqBody, r.InstallationSecret, logger)
+	if createErr != nil {
+		logger.Error("Failed to get or create origin certificate", zap.Error(createErr))
+		domainRequest.Status.State = "Failed"
+		domainRequest.Status.Message = fmt.Sprintf("Failed to get or create origin certificate: %v", createErr)
+		if updateErr := r.Status().Update(ctx, domainRequest); updateErr != nil {
+			logger.Error("Failed to update status", zap.Error(updateErr))
+			return reconcile.Result{}, updateErr
+		}
+		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
 	var certResp getOriginCertificateResponse
@@ -1132,20 +1142,27 @@ func (r *DomainRequestReconciler) handleDeletion(ctx context.Context, domainRequ
 			}
 		}
 
-		// Delete DNS records via console API
-		logger.Info("Deleting DNS records via console API")
-		deletionReqBody := configureIPRequest{
-			InstallationKey:   r.InstallationKey,
-			DomainRequestName: domainRequest.Name,
-			Deleted:           true,
+		// Delete all DomainRequest resources from Cloudflare and Supabase
+		// This includes:
+		// 1. Origin certificates (Cloudflare Origin CA)
+		// 2. Edge certificates (Cloudflare Edge TLS)
+		// 3. DNS records (A/AAAA records)
+		// All stored in Supabase with key (domainRequestName, installationKey)
+		logger.Info("Deleting DomainRequest resources from Cloudflare and Supabase",
+			zap.String("domainRequestName", domainRequest.Name))
+
+		deleteReqBody := map[string]interface{}{
+			"installationKey":   r.InstallationKey,
+			"domainRequestName": domainRequest.Name,
 		}
 
-		_, err := r.callConsoleAPI(ctx, "/api/installations/configure-ips", "POST", deletionReqBody, r.InstallationSecret, logger)
+		// Call delete-domain-request endpoint to remove all associated resources
+		_, err := r.callConsoleAPI(ctx, "/api/installations/delete-domain-request", "POST", deleteReqBody, r.InstallationSecret, logger)
 		if err != nil {
-			logger.Error("Failed to delete DNS records via console API", zap.Error(err))
+			logger.Error("Failed to delete DomainRequest resources via console API", zap.Error(err))
 			// Continue with finalizer removal even if API call fails
 		} else {
-			logger.Info("Successfully deleted DNS records")
+			logger.Info("Successfully deleted all DomainRequest resources from Cloudflare and Supabase")
 		}
 
 		// TLS Secret cleanup is automatic via owner references
