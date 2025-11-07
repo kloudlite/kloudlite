@@ -48,16 +48,9 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   try {
     const env = await environmentService.getEnvironment(id)
 
-    // Extract owner email from labels
-    let owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
-    const encodedEmail = env.spec.labels?.['kloudlite.io/owner-email']
-    if (encodedEmail) {
-      try {
-        owner = Buffer.from(encodedEmail, 'base64').toString('utf-8')
-      } catch {
-        // Fall back to username
-      }
-    }
+    // Use the createdBy field which contains the full email, then extract username
+    const ownerEmail = env.spec.createdBy || 'unknown'
+    const owner = ownerEmail.includes('@') ? ownerEmail.split('@')[0] : ownerEmail
 
     environment = {
       id,
