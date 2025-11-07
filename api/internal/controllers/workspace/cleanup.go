@@ -117,6 +117,38 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		return reconcile.Result{}, nil
 	}
 
+	// Check if WorkMachine owner is being deleted
+	workMachineBeingDeleted := false
+	if workspace.Spec.WorkmachineName != "" {
+		wm, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				// WorkMachine already deleted
+				workMachineBeingDeleted = true
+				logger.Info("WorkMachine not found, removing directory-cleanup finalizer")
+			} else {
+				logger.Warn("Failed to check WorkMachine status", zap.Error(err))
+			}
+		} else if wm.DeletionTimestamp != nil {
+			// WorkMachine is being deleted
+			workMachineBeingDeleted = true
+			logger.Info("WorkMachine is being deleted, removing directory-cleanup finalizer")
+		}
+	}
+
+	// If WorkMachine is being deleted, remove directory-cleanup finalizer
+	// since the entire node/VM will be deleted anyway
+	if workMachineBeingDeleted && controllerutil.ContainsFinalizer(workspace, "workspaces.kloudlite.io/directory-cleanup") {
+		controllerutil.RemoveFinalizer(workspace, "workspaces.kloudlite.io/directory-cleanup")
+		if err := r.Update(ctx, workspace); err != nil {
+			logger.Error("Failed to remove directory-cleanup finalizer", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		logger.Info("Removed directory-cleanup finalizer since WorkMachine is being deleted")
+		// Requeue to continue with normal cleanup
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
 	if err != nil {
