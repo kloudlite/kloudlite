@@ -1217,6 +1217,11 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 		obj.Status.StartedAt = &metav1.Time{Time: time.Now()}
 		obj.Status.MachineInfo = *mi
+		// Set state to starting since node hasn't joined yet
+		if obj.Spec.State == v1.MachineStateRunning {
+			obj.Status.State = v1.MachineStateStarting
+			obj.Status.Message = "Cloud machine created, waiting for node to join"
+		}
 		return check.UpdateMsg("created cloud machine").RequeueAfter(2 * time.Second)
 	}
 
@@ -1233,6 +1238,7 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 		if err := r.cloudProviderAPI.StartMachine(check.Context(), obj.Status.MachineID); err != nil {
 			return check.Failed(fmt.Errorf("failed to start machine: %w", err))
 		}
+		obj.Status.State = v1.MachineStateStarting
 		obj.Status.StartedAt = &metav1.Time{Time: time.Now()}
 		return check.UpdateMsg("Starting machine").RequeueAfter(10 * time.Second)
 	}
@@ -1243,12 +1249,14 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 			return check.Failed(fmt.Errorf("failed to stop machine: %w", err))
 		}
 
+		obj.Status.State = v1.MachineStateStopping
 		obj.Status.StoppedAt = &metav1.Time{Time: time.Now()}
 		return check.UpdateMsg("Stopping Machine").RequeueAfter(10 * time.Second)
 	}
 
-	obj.Status.State = machineInfo.State
+	// Check if machine state matches desired state (but we'll verify node readiness below)
 	if currentState != obj.Spec.State {
+		// Machine is transitioning
 		return check.UpdateMsg("waiting for machine status to change").RequeueAfter(5 * time.Second)
 	}
 
@@ -1270,14 +1278,47 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 	}
 
 	// Update status with current machine info
-	obj.Status.State = machineInfo.State
-	obj.Status.Message = machineInfo.Message
 	obj.Status.PublicIP = machineInfo.PublicIP
 	obj.Status.PrivateIP = machineInfo.PrivateIP
 	obj.Status.RootVolumeSize = specVolume
+	obj.Status.Message = machineInfo.Message
 
-	// No need to fetch node - we use nodeName directly for pod scheduling
-	// Node watch will trigger DomainRequest IP update when node joins
+	// Check if node has joined the cluster before marking as running
+	if machineInfo.State == v1.MachineStateRunning {
+		node := &corev1.Node{}
+		if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
+			if apiErrors.IsNotFound(err) {
+				// Node hasn't joined yet, keep state as "starting"
+				obj.Status.State = v1.MachineStateStarting
+				obj.Status.Message = "Waiting for node to join cluster"
+				return check.UpdateMsg("waiting for node to join cluster").RequeueAfter(10 * time.Second)
+			}
+			return check.Failed(fmt.Errorf("failed to get node: %w", err))
+		}
+
+		// Check if node is ready
+		nodeReady := false
+		for _, condition := range node.Status.Conditions {
+			if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
+				nodeReady = true
+				break
+			}
+		}
+
+		if !nodeReady {
+			obj.Status.State = v1.MachineStateStarting
+			obj.Status.Message = "Node joined, waiting for node to be ready"
+			return check.UpdateMsg("waiting for node to be ready").RequeueAfter(5 * time.Second)
+		}
+
+		// Node is ready, mark as running
+		obj.Status.State = v1.MachineStateRunning
+		obj.Status.Message = "Node is ready"
+	} else {
+		// For other states (stopped, stopping, etc.), use the cloud provider state directly
+		obj.Status.State = machineInfo.State
+	}
+
 	return check.Passed()
 }
 
