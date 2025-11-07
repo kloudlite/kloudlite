@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
@@ -954,7 +953,7 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 	}
 
 	// Create a secret to store the origin certificate
-	secretName := fmt.Sprintf("%s-origin-cert", domainRequest.Name)
+	secretName = fmt.Sprintf("%s-origin-cert", domainRequest.Name)
 
 	// Create combined PEM file for HAProxy (certificate + key)
 	combinedPEM := certResp.Certificate + "\n" + certResp.PrivateKey
@@ -979,7 +978,7 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 	}
 
 	// Create or update secret
-	existingSecret := &corev1.Secret{}
+	existingSecret = &corev1.Secret{}
 	err = r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: domainRequest.Spec.WorkloadNamespace}, existingSecret)
 	if err != nil {
 		if errors.IsNotFound(err) {

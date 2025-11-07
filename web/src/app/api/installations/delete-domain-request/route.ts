@@ -70,12 +70,12 @@ export async function POST(request: NextRequest) {
     )
 
     // 1. Delete Origin Certificates from Cloudflare and Supabase
-    const { data: originCerts } = await supabase
+    const { data: originCerts } = (await supabase
       .from('tls_certificates')
       .select('cloudflare_cert_id')
       .eq('installation_id', installation.id)
       .eq('scope', 'workmachine')
-      .eq('scope_identifier', domainRequestName)
+      .eq('scope_identifier', domainRequestName)) as { data: Array<{ cloudflare_cert_id: string | null }> | null }
 
     if (originCerts && originCerts.length > 0) {
       for (const cert of originCerts) {
