@@ -1151,20 +1151,21 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 		},
 	}
 
-	// Set WorkMachine as owner for cascading deletion
-	blockOwnerDeletion := false
-	controller := true
-	ownerRef := metav1.OwnerReference{
-		APIVersion:         obj.APIVersion,
-		Kind:               obj.Kind,
-		Name:               obj.Name,
-		UID:                obj.UID,
-		Controller:         &controller,
-		BlockOwnerDeletion: &blockOwnerDeletion,
-	}
-	domainRequest.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
-
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, domainRequest, func() error {
+		// Set WorkMachine as owner for cascading deletion
+		// MUST be set inside the mutate function to ensure it's preserved on updates
+		blockOwnerDeletion := false
+		controller := true
+		ownerRef := metav1.OwnerReference{
+			APIVersion:         obj.APIVersion,
+			Kind:               obj.Kind,
+			Name:               obj.Name,
+			UID:                obj.UID,
+			Controller:         &controller,
+			BlockOwnerDeletion: &blockOwnerDeletion,
+		}
+		domainRequest.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+
 		hostManagerName := fmt.Sprintf("hm-%s", obj.Name)
 		domainRequest.Spec = domainrequestv1.DomainRequestSpec{
 			NodeName:          obj.Name,
