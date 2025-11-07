@@ -26,15 +26,16 @@ func (r *WorkMachineReconciler) handleMachineTypeChange(check *reconciler.Check[
 	// Initialize CurrentMachineType if not set
 	if obj.Status.CurrentMachineType == "" {
 		obj.Status.CurrentMachineType = obj.Spec.MachineType
-		return check.Passed()
+		// Don't trigger reconciliation, this will be saved with other status updates
 	}
 
 	// Check if machine type has changed
 	if obj.Spec.MachineType == obj.Status.CurrentMachineType {
-		// No change, clear any change-in-progress state
+		// No change, clear any change-in-progress state if needed
 		if obj.Status.MachineTypeChanging {
 			obj.Status.MachineTypeChanging = false
 			obj.Status.MachineTypeChangeMessage = ""
+			// Status will be updated, but don't return early - let it continue
 		}
 		return check.Passed()
 	}
