@@ -73,6 +73,33 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		return nil, fmt.Errorf("unable to create manager: %w", err)
 	}
 
+	// Setup field indexes for efficient queries by owner
+	ctx := context.Background()
+
+	// Index Environment by ownedBy
+	if err := mgr.GetFieldIndexer().IndexField(ctx, &environmentsv1.Environment{}, "spec.ownedBy", func(obj client.Object) []string {
+		env := obj.(*environmentsv1.Environment)
+		return []string{env.Spec.OwnedBy}
+	}); err != nil {
+		return nil, fmt.Errorf("unable to create Environment ownedBy index: %w", err)
+	}
+
+	// Index Workspace by ownedBy
+	if err := mgr.GetFieldIndexer().IndexField(ctx, &workspacev1.Workspace{}, "spec.ownedBy", func(obj client.Object) []string {
+		ws := obj.(*workspacev1.Workspace)
+		return []string{ws.Spec.OwnedBy}
+	}); err != nil {
+		return nil, fmt.Errorf("unable to create Workspace ownedBy index: %w", err)
+	}
+
+	// Index WorkMachine by ownedBy
+	if err := mgr.GetFieldIndexer().IndexField(ctx, &machinesv1.WorkMachine{}, "spec.ownedBy", func(obj client.Object) []string {
+		wm := obj.(*machinesv1.WorkMachine)
+		return []string{wm.Spec.OwnedBy}
+	}); err != nil {
+		return nil, fmt.Errorf("unable to create WorkMachine ownedBy index: %w", err)
+	}
+
 	// Setup User controller
 	userReconciler := &user.UserReconciler{
 		Client: mgr.GetClient(),
