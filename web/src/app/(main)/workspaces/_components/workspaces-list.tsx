@@ -170,7 +170,7 @@ export function WorkspacesList({
                       href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}
                       className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                     >
-                      {workspace.spec.displayName || workspace.metadata.name}
+                      {workspace.spec.owner.split('@')[0]}/ws-{workspace.spec.displayName || workspace.metadata.name}
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                     {workspace.spec.description && (

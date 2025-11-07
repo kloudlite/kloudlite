@@ -200,7 +200,7 @@ export function WorkMachinesContent({
               </div>
               <div>
                 <h2 className="text-base font-semibold">
-                  {selectedMachine.owner.split('@')[0]}/{selectedMachine.name}
+                  {selectedMachine.owner.split('@')[0]}/wm-{selectedMachine.name}
                 </h2>
                 <p className="text-muted-foreground text-xs">{selectedMachine.type}</p>
               </div>

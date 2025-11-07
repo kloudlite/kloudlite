@@ -264,7 +264,7 @@ export function EnvironmentsList({
                     href={`/environments/${env.id}`}
                     className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                   >
-                    {env.name}
+                    {env.owner.split('@')[0]}/env-{env.name}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 </td>
