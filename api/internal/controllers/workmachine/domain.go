@@ -17,17 +17,42 @@ import (
 // syncDomainRequest creates or updates the DomainRequest with the latest WorkMachine IP
 // This runs on every reconcile to keep the DomainRequest in sync
 func (r *WorkMachineReconciler) syncDomainRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	// First check if DomainRequest exists and has the correct IP
+	// Check if DomainRequest exists
 	domainRequest := &domainrequestv1.DomainRequest{}
 	err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, domainRequest)
 
-	if err != nil && !apiErrors.IsNotFound(err) {
-		return check.Errored(err)
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Errored(err)
+		}
+		// DomainRequest doesn't exist, create it
+		return r.createDomainRequest(check, obj)
 	}
 
-	// Always update/create DomainRequest to sync workspace routes
-	// CreateOrUpdate will handle both creation and updates efficiently
-	return r.createDomainRequest(check, obj)
+	// DomainRequest exists, check if it needs updating
+	// Only update if IP changed or workspace routes changed
+	needsUpdate := false
+
+	// Check if IP changed
+	if domainRequest.Spec.IPAddress != obj.Status.PublicIP {
+		needsUpdate = true
+	}
+
+	// Check if node name changed
+	if domainRequest.Spec.NodeName != obj.Name {
+		needsUpdate = true
+	}
+
+	// For now, assume workspace routes might have changed
+	// In the future, we could add more sophisticated change detection
+	// But since workspaces can be added/removed, we need to sync periodically
+	// However, we should not update on every reconciliation
+
+	if needsUpdate {
+		return r.createDomainRequest(check, obj)
+	}
+
+	return check.Passed()
 }
 
 // createDomainRequest creates or updates the DomainRequest with workspace routes
