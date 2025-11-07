@@ -268,7 +268,9 @@ export function EnvironmentsList({
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 </td>
-                <td className="px-6 py-4 text-sm whitespace-nowrap">{env.owner.split('@')[0]}</td>
+                <td className="px-6 py-4 text-sm whitespace-nowrap">
+                  {env.owner.includes('@') ? env.owner.split('@')[0] : env.owner}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
