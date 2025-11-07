@@ -1187,13 +1187,12 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 		return check.Failed(err)
 	}
 
-	// Wait for DomainRequest to be ready before marking this step as complete
-	if domainRequest.Status.State != "Ready" {
-		return check.UpdateMsg(fmt.Sprintf("Waiting for DomainRequest to be ready (current state: %s)", domainRequest.Status.State)).RequeueAfter(5 * time.Second)
+	// Store the DNS host in WorkMachine status if available
+	// Don't block on DomainRequest readiness - it will become ready asynchronously
+	// This allows the WorkMachine to proceed with cloud machine setup
+	if domainRequest.Status.Domain != "" {
+		obj.Status.DNSHost = domainRequest.Status.Domain
 	}
-
-	// Store the DNS host in WorkMachine status
-	obj.Status.DNSHost = domainRequest.Status.Domain
 
 	return check.Passed()
 }
