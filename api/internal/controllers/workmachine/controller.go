@@ -1330,11 +1330,14 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 
 	// Step 1: Add NoExecute taint to the node to evict pods
 	node := &corev1.Node{}
+	nodeExists := false
 	if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			check.Logger().Warn("failed to get node for tainting", "error", err)
 		}
+		// Node doesn't exist or failed to get, skip tainting
 	} else {
+		nodeExists = true
 		// Add NoExecute taint if not already present
 		taintExists := false
 		for _, taint := range node.Spec.Taints {
@@ -1379,10 +1382,12 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 		return check.UpdateMsg("Waiting for pods to be deleted").RequeueAfter(2 * time.Second)
 	}
 
-	// Step 3: Delete the Kubernetes Node object
-	if err := r.Delete(check.Context(), node); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete Kubernetes node: %w", err))
+	// Step 3: Delete the Kubernetes Node object (only if it exists)
+	if nodeExists {
+		if err := r.Delete(check.Context(), node); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(fmt.Errorf("failed to delete Kubernetes node: %w", err))
+			}
 		}
 	}
 
