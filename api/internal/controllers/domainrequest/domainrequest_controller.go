@@ -993,12 +993,19 @@ func (r *DomainRequestReconciler) handleOriginCertificateDownload(ctx context.Co
 		logger.Info("Updated origin certificate Secret", zap.String("secretName", secretName))
 	}
 
-	// Update status
-	domainRequest.Status.State = "CertificateGenerated"
-	domainRequest.Status.Message = "Origin certificate downloaded and stored"
-	domainRequest.Status.OriginCertificateSecretName = secretName
+	// Refetch the latest DomainRequest to avoid resourceVersion conflicts
+	latestDomainRequest := &domainrequestsv1.DomainRequest{}
+	if err := r.Get(ctx, client.ObjectKey{Name: domainRequest.Name}, latestDomainRequest); err != nil {
+		logger.Error("Failed to refetch DomainRequest before status update", zap.Error(err))
+		return reconcile.Result{}, err
+	}
 
-	if err := r.Status().Update(ctx, domainRequest); err != nil {
+	// Update status
+	latestDomainRequest.Status.State = "CertificateGenerated"
+	latestDomainRequest.Status.Message = "Origin certificate downloaded and stored"
+	latestDomainRequest.Status.OriginCertificateSecretName = secretName
+
+	if err := r.Status().Update(ctx, latestDomainRequest); err != nil {
 		logger.Error("Failed to update status", zap.Error(err))
 		return reconcile.Result{}, err
 	}
