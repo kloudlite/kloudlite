@@ -110,6 +110,7 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	// Set the CreatedBy field with the user email from JWT token
 	// The webhook will handle adding ownership labels and metadata
 	env.Spec.CreatedBy = userEmail
+	env.Spec.WorkMachineName = wm.Name
 	env.Spec.NodeSelector = wm.Status.NodeLabels
 	env.Spec.Tolerations = wm.Status.PodTolerations
 
