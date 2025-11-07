@@ -7,11 +7,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kloudlite/kloudlite/api/internal/constants"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
-	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -98,9 +96,6 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Name,
 			Namespace: workMachineNamespace,
-			Labels: map[string]string{
-				constants.LabelKeyOwnedBy: fn.LabelKeyEncoder(userEmail),
-			},
 		},
 		Spec: req.Spec,
 	}

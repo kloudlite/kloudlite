@@ -9,7 +9,6 @@ import (
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
-	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -100,9 +99,6 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: req.Name,
-			Labels: map[string]string{
-				"kloudlite.io/owned-by": fn.LabelValueEncoder(userEmail),
-			},
 		},
 		Spec: req.Spec,
 	}

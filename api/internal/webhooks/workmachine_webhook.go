@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kloudlite/kloudlite/api/internal/config"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -178,58 +176,8 @@ func (w *WorkMachineWebhook) handleMutation(
 		})
 	}
 
-	// Find user by username or email to get the actual user ID
-	var userID, userEmail string
-	ownedBy := machine.Spec.OwnedBy
-
-	if strings.Contains(ownedBy, "@") {
-		// OwnedBy is an email, lookup user
-		userList := &platformv1alpha1.UserList{}
-		if err := w.k8sClient.List(ctx, userList); err == nil {
-			for _, user := range userList.Items {
-				if user.Spec.Email == ownedBy {
-					userID = user.Name
-					userEmail = user.Spec.Email
-					break
-				}
-			}
-		}
-
-		if userID == "" {
-			// If user not found, use sanitized email as userID
-			userID = strings.ReplaceAll(strings.Split(ownedBy, "@")[0], ".", "-")
-			userEmail = ownedBy
-		}
-	} else {
-		// OwnedBy is a username, lookup user
-		user := &platformv1alpha1.User{}
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: ownedBy}, user); err == nil {
-			userID = user.Name
-			userEmail = user.Spec.Email
-		} else {
-			// User not found, use the ownedBy value as userID
-			userID = ownedBy
-		}
-	}
-
-	// Add owned-by label
-	ownerLabelPatch := map[string]interface{}{
-		"op":    "add",
-		"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/owned-by"),
-		"value": userID,
-	}
-	patches = append(patches, ownerLabelPatch)
-
-	// Add owner-email label (base64 encoded)
-	if userEmail != "" {
-		encodedEmail := fn.LabelValueEncoder(userEmail)
-		emailLabelPatch := map[string]interface{}{
-			"op":    "add",
-			"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/owner-email"),
-			"value": encodedEmail,
-		}
-		patches = append(patches, emailLabelPatch)
-	}
+	// Note: Labels removed - using spec.ownedBy field instead for ownership tracking
+	// Previous label-based tracking code removed
 
 	// Set default machine type if not provided
 	if machine.Spec.MachineType == "" {
