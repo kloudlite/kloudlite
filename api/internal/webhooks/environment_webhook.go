@@ -232,7 +232,8 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 
 	// Add base64 encoded email as a label in both metadata and spec
 	if userEmail != "" {
-		encodedEmail := base64.URLEncoding.EncodeToString([]byte(userEmail))
+		// Use URL encoding without padding to ensure Kubernetes label compatibility
+		encodedEmail := base64.RawURLEncoding.EncodeToString([]byte(userEmail))
 
 		// Metadata label
 		metadataEmailPatch := map[string]interface{}{
