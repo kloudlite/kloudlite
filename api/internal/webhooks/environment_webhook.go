@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +14,7 @@ import (
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
+	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -230,16 +230,16 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	}
 	patches = append(patches, ownerPatch)
 
-	// Add base64 encoded email as a label in both metadata and spec
+	// Add sanitized email as a label in both metadata and spec
 	if userEmail != "" {
-		// Use URL encoding without padding to ensure Kubernetes label compatibility
-		encodedEmail := base64.RawURLEncoding.EncodeToString([]byte(userEmail))
+		// Sanitize email for use as Kubernetes label value
+		sanitizedEmail := utils.SanitizeForLabel(userEmail)
 
 		// Metadata label
 		metadataEmailPatch := map[string]interface{}{
 			"op":    "add",
 			"path":  "/metadata/labels/kloudlite.io~1owner-email",
-			"value": encodedEmail,
+			"value": sanitizedEmail,
 		}
 		patches = append(patches, metadataEmailPatch)
 
@@ -247,7 +247,7 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		emailPatch := map[string]interface{}{
 			"op":    "add",
 			"path":  "/spec/labels/kloudlite.io~1owner-email",
-			"value": encodedEmail,
+			"value": sanitizedEmail,
 		}
 		patches = append(patches, emailPatch)
 	}
