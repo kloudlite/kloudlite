@@ -6,9 +6,9 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/templates"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	errors "github.com/kloudlite/kloudlite/api/internal/pkg/errors"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
-	errors "github.com/kloudlite/kloudlite/api/internal/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
