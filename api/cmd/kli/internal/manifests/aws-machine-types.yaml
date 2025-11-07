@@ -3,11 +3,14 @@ apiVersion: machines.kloudlite.io/v1
 kind: MachineType
 metadata:
   name: t3-medium
+  labels:
+    kloudlite.io/machinetype.default: "true"
 spec:
   displayName: Starter (t3.medium)
   description: For testing and small experiments - minimal resources for quick trials
   category: development
   active: true
+  isDefault: true
   priority: 5
   resources:
     cpu: "2"
@@ -36,7 +39,6 @@ spec:
   description: For typical full-stack development - runs IDEs and multiple backend services
   category: general
   active: true
-  isDefault: true
   priority: 20
   resources:
     cpu: "8"
