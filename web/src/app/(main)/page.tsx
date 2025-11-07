@@ -32,7 +32,14 @@ interface TransformedWorkMachine {
 function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
   // Use status.state as the source of truth for machine state
   // Controller updates status.state to reflect actual machine state
-  const state = wm.status?.state || wm.spec.state
+  let state = wm.status?.state || wm.spec.state
+
+  // If machine is not ready yet (DomainRequest or host-manager not ready),
+  // show as "starting" even if state is "running"
+  const isReady = wm.status?.isReady ?? false
+  if (!isReady && state === 'running') {
+    state = 'starting'
+  }
 
   // Calculate uptime from startedAt timestamp
   let uptime = '0 minutes'
@@ -56,7 +63,7 @@ function transformWorkMachine(wm: WorkMachine): TransformedWorkMachine {
     owner: wm.spec.ownedBy,
     name: wm.metadata.name,
     currentState: state,
-    desiredState: state, // Both are the same now - no separate desired/current concept
+    desiredState: wm.spec.state, // Desired state is what the user wants
     // Legacy status for backward compatibility
     status:
       state === 'running'

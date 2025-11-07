@@ -22,12 +22,17 @@ export interface WorkMachineSpec {
 export type MachineState = 'starting' | 'running' | 'stopping' | 'stopped' | 'disabled' | 'errored'
 
 export interface WorkMachineStatus {
+  isReady?: boolean
   state?: MachineState
   conditions?: Array<{
     type: string
     status: string
     lastTransitionTime?: string
     reason?: string
+    message?: string
+  }>
+  checks?: Record<string, {
+    status: boolean
     message?: string
   }>
   startedAt?: string
