@@ -100,7 +100,7 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 	}
 
 	// Cleanup stale status checks from previous versions
-	// Remove "create/setup domain request" check if it exists (changed to "setup domain request")
+	// Remove "create/setup domain request" check if it exists (this step name was changed)
 	if req.Object.DeletionTimestamp == nil {
 		obj := req.Object
 		if obj.Status.Checks != nil {
@@ -110,6 +110,8 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 				if updateErr := r.Status().Update(ctx, obj); updateErr != nil {
 					return reconcile.Result{}, updateErr
 				}
+				// Return to process the update in the next reconciliation
+				return reconcile.Result{Requeue: true}, nil
 			}
 		}
 	}
