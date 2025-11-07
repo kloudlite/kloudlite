@@ -50,7 +50,9 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
                 </span>
               </div>
               <div className="mt-1 flex flex-col gap-0.5">
-                <p className="text-muted-foreground text-sm">Owned by {env.owner.split('@')[0]}</p>
+                <p className="text-muted-foreground text-sm">
+                  Owned by {env.owner.includes('@') ? env.owner.split('@')[0] : env.owner}
+                </p>
                 <p className="text-muted-foreground text-sm">Last deployed {env.lastDeployed}</p>
               </div>
             </div>

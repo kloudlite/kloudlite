@@ -18,8 +18,8 @@ export default async function EnvironmentsPage() {
   try {
     const response = await environmentService.listEnvironments()
     allEnvironments = response.environments.map((env) => {
-      // Use username from owned-by label
-      const owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
+      // Use the createdBy field which contains the full email
+      const owner = env.spec.createdBy || 'unknown'
 
       return environmentToUIModel(env, owner)
     })
