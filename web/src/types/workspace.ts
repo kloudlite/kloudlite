@@ -16,7 +16,7 @@ export interface Workspace {
 export interface WorkspaceSpec {
   displayName: string
   description?: string
-  owner: string
+  ownedBy: string
   workMachineRef?: ObjectReference
   environmentRef?: ObjectReference
   machineTypeRef?: ObjectReference

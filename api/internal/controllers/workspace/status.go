@@ -228,7 +228,7 @@ func (r *WorkspaceReconciler) applyLabelsAndAnnotations(obj metav1.Object, works
 	labels["app"] = "workspace"
 	labels["workspace"] = workspace.Name
 	labels["workspaces.kloudlite.io/workspace-name"] = workspace.Name
-	labels["kloudlite.io/workspace-owner"] = workspace.Spec.Owner
+	labels["kloudlite.io/workspace-owner"] = workspace.Spec.OwnedBy
 
 	if workspace.Spec.DisplayName != "" {
 		labels["kloudlite.io/workspace-display-name"] = utils.SanitizeForLabel(workspace.Spec.DisplayName)
@@ -245,7 +245,7 @@ func (r *WorkspaceReconciler) applyLabelsAndAnnotations(obj metav1.Object, works
 	if workspace.Spec.DisplayName != "" {
 		annotations["kloudlite.io/workspace-display-name"] = workspace.Spec.DisplayName
 	}
-	annotations["kloudlite.io/workspace-owner"] = workspace.Spec.Owner
+	annotations["kloudlite.io/workspace-owner"] = workspace.Spec.OwnedBy
 
 	obj.SetAnnotations(annotations)
 }

@@ -47,7 +47,7 @@ func (r *EnvironmentReconciler) applyLabelsAndAnnotations(namespace *corev1.Name
 	namespace.Labels["kloudlite.io/environment"] = environment.Name
 
 	// Add created-by annotation (emails contain invalid label characters)
-	namespace.Annotations["kloudlite.io/created-by"] = environment.Spec.CreatedBy
+	namespace.Annotations["kloudlite.io/created-by"] = environment.Spec.OwnedBy
 
 	// Add custom labels from environment spec (move to annotations for invalid characters)
 	if environment.Spec.Labels != nil {
@@ -371,7 +371,7 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			Annotations: map[string]string{
 				"kloudlite.io/environment-uid": string(environment.UID),
 				"kloudlite.io/creation-reason": "auto-created-for-environment",
-				"kloudlite.io/created-by":      environment.Spec.CreatedBy, // Move email to annotations
+				"kloudlite.io/created-by":      environment.Spec.OwnedBy, // Move email to annotations
 			},
 		},
 	}
@@ -544,7 +544,7 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 				Annotations: map[string]string{
 					"kloudlite.io/environment-uid": string(environment.UID),
 					"kloudlite.io/creation-reason": "auto-created-for-cloned-environment",
-					"kloudlite.io/created-by":      environment.Spec.CreatedBy,
+					"kloudlite.io/created-by":      environment.Spec.OwnedBy,
 					"kloudlite.io/cloned-from":     sourceName,
 				},
 			},

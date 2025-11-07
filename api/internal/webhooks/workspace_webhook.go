@@ -185,7 +185,7 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 	patches = append(patches, workspaceNameLabelPatch)
 
 	// Look up user to get email and user ID
-	owner := workspace.Spec.Owner
+	owner := workspace.Spec.OwnedBy
 	var userName string
 	var userEmail string
 
@@ -304,7 +304,7 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 	}
 
 	// Validate that owner exists
-	owner := workspace.Spec.Owner
+	owner := workspace.Spec.OwnedBy
 	if owner == "" {
 		return fmt.Errorf("workspace owner is required")
 	}

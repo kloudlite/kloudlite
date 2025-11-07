@@ -106,7 +106,7 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	}
 
 	// Ensure the owner is set to the authenticated user
-	workspace.Spec.Owner = userEmail
+	workspace.Spec.OwnedBy = userEmail
 	// FIXME(nxtcoder17): move it to workmachine name, and even better if frontend set's it directly
 	workspace.Spec.WorkmachineName = workspace.Namespace
 

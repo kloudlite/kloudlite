@@ -368,7 +368,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	if err != nil {
 		r.Logger.Warn("Failed to get WorkMachine nodeSelector, proceeding without it",
 			zap.String("workspace", workspace.Name),
-			zap.String("owner", workspace.Spec.Owner),
+			zap.String("owner", workspace.Spec.OwnedBy),
 			zap.Error(err),
 		)
 		return nil, err
@@ -399,7 +399,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		},
 		{
 			Name:  "WORKSPACE_OWNER",
-			Value: workspace.Spec.Owner,
+			Value: workspace.Spec.OwnedBy,
 		},
 	}
 
@@ -444,7 +444,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 			},
 			Annotations: map[string]string{
 				"kloudlite.io/workspace-display-name": workspace.Spec.DisplayName,
-				"kloudlite.io/workspace-owner":        workspace.Spec.Owner,
+				"kloudlite.io/workspace-owner":        workspace.Spec.OwnedBy,
 			},
 		},
 		Spec: corev1.PodSpec{
