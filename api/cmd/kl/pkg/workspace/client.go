@@ -109,15 +109,23 @@ func getKubeConfig() (*rest.Config, error) {
 		return config, nil
 	}
 
+	// Store the in-cluster config error for better debugging
+	inClusterErr := err
+
 	// Fall back to kubeconfig file
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("in-cluster config failed (%v), and failed to get home directory: %w", inClusterErr, err)
 		}
 		kubeconfig = filepath.Join(home, ".kube", "config")
 	}
 
-	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("in-cluster config failed (%v), and kubeconfig failed: %w", inClusterErr, err)
+	}
+
+	return config, nil
 }
