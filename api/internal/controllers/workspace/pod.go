@@ -488,17 +488,22 @@ if [ ! -d "/home/kl/.local/lib/node_modules/@anthropic-ai/claude-code" ]; then
 fi
 chown -R 1001:1001 /home/kl/.local
 
-# Create /etc/environment with PATH and Kubernetes service env vars for PAM
+# Create /etc/environment with all environment variables for PAM
 # This will be read by PAM on SSH login (both interactive and non-interactive)
-# The Kubernetes env vars are needed for kl binary to work with in-cluster config
+# Dump all env vars to ensure Kubernetes client config works properly
 # /kloudlite/bin has highest priority for kl binary and system tools
 # Include user's local bin in PATH for user-installed npm packages like Claude Code
+
+# Start with PATH
 cat > /etc-writable/environment << 'EOF'
 PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-KUBERNETES_SERVICE_HOST=10.43.0.1
-KUBERNETES_SERVICE_PORT=443
 WORKSPACE_NAME=%s
 EOF
+
+# Dump all environment variables to /etc/environment
+# This ensures Kubernetes env vars like KUBERNETES_PORT_443_TCP_ADDR are available in SSH sessions
+env | grep -E '^KUBERNETES_' >> /etc-writable/environment || true
+
 chmod 644 /etc-writable/environment
 
 # Create /etc/resolv.conf with DNS configuration
