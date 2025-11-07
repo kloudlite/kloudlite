@@ -18,19 +18,8 @@ export default async function EnvironmentsPage() {
   try {
     const response = await environmentService.listEnvironments()
     allEnvironments = response.environments.map((env) => {
-      let owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
-
-      // Try to get and decode the email if available
-      const encodedEmail = env.spec.labels?.['kloudlite.io/owner-email']
-      if (encodedEmail) {
-        try {
-          // Decode base64 URL-encoded email
-          owner = Buffer.from(encodedEmail, 'base64').toString('utf-8')
-        } catch {
-          // Fall back to username if decoding fails
-          owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
-        }
-      }
+      // Use username from owned-by label
+      const owner = env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown'
 
       return environmentToUIModel(env, owner)
     })
