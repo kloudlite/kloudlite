@@ -27,7 +27,7 @@ export default function InstallingPage() {
             Installation in Progress
           </h2>
           <p className="text-surface-600 dark:text-surface-400 mb-6">
-            We're setting up your Kloudlite instance. This typically takes 5-10 minutes.
+            We&apos;re setting up your Kloudlite instance. This typically takes 5-10 minutes.
           </p>
 
           {/* Progress Steps */}

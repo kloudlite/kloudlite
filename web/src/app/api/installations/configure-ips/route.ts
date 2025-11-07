@@ -4,7 +4,6 @@ import {
   addOrUpdateIpRecord,
   removeIpRecord,
   markDeploymentReady,
-  saveEdgeCertificate,
   deleteEdgeCertificatesForDomainRequest,
   deleteEdgeCertificateForDomain,
   type IPRecord,

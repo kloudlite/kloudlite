@@ -12,7 +12,7 @@ import {
   stopMyWorkMachine,
 } from '@/app/actions/work-machine.actions'
 import { toast } from 'sonner'
-import { Loader2, ArrowRight } from 'lucide-react'
+import { Server, Loader2, ArrowRight } from 'lucide-react'
 
 interface WorkMachine {
   id: string
