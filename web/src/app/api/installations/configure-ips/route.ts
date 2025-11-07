@@ -17,7 +17,6 @@ import {
   deleteDnsRecord,
 } from '@/lib/console/cloudflare-dns'
 import {
-  createOrReuseWildcardEdgeCertificate,
   deleteEdgeCertificate,
 } from '@/lib/console/cloudflare-edge-certificates'
 
@@ -242,18 +241,6 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create or reuse wildcard certificate for new domains
-        if (toAdd.length > 0) {
-          const wildcardCertId = await createOrReuseWildcardEdgeCertificate(
-            installation.id,
-            toAdd.map(domain => ({ domain })),
-            domainRequestName
-          )
-          if (wildcardCertId) {
-            console.log(`Using wildcard certificate ${wildcardCertId} for ${toAdd.length} new domains`)
-          }
-        }
-
         // Create new domains
         for (const domain of toAdd) {
           const cnameRecordId = await createCnameRecord(domain, sshDomain, true)
@@ -265,18 +252,6 @@ export async function POST(request: NextRequest) {
       } else {
         // New domain request - create all CNAMEs
         console.log(`Creating ${domainList.length} new CNAME records`)
-
-        // Create or reuse wildcard certificate for all domains
-        if (domainList.length > 0) {
-          const wildcardCertId = await createOrReuseWildcardEdgeCertificate(
-            installation.id,
-            domainList.map(domain => ({ domain })),
-            domainRequestName
-          )
-          if (wildcardCertId) {
-            console.log(`Using wildcard certificate ${wildcardCertId} for ${domainList.length} domains`)
-          }
-        }
 
         for (const domain of domainList) {
           const cnameRecordId = await createCnameRecord(domain, sshDomain, true)
