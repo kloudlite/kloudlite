@@ -319,14 +319,11 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		return fmt.Errorf("referenced WorkMachine '%s' does not exist. Please create the WorkMachine first or provide a valid WorkMachine reference", workspace.Spec.WorkmachineName)
 	}
 
-	// Prevent activating workspace when WorkMachine is stopped
+	// Prevent activating workspace when WorkMachine is not running
 	if workspace.Spec.Status == "active" {
-		if workMachine.Spec.State == "stopped" || workMachine.Spec.State == "disabled" {
-			return fmt.Errorf("cannot activate workspace: WorkMachine '%s' is in '%s' state. Please start the WorkMachine first", workspace.Spec.WorkmachineName, workMachine.Spec.State)
-		}
-		// Also check runtime status
-		if workMachine.Status.State == machinesv1.MachineStateStopped || workMachine.Status.State == machinesv1.MachineStateStopping {
-			return fmt.Errorf("cannot activate workspace: WorkMachine '%s' is currently %s. Please wait for the WorkMachine to be running", workspace.Spec.WorkmachineName, workMachine.Status.State)
+		// Check if WorkMachine is running - it must be in running state for workspace to be active
+		if workMachine.Status.State != machinesv1.MachineStateRunning {
+			return fmt.Errorf("cannot activate workspace: WorkMachine '%s' is currently '%s'. Please wait for the WorkMachine to be running before activating workspaces", workspace.Spec.WorkmachineName, workMachine.Status.State)
 		}
 	}
 

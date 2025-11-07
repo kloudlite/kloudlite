@@ -239,26 +239,22 @@ export function WorkMachinesContent({
                       .label
                   }
                 </p>
-                {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-                  .isTransitioning && (
-                  <>
-                    <ArrowRight className="text-muted-foreground h-3 w-3" />
-                    <span className="text-muted-foreground text-sm font-medium">
-                      {
-                        getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-                          .desiredLabel
-                      }
-                    </span>
-                  </>
-                )}
               </div>
             </div>
             <div>
               <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                {selectedMachine.currentState === 'stopped' ? 'Status' : 'Uptime'}
+                {selectedMachine.currentState === 'running' ? 'Uptime' : 'Status'}
               </p>
               <p className="mt-2 text-sm font-medium">
-                {selectedMachine.currentState === 'stopped' ? 'Not consuming resources' : selectedMachine.uptime}
+                {selectedMachine.currentState === 'running'
+                  ? selectedMachine.uptime
+                  : selectedMachine.currentState === 'stopped'
+                    ? 'Not consuming resources'
+                    : selectedMachine.currentState === 'starting'
+                      ? 'Starting up...'
+                      : selectedMachine.currentState === 'stopping'
+                        ? 'Shutting down...'
+                        : 'Transitioning...'}
               </p>
             </div>
             <div>
@@ -276,53 +272,10 @@ export function WorkMachinesContent({
           </div>
         </div>
 
-        {/* Transitioning State Banner */}
-        {getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-          .isTransitioning && (
-          <div className="border-info bg-info/10 mb-6 border p-4">
-            <div className="flex items-center gap-3">
-              <Loader2 className="text-info h-5 w-5 animate-spin" />
-              <div>
-                <p className="text-foreground text-sm font-medium">
-                  Machine is transitioning from{' '}
-                  <span className="font-semibold">
-                    {
-                      getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-                        .label
-                    }
-                  </span>{' '}
-                  to{' '}
-                  <span className="font-semibold">
-                    {
-                      getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-                        .desiredLabel
-                    }
-                  </span>
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  This may take a few moments. The page will refresh automatically when complete.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Stopped State Message */}
-        {selectedMachine.currentState === 'stopped' &&
-          !getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-            .isTransitioning && (
-            <div className="border-info bg-info/10 mb-6 border p-4">
-              <p className="text-foreground text-sm font-medium">
-                💰 Machine is stopped - Saving costs while preserving your disk storage
-              </p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Click "Start Machine" above to resume. Your workspaces and environments are suspended and will activate when the machine starts.
-              </p>
-            </div>
-          )}
 
         {/* Metrics Section - Only show when machine is running */}
-        {selectedMachine.currentState !== 'stopped' && (
+        {selectedMachine.currentState === 'running' && (
           <div className="mb-6">
             <h2 className="mb-4 text-base font-semibold">Resource Usage</h2>
             <WorkMachineMetrics machineState={selectedMachine.currentState} />
