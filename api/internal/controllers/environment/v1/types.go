@@ -33,9 +33,9 @@ type EnvironmentSpec struct {
 	// +kubebuilder:validation:Required
 	TargetNamespace string `json:"targetNamespace"`
 
-	// CreatedBy is the username/email of the user who created this environment
+	// OwnedBy is the username of the user who owns this environment
 	// +kubebuilder:validation:Required
-	CreatedBy string `json:"createdBy"`
+	OwnedBy string `json:"ownedBy"`
 
 	// WorkMachineName references the WorkMachine this environment belongs to
 	// +kubebuilder:validation:Required

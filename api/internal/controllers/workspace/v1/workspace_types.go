@@ -51,10 +51,10 @@ type WorkspaceSpec struct {
 	// +optional
 	Description string `json:"description,omitempty"`
 
-	// Owner is the email/username of the workspace owner
+	// OwnedBy is the username of the workspace owner
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
-	Owner string `json:"owner"`
+	OwnedBy string `json:"ownedBy"`
 
 	// WorkmachineName references the WorkMachine this workspace belongs to
 	// The workspace will run in the WorkMachine's targetNamespace

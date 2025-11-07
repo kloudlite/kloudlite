@@ -17,6 +17,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.username
+      name: Username
+      type: string
     - jsonPath: .spec.email
       name: Email
       type: string
@@ -69,7 +72,7 @@ spec:
                 maxLength: 100
                 type: string
               email:
-                description: Email address of the user (primary identifier)
+                description: Email address of the user (for authentication)
                 pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
                 type: string
               metadata:
@@ -128,9 +131,17 @@ spec:
                   type: string
                 minItems: 1
                 type: array
+              username:
+                description: Username of the user (primary identifier for resource
+                  ownership)
+                maxLength: 63
+                minLength: 3
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
             required:
             - email
             - roles
+            - username
             type: object
           status:
             description: UserStatus defines the observed state of User

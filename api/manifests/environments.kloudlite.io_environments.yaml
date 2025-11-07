@@ -75,10 +75,6 @@ spec:
                   CloneFrom specifies the source environment name to clone resources from
                   This field is automatically cleared after successful cloning
                 type: string
-              createdBy:
-                description: CreatedBy is the username/email of the user who created
-                  this environment
-                type: string
               labels:
                 additionalProperties:
                   type: string
@@ -155,6 +151,9 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              ownedBy:
+                description: OwnedBy is the username of the user who owns this environment
+                type: string
               resourceQuotas:
                 description: ResourceQuotas defines resource quotas for the environment
                   namespace
@@ -229,7 +228,7 @@ spec:
                 type: string
             required:
             - activated
-            - createdBy
+            - ownedBy
             - targetNamespace
             - workmachineName
             type: object
