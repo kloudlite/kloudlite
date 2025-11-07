@@ -343,6 +343,20 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
+	// Prevent activating environment when WorkMachine is stopped
+	if env.Spec.Activated && env.Spec.WorkMachineName != "" {
+		var workMachine machinesv1.WorkMachine
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.WorkMachineName}, &workMachine); err == nil {
+			if workMachine.Spec.State == "stopped" || workMachine.Spec.State == "disabled" {
+				return fmt.Errorf("cannot activate environment: WorkMachine '%s' is in '%s' state. Please start the WorkMachine first", env.Spec.WorkMachineName, workMachine.Spec.State)
+			}
+			// Also check runtime status
+			if workMachine.Status.State == machinesv1.MachineStateStopped || workMachine.Status.State == machinesv1.MachineStateStopping {
+				return fmt.Errorf("cannot activate environment: WorkMachine '%s' is currently %s. Please wait for the WorkMachine to be running", env.Spec.WorkMachineName, workMachine.Status.State)
+			}
+		}
+	}
+
 	// Validate targetNamespace is unique across Environments and not used by WorkMachines
 	if env.Spec.TargetNamespace != "" && (operation == admissionv1.Create || operation == admissionv1.Update) {
 		// Check if any other Environment is using this targetNamespace (using label selector)

@@ -52,13 +52,23 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 	// Stop machine if desired state is stopped but machine is running
 	if obj.Spec.State == v1.MachineStateStopped && currentState == v1.MachineStateRunning {
+		// First suspend all workspaces
+		if err := r.suspendAllWorkspaces(check.Context(), obj.Name); err != nil {
+			return check.Failed(fmt.Errorf("failed to suspend workspaces before stopping machine: %w", err))
+		}
+
+		// Then deactivate all environments
+		if err := r.deactivateAllEnvironments(check.Context(), obj.Name); err != nil {
+			return check.Failed(fmt.Errorf("failed to deactivate environments before stopping machine: %w", err))
+		}
+
 		if err := r.cloudProviderAPI.StopMachine(check.Context(), obj.Status.MachineID); err != nil {
 			return check.Failed(fmt.Errorf("failed to stop machine: %w", err))
 		}
 
 		obj.Status.State = v1.MachineStateStopping
 		obj.Status.StoppedAt = &metav1.Time{Time: time.Now()}
-		return check.UpdateMsg("Stopping Machine").RequeueAfter(10 * time.Second)
+		return check.UpdateMsg("Stopping Machine (workspaces suspended, environments deactivated)").RequeueAfter(10 * time.Second)
 	}
 
 	// Check if machine state matches desired state (but we'll verify node readiness below)
