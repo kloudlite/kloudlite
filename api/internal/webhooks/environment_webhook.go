@@ -173,7 +173,7 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	patches = append(patches, managedByPatch)
 
 	// Use the CreatedBy field from the spec to determine ownership
-	createdBy := env.Spec.CreatedBy
+	createdBy := env.Spec.OwnedBy
 	var userName string
 	var userEmail string
 

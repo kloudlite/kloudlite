@@ -359,7 +359,7 @@ func (s *userService) deleteEnvironmentsForUser(ctx context.Context, user *platf
 	var deletionErrors []string
 	for i := range envList.Items {
 		env := &envList.Items[i]
-		if env.Spec.CreatedBy == user.Spec.Email {
+		if env.Spec.OwnedBy == user.Spec.Email {
 			if err := s.envRepo.Delete(ctx, env.Name); err != nil {
 				if !repository.IsNotFound(err) {
 					deletionErrors = append(deletionErrors, fmt.Sprintf("environment %s: %v", env.Name, err))
