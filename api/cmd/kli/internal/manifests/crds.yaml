@@ -820,7 +820,7 @@ spec:
             description: EnvironmentSpec defines the desired state of Environment
             properties:
               activated:
-                default: false
+                default: true
                 description: |-
                   Activated determines whether the environment is active (true) or inactive (false)
                   When deactivated, all deployments and statefulsets are scaled to 0
