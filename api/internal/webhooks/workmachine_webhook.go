@@ -158,9 +158,9 @@ func (w *WorkMachineWebhook) handleMutation(
 		})
 	}
 
-	// Set targetNamespace if not provided - generate as wm-{machine-name}
+	// Set targetNamespace if not provided - use machine name (which already has wm- prefix)
 	if machine.Spec.TargetNamespace == "" {
-		targetNS := fmt.Sprintf("wm-%s", machine.Name)
+		targetNS := machine.Name
 		patches = append(patches, map[string]interface{}{
 			"op":    "add",
 			"path":  "/spec/targetNamespace",
