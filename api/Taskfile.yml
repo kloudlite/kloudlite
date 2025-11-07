@@ -15,3 +15,9 @@ tasks:
       # generate deep copy go files
       - controller-gen object paths="./..."
       # - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:stdout
+
+  consolidate-crds:
+    desc: Consolidate all CRD manifests into single file for kli
+    cmds:
+      - cat manifests/*.yaml > cmd/kli/internal/manifests/crds.yaml
+      - echo "Consolidated CRDs into cmd/kli/internal/manifests/crds.yaml"
