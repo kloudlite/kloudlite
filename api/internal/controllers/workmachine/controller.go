@@ -973,7 +973,19 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 			return check.UpdateMsg("Recreating failed pod").RequeueAfter(2 * time.Second)
 		}
 
-		// Pod exists and is running/pending - all good
+		// Check if pod is ready (all containers ready)
+		if pod.Status.Phase != corev1.PodRunning {
+			return check.UpdateMsg(fmt.Sprintf("Waiting for host-manager pod to be running (current: %s)", pod.Status.Phase)).RequeueAfter(5 * time.Second)
+		}
+
+		// Check all containers are ready
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			if !containerStatus.Ready {
+				return check.UpdateMsg(fmt.Sprintf("Waiting for container %s to be ready", containerStatus.Name)).RequeueAfter(5 * time.Second)
+			}
+		}
+
+		// Pod is running and all containers are ready
 		return check.Passed()
 	}
 
@@ -1187,6 +1199,14 @@ func (r *WorkMachineReconciler) createDomainRequest(check *reconciler.Check[*v1.
 	}); err != nil {
 		return check.Failed(err)
 	}
+
+	// Wait for DomainRequest to be ready before marking this step as complete
+	if domainRequest.Status.State != "Ready" {
+		return check.UpdateMsg(fmt.Sprintf("Waiting for DomainRequest to be ready (current state: %s)", domainRequest.Status.State)).RequeueAfter(5 * time.Second)
+	}
+
+	// Store the DNS host in WorkMachine status
+	obj.Status.DNSHost = domainRequest.Status.Domain
 
 	return check.Passed()
 }
