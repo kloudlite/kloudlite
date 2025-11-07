@@ -35,12 +35,12 @@ export function WorkMachineMetrics({ nodeName = 'master', machineState }: WorkMa
   const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Don't show metrics when machine is stopped
-  if (machineState === 'stopped') {
-    return null
-  }
-
   useEffect(() => {
+    // Don't fetch metrics when machine is stopped
+    if (machineState === 'stopped') {
+      return
+    }
+
     const fetchMetrics = async () => {
       try {
         const result = await getNodeMetrics(nodeName)
@@ -65,7 +65,12 @@ export function WorkMachineMetrics({ nodeName = 'master', machineState }: WorkMa
     return () => {
       clearInterval(intervalId)
     }
-  }, [nodeName])
+  }, [nodeName, machineState])
+
+  // Don't show metrics when machine is stopped
+  if (machineState === 'stopped') {
+    return null
+  }
 
   const getUsageColor = (value: number) => {
     if (value < 50) return 'bg-success'
