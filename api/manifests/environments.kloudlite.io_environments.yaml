@@ -231,6 +231,7 @@ spec:
             - activated
             - createdBy
             - targetNamespace
+            - workmachineName
             type: object
           status:
             description: EnvironmentStatus defines the observed state of Environment
