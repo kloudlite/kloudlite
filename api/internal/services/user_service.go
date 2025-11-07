@@ -67,13 +67,8 @@ func (s *userService) CreateUser(ctx context.Context, user *platformv1alpha1.Use
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Create WorkMachine only if user has 'user' role
-	if s.hasUserRole(user) {
-		if err := s.createWorkMachineForUser(ctx, user); err != nil {
-			// Log error but don't fail user creation
-			slog.Warn("failed to create WorkMachine for user", "email", user.Spec.Email, "error", err)
-		}
-	}
+	// WorkMachine will be created on-demand when user first logs in
+	// and selects a machine type from the landing page
 
 	return user, nil
 }
@@ -147,12 +142,8 @@ func (s *userService) UpdateUser(ctx context.Context, user *platformv1alpha1.Use
 	}
 
 	// Handle WorkMachine based on role changes
-	if !hadUserRole && hasUserRole {
-		// Role added: create WorkMachine
-		if err := s.createWorkMachineForUser(ctx, existing); err != nil {
-			slog.Warn("failed to create WorkMachine for user", "email", existing.Spec.Email, "error", err)
-		}
-	} else if hadUserRole && !hasUserRole {
+	// Only delete WorkMachine when role is removed, don't auto-create
+	if hadUserRole && !hasUserRole {
 		// Role removed: delete WorkMachine
 		if err := s.deleteWorkMachineForUser(ctx, existing); err != nil {
 			slog.Warn("failed to delete WorkMachine for user", "email", existing.Spec.Email, "error", err)
