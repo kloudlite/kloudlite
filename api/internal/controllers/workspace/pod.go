@@ -734,7 +734,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					},
 				},
 			},
-			ServiceAccountName: "workspace-user",
+			ServiceAccountName: fmt.Sprintf("workspace-%s", workspace.Name),
 			RestartPolicy:      corev1.RestartPolicyAlways,
 		},
 	}
