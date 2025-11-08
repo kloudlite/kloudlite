@@ -180,6 +180,15 @@ type GPUInfo struct {
 	// RuntimeConfigured indicates whether NVIDIA Container Runtime is configured
 	// +optional
 	RuntimeConfigured bool `json:"runtimeConfigured,omitempty"`
+
+	// DriverInstallationStatus tracks the status of driver installation
+	// Values: "not-installed", "installing", "installed", "awaiting-reboot", "ready", "error"
+	// +optional
+	DriverInstallationStatus string `json:"driverInstallationStatus,omitempty"`
+
+	// DriverInstallationMessage provides detailed status about driver installation
+	// +optional
+	DriverInstallationMessage string `json:"driverInstallationMessage,omitempty"`
 }
 
 // WorkMachineStatus defines the observed state of WorkMachine

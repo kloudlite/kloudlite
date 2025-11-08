@@ -812,16 +812,48 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 	}
 
 	// Ensure NVIDIA drivers are installed
-	if err := r.ensureNVIDIADriversInstalled(logger); err != nil {
-		logger.Error("Failed to ensure NVIDIA drivers are installed", zap2.Error(err))
-		return reconcile.Result{}, err
+	driverInstallErr := r.ensureNVIDIADriversInstalled(logger)
+	if driverInstallErr != nil {
+		logger.Error("Failed to ensure NVIDIA drivers are installed", zap2.Error(driverInstallErr))
+
+		// Update node labels with installation status
+		if node.Labels == nil {
+			node.Labels = make(map[string]string)
+		}
+		node.Labels["nvidia.com/gpu.driver-status"] = "installing"
+		if strings.Contains(driverInstallErr.Error(), "require reboot") {
+			node.Labels["nvidia.com/gpu.driver-status"] = "awaiting-reboot"
+			node.Labels["nvidia.com/gpu.driver-message"] = "System will reboot to load NVIDIA drivers"
+		} else {
+			node.Labels["nvidia.com/gpu.driver-status"] = "error"
+			node.Labels["nvidia.com/gpu.driver-message"] = driverInstallErr.Error()
+		}
+
+		// Try to update node with status even if driver installation failed
+		if updateErr := r.Update(ctx, node); updateErr != nil {
+			logger.Error("Failed to update node with driver status", zap2.Error(updateErr))
+		}
+
+		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
 	// Get GPU information
 	gpuInfo, err := r.getGPUInfo(logger)
 	if err != nil {
 		logger.Error("Failed to get GPU information", zap2.Error(err))
-		return reconcile.Result{}, err
+
+		// Update node labels with status
+		if node.Labels == nil {
+			node.Labels = make(map[string]string)
+		}
+		node.Labels["nvidia.com/gpu.driver-status"] = "error"
+		node.Labels["nvidia.com/gpu.driver-message"] = err.Error()
+
+		if updateErr := r.Update(ctx, node); updateErr != nil {
+			logger.Error("Failed to update node with GPU error status", zap2.Error(updateErr))
+		}
+
+		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
 	logger.Info("GPU detected",
@@ -866,14 +898,15 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 	logger.Info("Detected OS distribution", zap2.String("distro", distro))
 
 	// Install NVIDIA driver on Debian (host OS)
-	// Enable non-free repositories and install nvidia-driver metapackage
+	// Install kernel headers, enable non-free repositories, and install nvidia-driver metapackage
 	installScript := `
 		echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-nonfree.list && \
 		apt-get update && \
+		DEBIAN_FRONTEND=noninteractive apt-get install -y linux-headers-$(uname -r) && \
 		DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver firmware-misc-nonfree
 	`
 
-	logger.Info("Installing NVIDIA drivers", zap2.String("distro", distro))
+	logger.Info("Installing NVIDIA drivers with kernel headers", zap2.String("distro", distro))
 	output, err := r.CmdExec.Execute(installScript)
 	if err != nil {
 		return fmt.Errorf("driver installation failed: %w, output: %s", err, string(output))
@@ -888,13 +921,22 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 		modprobe nvidia-modeset
 	`
 	if output, err := r.CmdExec.Execute(loadModulesScript); err != nil {
-		logger.Warn("Failed to load kernel modules (may require reboot)",
+		logger.Warn("Failed to load kernel modules, system reboot required",
 			zap2.Error(err),
 			zap2.String("output", string(output)))
-	} else {
-		logger.Info("NVIDIA kernel modules loaded successfully")
+
+		// Trigger system reboot to load the driver
+		logger.Info("Triggering system reboot to load NVIDIA drivers")
+		rebootScript := "shutdown -r +1 'Rebooting to load NVIDIA drivers'"
+		if _, rebootErr := r.CmdExec.Execute(rebootScript); rebootErr != nil {
+			logger.Error("Failed to trigger reboot", zap2.Error(rebootErr))
+			return fmt.Errorf("kernel modules failed to load and reboot trigger failed: %w", rebootErr)
+		}
+		logger.Info("System will reboot in 1 minute to load NVIDIA drivers")
+		return fmt.Errorf("nvidia drivers installed but require reboot to load kernel modules")
 	}
 
+	logger.Info("NVIDIA kernel modules loaded successfully")
 	return nil
 }
 
@@ -976,6 +1018,8 @@ func (r *GPUStatusReconciler) updateNodeGPU(ctx context.Context, node *corev1.No
 	node.Labels["nvidia.com/gpu.count"] = fmt.Sprintf("%d", gpuInfo.Count)
 	node.Labels["nvidia.com/gpu.product"] = gpuInfo.Product
 	node.Labels["nvidia.com/gpu.driver-version"] = gpuInfo.DriverVersion
+	node.Labels["nvidia.com/gpu.driver-status"] = "ready"
+	node.Labels["nvidia.com/gpu.driver-message"] = "NVIDIA drivers loaded and operational"
 
 	// Update node to apply labels
 	if err := r.Update(ctx, node); err != nil {
