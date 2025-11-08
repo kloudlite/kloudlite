@@ -23,8 +23,8 @@ spec:
       - {{ .TargetNamespace }}.svc.cluster.local
   initContainers:
     - name: setup-nix
-      image: {{ .HostManagerImage }}
-      imagePullPolicy: Always
+      image: debian:bookworm-slim
+      imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true
       command: ["sh", "-c"]
@@ -37,27 +37,38 @@ spec:
 
           # Check if Nix is already on the shared volume
           if [ -f /nix-shared/var/nix/profiles/default/etc/profile.d/nix.sh ]; then
-            echo "Nix already exists on shared volume, skipping copy"
-          else
-            echo "Copying Nix from image to shared volume..."
-
-            # Copy the entire /nix directory from this container's image to the shared volume
-            # The kloudlite/workmachine-node-manager image already has Nix installed at /nix
-            # We need to copy it to the hostPath so it's available to other containers
-            if [ -d /nix ]; then
-              # Create target directory structure
-              mkdir -p /nix-shared
-              # Copy everything from /nix to /nix-shared
-              cp -a /nix/* /nix-shared/
-              echo "Nix copied successfully to shared volume"
-            else
-              echo "ERROR: /nix not found in image"
-              exit 1
-            fi
+            echo "Nix already exists on shared volume, skipping installation"
+            # Always ensure profile directory exists (idempotent - safe to run multiple times)
+            echo "Ensuring profile directory exists..."
+            mkdir -p /nix-shared/profiles/per-user/root
+            echo "Profile directory ready"
+            exit 0
           fi
 
-          # Always ensure profile directory exists (idempotent - safe to run multiple times)
-          # This is required for nix-env to work properly with user profiles
+          echo "Installing Nix to shared volume..."
+
+          # Install dependencies
+          apt-get update
+          apt-get install -y curl xz-utils ca-certificates
+
+          # Create /nix directory structure on shared volume
+          mkdir -p /nix-shared
+
+          # Create nixbld group and build users
+          groupadd -g 30000 nixbld || true
+          for i in $(seq 1 10); do
+            useradd -c "Nix build user $i" -d /var/empty -g nixbld -G nixbld -M -N -r -s "$(which nologin)" "nixbld$i" 2>/dev/null || true
+          done
+
+          # Install Nix to /nix-shared by creating symlink
+          ln -sfn /nix-shared /nix
+
+          # Download and install Nix
+          curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
+
+          echo "Nix installed successfully to shared volume"
+
+          # Ensure profile directory exists
           echo "Ensuring profile directory exists..."
           mkdir -p /nix-shared/profiles/per-user/root
           echo "Profile directory ready"
