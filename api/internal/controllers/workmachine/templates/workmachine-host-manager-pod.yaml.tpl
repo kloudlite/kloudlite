@@ -114,54 +114,6 @@ spec:
           readOnly: true
         - name: host-lib-modules
           mountPath: /host/lib/modules
-
-    - name: ssh-server
-      image: linuxserver/openssh-server:latest
-      imagePullPolicy: IfNotPresent
-      env:
-        - name: PUID
-          value: "{{ $sshUserUID }}"
-        - name: PGID
-          value: "{{ $sshUserGID }}"
-        - name: PASSWORD_ACCESS
-          value: "false"
-        - name: USER_PASSWORD
-          value: kloudlite123
-        - name: USER_NAME
-          value: {{ $sshUsername }}
-        - name: SUDO_ACCESS
-          value: "false"
-        - name: TCP_FORWARDING
-          value: "true"
-
-      ports:
-        - name: ssh
-          containerPort: 2222
-          protocol: TCP
-
-      volumeMounts:
-        - name: ssh-key-volume
-          mountPath: /config/.ssh/id_ed25519
-          subPath: id_ed25519
-          readOnly: true
-
-        - name: ssh-config
-          mountPath: /var/lib/kloudlite/ssh-config
-          readOnly: false
-
-        - name: sshd-config
-          mountPath: /etc/ssh/sshd_config
-          subPath: sshd_config
-          readOnly: true
-
-        - name: ssh-host-keys
-          mountPath: /etc/ssh/ssh_host_rsa_key
-          subPath: ssh_host_rsa_key
-          readOnly: true
-        - name: ssh-host-keys
-          mountPath: /etc/ssh/ssh_host_rsa_key.pub
-          subPath: ssh_host_rsa_key.pub
-          readOnly: true
   volumes:
     - name: nix-store
       hostPath:
@@ -192,15 +144,3 @@ spec:
       hostPath:
         path: /lib/modules
         type: DirectoryOrCreate
-    - name: ssh-proxy-key
-      secret:
-        secretName: ssh-host-keys-{{.WorkMachineName}}
-    - name: ssh-key-volume
-      emptyDir: {}
-    - name: sshd-config
-      configMap:
-        name: sshd-config
-    - name: ssh-host-keys
-      secret:
-        secretName: ssh-host-keys-{{.WorkMachineName}}
-        defaultMode: 0o600
