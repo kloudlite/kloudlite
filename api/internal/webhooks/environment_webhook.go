@@ -133,9 +133,45 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	// Create patches for mutations
 	var patches []map[string]interface{}
 
+	// Use the OwnedBy field from the spec to determine ownership first
+	// This is needed for generating the targetNamespace with username prefix
+	ownedBy := env.Spec.OwnedBy
+	var userName string
+	var userEmail string
+
+	// Determine if OwnedBy is an email or username
+	if strings.Contains(ownedBy, "@") {
+		// OwnedBy is an email
+		userEmail = ownedBy
+		// Find the actual user name
+		userList := &platformv1alpha1.UserList{}
+		if err := w.k8sClient.List(context.Background(), userList); err == nil {
+			for _, u := range userList.Items {
+				if u.Spec.Email == ownedBy {
+					userName = u.Name
+					break
+				}
+			}
+		}
+		// If no user found, use a sanitized version of email as username
+		if userName == "" {
+			userName = strings.ReplaceAll(strings.Split(ownedBy, "@")[0], ".", "-")
+		}
+	} else {
+		// OwnedBy is a username
+		userName = ownedBy
+		// Look up the email
+		var user platformv1alpha1.User
+		if err := w.k8sClient.Get(context.Background(), client.ObjectKey{Name: userName}, &user); err == nil {
+			userEmail = user.Spec.Email
+		}
+	}
+
 	// Generate targetNamespace if not provided
+	// Use username prefix to avoid conflicts between users
 	if env.Spec.TargetNamespace == "" {
-		// Generate namespace name as env-{environment-name}
+		// Extract the environment name from the full name (which is {username}--{envname})
+		// The env.Name at this point is already prefixed by the handler
 		targetNamespace := fmt.Sprintf("env-%s", env.Name)
 		patches = append(patches, map[string]interface{}{
 			"op":    "add",
@@ -171,39 +207,6 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		"value": "environment-controller",
 	}
 	patches = append(patches, managedByPatch)
-
-	// Use the CreatedBy field from the spec to determine ownership
-	createdBy := env.Spec.OwnedBy
-	var userName string
-	var userEmail string
-
-	// Determine if CreatedBy is an email or username
-	if strings.Contains(createdBy, "@") {
-		// CreatedBy is an email
-		userEmail = createdBy
-		// Find the actual user name
-		userList := &platformv1alpha1.UserList{}
-		if err := w.k8sClient.List(context.Background(), userList); err == nil {
-			for _, u := range userList.Items {
-				if u.Spec.Email == createdBy {
-					userName = u.Name
-					break
-				}
-			}
-		}
-		// If no user found, use a sanitized version of email as username
-		if userName == "" {
-			userName = strings.ReplaceAll(strings.Split(createdBy, "@")[0], ".", "-")
-		}
-	} else {
-		// CreatedBy is a username
-		userName = createdBy
-		// Look up the email
-		var user platformv1alpha1.User
-		if err := w.k8sClient.Get(context.Background(), client.ObjectKey{Name: userName}, &user); err == nil {
-			userEmail = user.Spec.Email
-		}
-	}
 
 	// Ensure metadata.labels exists
 	if env.Labels == nil {
