@@ -3,6 +3,7 @@ import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
 import { environmentService } from '@/lib/services/environment.service'
+import { formatResourceName } from '@/lib/utils'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -72,7 +73,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
 
   const breadcrumbItems = [
     { label: 'Environments', href: '/environments' },
-    { label: environment.name },
+    { label: formatResourceName(environment.name) },
   ]
 
   return (
@@ -89,7 +90,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
           <div className="pb-4">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl font-semibold">{environment.name}</h1>
+                <h1 className="text-2xl font-semibold">{formatResourceName(environment.name)}</h1>
                 <div className="text-muted-foreground mt-1.5 flex items-center gap-4 text-sm">
                   <span>Owner: {environment.owner}</span>
                   <span>•</span>
