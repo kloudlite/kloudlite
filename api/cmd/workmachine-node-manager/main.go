@@ -824,10 +824,15 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		node.Labels["nvidia.com/gpu.driver-status"] = "installing"
 		if strings.Contains(driverInstallErr.Error(), "require reboot") {
 			node.Labels["nvidia.com/gpu.driver-status"] = "awaiting-reboot"
-			node.Labels["nvidia.com/gpu.driver-message"] = "System will reboot to load NVIDIA drivers"
+			node.Labels["nvidia.com/gpu.driver-message"] = "Reboot required to load drivers"
 		} else {
 			node.Labels["nvidia.com/gpu.driver-status"] = "error"
-			node.Labels["nvidia.com/gpu.driver-message"] = driverInstallErr.Error()
+			// Truncate error message to fit label limit (63 chars)
+			errMsg := driverInstallErr.Error()
+			if len(errMsg) > 63 {
+				errMsg = errMsg[:60] + "..."
+			}
+			node.Labels["nvidia.com/gpu.driver-message"] = errMsg
 		}
 
 		// Try to update node with status even if driver installation failed
@@ -848,7 +853,12 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 			node.Labels = make(map[string]string)
 		}
 		node.Labels["nvidia.com/gpu.driver-status"] = "error"
-		node.Labels["nvidia.com/gpu.driver-message"] = err.Error()
+		// Truncate error message to fit label limit (63 chars)
+		errMsg := err.Error()
+		if len(errMsg) > 63 {
+			errMsg = errMsg[:60] + "..."
+		}
+		node.Labels["nvidia.com/gpu.driver-message"] = errMsg
 
 		if updateErr := r.Update(ctx, node); updateErr != nil {
 			logger.Error("Failed to update node with GPU error status", zap2.Error(updateErr))
@@ -899,18 +909,22 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 	logger.Info("Detected OS distribution", zap2.String("distro", distro))
 
 	// Install NVIDIA driver on Debian (host OS)
-	// Install kernel headers, enable non-free repositories, and install nvidia-driver metapackage
+	// Try without kernel headers first (driver package may have pre-built modules)
+	// This is especially important for AWS kernels where headers aren't available
 	installScript := `
 		echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-nonfree.list && \
 		apt-get update && \
-		DEBIAN_FRONTEND=noninteractive apt-get install -y linux-headers-$(uname -r) && \
 		DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver firmware-misc-nonfree
 	`
 
-	logger.Info("Installing NVIDIA drivers with kernel headers", zap2.String("distro", distro))
+	logger.Info("Installing NVIDIA drivers (trying without kernel headers first)", zap2.String("distro", distro))
 	output, err := r.CmdExec.Execute(installScript)
 	if err != nil {
-		return fmt.Errorf("driver installation failed: %w, output: %s", err, string(output))
+		// Log the error but truncate for status message
+		logger.Warn("Driver installation without headers failed, this may be expected for some kernels",
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		return fmt.Errorf("driver installation failed - kernel headers may be required")
 	}
 
 	logger.Info("NVIDIA drivers installed successfully")
