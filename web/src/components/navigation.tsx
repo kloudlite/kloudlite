@@ -12,7 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Key } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Key, Package, Box } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
 import { ThemeSwitcher } from './theme-switcher'
 
@@ -37,6 +38,8 @@ export function Navigation({
     { href: '/', label: 'Home', icon: Home },
     { href: '/environments', label: 'Environments', icon: Cloud },
     { href: '/workspaces', label: 'Workspaces', icon: Monitor },
+    { href: '#', label: 'Container Registry', icon: Package, comingSoon: true },
+    { href: '#', label: 'Model Registry', icon: Box, comingSoon: true },
   ]
 
   return (
@@ -53,6 +56,30 @@ export function Navigation({
                 // Check if current path is the item's path or a sub-path
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 const Icon = item.icon
+                const isComingSoon = item.comingSoon || false
+
+                const content = (
+                  <>
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                    {isComingSoon && (
+                      <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                        Coming Soon
+                      </Badge>
+                    )}
+                  </>
+                )
+
+                if (isComingSoon) {
+                  return (
+                    <div
+                      key={item.label}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground cursor-not-allowed opacity-60"
+                    >
+                      {content}
+                    </div>
+                  )
+                }
 
                 return (
                   <Link
@@ -64,8 +91,7 @@ export function Navigation({
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
+                    {content}
                   </Link>
                 )
               })}
