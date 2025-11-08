@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Key, Package, Box } from 'lucide-react'
+import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Key, Package } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
 import { ThemeSwitcher } from './theme-switcher'
 
@@ -38,8 +38,7 @@ export function Navigation({
     { href: '/', label: 'Home', icon: Home },
     { href: '/environments', label: 'Environments', icon: Cloud },
     { href: '/workspaces', label: 'Workspaces', icon: Monitor },
-    { href: '#', label: 'Container Registry', icon: Package, comingSoon: true },
-    { href: '#', label: 'Model Registry', icon: Box, comingSoon: true },
+    { href: '#', label: 'Artifacts', icon: Package, comingSoon: true },
   ]
 
   return (
@@ -60,10 +59,10 @@ export function Navigation({
 
                 const content = (
                   <>
-                    <Icon className="h-4 w-4" />
-                    {item.label}
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="whitespace-nowrap">{item.label}</span>
                     {isComingSoon && (
-                      <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                      <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0.5 font-normal whitespace-nowrap">
                         Coming Soon
                       </Badge>
                     )}
@@ -85,7 +84,7 @@ export function Navigation({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                    className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors whitespace-nowrap ${
                       isActive
                         ? 'bg-accent text-accent-foreground font-semibold'
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
