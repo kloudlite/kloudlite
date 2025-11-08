@@ -150,6 +150,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
+			Name:     "handle-node-reboot-request",
+			Title:    "Handle node reboot requests for driver installation",
+			OnCreate: r.handleNodeRebootRequest,
+			OnDelete: nil,
+		},
+		{
 			Name:     "setup cloud machine",
 			Title:    "Setup Cloud Machine",
 			OnCreate: r.setupCloudMachine,
@@ -161,6 +167,50 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 // createWorkspaceRBAC is a placeholder step for workspace RBAC setup
 // Actual workspace-specific RBAC is created by the Workspace controller
 func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	return check.Passed()
+}
+
+// handleNodeRebootRequest checks if the node associated with this WorkMachine has requested a reboot
+// (typically for loading NVIDIA drivers after installation) and reboots the instance if needed
+func (r *WorkMachineReconciler) handleNodeRebootRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	// Only handle reboot requests if machine is created and running
+	if obj.Status.MachineID == "" {
+		return check.Passed()
+	}
+
+	// Get the node with the same name as the WorkMachine
+	var node corev1.Node
+	if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, &node); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			// Node doesn't exist yet, nothing to do
+			return check.Passed()
+		}
+		return check.Failed("failed to get node").Err(err)
+	}
+
+	// Check if node has reboot requested annotation
+	rebootRequested, exists := node.Annotations["kloudlite.io/workmachine-reboot-requested"]
+	if !exists || rebootRequested != "true" {
+		// No reboot requested
+		return check.Passed()
+	}
+
+	check.Logger().Info("node reboot requested, rebooting instance", "node", node.Name, "machineID", obj.Status.MachineID)
+
+	// Reboot the instance using cloud provider API
+	if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
+		return check.Failed("failed to reboot machine").Err(err)
+	}
+
+	// Remove the reboot annotation from the node
+	delete(node.Annotations, "kloudlite.io/workmachine-reboot-requested")
+	if err := r.Update(check.Context(), &node); err != nil {
+		check.Logger().Warn("failed to remove reboot annotation from node, will retry", "error", err.Error())
+		// Don't fail the step, the annotation will be removed on next reconciliation
+	}
+
+	check.Logger().Info("instance rebooted successfully, waiting for node to rejoin", "node", node.Name, "machineID", obj.Status.MachineID)
+
 	return check.Passed()
 }
 
