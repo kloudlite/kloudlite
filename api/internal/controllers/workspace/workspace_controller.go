@@ -180,6 +180,32 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 	namespace := workmachine.Spec.TargetNamespace
 	workspaceName := workspace.Name
 
+	// Create ServiceAccount for the workspace
+	serviceAccountName := fmt.Sprintf("workspace-%s", workspaceName)
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceAccountName,
+			Namespace: namespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sa, func() error {
+		// Set Workspace as owner for cascade deletion
+		if err := controllerutil.SetControllerReference(workspace, sa, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference on ServiceAccount: %w", err)
+		}
+
+		if sa.Labels == nil {
+			sa.Labels = make(map[string]string)
+		}
+		sa.Labels["kloudlite.io/workspace-rbac"] = "true"
+		sa.Labels["kloudlite.io/workspace-name"] = workspaceName
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to create/update ServiceAccount: %w", err)
+	}
+
 	// Create workspace-specific ClusterRole with ResourceNames restrictions
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
