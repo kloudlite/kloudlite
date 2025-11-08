@@ -97,6 +97,17 @@ spec:
           mountPath: /var/lib/kloudlite/workspace-homes
         - name: ssh-config
           mountPath: /var/lib/kloudlite/ssh-config
+        # Host filesystem mounts for GPU detection and driver installation
+        - name: host-sys
+          mountPath: /host/sys
+          readOnly: true
+        - name: host-dev
+          mountPath: /host/dev
+        - name: host-proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: host-lib-modules
+          mountPath: /host/lib/modules
 
     - name: ssh-server
       image: linuxserver/openssh-server:latest
@@ -157,6 +168,23 @@ spec:
     - name: ssh-config
       hostPath:
         path: /var/lib/kloudlite/ssh-config
+        type: DirectoryOrCreate
+    # Host filesystem volumes for GPU detection and driver installation
+    - name: host-sys
+      hostPath:
+        path: /sys
+        type: Directory
+    - name: host-dev
+      hostPath:
+        path: /dev
+        type: Directory
+    - name: host-proc
+      hostPath:
+        path: /proc
+        type: Directory
+    - name: host-lib-modules
+      hostPath:
+        path: /lib/modules
         type: DirectoryOrCreate
     - name: ssh-proxy-key
       secret:
