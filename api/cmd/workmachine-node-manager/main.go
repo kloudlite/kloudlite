@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -751,6 +752,212 @@ func (r *SSHConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// GPUStatusReconciler monitors GPU hardware and updates node labels and resources
+type GPUStatusReconciler struct {
+	client.Client
+	Logger          *zap2.Logger
+	CmdExec         CommandExecutor
+	NodeName        string
+	LastGPUDetected bool
+}
+
+func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+	logger := r.Logger.With(
+		zap2.String("node", req.Name),
+	)
+
+	// Only reconcile our own node
+	if req.Name != r.NodeName {
+		return reconcile.Result{}, nil
+	}
+
+	logger.Info("Reconciling GPU status for node")
+
+	// Fetch the node
+	node := &corev1.Node{}
+	if err := r.Get(ctx, req.NamespacedName, node); err != nil {
+		logger.Error("Failed to get Node", zap2.Error(err))
+		return reconcile.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Detect GPU hardware
+	gpuDetected := r.detectGPU(logger)
+
+	// If GPU status changed, update node
+	if gpuDetected != r.LastGPUDetected {
+		logger.Info("GPU detection status changed",
+			zap2.Bool("previouslyDetected", r.LastGPUDetected),
+			zap2.Bool("currentlyDetected", gpuDetected))
+		r.LastGPUDetected = gpuDetected
+	}
+
+	if !gpuDetected {
+		logger.Info("No GPU detected on this node")
+		return reconcile.Result{}, nil
+	}
+
+	// Get GPU information
+	gpuInfo, err := r.getGPUInfo(logger)
+	if err != nil {
+		logger.Error("Failed to get GPU information", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("GPU detected",
+		zap2.Int("count", gpuInfo.Count),
+		zap2.String("product", gpuInfo.Product),
+		zap2.String("driverVersion", gpuInfo.DriverVersion))
+
+	// Update node labels and resources
+	if err := r.updateNodeGPU(ctx, node, gpuInfo, logger); err != nil {
+		logger.Error("Failed to update node GPU status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Successfully updated node with GPU information")
+	return reconcile.Result{}, nil
+}
+
+type GPUInfo struct {
+	Count         int
+	Product       string
+	DriverVersion string
+}
+
+func (r *GPUStatusReconciler) detectGPU(logger *zap2.Logger) bool {
+	// Check if lspci is available
+	checkCmd := "command -v lspci > /dev/null 2>&1"
+	if _, err := r.CmdExec.Execute(checkCmd); err != nil {
+		logger.Debug("lspci not available")
+		return false
+	}
+
+	// Check for NVIDIA GPU using lspci
+	detectScript := "lspci | grep -i nvidia > /dev/null 2>&1"
+	_, err := r.CmdExec.Execute(detectScript)
+	return err == nil
+}
+
+func (r *GPUStatusReconciler) getGPUInfo(logger *zap2.Logger) (*GPUInfo, error) {
+	// Check if nvidia-smi is available
+	checkScript := "nvidia-smi > /dev/null 2>&1"
+	if _, err := r.CmdExec.Execute(checkScript); err != nil {
+		return nil, fmt.Errorf("nvidia-smi not available or drivers not loaded")
+	}
+
+	// Get GPU count
+	countScript := "nvidia-smi --query-gpu=name --format=csv,noheader | wc -l"
+	countOutput, err := r.CmdExec.Execute(countScript)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get GPU count: %w", err)
+	}
+
+	count := 1 // Default to 1
+	if parsed, err := fmt.Sscanf(strings.TrimSpace(string(countOutput)), "%d", &count); err == nil && parsed == 1 {
+		// Successfully parsed count
+	}
+
+	// Get GPU product name (normalized)
+	productScript := "nvidia-smi --query-gpu=gpu_name --format=csv,noheader | head -1 | tr ' ' '-' | tr '[:upper:]' '[:lower:]'"
+	productOutput, err := r.CmdExec.Execute(productScript)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get GPU product: %w", err)
+	}
+	product := strings.TrimSpace(string(productOutput))
+
+	// Get driver version
+	driverScript := "nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1"
+	driverOutput, err := r.CmdExec.Execute(driverScript)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get driver version: %w", err)
+	}
+	driverVersion := strings.TrimSpace(string(driverOutput))
+
+	return &GPUInfo{
+		Count:         count,
+		Product:       product,
+		DriverVersion: driverVersion,
+	}, nil
+}
+
+func (r *GPUStatusReconciler) updateNodeGPU(ctx context.Context, node *corev1.Node, gpuInfo *GPUInfo, logger *zap2.Logger) error {
+	// Update node labels
+	if node.Labels == nil {
+		node.Labels = make(map[string]string)
+	}
+
+	node.Labels["nvidia.com/gpu"] = "true"
+	node.Labels["nvidia.com/gpu.count"] = fmt.Sprintf("%d", gpuInfo.Count)
+	node.Labels["nvidia.com/gpu.product"] = gpuInfo.Product
+	node.Labels["nvidia.com/gpu.driver-version"] = gpuInfo.DriverVersion
+
+	// Update node to apply labels
+	if err := r.Update(ctx, node); err != nil {
+		return fmt.Errorf("failed to update node labels: %w", err)
+	}
+
+	logger.Info("Updated node labels",
+		zap2.String("gpu", "true"),
+		zap2.Int("count", gpuInfo.Count),
+		zap2.String("product", gpuInfo.Product),
+		zap2.String("driverVersion", gpuInfo.DriverVersion))
+
+	// Fetch latest node to update status (capacity and allocatable)
+	updatedNode := &corev1.Node{}
+	if err := r.Get(ctx, client.ObjectKey{Name: node.Name}, updatedNode); err != nil {
+		return fmt.Errorf("failed to get latest node: %w", err)
+	}
+
+	// Update capacity and allocatable
+	if updatedNode.Status.Capacity == nil {
+		updatedNode.Status.Capacity = make(corev1.ResourceList)
+	}
+	if updatedNode.Status.Allocatable == nil {
+		updatedNode.Status.Allocatable = make(corev1.ResourceList)
+	}
+
+	gpuQuantity := fmt.Sprintf("%d", gpuInfo.Count)
+	updatedNode.Status.Capacity[corev1.ResourceName("nvidia.com/gpu")] = *parseQuantity(gpuQuantity)
+	updatedNode.Status.Allocatable[corev1.ResourceName("nvidia.com/gpu")] = *parseQuantity(gpuQuantity)
+
+	// Update node status
+	if err := r.Status().Update(ctx, updatedNode); err != nil {
+		return fmt.Errorf("failed to update node status: %w", err)
+	}
+
+	logger.Info("Updated node capacity and allocatable",
+		zap2.String("nvidia.com/gpu", gpuQuantity))
+
+	return nil
+}
+
+func parseQuantity(value string) *resource.Quantity {
+	q, err := resource.ParseQuantity(value)
+	if err != nil {
+		// Fallback to 0 if parsing fails
+		return resource.NewQuantity(0, resource.DecimalSI)
+	}
+	return &q
+}
+
+func (r *GPUStatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&corev1.Node{}).
+		WithEventFilter(predicate.Funcs{
+			// Only watch our own node
+			CreateFunc: func(e event.CreateEvent) bool {
+				return e.Object.GetName() == r.NodeName
+			},
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				return e.ObjectNew.GetName() == r.NodeName
+			},
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				return false // Don't reconcile on delete
+			},
+		}).
+		Complete(r)
+}
+
 // WorkspaceCleanupReconciler watches Workspace resources and cleans up workspace directories
 type WorkspaceCleanupReconciler struct {
 	client.Client
@@ -898,7 +1105,7 @@ func main() {
 		zapLogger.Fatal("Failed to get in-cluster config", zap2.Error(err))
 	}
 
-	// Create manager watching only the specified namespace
+	// Create manager watching namespace-scoped resources in namespace and cluster-scoped resources (Nodes)
 	mgr, err := ctrl.NewManager(config, ctrl.Options{
 		Scheme:         scheme,
 		LeaderElection: false, // Each Deployment manages only its namespace
@@ -907,8 +1114,9 @@ func main() {
 		},
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{
-				namespace: {},
+				namespace: {}, // Watch namespace-scoped resources in this namespace
 			},
+			// Cluster-scoped resources (Nodes, Workspaces) are watched globally by default
 		},
 	})
 	if err != nil {
@@ -950,6 +1158,23 @@ func main() {
 	if err := workspaceCleanupReconciler.SetupWithManager(mgr); err != nil {
 		zapLogger.Fatal("Failed to setup workspace cleanup controller", zap2.Error(err))
 	}
+
+	// Setup GPU status reconciler
+	// Get node name from environment (should match the K3s node name)
+	nodeName := workmachineName // Use workmachine name as node name
+	gpuStatusReconciler := &GPUStatusReconciler{
+		Client:   mgr.GetClient(),
+		Logger:   zapLogger,
+		CmdExec:  &RealCommandExecutor{},
+		NodeName: nodeName,
+	}
+
+	if err := gpuStatusReconciler.SetupWithManager(mgr); err != nil {
+		zapLogger.Fatal("Failed to setup GPU status controller", zap2.Error(err))
+	}
+
+	zapLogger.Info("All reconcilers configured",
+		zap2.String("nodeName", nodeName))
 
 	ctx := ctrl.SetupSignalHandler()
 	zapLogger.Info("Starting manager")
