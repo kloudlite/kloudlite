@@ -34,7 +34,6 @@ type Env struct {
 }
 
 type awsProviderEnv struct {
-	AWS_AMI_ID            string `env:"AWS_AMI_ID" required:"true"`
 	AWS_VPC_ID            string `env:"AWS_VPC_ID" required:"true"`
 	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
 	AWS_REGION            string `env:"AWS_REGION" required:"true"`
@@ -232,7 +231,6 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			ctx, cf := context.WithTimeout(context.TODO(), 5*time.Second)
 			defer cf()
 			p, err := aws.NewProvider(ctx, aws.ProviderArgs{
-				AMI:             awsEnv.AWS_AMI_ID,
 				Region:          awsEnv.AWS_REGION,
 				VPC:             awsEnv.AWS_VPC_ID,
 				SecurityGroupID: awsEnv.AWS_SECURITY_GROUP_ID,

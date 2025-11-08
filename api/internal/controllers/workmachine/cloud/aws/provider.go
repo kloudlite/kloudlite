@@ -31,8 +31,30 @@ type Tag struct {
 	Value string
 }
 
+// deepLearningAMIs contains the latest Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04) for each region
+// These AMIs come with NVIDIA drivers and container toolkit pre-installed
+// Last updated: 2025-11-04
+var deepLearningAMIs = map[string]string{
+	"us-east-1":      "ami-0601999f27e2188a7",
+	"us-east-2":      "ami-0ed1c23f0bcb40927",
+	"us-west-1":      "ami-0146926033426fbcd",
+	"us-west-2":      "ami-0dcded48d19e200d5",
+	"ca-central-1":   "ami-0d589d373f3feb7fd",
+	"eu-west-1":      "ami-0e2e7dea1f94b3d42",
+	"eu-west-2":      "ami-00579f639c988cd3d",
+	"eu-west-3":      "ami-03c8212ad315d7047",
+	"eu-central-1":   "ami-08d64cbc80d3437f1",
+	"eu-north-1":     "ami-0591f0523dab0e67d",
+	"ap-south-1":     "ami-01bcd4fac4567fce5",
+	"ap-southeast-1": "ami-0aaa45f8660cd207e",
+	"ap-southeast-2": "ami-06132721fbac603ce",
+	"ap-northeast-1": "ami-0118d2ff5d5b40720",
+	"ap-northeast-2": "ami-046092bf277148a89",
+	"ap-northeast-3": "ami-02747df5ee02ec5b3",
+	"sa-east-1":      "ami-00d4a6a9b043e6ece",
+}
+
 type ProviderArgs struct {
-	AMI             string
 	Region          string
 	VPC             string
 	SecurityGroupID string
@@ -44,6 +66,11 @@ type ProviderArgs struct {
 }
 
 func NewProvider(ctx context.Context, args ProviderArgs) (cloud.Provider, error) {
+	// Validate that we have an AMI for this region
+	if _, exists := deepLearningAMIs[args.Region]; !exists {
+		return nil, fmt.Errorf("no Deep Learning AMI configured for region %s", args.Region)
+	}
+
 	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(args.Region))
 	if err != nil {
 		return nil, errors.Wrap("failed to load AWS config", err)
@@ -178,8 +205,14 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		tags = append(tags, ec2types.Tag{Key: &tag.Key, Value: &tag.Value})
 	}
 
+	// Get the region-specific Deep Learning AMI
+	ami, exists := deepLearningAMIs[p.Region]
+	if !exists {
+		return nil, fmt.Errorf("no Deep Learning AMI configured for region %s", p.Region)
+	}
+
 	amiInfo, err := p.ec2Client.DescribeImages(ctx, &ec2.DescribeImagesInput{
-		ImageIds: []string{p.AMI},
+		ImageIds: []string{ami},
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to get AMI info", err)
@@ -205,7 +238,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	awsInstanceType := strings.ReplaceAll(wm.Spec.MachineType, "-", ".")
 
 	runInput := &ec2.RunInstancesInput{
-		ImageId:          fn.Ptr(p.AMI),
+		ImageId:          fn.Ptr(ami),
 		InstanceType:     ec2types.InstanceType(awsInstanceType),
 		MinCount:         fn.Ptr[int32](1),
 		MaxCount:         fn.Ptr[int32](1),
