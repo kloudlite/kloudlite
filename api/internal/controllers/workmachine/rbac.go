@@ -13,27 +13,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// createPackageManagerRBAC creates RBAC resources for the package manager
-func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	namespaceName := obj.Spec.TargetNamespace
-	serviceAccountName := "package-manager"
+// createHostManagerRBAC creates RBAC resources for the workmachine-node-manager (host manager pod)
+// This service account runs in the kloudlite-hostmanager namespace and needs access to:
+// - PackageRequests (cluster-wide) - to install Nix packages
+// - Workspaces (cluster-wide) - to manage SSH configuration
+// - Nodes (cluster-wide) - to update GPU status
+// - Secrets (in hostmanager namespace) - to manage SSH keys
+func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	const hostManagerNamespace = "kloudlite-hostmanager"
+	const serviceAccountName = "workmachine-node-manager"
 
-	// Create ServiceAccount
-	sa := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: serviceAccountName, Namespace: namespaceName}}
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, sa, func() error {
-		sa.SetLabels(fn.MapMerge(sa.GetLabels(), map[string]string{
-			"kloudlite.io/managed":     "true",
-			"kloudlite.io/workmachine": "true",
-		}))
-		return nil
-	}); err != nil {
-		return check.Failed(err)
-	}
-
-	// Create ClusterRole
+	// Create ClusterRole for host manager
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workmachine-%s-package-manager", obj.Name),
+			Name: fmt.Sprintf("hm-%s", obj.Name),
 		},
 	}
 
@@ -44,6 +37,7 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 		}))
 
 		clusterRole.Rules = []rbacv1.PolicyRule{
+			// PackageRequests - for Nix package management
 			{
 				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests"},
@@ -53,6 +47,18 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests/status"},
 				Verbs:     []string{"get", "update", "patch"},
+			},
+			// Workspaces - for SSH configuration management
+			{
+				APIGroups: []string{"workspaces.kloudlite.io"},
+				Resources: []string{"workspaces"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+			// Nodes - for GPU status updates
+			{
+				APIGroups: []string{""},
+				Resources: []string{"nodes"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
 			},
 		}
 
@@ -67,7 +73,7 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 	// Create ClusterRoleBinding
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workmachine-%s-package-manager", obj.Name),
+			Name: fmt.Sprintf("hm-%s", obj.Name),
 		},
 	}
 
@@ -87,12 +93,71 @@ func (r *WorkMachineReconciler) createPackageManagerRBAC(check *reconciler.Check
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
-				Namespace: namespaceName,
+				Namespace: hostManagerNamespace,
 			},
 		}
 
 		if !fn.IsOwner(clusterRoleBinding, obj) {
 			clusterRoleBinding.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	// Create Role in hostmanager namespace for Secrets access
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("hm-%s", obj.Name),
+			Namespace: hostManagerNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, role, func() error {
+		role.SetLabels(fn.MapMerge(role.GetLabels(), map[string]string{
+			"kloudlite.io/managed":     "true",
+			"kloudlite.io/workmachine": "true",
+		}))
+
+		role.Rules = []rbacv1.PolicyRule{
+			// Secrets - for SSH key management
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch"},
+			},
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	// Create RoleBinding in hostmanager namespace
+	roleBinding := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("hm-%s", obj.Name),
+			Namespace: hostManagerNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, roleBinding, func() error {
+		roleBinding.SetLabels(fn.MapMerge(roleBinding.GetLabels(), map[string]string{
+			"kloudlite.io/managed":     "true",
+			"kloudlite.io/workmachine": "true",
+		}))
+
+		roleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     role.Name,
+		}
+
+		roleBinding.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      serviceAccountName,
+				Namespace: hostManagerNamespace,
+			},
 		}
 		return nil
 	}); err != nil {
@@ -282,7 +347,7 @@ func (r *WorkMachineReconciler) createWorkspaceRBACForWorkspace(check *reconcile
 	// Create ClusterRole for workspace
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workspace-%s", workspaceName),
+			Name: fmt.Sprintf("ws-%s", workspaceName),
 		},
 	}
 
@@ -342,7 +407,7 @@ func (r *WorkMachineReconciler) createWorkspaceRBACForWorkspace(check *reconcile
 	// Create ClusterRoleBinding
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workspace-%s", workspaceName),
+			Name: fmt.Sprintf("ws-%s", workspaceName),
 		},
 	}
 
@@ -396,7 +461,7 @@ func (r *WorkMachineReconciler) deleteWorkspaceRBACForWorkspace(check *reconcile
 	// Delete ClusterRole
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workspace-%s", workspaceName),
+			Name: fmt.Sprintf("ws-%s", workspaceName),
 		},
 	}
 	if err := r.Delete(check.Context(), clusterRole); err != nil && !apiErrors.IsNotFound(err) {
@@ -406,7 +471,7 @@ func (r *WorkMachineReconciler) deleteWorkspaceRBACForWorkspace(check *reconcile
 	// Delete ClusterRoleBinding
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workspace-%s", workspaceName),
+			Name: fmt.Sprintf("ws-%s", workspaceName),
 		},
 	}
 	if err := r.Delete(check.Context(), clusterRoleBinding); err != nil && !apiErrors.IsNotFound(err) {

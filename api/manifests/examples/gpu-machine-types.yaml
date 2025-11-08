@@ -1,0 +1,154 @@
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: g4dn-xlarge
+spec:
+  displayName: "GPU Starter (g4dn.xlarge)"
+  description: "For ML/AI testing and light GPU workloads - NVIDIA T4 GPU with basic compute"
+  category: gpu
+  resources:
+    cpu: "4"
+    memory: "16Gi"
+    gpu: "1"
+  active: true
+  isDefault: false
+  priority: 50
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: g4dn-2xlarge
+spec:
+  displayName: "GPU Standard (g4dn.2xlarge)"
+  description: "For ML training and GPU development - NVIDIA T4 GPU with good performance"
+  category: gpu
+  resources:
+    cpu: "8"
+    memory: "32Gi"
+    gpu: "1"
+  active: true
+  isDefault: false
+  priority: 51
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: g4dn-4xlarge
+spec:
+  displayName: "GPU Heavy (g4dn.4xlarge)"
+  description: "For intensive ML workloads - NVIDIA T4 GPU with high compute capacity"
+  category: gpu
+  resources:
+    cpu: "16"
+    memory: "64Gi"
+    gpu: "1"
+  active: true
+  isDefault: false
+  priority: 52
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: g5-xlarge
+spec:
+  displayName: "GPU Advanced (g5.xlarge)"
+  description: "For advanced ML and graphics - NVIDIA A10G GPU for high performance"
+  category: gpu
+  resources:
+    cpu: "4"
+    memory: "16Gi"
+    gpu: "1"
+  active: true
+  isDefault: false
+  priority: 60
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: g5-2xlarge
+spec:
+  displayName: "GPU Pro (g5.2xlarge)"
+  description: "For professional ML and AI workloads - NVIDIA A10G GPU with enhanced performance"
+  category: gpu
+  resources:
+    cpu: "8"
+    memory: "32Gi"
+    gpu: "1"
+  active: true
+  isDefault: false
+  priority: 61
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: p3-2xlarge
+spec:
+  displayName: "GPU Enterprise (p3.2xlarge)"
+  description: "For deep learning and research - NVIDIA V100 GPU for maximum performance"
+  category: gpu
+  resources:
+    cpu: "8"
+    memory: "61Gi"
+    gpu: "1"
+  active: true
+  isDefault: false
+  priority: 70
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: p3-8xlarge
+spec:
+  displayName: "GPU Ultra (p3.8xlarge)"
+  description: "For large-scale deep learning - 4x NVIDIA V100 GPUs for extreme performance"
+  category: gpu
+  resources:
+    cpu: "32"
+    memory: "244Gi"
+    gpu: "4"
+  active: true
+  isDefault: false
+  priority: 71
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule

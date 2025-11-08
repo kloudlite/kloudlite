@@ -106,9 +106,9 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: r.deleteNamespace,
 		},
 		{
-			Name:     "setup-package-manager-RBAC",
-			Title:    "Setup RBAC resources for workmachine-node-manager",
-			OnCreate: r.createPackageManagerRBAC,
+			Name:     "setup-host-manager-RBAC",
+			Title:    "Setup RBAC resources for workmachine-node-manager (host manager)",
+			OnCreate: r.createHostManagerRBAC,
 			OnDelete: nil,
 		},
 		{
