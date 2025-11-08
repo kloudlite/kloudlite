@@ -59,7 +59,7 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	}
 
 	// Get the authenticated user from context
-	userEmail, _, exists := middleware.GetUserFromContext(c)
+	username, userEmail, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		h.logger.Error("User not authenticated")
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -100,8 +100,8 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 		Spec: req.Spec,
 	}
 
-	// Ensure the owner is set to the authenticated user
-	workspace.Spec.OwnedBy = userEmail
+	// Ensure the owner is set to the authenticated user's username (metadata.name)
+	workspace.Spec.OwnedBy = username
 	// FIXME(nxtcoder17): move it to workmachine name, and even better if frontend set's it directly
 	workspace.Spec.WorkmachineName = workspace.Namespace
 
@@ -504,7 +504,7 @@ type NodeMetrics struct {
 
 // GetNodeMetrics handles GET /api/v1/nodes/:nodeName/metrics
 func (h *WorkspaceHandlers) GetNodeMetrics(c *gin.Context) {
-	userEmail, _, exists := middleware.GetUserFromContext(c)
+	_, userEmail, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		h.logger.Error("User not authenticated")
 		c.JSON(http.StatusUnauthorized, gin.H{

@@ -50,8 +50,8 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		return
 	}
 
-	// Get the authenticated user email from JWT middleware context
-	userEmail, _, exists := middleware.GetUserFromContext(c)
+	// Get the authenticated user from JWT middleware context
+	username, userEmail, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		h.logger.Error("User not authenticated")
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -103,9 +103,9 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		Spec: req.Spec,
 	}
 
-	// Set the CreatedBy field with the user email from JWT token
+	// Set the OwnedBy field with the username (User's metadata.name) from JWT token
 	// The webhook will handle adding ownership labels and metadata
-	env.Spec.OwnedBy = userEmail
+	env.Spec.OwnedBy = username
 	env.Spec.WorkMachineName = wm.Name
 	env.Spec.NodeSelector = wm.Status.NodeLabels
 	env.Spec.Tolerations = wm.Status.PodTolerations

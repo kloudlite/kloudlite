@@ -164,6 +164,7 @@ export async function createUser(
 ): Promise<{ success: boolean; user?: UserDisplay; error?: string }> {
   try {
     const createData: CreateUserRequest = {
+      username: data.username,
       email: data.email,
       displayName: data.displayName,
       roles: data.roles,

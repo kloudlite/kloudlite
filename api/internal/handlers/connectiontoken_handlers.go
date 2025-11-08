@@ -93,7 +93,7 @@ func (h *ConnectionTokenHandlers) CreateConnectionToken(c *gin.Context) {
 	}
 
 	// Get current user from JWT middleware context
-	userEmail, _, exists := middleware.GetUserFromContext(c)
+	_, userEmail, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		h.logger.Warn("No user found in context")
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Authentication required"})
@@ -197,7 +197,7 @@ func (h *ConnectionTokenHandlers) CreateConnectionToken(c *gin.Context) {
 // ListConnectionTokens handles GET /connection-tokens
 func (h *ConnectionTokenHandlers) ListConnectionTokens(c *gin.Context) {
 	// Get current user from JWT middleware context
-	userEmail, _, exists := middleware.GetUserFromContext(c)
+	_, userEmail, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		h.logger.Warn("No user found in context")
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Authentication required"})
@@ -238,7 +238,7 @@ func (h *ConnectionTokenHandlers) DeleteConnectionToken(c *gin.Context) {
 	tokenName := c.Param("name")
 
 	// Get current user from JWT middleware context
-	userEmail, _, exists := middleware.GetUserFromContext(c)
+	_, userEmail, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		h.logger.Warn("No user found in context")
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Authentication required"})

@@ -32,6 +32,7 @@ export interface User {
 }
 
 export interface CreateUserRequest {
+  username: string
   email: string
   displayName?: string
   roles: string[]
@@ -82,7 +83,9 @@ class UserServiceImpl implements UserService {
   }
 
   async createUser(data: CreateUserRequest): Promise<User> {
-    const response = await apiClient.post<User>('/api/v1/users', data)
+    // Send username as query parameter for metadata.name, rest in body
+    const { username, ...specData } = data
+    const response = await apiClient.post<User>(`/api/v1/users?name=${encodeURIComponent(username)}`, specData)
     return response
   }
 

@@ -392,6 +392,18 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		return fmt.Errorf("cannot delete an active workspace. Please suspend or archive it first")
 	}
 
+	// Prevent deletion when WorkMachine is not running (for finalizer cleanup)
+	if operation == admissionv1.Delete {
+		var workMachine machinesv1.WorkMachine
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: workspace.Spec.WorkmachineName}, &workMachine); err != nil {
+			return fmt.Errorf("cannot delete workspace: WorkMachine '%s' does not exist or is inaccessible", workspace.Spec.WorkmachineName)
+		}
+
+		if workMachine.Status.State != machinesv1.MachineStateRunning {
+			return fmt.Errorf("cannot delete workspace: WorkMachine '%s' is currently '%s'. Please start the WorkMachine before deleting workspaces to allow proper cleanup of workspace directories", workspace.Spec.WorkmachineName, workMachine.Status.State)
+		}
+	}
+
 	return nil
 }
 

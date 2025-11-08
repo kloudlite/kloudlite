@@ -76,20 +76,22 @@ func TestGenerateToken(t *testing.T) {
 
 	t.Run("should generate valid JWT token", func(t *testing.T) {
 		ctx := context.Background()
+		username := "test-user"
 		email := "test@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, username, email, roles)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, tokenString)
 	})
 
 	t.Run("generated token should be parseable and valid", func(t *testing.T) {
 		ctx := context.Background()
+		username := "test-user"
 		email := "test@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, username, email, roles)
 		assert.NoError(t, err)
 
 		// Parse the token
@@ -103,10 +105,11 @@ func TestGenerateToken(t *testing.T) {
 
 	t.Run("generated token should contain correct claims", func(t *testing.T) {
 		ctx := context.Background()
+		username := "admin-user"
 		email := "admin@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin, platformv1alpha1.RoleUser}
 
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, username, email, roles)
 		assert.NoError(t, err)
 
 		// Parse and validate claims

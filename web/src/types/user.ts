@@ -2,6 +2,7 @@
 export interface UserDisplay {
   id: string
   name: string
+  username: string
   email: string
   role: string
   status: string
@@ -17,6 +18,7 @@ export interface UserDisplay {
 
 // Form data interfaces
 export interface CreateUserFormData {
+  username: string
   email: string
   displayName?: string
   roles: string[]
@@ -55,8 +57,9 @@ export interface UserResource {
 
 // Utility function to convert API User to UserDisplay
 export function userToDisplay(user: UserResource): UserDisplay {
+  const username = user.metadata?.name || ''
   const email = user.spec?.email || ''
-  const displayName = user.spec?.displayName || email.split('@')[0]
+  const displayName = user.spec?.displayName || username || email.split('@')[0]
 
   const createdAt = user.metadata?.creationTimestamp
     ? new Date(user.metadata.creationTimestamp)
@@ -71,8 +74,9 @@ export function userToDisplay(user: UserResource): UserDisplay {
   const userRoles = roles.length > 0 ? roles : ['user']
 
   return {
-    id: user.metadata?.name || user.metadata?.uid || email,
+    id: username || user.metadata?.uid || email,
     name: displayName,
+    username: username,
     email: email,
     role: userRoles.join(', '), // Always show all roles consistently
     status: user.spec?.active !== false ? 'active' : 'inactive',

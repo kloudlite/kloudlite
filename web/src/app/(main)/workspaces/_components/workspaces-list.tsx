@@ -170,7 +170,7 @@ export function WorkspacesList({
                       href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}
                       className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                     >
-                      {workspace.spec.ownedBy.split('@')[0]}/ws-{workspace.spec.displayName || workspace.metadata.name}
+                      {workspace.spec.ownedBy || 'unknown'}/ws-{workspace.spec.displayName || workspace.metadata.name}
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                     {workspace.spec.description && (
@@ -180,7 +180,7 @@ export function WorkspacesList({
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm whitespace-nowrap">
-                    {workspace.spec.ownedBy.split('@')[0]}
+                    {workspace.spec.ownedBy || 'unknown'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

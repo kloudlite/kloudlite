@@ -39,13 +39,6 @@ type ProviderAccount struct {
 
 // UserSpec defines the desired state of User
 type UserSpec struct {
-	// Username of the user (primary identifier for resource ownership)
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
-	// +kubebuilder:validation:MinLength=3
-	// +kubebuilder:validation:MaxLength=63
-	Username string `json:"username"`
-
 	// Email address of the user (for authentication)
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
@@ -115,7 +108,7 @@ type UserStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,shortName=usr
-// +kubebuilder:printcolumn:name="Username",type="string",JSONPath=".spec.username"
+// +kubebuilder:printcolumn:name="Username",type="string",JSONPath=".metadata.name"
 // +kubebuilder:printcolumn:name="Email",type="string",JSONPath=".spec.email"
 // +kubebuilder:printcolumn:name="DisplayName",type="string",JSONPath=".spec.displayName"
 // +kubebuilder:printcolumn:name="Providers",type="string",JSONPath=".spec.providers[*].provider"
