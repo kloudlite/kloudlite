@@ -176,8 +176,41 @@ func (w *WorkMachineWebhook) handleMutation(
 		})
 	}
 
-	// Note: Labels removed - using spec.ownedBy field instead for ownership tracking
-	// Previous label-based tracking code removed
+	// Look up user to get username and email (similar to Workspace webhook)
+	owner := machine.Spec.OwnedBy
+	var userName string
+	var userEmail string
+
+	// For simplicity, assume ownedBy is already a username
+	// If it's an email, we would need to lookup the user
+	userName = owner
+
+	// Add created-by label with username
+	createdByLabelPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/created-by"),
+		"value": userName,
+	}
+	patches = append(patches, createdByLabelPatch)
+
+	// Add owned-by label with username (for efficient querying)
+	ownerLabelPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/owned-by"),
+		"value": userName,
+	}
+	patches = append(patches, ownerLabelPatch)
+
+	// Add base64 encoded email as a label (if we have it)
+	if userEmail != "" {
+		encodedEmail := fn.LabelValueEncoder(userEmail)
+		emailLabelPatch := map[string]interface{}{
+			"op":    "add",
+			"path":  "/metadata/labels/" + fn.LabelKeyEncoder("kloudlite.io/owner-email"),
+			"value": encodedEmail,
+		}
+		patches = append(patches, emailLabelPatch)
+	}
 
 	// Set default machine type if not provided
 	if machine.Spec.MachineType == "" {

@@ -41,8 +41,8 @@ func NewEnvironmentRepository(k8sClient client.Client) EnvironmentRepository {
 
 // GetByNamespace retrieves an environment by its target namespace
 func (r *environmentRepository) GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
-	// Use field selector to find environment by target namespace
-	envs, err := r.List(ctx, WithFieldSelector("spec.targetNamespace="+namespace))
+	// Use label selector for efficient server-side filtering
+	envs, err := r.List(ctx, WithLabelSelector("kloudlite.io/target-namespace="+namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -60,14 +60,14 @@ func (r *environmentRepository) GetByNamespace(ctx context.Context, namespace st
 
 // ListActive retrieves all active environments
 func (r *environmentRepository) ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
-	// Use field selector to find active environments
-	return r.List(ctx, WithFieldSelector("spec.activated=true"))
+	// Use label selector for efficient server-side filtering
+	return r.List(ctx, WithLabelSelector("kloudlite.io/activated=true"))
 }
 
 // ListInactive retrieves all inactive environments
 func (r *environmentRepository) ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
-	// Use field selector to find inactive environments
-	return r.List(ctx, WithFieldSelector("spec.activated=false"))
+	// Use label selector for efficient server-side filtering
+	return r.List(ctx, WithLabelSelector("kloudlite.io/activated=false"))
 }
 
 // ActivateEnvironment activates an environment by name

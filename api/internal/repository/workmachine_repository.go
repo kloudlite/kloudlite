@@ -40,8 +40,8 @@ func NewWorkMachineRepository(k8sClient client.Client) WorkMachineRepository {
 
 // GetByOwner returns the WorkMachine owned by a specific user
 func (r *workMachineRepository) GetByOwner(ctx context.Context, owner string) (*machinesv1.WorkMachine, error) {
-	// Use field selector to efficiently query by owner (leverages the index defined in manager.go)
-	list, err := r.List(ctx, WithFieldSelector("spec.ownedBy="+owner))
+	// Use label selector for efficient server-side filtering
+	list, err := r.List(ctx, WithLabelSelector("kloudlite.io/owned-by="+owner))
 	if err != nil {
 		return nil, err
 	}

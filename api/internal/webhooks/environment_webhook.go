@@ -272,6 +272,18 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		patches = append(patches, workMachineNamePatch)
 	}
 
+	// Add activated label for efficient filtering
+	activatedValue := "false"
+	if env.Spec.Activated {
+		activatedValue = "true"
+	}
+	activatedPatch := map[string]interface{}{
+		"op":    "add",
+		"path":  "/metadata/labels/kloudlite.io~1activated",
+		"value": activatedValue,
+	}
+	patches = append(patches, activatedPatch)
+
 	// Add default annotations if not present
 	if env.Spec.Annotations == nil {
 		patches = append(patches, map[string]interface{}{
