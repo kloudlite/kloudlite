@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -43,9 +44,15 @@ const (
 )
 
 func (p *provider) dryRunCreateInstance(ctx context.Context) error {
+	// Get the region-specific Deep Learning AMI for dry-run test
+	ami, exists := deepLearningAMIs[p.Region]
+	if !exists {
+		return fmt.Errorf("no Deep Learning AMI configured for region %s", p.Region)
+	}
+
 	_, err := p.ec2Client.RunInstances(ctx, &ec2.RunInstancesInput{
 		DryRun:       fn.Ptr(true),
-		ImageId:      fn.Ptr(p.AMI), // Use configured AMI from provider
+		ImageId:      fn.Ptr(ami),
 		InstanceType: ec2types.InstanceTypeT3Micro,
 		MinCount:     fn.Ptr[int32](1),
 		MaxCount:     fn.Ptr[int32](1),
