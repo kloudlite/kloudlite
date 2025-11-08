@@ -20,7 +20,6 @@ import {
   FolderOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { WorkMachineMetrics } from '../../(main)/workspaces/_components/work-machine-metrics'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
@@ -162,8 +161,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
           </div>
         </div>
 
-        {/* Metrics */}
-        <WorkMachineMetrics />
+        {/* Metrics - TODO: Implement metrics display */}
       </div>
 
       {/* Tabs */}
