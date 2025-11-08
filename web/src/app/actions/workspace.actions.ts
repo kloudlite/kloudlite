@@ -202,12 +202,19 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
 }
 
 /**
- * Server action to get node metrics
+ * Server action to get node metrics for a work machine
+ * @param workMachineName - The name of the work machine to get metrics for
  */
-export async function getNodeMetrics(nodeName: string = 'master') {
+export async function getWorkMachineMetrics(workMachineName: string) {
   try {
+    if (!workMachineName) {
+      return {
+        success: false,
+        error: 'Work machine name is required',
+      }
+    }
+
     // Import auth and env dynamically to ensure this only runs on server
-    // Removed unused auth import
     const { env } = await import('@/lib/env')
 
     const session = await getSession()
@@ -218,7 +225,7 @@ export async function getNodeMetrics(nodeName: string = 'master') {
       }
     }
 
-    const url = `${env.apiUrl}/api/v1/nodes/${nodeName}/metrics`
+    const url = `${env.apiUrl}/api/v1/work-machines/${workMachineName}/metrics`
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${session.user.backendToken}`,
@@ -231,14 +238,23 @@ export async function getNodeMetrics(nodeName: string = 'master') {
       const errorText = await response.text()
       return {
         success: false,
-        error: errorText || 'Failed to get node metrics',
+        error: errorText || 'Failed to get work machine metrics',
       }
     }
 
     const data = await response.json()
+
+    // Check if we actually have metrics data (not just an empty response)
+    if (!data.cpu || !data.cpu.capacity || data.cpu.capacity === 0) {
+      return {
+        success: false,
+        error: 'Metrics not yet available',
+      }
+    }
+
     return { success: true, data }
   } catch (err) {
-    console.error('Get node metrics error:', err)
+    console.error('Get work machine metrics error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,

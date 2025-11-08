@@ -1,14 +1,19 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/managers"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -414,4 +419,111 @@ func (h *WorkMachineHandlers) GetWorkMachine(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, machine)
+}
+
+// NodeMetrics represents CPU and memory metrics for a node
+type NodeMetrics struct {
+	CPU struct {
+		Usage       int64 `json:"usage"`       // in millicores
+		Capacity    int64 `json:"capacity"`    // in millicores
+		Allocatable int64 `json:"allocatable"` // in millicores
+	} `json:"cpu"`
+	Memory struct {
+		Usage       int64 `json:"usage"`       // in bytes
+		Capacity    int64 `json:"capacity"`    // in bytes
+		Allocatable int64 `json:"allocatable"` // in bytes
+	} `json:"memory"`
+	Timestamp string `json:"timestamp"`
+}
+
+// GetWorkMachineMetrics handles GET /api/v1/work-machines/:name/metrics
+func (h *WorkMachineHandlers) GetWorkMachineMetrics(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get work machine name from URL parameter
+	workMachineName := c.Param("name")
+	if workMachineName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Work machine name is required",
+		})
+		return
+	}
+
+	// Fetch the WorkMachine resource to get the node name
+	wm, err := h.manager.WorkMachineRepository.Get(ctx, workMachineName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Work machine not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// Get node metrics from Kubernetes metrics API using the WorkMachine's name as node name
+	var nodeMetrics metricsv1beta1.NodeMetrics
+	if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &nodeMetrics); err != nil {
+		// Return empty metrics if not found (node might not be ready yet)
+		if apiErrors.IsNotFound(err) {
+			c.JSON(http.StatusOK, &NodeMetrics{
+				Timestamp: time.Now().UTC().Format(time.RFC3339),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch node metrics",
+		})
+		return
+	}
+
+	// Get node to read capacity and allocatable resources
+	var node corev1.Node
+	if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &node); err != nil {
+		// Return empty metrics if node not found
+		if apiErrors.IsNotFound(err) {
+			c.JSON(http.StatusOK, &NodeMetrics{
+				Timestamp: time.Now().UTC().Format(time.RFC3339),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch node info",
+		})
+		return
+	}
+
+	metrics := &NodeMetrics{
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// CPU metrics
+	if cpu, ok := nodeMetrics.Usage[corev1.ResourceCPU]; ok {
+		metrics.CPU.Usage = cpu.MilliValue()
+	}
+	if capacity, ok := node.Status.Capacity[corev1.ResourceCPU]; ok {
+		metrics.CPU.Capacity = capacity.MilliValue()
+	}
+	if allocatable, ok := node.Status.Allocatable[corev1.ResourceCPU]; ok {
+		metrics.CPU.Allocatable = allocatable.MilliValue()
+	}
+
+	// Memory metrics
+	if mem, ok := nodeMetrics.Usage[corev1.ResourceMemory]; ok {
+		metrics.Memory.Usage = mem.Value()
+	}
+	if capacity, ok := node.Status.Capacity[corev1.ResourceMemory]; ok {
+		metrics.Memory.Capacity = capacity.Value()
+	}
+	if allocatable, ok := node.Status.Allocatable[corev1.ResourceMemory]; ok {
+		metrics.Memory.Allocatable = allocatable.Value()
+	}
+
+	c.JSON(http.StatusOK, metrics)
 }

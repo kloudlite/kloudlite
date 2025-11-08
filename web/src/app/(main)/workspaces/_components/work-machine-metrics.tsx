@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Cpu, MemoryStick } from 'lucide-react'
-import { getNodeMetrics } from '@/app/actions/workspace.actions'
+import { getWorkMachineMetrics } from '@/app/actions/workspace.actions'
 
 interface NodeMetrics {
   cpu: {
@@ -19,7 +19,7 @@ interface NodeMetrics {
 }
 
 interface WorkMachineMetricsProps {
-  nodeName?: string
+  workMachineName: string
   machineState?: string
 }
 
@@ -31,19 +31,19 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
 
-export function WorkMachineMetrics({ nodeName = 'master', machineState }: WorkMachineMetricsProps) {
+export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachineMetricsProps) {
   const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Don't fetch metrics when machine is stopped
-    if (machineState === 'stopped') {
+    // Don't fetch metrics when machine is stopped or no name provided
+    if (machineState === 'stopped' || !workMachineName) {
       return
     }
 
     const fetchMetrics = async () => {
       try {
-        const result = await getNodeMetrics(nodeName)
+        const result = await getWorkMachineMetrics(workMachineName)
         if (result.success && result.data) {
           setMetrics(result.data)
           setError(null)
@@ -51,7 +51,7 @@ export function WorkMachineMetrics({ nodeName = 'master', machineState }: WorkMa
           setError(result.error || 'Failed to load metrics')
         }
       } catch (err) {
-        console.error('Failed to fetch node metrics:', err)
+        console.error('Failed to fetch work machine metrics:', err)
         setError('Failed to load metrics')
       }
     }
@@ -65,7 +65,7 @@ export function WorkMachineMetrics({ nodeName = 'master', machineState }: WorkMa
     return () => {
       clearInterval(intervalId)
     }
-  }, [nodeName, machineState])
+  }, [workMachineName, machineState])
 
   // Don't show metrics when machine is stopped
   if (machineState === 'stopped') {
