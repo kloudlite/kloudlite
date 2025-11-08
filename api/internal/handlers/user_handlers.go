@@ -609,7 +609,7 @@ func (h *UserHandlers) CheckUsernameAvailability(c *gin.Context) {
 	}
 
 	// Check if user exists
-	existingUser, err := h.userService.GetUserByName(c.Request.Context(), req.Username)
+	existingUser, err := h.userService.GetUser(c.Request.Context(), req.Username)
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		h.logger.Error("Failed to check username availability",
 			zap.String("username", req.Username),
