@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { formatResourceName } from '@/lib/utils'
 
 interface Environment {
   id: string
@@ -37,7 +38,7 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
             <div className="flex-1">
               <div className="flex items-center gap-3">
                 <h3 className="group-hover:text-info text-lg font-medium transition-colors">
-                  {env.owner.split('@')[0]}/env-{env.name}
+                  {formatResourceName(env.name)}
                 </h3>
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
