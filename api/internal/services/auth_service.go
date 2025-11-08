@@ -15,15 +15,16 @@ import (
 
 // AuthService handles JWT token generation and validation
 type AuthService interface {
-	GenerateToken(ctx context.Context, userEmail string, roles []platformv1alpha1.RoleType) (string, error)
+	GenerateToken(ctx context.Context, username string, userEmail string, roles []platformv1alpha1.RoleType) (string, error)
 	ValidateToken(ctx context.Context, tokenString string) (*UserClaims, error)
 	VerifyPassword(ctx context.Context, email, password string) (*platformv1alpha1.User, error)
 }
 
 // UserClaims represents the JWT claims for a user
 type UserClaims struct {
-	Email string                      `json:"email"`
-	Roles []platformv1alpha1.RoleType `json:"roles"`
+	Username string                      `json:"username"` // User's metadata.name
+	Email    string                      `json:"email"`
+	Roles    []platformv1alpha1.RoleType `json:"roles"`
 	jwt.RegisteredClaims
 }
 
@@ -46,13 +47,14 @@ func NewAuthService(jwtSecret string, tokenExpiry time.Duration, userService Use
 }
 
 // GenerateToken creates a new JWT token for the user
-func (s *authService) GenerateToken(ctx context.Context, userEmail string, roles []platformv1alpha1.RoleType) (string, error) {
+func (s *authService) GenerateToken(ctx context.Context, username string, userEmail string, roles []platformv1alpha1.RoleType) (string, error) {
 	now := time.Now()
 	expirationTime := now.Add(s.tokenExpiry)
 
 	claims := &UserClaims{
-		Email: userEmail,
-		Roles: roles,
+		Username: username,
+		Email:    userEmail,
+		Roles:    roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -70,6 +72,7 @@ func (s *authService) GenerateToken(ctx context.Context, userEmail string, roles
 	}
 
 	s.logger.Debug("Generated JWT token",
+		zap.String("username", username),
 		zap.String("email", userEmail),
 		zap.Strings("roles", rolesToStrings(roles)),
 		zap.Time("expires_at", expirationTime),
@@ -99,6 +102,7 @@ func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*U
 	}
 
 	s.logger.Debug("Validated JWT token",
+		zap.String("username", claims.Username),
 		zap.String("email", claims.Email),
 		zap.Strings("roles", rolesToStrings(claims.Roles)),
 	)

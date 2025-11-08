@@ -68,6 +68,7 @@ export function UserManagementList({
 
   // Form state
   const [formData, setFormData] = useState<CreateUserFormData>({
+    username: '',
     email: '',
     displayName: '',
     roles: [],
@@ -75,6 +76,7 @@ export function UserManagementList({
 
   const resetForm = () => {
     setFormData({
+      username: '',
       email: '',
       displayName: '',
       roles: [],
@@ -108,6 +110,7 @@ export function UserManagementList({
     }
 
     setFormData({
+      username: user.username,
       email: user.email,
       displayName: user.displayName || '',
       roles: roles.length > 0 ? roles : ['user'], // Ensure at least one role
@@ -137,6 +140,11 @@ export function UserManagementList({
     setFormError(null)
 
     // Validate required fields
+    if (!formData.username && !editingUser) {
+      setFormError('Username is required')
+      return
+    }
+
     if (!formData.email) {
       setFormError('Email is required')
       return
@@ -503,6 +511,32 @@ export function UserManagementList({
           )}
           <div className="space-y-6 py-4">
             <div className="space-y-2">
+              <Label htmlFor="username">Username *</Label>
+              <Input
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData((prev) => ({ ...prev, username: e.target.value }))}
+                placeholder="Enter username (e.g., john-doe)"
+                required
+                disabled={!!editingUser}
+                className={editingUser ? 'bg-muted cursor-not-allowed' : ''}
+                pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+                minLength={3}
+                maxLength={63}
+              />
+              {editingUser && (
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Username cannot be changed after user creation
+                </p>
+              )}
+              {!editingUser && (
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Username is the resource name (3-63 chars, lowercase, numbers, hyphens only)
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
@@ -573,7 +607,12 @@ export function UserManagementList({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isPending || !formData.email || formData.roles.length === 0}
+              disabled={
+                isPending ||
+                (!editingUser && !formData.username) ||
+                !formData.email ||
+                formData.roles.length === 0
+              }
             >
               {isPending ? (
                 <>

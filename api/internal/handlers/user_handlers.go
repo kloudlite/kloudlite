@@ -32,7 +32,7 @@ func NewUserHandlers(userService services.UserService, logger *zap.Logger) *User
 
 // getCurrentUserRoles extracts user roles from JWT context (set by auth middleware)
 func (h *UserHandlers) getCurrentUserRoles(c *gin.Context) []platformv1alpha1.RoleType {
-	_, roles, exists := middleware.GetUserFromContext(c)
+	_, _, roles, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		return []platformv1alpha1.RoleType{}
 	}

@@ -104,7 +104,7 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token, err := h.authService.GenerateToken(c.Request.Context(), user.Spec.Email, user.Spec.Roles)
+	token, err := h.authService.GenerateToken(c.Request.Context(), user.Name, user.Spec.Email, user.Spec.Roles)
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.String("email", req.Email), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate authentication token"})
@@ -159,7 +159,7 @@ func (h *AuthHandlers) GenerateToken(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token, err := h.authService.GenerateToken(c.Request.Context(), user.Spec.Email, user.Spec.Roles)
+	token, err := h.authService.GenerateToken(c.Request.Context(), user.Name, user.Spec.Email, user.Spec.Roles)
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.String("email", req.Email), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate authentication token"})

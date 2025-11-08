@@ -78,10 +78,12 @@ func JWTMiddleware(authService services.AuthService, logger *zap.Logger, skipAut
 		}
 
 		// Set user information in context
+		c.Set("user_username", userClaims.Username)
 		c.Set("user_email", userClaims.Email)
 		c.Set("user_roles", userClaims.Roles)
 
 		logger.Debug("User authenticated via JWT",
+			zap.String("username", userClaims.Username),
 			zap.String("email", userClaims.Email),
 			zap.Any("roles", userClaims.Roles),
 		)
@@ -91,31 +93,37 @@ func JWTMiddleware(authService services.AuthService, logger *zap.Logger, skipAut
 }
 
 // GetUserFromContext extracts user information from gin context
-func GetUserFromContext(c *gin.Context) (email string, roles []platformv1alpha1.RoleType, exists bool) {
+func GetUserFromContext(c *gin.Context) (username string, email string, roles []platformv1alpha1.RoleType, exists bool) {
+	usernameValue, usernameExists := c.Get("user_username")
 	emailValue, emailExists := c.Get("user_email")
 	rolesValue, rolesExists := c.Get("user_roles")
 
-	if !emailExists || !rolesExists {
-		return "", nil, false
+	if !usernameExists || !emailExists || !rolesExists {
+		return "", "", nil, false
+	}
+
+	username, usernameOk := usernameValue.(string)
+	if !usernameOk {
+		return "", "", nil, false
 	}
 
 	email, emailOk := emailValue.(string)
 	if !emailOk {
-		return "", nil, false
+		return "", "", nil, false
 	}
 
 	roles, rolesOk := rolesValue.([]platformv1alpha1.RoleType)
 	if !rolesOk {
-		return "", nil, false
+		return "", "", nil, false
 	}
 
-	return email, roles, true
+	return username, email, roles, true
 }
 
 // RequireRoles is a middleware that requires specific roles
 func RequireRoles(requiredRoles ...platformv1alpha1.RoleType) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, userRoles, exists := GetUserFromContext(c)
+		_, _, userRoles, exists := GetUserFromContext(c)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 			c.Abort()

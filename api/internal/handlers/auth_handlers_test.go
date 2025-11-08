@@ -23,7 +23,7 @@ import (
 // mockAuthService implements services.AuthService for testing
 type mockAuthService struct {
 	verifyPasswordFunc func(ctx context.Context, email, password string) (*platformv1alpha1.User, error)
-	generateTokenFunc  func(ctx context.Context, email string, roles []platformv1alpha1.RoleType) (string, error)
+	generateTokenFunc  func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error)
 	validateTokenFunc  func(ctx context.Context, token string) (*services.UserClaims, error)
 }
 
@@ -34,9 +34,9 @@ func (m *mockAuthService) VerifyPassword(ctx context.Context, email, password st
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockAuthService) GenerateToken(ctx context.Context, email string, roles []platformv1alpha1.RoleType) (string, error) {
+func (m *mockAuthService) GenerateToken(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
 	if m.generateTokenFunc != nil {
-		return m.generateTokenFunc(ctx, email, roles)
+		return m.generateTokenFunc(ctx, username, email, roles)
 	}
 	return "", errors.New("not implemented")
 }

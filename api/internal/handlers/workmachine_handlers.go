@@ -41,7 +41,7 @@ func (h *WorkMachineHandlers) GetMyWorkMachine(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get current user
-	userName, _, exists := middleware.GetUserFromContext(c)
+	userName, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
@@ -72,7 +72,7 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get current user
-	userName, _, exists := middleware.GetUserFromContext(c)
+	userName, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
@@ -160,7 +160,7 @@ func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get current user
-	userName, _, exists := middleware.GetUserFromContext(c)
+	userName, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
@@ -223,7 +223,7 @@ func (h *WorkMachineHandlers) DeleteMyWorkMachine(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get current user
-	userName, _, exists := middleware.GetUserFromContext(c)
+	userName, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
@@ -264,7 +264,7 @@ func (h *WorkMachineHandlers) StartMyWorkMachine(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get current user
-	userName, _, exists := middleware.GetUserFromContext(c)
+	userName, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
@@ -306,7 +306,7 @@ func (h *WorkMachineHandlers) StopMyWorkMachine(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get current user
-	userName, _, exists := middleware.GetUserFromContext(c)
+	userName, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { MoreHorizontal, Loader2 } from 'lucide-react'
+import { MoreHorizontal, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -37,21 +37,24 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const handleDelete = async () => {
     setIsDeleting(true)
+    setDeleteError(null)
     try {
       const result = await deleteWorkspace(workspace.metadata.name, workspace.metadata.namespace)
       if (!result.success) {
-        throw new Error(result.error)
+        setDeleteError(result.error || 'Failed to delete workspace')
+        return
       }
+      setShowDeleteDialog(false)
       router.refresh()
     } catch (error) {
       console.error('Failed to delete workspace:', error)
-      alert(error instanceof Error ? error.message : 'Failed to delete workspace')
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete workspace')
     } finally {
       setIsDeleting(false)
-      setShowDeleteDialog(false)
     }
   }
 
@@ -129,6 +132,17 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
               permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {deleteError && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-destructive">Unable to delete workspace</p>
+                <p className="text-sm text-destructive/90 mt-1">{deleteError}</p>
+              </div>
+            </div>
+          )}
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
