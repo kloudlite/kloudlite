@@ -868,7 +868,7 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 	// Install NVIDIA driver on Debian (host OS)
 	// Enable non-free repositories and install nvidia-driver metapackage
 	installScript := `
-		echo "deb http://deb.debian.org/debian $(lsb_release -sc) main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-nonfree.list && \
+		echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-nonfree.list && \
 		apt-get update && \
 		DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver firmware-misc-nonfree
 	`
