@@ -965,11 +965,12 @@ func (r *GPUStatusReconciler) ensureNVIDIASetup(logger *zap2.Logger) error {
 }
 
 func (r *GPUStatusReconciler) detectGPU(logger *zap2.Logger) bool {
-	// Check for NVIDIA GPU by reading /host/sys/bus/pci/devices directly
+	// Check for NVIDIA GPU by reading /sys/bus/pci/devices directly
 	// This approach doesn't require lspci to be installed
+	// Note: When using nsenter to enter host namespaces, paths like /sys are already host paths
 	checkScript := `
-		if [ -d /host/sys/bus/pci/devices ]; then
-			for device in /host/sys/bus/pci/devices/*; do
+		if [ -d /sys/bus/pci/devices ]; then
+			for device in /sys/bus/pci/devices/*; do
 				if [ -f "$device/vendor" ] && [ -f "$device/device" ]; then
 					vendor=$(cat "$device/vendor" 2>/dev/null)
 					# 0x10de is NVIDIA's PCI vendor ID
@@ -983,7 +984,7 @@ func (r *GPUStatusReconciler) detectGPU(logger *zap2.Logger) bool {
 	`
 	_, err := r.CmdExec.Execute(checkScript)
 	if err != nil {
-		logger.Debug("No NVIDIA GPU detected in /host/sys/bus/pci/devices")
+		logger.Debug("No NVIDIA GPU detected in /sys/bus/pci/devices")
 		return false
 	}
 	logger.Info("NVIDIA GPU detected via PCI device scan")
