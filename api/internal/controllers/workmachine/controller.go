@@ -185,7 +185,7 @@ func (r *WorkMachineReconciler) handleNodeRebootRequest(check *reconciler.Check[
 			// Node doesn't exist yet, nothing to do
 			return check.Passed()
 		}
-		return check.Failed("failed to get node").Err(err)
+		return check.Failed(fmt.Errorf("failed to get node: %w", err))
 	}
 
 	// Check if node has reboot requested annotation
@@ -199,7 +199,7 @@ func (r *WorkMachineReconciler) handleNodeRebootRequest(check *reconciler.Check[
 
 	// Reboot the instance using cloud provider API
 	if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
-		return check.Failed("failed to reboot machine").Err(err)
+		return check.Failed(fmt.Errorf("failed to reboot machine: %w", err))
 	}
 
 	// Remove the reboot annotation from the node
