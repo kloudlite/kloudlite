@@ -855,29 +855,48 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 	if driverInstallErr != nil {
 		logger.Error("Failed to ensure NVIDIA drivers are installed", zap2.Error(driverInstallErr))
 
-		// Update node labels with installation status
-		if node.Labels == nil {
-			node.Labels = make(map[string]string)
-		}
-		node.Labels["nvidia.com/gpu.driver-status"] = "installing"
-		if strings.Contains(driverInstallErr.Error(), "require reboot") {
-			node.Labels["nvidia.com/gpu.driver-status"] = "awaiting-reboot"
-			node.Labels["nvidia.com/gpu.driver-message"] = "Reboot-required-to-load-drivers"
-
-			// Add annotation to request reboot - WorkMachine controller will handle this
-			if node.Annotations == nil {
-				node.Annotations = make(map[string]string)
+		// Retry updating node with latest version on conflict
+		for retries := 0; retries < 3; retries++ {
+			// Refetch the latest node
+			latestNode := &corev1.Node{}
+			if err := r.Get(ctx, client.ObjectKey{Name: node.Name}, latestNode); err != nil {
+				logger.Error("Failed to refetch node", zap2.Error(err))
+				break
 			}
-			node.Annotations["kloudlite.io/workmachine-reboot-requested"] = "true"
-			logger.Info("Added reboot request annotation to node")
-		} else {
-			node.Labels["nvidia.com/gpu.driver-status"] = "error"
-			node.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(driverInstallErr.Error(), 63)
-		}
 
-		// Try to update node with status even if driver installation failed
-		if updateErr := r.Update(ctx, node); updateErr != nil {
-			logger.Error("Failed to update node with driver status", zap2.Error(updateErr))
+			// Update labels with installation status
+			if latestNode.Labels == nil {
+				latestNode.Labels = make(map[string]string)
+			}
+			latestNode.Labels["nvidia.com/gpu.driver-status"] = "installing"
+			if strings.Contains(driverInstallErr.Error(), "require reboot") {
+				latestNode.Labels["nvidia.com/gpu.driver-status"] = "awaiting-reboot"
+				latestNode.Labels["nvidia.com/gpu.driver-message"] = "Reboot-required-to-load-drivers"
+
+				// Add annotation to request reboot - WorkMachine controller will handle this
+				if latestNode.Annotations == nil {
+					latestNode.Annotations = make(map[string]string)
+				}
+				latestNode.Annotations["kloudlite.io/workmachine-reboot-requested"] = "true"
+				logger.Info("Added reboot request annotation to node")
+			} else {
+				latestNode.Labels["nvidia.com/gpu.driver-status"] = "error"
+				latestNode.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(driverInstallErr.Error(), 63)
+			}
+
+			// Try to update node with status
+			if updateErr := r.Update(ctx, latestNode); updateErr != nil {
+				if strings.Contains(updateErr.Error(), "the object has been modified") {
+					logger.Warn("Node was modified, retrying update", zap2.Int("retry", retries+1))
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+				logger.Error("Failed to update node with driver status", zap2.Error(updateErr))
+				break
+			}
+
+			logger.Info("Successfully updated node with driver status")
+			break
 		}
 
 		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
@@ -888,15 +907,34 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 	if err != nil {
 		logger.Error("Failed to get GPU information", zap2.Error(err))
 
-		// Update node labels with status
-		if node.Labels == nil {
-			node.Labels = make(map[string]string)
-		}
-		node.Labels["nvidia.com/gpu.driver-status"] = "error"
-		node.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(err.Error(), 63)
+		// Retry updating node with latest version on conflict
+		for retries := 0; retries < 3; retries++ {
+			// Refetch the latest node
+			latestNode := &corev1.Node{}
+			if getErr := r.Get(ctx, client.ObjectKey{Name: node.Name}, latestNode); getErr != nil {
+				logger.Error("Failed to refetch node", zap2.Error(getErr))
+				break
+			}
 
-		if updateErr := r.Update(ctx, node); updateErr != nil {
-			logger.Error("Failed to update node with GPU error status", zap2.Error(updateErr))
+			// Update labels with status
+			if latestNode.Labels == nil {
+				latestNode.Labels = make(map[string]string)
+			}
+			latestNode.Labels["nvidia.com/gpu.driver-status"] = "error"
+			latestNode.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(err.Error(), 63)
+
+			if updateErr := r.Update(ctx, latestNode); updateErr != nil {
+				if strings.Contains(updateErr.Error(), "the object has been modified") {
+					logger.Warn("Node was modified, retrying update", zap2.Int("retry", retries+1))
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+				logger.Error("Failed to update node with GPU error status", zap2.Error(updateErr))
+				break
+			}
+
+			logger.Info("Successfully updated node with GPU error status")
+			break
 		}
 
 		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
