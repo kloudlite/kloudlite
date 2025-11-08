@@ -2,11 +2,14 @@ package aws
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 )
 
 func EnsureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installationKey string) error {
@@ -17,11 +20,20 @@ func EnsureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installatio
 		Bucket: aws.String(bucketName),
 	})
 	if err == nil {
-		// Bucket exists
+		// Bucket exists, verify it's accessible
 		return nil
 	}
 
-	// Create bucket
+	// Check if error is something other than NotFound (e.g., permission issues)
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		// If it's not a NotFound error, we have a problem
+		if apiErr.ErrorCode() != "NotFound" && apiErr.ErrorCode() != "NoSuchBucket" {
+			return fmt.Errorf("failed to check bucket existence (code: %s): %w", apiErr.ErrorCode(), err)
+		}
+	}
+
+	// Bucket doesn't exist, create it
 	createInput := &s3.CreateBucketInput{
 		Bucket: aws.String(bucketName),
 	}
@@ -35,7 +47,25 @@ func EnsureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installatio
 
 	_, err = s3Client.CreateBucket(ctx, createInput)
 	if err != nil {
-		return fmt.Errorf("failed to create S3 bucket: %w", err)
+		// Check if bucket was created by someone else in the meantime
+		var bucketAlreadyExists *s3Types.BucketAlreadyExists
+		var bucketAlreadyOwnedByYou *s3Types.BucketAlreadyOwnedByYou
+		if errors.As(err, &bucketAlreadyExists) || errors.As(err, &bucketAlreadyOwnedByYou) {
+			// Bucket exists now, that's fine - continue with configuration
+		} else {
+			return fmt.Errorf("failed to create S3 bucket '%s' in region '%s': %w", bucketName, cfg.Region, err)
+		}
+	}
+
+	// Wait a moment for bucket creation to propagate
+	time.Sleep(2 * time.Second)
+
+	// Verify bucket was actually created
+	_, err = s3Client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return fmt.Errorf("bucket creation appeared to succeed but bucket is not accessible: %w", err)
 	}
 
 	// Enable versioning for backup safety
@@ -86,6 +116,14 @@ func EnsureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installatio
 	})
 	if err != nil {
 		return fmt.Errorf("failed to tag bucket: %w", err)
+	}
+
+	// Final verification that bucket is fully configured
+	_, err = s3Client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return fmt.Errorf("bucket configuration completed but final verification failed: %w", err)
 	}
 
 	return nil
