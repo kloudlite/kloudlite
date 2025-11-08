@@ -918,10 +918,19 @@ type GPUInfo struct {
 
 // ensureNVIDIADriversInstalled checks if NVIDIA drivers are installed and installs them if needed
 func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) error {
-	// Check if nvidia-smi is available on host
+	// Check if installation flag file exists (indicates drivers were successfully installed)
+	flagCheckScript := "test -f /var/lib/kloudlite/nvidia-drivers-installed"
+	if _, err := r.CmdExec.Execute(flagCheckScript); err == nil {
+		logger.Info("NVIDIA drivers already installed (flag file exists)")
+		return nil
+	}
+
+	// Also check if nvidia-smi is available as fallback
 	checkScript := "which nvidia-smi > /dev/null 2>&1"
 	if _, err := r.CmdExec.Execute(checkScript); err == nil {
-		logger.Info("NVIDIA drivers already installed")
+		logger.Info("NVIDIA drivers already installed (nvidia-smi found)")
+		// Create flag file for future checks
+		r.CmdExec.Execute("mkdir -p /var/lib/kloudlite && touch /var/lib/kloudlite/nvidia-drivers-installed")
 		return nil
 	}
 
@@ -980,6 +989,15 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 	}
 
 	logger.Info("NVIDIA kernel modules loaded successfully")
+
+	// Create flag file to indicate successful installation
+	flagScript := "mkdir -p /var/lib/kloudlite && touch /var/lib/kloudlite/nvidia-drivers-installed"
+	if _, err := r.CmdExec.Execute(flagScript); err != nil {
+		logger.Warn("Failed to create driver installation flag file", zap2.Error(err))
+	} else {
+		logger.Info("Created driver installation flag file")
+	}
+
 	return nil
 }
 
