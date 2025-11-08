@@ -7,8 +7,11 @@ export async function getMyWorkMachine() {
     const data = await workMachineService.getMyWorkMachine()
     return { success: true, data }
   } catch (err) {
-    console.error('Get my work machine error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
+    // Don't log error if user simply doesn't have a work machine yet
+    if (!error.message.includes('No work machine found')) {
+      console.error('Get my work machine error:', err)
+    }
     return {
       success: false,
       error: error.message,
