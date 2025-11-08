@@ -68,8 +68,9 @@ func (r *HostCommandExecutor) Execute(script string) ([]byte, error) {
 	// -m: enter mount namespace
 	// -u: enter UTS namespace
 	// -i: enter IPC namespace
-	cmd := exec.Command("nsenter", "-t", "1", "-m", "-u", "-i", "sh", "-c", script)
-	cmd.Env = os.Environ()
+	// Set PATH explicitly to ensure standard binaries like nvidia-smi are found
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "-u", "-i", "bash", "-c", script)
+	cmd.Env = append(os.Environ(), "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
 	return cmd.CombinedOutput()
 }
 
