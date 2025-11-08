@@ -40,23 +40,22 @@ func NewWorkMachineRepository(k8sClient client.Client) WorkMachineRepository {
 
 // GetByOwner returns the WorkMachine owned by a specific user
 func (r *workMachineRepository) GetByOwner(ctx context.Context, owner string) (*machinesv1.WorkMachine, error) {
-	list := &machinesv1.WorkMachineList{}
-	if err := r.k8sClient.List(ctx, list); err != nil {
+	// Use field selector to efficiently query by owner (leverages the index defined in manager.go)
+	list, err := r.List(ctx, WithFieldSelector("spec.ownedBy="+owner))
+	if err != nil {
 		return nil, err
 	}
 
-	// Find machine owned by the user (each user should have only one)
-	for _, machine := range list.Items {
-		if machine.Spec.OwnedBy == owner {
-			return &machine, nil
-		}
+	// Each user should have only one WorkMachine
+	if len(list.Items) == 0 {
+		// Return a proper Kubernetes NotFound error
+		return nil, apierrors.NewNotFound(
+			schema.GroupResource{Group: "machines.kloudlite.io", Resource: "workmachines"},
+			fmt.Sprintf("owner:%s", owner),
+		)
 	}
 
-	// Return a proper Kubernetes NotFound error
-	return nil, apierrors.NewNotFound(
-		schema.GroupResource{Group: "machines.kloudlite.io", Resource: "workmachines"},
-		fmt.Sprintf("owner:%s", owner),
-	)
+	return &list.Items[0], nil
 }
 
 // StartMachine starts a WorkMachine
