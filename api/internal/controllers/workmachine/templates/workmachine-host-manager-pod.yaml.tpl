@@ -23,7 +23,7 @@ spec:
       - {{ .TargetNamespace }}.svc.cluster.local
   initContainers:
     - name: setup-nix
-      image: debian:bookworm-slim
+      image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:v1.0.9-nightly
       imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true
@@ -37,7 +37,7 @@ spec:
 
           # Check if Nix is already on the shared volume
           if [ -f /nix-shared/var/nix/profiles/default/etc/profile.d/nix.sh ]; then
-            echo "Nix already exists on shared volume, skipping installation"
+            echo "Nix already exists on shared volume, skipping copy"
             # Always ensure profile directory exists (idempotent - safe to run multiple times)
             echo "Ensuring profile directory exists..."
             mkdir -p /nix-shared/profiles/per-user/root
@@ -45,28 +45,21 @@ spec:
             exit 0
           fi
 
-          echo "Installing Nix to shared volume..."
+          echo "Copying Nix from image to shared volume..."
 
-          # Install dependencies
-          apt-get update
-          apt-get install -y curl xz-utils ca-certificates
+          # Verify Nix exists in the image
+          if [ ! -d /nix ]; then
+            echo "ERROR: /nix not found in image"
+            exit 1
+          fi
 
-          # Create /nix directory structure on shared volume
+          # Create shared volume directory
           mkdir -p /nix-shared
 
-          # Create nixbld group and build users
-          groupadd -g 30000 nixbld || true
-          for i in $(seq 1 10); do
-            useradd -c "Nix build user $i" -d /var/empty -g nixbld -G nixbld -M -N -r -s "$(which nologin)" "nixbld$i" 2>/dev/null || true
-          done
+          # Copy Nix from image to shared volume
+          cp -a /nix/* /nix-shared/
 
-          # Install Nix to /nix-shared by creating symlink
-          ln -sfn /nix-shared /nix
-
-          # Download and install Nix
-          curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
-
-          echo "Nix installed successfully to shared volume"
+          echo "Nix copied successfully to shared volume"
 
           # Ensure profile directory exists
           echo "Ensuring profile directory exists..."
