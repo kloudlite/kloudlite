@@ -79,7 +79,7 @@ func EnsureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installatio
 		return fmt.Errorf("failed to enable bucket versioning: %w", err)
 	}
 
-	// Add lifecycle policy to expire old backups after 30 days
+	// Add lifecycle policy to expire old backups after 90 days (3 months)
 	_, err = s3Client.PutBucketLifecycleConfiguration(ctx, &s3.PutBucketLifecycleConfigurationInput{
 		Bucket: aws.String(bucketName),
 		LifecycleConfiguration: &s3Types.BucketLifecycleConfiguration{
@@ -88,7 +88,7 @@ func EnsureS3Bucket(ctx context.Context, cfg aws.Config, bucketName, installatio
 					ID:     aws.String("expire-old-backups"),
 					Status: s3Types.ExpirationStatusEnabled,
 					Expiration: &s3Types.LifecycleExpiration{
-						Days: aws.Int32(30),
+						Days: aws.Int32(90),
 					},
 					Filter: &s3Types.LifecycleRuleFilter{
 						Prefix: aws.String(""),
