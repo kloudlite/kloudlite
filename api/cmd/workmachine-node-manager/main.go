@@ -865,34 +865,13 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 	distro := strings.TrimSpace(string(distroOutput))
 	logger.Info("Detected OS distribution", zap2.String("distro", distro))
 
-	// Install based on distribution
-	var installScript string
-	switch distro {
-	case "ubuntu", "debian":
-		installScript = `
-			apt-get update && \
-			DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver-535 nvidia-utils-535
-		`
-	case "fedora":
-		installScript = `
-			dnf install -y akmod-nvidia nvidia-driver
-		`
-	case "rhel", "centos", "rocky", "almalinux":
-		installScript = `
-			dnf install -y epel-release && \
-			dnf install -y akmod-nvidia nvidia-driver
-		`
-	case "amzn":
-		// Amazon Linux
-		installScript = `
-			yum install -y gcc kernel-devel-$(uname -r) && \
-			aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . && \
-			chmod +x NVIDIA-Linux-*.run && \
-			./NVIDIA-Linux-*.run --silent
-		`
-	default:
-		return fmt.Errorf("unsupported distribution: %s", distro)
-	}
+	// Install NVIDIA driver on Debian (host OS)
+	// Enable non-free repositories and install nvidia-driver metapackage
+	installScript := `
+		echo "deb http://deb.debian.org/debian $(lsb_release -sc) main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-nonfree.list && \
+		apt-get update && \
+		DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver firmware-misc-nonfree
+	`
 
 	logger.Info("Installing NVIDIA drivers", zap2.String("distro", distro))
 	output, err := r.CmdExec.Execute(installScript)
