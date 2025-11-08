@@ -57,6 +57,21 @@ func (r *RealCommandExecutor) Execute(script string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
+// HostCommandExecutor implements CommandExecutor using nsenter to run commands on the host
+// This is necessary for GPU detection and driver installation which must happen on the host system
+type HostCommandExecutor struct{}
+
+func (r *HostCommandExecutor) Execute(script string) ([]byte, error) {
+	// Use nsenter to execute commands on the host by entering the mount namespace of PID 1
+	// -t 1: target PID 1 (the host's init process)
+	// -m: enter mount namespace
+	// -u: enter UTS namespace
+	// -i: enter IPC namespace
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "-u", "-i", "sh", "-c", script)
+	cmd.Env = os.Environ()
+	return cmd.CombinedOutput()
+}
+
 // FileSystem defines an interface for filesystem operations
 // This allows for mocking in tests
 type FileSystem interface {
@@ -796,6 +811,12 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		return reconcile.Result{}, nil
 	}
 
+	// Ensure NVIDIA drivers are installed
+	if err := r.ensureNVIDIADriversInstalled(logger); err != nil {
+		logger.Error("Failed to ensure NVIDIA drivers are installed", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
 	// Get GPU information
 	gpuInfo, err := r.getGPUInfo(logger)
 	if err != nil {
@@ -822,6 +843,80 @@ type GPUInfo struct {
 	Count         int
 	Product       string
 	DriverVersion string
+}
+
+// ensureNVIDIADriversInstalled checks if NVIDIA drivers are installed and installs them if needed
+func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) error {
+	// Check if nvidia-smi is available on host
+	checkScript := "which nvidia-smi > /dev/null 2>&1"
+	if _, err := r.CmdExec.Execute(checkScript); err == nil {
+		logger.Info("NVIDIA drivers already installed")
+		return nil
+	}
+
+	logger.Info("NVIDIA drivers not found, installing...")
+
+	// Detect distribution
+	distroScript := "cat /etc/os-release | grep ^ID= | cut -d= -f2 | tr -d '\"'"
+	distroOutput, err := r.CmdExec.Execute(distroScript)
+	if err != nil {
+		return fmt.Errorf("failed to detect distribution: %w", err)
+	}
+	distro := strings.TrimSpace(string(distroOutput))
+	logger.Info("Detected OS distribution", zap2.String("distro", distro))
+
+	// Install based on distribution
+	var installScript string
+	switch distro {
+	case "ubuntu", "debian":
+		installScript = `
+			apt-get update && \
+			DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver-535 nvidia-utils-535
+		`
+	case "fedora":
+		installScript = `
+			dnf install -y akmod-nvidia nvidia-driver
+		`
+	case "rhel", "centos", "rocky", "almalinux":
+		installScript = `
+			dnf install -y epel-release && \
+			dnf install -y akmod-nvidia nvidia-driver
+		`
+	case "amzn":
+		// Amazon Linux
+		installScript = `
+			yum install -y gcc kernel-devel-$(uname -r) && \
+			aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . && \
+			chmod +x NVIDIA-Linux-*.run && \
+			./NVIDIA-Linux-*.run --silent
+		`
+	default:
+		return fmt.Errorf("unsupported distribution: %s", distro)
+	}
+
+	logger.Info("Installing NVIDIA drivers", zap2.String("distro", distro))
+	output, err := r.CmdExec.Execute(installScript)
+	if err != nil {
+		return fmt.Errorf("driver installation failed: %w, output: %s", err, string(output))
+	}
+
+	logger.Info("NVIDIA drivers installed successfully")
+
+	// Load kernel modules
+	loadModulesScript := `
+		modprobe nvidia && \
+		modprobe nvidia-uvm && \
+		modprobe nvidia-modeset
+	`
+	if output, err := r.CmdExec.Execute(loadModulesScript); err != nil {
+		logger.Warn("Failed to load kernel modules (may require reboot)",
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+	} else {
+		logger.Info("NVIDIA kernel modules loaded successfully")
+	}
+
+	return nil
 }
 
 func (r *GPUStatusReconciler) detectGPU(logger *zap2.Logger) bool {
@@ -1165,7 +1260,7 @@ func main() {
 	gpuStatusReconciler := &GPUStatusReconciler{
 		Client:   mgr.GetClient(),
 		Logger:   zapLogger,
-		CmdExec:  &RealCommandExecutor{},
+		CmdExec:  &HostCommandExecutor{}, // Use HostCommandExecutor to run commands on host for GPU detection
 		NodeName: nodeName,
 	}
 
