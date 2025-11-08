@@ -99,7 +99,7 @@ export function CreateEnvironmentDialog({
         spec: {
           targetNamespace: targetNamespace,
           activated: false,
-          createdBy: currentUser,
+          ownedBy: currentUser,
         },
       }
 

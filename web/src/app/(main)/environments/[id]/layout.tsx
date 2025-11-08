@@ -48,9 +48,8 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   try {
     const env = await environmentService.getEnvironment(id)
 
-    // Use the createdBy field which contains the full email, then extract username
-    const ownerEmail = env.spec.createdBy || 'unknown'
-    const owner = ownerEmail.includes('@') ? ownerEmail.split('@')[0] : ownerEmail
+    // Use the ownedBy field which contains the username (User's metadata.name)
+    const owner = env.spec.ownedBy || 'unknown'
 
     environment = {
       id,

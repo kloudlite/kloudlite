@@ -27,7 +27,7 @@ export function WorkspacesList({
 
   // Apply scope filter (only for admins)
   if (isAdmin && scopeFilter === 'mine') {
-    filteredWorkspaces = filteredWorkspaces.filter((ws) => ws.spec.owner === currentUser)
+    filteredWorkspaces = filteredWorkspaces.filter((ws) => ws.spec.ownedBy === currentUser)
   }
 
   // Apply status filter
