@@ -55,6 +55,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: HOST_MANAGER_IMAGE
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.containers[0].image
           volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs
