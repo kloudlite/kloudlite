@@ -35,7 +35,7 @@ func handleStatus() error {
 	fmt.Printf("Workspace: %s\n", workspace.Spec.DisplayName)
 	fmt.Printf("Name: %s\n", workspace.Name)
 	fmt.Printf("Namespace: %s\n", workspace.Namespace)
-	fmt.Printf("Owner: %s\n", workspace.Spec.Owner)
+	fmt.Printf("Owner: %s\n", workspace.Spec.OwnedBy)
 	fmt.Printf("Phase: %s\n", workspace.Status.Phase)
 	fmt.Printf("Status: %s\n", workspace.Spec.Status)
 

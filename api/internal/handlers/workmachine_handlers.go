@@ -348,7 +348,7 @@ func (h *WorkMachineHandlers) ListAllWorkMachines(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Only admin users can list all machines
-	_, _, exists := middleware.GetUserFromContext(c)
+	_, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",
@@ -389,7 +389,7 @@ func (h *WorkMachineHandlers) GetWorkMachine(c *gin.Context) {
 	name := c.Param("name")
 
 	// Only admin users can get any machine
-	_, _, exists := middleware.GetUserFromContext(c)
+	_, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authenticated",

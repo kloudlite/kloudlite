@@ -102,7 +102,7 @@ func handleConfigGet(args []string) error {
 	fmt.Println("Workspace Configuration:")
 	fmt.Printf("  Display Name: %s\n", workspace.Spec.DisplayName)
 	fmt.Printf("  Description: %s\n", workspace.Spec.Description)
-	fmt.Printf("  Owner: %s\n", workspace.Spec.Owner)
+	fmt.Printf("  Owner: %s\n", workspace.Spec.OwnedBy)
 	fmt.Printf("  Storage Size: %s\n", workspace.Spec.StorageSize)
 	fmt.Printf("  Workspace Path: %s\n", workspace.Spec.WorkspacePath)
 	fmt.Printf("  VS Code Version: %s\n", workspace.Spec.VSCodeVersion)
@@ -159,7 +159,7 @@ func getConfigValue(workspace *workspacesv1.Workspace, key string) error {
 	case "description":
 		fmt.Println(workspace.Spec.Description)
 	case "owner":
-		fmt.Println(workspace.Spec.Owner)
+		fmt.Println(workspace.Spec.OwnedBy)
 	case "storage-size":
 		fmt.Println(workspace.Spec.StorageSize)
 	case "workspace-path":
