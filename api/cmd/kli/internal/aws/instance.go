@@ -265,7 +265,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: backup
-              image: amazon/aws-cli:latest
+              image: ghcr.io/kloudlite/kloudlite/k3s-backup:latest
               command:
                 - /bin/bash
                 - -c
