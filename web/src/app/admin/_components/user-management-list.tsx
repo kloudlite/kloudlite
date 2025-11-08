@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,9 @@ import {
   Loader2,
   UserCheck,
   UserX,
+  Check,
+  X,
+  AlertCircle,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -30,7 +33,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { createUser, updateUser, deleteUser, resetUserPassword } from '@/lib/actions/user-actions'
+import {
+  createUser,
+  updateUser,
+  deleteUser,
+  resetUserPassword,
+  generateUsernameFromEmail,
+  checkUsernameAvailability,
+} from '@/lib/actions/user-actions'
 import { UserDisplay, CreateUserFormData } from '@/types/user'
 import { toast } from 'sonner'
 
@@ -74,6 +84,18 @@ export function UserManagementList({
     roles: [],
   })
 
+  // Username validation state
+  const [usernameStatus, setUsernameStatus] = useState<{
+    checking: boolean
+    available: boolean | null
+    suggested: string | null
+  }>({
+    checking: false,
+    available: null,
+    suggested: null,
+  })
+  const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false)
+
   const resetForm = () => {
     setFormData({
       username: '',
@@ -85,6 +107,12 @@ export function UserManagementList({
     setHasAttemptedSubmit(false)
     setEditingUser(null)
     setIsAddUserOpen(false)
+    setUsernameStatus({
+      checking: false,
+      available: null,
+      suggested: null,
+    })
+    setUsernameManuallyEdited(false)
   }
 
   const resetDeleteDialog = () => {
@@ -95,6 +123,58 @@ export function UserManagementList({
     setResettingPasswordUser(null)
     setNewPassword('')
   }
+
+  // Auto-suggest username from email when email changes (only when creating new user)
+  useEffect(() => {
+    if (!editingUser && formData.email && !usernameManuallyEdited) {
+      const suggested = generateUsernameFromEmail(formData.email)
+      setFormData((prev) => ({ ...prev, username: suggested }))
+    }
+  }, [formData.email, editingUser, usernameManuallyEdited])
+
+  // Debounced username availability check
+  useEffect(() => {
+    if (editingUser || !formData.username || formData.username.length < 3) {
+      setUsernameStatus({ checking: false, available: null, suggested: null })
+      return
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setUsernameStatus((prev) => ({ ...prev, checking: true }))
+
+      const result = await checkUsernameAvailability(formData.username)
+
+      if (result.success) {
+        setUsernameStatus({
+          checking: false,
+          available: result.available ?? null,
+          suggested: result.suggested ?? null,
+        })
+      } else {
+        setUsernameStatus({
+          checking: false,
+          available: null,
+          suggested: null,
+        })
+      }
+    }, 500) // 500ms debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [formData.username, editingUser])
+
+  // Handler for username change
+  const handleUsernameChange = useCallback((value: string) => {
+    setFormData((prev) => ({ ...prev, username: value }))
+    setUsernameManuallyEdited(true)
+  }, [])
+
+  // Handler to use suggested username
+  const useSuggestedUsername = useCallback(() => {
+    if (usernameStatus.suggested) {
+      setFormData((prev) => ({ ...prev, username: usernameStatus.suggested! }))
+      setUsernameManuallyEdited(true)
+    }
+  }, [usernameStatus.suggested])
 
   const handleEditUser = (user: UserDisplay) => {
     // Clear any previous errors first
@@ -512,28 +592,58 @@ export function UserManagementList({
           <div className="space-y-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username *</Label>
-              <Input
-                id="username"
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData((prev) => ({ ...prev, username: e.target.value }))}
-                placeholder="Enter username (e.g., john-doe)"
-                required
-                disabled={!!editingUser}
-                className={editingUser ? 'bg-muted cursor-not-allowed' : ''}
-                pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
-                minLength={3}
-                maxLength={63}
-              />
+              <div className="relative">
+                <Input
+                  id="username"
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  placeholder="Enter username (e.g., john-doe)"
+                  required
+                  disabled={!!editingUser}
+                  className={editingUser ? 'bg-muted cursor-not-allowed pr-10' : 'pr-10'}
+                  pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+                  minLength={3}
+                  maxLength={63}
+                />
+                {!editingUser && formData.username.length >= 3 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {usernameStatus.checking && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {!usernameStatus.checking && usernameStatus.available === true && (
+                      <Check className="h-4 w-4 text-green-600" />
+                    )}
+                    {!usernameStatus.checking && usernameStatus.available === false && (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                  </div>
+                )}
+              </div>
               {editingUser && (
                 <p className="text-muted-foreground mt-1 text-sm">
                   Username cannot be changed after user creation
                 </p>
               )}
-              {!editingUser && (
+              {!editingUser && !usernameStatus.suggested && (
                 <p className="text-muted-foreground mt-1 text-sm">
                   Username is the resource name (3-63 chars, lowercase, numbers, hyphens only)
                 </p>
+              )}
+              {!editingUser && usernameStatus.available === false && usernameStatus.suggested && (
+                <div className="flex items-center gap-2 mt-1">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <p className="text-sm text-muted-foreground">
+                    Username is taken.{' '}
+                    <button
+                      type="button"
+                      onClick={useSuggestedUsername}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Use suggested: {usernameStatus.suggested}
+                    </button>
+                  </p>
+                </div>
               )}
             </div>
             <div className="space-y-2">
