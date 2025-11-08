@@ -18,6 +18,7 @@ spec:
   restartPolicy: Never
   serviceAccountName: workmachine-node-manager
   nodeName: {{ $workmachineName }}
+  hostPID: true
   dnsConfig:
     searches:
       - {{ .TargetNamespace }}.svc.cluster.local
