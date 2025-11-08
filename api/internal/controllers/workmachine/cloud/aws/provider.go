@@ -31,27 +31,27 @@ type Tag struct {
 	Value string
 }
 
-// deepLearningAMIs contains the latest Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04) for each region
-// These AMIs come with NVIDIA drivers and container toolkit pre-installed
+// deepLearningAMIs contains Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.8 (Ubuntu 24.04) for each region
+// These AMIs come with NVIDIA drivers, PyTorch 2.8, and container toolkit pre-installed
 // Last updated: 2025-11-04
 var deepLearningAMIs = map[string]string{
-	"us-east-1":      "ami-0601999f27e2188a7",
-	"us-east-2":      "ami-0ed1c23f0bcb40927",
-	"us-west-1":      "ami-0146926033426fbcd",
-	"us-west-2":      "ami-0dcded48d19e200d5",
-	"ca-central-1":   "ami-0d589d373f3feb7fd",
-	"eu-west-1":      "ami-0e2e7dea1f94b3d42",
-	"eu-west-2":      "ami-00579f639c988cd3d",
-	"eu-west-3":      "ami-03c8212ad315d7047",
-	"eu-central-1":   "ami-08d64cbc80d3437f1",
-	"eu-north-1":     "ami-0591f0523dab0e67d",
-	"ap-south-1":     "ami-01bcd4fac4567fce5",
-	"ap-southeast-1": "ami-0aaa45f8660cd207e",
-	"ap-southeast-2": "ami-06132721fbac603ce",
-	"ap-northeast-1": "ami-0118d2ff5d5b40720",
-	"ap-northeast-2": "ami-046092bf277148a89",
-	"ap-northeast-3": "ami-02747df5ee02ec5b3",
-	"sa-east-1":      "ami-00d4a6a9b043e6ece",
+	"us-east-1":      "ami-05b1f2b5642f2ad75",
+	"us-east-2":      "ami-0043b6c2df08481c0",
+	"us-west-1":      "ami-06e437dd842c4028d",
+	"us-west-2":      "ami-0a21f659fc5b1d390",
+	"ca-central-1":   "ami-0c59aef3e36b835b9",
+	"eu-west-1":      "ami-04576f210788f9b43",
+	"eu-west-2":      "ami-07fc210e342568870",
+	"eu-west-3":      "ami-073bf652ac0b20481",
+	"eu-central-1":   "ami-092e1514db2e72ede",
+	"eu-north-1":     "ami-015893c04d94bd104",
+	"ap-south-1":     "ami-080b4e8311df57073",
+	"ap-southeast-1": "ami-0a31575d4e4c61653",
+	"ap-southeast-2": "ami-0ff27c98bfbca8e48",
+	"ap-northeast-1": "ami-0cf91930fcafd6afb",
+	"ap-northeast-2": "ami-07cfba2a1601b3d6e",
+	"ap-northeast-3": "ami-048e1fa1e995f5588",
+	"sa-east-1":      "ami-0d07bb5a890c6d991",
 }
 
 type ProviderArgs struct {
