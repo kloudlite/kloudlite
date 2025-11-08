@@ -952,7 +952,7 @@ type GPUInfo struct {
 // Note: The Deep Learning AMI comes with drivers and container runtime pre-installed
 func (r *GPUStatusReconciler) ensureNVIDIASetup(logger *zap2.Logger) error {
 	// Check if nvidia-smi is available (should be pre-installed in Deep Learning AMI)
-	// Use full path since nsenter may not inherit full PATH
+	// Use full path since nsenter may not inherit full PATH from the host
 	checkScript := "/usr/bin/nvidia-smi > /dev/null 2>&1"
 	if _, err := r.CmdExec.Execute(checkScript); err != nil {
 		logger.Info("NVIDIA drivers not available (nvidia-smi failed)")
