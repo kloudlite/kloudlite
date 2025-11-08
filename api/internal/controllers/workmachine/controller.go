@@ -29,6 +29,8 @@ type Env struct {
 	K3sAgentToken string `env:"K3S_AGENT_TOKEN" required:"true"`
 
 	CloudProvider v1.CloudProvider `env:"CLOUD_PROVIDER" required:"true"`
+
+	HostManagerImage string `env:"HOST_MANAGER_IMAGE" required:"true"`
 }
 
 type awsProviderEnv struct {

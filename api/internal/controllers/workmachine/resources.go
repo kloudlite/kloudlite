@@ -71,10 +71,11 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 	// Render pod from template
 	b, err := templates.WorkMachineHostManagerPod.Render(
 		templates.WorkspaceHostManagerValues{
-			Namespace:       namespace,
-			WorkMachineName: obj.Name,
-			TargetNamespace: obj.Spec.TargetNamespace,
-			SSHUsername:     SSHUserName,
+			Namespace:        namespace,
+			WorkMachineName:  obj.Name,
+			TargetNamespace:  obj.Spec.TargetNamespace,
+			SSHUsername:      SSHUserName,
+			HostManagerImage: r.env.HostManagerImage,
 		},
 	)
 	if err != nil {
