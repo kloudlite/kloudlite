@@ -83,6 +83,7 @@ spec:
     - name: workmachine-node-manager
       image: {{ .HostManagerImage }}
       imagePullPolicy: Always
+      command: ["/usr/local/bin/workmachine-node-manager"]
       securityContext:
         privileged: true
       env:
