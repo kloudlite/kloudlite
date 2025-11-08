@@ -278,7 +278,7 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		clusterRoleBinding.Subjects = []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      "workspace-user",
+				Name:      fmt.Sprintf("workspace-%s", workspaceName),
 				Namespace: namespace,
 			},
 		}
