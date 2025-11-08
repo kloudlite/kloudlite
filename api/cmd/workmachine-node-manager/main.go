@@ -920,17 +920,29 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 }
 
 func (r *GPUStatusReconciler) detectGPU(logger *zap2.Logger) bool {
-	// Check if lspci is available
-	checkCmd := "command -v lspci > /dev/null 2>&1"
-	if _, err := r.CmdExec.Execute(checkCmd); err != nil {
-		logger.Debug("lspci not available")
+	// Check for NVIDIA GPU by reading /host/sys/bus/pci/devices directly
+	// This approach doesn't require lspci to be installed
+	checkScript := `
+		if [ -d /host/sys/bus/pci/devices ]; then
+			for device in /host/sys/bus/pci/devices/*; do
+				if [ -f "$device/vendor" ] && [ -f "$device/device" ]; then
+					vendor=$(cat "$device/vendor" 2>/dev/null)
+					# 0x10de is NVIDIA's PCI vendor ID
+					if [ "$vendor" = "0x10de" ]; then
+						exit 0
+					fi
+				fi
+			done
+		fi
+		exit 1
+	`
+	_, err := r.CmdExec.Execute(checkScript)
+	if err != nil {
+		logger.Debug("No NVIDIA GPU detected in /host/sys/bus/pci/devices")
 		return false
 	}
-
-	// Check for NVIDIA GPU using lspci
-	detectScript := "lspci | grep -i nvidia > /dev/null 2>&1"
-	_, err := r.CmdExec.Execute(detectScript)
-	return err == nil
+	logger.Info("NVIDIA GPU detected via PCI device scan")
+	return true
 }
 
 func (r *GPUStatusReconciler) getGPUInfo(logger *zap2.Logger) (*GPUInfo, error) {
