@@ -159,6 +159,29 @@ const (
 	MachineStateDisabled MachineState = "disabled"
 )
 
+// GPUInfo contains detailed information about GPU hardware
+type GPUInfo struct {
+	// HasGPU indicates whether GPU hardware is available
+	// +optional
+	HasGPU bool `json:"hasGPU,omitempty"`
+
+	// Count is the number of GPUs
+	// +optional
+	Count int `json:"count,omitempty"`
+
+	// Product is the GPU product name (e.g., "tesla-t4")
+	// +optional
+	Product string `json:"product,omitempty"`
+
+	// DriverVersion is the NVIDIA driver version
+	// +optional
+	DriverVersion string `json:"driverVersion,omitempty"`
+
+	// RuntimeConfigured indicates whether NVIDIA Container Runtime is configured
+	// +optional
+	RuntimeConfigured bool `json:"runtimeConfigured,omitempty"`
+}
+
 // WorkMachineStatus defines the observed state of WorkMachine
 type WorkMachineStatus struct {
 	reconciler.Status `json:",inline"`
@@ -184,6 +207,10 @@ type WorkMachineStatus struct {
 	// Resources actually allocated to the machine
 	// +optional
 	AllocatedResources *MachineResources `json:"allocatedResources,omitempty"`
+
+	// GPU contains detailed GPU information if hardware is present
+	// +optional
+	GPU *GPUInfo `json:"gpu,omitempty"`
 
 	// SSHPublicKey is the WorkMachine's public SSH key for all workspaces
 	// This key is shared across all workspaces in the WorkMachine

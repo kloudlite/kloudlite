@@ -30,6 +30,103 @@ log "Disabling swap and preparing system..."
 swapoff -a || true
 sed -i '/ swap / s/^/#/' /etc/fstab || true
 
+# --- GPU Detection and Setup ---
+function setup_gpu_runtime() {
+  log "=== Starting GPU Detection and Setup ==="
+
+  # Check if lspci is available
+  if ! command -v lspci &> /dev/null; then
+    log "Installing pciutils for GPU detection..."
+    apt-get update -qq
+    apt-get install -y pciutils
+  fi
+
+  # Check if NVIDIA GPU is present
+  log "Checking for NVIDIA GPU hardware..."
+  if ! lspci | grep -i nvidia > /dev/null 2>&1; then
+    log "No NVIDIA GPU detected, skipping GPU setup"
+    return 0
+  fi
+
+  log "✓ NVIDIA GPU detected!"
+  lspci | grep -i nvidia
+
+  # Check if drivers were already installed in a previous run
+  local drivers_flag="/var/lib/kloudlite/gpu-drivers-installed"
+  local need_reboot=false
+
+  # Check if NVIDIA drivers are installed and working
+  log "Checking for NVIDIA drivers..."
+  if ! nvidia-smi > /dev/null 2>&1; then
+    # Check if drivers were just installed but need reboot
+    if [ -f "$drivers_flag" ]; then
+      log "Drivers were installed but need reboot to load kernel modules"
+      need_reboot=true
+    else
+      log "Installing NVIDIA drivers..."
+      apt-get update
+      apt-get install -y ubuntu-drivers-common
+      ubuntu-drivers autoinstall
+
+      # Create flag file and mark for reboot
+      mkdir -p /var/lib/kloudlite
+      touch "$drivers_flag"
+      need_reboot=true
+      log "✓ NVIDIA drivers installed"
+    fi
+
+    if [ "$need_reboot" = true ]; then
+      log "System will reboot in 10 seconds to activate NVIDIA drivers..."
+      shutdown -r +1 "Rebooting to load NVIDIA drivers"
+      return 0
+    fi
+  else
+    log "✓ NVIDIA drivers already installed and working"
+    nvidia-smi --query-gpu=driver_version,name --format=csv,noheader
+  fi
+
+  # Check if NVIDIA Container Toolkit is installed
+  log "Checking for NVIDIA Container Toolkit..."
+  if ! command -v nvidia-container-cli &> /dev/null; then
+    log "Installing NVIDIA Container Toolkit..."
+
+    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+    curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+    curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
+      sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+      tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+    apt-get update
+    apt-get install -y nvidia-container-toolkit
+
+    log "✓ NVIDIA Container Toolkit installed"
+  else
+    log "✓ NVIDIA Container Toolkit already installed"
+  fi
+
+  nvidia-container-cli --version
+
+  # Configure containerd for NVIDIA runtime
+  log "Configuring K3s containerd for NVIDIA runtime..."
+  mkdir -p /var/lib/rancher/k3s/agent/etc/containerd
+  cat > /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl << 'EOF'
+[plugins."io.containerd.grpc.v1.cri".containerd]
+  default_runtime_name = "nvidia"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
+  runtime_type = "io.containerd.runc.v2"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
+  BinaryName = "/usr/bin/nvidia-container-runtime"
+EOF
+
+  log "✓ Containerd configured for NVIDIA runtime"
+  log "=== GPU Setup Complete ==="
+}
+
+# Run GPU setup before K3s installation
+setup_gpu_runtime
+
 log "Starting K3s agent setup..."
 
 export K3S_VERSION={{.K3sVersion}}
