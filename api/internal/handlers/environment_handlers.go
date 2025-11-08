@@ -95,10 +95,14 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		return
 	}
 
+	// Prefix environment name with username to avoid conflicts
+	// Format: {username}--{envname}
+	envName := fmt.Sprintf("%s--%s", username, req.Name)
+
 	// Create Environment object with ownership
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: req.Name,
+			Name: envName,
 		},
 		Spec: req.Spec,
 	}
