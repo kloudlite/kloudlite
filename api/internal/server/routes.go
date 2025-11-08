@@ -136,6 +136,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			users := protected.Group("/users")
 			{
 				users.POST("", userHandlers.CreateUser)
+				users.POST("/check-username", userHandlers.CheckUsernameAvailability)
 				users.GET("/by-email", userHandlers.GetUserByEmail)
 				users.GET("/:name", userHandlers.GetUser)
 				users.PUT("/:name", userHandlers.UpdateUser)

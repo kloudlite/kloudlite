@@ -578,3 +578,60 @@ func getNamespace(c *gin.Context) string {
 	// Default namespace
 	return "default"
 }
+
+// CheckUsernameRequest represents a request to check username availability
+type CheckUsernameRequest struct {
+	Username string `json:"username" binding:"required"`
+}
+
+// CheckUsernameResponse represents the response for username availability check
+type CheckUsernameResponse struct {
+	Available bool   `json:"available"`
+	Suggested string `json:"suggested,omitempty"` // Suggested username if not available
+}
+
+// CheckUsernameAvailability checks if a username is available
+func (h *UserHandlers) CheckUsernameAvailability(c *gin.Context) {
+	var req CheckUsernameRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request payload",
+		})
+		return
+	}
+
+	// Validate username format
+	if !repository.IsValidK8sName(req.Username) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid username format. Must be 3-63 characters, lowercase alphanumeric with hyphens, starting and ending with alphanumeric character",
+		})
+		return
+	}
+
+	// Check if user exists
+	existingUser, err := h.userService.GetUserByName(c.Request.Context(), req.Username)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		h.logger.Error("Failed to check username availability",
+			zap.String("username", req.Username),
+			zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to check username availability",
+		})
+		return
+	}
+
+	if existingUser != nil {
+		// Username is taken, suggest an alternative
+		suggested := repository.GenerateUsernameWithSuffix(req.Username)
+		c.JSON(http.StatusOK, CheckUsernameResponse{
+			Available: false,
+			Suggested: suggested,
+		})
+		return
+	}
+
+	// Username is available
+	c.JSON(http.StatusOK, CheckUsernameResponse{
+		Available: true,
+	})
+}
