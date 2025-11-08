@@ -7,9 +7,10 @@ on:
       - development
     paths:
       - 'api/cmd/server/**'
+      - 'api/cmd/workmachine-node-manager/**'
       - 'api/internal/**'
       - 'api/pkg/**'
-      - 'api/Dockerfile'
+      - 'api/Dockerfile.workmachine-node-manager'
       - 'api/go.mod'
       - 'api/go.sum'
       - '.github/workflows/build-api-server.yml'
@@ -19,9 +20,10 @@ on:
       - development
     paths:
       - 'api/cmd/server/**'
+      - 'api/cmd/workmachine-node-manager/**'
       - 'api/internal/**'
       - 'api/pkg/**'
-      - 'api/Dockerfile'
+      - 'api/Dockerfile.workmachine-node-manager'
       - 'api/go.mod'
       - 'api/go.sum'
   workflow_dispatch:
@@ -52,12 +54,13 @@ jobs:
           go-version: '1.24'
           cache-dependency-path: api/go.sum
 
-      - name: Build Go binary
+      - name: Build Go binaries
         run: |
           cd api
           mkdir -p bin
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/api-server ./cmd/server
-          ls -lh ./bin/api-server
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/workmachine-node-manager ./cmd/workmachine-node-manager
+          ls -lh ./bin/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -90,7 +93,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./api
-          file: ./api/Dockerfile
+          file: ./api/Dockerfile.workmachine-node-manager
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -108,9 +111,13 @@ jobs:
         run: |
           echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Component**: API Server" >> $GITHUB_STEP_SUMMARY
+          echo "- **Component**: API Server + Workmachine Node Manager (unified image)" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Binaries included:**" >> $GITHUB_STEP_SUMMARY
+          echo "- /usr/local/bin/api-server" >> $GITHUB_STEP_SUMMARY
+          echo "- /usr/local/bin/workmachine-node-manager" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Docker Tags:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

@@ -1,4 +1,5 @@
-# CI Dockerfile - expects pre-built binary at ./bin/workmachine-node-manager
+# Multi-binary CI Dockerfile - expects pre-built binaries at ./bin/
+# This image contains both api-server and workmachine-node-manager
 FROM debian:bookworm-slim
 
 # Install dependencies including nix with apt cache mount
@@ -27,8 +28,8 @@ RUN --mount=type=cache,target=/tmp/nix-install-cache \
 # Source nix profile
 ENV PATH="/root/.nix-profile/bin:${PATH}"
 
-# Copy the pre-built binary from local filesystem
+# Copy both pre-built binaries from local filesystem
+COPY ./bin/api-server /usr/local/bin/api-server
 COPY ./bin/workmachine-node-manager /usr/local/bin/workmachine-node-manager
 
-# Run workmachine-node-manager
-CMD ["/usr/local/bin/workmachine-node-manager"]
+# No CMD - command will be specified in pod spec at runtime
