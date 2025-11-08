@@ -948,38 +948,17 @@ type GPUInfo struct {
 	DriverVersion string
 }
 
-// ensureNVIDIASetup checks if NVIDIA drivers are available and ensures container runtime is configured
-// Note: Driver installation is handled by cloud-init script, not here
+// ensureNVIDIASetup checks if NVIDIA drivers are available
+// Note: The Deep Learning AMI comes with drivers and container runtime pre-installed
 func (r *GPUStatusReconciler) ensureNVIDIASetup(logger *zap2.Logger) error {
-	// Check if nvidia-smi is available (drivers should be installed by cloud-init)
+	// Check if nvidia-smi is available (should be pre-installed in Deep Learning AMI)
 	checkScript := "nvidia-smi > /dev/null 2>&1"
 	if _, err := r.CmdExec.Execute(checkScript); err != nil {
-		logger.Info("NVIDIA drivers not available (nvidia-smi failed) - drivers should be installed by cloud-init script")
-		return fmt.Errorf("nvidia-smi not available - waiting for cloud-init to install drivers")
+		logger.Info("NVIDIA drivers not available (nvidia-smi failed)")
+		return fmt.Errorf("nvidia-smi not available")
 	}
 
-	logger.Info("NVIDIA drivers are available and working")
-
-	// Ensure NVIDIA container runtime is configured
-	// This allows K3s/containerd to use NVIDIA GPUs in containers
-	logger.Info("Ensuring NVIDIA container runtime is configured...")
-
-	// Check if nvidia-container-runtime is available
-	runtimeCheckScript := "which nvidia-container-runtime > /dev/null 2>&1"
-	if _, err := r.CmdExec.Execute(runtimeCheckScript); err != nil {
-		logger.Warn("nvidia-container-runtime not found - should be installed by cloud-init")
-		return fmt.Errorf("nvidia-container-runtime not available")
-	}
-
-	// Verify K3s containerd config has NVIDIA runtime configured
-	// The cloud-init script should have created this, just verify it exists
-	configCheckScript := "test -f /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
-	if _, err := r.CmdExec.Execute(configCheckScript); err != nil {
-		logger.Warn("K3s containerd NVIDIA config not found - should be created by cloud-init")
-		return fmt.Errorf("containerd nvidia config missing")
-	}
-
-	logger.Info("✓ NVIDIA container runtime is configured")
+	logger.Info("✓ NVIDIA drivers are available and working")
 	return nil
 }
 
