@@ -38,9 +38,9 @@ import {
   updateUser,
   deleteUser,
   resetUserPassword,
-  generateUsernameFromEmail,
   checkUsernameAvailability,
 } from '@/lib/actions/user-actions'
+import { generateUsernameFromEmail } from '@/lib/utils/username'
 import { UserDisplay, CreateUserFormData } from '@/types/user'
 import { toast } from 'sonner'
 
