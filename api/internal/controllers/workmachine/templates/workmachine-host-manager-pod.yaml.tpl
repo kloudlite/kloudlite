@@ -23,7 +23,7 @@ spec:
       - {{ .TargetNamespace }}.svc.cluster.local
   initContainers:
     - name: setup-nix
-      image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
+      image: {{ .HostManagerImage }}
       imagePullPolicy: Always
       securityContext:
         privileged: true
@@ -81,7 +81,7 @@ spec:
 
   containers:
     - name: workmachine-node-manager
-      image: ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development
+      image: {{ .HostManagerImage }}
       imagePullPolicy: Always
       securityContext:
         privileged: true
