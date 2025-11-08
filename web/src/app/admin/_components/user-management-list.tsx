@@ -591,6 +591,33 @@ export function UserManagementList({
           )}
           <div className="space-y-6 py-4">
             <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                value={formData.displayName || ''}
+                onChange={(e) => setFormData((prev) => ({ ...prev, displayName: e.target.value }))}
+                placeholder="Enter display name (optional)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                placeholder="Enter email address"
+                required
+                disabled={!!editingUser}
+                className={editingUser ? 'bg-muted cursor-not-allowed' : ''}
+              />
+              {editingUser && (
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Email cannot be changed after user creation
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="username">Username *</Label>
               <div className="relative">
                 <Input
@@ -645,33 +672,6 @@ export function UserManagementList({
                   </p>
                 </div>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                placeholder="Enter email address"
-                required
-                disabled={!!editingUser}
-                className={editingUser ? 'bg-muted cursor-not-allowed' : ''}
-              />
-              {editingUser && (
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Email cannot be changed after user creation
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
-              <Input
-                id="displayName"
-                value={formData.displayName || ''}
-                onChange={(e) => setFormData((prev) => ({ ...prev, displayName: e.target.value }))}
-                placeholder="Enter display name (optional)"
-              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="roles">Roles *</Label>
