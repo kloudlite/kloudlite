@@ -31,58 +31,122 @@ swapoff -a || true
 sed -i '/ swap / s/^/#/' /etc/fstab || true
 
 # --- GPU Detection and Setup ---
+# This function is idempotent and safe to run on every boot
+# It detects GPU hardware and configures the container runtime accordingly
 function setup_gpu_runtime() {
-  log "=== Starting GPU Detection and Setup ==="
+  log "=== Starting GPU Detection and Setup (idempotent) ==="
 
   # Check if lspci is available
   if ! command -v lspci &> /dev/null; then
     log "Installing pciutils for GPU detection..."
     apt-get update -qq
-    apt-get install -y pciutils
+    apt-get install -y pciutils curl gpg
   fi
 
   # Check if NVIDIA GPU is present
   log "Checking for NVIDIA GPU hardware..."
   if ! lspci | grep -i nvidia > /dev/null 2>&1; then
-    log "No NVIDIA GPU detected, skipping GPU setup"
+    log "No NVIDIA GPU detected"
+
+    # Disable NVIDIA runtime if it was previously configured
+    if [ -f /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl ]; then
+      log "Removing NVIDIA runtime configuration (no GPU present)"
+      rm -f /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl
+
+      # Restart K3s if it's running to apply config changes
+      if systemctl is-active --quiet k3s-agent; then
+        log "Restarting K3s agent to apply runtime changes..."
+        systemctl restart k3s-agent || true
+      fi
+    fi
+
     return 0
   fi
 
   log "✓ NVIDIA GPU detected!"
   lspci | grep -i nvidia
 
-  # Check if drivers were already installed in a previous run
-  local drivers_flag="/var/lib/kloudlite/gpu-drivers-installed"
-  local need_reboot=false
-
-  # Check if NVIDIA drivers are installed and working
-  log "Checking for NVIDIA drivers..."
-  if ! nvidia-smi > /dev/null 2>&1; then
-    # Check if drivers were just installed but need reboot
-    if [ -f "$drivers_flag" ]; then
-      log "Drivers were installed but need reboot to load kernel modules"
-      need_reboot=true
-    else
-      log "Installing NVIDIA drivers..."
-      apt-get update
-      apt-get install -y ubuntu-drivers-common
-      ubuntu-drivers autoinstall
-
-      # Create flag file and mark for reboot
-      mkdir -p /var/lib/kloudlite
-      touch "$drivers_flag"
-      need_reboot=true
-      log "✓ NVIDIA drivers installed"
-    fi
-
-    if [ "$need_reboot" = true ]; then
-      log "System will reboot in 10 seconds to activate NVIDIA drivers..."
-      shutdown -r +1 "Rebooting to load NVIDIA drivers"
-      return 0
-    fi
-  else
+  # Check if nvidia-smi is working (drivers installed and loaded)
+  log "Checking NVIDIA drivers status..."
+  if nvidia-smi > /dev/null 2>&1; then
     log "✓ NVIDIA drivers already installed and working"
     nvidia-smi --query-gpu=driver_version,name --format=csv,noheader
+  else
+    log "NVIDIA drivers not working, checking installation status..."
+
+    # Check if drivers are installed but modules not loaded
+    if dpkg -l | grep -q "cuda-toolkit\|nvidia-driver"; then
+      log "Drivers installed but modules not loaded, attempting to load..."
+
+      # Try loading kernel modules
+      if modprobe nvidia 2>/dev/null && \
+         modprobe nvidia-uvm 2>/dev/null && \
+         modprobe nvidia-modeset 2>/dev/null; then
+        log "✓ Kernel modules loaded successfully"
+      else
+        log "ERROR: Failed to load kernel modules, reboot required"
+        log "Rebooting system in 60 seconds to load NVIDIA drivers..."
+        shutdown -r +1 "Rebooting to load NVIDIA drivers"
+        return 0
+      fi
+    else
+      # Drivers not installed, install them using NVIDIA CUDA toolkit
+      log "Installing NVIDIA CUDA toolkit and drivers..."
+
+      # Install prerequisites
+      apt-get update
+      DEBIAN_FRONTEND=noninteractive apt-get install -y wget software-properties-common gnupg2
+
+      # Detect distribution for CUDA repo
+      distribution=$(. /etc/os-release; echo $ID$VERSION_ID | sed 's/\.//g')
+      log "Detected distribution: $distribution"
+
+      # Register NVIDIA CUDA repository if not already registered
+      if [ ! -f /etc/apt/sources.list.d/cuda-${distribution}-x86_64.list ]; then
+        log "Registering NVIDIA CUDA repository..."
+        wget -q https://developer.download.nvidia.com/compute/cuda/repos/${distribution}/x86_64/cuda-keyring_1.1-1_all.deb
+        dpkg -i cuda-keyring_1.1-1_all.deb
+        rm -f cuda-keyring_1.1-1_all.deb
+        apt-get update
+      fi
+
+      # Install CUDA toolkit (includes drivers)
+      log "Installing CUDA toolkit..."
+      DEBIAN_FRONTEND=noninteractive apt-get install -y cuda-toolkit
+
+      # Install driver (try open source first, fallback to proprietary)
+      log "Installing NVIDIA driver..."
+      DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-open || \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver
+
+      # Install optional components
+      DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-gds 2>/dev/null || true
+      DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-fabricmanager 2>/dev/null || true
+
+      # Enable services
+      systemctl enable nvidia-fabricmanager 2>/dev/null || true
+      systemctl enable nvidia-persistenced 2>/dev/null || true
+
+      log "✓ NVIDIA drivers installed"
+
+      # Try loading kernel modules (may require reboot)
+      if modprobe nvidia 2>/dev/null && \
+         modprobe nvidia-uvm 2>/dev/null && \
+         modprobe nvidia-modeset 2>/dev/null; then
+        log "✓ Kernel modules loaded successfully"
+      else
+        log "Failed to load kernel modules, reboot required"
+        log "Rebooting system in 60 seconds to load NVIDIA drivers..."
+        shutdown -r +1 "Rebooting to load NVIDIA drivers"
+        return 0
+      fi
+    fi
+  fi
+
+  # At this point, nvidia-smi should be working
+  if ! nvidia-smi > /dev/null 2>&1; then
+    log "ERROR: NVIDIA drivers not working after installation"
+    return 1
   fi
 
   # Check if NVIDIA Container Toolkit is installed
@@ -97,7 +161,7 @@ function setup_gpu_runtime() {
       tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
     apt-get update
-    apt-get install -y nvidia-container-toolkit
+    DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-container-toolkit
 
     log "✓ NVIDIA Container Toolkit installed"
   else
