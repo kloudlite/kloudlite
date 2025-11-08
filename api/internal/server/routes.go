@@ -238,12 +238,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.GET("/:name/metrics", workspaceHandlers.GetMetrics)
 			}
 
-			// Node metrics routes
-			nodes := protected.Group("/nodes")
-			{
-				nodes.GET("/:nodeName/metrics", workspaceHandlers.GetNodeMetrics)
-			}
-
 			// Composition routes (namespaced)
 			compositions := protected.Group("/namespaces/:namespace/compositions")
 			{
