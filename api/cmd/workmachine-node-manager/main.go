@@ -863,6 +863,13 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		if strings.Contains(driverInstallErr.Error(), "require reboot") {
 			node.Labels["nvidia.com/gpu.driver-status"] = "awaiting-reboot"
 			node.Labels["nvidia.com/gpu.driver-message"] = "Reboot-required-to-load-drivers"
+
+			// Add annotation to request reboot - WorkMachine controller will handle this
+			if node.Annotations == nil {
+				node.Annotations = make(map[string]string)
+			}
+			node.Annotations["kloudlite.io/workmachine-reboot-requested"] = "true"
+			logger.Info("Added reboot request annotation to node")
 		} else {
 			node.Labels["nvidia.com/gpu.driver-status"] = "error"
 			node.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(driverInstallErr.Error(), 63)
@@ -977,14 +984,9 @@ func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) 
 			zap2.Error(err),
 			zap2.String("output", string(output)))
 
-		// Trigger system reboot to load the driver
-		logger.Info("Triggering system reboot to load NVIDIA drivers")
-		rebootScript := "shutdown -r +1 'Rebooting to load NVIDIA drivers'"
-		if _, rebootErr := r.CmdExec.Execute(rebootScript); rebootErr != nil {
-			logger.Error("Failed to trigger reboot", zap2.Error(rebootErr))
-			return fmt.Errorf("kernel modules failed to load and reboot trigger failed: %w", rebootErr)
-		}
-		logger.Info("System will reboot in 1 minute to load NVIDIA drivers")
+		// Mark node for reboot by setting annotation
+		// The WorkMachine controller will handle the actual reboot
+		logger.Info("Marking node for reboot to load NVIDIA drivers")
 		return fmt.Errorf("nvidia drivers installed but require reboot to load kernel modules")
 	}
 
