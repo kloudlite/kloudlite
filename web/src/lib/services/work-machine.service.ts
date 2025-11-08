@@ -12,7 +12,9 @@ export class WorkMachineService {
       return await apiClient.get<WorkMachine>(`${this.baseUrl}/my`)
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error')
-      if (error.message?.includes('404')) {
+      // Handle common "not found" scenarios
+      if (error.message?.includes('404') ||
+          error.message?.includes('No work machine found')) {
         return null
       }
       throw error

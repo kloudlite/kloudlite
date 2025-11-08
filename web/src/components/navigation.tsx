@@ -23,6 +23,7 @@ interface NavigationProps {
   isSuperAdmin?: boolean
   isAdmin?: boolean
   userRoles?: string[]
+  hasWorkMachine?: boolean
 }
 
 export function Navigation({
@@ -31,13 +32,14 @@ export function Navigation({
   isSuperAdmin,
   isAdmin,
   userRoles: _userRoles = [],
+  hasWorkMachine = false,
 }: NavigationProps) {
   const pathname = usePathname()
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/environments', label: 'Environments', icon: Cloud },
-    { href: '/workspaces', label: 'Workspaces', icon: Monitor },
+    { href: '/environments', label: 'Environments', icon: Cloud, requiresWorkMachine: true },
+    { href: '/workspaces', label: 'Workspaces', icon: Monitor, requiresWorkMachine: true },
     { href: '#', label: 'Artifacts', icon: Package, comingSoon: true },
   ]
 
@@ -56,6 +58,7 @@ export function Navigation({
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 const Icon = item.icon
                 const isComingSoon = item.comingSoon || false
+                const isDisabled = (item.requiresWorkMachine && !hasWorkMachine) || isComingSoon
 
                 const content = (
                   <>
@@ -69,7 +72,7 @@ export function Navigation({
                   </>
                 )
 
-                if (isComingSoon) {
+                if (isDisabled) {
                   return (
                     <div
                       key={item.label}
