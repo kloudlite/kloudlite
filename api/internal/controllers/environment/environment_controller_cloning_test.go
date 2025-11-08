@@ -24,7 +24,7 @@ func TestEnvironmentReconciler_HandleCloning_Success(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "source-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Activated:       true,
 		},
 	}
@@ -37,7 +37,7 @@ func TestEnvironmentReconciler_HandleCloning_Success(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "target-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			CloneFrom:       "source-env",
 			Activated:       false,
 		},
@@ -142,7 +142,7 @@ func TestEnvironmentReconciler_HandleCloning_SourceNotFound(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "target-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			CloneFrom:       "nonexistent-env",
 			Activated:       false,
 		},

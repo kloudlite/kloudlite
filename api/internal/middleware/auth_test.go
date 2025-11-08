@@ -128,8 +128,9 @@ func TestJWTMiddleware(t *testing.T) {
 		router := gin.New()
 		router.Use(middleware)
 		router.GET("/test", func(c *gin.Context) {
-			email, roles, exists := GetUserFromContext(c)
+			username, email, roles, exists := GetUserFromContext(c)
 			assert.True(t, exists)
+			assert.NotEmpty(t, username)
 			assert.Equal(t, "test@example.com", email)
 			assert.Equal(t, []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}, roles)
 			c.JSON(200, gin.H{"message": "success"})
@@ -170,11 +171,13 @@ func TestGetUserFromContext(t *testing.T) {
 	t.Run("should return user data when present", func(t *testing.T) {
 		router := gin.New()
 		router.GET("/test", func(c *gin.Context) {
+			c.Set("user_username", "testuser")
 			c.Set("user_email", "test@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 
-			email, roles, exists := GetUserFromContext(c)
+			username, email, roles, exists := GetUserFromContext(c)
 			assert.True(t, exists)
+			assert.Equal(t, "testuser", username)
 			assert.Equal(t, "test@example.com", email)
 			assert.Equal(t, []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin}, roles)
 			c.JSON(200, gin.H{"ok": true})
@@ -190,8 +193,9 @@ func TestGetUserFromContext(t *testing.T) {
 	t.Run("should return false when user data not present", func(t *testing.T) {
 		router := gin.New()
 		router.GET("/test", func(c *gin.Context) {
-			email, roles, exists := GetUserFromContext(c)
+			username, email, roles, exists := GetUserFromContext(c)
 			assert.False(t, exists)
+			assert.Empty(t, username)
 			assert.Empty(t, email)
 			assert.Nil(t, roles)
 			c.JSON(200, gin.H{"ok": true})

@@ -121,7 +121,7 @@ func TestLogin(t *testing.T) {
 					},
 				}, nil
 			},
-			generateTokenFunc: func(ctx context.Context, email string, roles []platformv1alpha1.RoleType) (string, error) {
+			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
 				return "test-jwt-token", nil
 			},
 		}
@@ -231,7 +231,7 @@ func TestLogin(t *testing.T) {
 					},
 				}, nil
 			},
-			generateTokenFunc: func(ctx context.Context, email string, roles []platformv1alpha1.RoleType) (string, error) {
+			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
 				return "", errors.New("token generation failed")
 			},
 		}
@@ -267,7 +267,7 @@ func TestLogin(t *testing.T) {
 					},
 				}, nil
 			},
-			generateTokenFunc: func(ctx context.Context, email string, roles []platformv1alpha1.RoleType) (string, error) {
+			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
 				return "test-jwt-token", nil
 			},
 		}
@@ -304,7 +304,7 @@ func TestGenerateToken(t *testing.T) {
 
 	t.Run("should generate token for existing user", func(t *testing.T) {
 		authService := &mockAuthService{
-			generateTokenFunc: func(ctx context.Context, email string, roles []platformv1alpha1.RoleType) (string, error) {
+			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
 				return "oauth-jwt-token", nil
 			},
 		}
@@ -426,7 +426,7 @@ func TestGenerateToken(t *testing.T) {
 
 	t.Run("should handle token generation failure", func(t *testing.T) {
 		authService := &mockAuthService{
-			generateTokenFunc: func(ctx context.Context, email string, roles []platformv1alpha1.RoleType) (string, error) {
+			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
 				return "", errors.New("token generation failed")
 			},
 		}

@@ -21,7 +21,7 @@ func TestCompositionReconciler_GetEnvironmentForNamespace(t *testing.T) {
 		},
 		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Activated:       true,
 		},
 	}
@@ -233,7 +233,7 @@ func TestCompositionReconciler_EnvironmentActivationStateTracking(t *testing.T) 
 				},
 				Spec: compositionsv1.EnvironmentSpec{
 					TargetNamespace: "test-namespace",
-					CreatedBy:       "admin@example.com",
+					OwnedBy:         "admin@example.com",
 					Activated:       tt.environmentActivated,
 				},
 			}
@@ -292,7 +292,7 @@ func TestCompositionReconciler_StatusTracksEnvironmentActivation(t *testing.T) {
 		},
 		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Activated:       true,
 		},
 	}

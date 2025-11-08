@@ -383,7 +383,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			Packages:    []workspacev1.PackageSpec{},
 		},
@@ -459,7 +459,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_KloudliteBinMount(t *testing.T) 
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			Packages:    []workspacev1.PackageSpec{},
 		},
@@ -557,7 +557,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			Packages:    []workspacev1.PackageSpec{},
 		},
@@ -610,7 +610,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			ResourceQuota: &workspacev1.ResourceQuota{
 				CPU:    "2",
@@ -657,7 +657,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomEnvironmentVariables(t *te
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			Settings: &workspacev1.WorkspaceSettings{
 				EnvironmentVariables: map[string]string{
@@ -712,7 +712,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_StartupScript(t *testing.T) {
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			Settings: &workspacev1.WorkspaceSettings{
 				StartupScript: startupScript,
@@ -766,7 +766,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_SSHHostKeys(t *testing.T) {
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 		},
 	}
@@ -817,7 +817,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_DNSConfiguration(t *testing.T) {
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 		},
 	}

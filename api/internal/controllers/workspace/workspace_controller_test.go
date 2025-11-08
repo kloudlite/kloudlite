@@ -60,7 +60,7 @@ func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
@@ -121,7 +121,7 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			Packages: []workspacev1.PackageSpec{
 				{Name: "git"},
@@ -192,7 +192,7 @@ func TestReconcile_WithEnvironmentConnection(t *testing.T) {
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "active",
 			EnvironmentConnection: &workspacev1.EnvironmentConnectionSpec{
 				EnvironmentRef: corev1.ObjectReference{
@@ -731,7 +731,7 @@ func TestApplyLabelsAndAnnotations(t *testing.T) {
 					Name: "test-workspace",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner:       "test@example.com",
+					OwnedBy:     "test@example.com",
 					DisplayName: "Test Workspace",
 				},
 			},
@@ -759,7 +759,7 @@ func TestApplyLabelsAndAnnotations(t *testing.T) {
 					Name: "test-workspace",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner: "test@example.com",
+					OwnedBy: "test@example.com",
 				},
 			},
 			obj: &corev1.Pod{
@@ -992,7 +992,7 @@ func TestExecInPod(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			Owner: "test@example.com",
+			OwnedBy: "test@example.com",
 		},
 		Status: workspacev1.WorkspaceStatus{
 			PodName: "test-workspace-pod",
@@ -1128,7 +1128,7 @@ func TestHandleDeletion(t *testing.T) {
 			Finalizers: []string{workspaceFinalizer},
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			Owner:         "test@example.com",
+			OwnedBy:       "test@example.com",
 			DisplayName:   "Test Workspace",
 			WorkspacePath: "/home/kl/workspaces/test-workspace",
 		},
@@ -1190,7 +1190,7 @@ func TestHandleDeletion(t *testing.T) {
 					Namespace: "test-namespace",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner: "test@example.com",
+					OwnedBy: "test@example.com",
 				},
 			},
 			expectError:    false,
@@ -1234,7 +1234,7 @@ func TestHandleSuspendedWorkspace(t *testing.T) {
 			Finalizers: []string{workspaceFinalizer},
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			Status:      "suspended",
 			DisplayName: "Test Workspace",
 		},
@@ -1301,7 +1301,7 @@ func TestHandleSuspendedWorkspace(t *testing.T) {
 					Finalizers: []string{workspaceFinalizer},
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner:       "test@example.com",
+					OwnedBy:     "test@example.com",
 					Status:      "archived",
 					DisplayName: "Test Archived Workspace",
 				},
@@ -1341,7 +1341,7 @@ func TestUpdateDNSConfigInRunningPod(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			Owner: "test@example.com",
+			OwnedBy: "test@example.com",
 		},
 		Status: workspacev1.WorkspaceStatus{
 			PodName: "workspace-test-workspace",
@@ -1404,7 +1404,7 @@ func TestUpdateDNSConfigInRunningPod(t *testing.T) {
 					Namespace: "test-namespace",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner: "test@example.com",
+					OwnedBy: "test@example.com",
 				},
 				Status: workspacev1.WorkspaceStatus{
 					PodName: "", // No pod name

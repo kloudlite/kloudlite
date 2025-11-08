@@ -53,7 +53,7 @@ func TestValidateEnvironment_Success(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 			Activated:       false,
 		},
 	}
@@ -119,7 +119,7 @@ func TestValidateEnvironment_InvalidNamespace_Empty(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "", // Empty namespace
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 		},
 	}
 
@@ -185,7 +185,7 @@ func TestValidateEnvironment_InvalidNamespace_Reserved(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "kube-system", // Reserved namespace
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 		},
 	}
 
@@ -251,7 +251,7 @@ func TestValidateEnvironment_InvalidNamespace_InvalidFormat(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "Invalid_Namespace", // Uppercase and underscore
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 		},
 	}
 
@@ -311,7 +311,7 @@ func TestValidateEnvironment_NamespaceConflict(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "shared-namespace",
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 		},
 	}
 
@@ -327,7 +327,7 @@ func TestValidateEnvironment_NamespaceConflict(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "shared-namespace", // Conflict with existing-env
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 		},
 	}
 
@@ -382,7 +382,7 @@ func TestValidateEnvironment_UserNotFound(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "nonexistent-user",
+			OwnedBy:         "nonexistent-user",
 		},
 	}
 
@@ -448,7 +448,7 @@ func TestMutateEnvironment_AddLabels(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 			Activated:       false,
 		},
 	}
@@ -535,7 +535,7 @@ func TestMutateEnvironment_AddDefaultResourceQuotas(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "test-user",
+			OwnedBy:         "test-user",
 			Activated:       true, // Activated without quotas
 		},
 	}

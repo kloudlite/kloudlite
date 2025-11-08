@@ -33,7 +33,7 @@ func TestWorkspaceRepository_GetByOwner(t *testing.T) {
 				Namespace: "test-ns",
 			},
 			Spec: workspacesv1.WorkspaceSpec{
-				Owner: "test-user",
+				OwnedBy: "test-user",
 			},
 		},
 		{
@@ -42,7 +42,7 @@ func TestWorkspaceRepository_GetByOwner(t *testing.T) {
 				Namespace: "test-ns",
 			},
 			Spec: workspacesv1.WorkspaceSpec{
-				Owner: "other-user",
+				OwnedBy: "other-user",
 			},
 		},
 	}
@@ -57,7 +57,7 @@ func TestWorkspaceRepository_GetByOwner(t *testing.T) {
 		WithRuntimeObjects(objects...).
 		WithIndex(&workspacesv1.Workspace{}, "spec.owner", func(obj client.Object) []string {
 			workspace := obj.(*workspacesv1.Workspace)
-			return []string{workspace.Spec.Owner}
+			return []string{workspace.Spec.OwnedBy}
 		}).
 		Build()
 	repo := NewWorkspaceRepository(k8sClient)
@@ -68,7 +68,7 @@ func TestWorkspaceRepository_GetByOwner(t *testing.T) {
 	assert.NotNil(t, list)
 	// With the field index, should only return workspaces for test-user
 	assert.Equal(t, 1, len(list.Items))
-	assert.Equal(t, "test-user", list.Items[0].Spec.Owner)
+	assert.Equal(t, "test-user", list.Items[0].Spec.OwnedBy)
 }
 
 func TestWorkspaceRepository_GetByWorkMachine(t *testing.T) {
@@ -385,7 +385,7 @@ func TestWorkspaceRepository_ListActive(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Active Workspace 1",
-				Owner:       "user1",
+				OwnedBy:     "user1",
 				Status:      "active",
 			},
 		},
@@ -396,7 +396,7 @@ func TestWorkspaceRepository_ListActive(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Suspended Workspace",
-				Owner:       "user2",
+				OwnedBy:     "user2",
 				Status:      "suspended",
 			},
 		},
@@ -407,7 +407,7 @@ func TestWorkspaceRepository_ListActive(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Active Workspace 2",
-				Owner:       "user3",
+				OwnedBy:     "user3",
 				Status:      "active",
 			},
 		},
@@ -469,7 +469,7 @@ func TestWorkspaceRepository_ListSuspended(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Active Workspace",
-				Owner:       "user1",
+				OwnedBy:     "user1",
 				Status:      "active",
 			},
 		},
@@ -480,7 +480,7 @@ func TestWorkspaceRepository_ListSuspended(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Suspended Workspace 1",
-				Owner:       "user2",
+				OwnedBy:     "user2",
 				Status:      "suspended",
 			},
 		},
@@ -491,7 +491,7 @@ func TestWorkspaceRepository_ListSuspended(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Suspended Workspace 2",
-				Owner:       "user3",
+				OwnedBy:     "user3",
 				Status:      "suspended",
 			},
 		},
@@ -553,7 +553,7 @@ func TestWorkspaceRepository_ListArchived(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Active Workspace",
-				Owner:       "user1",
+				OwnedBy:     "user1",
 				Status:      "active",
 			},
 		},
@@ -564,7 +564,7 @@ func TestWorkspaceRepository_ListArchived(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Archived Workspace 1",
-				Owner:       "user2",
+				OwnedBy:     "user2",
 				Status:      "archived",
 			},
 		},
@@ -575,7 +575,7 @@ func TestWorkspaceRepository_ListArchived(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Archived Workspace 2",
-				Owner:       "user3",
+				OwnedBy:     "user3",
 				Status:      "archived",
 			},
 		},
