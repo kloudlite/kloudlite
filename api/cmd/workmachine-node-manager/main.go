@@ -949,6 +949,20 @@ type GPUInfo struct {
 	DriverVersion string
 }
 
+type GPUMetrics struct {
+	Model             string
+	DriverVersion     string
+	Count             int
+	MemoryTotal       int32
+	MemoryUsed        int32
+	MemoryFree        int32
+	UtilizationGPU    int32
+	UtilizationMemory int32
+	Temperature       int32
+	PowerDraw         float32
+	PowerLimit        float32
+}
+
 // ensureNVIDIASetup checks if NVIDIA drivers are available
 // Note: The Deep Learning AMI comes with drivers and container runtime pre-installed
 func (r *GPUStatusReconciler) ensureNVIDIASetup(logger *zap2.Logger) error {
@@ -1030,6 +1044,109 @@ func (r *GPUStatusReconciler) getGPUInfo(logger *zap2.Logger) (*GPUInfo, error) 
 		Count:         count,
 		Product:       product,
 		DriverVersion: driverVersion,
+	}, nil
+}
+
+func (r *GPUStatusReconciler) getGPUMetrics(logger *zap2.Logger) (*GPUMetrics, error) {
+	// Query nvidia-smi for comprehensive metrics
+	// Fields: name, driver_version, memory.total, memory.used, memory.free, utilization.gpu, utilization.memory, temperature.gpu, power.draw, power.limit
+	metricsScript := "nvidia-smi --query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory,temperature.gpu,power.draw,power.limit --format=csv,noheader,nounits | head -1"
+
+	output, err := r.CmdExec.Execute(metricsScript)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get GPU metrics: %w", err)
+	}
+
+	// Parse CSV output
+	parts := strings.Split(strings.TrimSpace(string(output)), ",")
+	if len(parts) < 10 {
+		return nil, fmt.Errorf("unexpected nvidia-smi output format: got %d fields, expected 10", len(parts))
+	}
+
+	// Helper function to parse int32
+	parseInt32 := func(s string, fieldName string) (int32, error) {
+		s = strings.TrimSpace(s)
+		var val int32
+		if _, err := fmt.Sscanf(s, "%d", &val); err != nil {
+			return 0, fmt.Errorf("failed to parse %s: %w", fieldName, err)
+		}
+		return val, nil
+	}
+
+	// Helper function to parse float32
+	parseFloat32 := func(s string, fieldName string) (float32, error) {
+		s = strings.TrimSpace(s)
+		var val float32
+		if _, err := fmt.Sscanf(s, "%f", &val); err != nil {
+			return 0, fmt.Errorf("failed to parse %s: %w", fieldName, err)
+		}
+		return val, nil
+	}
+
+	memoryTotal, err := parseInt32(parts[2], "memory.total")
+	if err != nil {
+		return nil, err
+	}
+
+	memoryUsed, err := parseInt32(parts[3], "memory.used")
+	if err != nil {
+		return nil, err
+	}
+
+	memoryFree, err := parseInt32(parts[4], "memory.free")
+	if err != nil {
+		return nil, err
+	}
+
+	utilizationGPU, err := parseInt32(parts[5], "utilization.gpu")
+	if err != nil {
+		return nil, err
+	}
+
+	utilizationMemory, err := parseInt32(parts[6], "utilization.memory")
+	if err != nil {
+		return nil, err
+	}
+
+	temperature, err := parseInt32(parts[7], "temperature.gpu")
+	if err != nil {
+		return nil, err
+	}
+
+	powerDraw, err := parseFloat32(parts[8], "power.draw")
+	if err != nil {
+		return nil, err
+	}
+
+	powerLimit, err := parseFloat32(parts[9], "power.limit")
+	if err != nil {
+		return nil, err
+	}
+
+	// Get GPU count
+	countScript := "nvidia-smi --query-gpu=name --format=csv,noheader | wc -l"
+	countOutput, err := r.CmdExec.Execute(countScript)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get GPU count: %w", err)
+	}
+
+	count := 1 // Default to 1
+	if parsed, err := fmt.Sscanf(strings.TrimSpace(string(countOutput)), "%d", &count); err == nil && parsed == 1 {
+		// Successfully parsed count
+	}
+
+	return &GPUMetrics{
+		Model:             strings.TrimSpace(parts[0]),
+		DriverVersion:     strings.TrimSpace(parts[1]),
+		Count:             count,
+		MemoryTotal:       memoryTotal,
+		MemoryUsed:        memoryUsed,
+		MemoryFree:        memoryFree,
+		UtilizationGPU:    utilizationGPU,
+		UtilizationMemory: utilizationMemory,
+		Temperature:       temperature,
+		PowerDraw:         powerDraw,
+		PowerLimit:        powerLimit,
 	}, nil
 }
 

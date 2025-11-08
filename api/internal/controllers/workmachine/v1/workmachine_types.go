@@ -287,6 +287,64 @@ type MachineInfo struct {
 
 	// Message provides additional information about the instance state
 	Message string `json:"message,omitempty"`
+
+	// GPU contains GPU information and metrics if a GPU is available
+	// +optional
+	GPU *GPUMetrics `json:"gpu,omitempty"`
+}
+
+// GPUMetrics contains GPU information and real-time metrics
+type GPUMetrics struct {
+	// Detected indicates if a GPU was detected on this machine
+	Detected bool `json:"detected"`
+
+	// Model is the GPU model name (e.g., "Tesla T4", "A100")
+	// +optional
+	Model string `json:"model,omitempty"`
+
+	// DriverVersion is the NVIDIA driver version
+	// +optional
+	DriverVersion string `json:"driverVersion,omitempty"`
+
+	// Count is the number of GPUs available
+	// +optional
+	Count int `json:"count,omitempty"`
+
+	// MemoryTotal is the total GPU memory in MiB
+	// +optional
+	MemoryTotal int32 `json:"memoryTotal,omitempty"`
+
+	// MemoryUsed is the currently used GPU memory in MiB
+	// +optional
+	MemoryUsed int32 `json:"memoryUsed,omitempty"`
+
+	// MemoryFree is the currently free GPU memory in MiB
+	// +optional
+	MemoryFree int32 `json:"memoryFree,omitempty"`
+
+	// UtilizationGPU is the GPU utilization percentage (0-100)
+	// +optional
+	UtilizationGPU int32 `json:"utilizationGpu,omitempty"`
+
+	// UtilizationMemory is the memory utilization percentage (0-100)
+	// +optional
+	UtilizationMemory int32 `json:"utilizationMemory,omitempty"`
+
+	// Temperature is the GPU temperature in Celsius
+	// +optional
+	Temperature int32 `json:"temperature,omitempty"`
+
+	// PowerDraw is the current power draw in Watts
+	// +optional
+	PowerDraw float32 `json:"powerDraw,omitempty"`
+
+	// PowerLimit is the power limit in Watts
+	// +optional
+	PowerLimit float32 `json:"powerLimit,omitempty"`
+
+	// LastUpdated is the timestamp when metrics were last updated
+	// +optional
+	LastUpdated *metav1.Time `json:"lastUpdated,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
