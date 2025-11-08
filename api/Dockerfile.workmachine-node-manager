@@ -2,11 +2,12 @@
 # This image contains both api-server and workmachine-node-manager
 FROM debian:bookworm-slim
 
-# Install minimal dependencies
+# Install minimal dependencies including NVIDIA driver
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y \
     ca-certificates \
+    nvidia-driver \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy both pre-built binaries from local filesystem
