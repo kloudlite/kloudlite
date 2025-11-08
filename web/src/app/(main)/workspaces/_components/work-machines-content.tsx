@@ -283,7 +283,10 @@ export function WorkMachinesContent({
         {selectedMachine.currentState === 'running' && (
           <div className="mb-6">
             <h2 className="mb-4 text-base font-semibold">Resource Usage</h2>
-            <WorkMachineMetrics machineState={selectedMachine.currentState} />
+            <WorkMachineMetrics
+              workMachineName={selectedMachine.name}
+              machineState={selectedMachine.currentState}
+            />
           </div>
         )}
 
