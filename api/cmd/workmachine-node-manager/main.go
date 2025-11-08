@@ -850,10 +850,10 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		return reconcile.Result{}, nil
 	}
 
-	// Ensure NVIDIA drivers are installed
-	driverInstallErr := r.ensureNVIDIADriversInstalled(logger)
-	if driverInstallErr != nil {
-		logger.Error("Failed to ensure NVIDIA drivers are installed", zap2.Error(driverInstallErr))
+	// Ensure NVIDIA drivers are available and container runtime is configured
+	setupErr := r.ensureNVIDIASetup(logger)
+	if setupErr != nil {
+		logger.Error("NVIDIA setup not ready", zap2.Error(setupErr))
 
 		// Retry updating node with latest version on conflict
 		for retries := 0; retries < 3; retries++ {
@@ -864,25 +864,12 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 				break
 			}
 
-			// Update labels with installation status
+			// Update labels with setup status
 			if latestNode.Labels == nil {
 				latestNode.Labels = make(map[string]string)
 			}
-			latestNode.Labels["nvidia.com/gpu.driver-status"] = "installing"
-			if strings.Contains(driverInstallErr.Error(), "require reboot") {
-				latestNode.Labels["nvidia.com/gpu.driver-status"] = "awaiting-reboot"
-				latestNode.Labels["nvidia.com/gpu.driver-message"] = "Reboot-required-to-load-drivers"
-
-				// Add annotation to request reboot - WorkMachine controller will handle this
-				if latestNode.Annotations == nil {
-					latestNode.Annotations = make(map[string]string)
-				}
-				latestNode.Annotations["kloudlite.io/workmachine-reboot-requested"] = "true"
-				logger.Info("Added reboot request annotation to node")
-			} else {
-				latestNode.Labels["nvidia.com/gpu.driver-status"] = "error"
-				latestNode.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(driverInstallErr.Error(), 63)
-			}
+			latestNode.Labels["nvidia.com/gpu.driver-status"] = "waiting"
+			latestNode.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(setupErr.Error(), 63)
 
 			// Try to update node with status
 			if updateErr := r.Update(ctx, latestNode); updateErr != nil {
@@ -961,83 +948,38 @@ type GPUInfo struct {
 	DriverVersion string
 }
 
-// ensureNVIDIADriversInstalled checks if NVIDIA drivers are installed and installs them if needed
-func (r *GPUStatusReconciler) ensureNVIDIADriversInstalled(logger *zap2.Logger) error {
-	// Check if installation flag file exists (indicates drivers were successfully installed)
-	flagCheckScript := "test -f /var/lib/kloudlite/nvidia-drivers-installed"
-	if _, err := r.CmdExec.Execute(flagCheckScript); err == nil {
-		logger.Info("NVIDIA drivers already installed (flag file exists)")
-		return nil
+// ensureNVIDIASetup checks if NVIDIA drivers are available and ensures container runtime is configured
+// Note: Driver installation is handled by cloud-init script, not here
+func (r *GPUStatusReconciler) ensureNVIDIASetup(logger *zap2.Logger) error {
+	// Check if nvidia-smi is available (drivers should be installed by cloud-init)
+	checkScript := "nvidia-smi > /dev/null 2>&1"
+	if _, err := r.CmdExec.Execute(checkScript); err != nil {
+		logger.Info("NVIDIA drivers not available (nvidia-smi failed) - drivers should be installed by cloud-init script")
+		return fmt.Errorf("nvidia-smi not available - waiting for cloud-init to install drivers")
 	}
 
-	// Also check if nvidia-smi is available as fallback
-	checkScript := "which nvidia-smi > /dev/null 2>&1"
-	if _, err := r.CmdExec.Execute(checkScript); err == nil {
-		logger.Info("NVIDIA drivers already installed (nvidia-smi found)")
-		// Create flag file for future checks
-		r.CmdExec.Execute("mkdir -p /var/lib/kloudlite && touch /var/lib/kloudlite/nvidia-drivers-installed")
-		return nil
+	logger.Info("NVIDIA drivers are available and working")
+
+	// Ensure NVIDIA container runtime is configured
+	// This allows K3s/containerd to use NVIDIA GPUs in containers
+	logger.Info("Ensuring NVIDIA container runtime is configured...")
+
+	// Check if nvidia-container-runtime is available
+	runtimeCheckScript := "which nvidia-container-runtime > /dev/null 2>&1"
+	if _, err := r.CmdExec.Execute(runtimeCheckScript); err != nil {
+		logger.Warn("nvidia-container-runtime not found - should be installed by cloud-init")
+		return fmt.Errorf("nvidia-container-runtime not available")
 	}
 
-	logger.Info("NVIDIA drivers not found, installing...")
-
-	// Detect distribution
-	distroScript := "cat /etc/os-release | grep ^ID= | cut -d= -f2 | tr -d '\"'"
-	distroOutput, err := r.CmdExec.Execute(distroScript)
-	if err != nil {
-		return fmt.Errorf("failed to detect distribution: %w", err)
-	}
-	distro := strings.TrimSpace(string(distroOutput))
-	logger.Info("Detected OS distribution", zap2.String("distro", distro))
-
-	// Install NVIDIA driver on Debian (host OS)
-	// Try without kernel headers first (driver package may have pre-built modules)
-	// This is especially important for AWS kernels where headers aren't available
-	installScript := `
-		echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-nonfree.list && \
-		apt-get update && \
-		DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-driver firmware-misc-nonfree
-	`
-
-	logger.Info("Installing NVIDIA drivers (trying without kernel headers first)", zap2.String("distro", distro))
-	output, err := r.CmdExec.Execute(installScript)
-	if err != nil {
-		// Log the error but truncate for status message
-		logger.Warn("Driver installation without headers failed, this may be expected for some kernels",
-			zap2.Error(err),
-			zap2.String("output", string(output)))
-		return fmt.Errorf("driver installation failed - kernel headers may be required")
+	// Verify K3s containerd config has NVIDIA runtime configured
+	// The cloud-init script should have created this, just verify it exists
+	configCheckScript := "test -f /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
+	if _, err := r.CmdExec.Execute(configCheckScript); err != nil {
+		logger.Warn("K3s containerd NVIDIA config not found - should be created by cloud-init")
+		return fmt.Errorf("containerd nvidia config missing")
 	}
 
-	logger.Info("NVIDIA drivers installed successfully")
-
-	// Load kernel modules
-	loadModulesScript := `
-		modprobe nvidia && \
-		modprobe nvidia-uvm && \
-		modprobe nvidia-modeset
-	`
-	if output, err := r.CmdExec.Execute(loadModulesScript); err != nil {
-		logger.Warn("Failed to load kernel modules, system reboot required",
-			zap2.Error(err),
-			zap2.String("output", string(output)))
-
-		// Mark node for reboot by setting annotation
-		// The WorkMachine controller will handle the actual reboot
-		logger.Info("Marking node for reboot to load NVIDIA drivers")
-		return fmt.Errorf("nvidia drivers installed but require reboot to load kernel modules")
-	}
-
-	logger.Info("NVIDIA kernel modules loaded successfully")
-
-	// Create flag file to indicate successful installation
-	flagScript := "mkdir -p /var/lib/kloudlite && touch /var/lib/kloudlite/nvidia-drivers-installed"
-	if _, err := r.CmdExec.Execute(flagScript); err != nil {
-		logger.Warn("Failed to create driver installation flag file", zap2.Error(err))
-	} else {
-		logger.Info("Created driver installation flag file")
-	}
-
+	logger.Info("✓ NVIDIA container runtime is configured")
 	return nil
 }
 
