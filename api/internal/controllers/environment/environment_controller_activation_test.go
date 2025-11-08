@@ -24,7 +24,7 @@ func TestEnvironmentReconciler_Reconcile_ActiveEnvironment(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "active-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 			Activated:       true,
 		},
 	}
@@ -65,7 +65,7 @@ func TestEnvironmentReconciler_Reconcile_InactiveEnvironment(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "inactive-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 			Activated:       false,
 		},
 	}
@@ -103,7 +103,7 @@ func TestEnvironmentReconciler_ActivationStatusUpdate(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Activated:       true,
 		},
 		Status: environmentsv1.EnvironmentStatus{
@@ -157,7 +157,7 @@ func TestEnvironmentReconciler_DeactivationStatusUpdate(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Activated:       false,
 		},
 		Status: environmentsv1.EnvironmentStatus{

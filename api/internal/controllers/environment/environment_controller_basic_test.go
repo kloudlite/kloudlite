@@ -24,7 +24,7 @@ func TestEnvironmentReconciler_Reconcile_CreateNamespace(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 			Activated:       true,
 		},
 	}
@@ -97,7 +97,7 @@ func TestEnvironmentReconciler_Reconcile_ExistingNamespace(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "existing-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 			Activated:       false,
 		},
 	}
@@ -145,7 +145,7 @@ func TestEnvironmentReconciler_Reconcile_WithCustomLabelsAndAnnotations(t *testi
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 			Labels: map[string]string{
 				"custom-label": "label-value",
 			},
@@ -195,7 +195,7 @@ func TestEnvironmentReconciler_Reconcile_CustomLabelsAndAnnotations(t *testing.T
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Labels: map[string]string{
 				"team":    "platform",
 				"project": "main",
@@ -248,7 +248,7 @@ func TestEnvironmentReconciler_Reconcile_ExistingNamespaceWithNilLabels(t *testi
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 		},
 	}
 
@@ -299,7 +299,7 @@ func TestEnvironmentReconciler_Reconcile_AddFinalizerError(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 		},
 	}
 

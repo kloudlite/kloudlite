@@ -135,7 +135,7 @@ func TestGenerateToken(t *testing.T) {
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
 		beforeGeneration := time.Now()
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, "test-user", email, roles)
 		afterGeneration := time.Now()
 		assert.NoError(t, err)
 
@@ -165,7 +165,7 @@ func TestGenerateToken(t *testing.T) {
 			platformv1alpha1.RoleUser,
 		}
 
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, "superadmin", email, roles)
 		assert.NoError(t, err)
 
 		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -186,7 +186,7 @@ func TestGenerateToken(t *testing.T) {
 		email := "noroles@example.com"
 		roles := []platformv1alpha1.RoleType{}
 
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, "noroles-user", email, roles)
 		assert.NoError(t, err)
 
 		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -214,7 +214,7 @@ func TestValidateToken(t *testing.T) {
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
 		// Generate token
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, "test-user", email, roles)
 		assert.NoError(t, err)
 
 		// Validate token
@@ -232,7 +232,7 @@ func TestValidateToken(t *testing.T) {
 
 		// Create auth service with very short expiry
 		shortExpiryAuthService := NewAuthService(jwtSecret, 1*time.Millisecond, userService, logger)
-		tokenString, err := shortExpiryAuthService.GenerateToken(ctx, email, roles)
+		tokenString, err := shortExpiryAuthService.GenerateToken(ctx, "test-user", email, roles)
 		assert.NoError(t, err)
 
 		// Wait for token to expire
@@ -252,7 +252,7 @@ func TestValidateToken(t *testing.T) {
 
 		// Create auth service with different secret
 		wrongSecretAuthService := NewAuthService("wrong-secret", tokenExpiry, userService, logger)
-		tokenString, err := wrongSecretAuthService.GenerateToken(ctx, email, roles)
+		tokenString, err := wrongSecretAuthService.GenerateToken(ctx, "test-user", email, roles)
 		assert.NoError(t, err)
 
 		// Try to validate with correct secret
@@ -290,7 +290,7 @@ func TestValidateToken(t *testing.T) {
 		email := "test@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
-		tokenString, err := authService.GenerateToken(ctx, email, roles)
+		tokenString, err := authService.GenerateToken(ctx, "test-user", email, roles)
 		assert.NoError(t, err)
 
 		// Tamper with the token

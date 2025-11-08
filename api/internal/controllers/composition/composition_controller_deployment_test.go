@@ -152,7 +152,7 @@ func TestCompositionReconciler_DeployComposition_WithInactiveEnvironment(t *test
 		},
 		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Activated:       false, // Inactive
 		},
 	}
@@ -210,7 +210,7 @@ func TestCompositionReconciler_DeployComposition_WithActiveEnvironment(t *testin
 		},
 		Spec: compositionsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
-			CreatedBy:       "admin@example.com",
+			OwnedBy:         "admin@example.com",
 			Activated:       true, // Active
 		},
 	}

@@ -26,7 +26,7 @@ func TestEnvironmentReconciler_HandleDeletion(t *testing.T) {
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "deleting-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 		},
 	}
 
@@ -68,7 +68,7 @@ func TestEnvironmentReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "already-deleted-namespace",
-			CreatedBy:       "test@example.com",
+			OwnedBy:         "test@example.com",
 		},
 	}
 

@@ -209,7 +209,7 @@ func TestWorkspaceWebhook_ValidateWorkspace_Success(t *testing.T) {
 			Namespace: "test-ns",
 		},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "testuser",
+			OwnedBy:     "testuser",
 			DisplayName: "Test Workspace",
 		},
 	}
@@ -288,7 +288,7 @@ func TestWorkspaceWebhook_ValidateWorkspace_OwnerNotFound(t *testing.T) {
 			Name: "test-workspace",
 		},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "nonexistent",
+			OwnedBy:     "nonexistent",
 			DisplayName: "Test Workspace",
 		},
 	}
@@ -336,7 +336,7 @@ func TestWorkspaceWebhook_ValidateWorkspace_NoWorkMachine(t *testing.T) {
 			Name: "test-workspace",
 		},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "testuser",
+			OwnedBy:     "testuser",
 			DisplayName: "Test Workspace",
 		},
 	}
@@ -381,7 +381,7 @@ func TestWorkspaceWebhook_ValidateWorkspace_DisplayNameRequired(t *testing.T) {
 
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace"},
-		Spec:       workspacesv1.WorkspaceSpec{Owner: "testuser"},
+		Spec:       workspacesv1.WorkspaceSpec{OwnedBy: "testuser"},
 	}
 
 	workspaceBytes, _ := json.Marshal(workspace)
@@ -423,7 +423,7 @@ func TestWorkspaceWebhook_ValidateWorkspace_DisplayNameTooLong(t *testing.T) {
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace"},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "testuser",
+			OwnedBy:     "testuser",
 			DisplayName: "a123456789b123456789c123456789d123456789e123456789f12345678901234567890123456789012345678901234567890",
 		},
 	}
@@ -467,7 +467,7 @@ func TestWorkspaceWebhook_ValidateWorkspace_InvalidStatus(t *testing.T) {
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace"},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "testuser",
+			OwnedBy:     "testuser",
 			DisplayName: "Test",
 			Status:      "invalid",
 		},
@@ -523,7 +523,7 @@ func TestWorkspaceWebhook_ValidateWorkspace_InterceptConflict(t *testing.T) {
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace", Namespace: "test-ns"},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "testuser",
+			OwnedBy:     "testuser",
 			DisplayName: "Test",
 			EnvironmentConnection: &workspacesv1.EnvironmentConnectionSpec{
 				EnvironmentRef: corev1.ObjectReference{Name: "test-env", Namespace: "test-ns"},
@@ -564,7 +564,7 @@ func TestWorkspaceWebhook_MutateWorkspace_DefaultValues(t *testing.T) {
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace"},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "testuser",
+			OwnedBy:     "testuser",
 			DisplayName: "Test",
 		},
 	}
@@ -639,7 +639,7 @@ func TestWorkspaceWebhook_MutateWorkspace_LabelsAndFinalizer(t *testing.T) {
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace"},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "testuser",
+			OwnedBy:     "testuser",
 			DisplayName: "Test",
 		},
 	}
@@ -716,7 +716,7 @@ func TestWorkspaceWebhook_MutateWorkspace_OwnerByEmail(t *testing.T) {
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace"},
 		Spec: workspacesv1.WorkspaceSpec{
-			Owner:       "test@example.com",
+			OwnedBy:     "test@example.com",
 			DisplayName: "Test",
 		},
 	}

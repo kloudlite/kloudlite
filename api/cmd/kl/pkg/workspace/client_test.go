@@ -48,7 +48,7 @@ func TestClient_Get_Success(t *testing.T) {
 		},
 		Spec: workspacesv1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "user@example.com",
+			OwnedBy:     "user@example.com",
 		},
 	}
 
@@ -352,7 +352,7 @@ func TestClient_WorkspaceWithEnvironmentRef(t *testing.T) {
 		},
 		Spec: workspacesv1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "user@example.com",
+			OwnedBy:     "user@example.com",
 			EnvironmentConnection: &workspacesv1.EnvironmentConnectionSpec{
 				EnvironmentRef: corev1.ObjectReference{
 					Name:      "test-environment",
@@ -412,7 +412,7 @@ func TestClient_UpdateWorkspaceEnvironmentRef(t *testing.T) {
 		},
 		Spec: workspacesv1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			Owner:       "user@example.com",
+			OwnedBy:     "user@example.com",
 		},
 	}
 

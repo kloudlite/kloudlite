@@ -38,7 +38,7 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 					Finalizers: []string{workspaceFinalizer},
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner:       "test-user",
+					OwnedBy:     "test-user",
 					DisplayName: "Test Workspace",
 					Status:      "active",
 				},
@@ -66,7 +66,7 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 					Finalizers: []string{workspaceFinalizer},
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner:       "test-user",
+					OwnedBy:     "test-user",
 					DisplayName: "Test Workspace 2",
 					Status:      "active",
 				},
@@ -84,7 +84,7 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 					Finalizers: []string{}, // No finalizer
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner:       "test-user",
+					OwnedBy:     "test-user",
 					DisplayName: "Test Workspace 3",
 					Status:      "active",
 				},
@@ -337,7 +337,7 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner:       "test-user",
+					OwnedBy:     "test-user",
 					DisplayName: "Test Workspace",
 					Status:      "suspended",
 				},
@@ -368,7 +368,7 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					Owner:       "test-user",
+					OwnedBy:     "test-user",
 					DisplayName: "Test Workspace 2",
 					Status:      "suspended",
 				},

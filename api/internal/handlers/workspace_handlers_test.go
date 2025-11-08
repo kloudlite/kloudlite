@@ -32,7 +32,7 @@ func setupWorkspaceHandlerTest() (*WorkspaceHandlers, *gin.Engine) {
 		WithScheme(scheme).
 		WithIndex(&workspacesv1.Workspace{}, "spec.owner", func(obj client.Object) []string {
 			workspace := obj.(*workspacesv1.Workspace)
-			return []string{workspace.Spec.Owner}
+			return []string{workspace.Spec.OwnedBy}
 		}).
 		WithIndex(&workspacesv1.Workspace{}, "spec.status", func(obj client.Object) []string {
 			workspace := obj.(*workspacesv1.Workspace)
@@ -203,7 +203,7 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 1",
-				Owner:       "user1@example.com",
+				OwnedBy:     "user1@example.com",
 				Status:      "active",
 			},
 		}
@@ -214,7 +214,7 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 2",
-				Owner:       "user2@example.com",
+				OwnedBy:     "user2@example.com",
 				Status:      "suspended",
 			},
 		}
@@ -244,7 +244,7 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 1",
-				Owner:       "user1@example.com",
+				OwnedBy:     "user1@example.com",
 				Status:      "active",
 			},
 		}
@@ -269,7 +269,7 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 2",
-				Owner:       "user2@example.com",
+				OwnedBy:     "user2@example.com",
 				Status:      "suspended",
 			},
 		}
@@ -299,7 +299,7 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 1",
-				Owner:       "user1@example.com",
+				OwnedBy:     "user1@example.com",
 				Status:      "active",
 			},
 		}
