@@ -59,7 +59,7 @@ export function EditEnvironmentDialog({
         spec: {
           targetNamespace: environment.targetNamespace,
           activated: environment.status === 'active',
-          createdBy: _currentUser,
+          ownedBy: _currentUser,
         },
       }
 

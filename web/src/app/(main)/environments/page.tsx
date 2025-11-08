@@ -18,8 +18,8 @@ export default async function EnvironmentsPage() {
   try {
     const response = await environmentService.listEnvironments()
     allEnvironments = response.environments.map((env) => {
-      // Use the createdBy field which contains the full email
-      const owner = env.spec.createdBy || 'unknown'
+      // Use the ownedBy field which contains the username (User's metadata.name)
+      const owner = env.spec.ownedBy || 'unknown'
 
       return environmentToUIModel(env, owner)
     })

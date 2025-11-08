@@ -188,7 +188,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         spec: {
           displayName: displayName.trim(),
           description: description.trim() || undefined,
-          owner: user,
+          ownedBy: user,
           packages: packageSpecs.length > 0 ? packageSpecs : undefined,
           status: 'active',
         },

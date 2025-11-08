@@ -82,7 +82,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                   </p>
                 )}
                 <div className="text-muted-foreground mt-3 flex items-center gap-4 text-sm">
-                  <span>Owner: {workspace.spec.owner.split('@')[0]}</span>
+                  <span>Owner: {workspace.spec.ownedBy || 'unknown'}</span>
                   <span>•</span>
                   <span>Namespace: {workspace.metadata.namespace}</span>
                   <span>•</span>
@@ -201,7 +201,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Owner</span>
-                  <span>{workspace.spec.owner.split('@')[0]}</span>
+                  <span>{workspace.spec.ownedBy || 'unknown'}</span>
                 </div>
                 {workspace.status?.podName && (
                   <div className="flex justify-between text-sm">

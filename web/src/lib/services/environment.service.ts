@@ -172,7 +172,7 @@ export class EnvironmentService {
       name: targetName,
       spec: {
         targetNamespace,
-        createdBy: currentUser,
+        ownedBy: currentUser,
         activated: false,
         cloneFrom: sourceName,
       },
