@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { formatResourceName } from '@/lib/utils'
 
 interface Workspace {
   id: string
@@ -36,7 +37,7 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h3 className="text-foreground group-hover:text-info text-lg font-medium transition-colors">
-                {workspace.name}
+                {formatResourceName(workspace.name)}
               </h3>
               <p className="text-muted-foreground mt-1 line-clamp-1 text-sm">
                 {workspace.description}

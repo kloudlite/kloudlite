@@ -6,6 +6,7 @@ import { ExternalLink } from 'lucide-react'
 import type { Workspace } from '@/types/workspace'
 import { WorkspaceRowActions } from './workspace-row-actions'
 import { CreateWorkspaceSheet } from './create-workspace-sheet'
+import { formatResourceName } from '@/lib/utils'
 
 interface WorkspacesListProps {
   workspaces: Workspace[]
@@ -170,7 +171,7 @@ export function WorkspacesList({
                       href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}
                       className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                     >
-                      {workspace.spec.ownedBy || 'unknown'}/ws-{workspace.spec.displayName || workspace.metadata.name}
+                      {formatResourceName(workspace.metadata.name)}
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                     {workspace.spec.description && (
