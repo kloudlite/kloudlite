@@ -200,7 +200,7 @@ export function WorkMachinesContent({
               </div>
               <div>
                 <h2 className="text-base font-semibold">
-                  {selectedMachine.owner.split('@')[0]}/wm-{selectedMachine.name}
+                  {selectedMachine.owner}&apos;s WorkMachine
                 </h2>
                 <p className="text-muted-foreground text-xs">{selectedMachine.type}</p>
               </div>
@@ -266,7 +266,7 @@ export function WorkMachinesContent({
               <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
                 Owner
               </p>
-              <p className="mt-2 text-sm font-medium">{selectedMachine.owner.split('@')[0]}</p>
+              <p className="mt-2 text-sm font-medium">{selectedMachine.owner}</p>
             </div>
             <div>
               <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
