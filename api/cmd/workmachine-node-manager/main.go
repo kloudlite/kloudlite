@@ -768,6 +768,44 @@ func (r *SSHConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// sanitizeLabelValue converts a string to a valid Kubernetes label value
+// Kubernetes labels must match regex: (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
+// and be at most 63 characters long
+func sanitizeLabelValue(s string, maxLen int) string {
+	if maxLen > 63 {
+		maxLen = 63
+	}
+	if maxLen < 1 {
+		maxLen = 1
+	}
+
+	// Replace spaces and invalid characters with hyphens
+	sanitized := strings.Map(func(r rune) rune {
+		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+			return r
+		}
+		return '-'
+	}, s)
+
+	// Truncate to max length
+	if len(sanitized) > maxLen {
+		sanitized = sanitized[:maxLen]
+	}
+
+	// Ensure it starts and ends with alphanumeric
+	// Trim leading/trailing non-alphanumeric chars
+	sanitized = strings.TrimFunc(sanitized, func(r rune) bool {
+		return !((r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'))
+	})
+
+	// If empty after sanitization, return a default
+	if sanitized == "" {
+		return "unknown"
+	}
+
+	return sanitized
+}
+
 // GPUStatusReconciler monitors GPU hardware and updates node labels and resources
 type GPUStatusReconciler struct {
 	client.Client
@@ -824,15 +862,10 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		node.Labels["nvidia.com/gpu.driver-status"] = "installing"
 		if strings.Contains(driverInstallErr.Error(), "require reboot") {
 			node.Labels["nvidia.com/gpu.driver-status"] = "awaiting-reboot"
-			node.Labels["nvidia.com/gpu.driver-message"] = "Reboot required to load drivers"
+			node.Labels["nvidia.com/gpu.driver-message"] = "Reboot-required-to-load-drivers"
 		} else {
 			node.Labels["nvidia.com/gpu.driver-status"] = "error"
-			// Truncate error message to fit label limit (63 chars)
-			errMsg := driverInstallErr.Error()
-			if len(errMsg) > 63 {
-				errMsg = errMsg[:60] + "..."
-			}
-			node.Labels["nvidia.com/gpu.driver-message"] = errMsg
+			node.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(driverInstallErr.Error(), 63)
 		}
 
 		// Try to update node with status even if driver installation failed
@@ -853,12 +886,7 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 			node.Labels = make(map[string]string)
 		}
 		node.Labels["nvidia.com/gpu.driver-status"] = "error"
-		// Truncate error message to fit label limit (63 chars)
-		errMsg := err.Error()
-		if len(errMsg) > 63 {
-			errMsg = errMsg[:60] + "..."
-		}
-		node.Labels["nvidia.com/gpu.driver-message"] = errMsg
+		node.Labels["nvidia.com/gpu.driver-message"] = sanitizeLabelValue(err.Error(), 63)
 
 		if updateErr := r.Update(ctx, node); updateErr != nil {
 			logger.Error("Failed to update node with GPU error status", zap2.Error(updateErr))
