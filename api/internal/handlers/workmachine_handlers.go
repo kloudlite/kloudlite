@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -526,4 +527,106 @@ func (h *WorkMachineHandlers) GetWorkMachineMetrics(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, metrics)
+}
+
+// GPUMetrics represents GPU metrics from workmachine-node-manager
+type GPUMetrics struct {
+	Detected          bool    `json:"detected"`
+	Model             string  `json:"model,omitempty"`
+	DriverVersion     string  `json:"driverVersion,omitempty"`
+	Count             int     `json:"count,omitempty"`
+	MemoryTotal       int32   `json:"memoryTotal,omitempty"`
+	MemoryUsed        int32   `json:"memoryUsed,omitempty"`
+	MemoryFree        int32   `json:"memoryFree,omitempty"`
+	UtilizationGPU    int32   `json:"utilizationGpu,omitempty"`
+	UtilizationMemory int32   `json:"utilizationMemory,omitempty"`
+	Temperature       int32   `json:"temperature,omitempty"`
+	PowerDraw         float32 `json:"powerDraw,omitempty"`
+	PowerLimit        float32 `json:"powerLimit,omitempty"`
+}
+
+// GetWorkMachineGPUMetrics handles GET /api/v1/work-machines/:name/gpu-metrics
+func (h *WorkMachineHandlers) GetWorkMachineGPUMetrics(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	// Get work machine name from URL parameter
+	workMachineName := c.Param("name")
+	if workMachineName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Work machine name is required",
+		})
+		return
+	}
+
+	// Get WorkMachine to verify it exists and get namespace
+	wm, err := h.manager.WorkMachineRepository.Get(c.Request.Context(), workMachineName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Work machine not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Construct URL to workmachine-host-manager metrics endpoint
+	// Service name: hm-{workmachine-name}
+	// Namespace: kloudlite (where workmachines run)
+	// Port: 8081
+	// Endpoint: /metrics/gpu
+	metricsURL := "http://hm-" + workMachineName + ".kloudlite:8081/metrics/gpu"
+
+	// Make HTTP request to metrics endpoint
+	req, err := http.NewRequestWithContext(ctx, "GET", metricsURL, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create metrics request: " + err.Error(),
+		})
+		return
+	}
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		// If the host manager pod isn't running yet, return a helpful message
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"error":   "GPU metrics not available - host manager may not be ready",
+			"details": err.Error(),
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		c.JSON(resp.StatusCode, gin.H{
+			"error": "Metrics endpoint returned error status",
+		})
+		return
+	}
+
+	// Decode response
+	var metrics GPUMetrics
+	if err := json.NewDecoder(resp.Body).Decode(&metrics); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to decode metrics response: " + err.Error(),
+		})
+		return
+	}
+
+	// Add WorkMachine info for context
+	response := gin.H{
+		"workMachine": wm.Name,
+		"state":       wm.Status.State,
+		"metrics":     metrics,
+	}
+
+	c.JSON(http.StatusOK, response)
 }

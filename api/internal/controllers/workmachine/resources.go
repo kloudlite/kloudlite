@@ -125,6 +125,12 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 				Port:       22,
 				TargetPort: intstr.FromInt32(2222),
 			},
+			{
+				Name:       "metrics",
+				Protocol:   corev1.ProtocolTCP,
+				Port:       8081,
+				TargetPort: intstr.FromInt32(8081),
+			},
 		}
 
 		return nil
