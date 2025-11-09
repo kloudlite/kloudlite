@@ -43,7 +43,7 @@ export interface NetworkPolicies {
 }
 
 export interface EnvironmentSpec {
-  targetNamespace: string
+  targetNamespace?: string
   ownedBy: string
   activated: boolean
   labels?: Record<string, string>
