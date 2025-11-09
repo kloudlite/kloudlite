@@ -3,8 +3,9 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -14,9 +15,48 @@ export default function ContactForm() {
     message: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [canSubmit, setCanSubmit] = useState(true)
+  const [timeRemaining, setTimeRemaining] = useState(0)
+
+  // Check rate limit on component mount
+  useEffect(() => {
+    const lastSubmission = localStorage.getItem('lastContactSubmission')
+    if (lastSubmission) {
+      const timeSinceSubmission = Date.now() - parseInt(lastSubmission, 10)
+      const oneHourInMs = 60 * 60 * 1000
+      if (timeSinceSubmission < oneHourInMs) {
+        setCanSubmit(false)
+        setTimeRemaining(Math.ceil((oneHourInMs - timeSinceSubmission) / 60000))
+      }
+    }
+  }, [])
+
+  // Update time remaining every minute
+  useEffect(() => {
+    if (!canSubmit && timeRemaining > 0) {
+      const timer = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setCanSubmit(true)
+            localStorage.removeItem('lastContactSubmission')
+            return 0
+          }
+          return prev - 1
+        })
+      }, 60000) // Update every minute
+      return () => clearInterval(timer)
+    }
+  }, [canSubmit, timeRemaining])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!canSubmit) {
+      toast.error(`Please wait ${timeRemaining} minutes before sending another message.`)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -34,8 +74,20 @@ export default function ContactForm() {
         throw new Error(data.error || 'Failed to submit form')
       }
 
-      toast.success(data.message || "Message sent successfully! We'll get back to you soon.")
+      // Store submission timestamp
+      localStorage.setItem('lastContactSubmission', Date.now().toString())
+      setCanSubmit(false)
+      setTimeRemaining(60) // 60 minutes
+
+      // Show success state
+      setIsSuccess(true)
+      toast.success(data.message || "Message sent successfully! We'll get back to you soon.", {
+        duration: 5000,
+      })
       setFormData({ name: '', email: '', subject: '', message: '' })
+
+      // Hide success state after 10 seconds
+      setTimeout(() => setIsSuccess(false), 10000)
     } catch (error) {
       console.error('Form submission error:', error)
       toast.error(
@@ -59,6 +111,33 @@ export default function ContactForm() {
       <p className="text-muted-foreground mt-2">
         Fill out the form below and we&apos;ll get back to you as soon as possible.
       </p>
+
+      {/* Success Message */}
+      {isSuccess && (
+        <div className="mt-6 rounded-lg bg-green-50 p-6 dark:bg-green-950/20">
+          <div className="flex items-start gap-4">
+            <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-green-600 dark:text-green-400" />
+            <div>
+              <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
+                Message Sent Successfully!
+              </h3>
+              <p className="mt-1 text-sm text-green-800 dark:text-green-200">
+                Thank you for reaching out. We&apos;ve received your message and will get back to
+                you as soon as possible.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rate Limit Warning */}
+      {!canSubmit && !isSuccess && (
+        <div className="mt-6 rounded-lg bg-amber-50 p-4 dark:bg-amber-950/20">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            You can send another message in {timeRemaining} minute{timeRemaining !== 1 ? 's' : ''}.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <div className="grid gap-6 sm:grid-cols-2">
@@ -123,9 +202,20 @@ export default function ContactForm() {
           />
         </div>
 
-        <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-          {isSubmitting ? 'Sending...' : 'Send Message'}
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full sm:w-auto"
+          disabled={isSubmitting || !canSubmit}
+        >
+          {isSubmitting ? 'Sending...' : !canSubmit ? 'Please Wait...' : 'Send Message'}
         </Button>
+        {!canSubmit && (
+          <p className="text-muted-foreground text-sm">
+            Rate limit: You can send another message in {timeRemaining} minute
+            {timeRemaining !== 1 ? 's' : ''}
+          </p>
+        )}
       </form>
     </div>
   )
