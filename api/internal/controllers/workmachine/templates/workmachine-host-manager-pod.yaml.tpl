@@ -91,6 +91,10 @@ spec:
       command: ["/usr/local/bin/workmachine-node-manager"]
       securityContext:
         privileged: true
+      ports:
+        - name: metrics
+          containerPort: 8081
+          protocol: TCP
       env:
         - name: NAMESPACE
           value: {{ .Namespace }}
