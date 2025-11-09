@@ -41,6 +41,7 @@ export type Database = {
           subdomain: string | null
           reserved_at: string | null
           deployment_ready: boolean | null
+          poller_active: boolean | null
           last_health_check: string | null
           edge_certificate_pack_id: string | null
           origin_certificate: string | null
@@ -62,6 +63,7 @@ export type Database = {
           subdomain?: string | null
           reserved_at?: string | null
           deployment_ready?: boolean | null
+          poller_active?: boolean | null
           last_health_check?: string | null
           edge_certificate_pack_id?: string | null
           origin_certificate?: string | null
@@ -80,6 +82,7 @@ export type Database = {
           subdomain?: string | null
           reserved_at?: string | null
           deployment_ready?: boolean | null
+          poller_active?: boolean | null
           last_health_check?: string | null
           edge_certificate_pack_id?: string | null
           origin_certificate?: string | null
