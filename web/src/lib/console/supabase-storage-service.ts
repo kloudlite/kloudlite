@@ -1138,3 +1138,55 @@ export async function findWildcardEdgeCertificate(
   }
 }
 
+/**
+ * Contact Submission Management
+ */
+
+export interface ContactSubmission {
+  id?: string
+  name: string
+  email: string
+  subject: string
+  message: string
+  submittedAt?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
+ * Save contact form submission
+ */
+export async function saveContactSubmission(
+  submission: Omit<ContactSubmission, 'id' | 'submittedAt' | 'createdAt' | 'updatedAt'>,
+): Promise<ContactSubmission> {
+  const { error, data } = await supabase
+    .from('contact_submissions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .insert({
+      name: submission.name,
+      email: submission.email,
+      subject: submission.subject,
+      message: submission.message,
+      submitted_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving contact submission:', error)
+    throw new Error(`Failed to save contact submission: ${error.message}`)
+  }
+
+  const row = data as Database['public']['Tables']['contact_submissions']['Row']
+
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    subject: row.subject,
+    message: row.message,
+    submittedAt: row.submitted_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}

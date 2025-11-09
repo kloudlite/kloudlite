@@ -4,6 +4,7 @@
 -- ============================================================================
 
 -- Drop existing tables (CASCADE will drop dependent objects)
+DROP TABLE IF EXISTS contact_submissions CASCADE;
 DROP TABLE IF EXISTS tls_certificates CASCADE;
 DROP TABLE IF EXISTS ip_records CASCADE;
 DROP TABLE IF EXISTS domain_reservations CASCADE;
@@ -184,6 +185,35 @@ CREATE TRIGGER update_tls_certificates_updated_at
 --   USING (user_id = current_setting('app.current_user_id')::TEXT);
 
 -- ============================================================================
+-- 6. CONTACT SUBMISSIONS TABLE
+-- Stores contact form submissions from website
+-- ============================================================================
+
+CREATE TABLE contact_submissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for contact_submissions
+CREATE INDEX idx_contact_submissions_email ON contact_submissions(email);
+CREATE INDEX idx_contact_submissions_submitted_at ON contact_submissions(submitted_at DESC);
+
+-- ============================================================================
+-- 7. TRIGGERS FOR UPDATED_AT TIMESTAMPS (Contact Submissions)
+-- ============================================================================
+
+CREATE TRIGGER update_contact_submissions_updated_at
+    BEFORE UPDATE ON contact_submissions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
 -- SCHEMA SETUP COMPLETE
 -- ============================================================================
 
@@ -199,6 +229,7 @@ WHERE table_schema = 'public'
     'installations',
     'ip_records',
     'domain_reservations',
-    'tls_certificates'
+    'tls_certificates',
+    'contact_submissions'
   )
 ORDER BY table_name;
