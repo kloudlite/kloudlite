@@ -26,6 +26,7 @@ interface TokenResponse {
 }
 
 export const authConfig: NextAuthConfig = {
+  trustHost: true,
   providers: [
     Credentials({
       name: 'credentials',
