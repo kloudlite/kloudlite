@@ -98,7 +98,9 @@ export default function InstallPage() {
 
         const data = await response.json()
 
-        if (data.verified) {
+        // Wait for pollerActive instead of just verified
+        // This ensures K3s cluster is up and SubdomainPoller is running
+        if (data.pollerActive) {
           setVerificationStatus('verified')
           // Auto-redirect to domain page after 2 seconds
           setTimeout(() => {
@@ -268,8 +270,8 @@ export default function InstallPage() {
                   <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
                     <p className="text-sm leading-relaxed text-blue-900">
                       <span className="font-semibold">Note:</span> After running the command, this
-                      page will automatically detect when your deployment contacts our server and
-                      proceed to the next step.
+                      page will automatically detect when your K3s cluster is up and ready, then
+                      proceed to domain configuration.
                     </p>
                   </div>
                 </div>

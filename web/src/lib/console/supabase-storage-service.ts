@@ -38,6 +38,7 @@ export interface Installation {
   reservedAt?: string
   ipRecords?: IPRecord[]
   deploymentReady?: boolean
+  pollerActive?: boolean
   lastHealthCheck?: string
   createdAt: string
   updatedAt: string
@@ -205,6 +206,7 @@ export async function getInstallationById(installationId: string): Promise<Insta
     subdomain: data.subdomain || undefined,
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
+    pollerActive: data.poller_active || undefined,
     lastHealthCheck: data.last_health_check || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
@@ -276,6 +278,7 @@ export async function getUserInstallations(userId: string): Promise<Installation
         subdomain: inst.subdomain || undefined,
         reservedAt: inst.reserved_at || undefined,
         deploymentReady: inst.deployment_ready || undefined,
+        pollerActive: inst.poller_active || undefined,
         lastHealthCheck: inst.last_health_check || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
@@ -340,6 +343,7 @@ export async function createInstallation(
     subdomain: data.subdomain || undefined,
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
+    pollerActive: data.poller_active || undefined,
     lastHealthCheck: data.last_health_check || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
@@ -365,6 +369,8 @@ export async function updateInstallation(
   if (updates.reservedAt !== undefined) updateData.reserved_at = updates.reservedAt || null
   if (updates.deploymentReady !== undefined)
     updateData.deployment_ready = updates.deploymentReady || null
+  if (updates.pollerActive !== undefined)
+    updateData.poller_active = updates.pollerActive || null
   if (updates.lastHealthCheck !== undefined)
     updateData.last_health_check = updates.lastHealthCheck || null
 
@@ -703,6 +709,7 @@ export async function resetInstallation(installationId: string): Promise<void> {
       secret_key: null,
       has_completed_installation: false,
       deployment_ready: false,
+      poller_active: false,
       last_health_check: null,
     })
     .eq('id', installationId)

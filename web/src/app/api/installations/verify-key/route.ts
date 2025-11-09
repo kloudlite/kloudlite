@@ -3,6 +3,7 @@ import {
   getInstallationByKey,
   markInstallationComplete,
   updateHealthCheck,
+  updateInstallation,
 } from '@/lib/console/supabase-storage-service'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
@@ -40,6 +41,15 @@ export async function POST(request: NextRequest) {
       updatedInstallation = await markInstallationComplete(installation.id, secretKey)
 
       console.log('Secret key generated and installation marked as complete')
+    } else if (!installation.pollerActive) {
+      // Secret key exists but pollerActive is false
+      // This means SubdomainPoller has started polling (2nd+ call)
+      console.log('SubdomainPoller started polling for installation:', installation.id)
+
+      // Mark poller as active
+      updatedInstallation = await updateInstallation(installation.id, { pollerActive: true })
+
+      console.log('Poller marked as active')
     }
 
     // Atomically update last health check timestamp (deployment is polling)

@@ -26,13 +26,17 @@ export async function POST(request: NextRequest) {
 
     // Check if installation has been verified (has secret key)
     const verified = !!installation.secretKey
+    const pollerActive = !!installation.pollerActive
 
     const response = NextResponse.json({
       verified,
+      pollerActive,
       hasCompletedInstallation: installation.hasCompletedInstallation,
-      message: verified
-        ? 'Installation verified successfully'
-        : 'Installation not verified. Please ensure the deployment has contacted the server.',
+      message: pollerActive
+        ? 'Deployment is active and polling for configuration'
+        : verified
+          ? 'Installation verified, waiting for deployment to start polling'
+          : 'Installation not verified. Please ensure the deployment has contacted the server.',
     })
 
     // Disable all caching
