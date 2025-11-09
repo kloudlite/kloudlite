@@ -29,7 +29,7 @@ export default async function ServicesPage({ params }: PageProps) {
   let namespace = ''
   try {
     const environment = await environmentService.getEnvironment(environmentName)
-    namespace = environment.spec.targetNamespace
+    namespace = environment.spec.targetNamespace || ''
   } catch (error) {
     console.error('Failed to fetch environment:', error)
     return (
