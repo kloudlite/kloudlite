@@ -50,7 +50,7 @@ export default function ContactPage() {
               Get in Touch
             </h1>
             <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-lg">
-              Have a question or feedback? We'd love to hear from you.
+              Have a question or feedback? We&apos;d love to hear from you.
             </p>
           </div>
 
