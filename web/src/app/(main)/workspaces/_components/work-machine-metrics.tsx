@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Cpu, MemoryStick } from 'lucide-react'
-import { getWorkMachineMetrics } from '@/app/actions/workspace.actions'
+import { Cpu, MemoryStick, Zap } from 'lucide-react'
+import { getWorkMachineMetrics, getWorkMachineGPUMetrics } from '@/app/actions/workspace.actions'
 
 interface NodeMetrics {
   cpu: {
@@ -16,6 +16,21 @@ interface NodeMetrics {
     allocatable: number
   }
   timestamp: string
+}
+
+interface GPUMetrics {
+  detected: boolean
+  model?: string
+  driverVersion?: string
+  count?: number
+  memoryTotal?: number
+  memoryUsed?: number
+  memoryFree?: number
+  utilizationGpu?: number
+  utilizationMemory?: number
+  temperature?: number
+  powerDraw?: number
+  powerLimit?: number
 }
 
 interface WorkMachineMetricsProps {
@@ -33,6 +48,7 @@ function formatBytes(bytes: number): string {
 
 export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachineMetricsProps) {
   const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
+  const [gpuMetrics, setGpuMetrics] = useState<GPUMetrics | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -56,11 +72,27 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
       }
     }
 
+    const fetchGPUMetrics = async () => {
+      try {
+        const result = await getWorkMachineGPUMetrics(workMachineName)
+        if (result.success && result.data) {
+          setGpuMetrics(result.data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch GPU metrics:', err)
+        // Don't set error state for GPU metrics - it's optional
+      }
+    }
+
     // Initial fetch
     fetchMetrics()
+    fetchGPUMetrics()
 
     // Poll every 3 seconds
-    const intervalId = setInterval(fetchMetrics, 3000)
+    const intervalId = setInterval(() => {
+      fetchMetrics()
+      fetchGPUMetrics()
+    }, 3000)
 
     return () => {
       clearInterval(intervalId)
@@ -92,6 +124,9 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
   const memoryPercent = metrics?.memory.capacity
     ? Math.round((metrics.memory.usage / metrics.memory.capacity) * 100)
     : 0
+
+  const gpuUtilPercent = gpuMetrics?.utilizationGpu ?? 0
+  const gpuMemoryPercent = gpuMetrics?.utilizationMemory ?? 0
 
   if (error) {
     return (
@@ -131,8 +166,11 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
     )
   }
 
+  const hasGPU = gpuMetrics?.detected ?? false
+  const gridCols = hasGPU ? 'md:grid-cols-3' : 'md:grid-cols-2'
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className={`grid gap-4 ${gridCols}`}>
       {/* CPU Usage */}
       <div className="bg-card rounded-lg border p-6">
         <div className="mb-4 flex items-center justify-between">
@@ -198,6 +236,68 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
           {formatBytes(metrics.memory.usage)} / {formatBytes(metrics.memory.capacity)}
         </div>
       </div>
+
+      {/* GPU Usage - only show if GPU is detected */}
+      {hasGPU && (
+        <div className="bg-card rounded-lg border p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="bg-warning/10 rounded-lg p-2">
+                <Zap className="text-warning h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold">GPU Usage</h3>
+                <p className="text-muted-foreground text-xs">{gpuMetrics?.model || 'Graphics processor'}</p>
+              </div>
+            </div>
+            <span className={`text-2xl font-medium ${getUsageTextColor(gpuUtilPercent)}`}>
+              {gpuUtilPercent}%
+            </span>
+          </div>
+          <div className="space-y-3">
+            {/* GPU Utilization */}
+            <div className="space-y-1">
+              <div className="text-muted-foreground flex justify-between text-xs">
+                <span>Compute</span>
+                <span>{gpuUtilPercent}%</span>
+              </div>
+              <div className="bg-muted h-2 overflow-hidden rounded-full">
+                <div
+                  className={`h-full ${getUsageColor(gpuUtilPercent)} transition-all duration-300`}
+                  style={{ width: `${gpuUtilPercent}%` }}
+                />
+              </div>
+            </div>
+            {/* GPU Memory */}
+            <div className="space-y-1">
+              <div className="text-muted-foreground flex justify-between text-xs">
+                <span>Memory</span>
+                <span>{gpuMemoryPercent}%</span>
+              </div>
+              <div className="bg-muted h-2 overflow-hidden rounded-full">
+                <div
+                  className={`h-full ${getUsageColor(gpuMemoryPercent)} transition-all duration-300`}
+                  style={{ width: `${gpuMemoryPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+            {gpuMetrics?.memoryUsed && gpuMetrics?.memoryTotal && (
+              <div>
+                <span className="text-muted-foreground">VRAM: </span>
+                {(gpuMetrics.memoryUsed / 1024).toFixed(1)} / {(gpuMetrics.memoryTotal / 1024).toFixed(1)} GB
+              </div>
+            )}
+            {gpuMetrics?.temperature && (
+              <div>
+                <span className="text-muted-foreground">Temp: </span>
+                {gpuMetrics.temperature}°C
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
