@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, AlertCircle, ChevronDown, ChevronRight, Copy } from 'lucide-react'
+import { Loader2, AlertCircle, Copy } from 'lucide-react'
 import { cloneEnvironment } from '@/app/actions/environment.actions'
 import type { EnvironmentUIModel } from '@/types/environment'
 
@@ -34,11 +34,7 @@ export function CloneEnvironmentDialog({
 }: CloneEnvironmentDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [formData, setFormData] = useState({
-    name: `${sourceEnvironment.name}-copy`,
-    targetNamespace: '',
-  })
+  const [name, setName] = useState(`${sourceEnvironment.name}-copy`)
 
   const validateNamespace = (name: string): string | null => {
     if (!name) {
@@ -79,17 +75,9 @@ export function CloneEnvironmentDialog({
     setError(null)
 
     // Validate environment name
-    const nameError = validateNamespace(formData.name)
+    const nameError = validateNamespace(name)
     if (nameError) {
       setError(`Environment name: ${nameError}`)
-      return
-    }
-
-    // Auto-generate or validate namespace
-    const targetNamespace = formData.targetNamespace || `env-${formData.name}`
-    const namespaceError = validateNamespace(targetNamespace)
-    if (namespaceError) {
-      setError(namespaceError)
       return
     }
 
@@ -98,8 +86,8 @@ export function CloneEnvironmentDialog({
     try {
       const result = await cloneEnvironment(
         sourceEnvironment.name,
-        formData.name,
-        targetNamespace,
+        name,
+        '', // targetNamespace - always empty, let webhook auto-generate
         true, // cloneEnvVars - always true, controller handles all resources
         true, // cloneFiles - always true, controller handles all resources
         currentUser,
@@ -107,10 +95,7 @@ export function CloneEnvironmentDialog({
 
       if (result.success) {
         // Reset form
-        setFormData({
-          name: `${sourceEnvironment.name}-copy`,
-          targetNamespace: '',
-        })
+        setName(`${sourceEnvironment.name}-copy`)
         onOpenChange(false)
 
         // Call success callback
@@ -131,12 +116,8 @@ export function CloneEnvironmentDialog({
 
   const handleClose = () => {
     if (!loading) {
-      setFormData({
-        name: `${sourceEnvironment.name}-copy`,
-        targetNamespace: '',
-      })
+      setName(`${sourceEnvironment.name}-copy`)
       setError(null)
-      setShowAdvanced(false)
       onOpenChange(false)
     }
   }
@@ -162,51 +143,14 @@ export function CloneEnvironmentDialog({
               <Input
                 id="name"
                 placeholder="my-cloned-environment"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 disabled={loading}
                 required
               />
               <p className="text-muted-foreground text-xs">
                 Must be lowercase alphanumeric or &quot;-&quot;, max 63 characters
               </p>
-            </div>
-
-            {/* Advanced Options */}
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
-              >
-                {showAdvanced ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-                Advanced Options
-              </button>
-
-              {showAdvanced && (
-                <div className="space-y-2 pt-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="namespace">Target Namespace (Optional)</Label>
-                    <Input
-                      id="namespace"
-                      placeholder={`env-${formData.name || 'environment-name'}`}
-                      value={formData.targetNamespace}
-                      onChange={(e) =>
-                        setFormData({ ...formData, targetNamespace: e.target.value })
-                      }
-                      disabled={loading}
-                    />
-                    <p className="text-muted-foreground text-xs">
-                      Leave empty to auto-generate as &quot;env-{'{name}'}&quot;. The Kubernetes
-                      namespace that will be created for this environment.
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
 
             {error && (
