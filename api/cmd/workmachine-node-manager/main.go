@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
@@ -850,6 +851,17 @@ func (r *GPUStatusReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 
 	if !gpuDetected {
 		logger.Info("No GPU detected on this node")
+
+		// If GPU was previously detected, clean up GPU resources from the node
+		if r.LastGPUDetected {
+			logger.Info("Cleaning up GPU resources from node (machine type changed to non-GPU)")
+			if err := r.cleanupNodeGPU(ctx, node, logger); err != nil {
+				logger.Error("Failed to cleanup node GPU resources", zap2.Error(err))
+				return reconcile.Result{}, err
+			}
+			logger.Info("Successfully cleaned up GPU resources from node")
+		}
+
 		return reconcile.Result{}, nil
 	}
 
@@ -1205,6 +1217,50 @@ func (r *GPUStatusReconciler) updateNodeGPU(ctx context.Context, node *corev1.No
 	return nil
 }
 
+// cleanupNodeGPU removes GPU labels and resources from the node
+// Called when machine type changes from GPU to non-GPU
+func (r *GPUStatusReconciler) cleanupNodeGPU(ctx context.Context, node *corev1.Node, logger *zap2.Logger) error {
+	// Remove GPU labels
+	if node.Labels != nil {
+		delete(node.Labels, "nvidia.com/gpu")
+		delete(node.Labels, "nvidia.com/gpu.count")
+		delete(node.Labels, "nvidia.com/gpu.product")
+		delete(node.Labels, "nvidia.com/gpu.driver-version")
+		delete(node.Labels, "nvidia.com/gpu.driver-status")
+		delete(node.Labels, "nvidia.com/gpu.driver-message")
+	}
+
+	// Update node to apply label deletions
+	if err := r.Update(ctx, node); err != nil {
+		return fmt.Errorf("failed to remove GPU labels from node: %w", err)
+	}
+
+	logger.Info("Removed GPU labels from node")
+
+	// Fetch latest node to update status (capacity and allocatable)
+	updatedNode := &corev1.Node{}
+	if err := r.Get(ctx, client.ObjectKey{Name: node.Name}, updatedNode); err != nil {
+		return fmt.Errorf("failed to get latest node: %w", err)
+	}
+
+	// Remove GPU resources from capacity and allocatable
+	if updatedNode.Status.Capacity != nil {
+		delete(updatedNode.Status.Capacity, corev1.ResourceName("nvidia.com/gpu"))
+	}
+	if updatedNode.Status.Allocatable != nil {
+		delete(updatedNode.Status.Allocatable, corev1.ResourceName("nvidia.com/gpu"))
+	}
+
+	// Update node status
+	if err := r.Status().Update(ctx, updatedNode); err != nil {
+		return fmt.Errorf("failed to remove GPU resources from node status: %w", err)
+	}
+
+	logger.Info("Removed GPU capacity and allocatable from node")
+
+	return nil
+}
+
 func parseQuantity(value string) *resource.Quantity {
 	q, err := resource.ParseQuantity(value)
 	if err != nil {
@@ -1318,6 +1374,12 @@ type MetricsServer struct {
 	CmdExec CommandExecutor
 	Logger  *zap2.Logger
 	Port    int
+
+	// Cache for GPU metrics with periodic background updates
+	cacheMutex    sync.RWMutex
+	cachedMetrics *GPUMetricsResponse
+	cacheInterval time.Duration
+	stopChan      chan struct{}
 }
 
 // GPUMetricsResponse is the JSON response for GPU metrics
@@ -1337,12 +1399,84 @@ type GPUMetricsResponse struct {
 }
 
 func (s *MetricsServer) Start() error {
+	// Start background goroutine to poll GPU metrics at constant frequency
+	s.startBackgroundPolling()
+
 	http.HandleFunc("/metrics/gpu", s.handleGPUMetrics)
 	http.HandleFunc("/healthz", s.handleHealthz)
 
 	addr := fmt.Sprintf(":%d", s.Port)
 	s.Logger.Info("Starting metrics server", zap2.Int("port", s.Port))
 	return http.ListenAndServe(addr, nil)
+}
+
+// startBackgroundPolling starts a background goroutine that polls GPU metrics
+// at a constant frequency and updates the in-memory cache
+func (s *MetricsServer) startBackgroundPolling() {
+	// Set default cache interval if not configured
+	if s.cacheInterval == 0 {
+		s.cacheInterval = 5 * time.Second
+	}
+
+	s.stopChan = make(chan struct{})
+
+	go func() {
+		s.Logger.Info("Starting background GPU metrics polling", zap2.Duration("interval", s.cacheInterval))
+
+		// Poll immediately on startup
+		s.updateCache()
+
+		ticker := time.NewTicker(s.cacheInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				s.updateCache()
+			case <-s.stopChan:
+				s.Logger.Info("Stopping background GPU metrics polling")
+				return
+			}
+		}
+	}()
+}
+
+// updateCache polls GPU metrics and updates the in-memory cache
+func (s *MetricsServer) updateCache() {
+	// Check if GPU is detected
+	gpuDetected := s.detectGPU()
+	if !gpuDetected {
+		s.cacheMutex.Lock()
+		s.cachedMetrics = &GPUMetricsResponse{
+			Detected: false,
+		}
+		s.cacheMutex.Unlock()
+		return
+	}
+
+	// Collect GPU metrics
+	metrics, err := s.collectGPUMetrics()
+	if err != nil {
+		s.Logger.Error("Failed to collect GPU metrics in background poll", zap2.Error(err))
+		return
+	}
+
+	// Update cache with write lock
+	s.cacheMutex.Lock()
+	s.cachedMetrics = metrics
+	s.cacheMutex.Unlock()
+
+	s.Logger.Debug("GPU metrics cache updated",
+		zap2.Bool("detected", metrics.Detected),
+		zap2.String("model", metrics.Model),
+		zap2.Int32("utilizationGpu", metrics.UtilizationGPU))
+}
+
+// Stop gracefully stops the background polling goroutine
+func (s *MetricsServer) Stop() {
+	if s.stopChan != nil {
+		close(s.stopChan)
+	}
 }
 
 func (s *MetricsServer) handleHealthz(w http.ResponseWriter, r *http.Request) {
@@ -1354,25 +1488,20 @@ func (s *MetricsServer) handleHealthz(w http.ResponseWriter, r *http.Request) {
 func (s *MetricsServer) handleGPUMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Check if GPU is detected
-	gpuDetected := s.detectGPU()
-	if !gpuDetected {
+	// Serve from cache with read lock (fast, no nvidia-smi execution)
+	s.cacheMutex.RLock()
+	cachedMetrics := s.cachedMetrics
+	s.cacheMutex.RUnlock()
+
+	// If cache is not yet populated, return a default response
+	if cachedMetrics == nil {
 		json.NewEncoder(w).Encode(GPUMetricsResponse{
 			Detected: false,
 		})
 		return
 	}
 
-	// Collect GPU metrics
-	metrics, err := s.collectGPUMetrics()
-	if err != nil {
-		s.Logger.Error("Failed to collect GPU metrics", zap2.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-
-	json.NewEncoder(w).Encode(metrics)
+	json.NewEncoder(w).Encode(cachedMetrics)
 }
 
 func (s *MetricsServer) detectGPU() bool {
