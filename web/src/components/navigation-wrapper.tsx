@@ -13,7 +13,7 @@ export async function NavigationWrapper() {
   try {
     const workMachine = await workMachineService.getMyWorkMachine()
     hasWorkMachine = !!workMachine
-  } catch (err) {
+  } catch (_err) {
     // Silently handle the case where user doesn't have a work machine
     // This is expected for new users
     hasWorkMachine = false
