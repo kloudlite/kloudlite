@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/codingconcepts/env"
+	cav1 "github.com/kloudlite/kloudlite/api/internal/controllers/certificate-authority/v1"
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -14,9 +16,11 @@ import (
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -51,8 +55,10 @@ type WorkMachineReconciler struct {
 	cloudProviderAPI cloud.Provider
 }
 
-const WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
-const hostManagerNamespace = "kloudlite-hostmanager"
+const (
+	WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
+	hostManagerNamespace     = "kloudlite-hostmanager"
+)
 
 // SSH Configuration Constants
 const (
@@ -137,6 +143,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
+			Name:     "setup workmachine TLS cert",
+			Title:    "Setup Workmachine TLS Cert and CA",
+			OnCreate: r.setupWorkmachineTLSCert,
+			OnDelete: nil,
+		},
+		{
 			Name:     "ensure-deployment",
 			Title:    "Ensure workmachine-host-manager deployment",
 			OnCreate: r.ensurePackageManagerDeploymentStep,
@@ -166,6 +178,48 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 // createWorkspaceRBAC is a placeholder step for workspace RBAC setup
 // Actual workspace-specific RBAC is created by the Workspace controller
 func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	return check.Passed()
+}
+
+// setupWorkmachineTLSCert creates a CertificateAuthority for the workmachine with wildcard certificates
+func (r *WorkMachineReconciler) setupWorkmachineTLSCert(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	// Fetch the installation-domain DomainRequest to get subdomain
+	domainRequest := &domainrequestv1.DomainRequest{}
+	if err := r.Client.Get(check.Context(), client.ObjectKey{Name: "installation-domain"}, domainRequest); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			// DomainRequest doesn't exist yet, skip for now
+			return check.Passed()
+		}
+		return check.Failed(fmt.Errorf("failed to get installation-domain DomainRequest: %w", err))
+	}
+
+	// Get subdomain from DomainRequest status
+	subdomain := domainRequest.Status.Subdomain
+	if subdomain == "" {
+		// Subdomain not available yet, skip for now
+		return check.UpdateMsg("waiting for DomainRequest to reconcile").RequeueAfter(2 * time.Second)
+	}
+
+	// Create or update CertificateAuthority
+	ca := &cav1.CertificateAuthority{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      obj.Name,
+			Namespace: "kloudlite-ingress",
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, ca, func() error {
+		ca.Spec = cav1.CertificateAuthoritySpec{
+			SANs: []string{
+				fmt.Sprintf("*.%s.%s", obj.Spec.OwnedBy, subdomain),
+				fmt.Sprintf("*.%s.%s", obj.Name, subdomain),
+			},
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update CertificateAuthority: %w", err))
+	}
+
 	return check.Passed()
 }
 

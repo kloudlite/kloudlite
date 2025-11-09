@@ -182,8 +182,8 @@ spec:
                 required:
                 - environmentRef
                 type: object
-              owner:
-                description: Owner is the email/username of the workspace owner
+              ownedBy:
+                description: OwnedBy is the username of the workspace owner
                 minLength: 1
                 type: string
               packages:
@@ -320,7 +320,7 @@ spec:
                 type: string
             required:
             - displayName
-            - owner
+            - ownedBy
             - workmachine
             type: object
           status:
