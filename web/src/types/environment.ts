@@ -264,7 +264,7 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     owner: owner || env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown',
     status,
     created: createdText,
-    targetNamespace: env.spec.targetNamespace,
+    targetNamespace: env.spec.targetNamespace || '',
     services: env.status?.resourceCount?.services || 0,
     configs: env.status?.resourceCount?.configMaps || 0,
     secrets: env.status?.resourceCount?.secrets || 0,
