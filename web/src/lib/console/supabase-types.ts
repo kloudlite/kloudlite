@@ -231,6 +231,33 @@ export type Database = {
           status?: 'pending' | 'active' | 'failed'
         }
       }
+      contact_submissions: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          subject: string
+          message: string
+          submitted_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          subject: string
+          message: string
+          submitted_at?: string
+        }
+        Update: {
+          name?: string
+          email?: string
+          subject?: string
+          message?: string
+          submitted_at?: string
+        }
+      }
     }
   }
 }
