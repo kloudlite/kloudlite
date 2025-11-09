@@ -44,6 +44,7 @@ CREATE TABLE installations (
   subdomain TEXT UNIQUE,
   reserved_at TIMESTAMPTZ,
   deployment_ready BOOLEAN DEFAULT FALSE,
+  poller_active BOOLEAN DEFAULT FALSE,
   last_health_check TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
