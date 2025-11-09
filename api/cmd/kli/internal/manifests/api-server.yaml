@@ -57,7 +57,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
             - name: HOST_MANAGER_IMAGE
-              value: "ghcr.io/kloudlite/kloudlite/api-server:development"
+              value: "ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development"
           volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs

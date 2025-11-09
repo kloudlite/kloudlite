@@ -1163,7 +1163,7 @@ func (r *GPUStatusReconciler) updateNodeGPU(ctx context.Context, node *corev1.No
 	node.Labels["nvidia.com/gpu.product"] = gpuInfo.Product
 	node.Labels["nvidia.com/gpu.driver-version"] = gpuInfo.DriverVersion
 	node.Labels["nvidia.com/gpu.driver-status"] = "ready"
-	node.Labels["nvidia.com/gpu.driver-message"] = "NVIDIA drivers loaded and operational"
+	node.Labels["nvidia.com/gpu.driver-message"] = "nvidia-drivers-operational"
 
 	// Update node to apply labels
 	if err := r.Update(ctx, node); err != nil {
