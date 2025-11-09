@@ -144,21 +144,40 @@ export async function GET(
     // For GitHub, if email is not in the user response (private email), fetch from /user/emails
     if (provider === 'github' && 'login' in userData && !userData.email) {
       console.log('GitHub email is private, fetching from /user/emails')
-      const emailsResponse = await fetch('https://api.github.com/user/emails', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
-        },
-      })
+      try {
+        const emailsResponse = await fetch('https://api.github.com/user/emails', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+          },
+        })
 
-      if (emailsResponse.ok) {
-        const emails = (await emailsResponse.json()) as GitHubEmail[]
-        // Find the primary verified email
-        const primaryEmail = emails.find((e) => e.primary && e.verified)
-        if (primaryEmail) {
-          userData.email = primaryEmail.email
-          console.log('Successfully retrieved primary email from /user/emails')
+        if (emailsResponse.ok) {
+          const emails = (await emailsResponse.json()) as GitHubEmail[]
+          // Find the primary verified email
+          const primaryEmail = emails.find((e) => e.primary && e.verified)
+          if (primaryEmail) {
+            userData.email = primaryEmail.email
+            console.log('Successfully retrieved primary email from /user/emails')
+          }
         }
+      } catch (error) {
+        console.error('Failed to fetch GitHub emails:', error)
+      }
+    }
+
+    // For Google, verify email is present
+    if (provider === 'google' && 'picture' in userData && !userData.email) {
+      console.error('Google OAuth did not return email')
+      throw new Error('No email found in Google OAuth response')
+    }
+
+    // For Microsoft, ensure we have an email
+    if (provider === 'microsoft-entra-id' && 'userPrincipalName' in userData) {
+      if (!userData.mail && (!userData.otherMails || userData.otherMails.length === 0)) {
+        console.log(
+          'Microsoft email not in mail/otherMails, will extract from userPrincipalName',
+        )
       }
     }
   } catch (err) {
