@@ -262,3 +262,58 @@ export async function getWorkMachineMetrics(workMachineName: string) {
     }
   }
 }
+
+export async function getWorkMachineGPUMetrics(workMachineName: string) {
+  try {
+    if (!workMachineName) {
+      return {
+        success: false,
+        error: 'Work machine name is required',
+      }
+    }
+
+    // Import auth and env dynamically to ensure this only runs on server
+    const { env } = await import('@/lib/env')
+
+    const session = await getSession()
+    if (!session?.user?.backendToken) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    const url = `${env.apiUrl}/api/v1/work-machines/${workMachineName}/gpu-metrics`
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${session.user.backendToken}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      return {
+        success: false,
+        error: errorText || 'Failed to get GPU metrics',
+      }
+    }
+
+    const data = await response.json()
+
+    // If no GPU detected, return success with detected=false
+    if (!data.detected) {
+      return { success: true, data: { detected: false } }
+    }
+
+    return { success: true, data }
+  } catch (err) {
+    console.error('Get work machine GPU metrics error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
