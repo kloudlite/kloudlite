@@ -47,6 +47,7 @@ export default function ContactForm() {
       }, 60000) // Update every minute
       return () => clearInterval(timer)
     }
+    return undefined
   }, [canSubmit, timeRemaining])
 
   const handleSubmit = async (e: React.FormEvent) => {
