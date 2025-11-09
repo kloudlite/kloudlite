@@ -71,9 +71,16 @@ export async function GET(
   interface GitHubUser {
     id: number
     login: string
-    email: string
+    email: string | null
     name: string
     avatar_url: string
+  }
+
+  interface GitHubEmail {
+    email: string
+    primary: boolean
+    verified: boolean
+    visibility: string | null
   }
 
   interface GoogleUser {
@@ -133,6 +140,27 @@ export async function GET(
     }
 
     userData = (await userResponse.json()) as OAuthUserData
+
+    // For GitHub, if email is not in the user response (private email), fetch from /user/emails
+    if (provider === 'github' && 'login' in userData && !userData.email) {
+      console.log('GitHub email is private, fetching from /user/emails')
+      const emailsResponse = await fetch('https://api.github.com/user/emails', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/json',
+        },
+      })
+
+      if (emailsResponse.ok) {
+        const emails = (await emailsResponse.json()) as GitHubEmail[]
+        // Find the primary verified email
+        const primaryEmail = emails.find((e) => e.primary && e.verified)
+        if (primaryEmail) {
+          userData.email = primaryEmail.email
+          console.log('Successfully retrieved primary email from /user/emails')
+        }
+      }
+    }
   } catch (err) {
     console.error('OAuth exchange error:', err)
     return NextResponse.redirect(
