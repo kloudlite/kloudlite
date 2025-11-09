@@ -559,8 +559,8 @@ func (h *WorkMachineHandlers) GetWorkMachineGPUMetrics(c *gin.Context) {
 		return
 	}
 
-	// Get WorkMachine to verify it exists and get namespace
-	wm, err := h.manager.WorkMachineRepository.Get(c.Request.Context(), workMachineName)
+	// Verify WorkMachine exists
+	_, err := h.manager.WorkMachineRepository.Get(c.Request.Context(), workMachineName)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -576,10 +576,10 @@ func (h *WorkMachineHandlers) GetWorkMachineGPUMetrics(c *gin.Context) {
 
 	// Construct URL to workmachine-host-manager metrics endpoint
 	// Service name: hm-{workmachine-name}
-	// Namespace: kloudlite (where workmachines run)
+	// Namespace: kloudlite-hostmanager (where host managers run)
 	// Port: 8081
 	// Endpoint: /metrics/gpu
-	metricsURL := "http://hm-" + workMachineName + ".kloudlite:8081/metrics/gpu"
+	metricsURL := "http://hm-" + workMachineName + ".kloudlite-hostmanager:8081/metrics/gpu"
 
 	// Make HTTP request to metrics endpoint
 	req, err := http.NewRequestWithContext(ctx, "GET", metricsURL, nil)
@@ -621,12 +621,6 @@ func (h *WorkMachineHandlers) GetWorkMachineGPUMetrics(c *gin.Context) {
 		return
 	}
 
-	// Add WorkMachine info for context
-	response := gin.H{
-		"workMachine": wm.Name,
-		"state":       wm.Status.State,
-		"metrics":     metrics,
-	}
-
-	c.JSON(http.StatusOK, response)
+	// Return metrics directly (frontend expects GPUMetrics structure)
+	c.JSON(http.StatusOK, metrics)
 }
