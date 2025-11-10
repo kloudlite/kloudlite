@@ -51,3 +51,4 @@ test-workspaces/
 
 # Generated CRD configuration
 config/devenv/manifests/kli
+cmd/kltun/kltun

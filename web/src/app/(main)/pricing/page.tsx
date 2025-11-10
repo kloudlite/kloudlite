@@ -1,38 +1,16 @@
 import { Button } from '@/components/ui/button'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
 import Link from 'next/link'
 import { APP_MODE } from '@/lib/app-mode'
 import { Check } from 'lucide-react'
-import { ThemeSwitcherServer } from '@/components/theme-switcher-server'
 import { GetStartedButton } from '@/components/get-started-button'
+import { WebsiteHeader } from '@/components/website-header'
+import { WebsiteFooter } from '@/components/website-footer'
 
 // Pricing page for website mode
 function PricingPage() {
   return (
     <div className="bg-background flex min-h-screen flex-col">
-      {/* Navigation Header */}
-      <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
-        <nav className="mx-auto flex h-16 max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6 lg:gap-8">
-            <KloudliteLogo showText={true} linkToHome={true} />
-            <div className="hidden items-center gap-6 md:flex">
-              <Link
-                href="/docs"
-                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-              >
-                Docs
-              </Link>
-              <Link href="/pricing" className="text-foreground text-sm font-medium">
-                Pricing
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <GetStartedButton size="sm" className="hidden sm:flex" />
-          </div>
-        </nav>
-      </header>
+      <WebsiteHeader currentPage="pricing" />
 
       {/* Pricing Section */}
       <main className="flex-1 px-4 py-16 sm:px-6 lg:px-8">
@@ -264,41 +242,7 @@ function PricingPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-muted border-t">
-        <div className="mx-auto max-w-[90rem] px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-muted-foreground text-sm">© 2024 Kloudlite. All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <Link
-                href="/docs"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-              >
-                Docs
-              </Link>
-              <Link
-                href="/pricing"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-              >
-                Pricing
-              </Link>
-              <Link
-                href="/contact"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-              >
-                Contact
-              </Link>
-              <Link
-                href="https://github.com/kloudlite/kloudlite"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-              >
-                GitHub
-              </Link>
-              <ThemeSwitcherServer />
-            </div>
-          </div>
-        </div>
-      </footer>
+      <WebsiteFooter />
     </div>
   )
 }
