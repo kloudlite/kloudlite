@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/codingconcepts/env"
-	cav1 "github.com/kloudlite/kloudlite/api/internal/controllers/certificate-authority/v1"
+	cav1 "github.com/kloudlite/kloudlite/api/internal/controllers/certs/v1"
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
@@ -203,21 +203,32 @@ func (r *WorkMachineReconciler) setupWorkmachineTLSCert(check *reconciler.Check[
 	// Create or update CertificateAuthority
 	ca := &cav1.CertificateAuthority{
 		ObjectMeta: metav1.ObjectMeta{
+			Name: "kloudlite-ca",
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, ca, func() error {
+		ca.Spec.SANs = []string{
+			fmt.Sprintf("*.%s.%s", obj.Spec.OwnedBy, subdomain),
+			fmt.Sprintf("*.%s.%s", obj.Name, subdomain),
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update CertificateAuthority: %w", err))
+	}
+
+	certificate := &cav1.Certificate{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      obj.Name,
 			Namespace: "kloudlite-ingress",
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, ca, func() error {
-		ca.Spec = cav1.CertificateAuthoritySpec{
-			SANs: []string{
-				fmt.Sprintf("*.%s.%s", obj.Spec.OwnedBy, subdomain),
-				fmt.Sprintf("*.%s.%s", obj.Name, subdomain),
-			},
-		}
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, certificate, func() error {
+		certificate.Spec.CA = ca.Name
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update CertificateAuthority: %w", err))
+		return check.Failed(fmt.Errorf("failed to create/update Certificate: %w", err))
 	}
 
 	return check.Passed()
