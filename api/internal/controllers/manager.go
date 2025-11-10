@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-logr/zapr"
 	"github.com/kloudlite/kloudlite/api/internal/config"
-	ca "github.com/kloudlite/kloudlite/api/internal/controllers/certificate-authority"
+	ca "github.com/kloudlite/kloudlite/api/internal/controllers/certs"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest"

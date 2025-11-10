@@ -9,15 +9,24 @@ type CertificateAuthoritySpec struct {
 	SANs []string `json:"san"`
 }
 
+type SecretKeyRef struct {
+	Name         string `json:"name"`
+	Namespace    string `json:"namespace"`
+	CaBundleKey  string `json:"caBundleKey"`
+	CaPrivateKey string `json:"caPrivateKey"`
+}
+
 type CertificateAuthorityStatus struct {
 	reconciler.Status `json:",inline"`
 
-	TLSSecretName string `json:"tlsSecretName,omitempty"`
+	SecretRef SecretKeyRef `json:"secretRef,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced,categories={kloudlite}
+// +kubebuilder:resource:scope=Cluster,categories={kloudlite}
+// +kubebuilder:printcolumn:name="Seen",type=date,JSONPath=".status.lastReconcileTime"
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready"
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // CertificateAuthority is the Schema for the certificate authority API
