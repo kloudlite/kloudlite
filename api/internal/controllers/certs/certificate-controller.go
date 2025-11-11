@@ -68,6 +68,8 @@ func (r *CertificateReconciler) createCert(check *reconciler.Check[*v1.Certifica
 		}
 
 		// Use TLS secret type for Ingress compatibility
+		caSecret.Type = corev1.SecretTypeTLS
+
 		if caSecret.Data == nil {
 			caBundle, tlsCert, tlsKey, err := r.genTLSCert(check.Context(), obj)
 			if err != nil {
@@ -93,7 +95,7 @@ func (r *CertificateReconciler) createCert(check *reconciler.Check[*v1.Certifica
 func (r *CertificateReconciler) genTLSCert(ctx context.Context, obj *v1.Certificate) (caBundle, tlsCert, tlsKey []byte, err error) {
 	ca := &v1.CertificateAuthority{}
 	if err := r.Get(ctx, fn.NN("", obj.Spec.CA), ca); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, errors.Wrap("failed to get Certificate Authority", err)
 	}
 
 	caBundleSecret := &corev1.Secret{}
@@ -143,7 +145,9 @@ func (r *CertificateReconciler) genTLSCert(ctx context.Context, obj *v1.Certific
 	serverTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().Unix()), // Use timestamp for unique serial
 		Subject: pkix.Name{
-			Organization: []string{fmt.Sprintf("Kloudlite Local TLS Cert for %s", obj.Name)},
+			Organization:       []string{"Kloudlite"},
+			OrganizationalUnit: []string{"Workspaces"},
+			CommonName:         "Kloudlite",
 		},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().Add(time.Hour * 100 * 365 * 24),
