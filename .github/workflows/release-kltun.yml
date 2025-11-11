@@ -1,0 +1,270 @@
+name: Release kltun
+
+on:
+  push:
+    tags:
+      - 'kltun-v*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - nightly
+          - stable
+        default: nightly
+      tag:
+        description: 'Tag to release (e.g., kltun-v0.1.0) - only for stable releases'
+        required: false
+        type: string
+      make_latest:
+        description: 'Mark as latest release (auto for nightly, custom for stable)'
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build kltun binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - goos: linux
+            goarch: amd64
+            output: kltun-linux-amd64
+          - goos: linux
+            goarch: arm64
+            output: kltun-linux-arm64
+
+          # macOS
+          - goos: darwin
+            goarch: amd64
+            output: kltun-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            output: kltun-darwin-arm64
+
+          # Windows
+          - goos: windows
+            goarch: amd64
+            output: kltun-windows-amd64.exe
+          - goos: windows
+            goarch: arm64
+            output: kltun-windows-arm64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'api/go.mod'
+          cache-dependency-path: 'api/go.sum'
+
+      - name: Get version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.release_type }}" = "nightly" ]; then
+              # Generate nightly version with timestamp
+              TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+              VERSION="0.1.0-nightly-${TIMESTAMP}"
+              TAG="kltun-v${VERSION}"
+            else
+              # Use provided tag for stable releases
+              TAG="${{ inputs.tag }}"
+              VERSION="${TAG#kltun-v}"
+            fi
+          else
+            # Tag push event
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#kltun-v}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION}"
+
+      - name: Build binary
+        working-directory: ./api
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -v \
+            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/kltun/cmd.Version=${{ steps.version.outputs.version }}" \
+            -o ../dist/${{ matrix.output }} \
+            ./cmd/kltun
+
+      - name: Generate checksum
+        working-directory: ./dist
+        run: |
+          sha256sum ${{ matrix.output }} > ${{ matrix.output }}.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: |
+            dist/${{ matrix.output }}
+            dist/${{ matrix.output }}.sha256
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.release_type }}" = "nightly" ]; then
+              # Generate nightly version with timestamp
+              TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+              VERSION="0.1.0-nightly-${TIMESTAMP}"
+              TAG="kltun-v${VERSION}"
+            else
+              # Use provided tag for stable releases
+              TAG="${{ inputs.tag }}"
+              VERSION="${TAG#kltun-v}"
+            fi
+          else
+            # Tag push event
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#kltun-v}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          find dist-artifacts -type f -exec cp {} release-assets/ \;
+          ls -lah release-assets/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          # kltun ${{ steps.version.outputs.version }}
+
+          ## Installation
+
+          ### Linux (AMD64)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kltun-linux-amd64
+          chmod +x kltun-linux-amd64
+          sudo mv kltun-linux-amd64 /usr/local/bin/kltun
+          ```
+
+          ### Linux (ARM64)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kltun-linux-arm64
+          chmod +x kltun-linux-arm64
+          sudo mv kltun-linux-arm64 /usr/local/bin/kltun
+          ```
+
+          ### macOS (Intel)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kltun-darwin-amd64
+          chmod +x kltun-darwin-amd64
+          sudo mv kltun-darwin-amd64 /usr/local/bin/kltun
+          ```
+
+          ### macOS (Apple Silicon)
+          ```bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kltun-darwin-arm64
+          chmod +x kltun-darwin-arm64
+          sudo mv kltun-darwin-arm64 /usr/local/bin/kltun
+          ```
+
+          ### Windows (AMD64)
+          Download [kltun-windows-amd64.exe](https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kltun-windows-amd64.exe) and add to your PATH.
+
+          ### Windows (ARM64)
+          Download [kltun-windows-arm64.exe](https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kltun-windows-arm64.exe) and add to your PATH.
+
+          ## Verify Checksums
+
+          After downloading, verify the integrity of the binary:
+
+          ```bash
+          # Download checksum file
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kltun-linux-amd64.sha256
+
+          # Verify (Linux/macOS)
+          sha256sum -c kltun-linux-amd64.sha256
+
+          # Verify (macOS alternative)
+          shasum -a 256 -c kltun-darwin-arm64.sha256
+          ```
+
+          ## What's Included
+
+          - kltun VPN tunnel CLI with WireGuard support
+          - Cross-platform daemon for background VPN management (macOS/Linux/Windows)
+          - Automatic privilege escalation when needed
+          - CA certificate management
+          - /etc/hosts management with isolated kl.hosts
+          - Configuration persistence for easy reconnection
+
+          ## Usage
+
+          ```bash
+          # Connect to Kloudlite VPN (first time with credentials)
+          kltun connect --token YOUR_TOKEN --server https://subdomain.khost.dev
+
+          # Connect using saved credentials
+          kltun connect
+
+          # Disconnect from VPN
+          kltun quit
+
+          # Check daemon status
+          kltun status
+          ```
+
+          ## Features
+
+          - **Background Connection**: VPN runs in the background via daemon, CLI returns immediately
+          - **Persistent Config**: Token and server are saved for future connections
+          - **Clean Disconnect**: Removes hosts but keeps CA cert for faster reconnection
+          - **Automatic Daemon Management**: CLI ensures daemon is installed and running
+          - **Privilege Escalation**: Automatically prompts for sudo when needed
+
+          For full documentation, see [api/cmd/kltun/README.md](https://github.com/kloudlite/kloudlite/blob/${{ steps.version.outputs.tag }}/api/cmd/kltun/README.md)
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: kltun ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          make_latest: ${{ github.event_name == 'workflow_dispatch' && inputs.make_latest || github.event_name == 'push' }}
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
