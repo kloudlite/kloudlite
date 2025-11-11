@@ -22,7 +22,7 @@ export default function InstallationPage() {
 
         <div className="bg-card rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6">
           <p className="text-card-foreground mb-4 text-lg leading-relaxed">
-            An <strong>Installation</strong> is your team's complete Kloudlite deployment -
+            An <strong>Installation</strong> is your team&apos;s complete Kloudlite deployment -
             a dedicated platform instance running on its own domain at{' '}
             <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm">{'{subdomain}'}.khost.dev</code>
           </p>
@@ -161,7 +161,7 @@ export default function InstallationPage() {
                   >
                     console.kloudlite.io
                   </a>{' '}
-                  and sign in with your account. If you don't have an account yet, click "Sign Up"
+                  and sign in with your account. If you don&apos;t have an account yet, click &quot;Sign Up&quot;
                   to create one.
                 </p>
               </div>
@@ -174,8 +174,8 @@ export default function InstallationPage() {
               <div className="flex-1">
                 <p className="text-card-foreground font-medium leading-snug">Create New Installation</p>
                 <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                  Once logged in, you'll see the installations dashboard. Click on the{' '}
-                  <strong>"Create Installation"</strong> button to begin the setup process.
+                  Once logged in, you&apos;ll see the installations dashboard. Click on the{' '}
+                  <strong>&quot;Create Installation&quot;</strong> button to begin the setup process.
                 </p>
               </div>
             </li>
@@ -304,7 +304,7 @@ export default function InstallationPage() {
                 </p>
                 <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed">
                   <li>• Navigate to the installation card in the console</li>
-                  <li>• Click on "Transfer Ownership"</li>
+                  <li>• Click on &quot;Transfer Ownership&quot;</li>
                   <li>• Enter the email address of the new owner</li>
                   <li>• Confirm the transfer</li>
                 </ul>
@@ -366,7 +366,7 @@ export default function InstallationPage() {
               </h3>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Set up isolated environments for development, staging, and production to organize your team's work.
+              Set up isolated environments for development, staging, and production to organize your team&apos;s work.
             </p>
           </div>
 
@@ -405,11 +405,11 @@ export default function InstallationPage() {
               Cannot Access Installation
             </h3>
             <p className="text-muted-foreground mb-2 text-sm leading-relaxed">
-              If you're having trouble accessing your installation:
+              If you&apos;re having trouble accessing your installation:
             </p>
             <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed">
               <li>• Verify your account has the correct permissions</li>
-              <li>• Check that the installation status is "Active" in the console</li>
+              <li>• Check that the installation status is &quot;Active&quot; in the console</li>
               <li>• Clear your browser cache and cookies</li>
               <li>• Try accessing from a different browser or incognito mode</li>
             </ul>
