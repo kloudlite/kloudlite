@@ -88,7 +88,7 @@ export default function InstallationPage() {
                   Proximity to Team
                 </h4>
                 <p className="text-muted-foreground leading-relaxed">
-                  Your installation runs in the cloud region closest to your team. By deploying in your preferred geographic location (AWS, GCP, or Azure regions), you get low latency access to workspaces and environments—ensuring fast, responsive development experiences
+                  Deploy in your preferred cloud region (AWS, GCP, or Azure) close to your team for low latency access to workspaces and environments
                 </p>
               </div>
             </div>
