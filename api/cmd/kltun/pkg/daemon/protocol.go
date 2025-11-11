@@ -41,18 +41,18 @@ const (
 
 // RPC Methods
 const (
-	MethodPing          = "ping"
-	MethodInstallCA     = "install_ca"
-	MethodUninstallCA   = "uninstall_ca"
-	MethodHostsAdd      = "hosts_add"
-	MethodHostsRemove   = "hosts_remove"
-	MethodHostsList     = "hosts_list"
-	MethodHostsSync     = "hosts_sync"
-	MethodHostsClean    = "hosts_clean"
-	MethodHostsFlush    = "hosts_flush"
-	MethodVPNConnect    = "vpn_connect"
-	MethodVPNQuit       = "vpn_quit"
-	MethodStatus        = "status"
+	MethodPing        = "ping"
+	MethodInstallCA   = "install_ca"
+	MethodUninstallCA = "uninstall_ca"
+	MethodHostsAdd    = "hosts_add"
+	MethodHostsRemove = "hosts_remove"
+	MethodHostsList   = "hosts_list"
+	MethodHostsSync   = "hosts_sync"
+	MethodHostsClean  = "hosts_clean"
+	MethodHostsFlush  = "hosts_flush"
+	MethodVPNConnect  = "vpn_connect"
+	MethodVPNQuit     = "vpn_quit"
+	MethodStatus      = "status"
 )
 
 // Request/Response Parameters
@@ -188,8 +188,8 @@ type ConnectionStatus struct {
 
 // StatusResult contains daemon status
 type StatusResult struct {
-	Running     bool                `json:"running"`
-	Connections []ConnectionStatus  `json:"connections"`
+	Running     bool               `json:"running"`
+	Connections []ConnectionStatus `json:"connections"`
 }
 
 // Helper functions for creating requests/responses
