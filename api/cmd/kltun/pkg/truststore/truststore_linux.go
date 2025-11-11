@@ -132,7 +132,7 @@ func (s *linuxStore) Install(certPath string, cert *x509.Certificate) error {
 	}
 
 	// Update system trust store
-	updateCmd := CommandWithSudo(s.updateCmd, s.updateArgs...)
+	updateCmd := CommandWithSudo(append([]string{s.updateCmd}, s.updateArgs...)...)
 	if out, err := ExecCommand(updateCmd); err != nil {
 		return fmt.Errorf("failed to update trust store: %w\nOutput: %s", err, out)
 	}
@@ -162,7 +162,7 @@ func (s *linuxStore) Uninstall(cert *x509.Certificate) error {
 	}
 
 	// Update system trust store
-	updateCmd := CommandWithSudo(s.updateCmd, s.updateArgs...)
+	updateCmd := CommandWithSudo(append([]string{s.updateCmd}, s.updateArgs...)...)
 	if out, err := ExecCommand(updateCmd); err != nil {
 		return fmt.Errorf("failed to update trust store: %w\nOutput: %s", err, out)
 	}
