@@ -109,22 +109,17 @@ func (r *CAReconciler) generateCABundle(ctx context.Context, obj *v1.Certificate
 
 	// Create a template for the CA certificate
 	caTemplate := x509.Certificate{
-		SerialNumber:          big.NewInt(1),
-		Subject:               pkix.Name{Organization: []string{"Kloudlite CA"}},
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization:       []string{"Kloudlite"},
+			OrganizationalUnit: []string{"Security"},
+			CommonName:         "Kloudlite Root CA",
+		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().Add(100 * 365 * 24 * time.Hour),
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
-		Issuer: pkix.Name{
-			Country:       []string{"IN"},
-			Organization:  []string{"Kloudlite"},
-			Locality:      []string{},
-			Province:      []string{"Karnataka"},
-			StreetAddress: []string{"415, VRR Fortuna", "Janatha Colony, Bangalore"},
-			PostalCode:    []string{"560035"},
-			CommonName:    "kloudlite",
-		},
 	}
 
 	// Create the CA certificate

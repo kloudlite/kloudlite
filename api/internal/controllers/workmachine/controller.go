@@ -13,6 +13,7 @@ import (
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/errors"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
@@ -208,6 +209,10 @@ func (r *WorkMachineReconciler) setupWorkmachineTLSCert(check *reconciler.Check[
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, ca, func() error {
+		if !fn.IsOwner(ca, obj) {
+			ca.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+
 		ca.Spec.SANs = []string{
 			fmt.Sprintf("*.%s.%s", obj.Spec.OwnedBy, subdomain),
 			fmt.Sprintf("*.%s.%s", obj.Name, subdomain),
@@ -220,11 +225,15 @@ func (r *WorkMachineReconciler) setupWorkmachineTLSCert(check *reconciler.Check[
 	certificate := &cav1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      obj.Name,
-			Namespace: "kloudlite-ingress",
+			Namespace: obj.Spec.TargetNamespace,
 		},
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, certificate, func() error {
+		if !fn.IsOwner(certificate, obj) {
+			certificate.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(ca, true)})
+		}
+
 		certificate.Spec.CA = ca.Name
 		return nil
 	}); err != nil {
@@ -366,6 +375,8 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 		}),
 	)
+
+	builder.Owns(&cav1.CertificateAuthority{})
 
 	// Watch for host-manager Pods to recreate them if they crash
 	builder.Watches(
