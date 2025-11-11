@@ -21,20 +21,20 @@ import (
 
 // Server represents the daemon RPC server
 type Server struct {
-	listener       net.Listener
-	hostsManager   hosts.Manager
-	connections    map[string]*VPNConnection
-	connMutex      sync.RWMutex
-	shutdownCh     chan struct{}
-	wg             sync.WaitGroup
+	listener     net.Listener
+	hostsManager hosts.Manager
+	connections  map[string]*VPNConnection
+	connMutex    sync.RWMutex
+	shutdownCh   chan struct{}
+	wg           sync.WaitGroup
 }
 
 // VPNConnection represents an active VPN connection
 type VPNConnection struct {
-	SessionID   string
-	Server      string
-	StartTime   time.Time
-	CancelFunc  context.CancelFunc
+	SessionID  string
+	Server     string
+	StartTime  time.Time
+	CancelFunc context.CancelFunc
 }
 
 // NewServer creates a new daemon server
@@ -42,9 +42,9 @@ func NewServer() (*Server, error) {
 	hostsManager := hosts.NewManager()
 
 	return &Server{
-		hostsManager:   hostsManager,
-		connections:    make(map[string]*VPNConnection),
-		shutdownCh:     make(chan struct{}),
+		hostsManager: hostsManager,
+		connections:  make(map[string]*VPNConnection),
+		shutdownCh:   make(chan struct{}),
 	}, nil
 }
 

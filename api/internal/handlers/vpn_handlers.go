@@ -26,8 +26,8 @@ func NewVPNHandlers(logger *zap.Logger, jwtSecret string) *VPNHandlers {
 
 // VPNConnectResponse represents the VPN connection configuration
 type VPNConnectResponse struct {
-	CACert   string     `json:"ca_cert"`
-	WGConfig string     `json:"wg_config"`
+	CACert   string      `json:"ca_cert"`
+	WGConfig string      `json:"wg_config"`
 	Hosts    []HostEntry `json:"hosts"`
 }
 

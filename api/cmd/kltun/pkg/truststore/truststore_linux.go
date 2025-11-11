@@ -29,11 +29,11 @@ func NewSystemStore() TrustStore {
 	if PathExists("/etc/pki/ca-trust/source/anchors/") {
 		// Red Hat/Fedora/CentOS
 		return &linuxStore{
-			distro:      "Red Hat/Fedora/CentOS",
-			certPath:    "/etc/pki/ca-trust/source/anchors",
-			certExt:     ".pem",
-			updateCmd:   "update-ca-trust",
-			updateArgs:  []string{"extract"},
+			distro:       "Red Hat/Fedora/CentOS",
+			certPath:     "/etc/pki/ca-trust/source/anchors",
+			certExt:      ".pem",
+			updateCmd:    "update-ca-trust",
+			updateArgs:   []string{"extract"},
 			installGuide: "Install NSS tools with: yum install nss-tools",
 		}
 	}
@@ -41,11 +41,11 @@ func NewSystemStore() TrustStore {
 	if PathExists("/usr/local/share/ca-certificates/") {
 		// Debian/Ubuntu
 		return &linuxStore{
-			distro:      "Debian/Ubuntu",
-			certPath:    "/usr/local/share/ca-certificates",
-			certExt:     ".crt",
-			updateCmd:   "update-ca-certificates",
-			updateArgs:  []string{},
+			distro:       "Debian/Ubuntu",
+			certPath:     "/usr/local/share/ca-certificates",
+			certExt:      ".crt",
+			updateCmd:    "update-ca-certificates",
+			updateArgs:   []string{},
 			installGuide: "Install NSS tools with: apt install libnss3-tools",
 		}
 	}
@@ -53,11 +53,11 @@ func NewSystemStore() TrustStore {
 	if PathExists("/etc/ca-certificates/trust-source/anchors/") {
 		// Arch Linux
 		return &linuxStore{
-			distro:      "Arch Linux",
-			certPath:    "/etc/ca-certificates/trust-source/anchors",
-			certExt:     ".crt",
-			updateCmd:   "trust",
-			updateArgs:  []string{"extract-compat"},
+			distro:       "Arch Linux",
+			certPath:     "/etc/ca-certificates/trust-source/anchors",
+			certExt:      ".crt",
+			updateCmd:    "trust",
+			updateArgs:   []string{"extract-compat"},
 			installGuide: "Install NSS tools with: pacman -S nss",
 		}
 	}
@@ -65,22 +65,22 @@ func NewSystemStore() TrustStore {
 	if PathExists("/usr/share/pki/trust/anchors") {
 		// openSUSE
 		return &linuxStore{
-			distro:      "openSUSE",
-			certPath:    "/usr/share/pki/trust/anchors",
-			certExt:     ".pem",
-			updateCmd:   "update-ca-certificates",
-			updateArgs:  []string{},
+			distro:       "openSUSE",
+			certPath:     "/usr/share/pki/trust/anchors",
+			certExt:      ".pem",
+			updateCmd:    "update-ca-certificates",
+			updateArgs:   []string{},
 			installGuide: "Install NSS tools with: zypper install mozilla-nss-tools",
 		}
 	}
 
 	log.Println("Warning: unsupported Linux distribution, using generic approach")
 	return &linuxStore{
-		distro:      "Generic Linux",
-		certPath:    "/usr/local/share/ca-certificates",
-		certExt:     ".crt",
-		updateCmd:   "update-ca-certificates",
-		updateArgs:  []string{},
+		distro:       "Generic Linux",
+		certPath:     "/usr/local/share/ca-certificates",
+		certExt:      ".crt",
+		updateCmd:    "update-ca-certificates",
+		updateArgs:   []string{},
 		installGuide: "Install NSS tools with your package manager",
 	}
 }

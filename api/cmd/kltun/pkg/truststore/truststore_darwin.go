@@ -159,12 +159,12 @@ func (s *macOSStore) modifyTrustSettings(plistPath string, cert *x509.Certificat
 	certTrustSettings := []map[string]interface{}{
 		{
 			"kSecTrustSettingsPolicy":       []byte{0x2A, 0x86, 0x48, 0x86, 0xF7, 0x63, 0x64, 0x01, 0x01}, // sslServer
-			"kSecTrustSettingsResult":       uint64(1),                                                      // kSecTrustSettingsResultTrustRoot
+			"kSecTrustSettingsResult":       uint64(1),                                                    // kSecTrustSettingsResultTrustRoot
 			"kSecTrustSettingsPolicyString": "sslServer",
 		},
 		{
 			"kSecTrustSettingsPolicy": []byte{0x2A, 0x86, 0x48, 0x86, 0xF7, 0x63, 0x64, 0x01, 0x00}, // basicX509
-			"kSecTrustSettingsResult": uint64(1),                                                      // kSecTrustSettingsResultTrustRoot
+			"kSecTrustSettingsResult": uint64(1),                                                    // kSecTrustSettingsResultTrustRoot
 		},
 	}
 

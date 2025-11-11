@@ -15,10 +15,10 @@ import (
 
 // javaStore implements TrustStore for Java keystore
 type javaStore struct {
-	javaHome     string
-	keytoolPath  string
-	cacertsPath  string
-	storePass    string
+	javaHome    string
+	keytoolPath string
+	cacertsPath string
+	storePass   string
 }
 
 // NewJavaStore creates a new Java keystore trust store
@@ -44,10 +44,10 @@ func NewJavaStore() TrustStore {
 	}
 
 	return &javaStore{
-		javaHome:     javaHome,
-		keytoolPath:  keytoolPath,
-		cacertsPath:  cacertsPath,
-		storePass:    "changeit", // Java's default keystore password
+		javaHome:    javaHome,
+		keytoolPath: keytoolPath,
+		cacertsPath: cacertsPath,
+		storePass:   "changeit", // Java's default keystore password
 	}
 }
 
