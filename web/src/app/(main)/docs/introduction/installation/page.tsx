@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Cloud, Server, Settings, Activity, AlertTriangle, Lock, UsersRound, Network, Boxes, FolderTree, UserCog } from 'lucide-react'
+import { Cloud, Server, Settings, Activity, AlertTriangle, Lock, UsersRound, Network, Boxes, FolderTree, UserCog, MapPin } from 'lucide-react'
 
 export default function InstallationPage() {
   return (
@@ -73,6 +73,22 @@ export default function InstallationPage() {
                 </h4>
                 <p className="text-muted-foreground leading-relaxed">
                   Members discover and interact with environments and workspaces within the scope of the installation
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <div className="mb-4 flex items-start gap-4">
+              <div className="bg-primary flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg">
+                <MapPin className="text-primary-foreground h-6 w-6" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-card-foreground mb-2 text-xl font-semibold leading-snug">
+                  Proximity to Team
+                </h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  Your installation runs in the cloud region closest to your team. By deploying in your preferred geographic location (AWS, GCP, or Azure regions), you get low latency access to workspaces and environments—ensuring fast, responsive development experiences
                 </p>
               </div>
             </div>
