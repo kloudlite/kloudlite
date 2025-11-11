@@ -31,23 +31,25 @@ type VerifyKeyResponse struct {
 }
 
 type SubdomainPoller struct {
-	config     *config.InstallationConfig
-	k8sClient  client.Client
-	logger     *zap.Logger
-	httpClient *http.Client
-	stopCh     chan struct{}
-	stopped    bool
-	stopOnce   sync.Once
-	readyCh    chan struct{}
-	readyOnce  sync.Once
+	config        *config.InstallationConfig
+	k8sClient     client.Client
+	logger        *zap.Logger
+	caInitializer *CAInitializer
+	httpClient    *http.Client
+	stopCh        chan struct{}
+	stopped       bool
+	stopOnce      sync.Once
+	readyCh       chan struct{}
+	readyOnce     sync.Once
 }
 
 // NewSubdomainPoller creates a new subdomain poller
-func NewSubdomainPoller(cfg *config.InstallationConfig, k8sClient client.Client, logger *zap.Logger) *SubdomainPoller {
+func NewSubdomainPoller(cfg *config.InstallationConfig, k8sClient client.Client, caInitializer *CAInitializer, logger *zap.Logger) *SubdomainPoller {
 	return &SubdomainPoller{
-		config:    cfg,
-		k8sClient: k8sClient,
-		logger:    logger.Named("subdomain-poller"),
+		config:        cfg,
+		k8sClient:     k8sClient,
+		logger:        logger.Named("subdomain-poller"),
+		caInitializer: caInitializer,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -212,9 +214,18 @@ func (sp *SubdomainPoller) verifyInstallationKey(ctx context.Context) (*VerifyKe
 
 // createOrUpdateDomainRequest creates or updates the DomainRequest resource
 func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subdomain string) error {
+	fqdn := fmt.Sprintf("%s.khost.dev", subdomain)
+
+	if err := sp.caInitializer.ensureCA(ctx, fqdn); err != nil {
+		return err
+	}
+
+	if err := sp.caInitializer.ensureWildcardCertificate(ctx); err != nil {
+		return err
+	}
+
 	existingDR := &domainrequestv1.DomainRequest{}
 	err := sp.k8sClient.Get(ctx, client.ObjectKey{Name: domainRequestName}, existingDR)
-
 	if err == nil {
 		existingDR.Spec.IPAddress = sp.config.PublicIP
 		if err := sp.k8sClient.Update(ctx, existingDR); err != nil {
@@ -238,12 +249,12 @@ func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subd
 			CertificateScope:  "installation",
 			// Covers both {subdomain}.khost.dev and *.{subdomain}.khost.dev
 			OriginCertificateHostnames: []string{
-				fmt.Sprintf("%s.khost.dev", subdomain),
-				fmt.Sprintf("*.%s.khost.dev", subdomain),
+				fqdn,
+				"*." + fqdn,
 			},
 			DomainRoutes: []domainrequestv1.DomainRoute{
 				{
-					Domain:           fmt.Sprintf("%s.khost.dev", subdomain),
+					Domain:           fqdn,
 					ServiceName:      "frontend",
 					ServiceNamespace: "kloudlite",
 					ServicePort:      80,

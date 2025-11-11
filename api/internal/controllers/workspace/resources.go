@@ -267,7 +267,10 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	var tlsHosts []string
 
 	for prefix, svc := range httpServices {
-		host := fmt.Sprintf("%s-%s.%s.%s", prefix, workspace.Name, workspace.Spec.WorkmachineName, domainRequest.Status.Subdomain)
+		// Use simplified naming without nested periods:
+		// {prefix}-{workspace}-{workmachine}.{subdomain}.khost.dev
+		// Example: vscode-myworkspace-myworkmachine.subdomain.khost.dev
+		host := fmt.Sprintf("%s-%s-%s.%s.khost.dev", prefix, workspace.Name, workspace.Spec.WorkmachineName, domainRequest.Status.Subdomain)
 		tlsHosts = append(tlsHosts, host)
 
 		pathType := networkingv1.PathTypePrefix
@@ -301,8 +304,8 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 		ingress.Spec.TLS = []networkingv1.IngressTLS{
 			{
 				Hosts: tlsHosts,
-				// TLS secret name matches the workmachine name
-				SecretName: fmt.Sprintf("%s-tls", workspace.Spec.WorkmachineName),
+				// Use the global wildcard certificate created at server startup
+				SecretName: "kloudlite-wildcard-cert-tls",
 			},
 		}
 		ingress.Spec.Rules = ingressRules
