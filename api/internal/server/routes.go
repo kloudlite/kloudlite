@@ -88,6 +88,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		cfg.Installation.InstallationSecret,
 		logger,
 	)
+	vpnHandlers := handlers.NewVPNHandlers(
+		logger,
+		cfg.Auth.JWTSecret,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
@@ -286,6 +290,12 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 
 		// Connection Token validation endpoint (public - used by VS Code extension)
 		v1.POST("/connection-tokens/validate", connectionTokenHandlers.ValidateConnectionToken)
+
+		// VPN connection endpoint (public - used by kltun CLI)
+		vpn := v1.Group("/vpn")
+		{
+			vpn.GET("/connect", vpnHandlers.GetVPNConnect)
+		}
 	}
 
 	// Webhook endpoints (for Kubernetes admission controllers)
