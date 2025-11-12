@@ -1,10 +1,19 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Cloud, Server, Settings, Activity, AlertTriangle, Lock, UsersRound, Network, Boxes, FolderTree, UserCog, MapPin } from 'lucide-react'
+import { Cloud, Server, Settings, Activity, AlertTriangle, Lock, UsersRound, UserCog, MapPin } from 'lucide-react'
+import { DocsContentLayout } from '@/components/docs/docs-content-layout'
+
+const tocItems = [
+  { id: 'what-is-installation', title: 'What is an Installation?' },
+  { id: 'creating-installation', title: 'Creating an Installation' },
+  { id: 'managing-installations', title: 'Managing Installations' },
+  { id: 'next-steps', title: 'Next Steps' },
+  { id: 'common-issues', title: 'Common Issues' },
+]
 
 export default function InstallationPage() {
   return (
-    <div className="prose prose-slate dark:prose-invert mx-auto max-w-3xl px-4 pt-8 pb-16 sm:px-6 lg:px-8 xl:pr-16">
+    <DocsContentLayout tocItems={tocItems}>
       {/* Header */}
       <div className="mb-12 sm:mb-16">
         <h1 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl break-words leading-tight sm:leading-tight">
@@ -17,7 +26,7 @@ export default function InstallationPage() {
       </div>
 
       {/* What is an Installation */}
-      <section className="mb-12 sm:mb-16">
+      <section id="what-is-installation" className="mb-12 sm:mb-16">
         <h2 className="text-foreground mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold">What is an Installation?</h2>
 
         <div className="bg-card rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6">
@@ -100,61 +109,10 @@ export default function InstallationPage() {
             <strong>Note:</strong> Installation is registered in <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">console.kloudlite.io</code> for subdomain allocation and root user access management only.
           </p>
         </div>
-
-        <h3 className="text-foreground mt-6 sm:mt-8 mb-4 text-xl font-semibold leading-snug">How it Works</h3>
-        <div className="mb-4 sm:mb-6 grid gap-4 sm:gap-6">
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <div className="mb-4 flex items-start gap-4">
-              <div className="bg-primary flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg">
-                <Network className="text-primary-foreground h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-card-foreground mb-2 text-xl font-semibold leading-snug">
-                  Management Node
-                </h4>
-                <p className="text-muted-foreground leading-relaxed">
-                  One dedicated node manages your entire installation - handling team access, environments, workspaces, orchestrating all workmachines, and responsible for backups and recovery
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <div className="mb-4 flex items-start gap-4">
-              <div className="bg-primary flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg">
-                <Boxes className="text-primary-foreground h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-card-foreground mb-2 text-xl font-semibold leading-snug">
-                  Workmachines for Users
-                </h4>
-                <p className="text-muted-foreground leading-relaxed">
-                  Additional VM instances are provisioned as workmachines where team members run their workspaces and development environments
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <div className="mb-4 flex items-start gap-4">
-              <div className="bg-primary flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg">
-                <FolderTree className="text-primary-foreground h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-card-foreground mb-2 text-xl font-semibold leading-snug">
-                  Centralized Management
-                </h4>
-                <p className="text-muted-foreground leading-relaxed">
-                  All team environments, workspaces, backups, and regional resources are managed centrally through the management node
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Creating an Installation */}
-      <section className="mb-12 sm:mb-16">
+      <section id="creating-installation" className="mb-12 sm:mb-16">
         <h2 className="text-foreground mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold">Creating an Installation</h2>
         <div className="bg-card rounded-lg border p-4 sm:p-6">
           <h3 className="text-card-foreground mb-4 text-xl font-semibold leading-snug">
@@ -259,7 +217,7 @@ export default function InstallationPage() {
       </section>
 
       {/* Managing Installations */}
-      <section className="mb-12 sm:mb-16">
+      <section id="managing-installations" className="mb-12 sm:mb-16">
         <h2 className="text-foreground mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold">Managing Installations</h2>
         <div className="grid gap-4 sm:gap-6">
           <div className="bg-card rounded-lg border p-4 sm:p-6">
@@ -361,7 +319,7 @@ export default function InstallationPage() {
       </section>
 
       {/* Next Steps */}
-      <section className="mb-12 sm:mb-16">
+      <section id="next-steps" className="mb-12 sm:mb-16">
         <h2 className="text-foreground mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold">Next Steps</h2>
         <div className="space-y-3 sm:space-y-4">
           <div className="bg-card rounded-lg border p-4 sm:p-6">
@@ -400,7 +358,7 @@ export default function InstallationPage() {
       </section>
 
       {/* Common Issues */}
-      <section className="mb-12 sm:mb-16">
+      <section id="common-issues" className="mb-12 sm:mb-16">
         <h2 className="text-foreground mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold">Common Issues</h2>
         <div className="bg-card space-y-3 sm:space-y-4 rounded-lg border p-4 sm:p-6">
           <div>
@@ -456,6 +414,6 @@ export default function InstallationPage() {
           </Button>
         </div>
       </section>
-    </div>
+    </DocsContentLayout>
   )
 }
