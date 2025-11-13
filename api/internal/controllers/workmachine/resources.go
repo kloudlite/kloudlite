@@ -52,11 +52,12 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 	pod := &corev1.Pod{}
 	err := r.Get(check.Context(), client.ObjectKey{Name: hostManagerName, Namespace: hostManagerNamespace}, pod)
 
+	// Handle errors (except NotFound which we'll handle below)
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return check.Errored(err)
 	}
 
-	// If pod exists, check its status
+	// If pod exists (no error), check its status
 	if err == nil {
 		// Check if pod is in a failed/completed state and needs recreation
 		if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodSucceeded {

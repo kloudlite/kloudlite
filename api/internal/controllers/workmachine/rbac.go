@@ -20,7 +20,6 @@ import (
 // - Nodes (cluster-wide) - to update GPU status
 // - Secrets (in hostmanager namespace) - to manage SSH keys
 func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	const hostManagerNamespace = "kloudlite-hostmanager"
 	const serviceAccountName = "workmachine-node-manager"
 
 	// Create ClusterRole for host manager

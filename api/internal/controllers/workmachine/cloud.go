@@ -182,8 +182,10 @@ func (r *WorkMachineReconciler) cleanupCloudMachine(check *reconciler.Check[*v1.
 	// Step 2: Force delete any remaining pods on this node
 	podList := &corev1.PodList{}
 	if err := r.List(check.Context(), podList, client.MatchingFields{"spec.nodeName": obj.Name}); err != nil {
-		check.Logger().Warn("failed to list pods on node", "error", err)
-	} else if len(podList.Items) > 0 {
+		return check.Failed(fmt.Errorf("failed to list pods on node: %w", err))
+	}
+
+	if len(podList.Items) > 0 {
 		gracePeriod := int64(0)
 		deleteOptions := &client.DeleteOptions{
 			GracePeriodSeconds: &gracePeriod,

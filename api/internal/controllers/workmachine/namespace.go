@@ -25,6 +25,10 @@ func (r *WorkMachineReconciler) createNamespace(check *reconciler.Check[*v1.Work
 		}))
 
 		if !fn.IsOwner(ns, obj) {
+			// Check if namespace already has other owners
+			if len(ns.GetOwnerReferences()) > 0 {
+				return fmt.Errorf("namespace %s already owned by another resource", ns.Name)
+			}
 			ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 		if !controllerutil.ContainsFinalizer(ns, WorkMachineFinalizerName) {

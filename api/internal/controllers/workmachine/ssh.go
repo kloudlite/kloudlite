@@ -22,23 +22,8 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 	namespace := hostManagerNamespace
 	secretName := fmt.Sprintf("ssh-host-keys-%s", obj.Name)
 
-	// Generate RSA 2048-bit key (only used if Secret doesn't exist)
-	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return check.Failed(fmt.Errorf("failed to generate RSA key: %w", err))
-	}
-
-	// Marshal RSA key
-	rsaPrivateBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(rsaKey),
-	})
-
-	rsaSSHPublicKey, err := ssh.NewPublicKey(&rsaKey.PublicKey)
-	if err != nil {
-		return check.Failed(fmt.Errorf("failed to create RSA SSH public key: %w", err))
-	}
-	rsaPublicBytes := ssh.MarshalAuthorizedKey(rsaSSHPublicKey)
+	// Defer key generation until we know if we need it (performance optimization)
+	var rsaPrivateBytes, rsaPublicBytes []byte
 
 	// Build authorized_keys content from WorkMachine spec
 	var authorizedKeys strings.Builder
@@ -89,6 +74,25 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 
 		// Only set host keys if they don't exist (preserve existing keys)
 		if _, exists := secret.Data["ssh_host_rsa_key"]; !exists {
+			// Generate keys only when needed (performance optimization)
+			if len(rsaPrivateBytes) == 0 {
+				rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
+				if err != nil {
+					return fmt.Errorf("failed to generate RSA key: %w", err)
+				}
+
+				// Marshal RSA key
+				rsaPrivateBytes = pem.EncodeToMemory(&pem.Block{
+					Type:  "RSA PRIVATE KEY",
+					Bytes: x509.MarshalPKCS1PrivateKey(rsaKey),
+				})
+
+				rsaSSHPublicKey, err := ssh.NewPublicKey(&rsaKey.PublicKey)
+				if err != nil {
+					return fmt.Errorf("failed to create RSA SSH public key: %w", err)
+				}
+				rsaPublicBytes = ssh.MarshalAuthorizedKey(rsaSSHPublicKey)
+			}
 			secret.Data["ssh_host_rsa_key"] = rsaPrivateBytes
 			secret.Data["ssh_host_rsa_key.pub"] = rsaPublicBytes
 		}
