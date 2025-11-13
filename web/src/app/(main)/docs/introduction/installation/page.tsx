@@ -232,11 +232,11 @@ export default function InstallationPage() {
                 <p className="text-muted-foreground mb-3 leading-relaxed">
                   From <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">console.kloudlite.io</code>, you can view details about your installations:
                 </p>
-                <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed">
-                  <li>• Installation URL (<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">{'{subdomain}'}.khost.dev</code>)</li>
-                  <li>• Current status and health</li>
-                  <li>• Cloud provider and region</li>
-                  <li>• Installation owner information</li>
+                <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed list-disc list-inside">
+                  <li>Installation URL (<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">{'{subdomain}'}.khost.dev</code>)</li>
+                  <li>Current status and health</li>
+                  <li>Cloud provider and region</li>
+                  <li>Installation owner information</li>
                 </ul>
               </div>
             </div>
@@ -254,11 +254,11 @@ export default function InstallationPage() {
                 <p className="text-muted-foreground mb-3 leading-relaxed">
                   The installation owner (root user) has full administrative access to the installation:
                 </p>
-                <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed">
-                  <li>• Access installation admin panel at <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">{'{subdomain}'}.khost.dev</code></li>
-                  <li>• Manage all team members, environments, and workspaces</li>
-                  <li>• Configure OAuth providers and authentication settings</li>
-                  <li>• Manage machine types and resource allocations</li>
+                <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed list-disc list-inside">
+                  <li>Access installation admin panel at <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">{'{subdomain}'}.khost.dev</code></li>
+                  <li>Manage all team members, environments, and workspaces</li>
+                  <li>Configure OAuth providers and authentication settings</li>
+                  <li>Manage machine types and resource allocations</li>
                 </ul>
               </div>
             </div>
@@ -276,11 +276,11 @@ export default function InstallationPage() {
                 <p className="text-muted-foreground mb-3 leading-relaxed">
                   The current installation owner can transfer ownership to another user through <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">console.kloudlite.io</code>:
                 </p>
-                <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed">
-                  <li>• Navigate to the installation card in the console</li>
-                  <li>• Click on &quot;Transfer Ownership&quot;</li>
-                  <li>• Enter the email address of the new owner</li>
-                  <li>• Confirm the transfer</li>
+                <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed list-disc list-inside">
+                  <li>Navigate to the installation card in the console</li>
+                  <li>Click on &quot;Transfer Ownership&quot;</li>
+                  <li>Enter the email address of the new owner</li>
+                  <li>Confirm the transfer</li>
                 </ul>
               </div>
             </div>
@@ -323,7 +323,11 @@ export default function InstallationPage() {
         <h2 className="text-foreground mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold">Next Steps</h2>
         <div className="space-y-3 sm:space-y-4">
           <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <Link href="/docs">
+            <Link
+              href="https://console.kloudlite.io"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <h3 className="text-card-foreground mb-3 text-lg font-semibold hover:text-primary cursor-pointer transition-colors leading-snug">
                 Access Installation Dashboard
               </h3>
@@ -334,7 +338,7 @@ export default function InstallationPage() {
           </div>
 
           <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <Link href="/docs">
+            <Link href="/docs/concepts/environments">
               <h3 className="text-card-foreground mb-3 text-lg font-semibold hover:text-primary cursor-pointer transition-colors leading-snug">
                 Create Your First Environment
               </h3>
@@ -345,7 +349,7 @@ export default function InstallationPage() {
           </div>
 
           <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <Link href="/docs">
+            <Link href="/docs/concepts/workspaces">
               <h3 className="text-card-foreground mb-3 text-lg font-semibold hover:text-primary cursor-pointer transition-colors leading-snug">
                 Create Your First Workspace
               </h3>
@@ -366,11 +370,11 @@ export default function InstallationPage() {
               Installation Creation Failed
             </h3>
             <p className="text-muted-foreground mb-2 text-sm leading-relaxed">If your installation fails to create, check:</p>
-            <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed">
-              <li>• Your account has sufficient credits (for Cloud installations)</li>
-              <li>• The installation name is unique and follows naming conventions</li>
-              <li>• For BYOC: Your cloud provider credentials are valid and have necessary permissions</li>
-              <li>• For BYOC: Your cloud account has sufficient quota for cluster resources</li>
+            <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed list-disc list-inside">
+              <li>Your account has sufficient credits (for Cloud installations)</li>
+              <li>The installation name is unique and follows naming conventions</li>
+              <li>For BYOC: Your cloud provider credentials are valid and have necessary permissions</li>
+              <li>For BYOC: Your cloud account has sufficient quota for cluster resources</li>
             </ul>
           </div>
 
@@ -381,21 +385,21 @@ export default function InstallationPage() {
             <p className="text-muted-foreground mb-2 text-sm leading-relaxed">
               If you&apos;re having trouble accessing your installation:
             </p>
-            <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed">
-              <li>• Verify your account has the correct permissions</li>
-              <li>• Check that the installation status is &quot;Active&quot; in the console</li>
-              <li>• Clear your browser cache and cookies</li>
-              <li>• Try accessing from a different browser or incognito mode</li>
+            <ul className="text-muted-foreground space-y-1 text-sm leading-relaxed list-disc list-inside">
+              <li>Verify your account has the correct permissions</li>
+              <li>Check that the installation status is &quot;Active&quot; in the console</li>
+              <li>Clear your browser cache and cookies</li>
+              <li>Try accessing from a different browser or incognito mode</li>
             </ul>
           </div>
 
           <div className="border-t pt-4">
             <h3 className="text-card-foreground mb-2 text-base font-semibold">Need More Help?</h3>
-            <div className="text-muted-foreground space-y-1 text-sm">
-              <p>• Check our <Link href="/docs/faq" className="text-primary hover:underline">FAQ page</Link> for common questions</p>
-              <p>• <Link href="/contact" className="text-primary hover:underline">Contact our support team</Link> for personalized assistance</p>
-              <p>• Visit our <a href="https://github.com/kloudlite/kloudlite/issues" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub repository</a> to report bugs</p>
-            </div>
+            <ul className="text-muted-foreground space-y-1 text-sm list-disc list-inside">
+              <li>Check our <Link href="/docs/faq" className="text-primary hover:underline">FAQ page</Link> for common questions</li>
+              <li><Link href="/contact" className="text-primary hover:underline">Contact our support team</Link> for personalized assistance</li>
+              <li>Visit our <a href="https://github.com/kloudlite/kloudlite/issues" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub repository</a> to report bugs</li>
+            </ul>
           </div>
         </div>
       </section>

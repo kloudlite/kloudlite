@@ -7,7 +7,12 @@ import {
   Users,
   Sparkles,
   CheckCircle2,
-  Layers
+  Layers,
+  Clock,
+  ShieldCheck,
+  GitBranch,
+  BarChart3,
+  Cpu
 } from 'lucide-react'
 
 const tocItems = [
@@ -94,6 +99,135 @@ export default function WhatIsKloudlitePage() {
                   <li>Production-like environments on demand</li>
                   <li>Real-time collaboration and debugging capabilities</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="bg-card rounded-lg border p-5">
+            <div className="flex items-start gap-4">
+              <div className="bg-primary/10 rounded-lg p-3 flex-shrink-0">
+                <Clock className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-card-foreground text-lg font-semibold mb-2 m-0">
+                  Faster Feedback Loops
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed m-0">
+                  Teams dramatically shrink time-to-first-test by intercepting services instead of
+                  waiting for container builds or cluster rollouts.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-lg border p-5">
+            <div className="flex items-start gap-4">
+              <div className="bg-primary/10 rounded-lg p-3 flex-shrink-0">
+                <ShieldCheck className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-card-foreground text-lg font-semibold mb-2 m-0">
+                  Production Parity
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed m-0">
+                  Every workspace uses the same Kubernetes namespaces, Secrets, and DNS that your
+                  service will use in production—no more “works on my machine” regressions.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-lg border p-5">
+            <div className="flex items-start gap-4">
+              <div className="bg-primary/10 rounded-lg p-3 flex-shrink-0">
+                <GitBranch className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-card-foreground text-lg font-semibold mb-2 m-0">
+                  Less Ops Overhead
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed m-0">
+                  Platform teams define guard-railed templates once; developers self-serve new
+                  environments and workspaces without needing cluster access.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 bg-gradient-to-r from-emerald-500/10 via-primary/5 to-blue-500/10 dark:from-emerald-500/20 dark:via-primary/10 dark:to-blue-500/20 border border-primary/20 rounded-2xl p-6 sm:p-8">
+          <h3 className="text-foreground text-xl font-semibold mb-4 m-0 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Measurable Impact
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-3 text-sm text-muted-foreground">
+            <div>
+              <p className="text-foreground text-2xl font-bold mb-1">⏱️ Faster loops</p>
+              <p className="m-0 leading-relaxed">
+                Inner-loop testing happens in seconds because code changes flow straight from your workspace into the environment.
+              </p>
+            </div>
+            <div>
+              <p className="text-foreground text-2xl font-bold mb-1">🔐 0 drift</p>
+              <p className="m-0 leading-relaxed">
+                Workspaces inherit the same Compose specs, Secrets, and routing rules that run in production.
+              </p>
+            </div>
+            <div>
+              <p className="text-foreground text-2xl font-bold mb-1">🧑‍🤝‍🧑 Lower ops load</p>
+              <p className="m-0 leading-relaxed">
+                Platform teams spend their time on strategic improvements rather than repetitive sandbox provisioning.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="bg-card rounded-lg border p-6">
+            <div className="flex items-start gap-4">
+              <div className="bg-primary/10 rounded-lg p-3 flex-shrink-0">
+                <Code2 className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-card-foreground text-lg font-semibold mb-2 m-0">
+                  For Developers
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed m-0">
+                  Ship features without fighting fleet configs. Spin up a workspace, intercept a service, and
+                  debug against real dependencies in seconds.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-lg border p-6">
+            <div className="flex items-start gap-4">
+              <div className="bg-primary/10 rounded-lg p-3 flex-shrink-0">
+                <Cpu className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-card-foreground text-lg font-semibold mb-2 m-0">
+                  For Platform Teams
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed m-0">
+                  Define reproducible blueprints for environments and machine types. Enforce policies and observability
+                  without blocking day-to-day delivery.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-lg border p-6">
+            <div className="flex items-start gap-4">
+              <div className="bg-primary/10 rounded-lg p-3 flex-shrink-0">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-card-foreground text-lg font-semibold mb-2 m-0">
+                  For Engineering Leaders
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed m-0">
+                  Reduce cycle time, improve release quality, and give teams on-demand, cost-aware environments while
+                  keeping compliance requirements intact.
+                </p>
               </div>
             </div>
           </div>
@@ -317,7 +451,7 @@ export default function WhatIsKloudlitePage() {
               <ul className="text-emerald-800 dark:text-emerald-200 text-sm space-y-1.5">
                 <li className="flex items-center gap-2">
                   <Zap className="h-4 w-4 flex-shrink-0" />
-                  <strong>50-100x faster iterations</strong> - Test changes in seconds instead of minutes
+                  <strong>Orders-of-magnitude faster iterations</strong> - Test changes in seconds instead of minutes
                 </li>
                 <li className="flex items-center gap-2">
                   <Zap className="h-4 w-4 flex-shrink-0" />

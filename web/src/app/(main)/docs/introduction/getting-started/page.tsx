@@ -19,12 +19,14 @@ import {
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
 
 const tocItems = [
+  { id: 'progress-overview', title: 'Your Journey' },
   { id: 'choose-machine', title: 'Choose Your Work Machine' },
   { id: 'create-environment', title: 'Create an Environment' },
   { id: 'create-workspace', title: 'Create Your Workspace' },
   { id: 'access-workspace', title: 'Access Your Workspace' },
   { id: 'next-steps', title: 'Next Steps' },
   { id: 'tips', title: 'Tips & Best Practices' },
+  { id: 'support', title: 'Need Help?' },
 ]
 
 export default function GettingStartedPage() {
@@ -41,7 +43,7 @@ export default function GettingStartedPage() {
       </div>
 
       {/* Progress Overview */}
-      <section id="next-steps" className="mb-12 sm:mb-16">
+      <section id="progress-overview" className="mb-12 sm:mb-16">
         <div className="bg-card rounded-lg border p-4 sm:p-6">
           <h2 className="text-card-foreground mb-6 text-xl font-semibold">Your Journey</h2>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
@@ -397,7 +399,7 @@ volumes:
       </section>
 
       {/* Step 4: Access Workspace */}
-      <section id="tips" className="mb-12 sm:mb-16">
+      <section id="access-workspace" className="mb-12 sm:mb-16">
         <div className="mb-6 flex items-center gap-3">
           <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
             <span className="text-primary-foreground text-lg font-bold">4</span>
@@ -586,7 +588,7 @@ volumes:
       </section>
 
       {/* Tips & Best Practices */}
-      <section id="next-steps" className="mb-12 sm:mb-16">
+      <section id="tips" className="mb-12 sm:mb-16">
         <h2 className="text-foreground mb-6 text-2xl sm:text-3xl font-bold">Tips & Best Practices</h2>
         <div className="bg-card space-y-4 rounded-lg border p-4 sm:p-6">
           <div className="flex items-start gap-3">
@@ -642,7 +644,7 @@ volumes:
       </section>
 
       {/* Support */}
-      <section id="tips" className="mb-12 sm:mb-16">
+      <section id="support" className="mb-12 sm:mb-16">
         <div className="bg-card rounded-lg border p-4 sm:p-6 lg:p-8 text-center">
           <h2 className="text-card-foreground mb-4 text-xl sm:text-2xl font-bold leading-tight">Ready to Start Building?</h2>
           <p className="text-muted-foreground mb-6 leading-relaxed">

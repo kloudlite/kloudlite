@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
 import {
   Code2,
@@ -22,6 +23,8 @@ const tocItems = [
   { id: 'access-methods', title: 'Access Methods' },
   { id: 'storage', title: 'Storage & Persistence' },
   { id: 'networking', title: 'Networking' },
+  { id: 'diagnostics', title: 'Diagnostics' },
+  { id: 'collaboration', title: 'Collaboration Patterns' },
 ]
 
 export default function WorkspaceOverviewPage() {
@@ -244,9 +247,9 @@ export default function WorkspaceOverviewPage() {
                       <Package className="h-8 w-8 text-white" />
                     </div>
                     <div className="font-semibold text-sm mb-1 text-slate-900 dark:text-slate-100">
-                      <a href="/docs/workspace-internals/packages" className="hover:text-purple-600 dark:hover:text-purple-400">
+                      <Link href="/docs/workspace-internals/packages" className="hover:text-purple-600 dark:hover:text-purple-400">
                         Packages
-                      </a>
+                      </Link>
                     </div>
                     <div className="text-xs text-slate-600 dark:text-slate-400">
                       Nix packages
@@ -281,18 +284,18 @@ export default function WorkspaceOverviewPage() {
             {/* Learn More Links */}
             <div className="mt-6">
               <div className="flex flex-wrap gap-6 justify-center items-center text-sm">
-                <a href="/docs/workspace-internals/cli" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
+                <Link href="/docs/workspace-internals/cli" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
                   <Terminal className="h-4 w-4" />
                   CLI Reference
-                </a>
-                <a href="/docs/workspace-internals/environment-connection" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
+                </Link>
+                <Link href="/docs/workspace-internals/environment-connection" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
                   <Network className="h-4 w-4" />
                   Environment Connection
-                </a>
-                <a href="/docs/workspace-internals/intercepts" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
+                </Link>
+                <Link href="/docs/workspace-internals/intercepts" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
                   <Settings className="h-4 w-4" />
                   Service Intercepts
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -586,6 +589,96 @@ export default function WorkspaceOverviewPage() {
         </div>
       </section>
 
+      {/* Diagnostics */}
+      <section id="diagnostics" className="mb-12 sm:mb-16">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
+            <Terminal className="text-primary-foreground h-6 w-6" />
+          </div>
+          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">Diagnostics</h2>
+        </div>
+
+        <p className="text-muted-foreground mb-6 leading-relaxed">
+          Workspaces are long-lived containers. When something feels off—slow startup, missing
+          services, broken SSH—the quickest path to a fix is to inspect the workspace state from
+          inside the container.
+        </p>
+
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6">
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
+              Quick Health Checks
+            </h4>
+            <div className="bg-muted rounded p-4 font-mono text-xs overflow-x-auto space-y-2">
+              <pre className="m-0 leading-relaxed">kl status               # Workspace overview</pre>
+              <pre className="m-0 leading-relaxed">kl env status           # Active environment connection</pre>
+              <pre className="m-0 leading-relaxed">kl intercept list       # Running intercepts</pre>
+              <pre className="m-0 leading-relaxed">df -h /workspaces       # Check remaining disk space</pre>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
+              SSH & Network Troubleshooting
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-2 m-0 list-disc list-inside">
+              <li>Verify SSH tunnel availability: <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">ssh -T workspace-name</code>.</li>
+              <li>Confirm DNS resolution: <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">getent hosts postgres</code>.</li>
+              <li>Check intercept health: <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">kl intercept status api-server</code>.</li>
+              <li>List listening ports for conflicts with <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">ss -plnt</code>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 rounded-lg border p-3 sm:p-4">
+          <div className="flex gap-2 sm:gap-3">
+            <Info className="text-amber-600 dark:text-amber-400 h-5 w-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-900 dark:text-amber-100 text-sm font-medium m-0 mb-1">
+                Tip
+              </p>
+              <p className="text-amber-800 dark:text-amber-200 text-sm m-0 leading-relaxed">
+                If a workspace becomes unhealthy, suspend and resume it from the dashboard. This
+                reprovisions the container while preserving your home directory and package cache.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Collaboration */}
+      <section id="collaboration" className="mb-12 sm:mb-16">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
+            <Globe className="text-primary-foreground h-6 w-6" />
+          </div>
+          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">Collaboration Patterns</h2>
+        </div>
+
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base">
+              Share What Matters
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
+              <li>Use Git or cloud storage inside <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">~/workspaces</code> to collaborate on code.</li>
+              <li>Keep team-wide tooling in the shared home (<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">~/</code>) so everyone benefits from the same dotfiles.</li>
+              <li>Define reusable package groups in the installation so new workspaces start with the same toolset.</li>
+            </ul>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base">
+              Coordinate with Environments
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
+              <li>Use service intercepts for pair debugging—one person intercepts while teammates observe live traffic.</li>
+              <li>Create dedicated environments for feature branches; tear them down once merged to keep costs low.</li>
+              <li>Leverage labels on services/workspaces to indicate ownership, review status, or required approvers.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
     </DocsContentLayout>
   )
 }

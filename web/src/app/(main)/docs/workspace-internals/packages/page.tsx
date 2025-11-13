@@ -8,8 +8,11 @@ import {
   Info,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Terminal,
   Layers,
+  Users,
+  GitBranch,
 } from 'lucide-react'
 
 const tocItems = [
@@ -18,6 +21,8 @@ const tocItems = [
   { id: 'searching', title: 'Searching for Packages' },
   { id: 'adding', title: 'Adding Packages' },
   { id: 'managing', title: 'Managing Packages' },
+  { id: 'troubleshooting', title: 'Troubleshooting' },
+  { id: 'team-workflows', title: 'Team Workflows' },
   { id: 'best-practices', title: 'Best Practices' },
 ]
 
@@ -390,6 +395,103 @@ export default function PackageManagementPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Troubleshooting */}
+      <section id="troubleshooting" className="mb-12 sm:mb-16">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
+            <AlertTriangle className="text-primary-foreground h-6 w-6" />
+          </div>
+          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">
+            Troubleshooting
+          </h2>
+        </div>
+
+        <p className="text-muted-foreground mb-6 leading-relaxed">
+          Package installation is declarative, but environment drift can still happen. Use these
+          checks to diagnose issues quickly when binaries are missing or install commands fail.
+        </p>
+
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
+              Validate Current State
+            </h4>
+            <div className="bg-muted rounded p-4 font-mono text-xs overflow-x-auto space-y-2">
+              <pre className="m-0 leading-relaxed">kl pkg list                 # Compare desired vs installed</pre>
+              <pre className="m-0 leading-relaxed">which node                  # Confirm binary availability</pre>
+              <pre className="m-0 leading-relaxed">nix-store --verify-path /nix/store/...-nodejs</pre>
+            </div>
+            <p className="text-muted-foreground text-xs mt-3 leading-relaxed">
+              If a binary path is missing, reinstall with{' '}
+              <code className="bg-muted rounded px-1 py-0.5 font-mono">kl pkg install</code> or remove
+              it from the spec and re-run <code className="bg-muted rounded px-1 py-0.5 font-mono">kl pkg add</code>.
+            </p>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
+              Common Error Scenarios
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-2 m-0 list-disc list-inside">
+              <li>
+                <strong>Install timeout:</strong> Re-run the command; large packages may need up to
+                five minutes to build the first time.
+              </li>
+              <li>
+                <strong>Unknown package:</strong> Use{' '}
+                <code className="bg-muted rounded px-1 py-0.5 font-mono">kl pkg search</code> to confirm
+                the name and available versions.
+              </li>
+              <li>
+                <strong>Version conflicts:</strong> Pin an explicit channel or commit so every workspace
+                resolves the same derivation.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Workflows */}
+      <section id="team-workflows" className="mb-12 sm:mb-16">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
+            <Users className="text-primary-foreground h-6 w-6" />
+          </div>
+          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">Team Workflows</h2>
+        </div>
+
+        <p className="text-muted-foreground mb-6 leading-relaxed">
+          Package configuration lives alongside workspace specs, so you can standardize toolchains
+          across the organisation. Adopt a workflow that keeps dev machines reproducible and fast.
+        </p>
+
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base flex items-center gap-2">
+              <GitBranch className="text-primary h-5 w-5" />
+              Version-Control Package Specs
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
+              <li>Keep workspace manifests in Git so changes to packages go through review.</li>
+              <li>Use feature branches to experiment with new toolchains before merging to main.</li>
+              <li>Track a CHANGELOG entry whenever you upgrade or remove a shared package.</li>
+            </ul>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base flex items-center gap-2">
+              <Users className="text-primary h-5 w-5" />
+              Share Curated Bundles
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
+              <li>Create installation-level machine presets with pre-approved package sets.</li>
+              <li>Document when to use heavier bundles (e.g., data-science vs. backend).</li>
+              <li>Leverage the shared host cache by aligning on the same versions across teams.</li>
+            </ul>
           </div>
         </div>
       </section>

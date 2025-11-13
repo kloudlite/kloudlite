@@ -112,7 +112,7 @@ export default function ArchitecturePage() {
                   </h4>
                   <p className="text-muted-foreground text-sm leading-relaxed m-0">
                     All environments, workspaces, configurations, and team resources are managed
-                    centrally through the Management Node&apos;s web interface
+                    centrally through the Control Node&apos;s web interface
                   </p>
                 </div>
               </div>
