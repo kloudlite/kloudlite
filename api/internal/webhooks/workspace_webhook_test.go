@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -33,7 +32,6 @@ func setupWorkspaceWebhookTest(t *testing.T, objects ...client.Object) *Workspac
 	_ = platformv1alpha1.AddToScheme(scheme)
 	_ = machinesv1.AddToScheme(scheme)
 	_ = environmentv1.AddToScheme(scheme)
-	_ = interceptsv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 
 	k8sClient := fakeclient.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
