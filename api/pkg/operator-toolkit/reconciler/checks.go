@@ -40,18 +40,12 @@ type CheckResult struct {
 }
 
 func AreChecksEqual(c1 CheckResult, c2 CheckResult) bool {
-	if c1.StartedAt == nil {
-		c1.StartedAt = &metav1.Time{Time: time.Now()}
-	}
-
-	if c2.StartedAt == nil {
-		c2.StartedAt = &metav1.Time{Time: time.Now()}
-	}
-
+	// Only compare meaningful fields that affect reconciliation logic
+	// Ignore timestamps (StartedAt, CompletedAt) to prevent reconciliation loops
+	// caused by timestamp-only changes
 	return c1.Generation == c2.Generation &&
 		c1.State == c2.State &&
-		c1.Message == c2.Message &&
-		c1.StartedAt.Sub(c2.StartedAt.Time) == 0
+		c1.Message == c2.Message
 }
 
 type Check[T Resource] struct {
