@@ -85,7 +85,11 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 
 			annHasChanged := false
 			for k, v := range oldAnn {
-				if k != LastAppliedKey && k != "deployment.kubernetes.io/revision" {
+				// Exclude internal operator annotations that change on every reconcile
+				if k != LastAppliedKey &&
+					k != "deployment.kubernetes.io/revision" &&
+					k != AnnotationResourceReady &&
+					k != AnnotationResourceChecks {
 					if v != newAnn[k] {
 						annHasChanged = true
 						break
