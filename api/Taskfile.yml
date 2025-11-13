@@ -5,7 +5,7 @@ tasks:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build -ldflags='-s -w' -o ./server ./cmd/server/
+      - go build -ldflags='-s -w' -o bin/api-server ./cmd/server/
 
   manifests:
     cmds:

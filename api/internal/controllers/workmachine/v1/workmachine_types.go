@@ -12,7 +12,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.ownedBy`
 // +kubebuilder:printcolumn:name="Machine Type",type=string,JSONPath=`.spec.machineType`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
