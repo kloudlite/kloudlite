@@ -155,6 +155,33 @@ func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.
 
 // setupTunnelServer creates the WireGuard tunnel server for the workmachine
 func (r *WorkMachineReconciler) setupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	// Don't create/maintain tunnel-server pod when machine is stopped, stopping, or disabled
+	if obj.Spec.State == v1.MachineStateStopped ||
+	   obj.Spec.State == v1.MachineStateStopping ||
+	   obj.Spec.State == v1.MachineStateDisabled {
+		// Clean up tunnel-server pod if it exists
+		podName := "tunnel-server"
+		existingPod := &corev1.Pod{}
+		err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: obj.Spec.TargetNamespace}, existingPod)
+
+		if err == nil {
+			// Pod exists, delete it
+			if err := r.Delete(check.Context(), existingPod); err != nil && !apiErrors.IsNotFound(err) {
+				return check.Failed(fmt.Errorf("failed to delete tunnel-server pod for stopped machine: %w", err))
+			}
+			check.UpdateMsg(fmt.Sprintf("deleted tunnel-server pod (machine state: %s)", obj.Spec.State))
+			return check.Passed()
+		}
+
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to check tunnel-server pod: %w", err))
+		}
+
+		// Pod doesn't exist, nothing to do
+		check.UpdateMsg(fmt.Sprintf("tunnel-server pod not needed (machine state: %s)", obj.Spec.State))
+		return check.Passed()
+	}
+
 	// Create ConfigMap for WireGuard configuration
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
