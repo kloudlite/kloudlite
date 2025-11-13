@@ -7,6 +7,7 @@ import {
   Settings,
   CheckCircle2,
   Info,
+  AlertTriangle,
 } from 'lucide-react'
 
 const tocItems = [
@@ -15,6 +16,8 @@ const tocItems = [
   { id: 'service-types', title: 'Service Types' },
   { id: 'networking', title: 'Service Networking' },
   { id: 'configuration', title: 'Configuration' },
+  { id: 'service-lifecycle', title: 'Service Lifecycle & Troubleshooting' },
+  { id: 'best-practices', title: 'Best Practices' },
 ]
 
 export default function ServicesPage() {
@@ -267,6 +270,109 @@ volumes:
                 Reference configs and secrets defined at the environment level for sensitive data.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Service Lifecycle & Troubleshooting */}
+      <section id="service-lifecycle" className="mb-12 sm:mb-16">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
+            <Info className="text-primary-foreground h-6 w-6" />
+          </div>
+          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">
+            Service Lifecycle & Troubleshooting
+          </h2>
+        </div>
+
+        <p className="text-muted-foreground mb-6 leading-relaxed">
+          Every time you edit the Docker Compose definition, the Composition controller reconciles the
+          spec and performs a rolling update. Understanding that lifecycle makes it easier to predict
+          behaviour and diagnose issues when something fails to deploy.
+        </p>
+
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6">
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
+              Update Flow
+            </h4>
+            <ol className="text-muted-foreground text-sm space-y-2 m-0 list-decimal list-inside">
+              <li>Save the updated Compose file from the console or CLI.</li>
+              <li>The controller compares the desired spec with existing Kubernetes resources.</li>
+              <li>Deployments are patched; pods roll out one replica at a time to avoid downtime.</li>
+              <li>Status for each service is published back to the environment dashboard.</li>
+            </ol>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
+              Inspecting Runtime State
+            </h4>
+            <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
+              Use Kubernetes tooling when you need deeper visibility into the namespace created for
+              your environment (default pattern:{' '}
+              <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">env-{`{environment-name}`}</code>).
+            </p>
+            <div className="bg-muted rounded p-4 font-mono text-xs overflow-x-auto space-y-2">
+              <pre className="m-0 leading-relaxed">kubectl get pods -n env-myapp</pre>
+              <pre className="m-0 leading-relaxed">kubectl logs deployment/api -n env-myapp</pre>
+              <pre className="m-0 leading-relaxed">kubectl describe pod api-6d7f8c -n env-myapp</pre>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 rounded-lg border p-4 sm:p-5">
+          <h4 className="text-amber-900 dark:text-amber-100 font-semibold mb-2 m-0 text-base flex items-center gap-2">
+            <AlertTriangle className="text-amber-600 dark:text-amber-400 h-5 w-5" />
+            Troubleshooting Checklist
+          </h4>
+          <ul className="text-amber-800 dark:text-amber-200 text-sm space-y-1.5 m-0 list-disc list-inside">
+            <li>Check the environment dashboard for failed services and descriptive error messages.</li>
+            <li>Review recent events:{' '}
+              <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
+                kubectl get events -n env-myapp --sort-by=.lastTimestamp
+              </code>
+            </li>
+            <li>Verify referenced ConfigMaps or Secrets exist and include the expected keys.</li>
+            <li>Ensure port mappings do not collide with other services inside the namespace.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Best Practices */}
+      <section id="best-practices" className="mb-12 sm:mb-16">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
+            <CheckCircle2 className="text-primary-foreground h-6 w-6" />
+          </div>
+          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">Best Practices</h2>
+        </div>
+
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base">
+              Define Reliable Services
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
+              <li>Add <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">healthcheck</code> probes to restart unhealthy containers quickly.</li>
+              <li>Prefer named volumes so data persists across redeployments.</li>
+              <li>Specify resource requests/limits to prevent noisy-neighbour problems.</li>
+            </ul>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base">
+              Manage Configuration Cleanly
+            </h4>
+            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
+              <li>Keep credentials in Secrets and surface them in Compose via{' '}
+                <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
+                  ${'{'}VAR_NAME{'}'}
+                </code>.
+              </li>
+              <li>Use labels or annotations to surface ownership, alerts, or routing metadata.</li>
+              <li>Split large systems into multiple environments instead of overloading a single Compose file.</li>
+            </ul>
           </div>
         </div>
       </section>

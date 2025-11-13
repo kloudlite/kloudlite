@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
 import {
   Database,
@@ -217,9 +218,9 @@ export default function EnvironmentOverviewPage() {
                       <Container className="h-8 w-8 text-white" />
                     </div>
                     <div className="font-semibold text-sm mb-1 text-slate-900 dark:text-slate-100">
-                      <a href="/docs/environment-internals/services" className="hover:text-blue-600 dark:hover:text-blue-400">
+                      <Link href="/docs/environment-internals/services" className="hover:text-blue-600 dark:hover:text-blue-400">
                         Services
-                      </a>
+                      </Link>
                     </div>
                     <div className="text-xs text-slate-600 dark:text-slate-400">
                       Docker Compose
@@ -232,9 +233,9 @@ export default function EnvironmentOverviewPage() {
                       <Settings className="h-8 w-8 text-white" />
                     </div>
                     <div className="font-semibold text-sm mb-1 text-slate-900 dark:text-slate-100">
-                      <a href="/docs/environment-internals/configs-secrets" className="hover:text-purple-600 dark:hover:text-purple-400">
+                      <Link href="/docs/environment-internals/configs-secrets" className="hover:text-purple-600 dark:hover:text-purple-400">
                         Configs & Secrets
-                      </a>
+                      </Link>
                     </div>
                     <div className="text-xs text-slate-600 dark:text-slate-400">
                       Environment variables
@@ -258,14 +259,14 @@ export default function EnvironmentOverviewPage() {
             {/* Learn More Links */}
             <div className="mt-6">
               <div className="flex flex-wrap gap-6 justify-center items-center text-sm">
-                <a href="/docs/environment-internals/services" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
+                <Link href="/docs/environment-internals/services" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
                   <Container className="h-4 w-4" />
                   Services
-                </a>
-                <a href="/docs/environment-internals/configs-secrets" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
+                </Link>
+                <Link href="/docs/environment-internals/configs-secrets" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium">
                   <Key className="h-4 w-4" />
                   Configs & Secrets
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -367,9 +368,9 @@ export default function EnvironmentOverviewPage() {
               </p>
               <p className="text-blue-800 dark:text-blue-200 text-sm m-0 leading-relaxed">
                 See the{' '}
-                <a href="/docs/environment-internals/services" className="underline hover:no-underline">
+                <Link href="/docs/environment-internals/services" className="underline hover:no-underline">
                   Services documentation
-                </a>{' '}
+                </Link>{' '}
                 for detailed information on defining and managing services.
               </p>
             </div>
@@ -455,9 +456,9 @@ export default function EnvironmentOverviewPage() {
               </p>
               <p className="text-green-800 dark:text-green-200 text-sm m-0 leading-relaxed">
                 See the{' '}
-                <a href="/docs/environment-internals/configs-secrets" className="underline hover:no-underline">
+                <Link href="/docs/environment-internals/configs-secrets" className="underline hover:no-underline">
                   Configs & Secrets documentation
-                </a>{' '}
+                </Link>{' '}
                 for detailed information on managing configuration and secrets.
               </p>
             </div>
