@@ -1,19 +1,14 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import {
-  Cpu,
   Database,
-  FolderTree,
   Code2,
   Terminal,
-  Laptop,
   Globe,
   Sparkles,
   CheckCircle2,
   Info,
-  Zap,
   Lock,
-  Network,
   Settings
 } from 'lucide-react'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
