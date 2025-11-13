@@ -165,7 +165,14 @@ func (r *WorkMachineReconciler) setupTunnelServer(check *reconciler.Check[*v1.Wo
 		err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: obj.Spec.TargetNamespace}, existingPod)
 
 		if err == nil {
-			// Pod exists, delete it
+			// Pod exists, check if it's already being deleted
+			if existingPod.DeletionTimestamp != nil {
+				// Pod is already being deleted, nothing to do
+				check.UpdateMsg(fmt.Sprintf("tunnel-server pod already terminating (machine state: %s)", obj.Spec.State))
+				return check.Passed()
+			}
+
+			// Pod exists and not being deleted, delete it now
 			if err := r.Delete(check.Context(), existingPod); err != nil && !apiErrors.IsNotFound(err) {
 				return check.Failed(fmt.Errorf("failed to delete tunnel-server pod for stopped machine: %w", err))
 			}
