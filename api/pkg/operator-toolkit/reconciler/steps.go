@@ -41,7 +41,17 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		}
 
 		for i := len(steps) - 1; i >= 0; i-- {
-			check := NewRunningCheck(checkList[i].Name, req)
+			checkName := checkList[i].Name
+
+			// Skip creating a new running check if it already passed with the same generation
+			if existingCheck, exists := req.Object.GetStatus().Checks[checkName]; exists {
+				if existingCheck.State == PassedState && existingCheck.Generation == req.Object.GetGeneration() {
+					// Check already passed for this generation, skip running it again
+					continue
+				}
+			}
+
+			check := NewRunningCheck(checkName, req)
 			if steps[i].OnDelete == nil {
 				if sr := check.Passed(); !sr.ShouldProceed() {
 					return sr.ReconcilerResponse()
@@ -84,6 +94,16 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 
 	for i := range steps {
 		checkName := checkList[i].Name
+
+		// Skip creating a new running check if it already passed with the same generation
+		// This prevents infinite reconciliation loops where the check state toggles between running/passed
+		if existingCheck, exists := req.Object.GetStatus().Checks[checkName]; exists {
+			if existingCheck.State == PassedState && existingCheck.Generation == req.Object.GetGeneration() {
+				// Check already passed for this generation, skip running it again
+				continue
+			}
+		}
+
 		check := NewRunningCheck(checkName, req)
 		if result := steps[i].OnCreate(check, req.Object); !result.ShouldProceed() {
 			return result.ReconcilerResponse()
