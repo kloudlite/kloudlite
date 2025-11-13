@@ -35,7 +35,6 @@ func (r *WorkMachineReconciler) handleMachineTypeChange(check *reconciler.Check[
 		if obj.Status.MachineTypeChanging {
 			obj.Status.MachineTypeChanging = false
 			obj.Status.MachineTypeChangeMessage = ""
-			// Status will be updated, but don't return early - let it continue
 		}
 		return check.Passed()
 	}
@@ -200,6 +199,10 @@ func (r *WorkMachineReconciler) suspendAllWorkspaces(ctx context.Context, workMa
 		}
 		workspace.Spec.Status = "suspended"
 		if err := r.Update(ctx, &workspace); err != nil {
+			if apiErrors.IsConflict(err) {
+				// Resource was modified, will be retried on next reconciliation
+				continue
+			}
 			return fmt.Errorf("failed to suspend workspace %s: %w", workspace.Name, err)
 		}
 	}
@@ -222,6 +225,10 @@ func (r *WorkMachineReconciler) deactivateAllEnvironments(ctx context.Context, w
 		}
 		env.Spec.Activated = false
 		if err := r.Update(ctx, &env); err != nil {
+			if apiErrors.IsConflict(err) {
+				// Resource was modified, will be retried on next reconciliation
+				continue
+			}
 			return fmt.Errorf("failed to deactivate environment %s: %w", env.Name, err)
 		}
 	}

@@ -367,6 +367,9 @@ func (p *provider) IncreaseVolumeSize(ctx context.Context, machineID string, new
 	}
 
 	volume, err := p.getRootVolume(ctx, instance)
+	if err != nil {
+		return err
+	}
 
 	currentSize := fn.ValueOf(volume.Size)
 	if newSize < currentSize {

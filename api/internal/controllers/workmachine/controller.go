@@ -336,6 +336,10 @@ func generateWgKeys() (privateKey, publicKey string, err error) {
 }
 
 func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	if obj.Spec.TargetNamespace == "" {
+		return check.Failed(fmt.Errorf("target namespace cannot be empty"))
+	}
+
 	if err := r.Delete(check.Context(), &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "tunnel-server",
@@ -396,8 +400,7 @@ func (r *WorkMachineReconciler) handleNodeRebootRequest(check *reconciler.Check[
 	// Remove the reboot annotation from the node
 	delete(node.Annotations, "kloudlite.io/workmachine-reboot-requested")
 	if err := r.Update(check.Context(), &node); err != nil {
-		check.Logger().Warn("failed to remove reboot annotation from node, will retry", "error", err.Error())
-		// Don't fail the step, the annotation will be removed on next reconciliation
+		return check.Failed(fmt.Errorf("failed to remove reboot annotation from node: %w", err))
 	}
 
 	check.Logger().Info("instance rebooted successfully, waiting for node to rejoin", "node", node.Name, "machineID", obj.Status.MachineID)
@@ -420,7 +423,7 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return errors.Wrap("failed to load env vars", err)
 			}
 
-			ctx, cf := context.WithTimeout(context.TODO(), 5*time.Second)
+			ctx, cf := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cf()
 			p, err := aws.NewProvider(ctx, aws.ProviderArgs{
 				Region:          awsEnv.AWS_REGION,
