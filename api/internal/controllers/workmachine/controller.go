@@ -91,12 +91,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "setup-workspace-RBAC",
-			Title:    "Setup RBAC resources for workspace pods",
-			OnCreate: r.createWorkspaceRBAC,
-			OnDelete: nil,
-		},
-		{
 			Name:     "ensure-ssh-host-keys",
 			Title:    "Ensure SSH host keys secret",
 			OnCreate: r.createSSHHostKeysSecret,
@@ -115,15 +109,43 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "setup workmachine tunnel server",
-			Title:    "Setup Workmachine Tunnel Server",
-			OnCreate: r.setupTunnelServer,
+			Name:  "when-running/ensure-tunnel-server",
+			Title: "Ensure tunnel server is running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureTunnelServer,
 			OnDelete: r.cleanupTunnelServer,
 		},
 		{
-			Name:     "ensure-deployment",
-			Title:    "Ensure workmachine-host-manager deployment",
-			OnCreate: r.ensurePackageManagerDeploymentStep,
+			Name:  "when-stopped/cleanup-tunnel-server",
+			Title: "Cleanup tunnel server when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupTunnelServer,
+			OnDelete: nil,
+		},
+		{
+			Name:  "when-running/ensure-host-manager",
+			Title: "Ensure host manager pod is running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureHostManagerPod,
+			OnDelete: r.cleanupHostManagerPod,
+		},
+		{
+			Name:  "when-stopped/cleanup-host-manager",
+			Title: "Cleanup host manager when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupHostManagerPod,
 			OnDelete: nil,
 		},
 		{
@@ -147,48 +169,9 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 	})
 }
 
-// createWorkspaceRBAC is a placeholder step for workspace RBAC setup
-// Actual workspace-specific RBAC is created by the Workspace controller
-func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	return check.Passed()
-}
-
-// setupTunnelServer creates the WireGuard tunnel server for the workmachine
-func (r *WorkMachineReconciler) setupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	// Don't create/maintain tunnel-server pod when machine is stopped, stopping, or disabled
-	if obj.Spec.State == v1.MachineStateStopped ||
-	   obj.Spec.State == v1.MachineStateStopping ||
-	   obj.Spec.State == v1.MachineStateDisabled {
-		// Clean up tunnel-server pod if it exists
-		podName := "tunnel-server"
-		existingPod := &corev1.Pod{}
-		err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: obj.Spec.TargetNamespace}, existingPod)
-
-		if err == nil {
-			// Pod exists, check if it's already being deleted
-			if existingPod.DeletionTimestamp != nil {
-				// Pod is already being deleted, nothing to do
-				check.UpdateMsg(fmt.Sprintf("tunnel-server pod already terminating (machine state: %s)", obj.Spec.State))
-				return check.Passed()
-			}
-
-			// Pod exists and not being deleted, delete it now
-			if err := r.Delete(check.Context(), existingPod); err != nil && !apiErrors.IsNotFound(err) {
-				return check.Failed(fmt.Errorf("failed to delete tunnel-server pod for stopped machine: %w", err))
-			}
-			check.UpdateMsg(fmt.Sprintf("deleted tunnel-server pod (machine state: %s)", obj.Spec.State))
-			return check.Passed()
-		}
-
-		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to check tunnel-server pod: %w", err))
-		}
-
-		// Pod doesn't exist, nothing to do
-		check.UpdateMsg(fmt.Sprintf("tunnel-server pod not needed (machine state: %s)", obj.Spec.State))
-		return check.Passed()
-	}
-
+// ensureTunnelServer creates and maintains the WireGuard tunnel server for the workmachine
+// This function is called when the WorkMachine is in running state
+func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	// Create ConfigMap for WireGuard configuration
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
