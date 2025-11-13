@@ -22,6 +22,9 @@ func isBeingDeleted(obj client.Object) bool {
 }
 
 func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, error) {
+	req.PreReconcile()
+	defer req.PostReconcile()
+
 	// Validate steps
 	for i, step := range steps {
 		if step.Name == "" {
@@ -86,11 +89,12 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 	}
 
 	for i := range steps {
+		checkList = append(checkList, CheckDefinition{Name: "create/" + steps[i].Name, Title: "[Create] " + steps[i].Title})
+
 		// Skip step if ShouldRun condition is not met
 		if steps[i].ShouldRun != nil && !steps[i].ShouldRun(req.Object) {
 			continue
 		}
-		checkList = append(checkList, CheckDefinition{Name: "create/" + steps[i].Name, Title: "[Create] " + steps[i].Title})
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
@@ -106,6 +110,11 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 	}
 
 	for i := range steps {
+		// Skip step if ShouldRun condition is not met
+		if steps[i].ShouldRun != nil && !steps[i].ShouldRun(req.Object) {
+			continue
+		}
+
 		checkName := checkList[i].Name
 
 		// Skip creating a new running check if it already passed with the same generation
@@ -127,9 +136,5 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 	}
 
 	req.Object.GetStatus().IsReady = true
-	if err := req.statusUpdate(); err != nil {
-		return ctrl.Result{}, err
-	}
-	req.PostReconcile()
 	return ctrl.Result{}, nil
 }

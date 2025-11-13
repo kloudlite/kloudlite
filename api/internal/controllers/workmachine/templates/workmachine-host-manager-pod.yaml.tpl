@@ -16,7 +16,7 @@ metadata:
     kloudlite.io/workmachine: {{ $workmachineName }}
 spec:
   restartPolicy: Never
-  serviceAccountName: workmachine-node-manager
+  serviceAccountName: hm-{{ $workmachineName }}
   nodeName: {{ $workmachineName }}
   hostPID: true
   dnsConfig:
@@ -70,25 +70,10 @@ spec:
         - name: nix-store
           mountPath: /nix-shared
 
-        {{- /* - name: setup-ssh-key */}}
-        {{- /*   image: busybox:latest */}}
-        {{- /*   imagePullPolicy: IfNotPresent */}}
-        {{- /*   command: */}}
-        {{- /*     - sh */}}
-        {{- /*     - -c */}}
-        {{- /*     - cp /ssh-key-source/private-key /ssh-key-target/id_ed25519 && chown {{ $sshUserUID }}:{{ $sshUserGID }} /ssh-key-target/id_ed25519 && chmod 600 /ssh-key-target/id_ed25519 */}}
-        {{- /*   volumeMounts: */}}
-        {{- /*     - name: ssh-proxy-key */}}
-        {{- /*       mountPath: /ssh-key-source */}}
-        {{- /*       readOnly: true */}}
-        {{- /*     - name: ssh-key-volume */}}
-        {{- /*       mountPath: /ssh-key-target */}}
-
   containers:
-    - name: workmachine-node-manager
+    - name: host-manager
       image: {{ .HostManagerImage }}
       imagePullPolicy: Always
-      command: ["/usr/local/bin/workmachine-node-manager"]
       securityContext:
         privileged: true
       ports:
