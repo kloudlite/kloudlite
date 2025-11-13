@@ -6,6 +6,7 @@ import (
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -19,6 +20,19 @@ import (
 // - Secrets (in hostmanager namespace) - to manage SSH keys
 func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	serviceAccountName := fmt.Sprintf("hm-%s", obj.Name)
+
+	svcAccount := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceAccountName,
+			Namespace: hostManagerNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svcAccount, func() error {
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
 
 	// Create ClusterRole for host manager
 	clusterRole := &rbacv1.ClusterRole{
