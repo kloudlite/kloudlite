@@ -2,10 +2,30 @@ package v1
 
 import (
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// PortMapping defines mapping between service and workspace ports for intercepts
+type PortMapping struct {
+	// ServicePort is the port exposed by the service
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	ServicePort int32 `json:"servicePort"`
+
+	// WorkspacePort is the port in the workspace pod
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	WorkspacePort int32 `json:"workspacePort"`
+
+	// Protocol is the protocol used (TCP/UDP)
+	// +kubebuilder:validation:Enum=TCP;UDP;SCTP
+	// +kubebuilder:default=TCP
+	// +optional
+	Protocol corev1.Protocol `json:"protocol,omitempty"`
+}
 
 // InterceptSpec defines a service to intercept when connected to an environment
 type InterceptSpec struct {
@@ -17,7 +37,7 @@ type InterceptSpec struct {
 	// PortMappings defines how service ports map to workspace ports
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
-	PortMappings []interceptsv1.PortMapping `json:"portMappings"`
+	PortMappings []PortMapping `json:"portMappings"`
 }
 
 // EnvironmentConnectionSpec defines the environment connection and associated intercepts

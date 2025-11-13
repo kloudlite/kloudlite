@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -510,33 +509,45 @@ func (w *WorkspaceWebhook) validateServiceIntercepts(ctx context.Context, worksp
 
 	targetNamespace := env.Spec.TargetNamespace
 
-	// List all existing ServiceIntercept CRs (cluster-scoped, no namespace filter)
-	interceptList := &interceptsv1.ServiceInterceptList{}
-	if err := w.k8sClient.List(ctx, interceptList); err != nil {
-		return fmt.Errorf("failed to list existing service intercepts: %w", err)
+	// List all Compositions in the target namespace (intercepts are now part of Composition)
+	compositionList := &environmentv1.CompositionList{}
+	if err := w.k8sClient.List(ctx, compositionList, client.InNamespace(targetNamespace)); err != nil {
+		return fmt.Errorf("failed to list compositions: %w", err)
 	}
 
-	// Build a map of service name+namespace -> workspace name for existing intercepts
+	// Build a map of service name -> workspace name for existing active intercepts
 	existingIntercepts := make(map[string]string)
-	for _, intercept := range interceptList.Items {
-		// Skip intercepts owned by the current workspace (for updates)
-		if intercept.Spec.WorkspaceRef.Name == workspace.Name {
+	for _, composition := range compositionList.Items {
+		// Skip compositions being deleted
+		if composition.DeletionTimestamp != nil {
 			continue
 		}
 
-		// Create a key combining service name and namespace
-		serviceKey := fmt.Sprintf("%s/%s", intercept.Spec.ServiceRef.Namespace, intercept.Spec.ServiceRef.Name)
-		existingIntercepts[serviceKey] = intercept.Spec.WorkspaceRef.Name
+		// Check all intercepts in the composition spec
+		for _, intercept := range composition.Spec.Intercepts {
+			// Skip intercepts that are not enabled
+			if !intercept.Enabled {
+				continue
+			}
+
+			// Skip intercepts owned by the current workspace (for updates)
+			if intercept.WorkspaceRef != nil && intercept.WorkspaceRef.Name == workspace.Name {
+				continue
+			}
+
+			// Track which workspace is intercepting this service
+			workspaceName := ""
+			if intercept.WorkspaceRef != nil {
+				workspaceName = intercept.WorkspaceRef.Name
+			}
+			existingIntercepts[intercept.ServiceName] = workspaceName
+		}
 	}
 
 	// Check each intercept in the workspace spec
 	for _, interceptSpec := range workspace.Spec.EnvironmentConnection.Intercepts {
-		// Construct the service key for this intercept
-		// The service will be in the environment's target namespace
-		serviceKey := fmt.Sprintf("%s/%s", targetNamespace, interceptSpec.ServiceName)
-
 		// Check if this service is already intercepted by another workspace
-		if conflictingWorkspace, exists := existingIntercepts[serviceKey]; exists {
+		if conflictingWorkspace, exists := existingIntercepts[interceptSpec.ServiceName]; exists {
 			return fmt.Errorf("service '%s' in namespace '%s' is already being intercepted by workspace '%s'. A service can only be intercepted by one workspace at a time",
 				interceptSpec.ServiceName, targetNamespace, conflictingWorkspace)
 		}

@@ -6,7 +6,6 @@ import (
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -155,7 +154,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	return reconcile.Result{}, nil
 }
 
-// collectActiveIntercepts collects the status of all active service intercepts for this workspace
+// collectActiveIntercepts collects the status of all active service intercepts for this workspace from Composition resources
 func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) []workspacev1.InterceptStatus {
 	var activeIntercepts []workspacev1.InterceptStatus
 
@@ -179,16 +178,12 @@ func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, works
 		return activeIntercepts
 	}
 
-	// List all ServiceIntercepts for this workspace (cluster-scoped)
-	// Filter by workspace name and then check if they target services in the environment namespace
-	interceptList := &interceptsv1.ServiceInterceptList{}
-	err = r.List(ctx, interceptList,
-		client.MatchingLabels{
-			"workspaces.kloudlite.io/workspace-name": workspace.Name,
-		})
+	// List all Compositions in the environment's target namespace
+	compositionList := &environmentv1.CompositionList{}
+	err = r.List(ctx, compositionList, client.InNamespace(env.Spec.TargetNamespace))
 
 	if err != nil {
-		logger.Error("Failed to list service intercepts for status",
+		logger.Error("Failed to list compositions for intercept status",
 			zap.String("workspace", workspace.Name),
 			zap.String("targetNamespace", env.Spec.TargetNamespace),
 			zap.Error(err),
@@ -196,20 +191,22 @@ func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, works
 		return activeIntercepts
 	}
 
-	// Collect status from each intercept (filter by environment namespace)
-	for _, intercept := range interceptList.Items {
-		// Only include intercepts that target services in this environment
-		if intercept.Spec.ServiceRef.Namespace == env.Spec.TargetNamespace {
-			interceptStatus := workspacev1.InterceptStatus{
-				ServiceName: intercept.Spec.ServiceRef.Name,
-				Phase:       intercept.Status.Phase,
-				Message:     intercept.Status.Message,
+	// Collect intercept status from each composition's activeIntercepts
+	for _, composition := range compositionList.Items {
+		for _, interceptStatus := range composition.Status.ActiveIntercepts {
+			// Only include intercepts for this workspace
+			if interceptStatus.WorkspaceName == workspace.Name {
+				workspaceInterceptStatus := workspacev1.InterceptStatus{
+					ServiceName: interceptStatus.ServiceName,
+					Phase:       interceptStatus.Phase,
+					Message:     interceptStatus.Message,
+				}
+				activeIntercepts = append(activeIntercepts, workspaceInterceptStatus)
 			}
-			activeIntercepts = append(activeIntercepts, interceptStatus)
 		}
 	}
 
-	logger.Info("Collected active intercept statuses",
+	logger.Info("Collected active intercept statuses from compositions",
 		zap.String("workspace", workspace.Name),
 		zap.Int("count", len(activeIntercepts)),
 	)

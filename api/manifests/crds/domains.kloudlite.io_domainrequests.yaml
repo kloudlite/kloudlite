@@ -12,7 +12,7 @@ spec:
     listKind: DomainRequestList
     plural: domainrequests
     singular: domainrequest
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.ipAddress
@@ -155,31 +155,44 @@ spec:
                 items:
                   type: string
                 type: array
-              sshProxyEnabled:
-                default: false
+              sshBackend:
                 description: |-
-                  SSHProxyEnabled enables SSH proxy functionality (port 22)
-                  Will be handled by a sidecar container in future implementation
-                type: boolean
+                  SSHBackend defines the SSH backend service for port 22 traffic
+                  If configured, HAProxy will route SSH protocol traffic to this backend
+                properties:
+                  serviceName:
+                    description: ServiceName is the name of the backend service
+                    type: string
+                  serviceNamespace:
+                    description: ServiceNamespace is the namespace of the backend
+                      service
+                    type: string
+                  servicePort:
+                    description: ServicePort is the port of the backend service
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                required:
+                - serviceName
+                - serviceNamespace
+                - servicePort
+                type: object
+              workloadNamespace:
+                default: kloudlite-ingress
+                description: |-
+                  WorkloadNamespace is the namespace where DomainRequest workloads (HAProxy pod, configmap, secret) run
+                  All DomainRequests share a common workload namespace for centralized ingress management
+                minLength: 1
+                type: string
             required:
             - certificateScope
+            - nodeName
+            - workloadNamespace
             type: object
           status:
             description: DomainRequestStatus defines the observed state of DomainRequest
             properties:
-              certificateExpiresAt:
-                description: CertificateExpiresAt is when the certificate expires
-                  (deprecated - kept for backward compatibility)
-                format: date-time
-                type: string
-              certificateId:
-                description: CertificateID is the ID of the generated certificate
-                  (deprecated - kept for backward compatibility)
-                type: string
-              certificateSecretName:
-                description: CertificateSecretName is the name of the Kubernetes Secret
-                  containing the certificate (deprecated - kept for backward compatibility)
-                type: string
               dnsRecordIds:
                 description: DNSRecordIDs contains the Cloudflare DNS record IDs created
                 items:
@@ -196,18 +209,18 @@ spec:
                 description: HAProxyReady indicates if the HAProxy pod is ready and
                   serving traffic
                 type: boolean
-              lastReconciledRoutesHash:
-                description: LastReconciledRoutesHash stores a hash of the last reconciled
-                  DomainRoutes to detect when routes have changed and need DNS record
-                  updates
-                type: string
-              lastCertificateGenerationTime:
-                description: LastCertificateGenerationTime is when the certificate
-                  was last generated (deprecated - kept for backward compatibility)
-                format: date-time
-                type: string
               lastIPRegistrationTime:
                 description: LastIPRegistrationTime is when the IP was last registered
+                format: date-time
+                type: string
+              lastReconciledRoutesHash:
+                description: |-
+                  LastReconciledRoutesHash stores a hash of the last reconciled DomainRoutes
+                  Used to detect when routes have changed and need DNS record updates
+                type: string
+              lastReconciledRoutesHashUpdated:
+                description: LastReconciledRoutesHashUpdated is a timestamp to track
+                  hash updates
                 format: date-time
                 type: string
               message:

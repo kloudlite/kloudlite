@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -68,41 +68,49 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 		}
 	}
 
-	// Check if there's an active ServiceIntercept for this service
-	interceptList := &interceptsv1.ServiceInterceptList{}
-	err := w.client.List(context.TODO(), interceptList,
-		client.InNamespace(req.Namespace),
-		client.MatchingLabels{
-			"intercepts.kloudlite.io/service-name": service.Name,
-		})
+	// Check if there's an active intercept for this service in any Composition
+	compositionList := &environmentsv1.CompositionList{}
+	err := w.client.List(context.TODO(), compositionList,
+		client.InNamespace(req.Namespace))
 
 	if err != nil {
 		// Handle TLS/certificate errors gracefully for development environments
 		if isTLSError(err) {
-			w.logger.Warn("TLS error when checking ServiceIntercepts (development mode), allowing service to proceed: " + err.Error())
+			w.logger.Warn("TLS error when checking Compositions (development mode), allowing service to proceed: " + err.Error())
 			return &admissionv1.AdmissionResponse{
 				Allowed: true,
 			}
 		}
-		w.logger.Error("Failed to list ServiceIntercepts: " + err.Error())
+		w.logger.Error("Failed to list Compositions: " + err.Error())
 		// Allow the service to proceed without interception on error
 		return &admissionv1.AdmissionResponse{
 			Allowed: true,
 		}
 	}
 
-	// Find an active intercept (skip ones being deleted)
-	var activeIntercept *interceptsv1.ServiceIntercept
-	for i := range interceptList.Items {
-		intercept := &interceptList.Items[i]
-		if intercept.DeletionTimestamp == nil && intercept.Status.Phase == "Active" {
-			activeIntercept = intercept
+	// Find an active intercept for this service
+	var hasActiveIntercept bool
+	for _, composition := range compositionList.Items {
+		// Skip compositions being deleted
+		if composition.DeletionTimestamp != nil {
+			continue
+		}
+
+		// Check if any active intercept matches this service
+		for _, activeIntercept := range composition.Status.ActiveIntercepts {
+			if activeIntercept.ServiceName == service.Name {
+				hasActiveIntercept = true
+				break
+			}
+		}
+
+		if hasActiveIntercept {
 			break
 		}
 	}
 
 	// If no active intercept, allow service as-is
-	if activeIntercept == nil {
+	if !hasActiveIntercept {
 		return &admissionv1.AdmissionResponse{
 			Allowed: true,
 		}

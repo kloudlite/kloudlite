@@ -6,7 +6,6 @@ import (
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	serviceinterceptv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
@@ -122,7 +121,6 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 		zap.String("targetNamespace", environment.Spec.TargetNamespace))
 
 	disconnectedWorkspaces := 0
-	deletedIntercepts := 0
 
 	// 1. Find and disconnect all workspaces connected to this environment
 	// Workspaces are cluster-scoped, so list without namespace filter
@@ -161,49 +159,12 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 		}
 	}
 
-	// 2. Find and delete all service intercepts targeting services in this environment's namespace
-	// ServiceIntercepts are cluster-scoped, so list all and filter by serviceRef.namespace
-	logger.Info("Finding service intercepts targeting services in environment namespace",
-		zap.String("targetNamespace", environment.Spec.TargetNamespace))
-
-	serviceInterceptList := &serviceinterceptv1.ServiceInterceptList{}
-	if err := r.List(ctx, serviceInterceptList); err != nil {
-		logger.Error("Failed to list service intercepts", zap.Error(err))
-		return fmt.Errorf("failed to list service intercepts: %w", err)
-	}
-
-	for i := range serviceInterceptList.Items {
-		intercept := &serviceInterceptList.Items[i]
-
-		// Only delete intercepts targeting services in this environment's namespace
-		if intercept.Spec.ServiceRef.Namespace != environment.Spec.TargetNamespace {
-			continue
-		}
-
-		logger.Info("Deleting service intercept",
-			zap.String("intercept", intercept.Name),
-			zap.String("service", intercept.Spec.ServiceRef.Name),
-			zap.String("serviceNamespace", intercept.Spec.ServiceRef.Namespace))
-
-		if err := r.Delete(ctx, intercept); err != nil {
-			if !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete service intercept",
-					zap.String("intercept", intercept.Name),
-					zap.Error(err))
-				// Continue with other intercepts instead of failing
-				continue
-			}
-		}
-
-		deletedIntercepts++
-		logger.Info("Successfully deleted service intercept",
-			zap.String("intercept", intercept.Name))
-	}
+	// Note: Service intercepts are now managed as part of Composition.spec.intercepts
+	// The composition controller handles their lifecycle automatically
 
 	logger.Info("Environment deactivation cleanup completed",
 		zap.String("environment", environment.Name),
-		zap.Int("disconnectedWorkspaces", disconnectedWorkspaces),
-		zap.Int("deletedServiceIntercepts", deletedIntercepts))
+		zap.Int("disconnectedWorkspaces", disconnectedWorkspaces))
 
 	return nil
 }

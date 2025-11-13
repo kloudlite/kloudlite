@@ -14,8 +14,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/user"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine"
@@ -49,7 +47,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(packagesv1.AddToScheme(scheme))
-	utilruntime.Must(interceptsv1.AddToScheme(scheme))
 	utilruntime.Must(connectiontokenv1.AddToScheme(scheme))
 	utilruntime.Must(domainrequestsv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
@@ -158,17 +155,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
-	}
-
-	// Setup ServiceIntercept controller
-	serviceInterceptReconciler := &serviceintercept.ServiceInterceptReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "serviceintercept")),
-	}
-
-	if err = serviceInterceptReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create ServiceIntercept controller: %w", err)
 	}
 
 	// Setup DomainRequest controller

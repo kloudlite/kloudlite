@@ -6,7 +6,6 @@ import (
 	"time"
 
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +18,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -252,16 +250,15 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Verbs:     []string{"get", "list"},
 			},
 			{
-				// Allow creating intercepts (cannot restrict by name beforehand)
-				// But list/get/delete will be restricted by label selector in application logic
-				APIGroups: []string{"intercepts.kloudlite.io"},
-				Resources: []string{"serviceintercepts"},
-				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+				// Allow updating Composition intercepts (workspace controller manages composition intercepts)
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"compositions"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
 			},
 			{
-				// Allow reading ServiceIntercept status
-				APIGroups: []string{"intercepts.kloudlite.io"},
-				Resources: []string{"serviceintercepts/status"},
+				// Allow reading Composition status for intercept status
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"compositions/status"},
 				Verbs:     []string{"get"},
 			},
 			{
@@ -333,26 +330,5 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
 		Owns(&packagesv1.PackageRequest{}).
-		Watches(
-			&interceptsv1.ServiceIntercept{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-				// Extract workspace name from labels (cluster-scoped, no namespace needed)
-				labels := obj.GetLabels()
-				workspaceName := labels["workspaces.kloudlite.io/workspace-name"]
-
-				if workspaceName == "" {
-					return nil
-				}
-
-				// Trigger reconciliation for the workspace (cluster-scoped)
-				return []reconcile.Request{
-					{
-						NamespacedName: client.ObjectKey{
-							Name: workspaceName,
-						},
-					},
-				}
-			}),
-		).
 		Complete(r)
 }
