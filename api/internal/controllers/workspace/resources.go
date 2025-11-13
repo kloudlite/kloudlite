@@ -230,6 +230,12 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 }
 
 func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Fetch the DomainRequest to get subdomain
 	domainRequest := &domainrequestv1.DomainRequest{}
 	if err := r.Get(ctx, fn.NN("", "installation-domain"), domainRequest); err != nil {
@@ -297,7 +303,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 		})
 	}
 
-	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: workspace.Name, Namespace: workspace.Namespace}}
+	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: workspace.Name, Namespace: targetNamespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
 		ingress.Spec.IngressClassName = fn.Ptr("traefik")
