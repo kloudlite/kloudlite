@@ -1,8 +1,53 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// PortMapping defines mapping between service and workspace ports for intercepts
+type PortMapping struct {
+	// ServicePort is the port exposed by the service
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	ServicePort int32 `json:"servicePort"`
+
+	// WorkspacePort is the port in the workspace pod
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	WorkspacePort int32 `json:"workspacePort"`
+
+	// Protocol is the protocol used (TCP/UDP)
+	// +kubebuilder:validation:Enum=TCP;UDP;SCTP
+	// +kubebuilder:default=TCP
+	// +optional
+	Protocol corev1.Protocol `json:"protocol,omitempty"`
+}
+
+// ServiceInterceptConfig defines intercept configuration for a composition service
+type ServiceInterceptConfig struct {
+	// ServiceName is the name of the service in the composition to intercept
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	ServiceName string `json:"serviceName"`
+
+	// PortMappings defines how service ports map to workspace ports
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	PortMappings []PortMapping `json:"portMappings"`
+
+	// Enabled indicates whether this intercept is currently active
+	// +kubebuilder:default=false
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// WorkspaceRef references the workspace that will receive intercepted traffic
+	// This is set when a workspace requests to intercept this service
+	// +optional
+	WorkspaceRef *corev1.ObjectReference `json:"workspaceRef,omitempty"`
+}
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -60,6 +105,11 @@ type CompositionSpec struct {
 	// ResourceOverrides allows overriding resource limits for specific services
 	// +optional
 	ResourceOverrides map[string]ServiceResourceOverride `json:"resourceOverrides,omitempty"`
+
+	// Intercepts defines service intercept configurations for this composition
+	// This allows workspace pods to intercept traffic destined for composition services
+	// +optional
+	Intercepts []ServiceInterceptConfig `json:"intercepts,omitempty"`
 }
 
 // EnvFromSource represents a source for environment variables
@@ -116,6 +166,10 @@ type CompositionStatus struct {
 	// +optional
 	Services []ServiceStatus `json:"services,omitempty"`
 
+	// ActiveIntercepts tracks the status of active service intercepts
+	// +optional
+	ActiveIntercepts []InterceptStatus `json:"activeIntercepts,omitempty"`
+
 	// Endpoints contains access URLs for exposed services
 	// +optional
 	Endpoints map[string]string `json:"endpoints,omitempty"`
@@ -167,6 +221,41 @@ const (
 	// CompositionStateDeleting means the composition is being deleted
 	CompositionStateDeleting CompositionState = "deleting"
 )
+
+// InterceptStatus tracks the status of an active service intercept
+type InterceptStatus struct {
+	// ServiceName is the service being intercepted
+	ServiceName string `json:"serviceName"`
+
+	// WorkspaceName is the workspace intercepting traffic
+	// +optional
+	WorkspaceName string `json:"workspaceName,omitempty"`
+
+	// SOCATPodName is the name of the SOCAT forwarding pod
+	// +optional
+	SOCATPodName string `json:"socatPodName,omitempty"`
+
+	// OriginalServiceSelector stores the original service selector before interception
+	// +optional
+	OriginalServiceSelector map[string]string `json:"originalServiceSelector,omitempty"`
+
+	// WorkspaceHeadlessServiceName is the name of the headless service for the workspace
+	// +optional
+	WorkspaceHeadlessServiceName string `json:"workspaceHeadlessServiceName,omitempty"`
+
+	// Phase represents the current phase of the intercept
+	// +kubebuilder:validation:Enum=creating;active;failed
+	// +optional
+	Phase string `json:"phase,omitempty"`
+
+	// Message provides additional information about the intercept status
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// InterceptStartTime when the intercept was activated
+	// +optional
+	InterceptStartTime *metav1.Time `json:"interceptStartTime,omitempty"`
+}
 
 // ServiceStatus tracks the status of an individual service
 type ServiceStatus struct {

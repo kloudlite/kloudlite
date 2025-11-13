@@ -29,6 +29,13 @@ func (r *CompositionReconciler) handleDeletion(ctx context.Context, composition 
 		}
 	}
 
+	// Cleanup all service intercepts before deleting other resources
+	// This ensures SOCAT pods are removed and service selectors are restored
+	if err := r.cleanupAllIntercepts(ctx, composition, logger); err != nil {
+		logger.Error("Failed to cleanup service intercepts", zap.Error(err))
+		// Continue with deletion even if intercept cleanup fails
+	}
+
 	// Common label selector for all resources created by this composition
 	labelSelector := client.MatchingLabels{dockerCompositionLabel: composition.Name}
 	namespaceOpt := client.InNamespace(composition.Namespace)

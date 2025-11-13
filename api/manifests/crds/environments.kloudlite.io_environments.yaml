@@ -18,6 +18,9 @@ spec:
     - jsonPath: .spec.targetNamespace
       name: Namespace
       type: string
+    - jsonPath: .spec.workmachineName
+      name: WorkMachine
+      type: string
     - jsonPath: .spec.activated
       name: Activated
       type: boolean
@@ -57,7 +60,7 @@ spec:
             description: EnvironmentSpec defines the desired state of Environment
             properties:
               activated:
-                default: false
+                default: true
                 description: |-
                   Activated determines whether the environment is active (true) or inactive (false)
                   When deactivated, all deployments and statefulsets are scaled to 0
@@ -71,10 +74,6 @@ spec:
                 description: |-
                   CloneFrom specifies the source environment name to clone resources from
                   This field is automatically cleared after successful cloning
-                type: string
-              createdBy:
-                description: CreatedBy is the username/email of the user who created
-                  this environment
                 type: string
               labels:
                 additionalProperties:
@@ -152,6 +151,9 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              ownedBy:
+                description: OwnedBy is the username of the user who owns this environment
+                type: string
               resourceQuotas:
                 description: ResourceQuotas defines resource quotas for the environment
                   namespace
@@ -220,10 +222,15 @@ spec:
                       type: string
                   type: object
                 type: array
+              workmachineName:
+                description: WorkMachineName references the WorkMachine this environment
+                  belongs to
+                type: string
             required:
             - activated
-            - createdBy
+            - ownedBy
             - targetNamespace
+            - workmachineName
             type: object
           status:
             description: EnvironmentStatus defines the observed state of Environment

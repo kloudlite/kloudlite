@@ -15,7 +15,7 @@ spec:
     listKind: WorkspaceList
     plural: workspaces
     singular: workspace
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.displayName
@@ -23,6 +23,9 @@ spec:
       type: string
     - jsonPath: .spec.owner
       name: Owner
+      type: string
+    - jsonPath: .spec.workmachine
+      name: WorkMachine
       type: string
     - jsonPath: .spec.status
       name: Status
@@ -136,7 +139,7 @@ spec:
                             to workspace ports
                           items:
                             description: PortMapping defines mapping between service
-                              and workspace ports
+                              and workspace ports for intercepts
                             properties:
                               protocol:
                                 default: TCP
@@ -179,52 +182,8 @@ spec:
                 required:
                 - environmentRef
                 type: object
-              machineTypeRef:
-                description: MachineTypeRef references the default machine type for
-                  this workspace
-                properties:
-                  apiVersion:
-                    description: API version of the referent.
-                    type: string
-                  fieldPath:
-                    description: |-
-                      If referring to a piece of an object instead of an entire object, this string
-                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within a pod, this would take on a value like:
-                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]" (container with
-                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
-                      referencing a part of an object.
-                    type: string
-                  kind:
-                    description: |-
-                      Kind of the referent.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-                    type: string
-                  name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    type: string
-                  namespace:
-                    description: |-
-                      Namespace of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
-                    type: string
-                  resourceVersion:
-                    description: |-
-                      Specific resourceVersion to which this reference is made, if any.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-                    type: string
-                  uid:
-                    description: |-
-                      UID of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
-                    type: string
-                type: object
-                x-kubernetes-map-type: atomic
-              owner:
-                description: Owner is the email/username of the workspace owner
+              ownedBy:
+                description: OwnedBy is the username of the workspace owner
                 minLength: 1
                 type: string
               packages:
@@ -348,6 +307,12 @@ spec:
                 description: VSCodeVersion specifies the version of VS Code server
                   to use
                 type: string
+              workmachine:
+                description: |-
+                  WorkmachineName references the WorkMachine this workspace belongs to
+                  The workspace will run in the WorkMachine's targetNamespace
+                minLength: 1
+                type: string
               workspacePath:
                 default: /workspace
                 description: WorkspacePath is the path inside the workspace container
@@ -355,7 +320,8 @@ spec:
                 type: string
             required:
             - displayName
-            - owner
+            - ownedBy
+            - workmachine
             type: object
           status:
             description: WorkspaceStatus defines the observed state of Workspace

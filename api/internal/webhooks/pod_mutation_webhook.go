@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -83,40 +83,46 @@ func (w *PodMutationWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		}
 	}
 
-	// List all active ServiceIntercepts in the pod's namespace
-	interceptList := &interceptsv1.ServiceInterceptList{}
-	err := w.client.List(context.TODO(), interceptList,
+	// List all Compositions in the pod's namespace (intercepts are now part of Composition)
+	compositionList := &environmentsv1.CompositionList{}
+	err := w.client.List(context.TODO(), compositionList,
 		client.InNamespace(req.Namespace))
 
 	if err != nil {
-		w.logger.Error("Failed to list ServiceIntercepts: " + err.Error())
+		w.logger.Error("Failed to list Compositions: " + err.Error())
 		// Allow the pod to proceed without modification on error
 		return &admissionv1.AdmissionResponse{
 			Allowed: true,
 		}
 	}
 
-	// Check if this pod matches any intercepted service's original selector
-	var matchedIntercept *interceptsv1.ServiceIntercept
-	for i := range interceptList.Items {
-		intercept := &interceptList.Items[i]
+	// Check if this pod matches any active intercept's original selector
+	var matchedInterceptName string
 
-		// Only consider intercepts that are not being deleted and are active
-		if intercept.DeletionTimestamp != nil || intercept.Status.Phase != "Active" {
+	for _, composition := range compositionList.Items {
+		// Only consider compositions that are not being deleted
+		if composition.DeletionTimestamp != nil {
 			continue
 		}
 
-		// Check if pod labels match the original service selector
-		if intercept.Status.OriginalServiceSelector != nil {
-			if podMatchesSelector(&pod, intercept.Status.OriginalServiceSelector) {
-				matchedIntercept = intercept
-				break
+		// Check all active intercepts in this composition
+		for _, activeIntercept := range composition.Status.ActiveIntercepts {
+			// Check if pod labels match the original service selector
+			if activeIntercept.OriginalServiceSelector != nil {
+				if podMatchesSelector(&pod, activeIntercept.OriginalServiceSelector) {
+					matchedInterceptName = fmt.Sprintf("%s/%s", composition.Name, activeIntercept.ServiceName)
+					break
+				}
 			}
+		}
+
+		if matchedInterceptName != "" {
+			break
 		}
 	}
 
 	// If no intercept matches, allow pod as-is
-	if matchedIntercept == nil {
+	if matchedInterceptName == "" {
 		return &admissionv1.AdmissionResponse{
 			Allowed: true,
 		}
@@ -155,11 +161,11 @@ func (w *PodMutationWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	patches = append(patches, patchOperation{
 		Op:    "add",
 		Path:  fmt.Sprintf("/metadata/annotations/%s", escapedKey),
-		Value: matchedIntercept.Name,
+		Value: matchedInterceptName,
 	})
 
 	w.logger.Info(fmt.Sprintf("Holding pod '%s' in namespace '%s' due to service intercept '%s'",
-		pod.Name, pod.Namespace, matchedIntercept.Name))
+		pod.Name, pod.Namespace, matchedInterceptName))
 
 	// Create patch response
 	patchBytes, err := json.Marshal(patches)

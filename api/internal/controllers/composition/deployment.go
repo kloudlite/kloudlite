@@ -156,6 +156,12 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	// Get current PVC names
 	deployedPVCs := getPVCNames(resources.PVCs)
 
+	// Reconcile service intercepts after services are deployed
+	// This creates SOCAT pods to forward traffic from composition services to workspace pods
+	if err := r.reconcileIntercepts(ctx, composition, logger); err != nil {
+		return fmt.Errorf("failed to reconcile service intercepts: %w", err)
+	}
+
 	// Cleanup removed resources using OLD deployed resources
 	if err := r.cleanupRemovedResources(ctx, composition, oldDeployedResources, deployedDeployments, deployedServices, deployedPVCs, logger); err != nil {
 		return fmt.Errorf("failed to cleanup removed resources: %w", err)
