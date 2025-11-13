@@ -39,7 +39,7 @@ func (ca *Certificate) GetStatus() *reconciler.Status {
 type CertificateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CertificateAuthority `json:"items"`
+	Items           []Certificate `json:"items"`
 }
 
 func init() {
