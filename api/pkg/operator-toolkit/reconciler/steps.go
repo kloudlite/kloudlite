@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"fmt"
+	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,8 +47,11 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 			// Skip creating a new running check if it already passed with the same generation
 			if existingCheck, exists := req.Object.GetStatus().Checks[checkName]; exists {
 				if existingCheck.State == PassedState && existingCheck.Generation == req.Object.GetGeneration() {
-					// Check already passed for this generation, skip running it again
-					continue
+					// Only skip if the check completed recently (within last 60 seconds)
+					// This allows the check to run again if resources were deleted externally
+					if existingCheck.CompletedAt != nil && time.Since(existingCheck.CompletedAt.Time) < 60*time.Second {
+						continue
+					}
 				}
 			}
 
@@ -99,8 +103,11 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		// This prevents infinite reconciliation loops where the check state toggles between running/passed
 		if existingCheck, exists := req.Object.GetStatus().Checks[checkName]; exists {
 			if existingCheck.State == PassedState && existingCheck.Generation == req.Object.GetGeneration() {
-				// Check already passed for this generation, skip running it again
-				continue
+				// Only skip if the check completed recently (within last 60 seconds)
+				// This allows the check to run again if resources were deleted externally
+				if existingCheck.CompletedAt != nil && time.Since(existingCheck.CompletedAt.Time) < 60*time.Second {
+					continue
+				}
 			}
 		}
 
