@@ -138,7 +138,7 @@ func (in *CertificateList) DeepCopyInto(out *CertificateList) {
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
-		*out = make([]CertificateAuthority, len(*in))
+		*out = make([]Certificate, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

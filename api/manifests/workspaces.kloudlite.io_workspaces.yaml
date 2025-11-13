@@ -139,7 +139,7 @@ spec:
                             to workspace ports
                           items:
                             description: PortMapping defines mapping between service
-                              and workspace ports
+                              and workspace ports for intercepts
                             properties:
                               protocol:
                                 default: TCP

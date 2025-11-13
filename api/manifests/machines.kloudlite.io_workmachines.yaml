@@ -16,7 +16,7 @@ spec:
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled
+      name: Seen
       type: date
     - jsonPath: .spec.ownedBy
       name: Owner
@@ -217,6 +217,45 @@ spec:
                   CurrentMachineType is the actual instance type currently running
                   Used to detect when spec.machineType changes and trigger instance type change
                 type: string
+              gpu:
+                description: GPU contains detailed GPU information if hardware is
+                  present
+                properties:
+                  count:
+                    description: Count is the number of GPUs
+                    type: integer
+                  driverInstallationMessage:
+                    description: DriverInstallationMessage provides detailed status
+                      about driver installation
+                    type: string
+                  driverInstallationStatus:
+                    description: |-
+                      DriverInstallationStatus tracks the status of driver installation
+                      Values: "not-installed", "installing", "installed", "awaiting-reboot", "ready", "error"
+                    type: string
+                  driverVersion:
+                    description: DriverVersion is the NVIDIA driver version
+                    type: string
+                  hasGPU:
+                    description: HasGPU indicates whether GPU hardware is available
+                    type: boolean
+                  product:
+                    description: Product is the GPU product name (e.g., "tesla-t4")
+                    type: string
+                  runtimeConfigured:
+                    description: RuntimeConfigured indicates whether NVIDIA Container
+                      Runtime is configured
+                    type: boolean
+                type: object
+              gpuModel:
+                description: |-
+                  GPUModel is the GPU model name if available (e.g., "Tesla T4", "A100")
+                  This is static info stored in status, real-time metrics available via metrics endpoint
+                type: string
+              hasGPU:
+                description: HasGPU indicates if this machine has a GPU (stored in
+                  status for quick filtering)
+                type: boolean
               isAutoStopped:
                 description: IsAutoStopped when set means machine was auto-stopped
                   by kloudlite
