@@ -264,6 +264,13 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		return reconcile.Result{}, err
 	}
 
+	// Setup Ingress for HTTP services
+	if err := r.setupWorkspaceIngress(ctx, workspace, logger); err != nil {
+		logger.Error("Failed to setup Ingress", zap.Error(err))
+		// Don't fail reconciliation - Ingress is optional if domain isn't ready yet
+		// The error is logged and will be retried on next reconciliation
+	}
+
 	// Ensure headless Service is created for service intercepts
 	if err := r.ensureWorkspaceHeadlessService(ctx, workspace, logger); err != nil {
 		logger.Error("Failed to ensure headless Service", zap.Error(err))

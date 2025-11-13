@@ -3,6 +3,7 @@ package workmachine
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/codingconcepts/env"
@@ -11,12 +12,17 @@ import (
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/errors"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -51,46 +57,18 @@ type WorkMachineReconciler struct {
 	cloudProviderAPI cloud.Provider
 }
 
-const WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
-const hostManagerNamespace = "kloudlite-hostmanager"
+const (
+	WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
+	hostManagerNamespace     = "kloudlite-hostmanager"
+)
 
 // SSH Configuration Constants
 const (
 	// SSHUserName is the username for the SSH server
 	SSHUserName = "kloudlite"
-)
 
-// SSH Jump Host Architecture
-//
-// This controller implements a secure SSH jump host (bastion) pattern for accessing workspaces:
-//
-// Authentication Flow:
-// 1. User authenticates to jump host using their public key (from WorkMachine.Spec.SSHPublicKeys)
-// 2. Jump host forwards TCP connection to workspace
-// 3. Workspace authenticates jump host using SSH proxy key pair
-//
-// Jump Host (workmachine-host-manager):
-// - Runs OpenSSH server on port 2222
-// - Authorizes users via ssh-authorized-keys ConfigMap (user keys only)
-// - Has TCP forwarding enabled (AllowTcpForwarding yes)
-// - Does NOT provide shell access (PermitTTY no, ForceCommand denies shells)
-// - Does NOT authenticate to workspaces (jump hosts work by TCP forwarding)
-// - Password authentication disabled for security
-// - Works like GitHub's SSH: authenticates users but only allows port forwarding
-//
-// Workspaces:
-// - Run OpenSSH servers that authorize the jump host's SSH proxy public key
-// - Jump host uses SSH proxy private key to authenticate to workspaces
-//
-// Security:
-// - All SSH keys are validated using ssh.ParseAuthorizedKey() before use
-// - Password authentication is disabled (PasswordAuthentication no)
-// - Only public key authentication is allowed
-// - Jump host runs as non-privileged user (UID/GID 1000)
-//
-// ConfigMaps:
-// - ssh-authorized-keys: Contains user public keys for jump host authentication
-// - sshd-config: Contains OpenSSH server configuration with security hardening
+	wireguardTunnelImage = "ghcr.io/kloudlite/kloudlite/wireguard-server:latest"
+)
 
 // Reconcile handles WorkMachine CR reconciliation
 func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
@@ -137,6 +115,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
+			Name:     "setup workmachine tunnel server",
+			Title:    "Setup Workmachine Tunnel Server",
+			OnCreate: r.setupTunnelServer,
+			OnDelete: r.cleanupTunnelServer,
+		},
+		{
 			Name:     "ensure-deployment",
 			Title:    "Ensure workmachine-host-manager deployment",
 			OnCreate: r.ensurePackageManagerDeploymentStep,
@@ -166,6 +150,214 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 // createWorkspaceRBAC is a placeholder step for workspace RBAC setup
 // Actual workspace-specific RBAC is created by the Workspace controller
 func (r *WorkMachineReconciler) createWorkspaceRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	return check.Passed()
+}
+
+// setupTunnelServer creates the WireGuard tunnel server for the workmachine
+func (r *WorkMachineReconciler) setupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	// Create ConfigMap for WireGuard configuration
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tunnel-server",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, secret, func() error {
+		if !fn.IsOwner(secret, obj) {
+			secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+
+		if secret.Data == nil {
+			secret.StringData = make(map[string]string)
+		}
+
+		// Initialize with empty server config if not exists
+		if _, exists := secret.Data["tunnel-server.conf"]; !exists {
+			serverPriv, serverPub, err := generateWgKeys()
+			if err != nil {
+				return err
+			}
+
+			peer1Priv, peer1Pub, err := generateWgKeys()
+			if err != nil {
+				return err
+			}
+
+			secret.StringData["tunnel-server.conf"] = fmt.Sprintf(`# WireGuard Server Configuration
+[Interface]
+PrivateKey = %s
+Address = 10.17.0.1/24
+ListenPort = 51820
+
+PostUp = proxyguard --listen 0.0.0.0:51821 --to 127.0.0.1:51820
+
+PostUp = iptables -A FORWARD -i %%i -j ACCEPT;
+PostUp = iptables -A FORWARD -o %%i -j ACCEPT;
+PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;
+
+PostDown = iptables -D FORWARD -i %%i -j ACCEPT;
+PostDown = iptables -D FORWARD -o %%i -j ACCEPT;
+PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE;
+
+[Peer]
+# Client Peer 1
+PublicKey = %s
+AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
+ListenPort = 51820
+`, serverPriv, peer1Pub)
+
+			secret.StringData["peer1.conf"] = fmt.Sprintf(`# WireGuard Client Configuration
+[Interface]
+PrivateKey = %s
+Address = 10.17.0.2/24
+ListenPort = 51820
+
+[Peer]
+# Server Peer
+PublicKey = %s
+AllowedIPs = 10.17.0.0/24, 10.43.0.0/0
+Endpoint = 127.0.0.1:51821
+`, peer1Priv, serverPub)
+
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update tunnel-server ConfigMap: %w", err))
+	}
+
+	// Create Pod directly (not Deployment) since it's pinned to a specific node
+	// Pods are immutable, so we check if it exists first
+	podName := "tunnel-server"
+	existingPod := &corev1.Pod{}
+	err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: obj.Spec.TargetNamespace}, existingPod)
+
+	if err == nil {
+		// Pod exists, check if it's running
+		if existingPod.Status.Phase == corev1.PodRunning || existingPod.Status.Phase == corev1.PodPending {
+			// Pod is fine, nothing to do
+			return check.Passed()
+		}
+		// Pod is in a bad state, delete it and let next reconciliation recreate it
+		if err := r.Delete(check.Context(), existingPod); err != nil && !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete bad tunnel-server pod: %w", err))
+		}
+		return check.UpdateMsg("deleted bad tunnel-server pod, recreating").RequeueAfter(2 * time.Second)
+	}
+
+	if !apiErrors.IsNotFound(err) {
+		return check.Failed(fmt.Errorf("failed to get tunnel-server pod: %w", err))
+	}
+
+	// Pod doesn't exist, create it
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: obj.Spec.TargetNamespace,
+			Labels: map[string]string{
+				"app":                      "tunnel-server",
+				"kloudlite.io/workmachine": obj.Name,
+			},
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
+		Spec: corev1.PodSpec{
+			NodeName:      obj.Name,
+			HostNetwork:   true,
+			RestartPolicy: corev1.RestartPolicyAlways,
+			Containers: []corev1.Container{
+				{
+					Name:  "tunnel-server",
+					Image: wireguardTunnelImage,
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: fn.Ptr(true),
+						Capabilities: &corev1.Capabilities{
+							Add: []corev1.Capability{
+								corev1.Capability("NET_ADMIN"),
+								corev1.Capability("SYS_ADMIN"),
+							},
+						},
+					},
+					Ports: []corev1.ContainerPort{
+						{
+							Name:          "wg-http-proxy",
+							ContainerPort: 443,
+							Protocol:      corev1.ProtocolTCP,
+						},
+					},
+					Command: []string{
+						"sh",
+						"-c",
+						strings.Join([]string{
+							"wg-quick down wg0 || echo starting wireguard",
+							"wg-quick up wg0 &",
+							"pid=$!",
+							"trap 'kill -9 $pid' SIGINT SIGTERM EXIT",
+							"wait $pid",
+						}, "\n"),
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "wireguard-secret",
+							MountPath: "/etc/wireguard/wg0.conf",
+							SubPath:   "tunnel-server.conf",
+							ReadOnly:  true,
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: "wireguard-secret",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: secret.Name,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := r.Create(check.Context(), pod); err != nil {
+		return check.Failed(fmt.Errorf("failed to create tunnel-server pod: %w", err))
+	}
+
+	return check.Passed()
+}
+
+func generateWgKeys() (privateKey, publicKey string, err error) {
+	key, err := wgtypes.GenerateKey()
+	if err != nil {
+		return "", "", errors.Wrap("failed to generate wireguard keys", err)
+	}
+
+	return key.String(), key.PublicKey().String(), nil
+}
+
+func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	if err := r.Delete(check.Context(), &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tunnel-server",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+	}
+
+	if err := r.Delete(check.Context(), &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tunnel-server",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+	}
+
 	return check.Passed()
 }
 
@@ -263,6 +455,7 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine")
 	builder.Owns(&corev1.Namespace{})
+	builder.Owns(&corev1.Pod{})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor("workmachine")))
 
 	// Watch for workspaces and trigger reconciliation of their owning WorkMachine

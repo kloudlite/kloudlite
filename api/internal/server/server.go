@@ -70,8 +70,10 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		logger.Fatal("Failed to create controller manager", zap.Error(err))
 	}
 
+	caInitializer := services.NewCAInitializer(k8sClient.RuntimeClient, logger)
+
 	// Initialize subdomain poller
-	subdomainPoller := services.NewSubdomainPoller(&cfg.Installation, k8sClient.RuntimeClient, logger)
+	subdomainPoller := services.NewSubdomainPoller(&cfg.Installation, k8sClient.RuntimeClient, caInitializer, logger)
 
 	// Setup router with dependencies
 	router := setupRouter(cfg, logger, servicesManager)

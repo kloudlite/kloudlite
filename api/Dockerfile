@@ -10,7 +10,7 @@ FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 
 # Copy the pre-built server binary (built outside Docker)
-COPY bin/api-server /app/server
+COPY ./bin/api-server /app/server
 
 # Expose API port
 EXPOSE 8080
