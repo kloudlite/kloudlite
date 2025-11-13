@@ -111,9 +111,9 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 		{
 			Name:  "when-running/ensure-tunnel-server",
 			Title: "Ensure tunnel server is running",
-			ShouldRun: func(obj *v1.WorkMachine) bool {
-				return obj.Spec.State == v1.MachineStateRunning
-			},
+			// ShouldRun: func(obj *v1.WorkMachine) bool {
+			// 	return obj.Spec.State == v1.MachineStateRunning
+			// },
 			OnCreate: r.ensureTunnelServer,
 			OnDelete: r.cleanupTunnelServer,
 		},
@@ -185,10 +185,6 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 			secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 
-		if secret.Data == nil {
-			secret.StringData = make(map[string]string)
-		}
-
 		// Initialize with empty server config if not exists
 		if _, exists := secret.Data["tunnel-server.conf"]; !exists {
 			serverPriv, serverPub, err := generateWgKeys()
@@ -201,13 +197,15 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 				return err
 			}
 
+			secret.StringData = make(map[string]string)
+
 			secret.StringData["tunnel-server.conf"] = fmt.Sprintf(`# WireGuard Server Configuration
 [Interface]
 PrivateKey = %s
 Address = 10.17.0.1/24
 ListenPort = 51820
 
-PostUp = proxyguard --listen 0.0.0.0:51821 --to 127.0.0.1:51820
+PostUp = proxyguard --listen 0.0.0.0:443 --to 127.0.0.1:51820
 
 PostUp = iptables -A FORWARD -i %%i -j ACCEPT;
 PostUp = iptables -A FORWARD -o %%i -j ACCEPT;
@@ -221,7 +219,6 @@ PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE;
 # Client Peer 1
 PublicKey = %s
 AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
-ListenPort = 51820
 `, serverPriv, peer1Pub)
 
 			secret.StringData["peer1.conf"] = fmt.Sprintf(`# WireGuard Client Configuration
@@ -233,7 +230,7 @@ ListenPort = 51820
 [Peer]
 # Server Peer
 PublicKey = %s
-AllowedIPs = 10.17.0.0/24, 10.43.0.0/0
+AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
 `, peer1Priv, serverPub)
 
