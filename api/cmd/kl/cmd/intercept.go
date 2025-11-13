@@ -495,12 +495,6 @@ func handleInterceptList() error {
 		return nil
 	}
 
-	// Get target namespace from status
-	targetNamespace := ""
-	if workspace.Status.ConnectedEnvironment != nil {
-		targetNamespace = workspace.Status.ConnectedEnvironment.TargetNamespace
-	}
-
 	// Get status from workspace status (intercepts are now tracked in workspace.status.activeIntercepts)
 	activeInterceptsMap := make(map[string]workspacesv1.InterceptStatus)
 	for _, activeIntercept := range workspace.Status.ActiveIntercepts {
@@ -613,10 +607,6 @@ func printInterceptStatusFromWorkspace(interceptSpec workspacesv1.InterceptSpec,
 	for _, mapping := range interceptSpec.PortMappings {
 		fmt.Printf("  %d (service) → %d (workspace) [%s]\n",
 			mapping.ServicePort, mapping.WorkspacePort, mapping.Protocol)
-	}
-
-	if hasStatus && status.InterceptPodName != "" {
-		fmt.Printf("\nIntercept Pod: %s\n", status.InterceptPodName)
 	}
 }
 
