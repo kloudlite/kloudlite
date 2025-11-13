@@ -10,10 +10,11 @@ import (
 )
 
 type Step[T Resource] struct {
-	Name     string
-	Title    string
-	OnCreate func(check *Check[T], obj T) StepResult
-	OnDelete func(check *Check[T], obj T) StepResult
+	Name      string
+	Title     string
+	ShouldRun func(obj T) bool // Optional: If provided, step only runs when this returns true
+	OnCreate  func(check *Check[T], obj T) StepResult
+	OnDelete  func(check *Check[T], obj T) StepResult
 }
 
 func isBeingDeleted(obj client.Object) bool {
@@ -34,6 +35,10 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 	checkList := make([]CheckDefinition, 0, len(steps))
 	if isBeingDeleted(req.Object) {
 		for i := range steps {
+			// Skip step if ShouldRun condition is not met
+			if steps[i].ShouldRun != nil && !steps[i].ShouldRun(req.Object) {
+				continue
+			}
 			checkList = append(checkList, CheckDefinition{Name: "delete/" + steps[i].Name, Title: "[Delete] " + steps[i].Title})
 		}
 
@@ -81,6 +86,10 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 	}
 
 	for i := range steps {
+		// Skip step if ShouldRun condition is not met
+		if steps[i].ShouldRun != nil && !steps[i].ShouldRun(req.Object) {
+			continue
+		}
 		checkList = append(checkList, CheckDefinition{Name: "create/" + steps[i].Name, Title: "[Create] " + steps[i].Title})
 	}
 

@@ -18,36 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// ensurePackageManagerDeploymentStep ensures the workmachine-host-manager pod exists
-// Pod will be recreated by the controller if it crashes
-func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+// ensureHostManagerPod ensures the workmachine-host-manager pod exists and is running
+// This function is called when the WorkMachine is in running state
+func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespace := hostManagerNamespace
 	// Use unique name per WorkMachine since all host managers share the same namespace
 	hostManagerName := fmt.Sprintf("hm-%s", obj.Name)
-
-	// Check WorkMachine state - only create pod when running
-	if obj.Spec.State != v1.MachineStateRunning {
-		// Delete pod if it exists
-		pod := &corev1.Pod{}
-		err := r.Get(check.Context(), client.ObjectKey{Name: hostManagerName, Namespace: hostManagerNamespace}, pod)
-		if err == nil {
-			// Pod exists, delete it
-			if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
-				return check.Failed(fmt.Errorf("failed to delete pod for non-running machine: %w", err))
-			}
-			check.Logger().Info("Deleted host-manager pod because WorkMachine is not running", "state", obj.Spec.State)
-		}
-		// Also delete service
-		svc := &corev1.Service{}
-		err = r.Get(check.Context(), client.ObjectKey{Name: hostManagerName, Namespace: hostManagerNamespace}, svc)
-		if err == nil {
-			if err := r.Delete(check.Context(), svc); err != nil && !apiErrors.IsNotFound(err) {
-				return check.Failed(fmt.Errorf("failed to delete service for non-running machine: %w", err))
-			}
-			check.Logger().Info("Deleted host-manager service because WorkMachine is not running", "state", obj.Spec.State)
-		}
-		return check.Passed()
-	}
 
 	pod := &corev1.Pod{}
 	err := r.Get(check.Context(), client.ObjectKey{Name: hostManagerName, Namespace: hostManagerNamespace}, pod)
@@ -161,6 +137,35 @@ func (r *WorkMachineReconciler) ensurePackageManagerDeploymentStep(check *reconc
 		return nil
 	}); err != nil {
 		return check.Failed(err)
+	}
+
+	return check.Passed()
+}
+
+// cleanupHostManagerPod deletes the host-manager pod and service
+// This function is called when the WorkMachine is not in running state
+func (r *WorkMachineReconciler) cleanupHostManagerPod(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	hostManagerName := fmt.Sprintf("hm-%s", obj.Name)
+
+	// Delete pod if it exists
+	pod := &corev1.Pod{}
+	err := r.Get(check.Context(), client.ObjectKey{Name: hostManagerName, Namespace: hostManagerNamespace}, pod)
+	if err == nil {
+		// Pod exists, delete it
+		if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete pod for non-running machine: %w", err))
+		}
+		check.Logger().Info("Deleted host-manager pod because WorkMachine is not running", "state", obj.Spec.State)
+	}
+
+	// Also delete service
+	svc := &corev1.Service{}
+	err = r.Get(check.Context(), client.ObjectKey{Name: hostManagerName, Namespace: hostManagerNamespace}, svc)
+	if err == nil {
+		if err := r.Delete(check.Context(), svc); err != nil && !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete service for non-running machine: %w", err))
+		}
+		check.Logger().Info("Deleted host-manager service because WorkMachine is not running", "state", obj.Spec.State)
 	}
 
 	return check.Passed()
