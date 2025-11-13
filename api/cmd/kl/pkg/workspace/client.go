@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	interceptsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/serviceintercept/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -33,11 +32,6 @@ func New() (*Client, error) {
 	// Register the environment API types with the scheme
 	if err := environmentsv1.AddToScheme(scheme.Scheme); err != nil {
 		return nil, fmt.Errorf("failed to add environment types to scheme: %w", err)
-	}
-
-	// Register the intercepts API types with the scheme
-	if err := interceptsv1.AddToScheme(scheme.Scheme); err != nil {
-		return nil, fmt.Errorf("failed to add intercepts types to scheme: %w", err)
 	}
 
 	// Get workspace name and namespace from environment variables
