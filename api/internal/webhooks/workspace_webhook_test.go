@@ -508,15 +508,22 @@ func TestWorkspaceWebhook_ValidateWorkspace_InterceptConflict(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-env", Namespace: "test-ns"},
 		Spec:       environmentv1.EnvironmentSpec{TargetNamespace: "target-ns"},
 	}
-	existingIntercept := &interceptsv1.ServiceIntercept{
-		ObjectMeta: metav1.ObjectMeta{Name: "existing-intercept", Namespace: "test-ns"},
-		Spec: interceptsv1.ServiceInterceptSpec{
-			WorkspaceRef: corev1.ObjectReference{Name: "other-workspace"},
-			ServiceRef:   corev1.ObjectReference{Name: "my-service", Namespace: "target-ns"},
+	// Create another workspace that already has an intercept on the same service
+	existingWorkspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "other-workspace", Namespace: "test-ns"},
+		Spec: workspacesv1.WorkspaceSpec{
+			OwnedBy:     "testuser",
+			DisplayName: "Other Workspace",
+			EnvironmentConnection: &workspacesv1.EnvironmentConnectionSpec{
+				EnvironmentRef: corev1.ObjectReference{Name: "test-env", Namespace: "test-ns"},
+				Intercepts: []workspacesv1.InterceptSpec{
+					{ServiceName: "my-service"},
+				},
+			},
 		},
 	}
 
-	webhook := setupWorkspaceWebhookTest(t, user, workMachine, env, existingIntercept)
+	webhook := setupWorkspaceWebhookTest(t, user, workMachine, env, existingWorkspace)
 
 	workspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-workspace", Namespace: "test-ns"},
