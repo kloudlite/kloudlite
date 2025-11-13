@@ -43,8 +43,8 @@ func TestWaitForInterceptSync_StartSuccess(t *testing.T) {
 		},
 		Spec: workspacesv1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
-			EnvironmentConnection: &workspacesv1.EnvironmentConnection{
-				EnvironmentName: "test-env",
+			EnvironmentConnection: &workspacesv1.EnvironmentConnectionSpec{
+				EnvironmentRef: corev1.ObjectReference{Name: "test-env"},
 				Intercepts: []workspacesv1.InterceptSpec{
 					{
 						ServiceName: "api-server",
@@ -94,8 +94,8 @@ func TestWaitForInterceptSync_StartFailure(t *testing.T) {
 			Name: "test-workspace",
 		},
 		Spec: workspacesv1.WorkspaceSpec{
-			EnvironmentConnection: &workspacesv1.EnvironmentConnection{
-				EnvironmentName: "test-env",
+			EnvironmentConnection: &workspacesv1.EnvironmentConnectionSpec{
+				EnvironmentRef: corev1.ObjectReference{Name: "test-env"},
 				Intercepts: []workspacesv1.InterceptSpec{
 					{
 						ServiceName: "api-server",
