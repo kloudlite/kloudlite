@@ -580,7 +580,7 @@ func handleInterceptStatus(serviceName string) error {
 	// Show status for all intercepts
 	for i, interceptSpec := range workspace.Spec.EnvironmentConnection.Intercepts {
 		if i > 0 {
-			fmt.Println("\n---\n")
+			fmt.Println("\n---")
 		}
 		status, hasStatus := activeInterceptsMap[interceptSpec.ServiceName]
 		printInterceptStatusFromWorkspace(interceptSpec, status, hasStatus, workspace.Name)
