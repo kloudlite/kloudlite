@@ -947,6 +947,10 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 				Spec: srcComp.Spec,
 			}
 
+			// Override NodeName with target environment's NodeName
+			// This ensures composition pods run on the correct node where target PVCs are bound
+			newComp.Spec.NodeName = environment.Spec.NodeName
+
 			// Update the environment label
 			if newComp.Labels == nil {
 				newComp.Labels = make(map[string]string)

@@ -111,8 +111,11 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	// The webhook will handle adding ownership labels and metadata
 	env.Spec.OwnedBy = username
 	env.Spec.WorkMachineName = wm.Name
-	env.Spec.NodeSelector = wm.Status.NodeLabels
-	env.Spec.Tolerations = wm.Status.PodTolerations
+
+	// Extract node name from WorkMachine's NodeLabels
+	if nodeName, ok := wm.Status.NodeLabels["kubernetes.io/hostname"]; ok {
+		env.Spec.NodeName = nodeName
+	}
 
 	// Create the environment (cluster-scoped)
 	if err := h.envRepo.Create(c.Request.Context(), env); err != nil {

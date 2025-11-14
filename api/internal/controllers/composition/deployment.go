@@ -3,7 +3,6 @@ package composition
 import (
 	"context"
 	"fmt"
-	"maps"
 	"strconv"
 
 	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -93,10 +92,9 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	// Apply Deployments (scale to 0 if environment is inactive)
 	deployedDeployments := make([]string, 0)
 	for _, deployment := range resources.Deployments {
-		// Apply nodeSelector and tolerations from environment
-		if environment != nil {
-			maps.Copy(deployment.Spec.Template.Spec.NodeSelector, environment.Spec.NodeSelector)
-			deployment.Spec.Template.Spec.Tolerations = environment.Spec.Tolerations
+		// Apply nodeName from environment
+		if environment != nil && environment.Spec.NodeName != "" {
+			deployment.Spec.Template.Spec.NodeName = environment.Spec.NodeName
 		}
 
 		// If environment is not activated, scale deployment to 0 replicas

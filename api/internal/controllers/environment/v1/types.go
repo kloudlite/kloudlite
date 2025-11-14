@@ -1,7 +1,6 @@
 package v1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -67,8 +66,10 @@ type EnvironmentSpec struct {
 	// +optional
 	CloneFrom string `json:"cloneFrom,omitempty"`
 
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	// NodeName specifies the node where all environment resources should run
+	// This is set from the WorkMachine's node assignment
+	// +optional
+	NodeName string `json:"nodeName,omitempty"`
 }
 
 // ResourceQuotas defines resource quotas for the environment
@@ -195,9 +196,6 @@ type EnvironmentStatus struct {
 	// SourceCloningStatus tracks when this environment is being used as a cloning source
 	// +optional
 	SourceCloningStatus *SourceCloningStatus `json:"sourceCloningStatus,omitempty"`
-
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 // EnvironmentState represents the state of an environment
