@@ -278,7 +278,7 @@ export function EnvironmentsList({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col gap-1">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium w-fit ${
                         env.status === 'active'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                           : env.status === 'deleting'
