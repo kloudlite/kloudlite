@@ -1319,8 +1319,8 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 		if containsString(workspace.Finalizers, workspaceCleanupFinalizer) {
 			logger.Info("Workspace is being deleted, cleaning up directory")
 
-			// Clean up workspace directory
-			workspaceDir := fmt.Sprintf("%s/workspaces/%s", workspaceHomePath, workspace.Name)
+			// Clean up workspace directory using FolderName
+			workspaceDir := fmt.Sprintf("%s/workspaces/%s", workspaceHomePath, workspace.Spec.FolderName)
 			logger.Info("Removing workspace directory", zap2.String("path", workspaceDir))
 
 			// Use rm -rf to remove directory and all contents
