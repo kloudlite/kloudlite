@@ -28,7 +28,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart={{.ExecutablePath}} daemon run
+ExecStart=sh -c '{{.ExecutablePath}} daemon run'
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

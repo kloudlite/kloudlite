@@ -21,3 +21,13 @@ tasks:
     cmds:
       - cat manifests/*.yaml > cmd/kli/internal/manifests/crds.yaml
       - echo "Consolidated CRDs into cmd/kli/internal/manifests/crds.yaml"
+
+  build:image:
+    env:
+      IMAGE: "ghcr.io/kloudlite/kloudlite/api-server:development"
+    # deps:
+    #   - task: build:server
+    cmds:
+      - docker build -t $IMAGE .
+      - docker push $IMAGE
+
