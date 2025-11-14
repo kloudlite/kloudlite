@@ -512,6 +512,20 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			logger.Info("Suspending source environment for safe cloning")
 			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseSuspending, "Suspending source environment", logger)
 
+			// Set source cloning status
+			now := metav1.Now()
+			sourceEnv.Status.SourceCloningStatus = &environmentsv1.SourceCloningStatus{
+				TargetEnvironmentName: environment.Name,
+				Phase:                 environmentsv1.SourceCloningPhaseSuspended,
+				Message:               fmt.Sprintf("Environment suspended for cloning to %s", environment.Name),
+				StartTime:             &now,
+			}
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, sourceEnv, func() error {
+				return nil
+			}, logger); err != nil {
+				logger.Error("Failed to update source cloning status", zap.Error(err))
+			}
+
 			// Scale down source environment
 			if err := r.suspendEnvironment(ctx, sourceEnv, logger); err != nil {
 				logger.Error("Failed to suspend source environment", zap.Error(err))
@@ -765,15 +779,14 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			logger.Debug("Created PVC", zap.String("name", srcPVC.Name))
 		}
 
-		// Move to copying phase
-		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCopying, "Starting data copy", logger)
+		// Move to creating copy jobs phase
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCreatingCopyJobs, "Creating copy jobs", logger)
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Phase 4: Copy data from source PVCs to target PVCs
-	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCloningPVCs ||
-		environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCopying {
-		logger.Info("Starting PVC data copy phase")
+	// Phase 4: Create ALL copy jobs (sender + receiver)
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCreatingCopyJobs {
+		logger.Info("Creating all PVC copy jobs")
 
 		// List PVCs from source namespace
 		pvcList := &corev1.PersistentVolumeClaimList{}
@@ -786,91 +799,168 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			return reconcile.Result{}, fmt.Errorf("failed to list source PVCs: %w", err)
 		}
 
-		// Initialize PVC copier
+		if len(pvcList.Items) == 0 {
+			logger.Info("No PVCs to clone, moving to resuming phase")
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseResuming, "No PVCs to clone", logger)
+			return reconcile.Result{Requeue: true}, nil
+		}
+
+		// Initialize copy jobs status tracking
+		copyJobsStatus := make([]environmentsv1.PVCCopyJobStatus, 0, len(pvcList.Items))
 		copier := NewPVCCopier(r.Client, sourceNamespace)
+		now := metav1.Now()
 
-		// Process each PVC
+		// Create sender and receiver jobs for ALL PVCs
 		for _, srcPVC := range pvcList.Items {
-			// Check if this PVC has already been copied
-			alreadyCopied := false
-			for _, failedPVC := range environment.Status.CloningStatus.FailedPVCs {
-				if failedPVC == srcPVC.Name {
-					alreadyCopied = true
-					break
-				}
-			}
-			if environment.Status.CloningStatus.ClonedPVCs > 0 {
-				// Check if copy is already in progress or completed
-				completed, failed, err := copier.GetCopyStatus(ctx, srcPVC.Name)
-				if err == nil {
-					if completed {
-						alreadyCopied = true
-					} else if failed {
-						// Track failure
-						logger.Error("PVC copy failed", zap.String("pvc", srcPVC.Name))
-						if !contains(environment.Status.CloningStatus.FailedPVCs, srcPVC.Name) {
-							environment.Status.CloningStatus.FailedPVCs = append(environment.Status.CloningStatus.FailedPVCs, srcPVC.Name)
-						}
-						continue
-					}
-				}
+			jobStatus := environmentsv1.PVCCopyJobStatus{
+				PVCName:        srcPVC.Name,
+				Phase:          "Creating",
+				SenderJobName:  fmt.Sprintf("pvc-copy-sender-%s", srcPVC.Name),
+				ReceiverJobName: fmt.Sprintf("pvc-copy-receiver-%s", srcPVC.Name),
+				StartTime:      &now,
 			}
 
-			if alreadyCopied {
-				continue
-			}
-
-			// Update current PVC being copied
-			environment.Status.CloningStatus.CurrentPVC = srcPVC.Name
-			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
-				return nil
-			}, logger); err != nil {
-				logger.Error("Failed to update current PVC", zap.Error(err))
-			}
-
-			logger.Info("Copying PVC data", zap.String("pvc", srcPVC.Name))
+			logger.Info("Creating copy jobs for PVC", zap.String("pvc", srcPVC.Name))
 			if err := copier.CopyPVC(ctx, srcPVC.Name, srcPVC.Name, environment); err != nil {
-				logger.Error("Failed to start PVC copy", zap.String("pvc", srcPVC.Name), zap.Error(err))
+				logger.Error("Failed to create copy jobs", zap.String("pvc", srcPVC.Name), zap.Error(err))
+				jobStatus.Phase = "Failed"
+				jobStatus.ErrorMessage = err.Error()
 				environment.Status.CloningStatus.FailedPVCs = append(environment.Status.CloningStatus.FailedPVCs, srcPVC.Name)
-				continue
+			} else {
+				jobStatus.Phase = "Copying"
 			}
+			copyJobsStatus = append(copyJobsStatus, jobStatus)
+		}
 
-			// Wait for copy to complete
-			completed, failed, err := copier.GetCopyStatus(ctx, srcPVC.Name)
-			if err != nil {
-				logger.Error("Failed to check copy status", zap.String("pvc", srcPVC.Name), zap.Error(err))
-				// Requeue to check again
-				return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
-			}
+		// Update status with copy jobs info
+		environment.Status.CloningStatus.CopyJobsStatus = copyJobsStatus
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+			return nil
+		}, logger); err != nil {
+			logger.Error("Failed to update copy jobs status", zap.Error(err))
+		}
 
-			if !completed && !failed {
-				// Copy still in progress, requeue
-				logger.Info("PVC copy in progress", zap.String("pvc", srcPVC.Name))
-				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
-			}
-
-			if completed {
-				logger.Info("PVC copy completed", zap.String("pvc", srcPVC.Name))
-				environment.Status.CloningStatus.ClonedPVCs++
-				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		// Update source environment to Copying phase
+		sourceEnv := &environmentsv1.Environment{}
+		if err := r.Get(ctx, client.ObjectKey{Name: sourceName}, sourceEnv); err == nil {
+			if sourceEnv.Status.SourceCloningStatus != nil {
+				sourceEnv.Status.SourceCloningStatus.Phase = environmentsv1.SourceCloningPhaseCopying
+				sourceEnv.Status.SourceCloningStatus.Message = "PVC data is being copied"
+				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, sourceEnv, func() error {
 					return nil
 				}, logger); err != nil {
-					logger.Error("Failed to update cloned PVC count", zap.Error(err))
+					logger.Error("Failed to update source copying status", zap.Error(err))
 				}
 			}
 		}
 
-		// All PVCs processed, move to resuming phase
-		logger.Info("All PVC copies completed",
-			zap.Int32("successful", environment.Status.CloningStatus.ClonedPVCs),
-			zap.Int32("total", environment.Status.CloningStatus.TotalPVCs),
-			zap.Int("failed", len(environment.Status.CloningStatus.FailedPVCs)))
+		logger.Info("All copy jobs created", zap.Int("total", len(copyJobsStatus)))
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseWaitingForCopyCompletion,
+			fmt.Sprintf("Waiting for %d PVC copies to complete", len(copyJobsStatus)), logger)
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
 
+	// Phase 5: Wait for ALL copy jobs to complete
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseWaitingForCopyCompletion {
+		logger.Info("Checking status of all PVC copy jobs")
+
+		copier := NewPVCCopier(r.Client, sourceNamespace)
+		allCompleted := true
+		anyFailed := false
+		completedCount := int32(0)
+		now := metav1.Now()
+
+		// Check status of ALL copy jobs
+		for i := range environment.Status.CloningStatus.CopyJobsStatus {
+			jobStatus := &environment.Status.CloningStatus.CopyJobsStatus[i]
+
+			if jobStatus.Phase == "Completed" {
+				completedCount++
+				continue
+			}
+
+			if jobStatus.Phase == "Failed" {
+				anyFailed = true
+				continue
+			}
+
+			// Check receiver job status
+			completed, failed, err := copier.GetCopyStatus(ctx, jobStatus.PVCName)
+			if err != nil {
+				logger.Warn("Failed to check copy status", zap.String("pvc", jobStatus.PVCName), zap.Error(err))
+				allCompleted = false
+				continue
+			}
+
+			if completed {
+				jobStatus.Phase = "Completed"
+				jobStatus.CompletionTime = &now
+				completedCount++
+				logger.Info("PVC copy completed", zap.String("pvc", jobStatus.PVCName))
+			} else if failed {
+				jobStatus.Phase = "Failed"
+				jobStatus.ErrorMessage = "Copy job failed"
+				anyFailed = true
+				environment.Status.CloningStatus.FailedPVCs = append(environment.Status.CloningStatus.FailedPVCs, jobStatus.PVCName)
+				logger.Error("PVC copy failed", zap.String("pvc", jobStatus.PVCName))
+			} else {
+				allCompleted = false
+				jobStatus.Phase = "Copying"
+			}
+		}
+
+		// Update cloned PVCs count
+		environment.Status.CloningStatus.ClonedPVCs = completedCount
+
+		// Update status
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+			return nil
+		}, logger); err != nil {
+			logger.Error("Failed to update copy status", zap.Error(err))
+		}
+
+		if anyFailed && allCompleted {
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed,
+				fmt.Sprintf("Some PVC copies failed: %v", environment.Status.CloningStatus.FailedPVCs), logger)
+			return reconcile.Result{}, fmt.Errorf("some PVC copies failed")
+		}
+
+		if !allCompleted {
+			logger.Info("Waiting for PVC copies to complete",
+				zap.Int32("completed", completedCount),
+				zap.Int32("total", environment.Status.CloningStatus.TotalPVCs))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+
+		// ALL copies completed successfully!
+		logger.Info("All PVC copies completed successfully",
+			zap.Int32("total", completedCount))
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseVerifyingCopies, "Verifying copies", logger)
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Phase 6: Verify copies and cleanup
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseVerifyingCopies {
+		logger.Info("Verifying all PVC copies")
+
+		// Cleanup completed copy jobs
+		copier := NewPVCCopier(r.Client, sourceNamespace)
+		for _, jobStatus := range environment.Status.CloningStatus.CopyJobsStatus {
+			if jobStatus.Phase == "Completed" {
+				if err := copier.CleanupCopyJobs(ctx, jobStatus.PVCName); err != nil {
+					logger.Warn("Failed to cleanup copy jobs",
+						zap.String("pvc", jobStatus.PVCName),
+						zap.Error(err))
+				}
+			}
+		}
+
+		logger.Info("Verification complete, proceeding to resume source")
 		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseResuming, "Resuming source environment", logger)
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Phase 5: Resume source environment
+	// Phase 7: Resume source environment
 	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseResuming {
 		logger.Info("Resuming source environment")
 
@@ -879,11 +969,32 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		if err := r.Get(ctx, client.ObjectKey{Name: sourceName}, sourceEnv); err != nil {
 			logger.Error("Failed to get source environment for resuming", zap.Error(err))
 		} else {
+			// Update source cloning status to Resuming
+			if sourceEnv.Status.SourceCloningStatus != nil {
+				sourceEnv.Status.SourceCloningStatus.Phase = environmentsv1.SourceCloningPhaseResuming
+				sourceEnv.Status.SourceCloningStatus.Message = "Resuming after cloning completed"
+				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, sourceEnv, func() error {
+					return nil
+				}, logger); err != nil {
+					logger.Error("Failed to update source resuming status", zap.Error(err))
+				}
+			}
+
 			// Scale up deployments back to original replica counts
 			if err := r.resumeEnvironment(ctx, sourceEnv, logger); err != nil {
 				logger.Error("Failed to resume source environment", zap.Error(err))
 			} else {
 				logger.Info("Source environment resumed successfully")
+
+				// Clear source cloning status after successful resume
+				if sourceEnv.Status.SourceCloningStatus != nil {
+					sourceEnv.Status.SourceCloningStatus = nil
+					if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, sourceEnv, func() error {
+						return nil
+					}, logger); err != nil {
+						logger.Error("Failed to clear source cloning status", zap.Error(err))
+					}
+				}
 			}
 		}
 

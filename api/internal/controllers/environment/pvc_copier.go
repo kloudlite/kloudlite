@@ -96,7 +96,7 @@ func (c *PVCCopier) createSenderJob(sourcePVC, targetPVC string, owner metav1.Ob
 # Install required tools
 apk add --no-cache python3 tar gzip
 
-# Create compressed archive
+# Create compressed archive (source must be fully suspended before this runs)
 echo "Creating compressed archive of source PVC..."
 cd /source-data
 tar czf /tmp/data.tar.gz . 2>/dev/null || tar czf /tmp/data.tar.gz --warning=no-file-changed .
