@@ -675,49 +675,6 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 	}
 	logger.Info("Secret cloning completed", zap.Int("cloned", clonedSecrets), zap.Int("total", len(secretList.Items)))
 
-	// Clone Compositions
-	logger.Info("Cloning Compositions from source environment")
-	compositionList := &environmentsv1.CompositionList{}
-	err = r.List(ctx, compositionList, client.InNamespace(sourceNamespace))
-	if err != nil {
-		logger.Error("Failed to list source compositions", zap.Error(err))
-		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
-			fmt.Sprintf("Failed to list Compositions from source environment '%s': %v", sourceName, err), logger); err != nil {
-			logger.Error("Failed to update environment status after retries", zap.Error(err))
-		}
-		return reconcile.Result{}, fmt.Errorf("failed to list source Compositions: %w", err)
-	}
-
-	clonedCompositions := 0
-	for _, srcComp := range compositionList.Items {
-		newComp := &environmentsv1.Composition{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        srcComp.Name,
-				Namespace:   targetNamespace,
-				Labels:      srcComp.Labels,
-				Annotations: srcComp.Annotations,
-			},
-			Spec: srcComp.Spec,
-		}
-
-		// Update the environment label
-		if newComp.Labels == nil {
-			newComp.Labels = make(map[string]string)
-		}
-		newComp.Labels["kloudlite.io/environment"] = environment.Name
-
-		if err := r.Create(ctx, newComp); err != nil && !apierrors.IsAlreadyExists(err) {
-			logger.Error("Failed to clone composition",
-				zap.String("name", srcComp.Name),
-				zap.Error(err))
-			// Continue with other resources instead of failing completely
-			continue
-		}
-		clonedCompositions++
-		logger.Debug("Cloned composition", zap.String("name", srcComp.Name))
-	}
-	logger.Info("Composition cloning completed", zap.Int("cloned", clonedCompositions), zap.Int("total", len(compositionList.Items)))
-
 	// Transition to PVC cloning phase after completing resource cloning
 	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCloningResources {
 		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCloningPVCs, "Starting PVC cloning", logger)
@@ -955,7 +912,60 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 			}
 		}
 
-		logger.Info("Verification complete, proceeding to resume source")
+		logger.Info("Verification complete, proceeding to clone Compositions")
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCloningCompositions, "Cloning Compositions to destination", logger)
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Phase 6.5: Clone Compositions (after PVC data is copied)
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCloningCompositions {
+		logger.Info("Cloning Compositions from source environment to destination (after PVC data is ready)")
+
+		sourceName := environment.Spec.CloneFrom
+		sourceNamespace := fmt.Sprintf("env-%s", sourceName)
+		targetNamespace := environment.Spec.TargetNamespace
+
+		// Clone Compositions
+		compositionList := &environmentsv1.CompositionList{}
+		err := r.List(ctx, compositionList, client.InNamespace(sourceNamespace))
+		if err != nil {
+			logger.Error("Failed to list source compositions", zap.Error(err))
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed,
+				fmt.Sprintf("Failed to list Compositions from source environment '%s': %v", sourceName, err), logger)
+			return reconcile.Result{}, fmt.Errorf("failed to list source Compositions: %w", err)
+		}
+
+		clonedCompositions := 0
+		for _, srcComp := range compositionList.Items {
+			newComp := &environmentsv1.Composition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        srcComp.Name,
+					Namespace:   targetNamespace,
+					Labels:      srcComp.Labels,
+					Annotations: srcComp.Annotations,
+				},
+				Spec: srcComp.Spec,
+			}
+
+			// Update the environment label
+			if newComp.Labels == nil {
+				newComp.Labels = make(map[string]string)
+			}
+			newComp.Labels["kloudlite.io/environment"] = environment.Name
+
+			if err := r.Create(ctx, newComp); err != nil && !apierrors.IsAlreadyExists(err) {
+				logger.Error("Failed to clone composition",
+					zap.String("name", srcComp.Name),
+					zap.Error(err))
+				// Continue with other resources instead of failing completely
+				continue
+			}
+			clonedCompositions++
+			logger.Debug("Cloned composition", zap.String("name", srcComp.Name))
+		}
+		logger.Info("Composition cloning completed", zap.Int("cloned", clonedCompositions), zap.Int("total", len(compositionList.Items)))
+
+		// Transition to Resuming phase
 		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseResuming, "Resuming source environment", logger)
 		return reconcile.Result{Requeue: true}, nil
 	}

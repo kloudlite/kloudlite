@@ -236,7 +236,7 @@ type ResourceCount struct {
 // CloningStatus tracks the progress of environment cloning including volumes
 type CloningStatus struct {
 	// Phase represents the current phase of cloning
-	// +kubebuilder:validation:Enum=Pending;Suspending;CloningResources;CloningPVCs;CreatingCopyJobs;WaitingForCopyCompletion;VerifyingCopies;Resuming;Completed;Failed
+	// +kubebuilder:validation:Enum=Pending;Suspending;CloningResources;CloningPVCs;CreatingCopyJobs;WaitingForCopyCompletion;VerifyingCopies;CloningCompositions;Resuming;Completed;Failed
 	Phase CloningPhase `json:"phase"`
 
 	// Message provides detailed information about the current cloning phase
@@ -300,6 +300,9 @@ const (
 
 	// CloningPhaseVerifyingCopies means verifying all PVC copies completed successfully
 	CloningPhaseVerifyingCopies CloningPhase = "VerifyingCopies"
+
+	// CloningPhaseCloningCompositions means Compositions are being cloned after PVC data is copied
+	CloningPhaseCloningCompositions CloningPhase = "CloningCompositions"
 
 	// CloningPhaseResuming means source environment is being resumed
 	CloningPhaseResuming CloningPhase = "Resuming"

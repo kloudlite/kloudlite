@@ -325,6 +325,7 @@ spec:
                     - CreatingCopyJobs
                     - WaitingForCopyCompletion
                     - VerifyingCopies
+                    - CloningCompositions
                     - Resuming
                     - Completed
                     - Failed
