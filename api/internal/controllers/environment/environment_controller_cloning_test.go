@@ -408,10 +408,10 @@ func TestPVCCopier_CreateJobs(t *testing.T) {
 
 	k8sClient := testutil.NewFakeClient(scheme, env).Build()
 
-	copier := NewPVCCopier(k8sClient, "source-namespace")
+	copier := NewPVCCopier(k8sClient, "source-namespace", "target-namespace")
 
 	// Test sender job creation
-	senderJob := copier.createSenderJob("source-pvc", "target-pvc", env)
+	senderJob := copier.createSenderJob("source-pvc", "target-pvc", "", env)
 	assert.NotNil(t, senderJob)
 	assert.Equal(t, "pvc-copy-sender-target-pvc", senderJob.Name)
 	assert.Equal(t, "source-namespace", senderJob.Namespace)
@@ -433,7 +433,7 @@ func TestPVCCopier_CreateJobs(t *testing.T) {
 	receiverJob := copier.createReceiverJob("source-pvc", "target-pvc", "10.0.0.1", env)
 	assert.NotNil(t, receiverJob)
 	assert.Equal(t, "pvc-copy-receiver-target-pvc", receiverJob.Name)
-	assert.Equal(t, "source-namespace", receiverJob.Namespace)
+	assert.Equal(t, "target-namespace", receiverJob.Namespace)
 	assert.Equal(t, "receiver", receiverJob.Spec.Template.Spec.Containers[0].Name)
 
 	// Verify receiver job has target PVC mounted as ReadWrite

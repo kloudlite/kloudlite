@@ -85,6 +85,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		logger,
 	)
 	vpnHandlers := handlers.NewVPNHandlers(
+		servicesManager.VPN,
 		logger,
 		cfg.Auth.JWTSecret,
 	)
