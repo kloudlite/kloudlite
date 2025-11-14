@@ -253,6 +253,55 @@ spec:
                       (success or failure)
                     format: date-time
                     type: string
+                  copyJobsStatus:
+                    description: CopyJobsStatus tracks the status of individual PVC
+                      copy jobs
+                    items:
+                      description: PVCCopyJobStatus tracks individual PVC copy job
+                        status
+                      properties:
+                        bytesTransferred:
+                          description: BytesTransferred is the number of bytes transferred
+                            for this PVC
+                          format: int64
+                          type: integer
+                        completionTime:
+                          description: CompletionTime when copy job completed
+                          format: date-time
+                          type: string
+                        errorMessage:
+                          description: ErrorMessage if copy job failed
+                          type: string
+                        phase:
+                          description: Phase represents the current phase of this
+                            copy job
+                          enum:
+                          - Pending
+                          - Creating
+                          - Copying
+                          - Completed
+                          - Failed
+                          type: string
+                        pvcName:
+                          description: PVCName is the name of the PVC being copied
+                          type: string
+                        receiverJobName:
+                          description: ReceiverJobName is the name of the receiver
+                            job in target namespace
+                          type: string
+                        senderJobName:
+                          description: SenderJobName is the name of the sender job
+                            in source namespace
+                          type: string
+                        startTime:
+                          description: StartTime when copy job started
+                          format: date-time
+                          type: string
+                      required:
+                      - phase
+                      - pvcName
+                      type: object
+                    type: array
                   currentPVC:
                     description: CurrentPVC is the name of the PVC currently being
                       cloned
@@ -273,7 +322,9 @@ spec:
                     - Suspending
                     - CloningResources
                     - CloningPVCs
-                    - Copying
+                    - CreatingCopyJobs
+                    - WaitingForCopyCompletion
+                    - VerifyingCopies
                     - Resuming
                     - Completed
                     - Failed
@@ -364,6 +415,33 @@ spec:
                   statefulsets:
                     format: int32
                     type: integer
+                type: object
+              sourceCloningStatus:
+                description: SourceCloningStatus tracks when this environment is being
+                  used as a cloning source
+                properties:
+                  message:
+                    description: Message provides detailed information
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning from
+                      this source
+                    enum:
+                    - Suspended
+                    - Copying
+                    - Resuming
+                    type: string
+                  startTime:
+                    description: StartTime when cloning from this source started
+                    format: date-time
+                    type: string
+                  targetEnvironmentName:
+                    description: TargetEnvironmentName is the environment being created
+                      from this source
+                    type: string
+                required:
+                - phase
+                - targetEnvironmentName
                 type: object
               state:
                 description: State represents the current state of the environment

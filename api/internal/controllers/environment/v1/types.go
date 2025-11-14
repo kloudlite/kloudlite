@@ -192,6 +192,10 @@ type EnvironmentStatus struct {
 	// +optional
 	CloningStatus *CloningStatus `json:"cloningStatus,omitempty"`
 
+	// SourceCloningStatus tracks when this environment is being used as a cloning source
+	// +optional
+	SourceCloningStatus *SourceCloningStatus `json:"sourceCloningStatus,omitempty"`
+
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
@@ -232,7 +236,7 @@ type ResourceCount struct {
 // CloningStatus tracks the progress of environment cloning including volumes
 type CloningStatus struct {
 	// Phase represents the current phase of cloning
-	// +kubebuilder:validation:Enum=Pending;Suspending;CloningResources;CloningPVCs;Copying;Resuming;Completed;Failed
+	// +kubebuilder:validation:Enum=Pending;Suspending;CloningResources;CloningPVCs;CreatingCopyJobs;WaitingForCopyCompletion;VerifyingCopies;Resuming;Completed;Failed
 	Phase CloningPhase `json:"phase"`
 
 	// Message provides detailed information about the current cloning phase
@@ -266,6 +270,10 @@ type CloningStatus struct {
 	// FailedPVCs lists PVCs that failed to clone
 	// +optional
 	FailedPVCs []string `json:"failedPVCs,omitempty"`
+
+	// CopyJobsStatus tracks the status of individual PVC copy jobs
+	// +optional
+	CopyJobsStatus []PVCCopyJobStatus `json:"copyJobsStatus,omitempty"`
 }
 
 // CloningPhase represents the phase of environment cloning
@@ -284,8 +292,14 @@ const (
 	// CloningPhaseCloningPVCs means PVCs are being created in target namespace
 	CloningPhaseCloningPVCs CloningPhase = "CloningPVCs"
 
-	// CloningPhaseCopying means data is being copied from source to target PVCs
-	CloningPhaseCopying CloningPhase = "Copying"
+	// CloningPhaseCreatingCopyJobs means sender and receiver jobs are being created
+	CloningPhaseCreatingCopyJobs CloningPhase = "CreatingCopyJobs"
+
+	// CloningPhaseWaitingForCopyCompletion means waiting for all PVC copy jobs to complete
+	CloningPhaseWaitingForCopyCompletion CloningPhase = "WaitingForCopyCompletion"
+
+	// CloningPhaseVerifyingCopies means verifying all PVC copies completed successfully
+	CloningPhaseVerifyingCopies CloningPhase = "VerifyingCopies"
 
 	// CloningPhaseResuming means source environment is being resumed
 	CloningPhaseResuming CloningPhase = "Resuming"
@@ -295,6 +309,72 @@ const (
 
 	// CloningPhaseFailed means cloning failed
 	CloningPhaseFailed CloningPhase = "Failed"
+)
+
+// PVCCopyJobStatus tracks individual PVC copy job status
+type PVCCopyJobStatus struct {
+	// PVCName is the name of the PVC being copied
+	PVCName string `json:"pvcName"`
+
+	// Phase represents the current phase of this copy job
+	// +kubebuilder:validation:Enum=Pending;Creating;Copying;Completed;Failed
+	Phase string `json:"phase"`
+
+	// SenderJobName is the name of the sender job in source namespace
+	// +optional
+	SenderJobName string `json:"senderJobName,omitempty"`
+
+	// ReceiverJobName is the name of the receiver job in target namespace
+	// +optional
+	ReceiverJobName string `json:"receiverJobName,omitempty"`
+
+	// BytesTransferred is the number of bytes transferred for this PVC
+	// +optional
+	BytesTransferred int64 `json:"bytesTransferred,omitempty"`
+
+	// StartTime when copy job started
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// CompletionTime when copy job completed
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	// ErrorMessage if copy job failed
+	// +optional
+	ErrorMessage string `json:"errorMessage,omitempty"`
+}
+
+// SourceCloningStatus indicates this environment is being cloned from
+type SourceCloningStatus struct {
+	// TargetEnvironmentName is the environment being created from this source
+	TargetEnvironmentName string `json:"targetEnvironmentName"`
+
+	// Phase represents the current phase of cloning from this source
+	// +kubebuilder:validation:Enum=Suspended;Copying;Resuming
+	Phase SourceCloningPhase `json:"phase"`
+
+	// Message provides detailed information
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// StartTime when cloning from this source started
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+}
+
+// SourceCloningPhase represents the phase when environment is being used as cloning source
+type SourceCloningPhase string
+
+const (
+	// SourceCloningPhaseSuspended means source environment is suspended for cloning
+	SourceCloningPhaseSuspended SourceCloningPhase = "Suspended"
+
+	// SourceCloningPhaseCopying means PVC data is being copied from this source
+	SourceCloningPhaseCopying SourceCloningPhase = "Copying"
+
+	// SourceCloningPhaseResuming means source environment is being resumed after cloning
+	SourceCloningPhaseResuming SourceCloningPhase = "Resuming"
 )
 
 // EnvironmentCondition represents a condition of the environment
