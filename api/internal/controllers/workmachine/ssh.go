@@ -105,6 +105,11 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 		return check.Failed(err)
 	}
 
+	// Update status with SSH public key from the secret
+	if publicKey, exists := secret.Data["ssh_host_rsa_key.pub"]; exists {
+		obj.Status.SSHPublicKey = strings.TrimSpace(string(publicKey))
+	}
+
 	return check.Passed()
 }
 
