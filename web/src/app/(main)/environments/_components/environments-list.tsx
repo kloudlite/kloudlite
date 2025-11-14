@@ -60,7 +60,10 @@ export function EnvironmentsList({
       // Check if any environment is in a transitional state
       const hasTransitionalEnv = environments.some(
         (env) =>
-          env.status === 'deleting' || env.status === 'activating' || env.status === 'deactivating',
+          env.status === 'deleting' ||
+          env.status === 'activating' ||
+          env.status === 'deactivating' ||
+          env.status === 'cloning',
       )
 
       if (hasTransitionalEnv) {
@@ -273,28 +276,61 @@ export function EnvironmentsList({
                   {env.owner.includes('@') ? env.owner.split('@')[0] : env.owner}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      env.status === 'active'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : env.status === 'deleting'
-                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                          : env.status === 'activating' || env.status === 'deactivating'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                            : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    {(env.status === 'deleting' ||
-                      env.status === 'activating' ||
-                      env.status === 'deactivating') && (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                  <div className="flex flex-col gap-1">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                        env.status === 'active'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                          : env.status === 'deleting'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            : env.status === 'activating' ||
+                                env.status === 'deactivating' ||
+                                env.status === 'cloning'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                              : 'bg-secondary text-secondary-foreground'
+                      }`}
+                    >
+                      {(env.status === 'deleting' ||
+                        env.status === 'activating' ||
+                        env.status === 'deactivating' ||
+                        env.status === 'cloning') && <Loader2 className="h-3 w-3 animate-spin" />}
+                      {env.status}
+                    </span>
+                    {/* Show cloning progress */}
+                    {env.status === 'cloning' && env.cloningStatus && (
+                      <div className="text-muted-foreground text-xs">
+                        {env.sourceCloningStatus ? (
+                          <span>Source for: {env.sourceCloningStatus.targetEnvironmentName}</span>
+                        ) : (
+                          <>
+                            <div>{env.cloningStatus.phase}</div>
+                            {env.cloningStatus.totalPVCs && env.cloningStatus.totalPVCs > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span>
+                                  {env.cloningStatus.clonedPVCs || 0}/{env.cloningStatus.totalPVCs}{' '}
+                                  PVCs
+                                </span>
+                                <div className="bg-muted h-1 w-12 overflow-hidden rounded-full">
+                                  <div
+                                    className="bg-primary h-full transition-all"
+                                    style={{
+                                      width: `${((env.cloningStatus.clonedPVCs || 0) / env.cloningStatus.totalPVCs) * 100}%`,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
                     )}
-                    {env.status}
-                  </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                   {env.status === 'deleting' ? (
                     <span className="text-muted-foreground text-xs">Deleting...</span>
+                  ) : env.status === 'cloning' ? (
+                    <span className="text-muted-foreground text-xs">Cloning...</span>
                   ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
