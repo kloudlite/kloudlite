@@ -108,6 +108,8 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	workspace.Spec.OwnedBy = username
 	// FIXME(nxtcoder17): move it to workmachine name, and even better if frontend set's it directly
 	workspace.Spec.WorkmachineName = workspace.Namespace
+	// Set FolderName to the original workspace name (without username prefix)
+	workspace.Spec.FolderName = req.Name
 
 	// Note: Default values are set by the admission webhook
 

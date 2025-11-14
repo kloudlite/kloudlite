@@ -1448,7 +1448,6 @@ func TestUpdateDNSConfigInRunningPod(t *testing.T) {
 	}
 }
 
-
 func TestUpdateKloudliteContextFile(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
