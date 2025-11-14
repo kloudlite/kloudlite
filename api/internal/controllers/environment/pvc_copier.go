@@ -159,11 +159,9 @@ python3 -m http.server 8080
 		},
 	}
 
-	// Add node selector if bound node is known
+	// Set nodeName to force pod to run on the node where PVC is bound
 	if boundNodeName != "" {
-		podSpec.NodeSelector = map[string]string{
-			"kubernetes.io/hostname": boundNodeName,
-		}
+		podSpec.NodeName = boundNodeName
 	}
 
 	return &batchv1.Job{
