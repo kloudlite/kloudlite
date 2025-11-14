@@ -16,15 +16,17 @@ import (
 
 // PVCCopier handles copying data between PVCs across nodes with compression
 type PVCCopier struct {
-	client    client.Client
-	namespace string
+	client          client.Client
+	sourceNamespace string
+	targetNamespace string
 }
 
 // NewPVCCopier creates a new PVC copier
-func NewPVCCopier(client client.Client, namespace string) *PVCCopier {
+func NewPVCCopier(client client.Client, sourceNamespace, targetNamespace string) *PVCCopier {
 	return &PVCCopier{
-		client:    client,
-		namespace: namespace,
+		client:          client,
+		sourceNamespace: sourceNamespace,
+		targetNamespace: targetNamespace,
 	}
 }
 
@@ -64,7 +66,7 @@ func (c *PVCCopier) createSenderJob(sourcePVC, targetPVC string, owner metav1.Ob
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
-			Namespace: c.namespace,
+			Namespace: c.sourceNamespace,
 			Labels: map[string]string{
 				"app":                     "pvc-copier",
 				"role":                    "sender",
@@ -161,7 +163,7 @@ func (c *PVCCopier) createReceiverJob(sourcePVC, targetPVC, senderIP string, own
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
-			Namespace: c.namespace,
+			Namespace: c.targetNamespace,
 			Labels: map[string]string{
 				"app":                     "pvc-copier",
 				"role":                    "receiver",
@@ -280,7 +282,7 @@ func (c *PVCCopier) waitForSenderReady(ctx context.Context, jobName string) (str
 			// Get pods for the sender job
 			podList := &corev1.PodList{}
 			if err := c.client.List(ctx, podList,
-				client.InNamespace(c.namespace),
+				client.InNamespace(c.sourceNamespace),
 				client.MatchingLabels{
 					"job-name": jobName,
 					"role":     "sender",
@@ -305,7 +307,7 @@ func (c *PVCCopier) GetCopyStatus(ctx context.Context, targetPVC string) (comple
 	receiverJob := &batchv1.Job{}
 	if err := c.client.Get(ctx, types.NamespacedName{
 		Name:      receiverJobName,
-		Namespace: c.namespace,
+		Namespace: c.targetNamespace,
 	}, receiverJob); err != nil {
 		return false, false, err
 	}
@@ -335,12 +337,12 @@ func (c *PVCCopier) GetBytesTransferred(ctx context.Context, targetPVC string) (
 
 // CleanupCopyJobs removes copy jobs for a specific PVC
 func (c *PVCCopier) CleanupCopyJobs(ctx context.Context, targetPVC string) error {
-	// Delete sender job
+	// Delete sender job from source namespace
 	senderJobName := fmt.Sprintf("pvc-copy-sender-%s", targetPVC)
 	senderJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      senderJobName,
-			Namespace: c.namespace,
+			Namespace: c.sourceNamespace,
 		},
 	}
 	if err := c.client.Delete(ctx, senderJob, client.PropagationPolicy(metav1.DeletePropagationBackground)); err != nil {
@@ -349,12 +351,12 @@ func (c *PVCCopier) CleanupCopyJobs(ctx context.Context, targetPVC string) error
 		}
 	}
 
-	// Delete receiver job
+	// Delete receiver job from target namespace
 	receiverJobName := fmt.Sprintf("pvc-copy-receiver-%s", targetPVC)
 	receiverJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      receiverJobName,
-			Namespace: c.namespace,
+			Namespace: c.targetNamespace,
 		},
 	}
 	if err := c.client.Delete(ctx, receiverJob, client.PropagationPolicy(metav1.DeletePropagationBackground)); err != nil {
