@@ -43,6 +43,9 @@ export function CreateEnvironmentDialog({
     if (name.length > 63) {
       return 'Namespace name must be no more than 63 characters'
     }
+    if (name.includes('--')) {
+      return 'Environment name cannot contain "--" (double hyphens)'
+    }
     const dnsLabelRegex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/
     if (!dnsLabelRegex.test(name)) {
       return 'Namespace name must consist of lower case alphanumeric characters or "-", and must start and end with an alphanumeric character'

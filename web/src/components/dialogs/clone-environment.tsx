@@ -34,7 +34,17 @@ export function CloneEnvironmentDialog({
 }: CloneEnvironmentDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [name, setName] = useState(`${sourceEnvironment.name}-copy`)
+  // Remove username prefix from source environment name if present
+  const getDefaultName = () => {
+    const sourceName = sourceEnvironment.name
+    const username = currentUser.includes('@') ? currentUser.split('@')[0] : currentUser
+    const prefix = `${username}--`
+    const nameWithoutPrefix = sourceName.startsWith(prefix)
+      ? sourceName.substring(prefix.length)
+      : sourceName
+    return `${nameWithoutPrefix}-copy`
+  }
+  const [name, setName] = useState(getDefaultName())
 
   const validateNamespace = (name: string): string | null => {
     if (!name) {
@@ -42,6 +52,9 @@ export function CloneEnvironmentDialog({
     }
     if (name.length > 63) {
       return 'Namespace name must be no more than 63 characters'
+    }
+    if (name.includes('--')) {
+      return 'Environment name cannot contain "--" (double hyphens)'
     }
     const dnsLabelRegex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/
     if (!dnsLabelRegex.test(name)) {
@@ -95,7 +108,7 @@ export function CloneEnvironmentDialog({
 
       if (result.success) {
         // Reset form
-        setName(`${sourceEnvironment.name}-copy`)
+        setName(getDefaultName())
         onOpenChange(false)
 
         // Call success callback
@@ -116,7 +129,7 @@ export function CloneEnvironmentDialog({
 
   const handleClose = () => {
     if (!loading) {
-      setName(`${sourceEnvironment.name}-copy`)
+      setName(getDefaultName())
       setError(null)
       onOpenChange(false)
     }
