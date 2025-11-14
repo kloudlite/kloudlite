@@ -1,0 +1,7 @@
+version: 3
+
+includes:
+  api:
+    taskfile: ./api/Taskfile.yml
+    dir: ./api
+
