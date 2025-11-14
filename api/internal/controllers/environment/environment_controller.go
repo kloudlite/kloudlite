@@ -704,10 +704,15 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 	}
 	logger.Info("Composition cloning completed", zap.Int("cloned", clonedCompositions), zap.Int("total", len(compositionList.Items)))
 
-	// Phase 3: Clone PVCs (create empty PVCs in target namespace)
+	// Transition to PVC cloning phase after completing resource cloning
 	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCloningResources {
-		logger.Info("Starting PVC cloning phase")
-		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCloningPVCs, "Creating PVCs in target namespace", logger)
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCloningPVCs, "Starting PVC cloning", logger)
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Phase 3: Clone PVCs (create empty PVCs in target namespace)
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCloningPVCs {
+		logger.Info("Creating PVCs in target namespace")
 
 		// List PVCs from source namespace with kloudlite.io/managed label
 		pvcList := &corev1.PersistentVolumeClaimList{}
@@ -885,6 +890,11 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		// Move to completed phase
 		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCompleted, "Cloning completed successfully", logger)
 		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Only execute completion logic when phase is Completed
+	if environment.Status.CloningStatus.Phase != environmentsv1.CloningPhaseCompleted {
+		return reconcile.Result{}, nil
 	}
 
 	// Prepare cloning completion message with statistics
