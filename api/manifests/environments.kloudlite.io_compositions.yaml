@@ -223,6 +223,11 @@ spec:
                   - serviceName
                   type: object
                 type: array
+              nodeName:
+                description: |-
+                  NodeName specifies the node where all composition services should run
+                  Inherited from the Environment's NodeName
+                type: string
               resourceOverrides:
                 additionalProperties:
                   description: ServiceResourceOverride allows overriding resources

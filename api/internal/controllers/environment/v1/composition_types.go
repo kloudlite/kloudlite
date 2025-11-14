@@ -110,6 +110,11 @@ type CompositionSpec struct {
 	// This allows workspace pods to intercept traffic destined for composition services
 	// +optional
 	Intercepts []ServiceInterceptConfig `json:"intercepts,omitempty"`
+
+	// NodeName specifies the node where all composition services should run
+	// Inherited from the Environment's NodeName
+	// +optional
+	NodeName string `json:"nodeName,omitempty"`
 }
 
 // EnvFromSource represents a source for environment variables

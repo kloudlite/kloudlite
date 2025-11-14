@@ -266,14 +266,9 @@ func convertServiceToDeployment(
 		Volumes:    volumes,
 	}
 
-	// Apply nodeSelector and tolerations from environment if available
-	if environment != nil {
-		if len(environment.Spec.NodeSelector) > 0 {
-			podSpec.NodeSelector = environment.Spec.NodeSelector
-		}
-		if len(environment.Spec.Tolerations) > 0 {
-			podSpec.Tolerations = environment.Spec.Tolerations
-		}
+	// Apply nodeName from environment if available
+	if environment != nil && environment.Spec.NodeName != "" {
+		podSpec.NodeName = environment.Spec.NodeName
 	}
 
 	// Create deployment
