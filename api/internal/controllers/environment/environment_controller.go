@@ -764,7 +764,7 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 
 		// Initialize copy jobs status tracking
 		copyJobsStatus := make([]environmentsv1.PVCCopyJobStatus, 0, len(pvcList.Items))
-		copier := NewPVCCopier(r.Client, sourceNamespace)
+		copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace)
 		now := metav1.Now()
 
 		// Create sender and receiver jobs for ALL PVCs
@@ -821,7 +821,7 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseWaitingForCopyCompletion {
 		logger.Info("Checking status of all PVC copy jobs")
 
-		copier := NewPVCCopier(r.Client, sourceNamespace)
+		copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace)
 		allCompleted := true
 		anyFailed := false
 		completedCount := int32(0)
@@ -901,7 +901,7 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		logger.Info("Verifying all PVC copies")
 
 		// Cleanup completed copy jobs
-		copier := NewPVCCopier(r.Client, sourceNamespace)
+		copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace)
 		for _, jobStatus := range environment.Status.CloningStatus.CopyJobsStatus {
 			if jobStatus.Phase == "Completed" {
 				if err := copier.CleanupCopyJobs(ctx, jobStatus.PVCName); err != nil {
