@@ -770,11 +770,11 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		// Create sender and receiver jobs for ALL PVCs
 		for _, srcPVC := range pvcList.Items {
 			jobStatus := environmentsv1.PVCCopyJobStatus{
-				PVCName:        srcPVC.Name,
-				Phase:          "Creating",
-				SenderJobName:  fmt.Sprintf("pvc-copy-sender-%s", srcPVC.Name),
+				PVCName:         srcPVC.Name,
+				Phase:           "Creating",
+				SenderJobName:   fmt.Sprintf("pvc-copy-sender-%s", srcPVC.Name),
 				ReceiverJobName: fmt.Sprintf("pvc-copy-receiver-%s", srcPVC.Name),
-				StartTime:      &now,
+				StartTime:       &now,
 			}
 
 			logger.Info("Creating copy jobs for PVC", zap.String("pvc", srcPVC.Name))
