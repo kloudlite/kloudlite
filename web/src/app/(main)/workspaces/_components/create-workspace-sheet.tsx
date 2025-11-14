@@ -240,7 +240,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
             {/* Basic Information */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name">Workspace Name *</Label>
                 <Input
                   id="name"
                   placeholder="my-workspace"
