@@ -1019,19 +1019,12 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 	}
 
 	// Prepare cloning completion message with statistics
-	totalResources := len(configMapList.Items) + len(secretList.Items) + len(compositionList.Items)
-	clonedResources := clonedConfigMaps + clonedSecrets + clonedCompositions
+	sourceName = environment.Spec.CloneFrom
+	successMessage := fmt.Sprintf("Successfully cloned environment from %s", sourceName)
 
-	pvcStats := ""
 	if environment.Status.CloningStatus.TotalPVCs > 0 {
-		pvcStats = fmt.Sprintf(", PVCs: %d/%d", environment.Status.CloningStatus.ClonedPVCs, environment.Status.CloningStatus.TotalPVCs)
-	}
-
-	successMessage := fmt.Sprintf("Successfully cloned %d/%d resources from %s (ConfigMaps: %d, Secrets: %d, Compositions: %d%s)",
-		clonedResources, totalResources, sourceName, clonedConfigMaps, clonedSecrets, clonedCompositions, pvcStats)
-
-	if clonedResources == 0 {
-		successMessage = fmt.Sprintf("No clonable resources found in %s", sourceName)
+		successMessage = fmt.Sprintf("Successfully cloned environment from %s (PVCs: %d/%d)",
+			sourceName, environment.Status.CloningStatus.ClonedPVCs, environment.Status.CloningStatus.TotalPVCs)
 	}
 
 	// Update status to indicate cloning is complete
@@ -1070,8 +1063,6 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 
 	logger.Info("Environment cloning completed successfully",
 		zap.String("source", sourceName),
-		zap.Int("clonedResources", clonedResources),
-		zap.Int("totalResources", totalResources),
 		zap.Int32("clonedPVCs", environment.Status.CloningStatus.ClonedPVCs),
 		zap.Int32("totalPVCs", environment.Status.CloningStatus.TotalPVCs))
 
