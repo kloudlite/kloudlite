@@ -6,7 +6,6 @@ import { Plus, X, Loader2, Package, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Sheet,
   SheetContent,
@@ -44,7 +43,6 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
 
   // Basic fields
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
 
   // Package management
   const [packages, setPackages] = useState<PackageWithVersion[]>([])
@@ -181,7 +179,6 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
           .replace(/[^a-z0-9-]/g, '-'),
         spec: {
           displayName: name.trim(),
-          description: description.trim() || undefined,
           ownedBy: user,
           packages: packageSpecs.length > 0 ? packageSpecs : undefined,
           status: 'active',
@@ -192,7 +189,6 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         toast.success('Workspace created successfully')
         setOpen(false)
         setName('')
-        setDescription('')
         setPackages([])
 
         // Immediately refresh and then poll for a few seconds to catch state changes
@@ -252,18 +248,6 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
                 <p className="text-muted-foreground text-xs">
                   Lowercase letters, numbers, and hyphens only
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe your workspace..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  disabled={isPending}
-                  rows={3}
-                />
               </div>
             </div>
 
