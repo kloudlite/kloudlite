@@ -44,7 +44,6 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
 
   // Basic fields
   const [name, setName] = useState('')
-  const [displayName, setDisplayName] = useState('')
   const [description, setDescription] = useState('')
 
   // Package management
@@ -169,11 +168,6 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
       return
     }
 
-    if (!displayName.trim()) {
-      toast.error('Please enter a display name')
-      return
-    }
-
     startTransition(async () => {
       // Convert PackageWithVersion to PackageSpec (remove displayVersion)
       const packageSpecs: PackageSpec[] = packages.map(
@@ -186,7 +180,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
           .toLowerCase()
           .replace(/[^a-z0-9-]/g, '-'),
         spec: {
-          displayName: displayName.trim(),
+          displayName: name.trim(),
           description: description.trim() || undefined,
           ownedBy: user,
           packages: packageSpecs.length > 0 ? packageSpecs : undefined,
@@ -198,7 +192,6 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         toast.success('Workspace created successfully')
         setOpen(false)
         setName('')
-        setDisplayName('')
         setDescription('')
         setPackages([])
 
@@ -247,18 +240,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
             {/* Basic Information */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name *</Label>
-                <Input
-                  id="displayName"
-                  placeholder="My Workspace"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  disabled={isPending}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Resource Name *</Label>
+                <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
                   placeholder="my-workspace"
