@@ -188,6 +188,10 @@ type EnvironmentStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
+	// CloningStatus tracks the progress of environment cloning including volumes
+	// +optional
+	CloningStatus *CloningStatus `json:"cloningStatus,omitempty"`
+
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
@@ -224,6 +228,74 @@ type ResourceCount struct {
 	Secrets      int32 `json:"secrets,omitempty"`
 	PVCs         int32 `json:"pvcs,omitempty"`
 }
+
+// CloningStatus tracks the progress of environment cloning including volumes
+type CloningStatus struct {
+	// Phase represents the current phase of cloning
+	// +kubebuilder:validation:Enum=Pending;Suspending;CloningResources;CloningPVCs;Copying;Resuming;Completed;Failed
+	Phase CloningPhase `json:"phase"`
+
+	// Message provides detailed information about the current cloning phase
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// TotalPVCs is the total number of PVCs to clone
+	// +optional
+	TotalPVCs int32 `json:"totalPVCs,omitempty"`
+
+	// ClonedPVCs is the number of PVCs successfully cloned
+	// +optional
+	ClonedPVCs int32 `json:"clonedPVCs,omitempty"`
+
+	// CurrentPVC is the name of the PVC currently being cloned
+	// +optional
+	CurrentPVC string `json:"currentPVC,omitempty"`
+
+	// BytesTransferred tracks total bytes transferred during copy
+	// +optional
+	BytesTransferred int64 `json:"bytesTransferred,omitempty"`
+
+	// StartTime is when the cloning process started
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// CompletionTime is when the cloning process completed (success or failure)
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	// FailedPVCs lists PVCs that failed to clone
+	// +optional
+	FailedPVCs []string `json:"failedPVCs,omitempty"`
+}
+
+// CloningPhase represents the phase of environment cloning
+type CloningPhase string
+
+const (
+	// CloningPhasePending means cloning is pending to start
+	CloningPhasePending CloningPhase = "Pending"
+
+	// CloningPhaseSuspending means source environment is being suspended
+	CloningPhaseSuspending CloningPhase = "Suspending"
+
+	// CloningPhaseCloningResources means ConfigMaps, Secrets, and Compositions are being cloned
+	CloningPhaseCloningResources CloningPhase = "CloningResources"
+
+	// CloningPhaseCloningPVCs means PVCs are being created in target namespace
+	CloningPhaseCloningPVCs CloningPhase = "CloningPVCs"
+
+	// CloningPhaseCopying means data is being copied from source to target PVCs
+	CloningPhaseCopying CloningPhase = "Copying"
+
+	// CloningPhaseResuming means source environment is being resumed
+	CloningPhaseResuming CloningPhase = "Resuming"
+
+	// CloningPhaseCompleted means cloning completed successfully
+	CloningPhaseCompleted CloningPhase = "Completed"
+
+	// CloningPhaseFailed means cloning failed
+	CloningPhaseFailed CloningPhase = "Failed"
+)
 
 // EnvironmentCondition represents a condition of the environment
 type EnvironmentCondition struct {
