@@ -384,6 +384,30 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
+	// Prevent cloning from environment whose WorkMachine is stopped
+	if env.Spec.CloneFrom != "" && operation == admissionv1.Create {
+		// Fetch the source environment
+		var sourceEnv environmentsv1.Environment
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.CloneFrom}, &sourceEnv); err != nil {
+			return fmt.Errorf("source environment '%s' not found for cloning", env.Spec.CloneFrom)
+		}
+
+		// Check if source environment's WorkMachine is running
+		if sourceEnv.Spec.WorkMachineName != "" {
+			var sourceWorkMachine machinesv1.WorkMachine
+			if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceEnv.Spec.WorkMachineName}, &sourceWorkMachine); err == nil {
+				// Check spec state
+				if sourceWorkMachine.Spec.State == "stopped" || sourceWorkMachine.Spec.State == "disabled" {
+					return fmt.Errorf("cannot clone from environment '%s': its WorkMachine '%s' is in '%s' state. Please start the WorkMachine first", env.Spec.CloneFrom, sourceEnv.Spec.WorkMachineName, sourceWorkMachine.Spec.State)
+				}
+				// Check runtime status
+				if sourceWorkMachine.Status.State == machinesv1.MachineStateStopped || sourceWorkMachine.Status.State == machinesv1.MachineStateStopping {
+					return fmt.Errorf("cannot clone from environment '%s': its WorkMachine '%s' is currently %s. Please start the WorkMachine and wait for it to be running", env.Spec.CloneFrom, sourceEnv.Spec.WorkMachineName, sourceWorkMachine.Status.State)
+				}
+			}
+		}
+	}
+
 	// Validate targetNamespace is unique across Environments and not used by WorkMachines
 	if env.Spec.TargetNamespace != "" && (operation == admissionv1.Create || operation == admissionv1.Update) {
 		// Check if any other Environment is using this targetNamespace (using label selector)
