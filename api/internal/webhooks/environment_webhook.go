@@ -133,6 +133,18 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	// Create patches for mutations
 	var patches []map[string]interface{}
 
+	// Set default Activated to true for new environments
+	if req.Operation == admissionv1.Create && !env.Spec.Activated {
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/activated",
+			"value": true,
+		})
+		// Update the env object for subsequent checks
+		env.Spec.Activated = true
+		w.logger.Info(fmt.Sprintf("Setting activated=true by default for new environment: %s", env.Name))
+	}
+
 	// Use the OwnedBy field from the spec to determine ownership first
 	// This is needed for generating the targetNamespace with username prefix
 	ownedBy := env.Spec.OwnedBy
