@@ -412,12 +412,12 @@ func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Compositio
 
 	// Add new status entry
 	status := v1.InterceptStatus{
-		ServiceName:              serviceName,
-		Phase:                    phase,
-		Message:                  message,
-		SOCATPodName:             socatPodName,
-		OriginalServiceSelector:  originalSelector,
-		InterceptStartTime:       startTime,
+		ServiceName:             serviceName,
+		Phase:                   phase,
+		Message:                 message,
+		SOCATPodName:            socatPodName,
+		OriginalServiceSelector: originalSelector,
+		InterceptStartTime:      startTime,
 	}
 	composition.Status.ActiveIntercepts = append(composition.Status.ActiveIntercepts, status)
 }

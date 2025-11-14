@@ -18,6 +18,7 @@ type Manager struct {
 	// Individual services
 	Users UserService
 	Auth  AuthService
+	VPN   VPNService
 
 	// You can add other services here as needed:
 	// Workspaces WorkspaceService
@@ -67,10 +68,17 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 		opts.Logger,
 	)
 
+	// Create VPN service
+	vpnService := NewVPNService(
+		opts.RepositoryManager.K8sClient,
+		opts.Logger,
+	)
+
 	return &Manager{
 		RepositoryManager: opts.RepositoryManager,
 		Users:             userService,
 		Auth:              authService,
+		VPN:               vpnService,
 	}, nil
 }
 
