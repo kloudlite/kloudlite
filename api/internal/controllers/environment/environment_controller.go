@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -444,7 +445,7 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 	return reconcile.Result{}, nil
 }
 
-// handleCloning handles cloning resources from a source environment
+// handleCloning handles cloning resources from a source environment including PVCs
 func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
 	sourceName := environment.Spec.CloneFrom
 
@@ -452,12 +453,28 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		zap.String("target", environment.Name),
 		zap.String("source", sourceName))
 
+	// Initialize cloning status if not already set
+	if environment.Status.CloningStatus == nil {
+		now := metav1.Now()
+		environment.Status.CloningStatus = &environmentsv1.CloningStatus{
+			Phase:     environmentsv1.CloningPhasePending,
+			Message:   "Initializing cloning process",
+			StartTime: &now,
+		}
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+			return nil
+		}, logger); err != nil {
+			logger.Error("Failed to initialize cloning status", zap.Error(err))
+		}
+	}
+
 	// Validate source environment exists and is accessible
 	sourceEnv := &environmentsv1.Environment{}
 	err := r.Get(ctx, client.ObjectKey{Name: sourceName}, sourceEnv)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Error("Source environment not found", zap.String("source", sourceName))
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed, "Source environment not found: "+sourceName, logger)
 			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError, "Source environment not found: "+sourceName, logger); err != nil {
 				logger.Error("Failed to update environment status after retries", zap.Error(err))
 			}
@@ -472,6 +489,8 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		logger.Error("Source environment is not in a clonable state",
 			zap.String("source", sourceName),
 			zap.String("sourceState", string(sourceEnv.Status.State)))
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed,
+			fmt.Sprintf("Source environment is in %s state", sourceEnv.Status.State), logger)
 		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
 			fmt.Sprintf("Source environment '%s' is in %s state and cannot be cloned", sourceName, sourceEnv.Status.State), logger); err != nil {
 			logger.Error("Failed to update environment status after retries", zap.Error(err))
@@ -486,6 +505,26 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		zap.String("source", sourceName),
 		zap.String("sourceNamespace", sourceNamespace),
 		zap.String("targetNamespace", targetNamespace))
+
+	// Phase 1: Suspend source environment if it's active
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhasePending {
+		if sourceEnv.Spec.Activated {
+			logger.Info("Suspending source environment for safe cloning")
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseSuspending, "Suspending source environment", logger)
+
+			// Scale down source environment
+			if err := r.suspendEnvironment(ctx, sourceEnv, logger); err != nil {
+				logger.Error("Failed to suspend source environment", zap.Error(err))
+				r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed, "Failed to suspend source environment", logger)
+				return reconcile.Result{RequeueAfter: 10 * time.Second}, err
+			}
+			logger.Info("Source environment suspended successfully")
+		}
+
+		// Move to next phase
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCloningResources, "Starting resource cloning", logger)
+		return reconcile.Result{Requeue: true}, nil
+	}
 
 	// Note: TargetNamespace is always set by the mutation webhook for the cloned environment.
 	// Controller creates the actual Kubernetes namespace resource if it doesn't exist.
@@ -523,6 +562,7 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 
 		if err := r.Create(ctx, namespace); err != nil && !apierrors.IsAlreadyExists(err) {
 			logger.Error("Failed to create namespace for cloned environment", zap.Error(err))
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed, fmt.Sprintf("Failed to create namespace: %v", err), logger)
 			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateError,
 				fmt.Sprintf("Failed to create namespace: %v", err), logger); err != nil {
 				logger.Error("Failed to update environment status after retries", zap.Error(err))
@@ -664,12 +704,200 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 	}
 	logger.Info("Composition cloning completed", zap.Int("cloned", clonedCompositions), zap.Int("total", len(compositionList.Items)))
 
+	// Phase 3: Clone PVCs (create empty PVCs in target namespace)
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCloningResources {
+		logger.Info("Starting PVC cloning phase")
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCloningPVCs, "Creating PVCs in target namespace", logger)
+
+		// List PVCs from source namespace with kloudlite.io/managed label
+		pvcList := &corev1.PersistentVolumeClaimList{}
+		err = r.List(ctx, pvcList,
+			client.InNamespace(sourceNamespace),
+			client.MatchingLabels{"kloudlite.io/managed": "true"})
+		if err != nil {
+			logger.Error("Failed to list source PVCs", zap.Error(err))
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed, fmt.Sprintf("Failed to list PVCs: %v", err), logger)
+			return reconcile.Result{}, fmt.Errorf("failed to list source PVCs: %w", err)
+		}
+
+		// Update total PVC count
+		environment.Status.CloningStatus.TotalPVCs = int32(len(pvcList.Items))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+			return nil
+		}, logger); err != nil {
+			logger.Error("Failed to update PVC count", zap.Error(err))
+		}
+
+		// Create empty PVCs in target namespace (data will be copied later)
+		for _, srcPVC := range pvcList.Items {
+			newPVC := &corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      srcPVC.Name,
+					Namespace: targetNamespace,
+					Labels:    srcPVC.Labels,
+				},
+				Spec: corev1.PersistentVolumeClaimSpec{
+					AccessModes:      srcPVC.Spec.AccessModes,
+					StorageClassName: srcPVC.Spec.StorageClassName,
+					Resources:        srcPVC.Spec.Resources,
+				},
+			}
+
+			// Update environment label
+			if newPVC.Labels == nil {
+				newPVC.Labels = make(map[string]string)
+			}
+			newPVC.Labels["kloudlite.io/environment"] = environment.Name
+
+			if err := r.Create(ctx, newPVC); err != nil && !apierrors.IsAlreadyExists(err) {
+				logger.Error("Failed to create PVC",
+					zap.String("name", srcPVC.Name),
+					zap.Error(err))
+				// Track failed PVC
+				environment.Status.CloningStatus.FailedPVCs = append(environment.Status.CloningStatus.FailedPVCs, srcPVC.Name)
+				continue
+			}
+			logger.Debug("Created PVC", zap.String("name", srcPVC.Name))
+		}
+
+		// Move to copying phase
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCopying, "Starting data copy", logger)
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Phase 4: Copy data from source PVCs to target PVCs
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCloningPVCs ||
+		environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseCopying {
+		logger.Info("Starting PVC data copy phase")
+
+		// List PVCs from source namespace
+		pvcList := &corev1.PersistentVolumeClaimList{}
+		err = r.List(ctx, pvcList,
+			client.InNamespace(sourceNamespace),
+			client.MatchingLabels{"kloudlite.io/managed": "true"})
+		if err != nil {
+			logger.Error("Failed to list source PVCs", zap.Error(err))
+			r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseFailed, fmt.Sprintf("Failed to list PVCs: %v", err), logger)
+			return reconcile.Result{}, fmt.Errorf("failed to list source PVCs: %w", err)
+		}
+
+		// Initialize PVC copier
+		copier := NewPVCCopier(r.Client, sourceNamespace)
+
+		// Process each PVC
+		for _, srcPVC := range pvcList.Items {
+			// Check if this PVC has already been copied
+			alreadyCopied := false
+			for _, failedPVC := range environment.Status.CloningStatus.FailedPVCs {
+				if failedPVC == srcPVC.Name {
+					alreadyCopied = true
+					break
+				}
+			}
+			if environment.Status.CloningStatus.ClonedPVCs > 0 {
+				// Check if copy is already in progress or completed
+				completed, failed, err := copier.GetCopyStatus(ctx, srcPVC.Name)
+				if err == nil {
+					if completed {
+						alreadyCopied = true
+					} else if failed {
+						// Track failure
+						logger.Error("PVC copy failed", zap.String("pvc", srcPVC.Name))
+						if !contains(environment.Status.CloningStatus.FailedPVCs, srcPVC.Name) {
+							environment.Status.CloningStatus.FailedPVCs = append(environment.Status.CloningStatus.FailedPVCs, srcPVC.Name)
+						}
+						continue
+					}
+				}
+			}
+
+			if alreadyCopied {
+				continue
+			}
+
+			// Update current PVC being copied
+			environment.Status.CloningStatus.CurrentPVC = srcPVC.Name
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+				return nil
+			}, logger); err != nil {
+				logger.Error("Failed to update current PVC", zap.Error(err))
+			}
+
+			logger.Info("Copying PVC data", zap.String("pvc", srcPVC.Name))
+			if err := copier.CopyPVC(ctx, srcPVC.Name, srcPVC.Name, environment); err != nil {
+				logger.Error("Failed to start PVC copy", zap.String("pvc", srcPVC.Name), zap.Error(err))
+				environment.Status.CloningStatus.FailedPVCs = append(environment.Status.CloningStatus.FailedPVCs, srcPVC.Name)
+				continue
+			}
+
+			// Wait for copy to complete
+			completed, failed, err := copier.GetCopyStatus(ctx, srcPVC.Name)
+			if err != nil {
+				logger.Error("Failed to check copy status", zap.String("pvc", srcPVC.Name), zap.Error(err))
+				// Requeue to check again
+				return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
+			}
+
+			if !completed && !failed {
+				// Copy still in progress, requeue
+				logger.Info("PVC copy in progress", zap.String("pvc", srcPVC.Name))
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+
+			if completed {
+				logger.Info("PVC copy completed", zap.String("pvc", srcPVC.Name))
+				environment.Status.CloningStatus.ClonedPVCs++
+				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+					return nil
+				}, logger); err != nil {
+					logger.Error("Failed to update cloned PVC count", zap.Error(err))
+				}
+			}
+		}
+
+		// All PVCs processed, move to resuming phase
+		logger.Info("All PVC copies completed",
+			zap.Int32("successful", environment.Status.CloningStatus.ClonedPVCs),
+			zap.Int32("total", environment.Status.CloningStatus.TotalPVCs),
+			zap.Int("failed", len(environment.Status.CloningStatus.FailedPVCs)))
+
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseResuming, "Resuming source environment", logger)
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Phase 5: Resume source environment
+	if environment.Status.CloningStatus.Phase == environmentsv1.CloningPhaseResuming {
+		logger.Info("Resuming source environment")
+
+		// Reload source environment
+		sourceEnv := &environmentsv1.Environment{}
+		if err := r.Get(ctx, client.ObjectKey{Name: sourceName}, sourceEnv); err != nil {
+			logger.Error("Failed to get source environment for resuming", zap.Error(err))
+		} else {
+			// Scale up deployments back to original replica counts
+			if err := r.resumeEnvironment(ctx, sourceEnv, logger); err != nil {
+				logger.Error("Failed to resume source environment", zap.Error(err))
+			} else {
+				logger.Info("Source environment resumed successfully")
+			}
+		}
+
+		// Move to completed phase
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCompleted, "Cloning completed successfully", logger)
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	// Prepare cloning completion message with statistics
 	totalResources := len(configMapList.Items) + len(secretList.Items) + len(compositionList.Items)
 	clonedResources := clonedConfigMaps + clonedSecrets + clonedCompositions
 
-	successMessage := fmt.Sprintf("Successfully cloned %d/%d resources from %s (ConfigMaps: %d, Secrets: %d, Compositions: %d)",
-		clonedResources, totalResources, sourceName, clonedConfigMaps, clonedSecrets, clonedCompositions)
+	pvcStats := ""
+	if environment.Status.CloningStatus.TotalPVCs > 0 {
+		pvcStats = fmt.Sprintf(", PVCs: %d/%d", environment.Status.CloningStatus.ClonedPVCs, environment.Status.CloningStatus.TotalPVCs)
+	}
+
+	successMessage := fmt.Sprintf("Successfully cloned %d/%d resources from %s (ConfigMaps: %d, Secrets: %d, Compositions: %d%s)",
+		clonedResources, totalResources, sourceName, clonedConfigMaps, clonedSecrets, clonedCompositions, pvcStats)
 
 	if clonedResources == 0 {
 		successMessage = fmt.Sprintf("No clonable resources found in %s", sourceName)
@@ -693,6 +921,15 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 		logger.Error("Failed to update environment conditions after retries", zap.Error(err))
 	}
 
+	// Mark completion time
+	now := metav1.Now()
+	environment.Status.CloningStatus.CompletionTime = &now
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update completion time", zap.Error(err))
+	}
+
 	// Clear the CloneFrom field to mark cloning as complete
 	environment.Spec.CloneFrom = ""
 	if err := r.Update(ctx, environment); err != nil {
@@ -703,7 +940,9 @@ func (r *EnvironmentReconciler) handleCloning(ctx context.Context, environment *
 	logger.Info("Environment cloning completed successfully",
 		zap.String("source", sourceName),
 		zap.Int("clonedResources", clonedResources),
-		zap.Int("totalResources", totalResources))
+		zap.Int("totalResources", totalResources),
+		zap.Int32("clonedPVCs", environment.Status.CloningStatus.ClonedPVCs),
+		zap.Int32("totalPVCs", environment.Status.CloningStatus.TotalPVCs))
 
 	return reconcile.Result{Requeue: true}, nil
 }
@@ -757,6 +996,109 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 	}
 
 	return nil
+}
+
+// updateCloningStatus updates the cloning status phase and message
+func (r *EnvironmentReconciler) updateCloningStatus(ctx context.Context, environment *environmentsv1.Environment, phase environmentsv1.CloningPhase, message string, logger *zap.Logger) {
+	if environment.Status.CloningStatus == nil {
+		now := metav1.Now()
+		environment.Status.CloningStatus = &environmentsv1.CloningStatus{
+			StartTime: &now,
+		}
+	}
+
+	environment.Status.CloningStatus.Phase = phase
+	environment.Status.CloningStatus.Message = message
+
+	// Set completion time if phase is completed or failed
+	if phase == environmentsv1.CloningPhaseCompleted || phase == environmentsv1.CloningPhaseFailed {
+		now := metav1.Now()
+		environment.Status.CloningStatus.CompletionTime = &now
+	}
+
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update cloning status", zap.Error(err))
+	}
+}
+
+// suspendEnvironment scales down all deployments in the environment
+// It stores the original replica count in annotations for later resumption
+func (r *EnvironmentReconciler) suspendEnvironment(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	namespace := environment.Spec.TargetNamespace
+	const originalReplicasAnnotation = "kloudlite.io/original-replicas"
+
+	// Scale down deployments
+	deployments := &appsv1.DeploymentList{}
+	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list deployments: %w", err)
+	}
+
+	for _, dep := range deployments.Items {
+		if dep.Spec.Replicas != nil && *dep.Spec.Replicas > 0 {
+			// Store original replica count in annotation
+			if dep.Annotations == nil {
+				dep.Annotations = make(map[string]string)
+			}
+			if _, exists := dep.Annotations[originalReplicasAnnotation]; !exists {
+				dep.Annotations[originalReplicasAnnotation] = fmt.Sprintf("%d", *dep.Spec.Replicas)
+			}
+
+			zero := int32(0)
+			dep.Spec.Replicas = &zero
+			if err := r.Update(ctx, &dep); err != nil {
+				logger.Error("Failed to scale down deployment", zap.String("deployment", dep.Name), zap.Error(err))
+			} else {
+				logger.Debug("Scaled down deployment", zap.String("deployment", dep.Name))
+			}
+		}
+	}
+
+	return nil
+}
+
+// resumeEnvironment scales up deployments to their original replica counts
+func (r *EnvironmentReconciler) resumeEnvironment(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	namespace := environment.Spec.TargetNamespace
+	const originalReplicasAnnotation = "kloudlite.io/original-replicas"
+
+	// Scale up deployments
+	deployments := &appsv1.DeploymentList{}
+	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list deployments: %w", err)
+	}
+
+	for _, dep := range deployments.Items {
+		if dep.Annotations != nil {
+			if originalReplicasStr, exists := dep.Annotations[originalReplicasAnnotation]; exists {
+				var originalReplicas int32
+				if _, err := fmt.Sscanf(originalReplicasStr, "%d", &originalReplicas); err == nil && originalReplicas > 0 {
+					dep.Spec.Replicas = &originalReplicas
+					// Remove the annotation after restoring
+					delete(dep.Annotations, originalReplicasAnnotation)
+
+					if err := r.Update(ctx, &dep); err != nil {
+						logger.Error("Failed to scale up deployment", zap.String("deployment", dep.Name), zap.Error(err))
+					} else {
+						logger.Debug("Scaled up deployment", zap.String("deployment", dep.Name), zap.Int32("replicas", originalReplicas))
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// contains checks if a string exists in a slice
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
 
 // SetupWithManager sets up the controller with the Manager

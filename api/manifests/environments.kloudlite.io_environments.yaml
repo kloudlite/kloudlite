@@ -235,6 +235,60 @@ spec:
           status:
             description: EnvironmentStatus defines the observed state of Environment
             properties:
+              cloningStatus:
+                description: CloningStatus tracks the progress of environment cloning
+                  including volumes
+                properties:
+                  bytesTransferred:
+                    description: BytesTransferred tracks total bytes transferred during
+                      copy
+                    format: int64
+                    type: integer
+                  clonedPVCs:
+                    description: ClonedPVCs is the number of PVCs successfully cloned
+                    format: int32
+                    type: integer
+                  completionTime:
+                    description: CompletionTime is when the cloning process completed
+                      (success or failure)
+                    format: date-time
+                    type: string
+                  currentPVC:
+                    description: CurrentPVC is the name of the PVC currently being
+                      cloned
+                    type: string
+                  failedPVCs:
+                    description: FailedPVCs lists PVCs that failed to clone
+                    items:
+                      type: string
+                    type: array
+                  message:
+                    description: Message provides detailed information about the current
+                      cloning phase
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning
+                    enum:
+                    - Pending
+                    - Suspending
+                    - CloningResources
+                    - CloningPVCs
+                    - Copying
+                    - Resuming
+                    - Completed
+                    - Failed
+                    type: string
+                  startTime:
+                    description: StartTime is when the cloning process started
+                    format: date-time
+                    type: string
+                  totalPVCs:
+                    description: TotalPVCs is the total number of PVCs to clone
+                    format: int32
+                    type: integer
+                required:
+                - phase
+                type: object
               conditions:
                 description: Conditions represent the latest available observations
                   of the environment's state
