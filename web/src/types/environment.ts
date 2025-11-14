@@ -53,6 +53,55 @@ export interface EnvironmentSpec {
   cloneFrom?: string
 }
 
+// Cloning status types
+export type CloningPhase =
+  | 'Pending'
+  | 'Suspending'
+  | 'CloningResources'
+  | 'CloningPVCs'
+  | 'CreatingCopyJobs'
+  | 'WaitingForCopyCompletion'
+  | 'VerifyingCopies'
+  | 'CloningCompositions'
+  | 'Resuming'
+  | 'Completed'
+  | 'Failed'
+
+export type PVCCopyJobPhase = 'Pending' | 'Creating' | 'Copying' | 'Completed' | 'Failed'
+
+export interface PVCCopyJobStatus {
+  pvcName: string
+  phase: PVCCopyJobPhase
+  senderJobName?: string
+  receiverJobName?: string
+  bytesTransferred?: number
+  startTime?: string
+  completionTime?: string
+  errorMessage?: string
+}
+
+export interface CloningStatus {
+  phase: CloningPhase
+  message?: string
+  totalPVCs?: number
+  clonedPVCs?: number
+  currentPVC?: string
+  bytesTransferred?: number
+  startTime?: string
+  completionTime?: string
+  failedPVCs?: string[]
+  copyJobsStatus?: PVCCopyJobStatus[]
+}
+
+export type SourceCloningPhase = 'Suspended' | 'Copying' | 'Resuming'
+
+export interface SourceCloningStatus {
+  targetEnvironmentName: string
+  phase: SourceCloningPhase
+  message?: string
+  startTime?: string
+}
+
 export interface EnvironmentStatus {
   state?: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
   message?: string
@@ -74,6 +123,8 @@ export interface EnvironmentStatus {
     message?: string
     lastTransitionTime?: string
   }>
+  cloningStatus?: CloningStatus
+  sourceCloningStatus?: SourceCloningStatus
 }
 
 export interface Environment {
@@ -215,7 +266,7 @@ export interface EnvironmentUIModel {
   id: string
   name: string
   owner: string
-  status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
+  status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'cloning'
   created: string
   targetNamespace: string
   services: number
@@ -223,6 +274,8 @@ export interface EnvironmentUIModel {
   secrets: number
   workspaces: string[]
   lastDeployed: string
+  cloningStatus?: CloningStatus
+  sourceCloningStatus?: SourceCloningStatus
 }
 
 // Converter functions
@@ -244,10 +297,18 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     createdText = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
   }
 
-  // Determine status: prioritize deletionTimestamp, then status.state, then spec.activated
-  let status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
+  // Determine status: prioritize cloning, then deletionTimestamp, then status.state, then spec.activated
+  let status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'cloning'
 
-  if (env.metadata.deletionTimestamp) {
+  // Check if environment is being cloned (either as target or source)
+  const isCloning =
+    (env.status?.cloningStatus &&
+      !['Completed', 'Failed'].includes(env.status.cloningStatus.phase)) ||
+    env.status?.sourceCloningStatus
+
+  if (isCloning) {
+    status = 'cloning'
+  } else if (env.metadata.deletionTimestamp) {
     // If deletionTimestamp is set, the resource is being deleted
     status = 'deleting'
   } else if (env.status?.state) {
@@ -272,5 +333,7 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     lastDeployed: env.status?.lastActivatedTime
       ? new Date(env.status.lastActivatedTime).toLocaleString()
       : 'Never',
+    cloningStatus: env.status?.cloningStatus,
+    sourceCloningStatus: env.status?.sourceCloningStatus,
   }
 }

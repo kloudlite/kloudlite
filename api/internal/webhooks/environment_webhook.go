@@ -462,9 +462,29 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
-	// Prevent deletion of activated environments
-	if operation == admissionv1.Delete && env.Spec.Activated {
-		return fmt.Errorf("cannot delete an activated environment, please deactivate it first")
+	// For deletion operations, fetch the current environment to check status
+	if operation == admissionv1.Delete {
+		// Prevent deletion of activated environments
+		if env.Spec.Activated {
+			return fmt.Errorf("cannot delete an activated environment, please deactivate it first")
+		}
+
+		// Fetch current environment to check cloning status
+		var currentEnv environmentsv1.Environment
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Name}, &currentEnv); err == nil {
+			// Check if environment is being cloned TO
+			if currentEnv.Status.CloningStatus != nil {
+				phase := currentEnv.Status.CloningStatus.Phase
+				if phase != "Completed" && phase != "Failed" {
+					return fmt.Errorf("cannot delete environment during cloning. Current phase: %s. Please wait for cloning to complete or fail", phase)
+				}
+			}
+
+			// Check if environment is being cloned FROM (used as source)
+			if currentEnv.Status.SourceCloningStatus != nil {
+				return fmt.Errorf("cannot delete environment while it's being used as cloning source for: %s. Please wait for cloning to complete", currentEnv.Status.SourceCloningStatus.TargetEnvironmentName)
+			}
+		}
 	}
 
 	// Check for conflicting environments with same namespace
