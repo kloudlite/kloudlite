@@ -182,6 +182,12 @@ spec:
                 required:
                 - environmentRef
                 type: object
+              folderName:
+                description: |-
+                  FolderName is the name of the workspace folder on the host (without username prefix)
+                  This is the original workspace name without the username-- prefix
+                minLength: 1
+                type: string
               ownedBy:
                 description: OwnedBy is the username of the workspace owner
                 minLength: 1
@@ -320,6 +326,7 @@ spec:
                 type: string
             required:
             - displayName
+            - folderName
             - ownedBy
             - workmachine
             type: object
