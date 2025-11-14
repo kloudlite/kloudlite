@@ -32,8 +32,39 @@ func NewPVCCopier(client client.Client, sourceNamespace, targetNamespace string)
 
 // CopyPVC copies data from source PVC to target PVC with compression
 func (c *PVCCopier) CopyPVC(ctx context.Context, sourcePVC, targetPVC string, owner metav1.Object) error {
-	// Create source sender job
-	senderJob := c.createSenderJob(sourcePVC, targetPVC, owner)
+	// Get source PVC to extract node binding information
+	pvc := &corev1.PersistentVolumeClaim{}
+	if err := c.client.Get(ctx, types.NamespacedName{
+		Name:      sourcePVC,
+		Namespace: c.sourceNamespace,
+	}, pvc); err != nil {
+		return fmt.Errorf("failed to get source PVC: %w", err)
+	}
+
+	// Get bound node name from PV
+	var boundNodeName string
+	if pvc.Spec.VolumeName != "" {
+		pv := &corev1.PersistentVolume{}
+		if err := c.client.Get(ctx, types.NamespacedName{Name: pvc.Spec.VolumeName}, pv); err == nil {
+			// Extract node from PV node affinity
+			if pv.Spec.NodeAffinity != nil && pv.Spec.NodeAffinity.Required != nil {
+				for _, term := range pv.Spec.NodeAffinity.Required.NodeSelectorTerms {
+					for _, expr := range term.MatchExpressions {
+						if expr.Key == "kubernetes.io/hostname" && len(expr.Values) > 0 {
+							boundNodeName = expr.Values[0]
+							break
+						}
+					}
+					if boundNodeName != "" {
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// Create source sender job with node affinity
+	senderJob := c.createSenderJob(sourcePVC, targetPVC, boundNodeName, owner)
 	if err := controllerutil.SetControllerReference(owner, senderJob, c.client.Scheme()); err != nil {
 		return fmt.Errorf("failed to set owner reference for sender job: %w", err)
 	}
@@ -60,8 +91,80 @@ func (c *PVCCopier) CopyPVC(ctx context.Context, sourcePVC, targetPVC string, ow
 }
 
 // createSenderJob creates a job that compresses and serves PVC data via HTTP
-func (c *PVCCopier) createSenderJob(sourcePVC, targetPVC string, owner metav1.Object) *batchv1.Job {
+func (c *PVCCopier) createSenderJob(sourcePVC, targetPVC, boundNodeName string, owner metav1.Object) *batchv1.Job {
 	jobName := fmt.Sprintf("pvc-copy-sender-%s", targetPVC)
+
+	podSpec := corev1.PodSpec{
+		RestartPolicy: corev1.RestartPolicyOnFailure,
+		Containers: []corev1.Container{
+			{
+				Name:    "sender",
+				Image:   "alpine:latest",
+				Command: []string{"/bin/sh", "-c"},
+				Args: []string{
+					`
+# Install required tools
+apk add --no-cache python3 tar gzip
+
+# Create compressed archive (source must be fully suspended before this runs)
+echo "Creating compressed archive of source PVC..."
+cd /source-data
+tar czf /tmp/data.tar.gz . 2>/dev/null || tar czf /tmp/data.tar.gz --warning=no-file-changed .
+
+# Get archive size for progress tracking
+ARCHIVE_SIZE=$(stat -c%s /tmp/data.tar.gz)
+echo "Archive created successfully. Size: $ARCHIVE_SIZE bytes"
+
+# Start HTTP server to serve the archive
+echo "Starting HTTP server on port 8080..."
+cd /tmp
+python3 -m http.server 8080
+`,
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "source-volume",
+						MountPath: "/source-data",
+						ReadOnly:  true,
+					},
+				},
+				Ports: []corev1.ContainerPort{
+					{
+						ContainerPort: 8080,
+						Protocol:      corev1.ProtocolTCP,
+					},
+				},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("100m"),
+						corev1.ResourceMemory: resource.MustParse("256Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("1000m"),
+						corev1.ResourceMemory: resource.MustParse("1Gi"),
+					},
+				},
+			},
+		},
+		Volumes: []corev1.Volume{
+			{
+				Name: "source-volume",
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: sourcePVC,
+						ReadOnly:  true,
+					},
+				},
+			},
+		},
+	}
+
+	// Add node selector if bound node is known
+	if boundNodeName != "" {
+		podSpec.NodeSelector = map[string]string{
+			"kubernetes.io/hostname": boundNodeName,
+		}
+	}
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -86,70 +189,7 @@ func (c *PVCCopier) createSenderJob(sourcePVC, targetPVC string, owner metav1.Ob
 						"kloudlite.io/target-pvc": targetPVC,
 					},
 				},
-				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyOnFailure,
-					Containers: []corev1.Container{
-						{
-							Name:    "sender",
-							Image:   "alpine:latest",
-							Command: []string{"/bin/sh", "-c"},
-							Args: []string{
-								`
-# Install required tools
-apk add --no-cache python3 tar gzip
-
-# Create compressed archive (source must be fully suspended before this runs)
-echo "Creating compressed archive of source PVC..."
-cd /source-data
-tar czf /tmp/data.tar.gz . 2>/dev/null || tar czf /tmp/data.tar.gz --warning=no-file-changed .
-
-# Get archive size for progress tracking
-ARCHIVE_SIZE=$(stat -c%s /tmp/data.tar.gz)
-echo "Archive created successfully. Size: $ARCHIVE_SIZE bytes"
-
-# Start HTTP server to serve the archive
-echo "Starting HTTP server on port 8080..."
-cd /tmp
-python3 -m http.server 8080
-`,
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "source-volume",
-									MountPath: "/source-data",
-									ReadOnly:  true,
-								},
-							},
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 8080,
-									Protocol:      corev1.ProtocolTCP,
-								},
-							},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("100m"),
-									corev1.ResourceMemory: resource.MustParse("256Mi"),
-								},
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1000m"),
-									corev1.ResourceMemory: resource.MustParse("1Gi"),
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "source-volume",
-							VolumeSource: corev1.VolumeSource{
-								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: sourcePVC,
-									ReadOnly:  true,
-								},
-							},
-						},
-					},
-				},
+				Spec: podSpec,
 			},
 		},
 	}
