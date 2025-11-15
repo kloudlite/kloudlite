@@ -67,6 +67,11 @@ spec:
           spec:
             description: WorkspaceSpec defines the desired state of Workspace
             properties:
+              copyFrom:
+                description: |-
+                  CopyFrom specifies the source workspace name to clone directory from
+                  This field is automatically cleared after successful cloning
+                type: string
               description:
                 description: Description provides additional information about the
                   workspace
@@ -372,6 +377,76 @@ spec:
                   - serviceName
                   type: object
                 type: array
+              cloningStatus:
+                description: CloningStatus tracks the progress of workspace directory
+                  cloning
+                properties:
+                  completionTime:
+                    description: CompletionTime when cloning completed (success or
+                      failure)
+                    format: date-time
+                    type: string
+                  copyJobStatus:
+                    description: CopyJobStatus tracks the directory copy job status
+                    properties:
+                      completed:
+                        description: Completed indicates if the copy completed successfully
+                        type: boolean
+                      completionTime:
+                        description: CompletionTime when the copy job completed
+                        format: date-time
+                        type: string
+                      failed:
+                        description: Failed indicates if the copy failed
+                        type: boolean
+                      message:
+                        description: Message provides additional information about
+                          the copy status
+                        type: string
+                      receiverJobName:
+                        description: ReceiverJobName is the name of the receiver job
+                        type: string
+                      senderJobName:
+                        description: SenderJobName is the name of the sender job
+                        type: string
+                      senderPodIP:
+                        description: SenderPodIP is the IP address of the sender pod
+                        type: string
+                      startTime:
+                        description: StartTime when the copy job started
+                        format: date-time
+                        type: string
+                      started:
+                        description: Started indicates if the copy job has started
+                        type: boolean
+                    type: object
+                  errorMessage:
+                    description: ErrorMessage if cloning failed
+                    type: string
+                  message:
+                    description: Message provides additional information about the
+                      current cloning state
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning
+                    type: string
+                  sourceFolderName:
+                    description: SourceFolderName is the folder name of the source
+                      workspace
+                    type: string
+                  sourceWorkmachineName:
+                    description: SourceWorkmachineName is the WorkMachine where the
+                      source workspace is located
+                    type: string
+                  sourceWorkspaceName:
+                    description: SourceWorkspaceName is the name of the workspace
+                      being cloned from
+                    type: string
+                  startTime:
+                    description: StartTime when cloning started
+                    format: date-time
+                    type: string
+                type: object
               conditions:
                 description: Conditions represent the latest available observations
                   of workspace state
@@ -528,6 +603,35 @@ spec:
                     type: string
                   storage:
                     description: Storage usage
+                    type: string
+                type: object
+              sourceCloningStatus:
+                description: SourceCloningStatus tracks when this workspace is being
+                  used as a cloning source
+                properties:
+                  completionTime:
+                    description: CompletionTime when the cloning operation completed
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message provides additional information
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of source workspace
+                      during cloning
+                    type: string
+                  startTime:
+                    description: StartTime when this workspace started being used
+                      as a clone source
+                    format: date-time
+                    type: string
+                  targetWorkmachineName:
+                    description: TargetWorkmachineName is the WorkMachine where the
+                      target workspace will be created
+                    type: string
+                  targetWorkspaceName:
+                    description: TargetWorkspaceName is the name of the workspace
+                      being created from this source
                     type: string
                 type: object
               startTime:

@@ -383,6 +383,18 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		if workMachine.Status.State != machinesv1.MachineStateRunning {
 			return fmt.Errorf("cannot delete workspace: WorkMachine '%s' is currently '%s'. Please start the WorkMachine before deleting workspaces to allow proper cleanup of workspace directories", workspace.Spec.WorkmachineName, workMachine.Status.State)
 		}
+
+		// Prevent deletion if workspace is being used as a clone source
+		if workspace.Status.SourceCloningStatus != nil {
+			return fmt.Errorf("cannot delete workspace: it is currently being used as a clone source by workspace '%s'. Please wait for cloning to complete", workspace.Status.SourceCloningStatus.TargetWorkspaceName)
+		}
+	}
+
+	// Validate clone source if copyFrom is specified
+	if workspace.Spec.CopyFrom != "" && operation == admissionv1.Create {
+		if err := w.validateCloneSource(ctx, workspace); err != nil {
+			return fmt.Errorf("invalid clone source: %w", err)
+		}
 	}
 
 	return nil
@@ -533,6 +545,44 @@ func (w *WorkspaceWebhook) validateServiceIntercepts(ctx context.Context, worksp
 			return fmt.Errorf("service '%s' in namespace '%s' is already being intercepted by workspace '%s'. A service can only be intercepted by one workspace at a time",
 				interceptSpec.ServiceName, targetNamespace, conflictingWorkspace)
 		}
+	}
+
+	return nil
+}
+
+// validateCloneSource validates the clone source workspace
+func (w *WorkspaceWebhook) validateCloneSource(ctx context.Context, workspace *workspacesv1.Workspace) error {
+	sourceWorkspaceName := workspace.Spec.CopyFrom
+
+	// Fetch source workspace
+	var sourceWorkspace workspacesv1.Workspace
+	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspaceName}, &sourceWorkspace); err != nil {
+		return fmt.Errorf("source workspace '%s' does not exist", sourceWorkspaceName)
+	}
+
+	// Validate source workspace is not being deleted
+	if sourceWorkspace.DeletionTimestamp != nil {
+		return fmt.Errorf("source workspace '%s' is being deleted and cannot be cloned", sourceWorkspaceName)
+	}
+
+	// Validate source workspace's WorkMachine exists and is running
+	var sourceWorkMachine machinesv1.WorkMachine
+	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspace.Spec.WorkmachineName}, &sourceWorkMachine); err != nil {
+		return fmt.Errorf("source workspace's WorkMachine '%s' does not exist", sourceWorkspace.Spec.WorkmachineName)
+	}
+
+	if sourceWorkMachine.Status.State != machinesv1.MachineStateRunning {
+		return fmt.Errorf("source workspace's WorkMachine '%s' is currently '%s'. WorkMachine must be running to clone workspace", sourceWorkspace.Spec.WorkmachineName, sourceWorkMachine.Status.State)
+	}
+
+	// Validate target workspace has different FolderName than source
+	if workspace.Spec.FolderName == sourceWorkspace.Spec.FolderName {
+		return fmt.Errorf("target workspace must have a different folderName than source workspace. Both have folderName '%s'", workspace.Spec.FolderName)
+	}
+
+	// Validate user has permission to clone (must be same owner)
+	if workspace.Spec.OwnedBy != sourceWorkspace.Spec.OwnedBy {
+		return fmt.Errorf("can only clone workspaces you own. Source workspace is owned by '%s' but target is owned by '%s'", sourceWorkspace.Spec.OwnedBy, workspace.Spec.OwnedBy)
 	}
 
 	return nil
