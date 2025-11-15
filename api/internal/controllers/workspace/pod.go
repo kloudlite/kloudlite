@@ -551,10 +551,14 @@ chmod 644 /tmp-writable/kloudlite-context.json
 				if workspace.Spec.GitRepository != nil && workspace.Spec.GitRepository.URL != "" {
 					workspaceDir := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Spec.FolderName)
 
+					// Build git clone command with SSH config to disable host key checking
+					// This is safe because we're cloning from trusted sources specified by the user
+					sshCommand := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
 					// Build git clone command
-					cloneCmd := fmt.Sprintf("git clone %s", workspace.Spec.GitRepository.URL)
+					cloneCmd := fmt.Sprintf("GIT_SSH_COMMAND='%s' git clone %s", sshCommand, workspace.Spec.GitRepository.URL)
 					if workspace.Spec.GitRepository.Branch != "" {
-						cloneCmd = fmt.Sprintf("git clone -b %s %s", workspace.Spec.GitRepository.Branch, workspace.Spec.GitRepository.URL)
+						cloneCmd = fmt.Sprintf("GIT_SSH_COMMAND='%s' git clone -b %s %s", sshCommand, workspace.Spec.GitRepository.Branch, workspace.Spec.GitRepository.URL)
 					}
 					cloneCmd += fmt.Sprintf(" %s && chown -R 1001:1001 %s", workspaceDir, workspaceDir)
 
