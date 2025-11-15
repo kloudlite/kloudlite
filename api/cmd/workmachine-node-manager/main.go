@@ -35,7 +35,7 @@ import (
 
 const (
 	nixStorePath              = "/nix"
-	workspaceHomePath         = "/var/lib/kloudlite/workspace-homes/kl"
+	workspaceHomePath         = "/var/lib/kloudlite/home"
 	workspaceUserUID          = 1001
 	workspaceUserGID          = 1001
 	sshConfigPath             = "/var/lib/kloudlite/ssh-config"
