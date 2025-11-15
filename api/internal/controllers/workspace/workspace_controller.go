@@ -124,11 +124,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		}
 	}
 
-	// Set default workspace path if not provided
-	if workspace.Spec.WorkspacePath == "" {
-		workspace.Spec.WorkspacePath = "/workspace"
-	}
-
 	// Set default VS Code version if not provided
 	if workspace.Spec.VSCodeVersion == "" {
 		workspace.Spec.VSCodeVersion = "latest"

@@ -453,27 +453,27 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 					{
 						Name:  "init-workspace-dir",
 						Image: "alpine:latest",
-					Command: []string{
-						"sh",
-						"-c",
-						func() string {
-							// Build search domains based on whether workspace has an environment connection
-							searchDomains := "svc.cluster.local cluster.local"
-							envName := ""
-							if envTargetNamespace != "" {
-								// Include environment namespace first for priority
-								searchDomains = fmt.Sprintf("%s.svc.cluster.local svc.cluster.local cluster.local", envTargetNamespace)
-								// Get environment name from EnvironmentConnection
-								if workspace.Spec.EnvironmentConnection != nil {
-									envName = workspace.Spec.EnvironmentConnection.EnvironmentRef.Name
+						Command: []string{
+							"sh",
+							"-c",
+							func() string {
+								// Build search domains based on whether workspace has an environment connection
+								searchDomains := "svc.cluster.local cluster.local"
+								envName := ""
+								if envTargetNamespace != "" {
+									// Include environment namespace first for priority
+									searchDomains = fmt.Sprintf("%s.svc.cluster.local svc.cluster.local cluster.local", envTargetNamespace)
+									// Get environment name from EnvironmentConnection
+									if workspace.Spec.EnvironmentConnection != nil {
+										envName = workspace.Spec.EnvironmentConnection.EnvironmentRef.Name
+									}
 								}
-							}
 
-							// Build initial Kloudlite context JSON
-							// Intercepts will be empty on pod creation (added later via controller updates)
-							contextJSON := fmt.Sprintf(`{"environment":"%s","intercepts":[]}`, envName)
+								// Build initial Kloudlite context JSON
+								// Intercepts will be empty on pod creation (added later via controller updates)
+								contextJSON := fmt.Sprintf(`{"environment":"%s","intercepts":[]}`, envName)
 
-							return fmt.Sprintf(`
+								return fmt.Sprintf(`
 # Create workspace directory
 mkdir -p /home/kl/workspaces/%s
 chown -R 1001:1001 /home/kl/workspaces
@@ -524,72 +524,72 @@ cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
 `, workspace.Spec.FolderName, workspace.Spec.FolderName, workspace.Spec.FolderName, searchDomains, contextJSON)
-						}(),
+							}(),
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "kl-home",
+								MountPath: "/home/kl",
+							},
+							{
+								Name:      "etc-environment",
+								MountPath: "/etc-writable",
+							},
+							{
+								Name:      "etc-resolv",
+								MountPath: "/etc-writable-resolv",
+							},
+							{
+								Name:      "tmp-context",
+								MountPath: "/tmp-writable",
+							},
+						},
 					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "kl-home",
-							MountPath: "/home/kl",
-						},
-						{
-							Name:      "etc-environment",
-							MountPath: "/etc-writable",
-						},
-						{
-							Name:      "etc-resolv",
-							MountPath: "/etc-writable-resolv",
-						},
-						{
-							Name:      "tmp-context",
-							MountPath: "/tmp-writable",
-						},
-					},
-				},
-			}
-
-			// Add git clone init container if git repository is specified
-			if workspace.Spec.GitRepository != nil && workspace.Spec.GitRepository.URL != "" {
-				workspaceDir := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Spec.FolderName)
-
-				// Build git clone command
-				cloneCmd := fmt.Sprintf("git clone %s", workspace.Spec.GitRepository.URL)
-				if workspace.Spec.GitRepository.Branch != "" {
-					cloneCmd = fmt.Sprintf("git clone -b %s %s", workspace.Spec.GitRepository.Branch, workspace.Spec.GitRepository.URL)
 				}
-				cloneCmd += fmt.Sprintf(" %s && chown -R 1001:1001 %s", workspaceDir, workspaceDir)
 
-				// Only clone if workspace directory is empty
-				fullCmd := fmt.Sprintf(
-					"if [ ! -d %s ] || [ -z \"$(ls -A %s 2>/dev/null)\" ]; then %s; else echo 'Workspace folder is not empty, skipping git clone'; fi",
-					workspaceDir,
-					workspaceDir,
-					cloneCmd,
-				)
+				// Add git clone init container if git repository is specified
+				if workspace.Spec.GitRepository != nil && workspace.Spec.GitRepository.URL != "" {
+					workspaceDir := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Spec.FolderName)
 
-				initContainers = append(initContainers, corev1.Container{
-					Name:  "git-clone",
-					Image: "alpine/git:latest",
-					Command: []string{
-						"sh",
-						"-c",
-						fullCmd,
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "kl-home",
-							MountPath: "/home/kl",
+					// Build git clone command
+					cloneCmd := fmt.Sprintf("git clone %s", workspace.Spec.GitRepository.URL)
+					if workspace.Spec.GitRepository.Branch != "" {
+						cloneCmd = fmt.Sprintf("git clone -b %s %s", workspace.Spec.GitRepository.Branch, workspace.Spec.GitRepository.URL)
+					}
+					cloneCmd += fmt.Sprintf(" %s && chown -R 1001:1001 %s", workspaceDir, workspaceDir)
+
+					// Only clone if workspace directory is empty
+					fullCmd := fmt.Sprintf(
+						"if [ ! -d %s ] || [ -z \"$(ls -A %s 2>/dev/null)\" ]; then %s; else echo 'Workspace folder is not empty, skipping git clone'; fi",
+						workspaceDir,
+						workspaceDir,
+						cloneCmd,
+					)
+
+					initContainers = append(initContainers, corev1.Container{
+						Name:  "git-clone",
+						Image: "alpine/git:latest",
+						Command: []string{
+							"sh",
+							"-c",
+							fullCmd,
 						},
-						{
-							Name:      "ssh-host-keys",
-							MountPath: "/root/.ssh",
-							ReadOnly:  true,
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "kl-home",
+								MountPath: "/home/kl",
+							},
+							{
+								Name:      "ssh-host-keys",
+								MountPath: "/root/.ssh",
+								ReadOnly:  true,
+							},
 						},
-					},
-				})
-			}
+					})
+				}
 
-			return initContainers
-		}(),
+				return initContainers
+			}(),
 			Containers: []corev1.Container{
 				// Comprehensive workspace container with all services
 				{

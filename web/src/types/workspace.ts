@@ -25,7 +25,6 @@ export interface WorkspaceSpec {
   settings?: WorkspaceSettings
   status?: 'active' | 'suspended' | 'archived'
   tags?: string[]
-  workspacePath?: string
   vscodeVersion?: string
   gitRepository?: GitRepository
 }

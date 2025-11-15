@@ -326,11 +326,6 @@ spec:
                   The workspace will run in the WorkMachine's targetNamespace
                 minLength: 1
                 type: string
-              workspacePath:
-                default: /workspace
-                description: WorkspacePath is the path inside the workspace container
-                  where storage will be mounted
-                type: string
             required:
             - displayName
             - folderName

@@ -1127,9 +1127,8 @@ func TestHandleDeletion(t *testing.T) {
 			Finalizers: []string{workspaceFinalizer},
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			OwnedBy:       "test@example.com",
-			DisplayName:   "Test Workspace",
-			WorkspacePath: "/home/kl/workspaces/test-workspace",
+			OwnedBy:     "test@example.com",
+			DisplayName: "Test Workspace",
 		},
 		Status: workspacev1.WorkspaceStatus{
 			PodName: "test-workspace-pod",
