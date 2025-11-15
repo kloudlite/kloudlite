@@ -371,6 +371,39 @@ func (c *WorkspaceDirectoryCopier) waitForSenderPodReady(
 	return "", fmt.Errorf("timeout waiting for sender pod to be ready after %v", timeout)
 }
 
+// getSenderPodIPIfReady immediately checks if the sender pod is ready and returns its IP
+// Returns error if pod doesn't exist or isn't ready yet
+// This method is used for recovery when the status wasn't updated but the pod is already running
+func (c *WorkspaceDirectoryCopier) getSenderPodIPIfReady(
+	ctx context.Context,
+	senderJobName string,
+	namespace string,
+	logger *zap.Logger,
+) (string, error) {
+	// List pods with the sender job label
+	podList := &corev1.PodList{}
+	if err := c.List(ctx, podList, client.InNamespace(namespace), client.MatchingLabels{
+		"job-name":              senderJobName,
+		"kloudlite.io/job-type": "workspace-clone-sender",
+	}); err != nil {
+		return "", fmt.Errorf("failed to list sender pods: %w", err)
+	}
+
+	if len(podList.Items) == 0 {
+		return "", fmt.Errorf("no sender pods found")
+	}
+
+	pod := &podList.Items[0]
+	if pod.Status.Phase == corev1.PodRunning && pod.Status.PodIP != "" {
+		logger.Info("Recovered sender pod IP from existing pod",
+			zap.String("podName", pod.Name),
+			zap.String("podIP", pod.Status.PodIP))
+		return pod.Status.PodIP, nil
+	}
+
+	return "", fmt.Errorf("sender pod not ready yet (phase=%s, ip=%s)", pod.Status.Phase, pod.Status.PodIP)
+}
+
 // getDirectoryCopyStatus checks the status of the receiver job
 // Returns (completed, failed, error)
 func (c *WorkspaceDirectoryCopier) getDirectoryCopyStatus(

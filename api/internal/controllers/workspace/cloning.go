@@ -271,15 +271,21 @@ func (r *WorkspaceReconciler) handleCloningCreatingCopyJob(
 			return reconcile.Result{}, nil
 		}
 
-		senderPodIP, err := copier.waitForSenderPodReady(ctx, copyStatus.SenderJobName, namespace, logger)
+		// Try to recover sender pod IP if it exists (handles recovery from failed status updates)
+		senderPodIP, err := copier.getSenderPodIPIfReady(ctx, copyStatus.SenderJobName, namespace, logger)
 		if err != nil {
-			logger.Error("Failed to get sender pod IP", zap.Error(err))
-			workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
-			workspace.Status.CloningStatus.ErrorMessage = fmt.Sprintf("Failed to get sender pod IP: %v", err)
-			if err := r.Status().Update(ctx, workspace); err != nil {
-				return reconcile.Result{}, err
+			// Pod might not be ready yet, wait for it
+			logger.Info("Sender pod not ready yet, waiting...", zap.Error(err))
+			senderPodIP, err = copier.waitForSenderPodReady(ctx, copyStatus.SenderJobName, namespace, logger)
+			if err != nil {
+				logger.Error("Failed to get sender pod IP", zap.Error(err))
+				workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
+				workspace.Status.CloningStatus.ErrorMessage = fmt.Sprintf("Failed to get sender pod IP: %v", err)
+				if err := r.Status().Update(ctx, workspace); err != nil {
+					return reconcile.Result{}, err
+				}
+				return reconcile.Result{}, nil
 			}
-			return reconcile.Result{}, nil
 		}
 
 		copyStatus.SenderPodIP = senderPodIP
@@ -287,10 +293,13 @@ func (r *WorkspaceReconciler) handleCloningCreatingCopyJob(
 
 		if err := r.Status().Update(ctx, workspace); err != nil {
 			logger.Error("Failed to update cloning status with sender IP", zap.Error(err))
-			return reconcile.Result{}, err
+			// Requeue instead of returning error, to retry the status update
+			return reconcile.Result{Requeue: true}, nil
 		}
 
 		logger.Info("Sender pod ready", zap.String("ip", senderPodIP))
+		// Requeue to continue to next step immediately
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Create receiver job if not already created
