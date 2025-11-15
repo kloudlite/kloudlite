@@ -139,6 +139,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		workspace.Spec.VSCodeVersion = "latest"
 	}
 
+	// Handle workspace cloning if copyFrom is set
+	// Cloning takes precedence over normal workspace reconciliation
+	if workspace.Spec.CopyFrom != "" {
+		logger.Info("Workspace has copyFrom set, handling cloning",
+			zap.String("sourceWorkspace", workspace.Spec.CopyFrom))
+		return r.handleCloning(ctx, workspace, logger)
+	}
+
 	// Handle workspace based on its status
 	var result reconcile.Result
 

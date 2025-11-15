@@ -135,6 +135,11 @@ type WorkspaceSpec struct {
 	// +kubebuilder:validation:Enum=active;suspended;archived
 	// +kubebuilder:default=active
 	Status string `json:"status,omitempty"`
+
+	// CopyFrom specifies the source workspace name to clone directory from
+	// This field is automatically cleared after successful cloning
+	// +optional
+	CopyFrom string `json:"copyFrom,omitempty"`
 }
 
 // WorkspaceSettings contains workspace-specific configuration
@@ -318,6 +323,14 @@ type WorkspaceStatus struct {
 	// ActiveIntercepts tracks the status of active service intercepts
 	// +optional
 	ActiveIntercepts []InterceptStatus `json:"activeIntercepts,omitempty"`
+
+	// CloningStatus tracks the progress of workspace directory cloning
+	// +optional
+	CloningStatus *WorkspaceCloningStatus `json:"cloningStatus,omitempty"`
+
+	// SourceCloningStatus tracks when this workspace is being used as a cloning source
+	// +optional
+	SourceCloningStatus *WorkspaceSourceCloningStatus `json:"sourceCloningStatus,omitempty"`
 }
 
 // ResourceUsage tracks current resource consumption
@@ -333,6 +346,154 @@ type ResourceUsage struct {
 
 	// LastUpdated timestamp
 	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
+}
+
+// CloningPhase represents the current phase of workspace cloning
+type CloningPhase string
+
+const (
+	// CloningPhasePending indicates cloning is pending to start
+	CloningPhasePending CloningPhase = "Pending"
+
+	// CloningPhaseSuspending indicates source workspace is being suspended
+	CloningPhaseSuspending CloningPhase = "Suspending"
+
+	// CloningPhaseCreatingCopyJob indicates sender and receiver jobs are being created
+	CloningPhaseCreatingCopyJob CloningPhase = "CreatingCopyJob"
+
+	// CloningPhaseWaitingForCopyCompletion indicates waiting for directory copy to complete
+	CloningPhaseWaitingForCopyCompletion CloningPhase = "WaitingForCopyCompletion"
+
+	// CloningPhaseVerifyingCopy indicates verifying the directory was copied successfully
+	CloningPhaseVerifyingCopy CloningPhase = "VerifyingCopy"
+
+	// CloningPhaseResuming indicates source workspace is being resumed
+	CloningPhaseResuming CloningPhase = "Resuming"
+
+	// CloningPhaseCompleted indicates cloning completed successfully
+	CloningPhaseCompleted CloningPhase = "Completed"
+
+	// CloningPhaseFailed indicates cloning failed
+	CloningPhaseFailed CloningPhase = "Failed"
+)
+
+// DirectoryCopyJobStatus tracks the status of directory copy sender/receiver jobs
+type DirectoryCopyJobStatus struct {
+	// SenderJobName is the name of the sender job
+	// +optional
+	SenderJobName string `json:"senderJobName,omitempty"`
+
+	// ReceiverJobName is the name of the receiver job
+	// +optional
+	ReceiverJobName string `json:"receiverJobName,omitempty"`
+
+	// SenderPodIP is the IP address of the sender pod
+	// +optional
+	SenderPodIP string `json:"senderPodIP,omitempty"`
+
+	// Started indicates if the copy job has started
+	// +optional
+	Started bool `json:"started,omitempty"`
+
+	// Completed indicates if the copy completed successfully
+	// +optional
+	Completed bool `json:"completed,omitempty"`
+
+	// Failed indicates if the copy failed
+	// +optional
+	Failed bool `json:"failed,omitempty"`
+
+	// Message provides additional information about the copy status
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// StartTime when the copy job started
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// CompletionTime when the copy job completed
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+}
+
+// WorkspaceCloningStatus tracks the overall cloning progress for the target workspace
+type WorkspaceCloningStatus struct {
+	// Phase represents the current phase of cloning
+	// +optional
+	Phase CloningPhase `json:"phase,omitempty"`
+
+	// Message provides additional information about the current cloning state
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// SourceWorkspaceName is the name of the workspace being cloned from
+	// +optional
+	SourceWorkspaceName string `json:"sourceWorkspaceName,omitempty"`
+
+	// SourceWorkmachineName is the WorkMachine where the source workspace is located
+	// +optional
+	SourceWorkmachineName string `json:"sourceWorkmachineName,omitempty"`
+
+	// SourceFolderName is the folder name of the source workspace
+	// +optional
+	SourceFolderName string `json:"sourceFolderName,omitempty"`
+
+	// CopyJobStatus tracks the directory copy job status
+	// +optional
+	CopyJobStatus *DirectoryCopyJobStatus `json:"copyJobStatus,omitempty"`
+
+	// StartTime when cloning started
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// CompletionTime when cloning completed (success or failure)
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	// ErrorMessage if cloning failed
+	// +optional
+	ErrorMessage string `json:"errorMessage,omitempty"`
+}
+
+// SourceCloningPhase represents the phase of the source workspace during cloning
+type SourceCloningPhase string
+
+const (
+	// SourceCloningPhaseSuspending indicates source is being suspended for cloning
+	SourceCloningPhaseSuspending SourceCloningPhase = "Suspending"
+
+	// SourceCloningPhaseCopying indicates source directory is being copied
+	SourceCloningPhaseCopying SourceCloningPhase = "Copying"
+
+	// SourceCloningPhaseResuming indicates source is being resumed after cloning
+	SourceCloningPhaseResuming SourceCloningPhase = "Resuming"
+)
+
+// WorkspaceSourceCloningStatus tracks the status of this workspace when used as a clone source
+type WorkspaceSourceCloningStatus struct {
+	// Phase represents the current phase of source workspace during cloning
+	// +optional
+	Phase SourceCloningPhase `json:"phase,omitempty"`
+
+	// Message provides additional information
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// TargetWorkspaceName is the name of the workspace being created from this source
+	// +optional
+	TargetWorkspaceName string `json:"targetWorkspaceName,omitempty"`
+
+	// TargetWorkmachineName is the WorkMachine where the target workspace will be created
+	// +optional
+	TargetWorkmachineName string `json:"targetWorkmachineName,omitempty"`
+
+	// StartTime when this workspace started being used as a clone source
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// CompletionTime when the cloning operation completed
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 }
 
 // +kubebuilder:object:root=true
