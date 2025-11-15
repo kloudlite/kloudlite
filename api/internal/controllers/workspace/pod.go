@@ -553,8 +553,9 @@ chmod 644 /tmp-writable/kloudlite-context.json
 
 					// Build git clone command with SSH config to disable host key checking
 					// SSH keys are mounted from /var/lib/kloudlite/ssh-config on host to /root/.ssh
+					// Use ssh_host_rsa_key which is the SSH private key available in that directory
 					// This is safe because we're cloning from trusted sources specified by the user
-					sshCommand := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/id_rsa"
+					sshCommand := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/ssh_host_rsa_key"
 
 					// Build git clone command
 					cloneCmd := fmt.Sprintf("GIT_SSH_COMMAND='%s' git clone %s", sshCommand, workspace.Spec.GitRepository.URL)
