@@ -1284,10 +1284,10 @@ func TestSetupWorkspaceHome_Success(t *testing.T) {
 	assert.NoError(t, err)
 	// Verify 4 filesystem calls: 2 MkdirAll + 2 Chown
 	assert.Len(t, mockFS.CallLog, 4)
-	assert.Contains(t, mockFS.CallLog[0], "MkdirAll(/var/lib/kloudlite/workspace-homes/kl")
-	assert.Contains(t, mockFS.CallLog[1], "Chown(/var/lib/kloudlite/workspace-homes/kl, 1001, 1001)")
-	assert.Contains(t, mockFS.CallLog[2], "MkdirAll(/var/lib/kloudlite/workspace-homes/kl/workspaces")
-	assert.Contains(t, mockFS.CallLog[3], "Chown(/var/lib/kloudlite/workspace-homes/kl/workspaces, 1001, 1001)")
+	assert.Contains(t, mockFS.CallLog[0], "MkdirAll(/var/lib/kloudlite/home")
+	assert.Contains(t, mockFS.CallLog[1], "Chown(/var/lib/kloudlite/home, 1001, 1001)")
+	assert.Contains(t, mockFS.CallLog[2], "MkdirAll(/var/lib/kloudlite/home/workspaces")
+	assert.Contains(t, mockFS.CallLog[3], "Chown(/var/lib/kloudlite/home/workspaces, 1001, 1001)")
 }
 
 func TestSetupWorkspaceHome_MkdirAllError(t *testing.T) {
