@@ -59,11 +59,11 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 				Resources: []string{"packagerequests/status"},
 				Verbs:     []string{"get", "update", "patch"},
 			},
-			// Workspaces - for SSH configuration management
+			// Workspaces - for SSH configuration management and directory cleanup
 			{
 				APIGroups: []string{"workspaces.kloudlite.io"},
 				Resources: []string{"workspaces"},
-				Verbs:     []string{"get", "list", "watch", "patch"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
 			},
 			// Nodes - for GPU status updates
 			{
