@@ -1217,16 +1217,6 @@ func (r *EnvironmentReconciler) resumeEnvironment(ctx context.Context, environme
 	return nil
 }
 
-// contains checks if a string exists in a slice
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
-
 // SetupWithManager sets up the controller with the Manager
 func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
