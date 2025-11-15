@@ -88,10 +88,8 @@ spec:
       volumeMounts:
         - name: nix-store
           mountPath: /nix
-        - name: workspace-homes
-          mountPath: /var/lib/kloudlite/home
-        - name: ssh-config
-          mountPath: /var/lib/kloudlite/ssh-config
+        - name: kloudlite-data
+          mountPath: /var/lib/kloudlite
         # Host filesystem mounts for GPU detection and driver installation
         - name: host-sys
           mountPath: /host/sys
@@ -108,13 +106,9 @@ spec:
       hostPath:
         path: /var/lib/kloudlite/nix-store
         type: DirectoryOrCreate
-    - name: workspace-homes
+    - name: kloudlite-data
       hostPath:
-        path: /var/lib/kloudlite/home
-        type: DirectoryOrCreate
-    - name: ssh-config
-      hostPath:
-        path: /var/lib/kloudlite/ssh-config
+        path: /var/lib/kloudlite
         type: DirectoryOrCreate
     # Host filesystem volumes for GPU detection and driver installation
     - name: host-sys
