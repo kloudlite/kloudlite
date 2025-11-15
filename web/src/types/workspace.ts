@@ -18,8 +18,10 @@ export interface WorkspaceSpec {
   description?: string
   ownedBy: string
   workMachineRef?: ObjectReference
+  workmachineName?: string
   environmentRef?: ObjectReference
   machineTypeRef?: ObjectReference
+  folderName?: string
   packages?: PackageSpec[]
   resourceQuota?: ResourceQuota
   settings?: WorkspaceSettings
@@ -27,6 +29,7 @@ export interface WorkspaceSpec {
   tags?: string[]
   vscodeVersion?: string
   gitRepository?: GitRepository
+  copyFrom?: string
 }
 
 export interface GitRepository {
@@ -83,6 +86,31 @@ export interface ConnectedEnvironmentInfo {
   availableServices?: string[]
 }
 
+export interface CloningStatus {
+  phase?: string
+  message?: string
+  sourceWorkspaceName?: string
+  sourceWorkmachineName?: string
+  sourceFolderName?: string
+  copyJobStatus?: {
+    senderJobName?: string
+    receiverJobName?: string
+    senderPodIP?: string
+    started?: boolean
+    completed?: boolean
+    failed?: boolean
+    message?: string
+  }
+  startTime?: string
+  completionTime?: string
+  errorMessage?: string
+}
+
+export interface SourceCloningStatus {
+  targetWorkspaceName?: string
+  suspended?: boolean
+}
+
 export interface WorkspaceStatus {
   phase?: string
   message?: string
@@ -113,6 +141,8 @@ export interface WorkspaceStatus {
   totalRuntime?: number
   connectedEnvironment?: ConnectedEnvironmentInfo
   activeConnections?: number
+  cloningStatus?: CloningStatus
+  sourceCloningStatus?: SourceCloningStatus
 }
 
 // Request/Response types

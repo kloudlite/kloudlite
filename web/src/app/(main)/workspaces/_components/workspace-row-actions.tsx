@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -28,6 +29,7 @@ import {
   activateWorkspace,
   archiveWorkspace,
 } from '@/app/actions/workspace.actions'
+import { CloneWorkspaceSheet } from './clone-workspace-sheet'
 
 interface WorkspaceRowActionsProps {
   workspace: Workspace
@@ -38,6 +40,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -81,7 +84,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isDeleting}>
             {isDeleting ? (
@@ -97,6 +100,20 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
               Open Workspace
             </Link>
           </DropdownMenuItem>
+          <CloneWorkspaceSheet
+            workspace={workspace}
+            trigger={
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault()
+                  setDropdownOpen(false)
+                }}
+              >
+                Clone
+              </DropdownMenuItem>
+            }
+          />
+          <DropdownMenuSeparator />
           {workspace.spec.status !== 'suspended' && (
             <DropdownMenuItem onClick={() => handleWorkspaceAction('suspend')}>
               Suspend
@@ -113,6 +130,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
             </DropdownMenuItem>
           )}
           <DropdownMenuItem>Settings</DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={() => setShowDeleteDialog(true)}
