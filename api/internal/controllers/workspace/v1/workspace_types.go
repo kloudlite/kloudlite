@@ -58,6 +58,18 @@ type PackageSpec = packagesv1.PackageSpec
 // InstalledPackage is an alias to packages.kloudlite.io/v1 InstalledPackage
 type InstalledPackage = packagesv1.InstalledPackage
 
+// GitRepository defines a git repository to clone when workspace starts
+type GitRepository struct {
+	// URL of the git repository (supports https:// and git@ formats)
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	URL string `json:"url"`
+
+	// Branch to clone (optional, uses repository default if not specified)
+	// +optional
+	Branch string `json:"branch,omitempty"`
+}
+
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
 	// DisplayName is the human-readable name for the workspace
@@ -92,6 +104,11 @@ type WorkspaceSpec struct {
 	// When set to nil, workspace is disconnected and all intercepts are removed
 	// +optional
 	EnvironmentConnection *EnvironmentConnectionSpec `json:"environmentConnection,omitempty"`
+
+	// GitRepository defines a git repository to clone when workspace starts
+	// The repository will be cloned into the workspace folder using SSH keys from the WorkMachine
+	// +optional
+	GitRepository *GitRepository `json:"gitRepository,omitempty"`
 
 	// Settings contains workspace-specific settings
 	// +optional

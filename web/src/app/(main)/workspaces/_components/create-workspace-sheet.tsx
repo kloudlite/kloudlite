@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Loader2, Package, Search } from 'lucide-react'
+import { Plus, X, Loader2, Package, Search, GitBranch } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,6 +43,10 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
 
   // Basic fields
   const [name, setName] = useState('')
+
+  // Git repository
+  const [gitRepoUrl, setGitRepoUrl] = useState('')
+  const [gitBranch, setGitBranch] = useState('')
 
   // Package management
   const [packages, setPackages] = useState<PackageWithVersion[]>([])
@@ -172,6 +176,14 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         ({ displayVersion: _displayVersion, ...pkg }) => pkg,
       )
 
+      // Build git repository config if URL is provided
+      const gitRepository = gitRepoUrl.trim()
+        ? {
+            url: gitRepoUrl.trim(),
+            ...(gitBranch.trim() && { branch: gitBranch.trim() }),
+          }
+        : undefined
+
       const result = await createWorkspace(namespace, {
         name: name
           .trim()
@@ -181,6 +193,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
           displayName: name.trim(),
           ownedBy: user,
           packages: packageSpecs.length > 0 ? packageSpecs : undefined,
+          gitRepository,
           status: 'active',
         },
       })
@@ -190,6 +203,8 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         setOpen(false)
         setName('')
         setPackages([])
+        setGitRepoUrl('')
+        setGitBranch('')
 
         // Immediately refresh and then poll for a few seconds to catch state changes
         router.refresh()
@@ -377,6 +392,46 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
                   <Plus className="mr-2 h-4 w-4" />
                   Add Package
                 </Button>
+              </div>
+            </div>
+
+            {/* Git Repository Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                <Label>Git Repository (Optional)</Label>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Clone a git repository when workspace starts. SSH keys from your WorkMachine will be used for authentication.
+              </p>
+
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="gitRepoUrl">Repository URL</Label>
+                  <Input
+                    id="gitRepoUrl"
+                    placeholder="https://github.com/user/repo.git or git@github.com:user/repo.git"
+                    value={gitRepoUrl}
+                    onChange={(e) => setGitRepoUrl(e.target.value)}
+                    disabled={isPending}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gitBranch">Branch (Optional)</Label>
+                  <Input
+                    id="gitBranch"
+                    placeholder="main"
+                    value={gitBranch}
+                    onChange={(e) => setGitBranch(e.target.value)}
+                    disabled={isPending}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Leave empty to use repository's default branch
+                  </p>
+                </div>
               </div>
             </div>
           </div>

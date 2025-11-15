@@ -448,10 +448,11 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 			},
 		},
 		Spec: corev1.PodSpec{
-			InitContainers: []corev1.Container{
-				{
-					Name:  "init-workspace-dir",
-					Image: "alpine:latest",
+			InitContainers: func() []corev1.Container {
+				initContainers := []corev1.Container{
+					{
+						Name:  "init-workspace-dir",
+						Image: "alpine:latest",
 					Command: []string{
 						"sh",
 						"-c",
@@ -544,7 +545,40 @@ chmod 644 /tmp-writable/kloudlite-context.json
 						},
 					},
 				},
-			},
+			}
+
+			// Add git clone init container if git repository is specified
+			if workspace.Spec.GitRepository != nil && workspace.Spec.GitRepository.URL != "" {
+				cloneCmd := fmt.Sprintf("git clone %s", workspace.Spec.GitRepository.URL)
+				if workspace.Spec.GitRepository.Branch != "" {
+					cloneCmd = fmt.Sprintf("git clone -b %s %s", workspace.Spec.GitRepository.Branch, workspace.Spec.GitRepository.URL)
+				}
+				cloneCmd += fmt.Sprintf(" /home/kl/workspaces/%s && chown -R 1001:1001 /home/kl/workspaces/%s || echo 'Git clone failed, continuing workspace startup'", workspace.Spec.FolderName, workspace.Spec.FolderName)
+
+				initContainers = append(initContainers, corev1.Container{
+					Name:  "git-clone",
+					Image: "alpine/git:latest",
+					Command: []string{
+						"sh",
+						"-c",
+						cloneCmd,
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "kl-home",
+							MountPath: "/home/kl",
+						},
+						{
+							Name:      "ssh-host-keys",
+							MountPath: "/root/.ssh",
+							ReadOnly:  true,
+						},
+					},
+				})
+			}
+
+			return initContainers
+		}(),
 			Containers: []corev1.Container{
 				// Comprehensive workspace container with all services
 				{
