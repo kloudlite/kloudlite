@@ -106,8 +106,8 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 
 	// Ensure the owner is set to the authenticated user's username (metadata.name)
 	workspace.Spec.OwnedBy = username
-	// FIXME(nxtcoder17): move it to workmachine name, and even better if frontend set's it directly
-	workspace.Spec.WorkmachineName = workspace.Namespace
+	// Set WorkmachineName to the actual WorkMachine name (not the namespace)
+	workspace.Spec.WorkmachineName = workMachine.Name
 	// Set FolderName to the original workspace name (without username prefix)
 	workspace.Spec.FolderName = req.Name
 
