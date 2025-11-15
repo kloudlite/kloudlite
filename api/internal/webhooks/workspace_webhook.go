@@ -139,15 +139,6 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 		})
 	}
 
-	// Set default workspace path if not specified
-	if workspace.Spec.WorkspacePath == "" {
-		patches = append(patches, map[string]interface{}{
-			"op":    "add",
-			"path":  "/spec/workspacePath",
-			"value": "/workspace",
-		})
-	}
-
 	// Set default VS Code version if not specified
 	if workspace.Spec.VSCodeVersion == "" {
 		patches = append(patches, map[string]interface{}{

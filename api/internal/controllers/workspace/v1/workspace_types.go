@@ -122,11 +122,6 @@ type WorkspaceSpec struct {
 	// +optional
 	ResourceQuota *ResourceQuota `json:"resourceQuota,omitempty"`
 
-	// WorkspacePath is the path inside the workspace container where storage will be mounted
-	// +kubebuilder:default=/workspace
-	// +optional
-	WorkspacePath string `json:"workspacePath,omitempty"`
-
 	// VSCodeVersion specifies the version of VS Code server to use
 	// +kubebuilder:default=latest
 	// +optional
