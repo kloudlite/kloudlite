@@ -1,6 +1,6 @@
 'use client'
 
-import { Network, Wifi } from 'lucide-react'
+import { Network } from 'lucide-react'
 import { useState } from 'react'
 import type { K8sService } from '@/types/service'
 import type { Composition } from '@/types/composition'
