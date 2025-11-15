@@ -1349,17 +1349,8 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 		return reconcile.Result{}, nil
 	}
 
-	// Add finalizer if not present
-	if !containsString(workspace.Finalizers, workspaceCleanupFinalizer) {
-		logger.Info("Adding cleanup finalizer to Workspace")
-		workspace.Finalizers = append(workspace.Finalizers, workspaceCleanupFinalizer)
-		if err := r.Update(ctx, workspace); err != nil {
-			logger.Error("Failed to add finalizer", zap2.Error(err))
-			return reconcile.Result{}, err
-		}
-		logger.Info("Successfully added cleanup finalizer")
-	}
-
+	// Finalizer is now added by the workspace controller
+	// This reconciler only handles cleanup during deletion
 	return reconcile.Result{}, nil
 }
 
