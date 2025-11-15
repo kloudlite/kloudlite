@@ -548,9 +548,6 @@ func (r *WorkspaceReconciler) handleCloningCompleted(
 		Message:            fmt.Sprintf("Successfully cloned from workspace %s", workspace.Status.CloningStatus.SourceWorkspaceName),
 	})
 
-	// Clear cloning status (keep it for a while for debugging)
-	// workspace.Status.CloningStatus = nil
-
 	if err := r.Update(ctx, workspace); err != nil {
 		logger.Error("Failed to clear copyFrom field", zap.Error(err))
 		return reconcile.Result{}, err
