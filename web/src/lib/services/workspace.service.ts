@@ -81,6 +81,23 @@ export class WorkspaceService {
       `${this.baseUrl}/namespaces/${namespace}/workspaces/${name}/metrics`,
     )
   }
+
+  // Clone a workspace
+  async clone(
+    sourceWorkspaceName: string,
+    data: WorkspaceCreateRequest,
+    namespace: string = 'default',
+  ): Promise<Workspace> {
+    // Add copyFrom field to the spec
+    const cloneData = {
+      ...data,
+      spec: {
+        ...data.spec,
+        copyFrom: sourceWorkspaceName,
+      },
+    }
+    return this.create(cloneData, namespace)
+  }
 }
 
 // Export singleton instance

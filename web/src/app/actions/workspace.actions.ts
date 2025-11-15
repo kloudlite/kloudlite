@@ -317,3 +317,25 @@ export async function getWorkMachineGPUMetrics(workMachineName: string) {
     }
   }
 }
+
+/**
+ * Server action to clone a workspace
+ */
+export async function cloneWorkspace(
+  sourceWorkspaceName: string,
+  data: WorkspaceCreateRequest,
+  namespace: string = 'default',
+) {
+  try {
+    const result = await workspaceService.clone(sourceWorkspaceName, data, namespace)
+    revalidatePath('/workspaces')
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Clone workspace error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
