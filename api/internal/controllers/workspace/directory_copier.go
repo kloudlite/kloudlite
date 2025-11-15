@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -336,12 +337,9 @@ func (c *WorkspaceDirectoryCopier) waitForSenderPodReady(
 	for time.Now().Before(deadline) {
 		// List pods with the sender job label
 		podList := &corev1.PodList{}
-		if err := c.List(ctx, podList, &client.ListOptions{
-			Namespace: namespace,
-			LabelSelector: client.MatchingLabels{
-				"job-name":                  senderJobName,
-				"kloudlite.io/job-type":     "workspace-clone-sender",
-			},
+		if err := c.List(ctx, podList, client.InNamespace(namespace), client.MatchingLabels{
+			"job-name":              senderJobName,
+			"kloudlite.io/job-type": "workspace-clone-sender",
 		}); err != nil {
 			logger.Warn("Failed to list sender pods", zap.Error(err))
 			time.Sleep(pollInterval)
@@ -426,7 +424,7 @@ func (c *WorkspaceDirectoryCopier) cleanupCopyJobs(
 	}
 	if err := c.Delete(ctx, senderJob, &client.DeleteOptions{
 		PropagationPolicy: fn.Ptr(metav1.DeletePropagationBackground),
-	}); err != nil && !client.IgnoreNotFound(err) != nil {
+	}); err != nil && !apierrors.IsNotFound(err) {
 		logger.Warn("Failed to delete sender job", zap.Error(err))
 	}
 
@@ -439,7 +437,7 @@ func (c *WorkspaceDirectoryCopier) cleanupCopyJobs(
 	}
 	if err := c.Delete(ctx, receiverJob, &client.DeleteOptions{
 		PropagationPolicy: fn.Ptr(metav1.DeletePropagationBackground),
-	}); err != nil && !client.IgnoreNotFound(err) != nil {
+	}); err != nil && !apierrors.IsNotFound(err) {
 		logger.Warn("Failed to delete receiver job", zap.Error(err))
 	}
 
