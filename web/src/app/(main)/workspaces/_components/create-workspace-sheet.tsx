@@ -429,7 +429,7 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
                     className="font-mono text-sm"
                   />
                   <p className="text-muted-foreground text-xs">
-                    Leave empty to use repository's default branch
+                    Leave empty to use repository&apos;s default branch
                   </p>
                 </div>
               </div>
