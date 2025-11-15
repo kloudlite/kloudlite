@@ -22,16 +22,26 @@ import type { Workspace } from '@/types/workspace'
 interface CloneWorkspaceSheetProps {
   workspace: Workspace
   trigger?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function CloneWorkspaceSheet({ workspace, trigger }: CloneWorkspaceSheetProps) {
+export function CloneWorkspaceSheet({
+  workspace,
+  trigger,
+  open: controlledOpen,
+  onOpenChange
+}: CloneWorkspaceSheetProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = onOpenChange || setInternalOpen
 
   // Form fields
   const [name, setName] = useState('')
-  const [folderName, setFolderName] = useState('')
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -51,9 +61,6 @@ export function CloneWorkspaceSheet({ workspace, trigger }: CloneWorkspaceSheetP
       // Suggest a default name based on source workspace
       const suggestedName = `${workspace.spec.displayName}-clone`
       setName(suggestedName)
-      // Suggest a default folder name
-      const suggestedFolder = `${workspace.spec.folderName || workspace.metadata.name}-clone`
-      setFolderName(suggestedFolder)
     }
   }, [open, workspace])
 
@@ -65,24 +72,22 @@ export function CloneWorkspaceSheet({ workspace, trigger }: CloneWorkspaceSheetP
       return
     }
 
-    if (!folderName.trim()) {
-      toast.error('Please enter a folder name')
-      return
-    }
-
     startTransition(async () => {
+      // Generate folder name from workspace name
+      const normalizedName = name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+
+      // Clone the entire workspace spec with only name changes
       const result = await cloneWorkspace(
         workspace.metadata.name,
         {
-          name: name
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9-]/g, '-'),
+          name: normalizedName,
           spec: {
+            ...workspace.spec,
             displayName: name.trim(),
-            ownedBy: workspace.spec.ownedBy,
-            folderName: folderName.trim(),
-            workmachineName: workspace.spec.workmachineName,
+            folderName: normalizedName,
             status: 'active',
           },
         },
@@ -93,7 +98,6 @@ export function CloneWorkspaceSheet({ workspace, trigger }: CloneWorkspaceSheetP
         toast.success('Workspace cloning initiated')
         setOpen(false)
         setName('')
-        setFolderName('')
 
         // Immediately refresh and then poll for a few seconds to catch state changes
         router.refresh()
@@ -121,16 +125,7 @@ export function CloneWorkspaceSheet({ workspace, trigger }: CloneWorkspaceSheetP
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      {trigger ? (
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
-      ) : (
-        <SheetTrigger asChild>
-          <Button size="sm" variant="outline" className="gap-2">
-            <Copy className="h-4 w-4" />
-            Clone
-          </Button>
-        </SheetTrigger>
-      )}
+      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
       <SheetContent side="right" className="w-full sm:max-w-lg">
         <form onSubmit={handleSubmit} className="flex h-full flex-col">
           <SheetHeader>
@@ -151,17 +146,18 @@ export function CloneWorkspaceSheet({ workspace, trigger }: CloneWorkspaceSheetP
                 {workspace.spec.workmachineName && (
                   <div>WorkMachine: {workspace.spec.workmachineName}</div>
                 )}
+                {workspace.spec.packages && workspace.spec.packages.length > 0 && (
+                  <div>Packages: {workspace.spec.packages.length} package(s)</div>
+                )}
               </div>
               <div className="bg-background mt-2 rounded border p-2 text-xs">
                 <div className="font-medium">What will be cloned:</div>
                 <ul className="text-muted-foreground mt-1 list-inside list-disc space-y-0.5">
                   <li>All files and directories from the workspace folder</li>
-                </ul>
-                <div className="text-muted-foreground mt-2 font-medium">What will NOT be cloned:</div>
-                <ul className="text-muted-foreground mt-1 list-inside list-disc space-y-0.5">
-                  <li>Installed packages (will need to be reinstalled)</li>
-                  <li>Workspace settings</li>
-                  <li>Environment connections</li>
+                  <li>All workspace settings and configuration</li>
+                  <li>Package specifications (packages will be reinstalled)</li>
+                  <li>Git repository configuration</li>
+                  <li>Resource quotas and limits</li>
                 </ul>
               </div>
             </div>
@@ -177,24 +173,10 @@ export function CloneWorkspaceSheet({ workspace, trigger }: CloneWorkspaceSheetP
                   onChange={(e) => setName(e.target.value)}
                   disabled={isPending}
                   className="font-mono text-sm"
+                  autoFocus
                 />
                 <p className="text-muted-foreground text-xs">
-                  Lowercase letters, numbers, and hyphens only
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="folderName">Folder Name *</Label>
-                <Input
-                  id="folderName"
-                  placeholder="my-workspace-clone"
-                  value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
-                  disabled={isPending}
-                  className="font-mono text-sm"
-                />
-                <p className="text-muted-foreground text-xs">
-                  Name of the directory on the WorkMachine where files will be stored
+                  The workspace folder name will be automatically generated from this name
                 </p>
               </div>
             </div>

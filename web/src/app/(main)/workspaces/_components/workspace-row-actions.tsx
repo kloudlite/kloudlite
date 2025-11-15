@@ -40,7 +40,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [showCloneSheet, setShowCloneSheet] = useState(false)
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -84,7 +84,7 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
 
   return (
     <>
-      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isDeleting}>
             {isDeleting ? (
@@ -100,19 +100,14 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
               Open Workspace
             </Link>
           </DropdownMenuItem>
-          <CloneWorkspaceSheet
-            workspace={workspace}
-            trigger={
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault()
-                  setDropdownOpen(false)
-                }}
-              >
-                Clone
-              </DropdownMenuItem>
-            }
-          />
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault()
+              setShowCloneSheet(true)
+            }}
+          >
+            Clone
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           {workspace.spec.status !== 'suspended' && (
             <DropdownMenuItem onClick={() => handleWorkspaceAction('suspend')}>
@@ -139,6 +134,12 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <CloneWorkspaceSheet
+        workspace={workspace}
+        open={showCloneSheet}
+        onOpenChange={setShowCloneSheet}
+      />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
