@@ -110,7 +110,7 @@ spec:
         type: DirectoryOrCreate
     - name: workspace-homes
       hostPath:
-        path: /var/lib/kloudlite/workspace-homes
+        path: /var/lib/kloudlite/home
         type: DirectoryOrCreate
     - name: ssh-config
       hostPath:
