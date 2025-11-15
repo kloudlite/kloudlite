@@ -188,6 +188,23 @@ spec:
                   This is the original workspace name without the username-- prefix
                 minLength: 1
                 type: string
+              gitRepository:
+                description: |-
+                  GitRepository defines a git repository to clone when workspace starts
+                  The repository will be cloned into the workspace folder using SSH keys from the WorkMachine
+                properties:
+                  branch:
+                    description: Branch to clone (optional, uses repository default
+                      if not specified)
+                    type: string
+                  url:
+                    description: URL of the git repository (supports https:// and
+                      git@ formats)
+                    minLength: 1
+                    type: string
+                required:
+                - url
+                type: object
               ownedBy:
                 description: OwnedBy is the username of the workspace owner
                 minLength: 1

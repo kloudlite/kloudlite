@@ -3,10 +3,8 @@ import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
 import { serviceService } from '@/lib/services/service.service'
 import { environmentService } from '@/lib/services/environment.service'
-import { serviceInterceptService } from '@/lib/services/serviceintercept.service'
 import { compositionService } from '@/lib/services/composition.service'
 import type { K8sService } from '@/types/service'
-import type { ServiceIntercept } from '@/types/serviceintercept'
 import type { Composition } from '@/types/composition'
 
 interface PageProps {
@@ -37,7 +35,6 @@ export default async function ServicesPage({ params }: PageProps) {
         <ServicesList
           services={[]}
           namespace={environmentName}
-          serviceIntercepts={[]}
           composition={null}
         />
       </div>
@@ -54,17 +51,7 @@ export default async function ServicesPage({ params }: PageProps) {
     services = []
   }
 
-  // Fetch service intercepts from API
-  let serviceIntercepts: ServiceIntercept[] = []
-  try {
-    const response = await serviceInterceptService.listServiceIntercepts(namespace)
-    serviceIntercepts = response.serviceIntercepts || []
-  } catch (error) {
-    console.error('Failed to fetch service intercepts:', error)
-    serviceIntercepts = []
-  }
-
-  // Fetch the main composition
+  // Fetch the main composition (service intercepts are part of composition)
   let composition: Composition | null = null
   try {
     composition = await compositionService.getComposition(namespace, 'main-composition')
@@ -77,7 +64,6 @@ export default async function ServicesPage({ params }: PageProps) {
     <ServicesList
       services={services}
       namespace={namespace}
-      serviceIntercepts={serviceIntercepts}
       composition={composition}
     />
   )

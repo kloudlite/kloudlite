@@ -478,24 +478,24 @@ export function WorkMachineControls({
                         it to authorize access to external systems.
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <code className="bg-muted flex-1 rounded border px-3 py-2 font-mono text-xs break-all">
+                    <div className="bg-muted/50 relative rounded-lg border p-4">
+                      <pre className="text-muted-foreground overflow-x-auto font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
                         {sshPublicKey}
-                      </code>
+                      </pre>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="secondary"
                         onClick={() => handleCopySSHKey(sshPublicKey)}
-                        className="flex-shrink-0"
+                        className="absolute right-2 top-2"
                       >
                         {copiedSSHKey ? (
                           <>
-                            <Check className="mr-2 h-4 w-4" />
+                            <Check className="mr-1.5 h-3.5 w-3.5" />
                             Copied
                           </>
                         ) : (
                           <>
-                            <Copy className="mr-2 h-4 w-4" />
+                            <Copy className="mr-1.5 h-3.5 w-3.5" />
                             Copy
                           </>
                         )}

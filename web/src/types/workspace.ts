@@ -29,6 +29,12 @@ export interface WorkspaceSpec {
   storageClassName?: string
   workspacePath?: string
   vscodeVersion?: string
+  gitRepository?: GitRepository
+}
+
+export interface GitRepository {
+  url: string
+  branch?: string
 }
 
 export interface PackageSpec {
