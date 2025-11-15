@@ -25,8 +25,6 @@ export interface WorkspaceSpec {
   settings?: WorkspaceSettings
   status?: 'active' | 'suspended' | 'archived'
   tags?: string[]
-  storageSize?: string
-  storageClassName?: string
   workspacePath?: string
   vscodeVersion?: string
   gitRepository?: GitRepository

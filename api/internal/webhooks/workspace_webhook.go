@@ -139,15 +139,6 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 		})
 	}
 
-	// Set default storage size if not specified
-	if workspace.Spec.StorageSize == "" {
-		patches = append(patches, map[string]interface{}{
-			"op":    "add",
-			"path":  "/spec/storageSize",
-			"value": "10Gi",
-		})
-	}
-
 	// Set default workspace path if not specified
 	if workspace.Spec.WorkspacePath == "" {
 		patches = append(patches, map[string]interface{}{

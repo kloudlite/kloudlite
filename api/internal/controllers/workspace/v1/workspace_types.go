@@ -122,16 +122,6 @@ type WorkspaceSpec struct {
 	// +optional
 	ResourceQuota *ResourceQuota `json:"resourceQuota,omitempty"`
 
-	// StorageSize is the size of the persistent volume for the workspace
-	// +kubebuilder:default="10Gi"
-	// +optional
-	StorageSize string `json:"storageSize,omitempty"`
-
-	// StorageClassName specifies the storage class to use for the workspace PVC
-	// If not specified, uses the cluster's default storage class
-	// +optional
-	StorageClassName *string `json:"storageClassName,omitempty"`
-
 	// WorkspacePath is the path inside the workspace container where storage will be mounted
 	// +kubebuilder:default=/workspace
 	// +optional

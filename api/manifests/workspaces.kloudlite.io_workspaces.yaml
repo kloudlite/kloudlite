@@ -310,16 +310,6 @@ spec:
                 - suspended
                 - archived
                 type: string
-              storageClassName:
-                description: |-
-                  StorageClassName specifies the storage class to use for the workspace PVC
-                  If not specified, uses the cluster's default storage class
-                type: string
-              storageSize:
-                default: 10Gi
-                description: StorageSize is the size of the persistent volume for
-                  the workspace
-                type: string
               tags:
                 description: Tags for categorizing and filtering workspaces
                 items:
