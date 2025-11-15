@@ -8,6 +8,8 @@ import (
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -603,11 +605,31 @@ func (r *WorkspaceReconciler) suspendWorkspacePod(
 		zap.String("workspace", workspace.Name),
 		zap.String("podName", workspace.Status.PodName))
 
+	// Get target namespace from WorkMachine
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get target namespace: %w", err)
+	}
+
 	// Delete the workspace pod if it exists
 	if workspace.Status.PodName != "" {
-		if err := r.deleteWorkspacePod(ctx, workspace, logger); err != nil {
+		podName := fmt.Sprintf("workspace-%s", workspace.Name)
+		pod := &corev1.Pod{}
+
+		err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info("Workspace pod already deleted")
+				return nil
+			}
+			return fmt.Errorf("failed to get workspace pod: %w", err)
+		}
+
+		// Delete the pod
+		if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("failed to delete workspace pod: %w", err)
 		}
+
 		logger.Info("Workspace pod deleted successfully")
 	}
 
