@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -92,9 +93,23 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	// Apply Deployments (scale to 0 if environment is inactive)
 	deployedDeployments := make([]string, 0)
 	for _, deployment := range resources.Deployments {
-		// Apply nodeName from environment
-		if environment != nil && environment.Spec.NodeName != "" {
-			deployment.Spec.Template.Spec.NodeName = environment.Spec.NodeName
+		// Apply nodeName from environment's WorkMachine
+		// This ensures composition deployments run on the same node as workspace pods
+		if environment != nil && environment.Spec.WorkMachineName != "" {
+			wm, err := r.getWorkMachine(ctx, environment.Spec.WorkMachineName)
+			if err != nil {
+				logger.Warn("Failed to get WorkMachine for node assignment",
+					zap.String("workmachine", environment.Spec.WorkMachineName),
+					zap.Error(err))
+			} else {
+				// Directly assign to WorkMachine node (same pattern as workspace pods)
+				// This bypasses the scheduler and ensures composition pods run on the correct node
+				// This is critical for shared resources like Nix store access via hostPath volumes
+				deployment.Spec.Template.Spec.NodeName = wm.Name
+				logger.Info("Assigned deployment to WorkMachine node",
+					zap.String("deployment", deployment.Name),
+					zap.String("nodeName", wm.Name))
+			}
 		}
 
 		// If environment is not activated, scale deployment to 0 replicas
@@ -324,4 +339,13 @@ func getPVCNames(pvcs []*corev1.PersistentVolumeClaim) []string {
 		names[i] = pvc.Name
 	}
 	return names
+}
+
+// getWorkMachine fetches the WorkMachine resource by name
+func (r *CompositionReconciler) getWorkMachine(ctx context.Context, name string) (*workmachinev1.WorkMachine, error) {
+	wm := &workmachinev1.WorkMachine{}
+	if err := r.Get(ctx, client.ObjectKey{Name: name}, wm); err != nil {
+		return nil, fmt.Errorf("failed to get WorkMachine %s: %w", name, err)
+	}
+	return wm, nil
 }
