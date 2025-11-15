@@ -549,11 +549,22 @@ chmod 644 /tmp-writable/kloudlite-context.json
 
 			// Add git clone init container if git repository is specified
 			if workspace.Spec.GitRepository != nil && workspace.Spec.GitRepository.URL != "" {
+				workspaceDir := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Spec.FolderName)
+
+				// Build git clone command
 				cloneCmd := fmt.Sprintf("git clone %s", workspace.Spec.GitRepository.URL)
 				if workspace.Spec.GitRepository.Branch != "" {
 					cloneCmd = fmt.Sprintf("git clone -b %s %s", workspace.Spec.GitRepository.Branch, workspace.Spec.GitRepository.URL)
 				}
-				cloneCmd += fmt.Sprintf(" /home/kl/workspaces/%s && chown -R 1001:1001 /home/kl/workspaces/%s || echo 'Git clone failed, continuing workspace startup'", workspace.Spec.FolderName, workspace.Spec.FolderName)
+				cloneCmd += fmt.Sprintf(" %s && chown -R 1001:1001 %s", workspaceDir, workspaceDir)
+
+				// Only clone if workspace directory is empty
+				fullCmd := fmt.Sprintf(
+					"if [ ! -d %s ] || [ -z \"$(ls -A %s 2>/dev/null)\" ]; then %s; else echo 'Workspace folder is not empty, skipping git clone'; fi",
+					workspaceDir,
+					workspaceDir,
+					cloneCmd,
+				)
 
 				initContainers = append(initContainers, corev1.Container{
 					Name:  "git-clone",
@@ -561,7 +572,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					Command: []string{
 						"sh",
 						"-c",
-						cloneCmd,
+						fullCmd,
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
