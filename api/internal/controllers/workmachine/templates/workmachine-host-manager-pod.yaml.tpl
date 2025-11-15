@@ -89,7 +89,7 @@ spec:
         - name: nix-store
           mountPath: /nix
         - name: workspace-homes
-          mountPath: /var/lib/kloudlite/workspace-homes
+          mountPath: /var/lib/kloudlite/home
         - name: ssh-config
           mountPath: /var/lib/kloudlite/ssh-config
         # Host filesystem mounts for GPU detection and driver installation
