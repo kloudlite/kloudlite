@@ -605,7 +605,6 @@ func TestWorkspaceWebhook_MutateWorkspace_DefaultValues(t *testing.T) {
 
 	// Check for default values
 	foundStatus := false
-	foundStorageSize := false
 	foundWorkspacePath := false
 	foundVSCodeVersion := false
 
@@ -614,9 +613,6 @@ func TestWorkspaceWebhook_MutateWorkspace_DefaultValues(t *testing.T) {
 		case "/spec/status":
 			foundStatus = true
 			assert.Equal(t, "active", patch["value"])
-		case "/spec/storageSize":
-			foundStorageSize = true
-			assert.Equal(t, "10Gi", patch["value"])
 		case "/spec/workspacePath":
 			foundWorkspacePath = true
 			assert.Equal(t, "/workspace", patch["value"])
@@ -627,7 +623,6 @@ func TestWorkspaceWebhook_MutateWorkspace_DefaultValues(t *testing.T) {
 	}
 
 	assert.True(t, foundStatus)
-	assert.True(t, foundStorageSize)
 	assert.True(t, foundWorkspacePath)
 	assert.True(t, foundVSCodeVersion)
 }
