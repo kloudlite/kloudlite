@@ -22,7 +22,8 @@ import (
 )
 
 const (
-	workspaceFinalizer = "workspaces.kloudlite.io/finalizer"
+	workspaceFinalizer        = "workspaces.kloudlite.io/finalizer"
+	workspaceCleanupFinalizer = "workspaces.kloudlite.io/directory-cleanup"
 
 	// Default idle timeout if not specified in workspace settings (30 minutes)
 	defaultIdleTimeoutMinutes = 30
@@ -63,12 +64,21 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		return r.handleDeletion(ctx, workspace, logger)
 	}
 
-	// Add finalizer if not present
+	// Add finalizers if not present
+	finalizersAdded := false
 	if !controllerutil.ContainsFinalizer(workspace, workspaceFinalizer) {
-		logger.Info("Adding finalizer to workspace")
+		logger.Info("Adding workspace finalizer")
 		controllerutil.AddFinalizer(workspace, workspaceFinalizer)
+		finalizersAdded = true
+	}
+	if !controllerutil.ContainsFinalizer(workspace, workspaceCleanupFinalizer) {
+		logger.Info("Adding directory cleanup finalizer")
+		controllerutil.AddFinalizer(workspace, workspaceCleanupFinalizer)
+		finalizersAdded = true
+	}
+	if finalizersAdded {
 		if err := r.Update(ctx, workspace); err != nil {
-			logger.Error("Failed to add finalizer", zap.Error(err))
+			logger.Error("Failed to add finalizers", zap.Error(err))
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
