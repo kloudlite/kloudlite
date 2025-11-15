@@ -69,7 +69,7 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	}
 
 	// Find the user's WorkMachine
-	workMachine, err := h.wmRepo.GetByOwner(c.Request.Context(), userEmail)
+	workMachine, err := h.wmRepo.GetByOwner(c.Request.Context(), username)
 	if err != nil {
 		h.logger.Error("Failed to find user's WorkMachine", zap.Error(err), zap.String("user", userEmail))
 		c.JSON(http.StatusNotFound, gin.H{
