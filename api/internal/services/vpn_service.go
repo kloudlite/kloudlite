@@ -26,8 +26,8 @@ type HostEntry struct {
 
 // VPNService provides business logic for VPN operations
 type VPNService interface {
-	// GetVPNConfig retrieves VPN configuration for a user based on their connection token
-	GetVPNConfig(ctx context.Context, tokenID, userEmail string) (*VPNConfig, error)
+	// GetVPNConfig retrieves VPN configuration for a user based on their username
+	GetVPNConfig(ctx context.Context, tokenID, username string) (*VPNConfig, error)
 }
 
 // vpnService implements VPNService
@@ -44,10 +44,10 @@ func NewVPNService(k8sClient client.Client, logger *zap.Logger) VPNService {
 	}
 }
 
-// GetVPNConfig retrieves VPN configuration for a user
+// GetVPNConfig retrieves VPN configuration for a user by username
 // tokenID is no longer used (kept for backwards compatibility but can be removed)
-func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, userEmail string) (*VPNConfig, error) {
-	// 1. Find the user's WorkMachine
+func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, username string) (*VPNConfig, error) {
+	// 1. Find the user's WorkMachine by username (matches WorkMachine.Spec.OwnedBy)
 	var workMachineList workmachinev1.WorkMachineList
 	if err := s.k8sClient.List(ctx, &workMachineList); err != nil {
 		return nil, fmt.Errorf("failed to list work machines: %w", err)
@@ -55,7 +55,7 @@ func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, userEmail string
 
 	var userWorkMachine *workmachinev1.WorkMachine
 	for i := range workMachineList.Items {
-		if workMachineList.Items[i].Spec.OwnedBy == userEmail {
+		if workMachineList.Items[i].Spec.OwnedBy == username {
 			userWorkMachine = &workMachineList.Items[i]
 			break
 		}
@@ -67,7 +67,7 @@ func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, userEmail string
 
 	targetNamespace := userWorkMachine.Spec.TargetNamespace
 	s.logger.Info("VPN config: Found WorkMachine",
-		zap.String("user", userEmail),
+		zap.String("username", username),
 		zap.String("workMachine", userWorkMachine.Name),
 		zap.String("namespace", targetNamespace))
 
@@ -90,7 +90,7 @@ func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, userEmail string
 	}
 
 	s.logger.Info("VPN config: Retrieved successfully",
-		zap.String("user", userEmail),
+		zap.String("username", username),
 		zap.Int("hostCount", len(hosts)))
 
 	return &VPNConfig{

@@ -26,9 +26,18 @@ export async function POST(request: NextRequest) {
     // Generate compact temporary JWT (3 minutes expiry)
     // Using minimal claims to keep token size small
     const secret = new TextEncoder().encode(jwtSecret)
+
+    // Get backend token from session
+    const backendToken = (session.user as any).backendToken
+
+    console.log('[VPN Generate] Creating token for email:', session.user.email)
+    console.log('[VPN Generate] Current time:', Math.floor(Date.now() / 1000))
+    console.log('[VPN Generate] JWT secret length:', jwtSecret.length)
+    console.log('[VPN Generate] Backend token available:', !!backendToken)
+
     const temporaryToken = await new SignJWT({
       e: session.user.email, // 'e' instead of 'email' to save bytes
-      b: (session as any).backendToken, // 'b' instead of 'backendToken'
+      b: backendToken, // 'b' instead of 'backendToken'
       t: 'temp', // 't' instead of 'type'
     })
       .setProtectedHeader({ alg: 'HS256' })
@@ -38,6 +47,8 @@ export async function POST(request: NextRequest) {
 
     const expiresAt = Date.now() + 3 * 60 * 1000
     const expiresIn = 180 // seconds
+
+    console.log('[VPN Generate] Token generated, expires at:', new Date(expiresAt).toISOString())
 
     return NextResponse.json({
       temporary_token: temporaryToken,
