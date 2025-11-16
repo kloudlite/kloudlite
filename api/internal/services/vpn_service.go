@@ -29,9 +29,10 @@ type HostEntry struct {
 
 // WireGuardConfigResponse contains WireGuard configuration with metadata
 type WireGuardConfigResponse struct {
-	Config     string `json:"config"`      // IPC format configuration
-	AssignedIP string `json:"assigned_ip"` // Device IP address (e.g., "10.17.0.2")
-	PublicKey  string `json:"public_key"`  // Device public key
+	Config         string `json:"config"`          // IPC format configuration
+	AssignedIP     string `json:"assigned_ip"`     // Device IP address (e.g., "10.17.0.2")
+	PublicKey      string `json:"public_key"`      // Device public key
+	ServerEndpoint string `json:"server_endpoint"` // WorkMachine endpoint (e.g., "203.0.113.1:443")
 }
 
 // VPNService provides business logic for VPN operations
@@ -194,6 +195,12 @@ func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username 
 		return nil, err
 	}
 
+	// Also get the full WorkMachine to access IP address
+	workMachine, err := s.findUserWorkMachine(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
 	s.logger.Info("VPN: GetWireGuardConfig",
 		zap.String("username", username),
 		zap.String("deviceID", deviceID),
@@ -235,12 +242,21 @@ func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username 
 		return nil, fmt.Errorf("device secret missing peer.ipc configuration")
 	}
 
+	// Determine server endpoint from WorkMachine IP
+	serverEndpoint := ""
+	if workMachine.Status.MachineInfo.PublicIP != "" {
+		serverEndpoint = fmt.Sprintf("%s:443", workMachine.Status.MachineInfo.PublicIP)
+	} else if workMachine.Status.MachineInfo.PrivateIP != "" {
+		serverEndpoint = fmt.Sprintf("%s:443", workMachine.Status.MachineInfo.PrivateIP)
+	}
+
 	// Return IPC config along with IP and public key
 	// IP address must be configured separately as IPC protocol doesn't support it
 	return &WireGuardConfigResponse{
-		Config:     config,
-		AssignedIP: device.Status.AssignedIP,
-		PublicKey:  device.Status.PublicKey,
+		Config:         config,
+		AssignedIP:     device.Status.AssignedIP,
+		PublicKey:      device.Status.PublicKey,
+		ServerEndpoint: serverEndpoint,
 	}, nil
 }
 
@@ -298,6 +314,22 @@ func (s *vpnService) findUserNamespaceAndWorkMachine(ctx context.Context, userna
 	}
 
 	return "", "", fmt.Errorf("no work machine found for user")
+}
+
+// findUserWorkMachine finds the WorkMachine for a user and returns the full object
+func (s *vpnService) findUserWorkMachine(ctx context.Context, username string) (*workmachinev1.WorkMachine, error) {
+	var workMachineList workmachinev1.WorkMachineList
+	if err := s.k8sClient.List(ctx, &workMachineList); err != nil {
+		return nil, fmt.Errorf("failed to list work machines: %w", err)
+	}
+
+	for i := range workMachineList.Items {
+		if workMachineList.Items[i].Spec.OwnedBy == username {
+			return &workMachineList.Items[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("no work machine found for user")
 }
 
 // getOrCreateWireGuardDevice retrieves or creates a WireGuardDevice for the given deviceID
