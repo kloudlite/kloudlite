@@ -3,6 +3,7 @@ package workmachine
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -283,6 +284,14 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 			configChanged = true
 			secret.Data["tunnel-server.conf"] = []byte(newConfig)
 			secret.Annotations["wireguard.kloudlite.io/config-hash"] = newHash
+		}
+
+		// Store server public key for WireGuardDevice controller to use
+		// This avoids repeated parsing of the config file
+		serverPrivKey, err := wgtypes.ParseKey(serverPrivateKey)
+		if err == nil {
+			serverPubKey := serverPrivKey.PublicKey()
+			secret.Data["server-public-key"] = []byte(hex.EncodeToString(serverPubKey[:]))
 		}
 
 		return nil

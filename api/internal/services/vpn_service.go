@@ -139,28 +139,10 @@ func (s *vpnService) fetchCACertificate(ctx context.Context) (string, error) {
 }
 
 // fetchWireGuardConfig retrieves the WireGuard peer configuration from the tunnel-server secret
+// DEPRECATED: This function is for legacy compatibility only. New clients should use GetWireGuardConfig()
+// which uses per-device WireGuardDevice CRDs instead of shared peer1.ipc/peer1.conf
 func (s *vpnService) fetchWireGuardConfig(ctx context.Context, namespace string) (string, error) {
-	wgSecret := &corev1.Secret{}
-	if err := s.k8sClient.Get(ctx, client.ObjectKey{
-		Name:      "tunnel-server",
-		Namespace: namespace,
-	}, wgSecret); err != nil {
-		if errors.IsNotFound(err) {
-			return "", fmt.Errorf("VPN tunnel not configured. Please ensure your WorkMachine is running")
-		}
-		return "", err
-	}
-
-	// Prefer IPC format for WireGuard-go, fallback to INI format
-	wgConfig := string(wgSecret.Data["peer1.ipc"])
-	if wgConfig == "" {
-		wgConfig = string(wgSecret.Data["peer1.conf"])
-		if wgConfig == "" {
-			return "", fmt.Errorf("peer1.ipc or peer1.conf not found in tunnel-server secret")
-		}
-	}
-
-	return wgConfig, nil
+	return "", fmt.Errorf("legacy peer1.ipc/peer1.conf configuration is no longer supported. Please use the /api/vpn/wireguard-config?device_id=<device_id> endpoint with a unique device ID")
 }
 
 // buildHostEntries creates host entries from Services in the namespace
