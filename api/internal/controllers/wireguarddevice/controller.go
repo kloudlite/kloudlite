@@ -157,11 +157,9 @@ func (r *WireGuardDeviceReconciler) generateKeys(check *reconciler.Check[*wiregu
 	publicKey := privateKey.PublicKey()
 	obj.Status.PublicKey = publicKey.String()
 
-	// Store private key in object annotations for use in secret creation
-	if obj.Annotations == nil {
-		obj.Annotations = make(map[string]string)
-	}
-	obj.Annotations["vpn.kloudlite.io/private-key"] = privateKey.String()
+	// Note: Private key will be regenerated in createDeviceSecret step
+	// and stored in the device secret for security
+	// We don't store it in annotations or status to avoid exposing it
 
 	return check.Passed()
 }
@@ -191,7 +189,30 @@ func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*
 		}
 
 		serverPublicKey := string(serverSecret.Data["server-public-key"])
-		privateKey := obj.Annotations["vpn.kloudlite.io/private-key"]
+
+		// Get or generate private key
+		// If secret already exists with a private key, preserve it
+		// Otherwise, generate a new one using the public key from status
+		var privateKey string
+		if existingKey := string(secret.Data["private-key"]); existingKey != "" {
+			// Secret already has a private key, reuse it
+			privateKey = existingKey
+		} else {
+			// Generate new private key from public key in status
+			// Note: We can't derive private key from public key, so we regenerate
+			// This is safe because this only happens on first secret creation
+			privKey, err := wgtypes.GeneratePrivateKey()
+			if err != nil {
+				return fmt.Errorf("failed to generate private key: %w", err)
+			}
+			privateKey = privKey.String()
+
+			// Update public key in status if it changed
+			pubKey := privKey.PublicKey()
+			if obj.Status.PublicKey != pubKey.String() {
+				obj.Status.PublicKey = pubKey.String()
+			}
+		}
 
 		// Create IPC format config
 		ipcConfig := fmt.Sprintf(`private_key=%s
@@ -215,8 +236,9 @@ Endpoint = 127.0.0.1:51821
 `, privateKey, obj.Status.AssignedIP, serverPublicKey)
 
 		secret.StringData = map[string]string{
-			"peer.ipc":  ipcConfig,
-			"peer.conf": iniConfig,
+			"private-key": privateKey,
+			"peer.ipc":    ipcConfig,
+			"peer.conf":   iniConfig,
 		}
 
 		return nil
