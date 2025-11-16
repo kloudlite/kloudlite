@@ -220,7 +220,8 @@ PublicKey = %s
 AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 `, serverPriv, peer1Pub)
 
-			secret.StringData["peer1.conf"] = fmt.Sprintf(`[Interface]
+			// INI format (human readable)
+		secret.StringData["peer1.conf"] = fmt.Sprintf(`[Interface]
 PrivateKey = %s
 Address = 10.17.0.2/24
 ListenPort = 51820
@@ -229,6 +230,15 @@ ListenPort = 51820
 PublicKey = %s
 AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
+`, peer1Priv, serverPub)
+
+		// IPC format (for WireGuard-go)
+		secret.StringData["peer1.ipc"] = fmt.Sprintf(`private_key=%s
+listen_port=51820
+public_key=%s
+allowed_ip=10.17.0.0/24
+allowed_ip=10.43.0.0/16
+endpoint=127.0.0.1:51821
 `, peer1Priv, serverPub)
 
 		}

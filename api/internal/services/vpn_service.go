@@ -131,9 +131,13 @@ func (s *vpnService) fetchWireGuardConfig(ctx context.Context, namespace string)
 		return "", err
 	}
 
-	wgConfig := string(wgSecret.Data["peer1.conf"])
+	// Prefer IPC format for WireGuard-go, fallback to INI format
+	wgConfig := string(wgSecret.Data["peer1.ipc"])
 	if wgConfig == "" {
-		return "", fmt.Errorf("peer1.conf not found in tunnel-server secret")
+		wgConfig = string(wgSecret.Data["peer1.conf"])
+		if wgConfig == "" {
+			return "", fmt.Errorf("peer1.ipc or peer1.conf not found in tunnel-server secret")
+		}
 	}
 
 	return wgConfig, nil

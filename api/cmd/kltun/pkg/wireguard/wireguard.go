@@ -124,8 +124,8 @@ func (d *Device) LoadConfig(configFile string) error {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	// Set configuration using UAPI
-	// IpcSetOperation expects an io.Reader
+	// Set configuration using UAPI/IPC format
+	// Config should already be in IPC format from the server
 	if err := d.wgDevice.IpcSet(string(configData)); err != nil {
 		return fmt.Errorf("failed to set configuration: %w", err)
 	}
