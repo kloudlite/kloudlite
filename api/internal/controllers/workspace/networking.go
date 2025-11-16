@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
-	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
@@ -17,126 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-// ensurePackageRequest creates or updates PackageRequest for the workspace
-func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
-
-	// Check if PackageRequest exists (cluster-scoped)
-	pkgReq := &packagesv1.PackageRequest{}
-	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq)
-
-	if apierrors.IsNotFound(err) {
-		// PackageRequest doesn't exist
-		// Only create if packages are defined
-		if len(workspace.Spec.Packages) == 0 {
-			logger.Info("No packages defined for workspace and no PackageRequest exists, skipping creation")
-			return nil
-		}
-
-		// Create new PackageRequest (cluster-scoped, no namespace)
-		pkgReq = &packagesv1.PackageRequest{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: pkgReqName,
-				// Do NOT set Namespace field for cluster-scoped resources
-			},
-			Spec: packagesv1.PackageRequestSpec{
-				WorkspaceRef: workspace.Name,
-				Packages:     workspace.Spec.Packages,
-				ProfileName:  fmt.Sprintf("workspace-%s-packages", workspace.Name),
-			},
-		}
-
-		// Set owner reference - use manual owner reference since both are cluster-scoped
-		// Cannot use controllerutil.SetControllerReference for cluster-scoped resources
-		blockOwnerDeletion := false
-		controller := true
-		ownerRef := metav1.OwnerReference{
-			APIVersion:         workspace.APIVersion,
-			Kind:               workspace.Kind,
-			Name:               workspace.Name,
-			UID:                workspace.UID,
-			Controller:         &controller,
-			BlockOwnerDeletion: &blockOwnerDeletion,
-		}
-		pkgReq.OwnerReferences = []metav1.OwnerReference{ownerRef}
-
-		if err := r.Create(ctx, pkgReq); err != nil {
-			return fmt.Errorf("failed to create PackageRequest: %w", err)
-		}
-		logger.Info("Created PackageRequest", zap.String("name", pkgReqName))
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to get PackageRequest: %w", err)
-	}
-
-	// PackageRequest exists
-	// If workspace has no packages, delete the PackageRequest
-	// (CRD validation requires MinItems=1, so we can't set empty list)
-	if len(workspace.Spec.Packages) == 0 {
-		logger.Info("No packages defined for workspace, deleting PackageRequest", zap.String("name", pkgReqName))
-		if err := r.Delete(ctx, pkgReq); err != nil && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("failed to delete PackageRequest: %w", err)
-		}
-		logger.Info("Deleted PackageRequest", zap.String("name", pkgReqName))
-		return nil
-	}
-
-	// Check if packages changed
-	packagesChanged := false
-	if len(pkgReq.Spec.Packages) != len(workspace.Spec.Packages) {
-		packagesChanged = true
-	} else {
-		for i, pkg := range workspace.Spec.Packages {
-			if pkgReq.Spec.Packages[i].Name != pkg.Name ||
-				pkgReq.Spec.Packages[i].Channel != pkg.Channel ||
-				pkgReq.Spec.Packages[i].NixpkgsCommit != pkg.NixpkgsCommit {
-				packagesChanged = true
-				break
-			}
-		}
-	}
-
-	if packagesChanged {
-		pkgReq.Spec.Packages = workspace.Spec.Packages
-		if err := r.Update(ctx, pkgReq); err != nil {
-			return fmt.Errorf("failed to update PackageRequest: %w", err)
-		}
-
-		// PackageManagerReconciler will be triggered by the spec change
-		// and will handle the status update (don't update status here to avoid race conditions)
-		logger.Info("Updated PackageRequest with new packages", zap.String("name", pkgReqName))
-	}
-
-	return nil
-}
-
-// syncPackageStatus syncs package installation status from PackageRequest to Workspace
-func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	// Only sync if packages are defined
-	if len(workspace.Spec.Packages) == 0 {
-		return nil
-	}
-
-	// Get the PackageRequest (cluster-scoped)
-	pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
-	pkgReq := &packagesv1.PackageRequest{}
-	err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			// PackageRequest not yet created
-			return nil
-		}
-		return fmt.Errorf("failed to get PackageRequest: %w", err)
-	}
-
-	// Copy package status from PackageRequest to Workspace
-	workspace.Status.InstalledPackages = pkgReq.Status.InstalledPackages
-	workspace.Status.FailedPackages = pkgReq.Status.FailedPackages
-	workspace.Status.PackageInstallationMessage = pkgReq.Status.Message
-
-	return nil
-}
 
 // ensureWorkspaceService ensures a Service is created for the workspace
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
