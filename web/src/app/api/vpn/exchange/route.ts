@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch VPN configuration from backend using the backend token
     const backendUrl = env.apiUrl
-    let vpnConfig: any
+    let vpnConfig: unknown
 
     console.log('[VPN Exchange] Fetching VPN config from backend:', backendUrl)
     console.log('[VPN Exchange] Backend token length:', tokenData.b?.length || 'undefined')
