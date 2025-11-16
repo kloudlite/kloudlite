@@ -183,17 +183,33 @@ if [ "$PLATFORM" = "windows" ]; then
     # Windows: start daemon in background
     if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
         start /B $KLTUN_CMD daemon run
-        sleep 2
+        sleep 3
     fi
 else
-    # Unix: use sudo if needed, start daemon in background
+    # Unix: start daemon in background (binary handles privilege escalation)
     if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
-        if [ -n "$SUDO" ]; then
-            $SUDO $KLTUN_CMD daemon run &
-        else
-            $KLTUN_CMD daemon run &
+        # Start daemon detached from terminal
+        # The binary will request sudo if needed for creating /var/run/kltund.sock
+        nohup $KLTUN_CMD daemon run >/dev/null 2>&1 &
+
+        # Wait for daemon to start (max 5 seconds)
+        for i in 1 2 3 4 5; do
+            sleep 1
+            if $KLTUN_CMD daemon status >/dev/null 2>&1; then
+                echo -e "\${GREEN}✓ Daemon started\${NC}"
+                break
+            fi
+        done
+
+        # Final check
+        if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
+            echo -e "\${RED}Error: Failed to start daemon\${NC}"
+            echo -e "\${YELLOW}Try starting it manually:\${NC}"
+            echo "  $KLTUN_CMD daemon run"
+            exit 1
         fi
-        sleep 2
+    else
+        echo -e "\${GREEN}✓ Daemon already running\${NC}"
     fi
 fi
 
