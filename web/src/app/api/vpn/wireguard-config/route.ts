@@ -82,29 +82,11 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Get the response as text (it's a WireGuard config, not JSON)
-    const configText = await backendResponse.text()
+    // Get the response data (now returns JSON with config, assigned_ip, public_key)
+    const data = await backendResponse.json()
 
-    // If backend returned an error status, try to parse as JSON for error message
-    if (!backendResponse.ok) {
-      try {
-        const errorData = JSON.parse(configText)
-        return NextResponse.json(errorData, { status: backendResponse.status })
-      } catch {
-        return NextResponse.json(
-          { error: configText || 'Failed to get WireGuard configuration' },
-          { status: backendResponse.status }
-        )
-      }
-    }
-
-    // Return the WireGuard configuration as plain text
-    return new NextResponse(configText, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    })
+    // Return the backend response with the same status code
+    return NextResponse.json(data, { status: backendResponse.status })
   } catch (error) {
     console.error('WireGuard config proxy error:', error)
     return NextResponse.json(

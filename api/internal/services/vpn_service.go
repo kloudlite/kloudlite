@@ -27,13 +27,20 @@ type HostEntry struct {
 	IP       string
 }
 
+// WireGuardConfigResponse contains WireGuard configuration with metadata
+type WireGuardConfigResponse struct {
+	Config     string `json:"config"`      // IPC format configuration
+	AssignedIP string `json:"assigned_ip"` // Device IP address (e.g., "10.17.0.2")
+	PublicKey  string `json:"public_key"`  // Device public key
+}
+
 // VPNService provides business logic for VPN operations
 type VPNService interface {
 	// GetVPNConfig retrieves VPN configuration for a user based on their username (combined endpoint)
 	GetVPNConfig(ctx context.Context, tokenID, username string) (*VPNConfig, error)
 
 	// GetWireGuardConfig retrieves only WireGuard configuration for a user
-	GetWireGuardConfig(ctx context.Context, deviceID, username string) (string, error)
+	GetWireGuardConfig(ctx context.Context, deviceID, username string) (*WireGuardConfigResponse, error)
 
 	// GetCACert retrieves only the CA certificate
 	GetCACert(ctx context.Context, username string) (string, error)
@@ -180,11 +187,11 @@ func (s *vpnService) buildHostEntries(ctx context.Context, namespace string) ([]
 
 // GetWireGuardConfig retrieves WireGuard configuration for a user by username
 // deviceID is the unique identifier for the client device
-func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username string) (string, error) {
+func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username string) (*WireGuardConfigResponse, error) {
 	// Find the user's WorkMachine
 	targetNamespace, workMachineRef, err := s.findUserNamespaceAndWorkMachine(ctx, username)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	s.logger.Info("VPN: GetWireGuardConfig",
@@ -195,7 +202,7 @@ func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username 
 	// Get or create WireGuardDevice
 	device, err := s.getOrCreateWireGuardDevice(ctx, deviceID, username, workMachineRef, targetNamespace)
 	if err != nil {
-		return "", fmt.Errorf("failed to get/create WireGuard device: %w", err)
+		return nil, fmt.Errorf("failed to get/create WireGuard device: %w", err)
 	}
 
 	// Wait for device to become Ready (simple polling, max 10 seconds)
@@ -205,31 +212,36 @@ func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username 
 		}
 		time.Sleep(1 * time.Second)
 		if err := s.k8sClient.Get(ctx, client.ObjectKey{Name: device.Name, Namespace: device.Namespace}, device); err != nil {
-			return "", fmt.Errorf("failed to get device status: %w", err)
+			return nil, fmt.Errorf("failed to get device status: %w", err)
 		}
 	}
 
 	if device.Status.Phase != "Ready" {
-		return "", fmt.Errorf("device not ready: %s - %s", device.Status.Phase, device.Status.Message)
+		return nil, fmt.Errorf("device not ready: %s - %s", device.Status.Phase, device.Status.Message)
 	}
 
 	// Fetch device config from secret
 	secretName := fmt.Sprintf("wg-device-%s", deviceID)
 	deviceSecret := &corev1.Secret{}
 	if err := s.k8sClient.Get(ctx, client.ObjectKey{Name: secretName, Namespace: targetNamespace}, deviceSecret); err != nil {
-		return "", fmt.Errorf("failed to get device secret: %w", err)
+		return nil, fmt.Errorf("failed to get device secret: %w", err)
 	}
 
-	// Prefer IPC format
+	// Use IPC format (standard WireGuard protocol)
+	var config string
 	if ipcConfig, ok := deviceSecret.Data["peer.ipc"]; ok {
-		return string(ipcConfig), nil
+		config = string(ipcConfig)
+	} else {
+		return nil, fmt.Errorf("device secret missing peer.ipc configuration")
 	}
 
-	if iniConfig, ok := deviceSecret.Data["peer.conf"]; ok {
-		return string(iniConfig), nil
-	}
-
-	return "", fmt.Errorf("device secret missing configuration data")
+	// Return IPC config along with IP and public key
+	// IP address must be configured separately as IPC protocol doesn't support it
+	return &WireGuardConfigResponse{
+		Config:     config,
+		AssignedIP: device.Status.AssignedIP,
+		PublicKey:  device.Status.PublicKey,
+	}, nil
 }
 
 // GetCACert retrieves the CA certificate
