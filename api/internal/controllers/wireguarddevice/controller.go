@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -293,15 +294,59 @@ Endpoint = 127.0.0.1:51821
 
 // updateTunnelServer updates the tunnel-server configuration to include this device
 func (r *WireGuardDeviceReconciler) updateTunnelServer(check *reconciler.Check[*wireguarddevicev1.WireGuardDevice], obj *wireguarddevicev1.WireGuardDevice) reconciler.StepResult {
-	// TODO: Implement multi-peer tunnel-server update
-	// For now, mark as completed to allow testing of device creation
+	ctx := check.Context()
+
+	// Fetch the WorkMachine to trigger its reconciliation
+	workMachine := &workmachinev1.WorkMachine{}
+	if err := r.Get(ctx, client.ObjectKey{Name: obj.Spec.WorkMachineRef}, workMachine); err != nil {
+		return check.Failed(fmt.Errorf("failed to get WorkMachine: %w", err))
+	}
+
+	// Update an annotation on WorkMachine to trigger reconciliation
+	// This will cause the WorkMachine controller to regenerate tunnel-server config
+	if workMachine.Annotations == nil {
+		workMachine.Annotations = make(map[string]string)
+	}
+
+	// Use current timestamp to ensure the annotation changes
+	workMachine.Annotations["vpn.kloudlite.io/peer-update-trigger"] = fmt.Sprintf("%d", time.Now().Unix())
+
+	if err := r.Update(ctx, workMachine); err != nil {
+		return check.Failed(fmt.Errorf("failed to trigger WorkMachine reconciliation: %w", err))
+	}
+
 	obj.Status.ConfigGeneration++
 	return check.Passed()
 }
 
 // removePeerFromTunnelServer removes the device peer from tunnel-server on deletion
 func (r *WireGuardDeviceReconciler) removePeerFromTunnelServer(check *reconciler.Check[*wireguarddevicev1.WireGuardDevice], obj *wireguarddevicev1.WireGuardDevice) reconciler.StepResult {
-	// TODO: Implement peer removal from tunnel-server
+	ctx := check.Context()
+
+	// Fetch the WorkMachine to trigger its reconciliation
+	workMachine := &workmachinev1.WorkMachine{}
+	if err := r.Get(ctx, client.ObjectKey{Name: obj.Spec.WorkMachineRef}, workMachine); err != nil {
+		// WorkMachine might already be deleted, which is fine
+		if errors.IsNotFound(err) {
+			return check.Passed()
+		}
+		return check.Failed(fmt.Errorf("failed to get WorkMachine: %w", err))
+	}
+
+	// Update an annotation on WorkMachine to trigger reconciliation
+	// This will cause the WorkMachine controller to regenerate tunnel-server config
+	// without this deleted device
+	if workMachine.Annotations == nil {
+		workMachine.Annotations = make(map[string]string)
+	}
+
+	// Use current timestamp to ensure the annotation changes
+	workMachine.Annotations["vpn.kloudlite.io/peer-update-trigger"] = fmt.Sprintf("%d", time.Now().Unix())
+
+	if err := r.Update(ctx, workMachine); err != nil {
+		return check.Failed(fmt.Errorf("failed to trigger WorkMachine reconciliation: %w", err))
+	}
+
 	return check.Passed()
 }
 
