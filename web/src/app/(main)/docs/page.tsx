@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
-import { APP_MODE } from '@/lib/app-mode'
+import { getAppMode } from '@/lib/app-mode'
 
 // Documentation root page - redirects to installation page
 export default function Page() {
   // Only show docs page in website mode
-  if (APP_MODE === 'website') {
+  const mode = getAppMode()
+  if (mode === 'website') {
     redirect('/docs/introduction/installation')
   }
 

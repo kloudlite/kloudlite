@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { APP_MODE } from '@/lib/app-mode'
+import { getAppMode } from '@/lib/app-mode'
 import { Check } from 'lucide-react'
 import { GetStartedButton } from '@/components/get-started-button'
 import { WebsiteHeader } from '@/components/website-header'
@@ -249,7 +249,8 @@ function PricingPage() {
 
 export default function Page() {
   // Only show pricing page in website mode
-  if (APP_MODE === 'website') {
+  const mode = getAppMode()
+  if (mode === 'website') {
     return <PricingPage />
   }
 

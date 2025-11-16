@@ -3,7 +3,7 @@ import { WorkMachinesContent } from './workspaces/_components/work-machines-cont
 import { getMyWorkMachine, listAllWorkMachines } from '@/app/actions/work-machine.actions'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import type { WorkMachine } from '@/types/work-machine'
-import { APP_MODE } from '@/lib/app-mode'
+import { getAppMode } from '@/lib/app-mode'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { TypingText } from './_components/typing-text'
@@ -159,7 +159,8 @@ function WebsiteLandingPage() {
 // Main dashboard page - middleware ensures only users with 'user' role can access this
 export default async function HomePage() {
   // If in website mode, show website landing page
-  if (APP_MODE === 'website') {
+  const mode = getAppMode()
+  if (mode === 'website') {
     return <WebsiteLandingPage />
   }
 
