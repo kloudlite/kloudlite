@@ -94,13 +94,7 @@ func (r *WorkspaceReconciler) handleCloningPending(
 	// Validate source workspace state
 	if sourceWorkspace.DeletionTimestamp != nil {
 		logger.Error("Source workspace is being deleted")
-		workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
-		workspace.Status.CloningStatus.ErrorMessage = "Source workspace is being deleted"
-		workspace.Status.CloningStatus.CompletionTime = fn.Ptr(metav1.Now())
-		if err := r.Status().Update(ctx, workspace); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
+		return r.failCloningPhase(ctx, workspace, "Source workspace is being deleted", logger)
 	}
 
 	// Store source workspace details
@@ -218,12 +212,7 @@ func (r *WorkspaceReconciler) handleCloningCreatingCopyJob(
 		senderJob, err := copier.createSenderJob(ctx, workspace, sourceWorkspace, logger)
 		if err != nil {
 			logger.Error("Failed to create sender job", zap.Error(err))
-			workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
-			workspace.Status.CloningStatus.ErrorMessage = fmt.Sprintf("Failed to create sender job: %v", err)
-			if err := r.Status().Update(ctx, workspace); err != nil {
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{}, nil
+			return r.failCloningPhase(ctx, workspace, fmt.Sprintf("Failed to create sender job: %v", err), logger)
 		}
 
 		copyStatus.SenderJobName = senderJob.Name
@@ -651,4 +640,23 @@ func (r *WorkspaceReconciler) getSourceWorkspaceOrFail(
 		return nil, true, reconcile.Result{}, nil
 	}
 	return sourceWorkspace, false, reconcile.Result{}, nil
+}
+
+// failCloningPhase sets the cloning phase to failed with an error message and returns
+// This is a helper to reduce boilerplate for the common "fail and return" pattern
+func (r *WorkspaceReconciler) failCloningPhase(
+	ctx context.Context,
+	workspace *workspacev1.Workspace,
+	errorMessage string,
+	logger *zap.Logger,
+) (reconcile.Result, error) {
+	workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
+	workspace.Status.CloningStatus.ErrorMessage = errorMessage
+	if workspace.Status.CloningStatus.CompletionTime == nil {
+		workspace.Status.CloningStatus.CompletionTime = fn.Ptr(metav1.Now())
+	}
+	if err := r.Status().Update(ctx, workspace); err != nil {
+		return reconcile.Result{}, err
+	}
+	return reconcile.Result{}, nil
 }

@@ -16,6 +16,62 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// deleteWorkspacePod deletes a workspace pod, using force delete if the node is not ready
+// Returns true if the pod was force deleted, false otherwise
+func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, podName string, logger *zap.Logger) (forceDeleted bool, err error) {
+	// Check if node is ready before attempting deletion
+	nodeName := pod.Spec.NodeName
+	shouldForceDelete := false
+
+	if nodeName != "" {
+		node := &corev1.Node{}
+		if err := r.Get(ctx, client.ObjectKey{Name: nodeName}, node); err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Warn("Node not found, will force delete pod", zap.String("node", nodeName))
+				shouldForceDelete = true
+			} else {
+				logger.Warn("Failed to get node status", zap.String("node", nodeName), zap.Error(err))
+			}
+		} else {
+			// Check if node is ready
+			nodeReady := false
+			for _, condition := range node.Status.Conditions {
+				if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
+					nodeReady = true
+					break
+				}
+			}
+			if !nodeReady {
+				logger.Info("Node is not ready, will force delete pod", zap.String("node", nodeName))
+				shouldForceDelete = true
+			}
+		}
+	}
+
+	logger.Info("Deleting workspace pod",
+		zap.String("pod", podName),
+		zap.Bool("forceDelete", shouldForceDelete))
+
+	if shouldForceDelete {
+		gracePeriod := int64(0)
+		deleteOptions := &client.DeleteOptions{
+			GracePeriodSeconds: &gracePeriod,
+		}
+		if err := r.Delete(ctx, pod, deleteOptions); err != nil && !apierrors.IsNotFound(err) {
+			logger.Error("Failed to force delete workspace pod", zap.Error(err))
+			return true, err
+		}
+		return true, nil
+	}
+
+	// Normal graceful deletion
+	if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
+		logger.Error("Failed to delete workspace pod", zap.Error(err))
+		return false, err
+	}
+	return false, nil
+}
+
 // deleteHostDirectory deletes a directory on the host by creating a temporary pod
 // that mounts the host filesystem and removes the directory
 func (r *WorkspaceReconciler) deleteHostDirectory(ctx context.Context, hostPath string, workspaceName string, logger *zap.Logger) error {
@@ -162,50 +218,9 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
 		if err == nil {
-			// Check if node is ready before attempting deletion
-			nodeName := pod.Spec.NodeName
-			shouldForceDelete := false
-
-			if nodeName != "" {
-				node := &corev1.Node{}
-				if err := r.Get(ctx, client.ObjectKey{Name: nodeName}, node); err != nil {
-					if apierrors.IsNotFound(err) {
-						logger.Warn("Node not found during deletion, will force delete pod", zap.String("node", nodeName))
-						shouldForceDelete = true
-					}
-				} else {
-					nodeReady := false
-					for _, condition := range node.Status.Conditions {
-						if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
-							nodeReady = true
-							break
-						}
-					}
-					if !nodeReady {
-						logger.Info("Node is not ready during deletion, will force delete pod", zap.String("node", nodeName))
-						shouldForceDelete = true
-					}
-				}
-			}
-
-			logger.Info("Deleting workspace pod",
-				zap.String("pod", podName),
-				zap.Bool("forceDelete", shouldForceDelete))
-
-			if shouldForceDelete {
-				gracePeriod := int64(0)
-				deleteOptions := &client.DeleteOptions{
-					GracePeriodSeconds: &gracePeriod,
-				}
-				if err := r.Delete(ctx, pod, deleteOptions); err != nil && !apierrors.IsNotFound(err) {
-					logger.Error("Failed to force delete workspace pod", zap.Error(err))
-					return reconcile.Result{}, err
-				}
-			} else {
-				if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
-					logger.Error("Failed to delete workspace pod", zap.Error(err))
-					return reconcile.Result{}, err
-				}
+			// Delete the workspace pod using the helper method
+			if _, err := r.deleteWorkspacePod(ctx, pod, podName, logger); err != nil {
+				return reconcile.Result{}, err
 			}
 		} else if !apierrors.IsNotFound(err) {
 			logger.Error("Failed to check workspace pod", zap.Error(err))
@@ -440,53 +455,14 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 		return reconcile.Result{}, err
 	}
 
-	// Pod exists, check if node is ready before attempting graceful deletion
-	nodeName := pod.Spec.NodeName
-	shouldForceDelete := false
-
-	if nodeName != "" {
-		// Check if the node is ready
-		node := &corev1.Node{}
-		if err := r.Get(ctx, client.ObjectKey{Name: nodeName}, node); err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Warn("Node not found, will force delete pod", zap.String("node", nodeName))
-				shouldForceDelete = true
-			} else {
-				logger.Warn("Failed to get node status", zap.String("node", nodeName), zap.Error(err))
-			}
-		} else {
-			// Check if node is ready
-			nodeReady := false
-			for _, condition := range node.Status.Conditions {
-				if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
-					nodeReady = true
-					break
-				}
-			}
-			if !nodeReady {
-				logger.Info("Node is not ready, will force delete pod", zap.String("node", nodeName))
-				shouldForceDelete = true
-			}
-		}
+	// Delete the workspace pod using the helper method
+	forceDeleted, err := r.deleteWorkspacePod(ctx, pod, podName, logger)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 
-	// Delete the pod (force delete if node is not ready)
-	logger.Info("Deleting workspace pod for suspended workspace",
-		zap.String("pod", podName),
-		zap.Bool("forceDelete", shouldForceDelete))
-
-	if shouldForceDelete {
-		// Force delete the pod with zero grace period
-		gracePeriod := int64(0)
-		deleteOptions := &client.DeleteOptions{
-			GracePeriodSeconds: &gracePeriod,
-		}
-		if err := r.Delete(ctx, pod, deleteOptions); err != nil && !apierrors.IsNotFound(err) {
-			logger.Error("Failed to force delete workspace pod", zap.Error(err))
-			return reconcile.Result{}, err
-		}
-
-		// Mark as stopped immediately since we force deleted
+	// If force deleted, mark as stopped immediately
+	if forceDeleted {
 		workspace.Status.Phase = "Stopped"
 		workspace.Status.Message = "Workspace stopped (node not ready)"
 		workspace.Status.PodName = ""
@@ -498,12 +474,6 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 			logger.Warn("Failed to update workspace status", zap.Error(err))
 		}
 		return reconcile.Result{}, nil
-	}
-
-	// Normal graceful deletion
-	if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
-		logger.Error("Failed to delete workspace pod", zap.Error(err))
-		return reconcile.Result{}, err
 	}
 
 	workspace.Status.Phase = "Stopping"

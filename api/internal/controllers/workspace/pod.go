@@ -343,19 +343,13 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 	return nil
 }
 
-// getWorkMachineNodeSelector retrieves the nodeSelector from the user's WorkMachine
-// Returns nil if WorkMachine doesn't exist or has no nodeSelector configured
+// getWorkMachine fetches the WorkMachine resource by name
 func (r *WorkspaceReconciler) getWorkMachine(ctx context.Context, name string) (*machinesv1.WorkMachine, error) {
-	// WorkMachine is cluster-scoped, so we don't need a namespace
-	workMachine := &machinesv1.WorkMachine{}
-	err := r.Get(ctx, fn.NN("", name), workMachine)
-	if err != nil {
-		// WorkMachine doesn't exist or error fetching it
-		r.Logger.Info("WorkMachine not found", zap.String("name", name))
-		return nil, err
+	wm := &machinesv1.WorkMachine{}
+	if err := r.Get(ctx, client.ObjectKey{Name: name}, wm); err != nil {
+		return nil, fmt.Errorf("failed to get WorkMachine %s: %w", name, err)
 	}
-
-	return workMachine, nil
+	return wm, nil
 }
 
 // createWorkspacePod creates a pod with multiple containers for different access methods
