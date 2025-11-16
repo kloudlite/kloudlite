@@ -471,19 +471,12 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID string, vpnConf
 	// Debug: Print WireGuard config
 	fmt.Printf("[Session %s] WireGuard Configuration:\n%s\n", sessionID, vpnConfig.WGConfig)
 
-	// Write WireGuard config to temp file
-	wgConfigFile := fmt.Sprintf("/tmp/kltun-wg-%s.conf", sessionID)
-	if err := os.WriteFile(wgConfigFile, []byte(vpnConfig.WGConfig), 0600); err != nil {
-		fmt.Printf("[Session %s] Failed to write WireGuard config: %v\n", sessionID, err)
-		return
-	}
-	defer os.Remove(wgConfigFile)
-
+	// Create WireGuard device with in-memory configuration (no temp files)
 	wgConfig := &wireguard.Config{
 		InterfaceName: "utun", // macOS
 		ListenPort:    51820,
-		ConfigFile:    wgConfigFile,
 		MTU:           1420,
+		// No ConfigFile - we'll use SetConfig() instead
 	}
 
 	wgDevice, err := wireguard.NewDevice(ctx, wgConfig)
@@ -497,6 +490,12 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID string, vpnConf
 		return
 	}
 	defer wgDevice.Close()
+
+	// Apply configuration directly to device (in-memory, no files written)
+	if err := wgDevice.SetConfig(vpnConfig.WGConfig); err != nil {
+		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
+		return
+	}
 
 	fmt.Printf("[Session %s] ✓ WireGuard device started\n", sessionID)
 
