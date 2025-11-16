@@ -15,6 +15,8 @@ import (
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/user"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice"
+	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workspace"
@@ -47,6 +49,7 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(packagesv1.AddToScheme(scheme))
 	utilruntime.Must(domainrequestsv1.AddToScheme(scheme))
+	utilruntime.Must(wireguarddevicev1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
 	// Set controller-runtime logger to use our zap logger
@@ -166,6 +169,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 
 	if err = domainRequestReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create DomainRequest controller: %w", err)
+	}
+
+	// Setup WireGuardDevice controller
+	wireguardDeviceReconciler := &wireguarddevice.WireGuardDeviceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}
+
+	if err = wireguardDeviceReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create WireGuardDevice controller: %w", err)
 	}
 
 	logger.Info("Controllers initialized successfully")

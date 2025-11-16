@@ -1,0 +1,158 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: wireguarddevices.vpn.kloudlite.io
+spec:
+  group: vpn.kloudlite.io
+  names:
+    kind: WireGuardDevice
+    listKind: WireGuardDeviceList
+    plural: wireguarddevices
+    singular: wireguarddevice
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.deviceId
+      name: Device ID
+      type: string
+    - jsonPath: .status.assignedIP
+      name: Assigned IP
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.lastSeen
+      name: Last Seen
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: WireGuardDevice represents a client device connecting to the
+          VPN
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: WireGuardDeviceSpec defines the desired state of WireGuardDevice
+            properties:
+              deviceId:
+                description: DeviceID is the unique identifier for this device (UUID)
+                type: string
+              deviceName:
+                description: DeviceName is a human-readable name for the device (e.g.,
+                  "John's MacBook")
+                type: string
+              platform:
+                description: Platform indicates the operating system (darwin, linux,
+                  windows)
+                enum:
+                - darwin
+                - linux
+                - windows
+                type: string
+              userRef:
+                description: UserRef is the username of the user who owns this device
+                type: string
+              workMachineRef:
+                description: WorkMachineRef is the name of the WorkMachine this device
+                  connects to
+                type: string
+            required:
+            - deviceId
+            - userRef
+            - workMachineRef
+            type: object
+          status:
+            description: WireGuardDeviceStatus defines the observed state of WireGuardDevice
+            properties:
+              assignedIP:
+                description: AssignedIP is the IP address allocated to this device
+                type: string
+              checkList:
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    completedAt:
+                      format: date-time
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                  type: object
+                type: object
+              configGeneration:
+                description: ConfigGeneration increments when the device configuration
+                  changes
+                format: int64
+                type: integer
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              lastSeen:
+                description: LastSeen is the timestamp when this device last connected
+                format: date-time
+                type: string
+              message:
+                description: Message provides additional information about the current
+                  state
+                type: string
+              phase:
+                description: Phase represents the current state of the device
+                enum:
+                - Pending
+                - Provisioning
+                - Ready
+                - Error
+                type: string
+              publicKey:
+                description: PublicKey is the WireGuard public key for this device
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

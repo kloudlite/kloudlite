@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/deviceid"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/hosts"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wireguard"
@@ -341,15 +342,6 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 		return resp
 	}
 
-	// Call API to get VPN configuration
-	apiClient := api.NewClient(server, token)
-	vpnConfig, err := apiClient.Connect()
-	if err != nil {
-		result := VPNConnectResult{Success: false, Message: fmt.Sprintf("Failed to get VPN config: %v", err)}
-		resp, _ := NewSuccessResponse(req.ID, result)
-		return resp
-	}
-
 	// Generate session ID
 	sessionID := fmt.Sprintf("conn-%d", time.Now().Unix())
 
@@ -374,8 +366,8 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 	s.connections[sessionID] = conn
 	s.connMutex.Unlock()
 
-	// Start VPN connection in background
-	go s.runVPNConnection(ctx, sessionID, vpnConfig)
+	// Start VPN connection in background with server and token
+	go s.runVPNConnection(ctx, sessionID, server, token)
 
 	result := VPNConnectResult{
 		Success:   true,
@@ -440,46 +432,64 @@ func (s *Server) handleStatus(req *Request) *Response {
 	return resp
 }
 
-// runVPNConnection runs a VPN connection
-func (s *Server) runVPNConnection(ctx context.Context, sessionID string, vpnConfig *api.ConnectResponse) {
+// runVPNConnection runs a VPN connection with separate API calls
+func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token string) {
 	fmt.Printf("[Session %s] Starting VPN connection\n", sessionID)
 
-	// 1. Install CA certificate
-	if vpnConfig.CACert != "" {
+	// Create API client
+	apiClient := api.NewClient(server, token)
+
+	// Get or create device ID
+	deviceID, err := deviceid.GetOrCreateDeviceID()
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to get device ID: %v\n", sessionID, err)
+		return
+	}
+	fmt.Printf("[Session %s] Using device ID: %s\n", sessionID, deviceID)
+
+	// 1. Get WireGuard configuration (one-time call)
+	fmt.Printf("[Session %s] Fetching WireGuard configuration...\n", sessionID)
+	wgConfig, err := apiClient.GetWireGuardConfig(deviceID)
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to get WireGuard config: %v\n", sessionID, err)
+		return
+	}
+
+	// 2. Get CA certificate (one-time call)
+	fmt.Printf("[Session %s] Fetching CA certificate...\n", sessionID)
+	caCert, err := apiClient.GetCACert()
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to get CA cert: %v\n", sessionID, err)
+		return
+	}
+
+	// Install CA certificate
+	if caCert != "" {
 		fmt.Printf("[Session %s] Installing CA certificate...\n", sessionID)
-		// Write CA cert to temp file
 		certFile := fmt.Sprintf("/tmp/kltun-ca-%s.crt", sessionID)
-		if err := os.WriteFile(certFile, []byte(vpnConfig.CACert), 0600); err != nil {
+		if err := os.WriteFile(certFile, []byte(caCert), 0600); err != nil {
 			fmt.Printf("[Session %s] Failed to write CA cert: %v\n", sessionID, err)
 			return
 		}
 		defer os.Remove(certFile)
 
-		// Install to all stores
 		stores := []string{"system", "nss", "java"}
 		if err := truststore.InstallAll(certFile, stores); err != nil {
 			fmt.Printf("[Session %s] Warning: Failed to install CA cert: %v\n", sessionID, err)
-			// Continue anyway
 		} else {
 			fmt.Printf("[Session %s] ✓ CA certificate installed\n", sessionID)
 		}
 	}
 
-	// 2. Start WireGuard device
+	// 3. Start WireGuard device
 	fmt.Printf("[Session %s] Starting WireGuard device...\n", sessionID)
-
-	// Debug: Print WireGuard config
-	fmt.Printf("[Session %s] WireGuard Configuration:\n%s\n", sessionID, vpnConfig.WGConfig)
-
-	// Create WireGuard device with in-memory configuration (no temp files)
-	wgConfig := &wireguard.Config{
+	wgDeviceConfig := &wireguard.Config{
 		InterfaceName: "utun", // macOS
 		ListenPort:    51820,
 		MTU:           1420,
-		// No ConfigFile - we'll use SetConfig() instead
 	}
 
-	wgDevice, err := wireguard.NewDevice(ctx, wgConfig)
+	wgDevice, err := wireguard.NewDevice(ctx, wgDeviceConfig)
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to create WireGuard device: %v\n", sessionID, err)
 		return
@@ -491,27 +501,20 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID string, vpnConf
 	}
 	defer wgDevice.Close()
 
-	// Apply configuration directly to device (in-memory, no files written)
-	if err := wgDevice.SetConfig(vpnConfig.WGConfig); err != nil {
+	if err := wgDevice.SetConfig(wgConfig); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
 		return
 	}
 
 	fmt.Printf("[Session %s] ✓ WireGuard device started\n", sessionID)
 
-	// 3. Configure hosts
-	if len(vpnConfig.Hosts) > 0 {
-		fmt.Printf("[Session %s] Configuring hosts (%d entries)...\n", sessionID, len(vpnConfig.Hosts))
-		for _, host := range vpnConfig.Hosts {
-			if err := s.hostsManager.Add(host.Hostname, host.IP, fmt.Sprintf("# kltun session %s", sessionID)); err != nil {
-				fmt.Printf("[Session %s] Warning: Failed to add host %s: %v\n", sessionID, host.Hostname, err)
-			}
-		}
-		fmt.Printf("[Session %s] ✓ Hosts configured\n", sessionID)
-	}
+	// 4. Start hosts polling goroutine (polls every 10 seconds)
+	fmt.Printf("[Session %s] Starting hosts polling (every 10 seconds)...\n", sessionID)
+	hostsCtx, hostsCancel := context.WithCancel(ctx)
+	defer hostsCancel()
 
-	// TODO: 4. Start proxyguard client
-	// This would require the proxyguard configuration from the API
+	hostsDone := make(chan struct{})
+	go s.pollHosts(hostsCtx, sessionID, apiClient, hostsDone)
 
 	fmt.Printf("[Session %s] VPN connection established successfully\n", sessionID)
 
@@ -520,15 +523,102 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID string, vpnConf
 
 	fmt.Printf("[Session %s] Stopping VPN connection...\n", sessionID)
 
-	// Cleanup hosts
-	if len(vpnConfig.Hosts) > 0 {
-		fmt.Printf("[Session %s] Removing hosts...\n", sessionID)
-		for _, host := range vpnConfig.Hosts {
-			if err := s.hostsManager.Remove(host.Hostname); err != nil {
-				fmt.Printf("[Session %s] Warning: Failed to remove host %s: %v\n", sessionID, host.Hostname, err)
+	// Wait for hosts polling to stop
+	hostsCancel()
+	<-hostsDone
+
+	// Cleanup all hosts for this session
+	s.cleanupSessionHosts(sessionID)
+
+	fmt.Printf("[Session %s] VPN connection stopped\n", sessionID)
+}
+
+// pollHosts polls the hosts API every 10 seconds and updates /etc/hosts
+func (s *Server) pollHosts(ctx context.Context, sessionID string, apiClient *api.Client, done chan<- struct{}) {
+	defer close(done)
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	// Track current hosts to detect changes
+	currentHosts := make(map[string]string) // hostname -> IP
+
+	// Initial fetch
+	s.fetchAndUpdateHosts(ctx, sessionID, apiClient, currentHosts)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.fetchAndUpdateHosts(ctx, sessionID, apiClient, currentHosts)
+		}
+	}
+}
+
+// fetchAndUpdateHosts fetches hosts from API and updates /etc/hosts
+func (s *Server) fetchAndUpdateHosts(ctx context.Context, sessionID string, apiClient *api.Client, currentHosts map[string]string) {
+	hosts, err := apiClient.GetHosts()
+	if err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to fetch hosts: %v\n", sessionID, err)
+		return
+	}
+
+	// Build map of new hosts
+	newHosts := make(map[string]string)
+	for _, host := range hosts {
+		newHosts[host.Hostname] = host.IP
+	}
+
+	// Remove hosts that no longer exist
+	for hostname := range currentHosts {
+		if _, exists := newHosts[hostname]; !exists {
+			fmt.Printf("[Session %s] Removing host: %s\n", sessionID, hostname)
+			if err := s.hostsManager.Remove(hostname); err != nil {
+				fmt.Printf("[Session %s] Warning: Failed to remove host %s: %v\n", sessionID, hostname, err)
 			}
 		}
 	}
 
-	fmt.Printf("[Session %s] VPN connection stopped\n", sessionID)
+	// Add or update hosts
+	for hostname, ip := range newHosts {
+		if currentIP, exists := currentHosts[hostname]; !exists || currentIP != ip {
+			fmt.Printf("[Session %s] Adding/updating host: %s -> %s\n", sessionID, hostname, ip)
+			if err := s.hostsManager.Add(hostname, ip, fmt.Sprintf("# kltun session %s", sessionID)); err != nil {
+				fmt.Printf("[Session %s] Warning: Failed to add host %s: %v\n", sessionID, hostname, err)
+			}
+		}
+	}
+
+	// Update current hosts map
+	for k := range currentHosts {
+		delete(currentHosts, k)
+	}
+	for k, v := range newHosts {
+		currentHosts[k] = v
+	}
+
+	fmt.Printf("[Session %s] ✓ Hosts updated (%d entries)\n", sessionID, len(currentHosts))
+}
+
+// cleanupSessionHosts removes all hosts for a session
+func (s *Server) cleanupSessionHosts(sessionID string) {
+	fmt.Printf("[Session %s] Cleaning up hosts...\n", sessionID)
+
+	// List all hosts managed by hostsManager
+	entries, err := s.hostsManager.List()
+	if err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to list hosts: %v\n", sessionID, err)
+		return
+	}
+
+	// Remove hosts that belong to this session
+	sessionComment := fmt.Sprintf("# kltun session %s", sessionID)
+	for _, entry := range entries {
+		if entry.Comment == sessionComment {
+			if err := s.hostsManager.Remove(entry.Hostname); err != nil {
+				fmt.Printf("[Session %s] Warning: Failed to remove host %s: %v\n", sessionID, entry.Hostname, err)
+			}
+		}
+	}
 }
