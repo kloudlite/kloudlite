@@ -31,12 +31,13 @@ export async function middleware(req: NextRequest) {
  * This is for users inside their Kloudlite installation managing workspaces/workmachines
  */
 async function handleDashboardMode(req: NextRequest, pathname: string): Promise<NextResponse> {
-  // Skip auth checks for auth pages, installation scripts, superadmin login, and public assets
+  // Skip auth checks for auth pages, installation scripts, superadmin login, kltun install, and public assets
   if (
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/install') ||
     pathname.startsWith('/uninstall') ||
+    pathname.startsWith('/kltun') ||
     pathname.startsWith('/superadmin-login') ||
     pathname.startsWith('/_next') ||
     pathname.includes('.')

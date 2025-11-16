@@ -20,7 +20,6 @@ export const MODE_ROUTES = {
     '/dashboard',
     '/workspaces',
     '/environments',
-    '/connection-tokens',
     '/admin',
     '/super-admin',
     '/auth',

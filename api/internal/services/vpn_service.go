@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -46,17 +45,9 @@ func NewVPNService(k8sClient client.Client, logger *zap.Logger) VPNService {
 }
 
 // GetVPNConfig retrieves VPN configuration for a user
+// tokenID is no longer used (kept for backwards compatibility but can be removed)
 func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, userEmail string) (*VPNConfig, error) {
-	// 1. Verify ConnectionToken exists in Kubernetes
-	var connectionToken connectiontokenv1.ConnectionToken
-	if err := s.k8sClient.Get(ctx, client.ObjectKey{Name: tokenID}, &connectionToken); err != nil {
-		if errors.IsNotFound(err) {
-			return nil, fmt.Errorf("connection token has been revoked")
-		}
-		return nil, fmt.Errorf("failed to verify connection token: %w", err)
-	}
-
-	// 2. Find the user's WorkMachine
+	// 1. Find the user's WorkMachine
 	var workMachineList workmachinev1.WorkMachineList
 	if err := s.k8sClient.List(ctx, &workMachineList); err != nil {
 		return nil, fmt.Errorf("failed to list work machines: %w", err)
@@ -80,19 +71,19 @@ func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, userEmail string
 		zap.String("workMachine", userWorkMachine.Name),
 		zap.String("namespace", targetNamespace))
 
-	// 3. Fetch CA certificate from kloudlite-ingress/kloudlite-wildcard-cert-tls
+	// 2. Fetch CA certificate from kloudlite-ingress/kloudlite-wildcard-cert-tls
 	caCert, err := s.fetchCACertificate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch CA certificate: %w", err)
 	}
 
-	// 4. Fetch WireGuard configuration from tunnel-server secret
+	// 3. Fetch WireGuard configuration from tunnel-server secret
 	wgConfig, err := s.fetchWireGuardConfig(ctx, targetNamespace)
 	if err != nil {
 		return nil, err // Error already formatted
 	}
 
-	// 5. Build host entries from Services in the target namespace
+	// 4. Build host entries from Services in the target namespace
 	hosts, err := s.buildHostEntries(ctx, targetNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build host entries: %w", err)
