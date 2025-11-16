@@ -25,11 +25,10 @@ function validateEnv() {
   }
 
   // Only non-dashboard, non-supabase modes need WEB_URL (currently none, but keeping for future extensibility)
+  // For multi-tenant deployments, we use the same image for all modes, so we just warn instead of throwing
   if (process.env.NODE_ENV === 'production' && !isBuildTime && !isSupabaseMode && !isDashboardMode && !webUrl) {
-    throw new Error(
-      'CRITICAL: NEXT_PUBLIC_WEB_URL environment variable is not set. ' +
-        'The application cannot function without this configuration. ' +
-        'Please set NEXT_PUBLIC_WEB_URL in your environment variables.',
+    console.warn(
+      '⚠️  NEXT_PUBLIC_WEB_URL environment variable is not set. Using fallback value.',
     )
   }
 
