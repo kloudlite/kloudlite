@@ -9,7 +9,17 @@
 
 export type AppMode = 'dashboard' | 'website' | 'console'
 
-export const APP_MODE = (process.env.APP_MODE || 'website') as AppMode
+/**
+ * Get the current app mode from environment variable
+ * This function reads the env var at runtime (not build time) to support multi-tenant deployments
+ */
+export function getAppMode(): AppMode {
+  return (process.env.APP_MODE || 'website') as AppMode
+}
+
+// Deprecated: Use getAppMode() instead for runtime env var reading
+// This constant may be inlined at build time by Next.js
+export const APP_MODE = getAppMode()
 
 // Route definitions for each mode
 export const MODE_ROUTES = {
@@ -77,12 +87,13 @@ export function validateRouteAccess(pathname: string): {
     return { allowed: true }
   }
 
-  const allowed = isRouteAllowedInMode(pathname, APP_MODE)
+  const mode = getAppMode()
+  const allowed = isRouteAllowedInMode(pathname, mode)
 
   if (!allowed) {
     return {
       allowed: false,
-      redirectTo: getRedirectForMode(APP_MODE),
+      redirectTo: getRedirectForMode(mode),
     }
   }
 

@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { validateRouteAccess, APP_MODE } from '@/lib/app-mode'
+import { validateRouteAccess, getAppMode } from '@/lib/app-mode'
 import { jwtVerify } from 'jose'
 import type { Session } from 'next-auth'
 
@@ -15,7 +15,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // Mode-specific middleware logic
-  switch (APP_MODE) {
+  const mode = getAppMode()
+  switch (mode) {
     case 'dashboard':
       return handleDashboardMode(req, pathname)
     case 'website':
