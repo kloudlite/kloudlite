@@ -179,11 +179,28 @@ func (sm *ServiceManager) Stop() error {
 
 // Status returns the status of the daemon service
 func (sm *ServiceManager) Status() (bool, error) {
+	// The daemon runs as root in the system domain, so we need to check with sudo
+	// First try without sudo (for non-root users)
 	cmd := exec.Command("launchctl", "list", LaunchdLabel)
 	output, err := cmd.CombinedOutput()
 
+	if err == nil && len(output) > 0 {
+		// Service found in user domain
+		return true, nil
+	}
+
+	// Try with sudo to check system domain
+	cmd = exec.Command("sudo", "-n", "launchctl", "list", LaunchdLabel)
+	output, err = cmd.CombinedOutput()
+
 	if err != nil {
-		// If the service is not loaded, launchctl list will fail
+		// If sudo -n fails due to password requirement, try checking process list
+		// This is a fallback that doesn't require sudo
+		cmd = exec.Command("pgrep", "-f", "kltun daemon run")
+		output, err = cmd.CombinedOutput()
+		if err == nil && len(output) > 0 {
+			return true, nil
+		}
 		return false, nil
 	}
 
