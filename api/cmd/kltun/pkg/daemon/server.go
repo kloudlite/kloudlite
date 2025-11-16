@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
-	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/config"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/hosts"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wireguard"
@@ -331,38 +330,15 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 		return NewErrorResponse(req.ID, ErrCodeInvalidParams, "Invalid parameters", err.Error())
 	}
 
-	// Load or use provided token/server
+	// Token and server must be provided - no persistence
 	token := params.Token
 	server := params.Server
 
-	// If not provided, try to load from config
-	if token == "" || server == "" {
-		cfg, err := config.Load()
-		if err != nil {
-			result := VPNConnectResult{Success: false, Message: fmt.Sprintf("Failed to load config: %v", err)}
-			resp, _ := NewSuccessResponse(req.ID, result)
-			return resp
-		}
-		if token == "" {
-			token = cfg.Token
-		}
-		if server == "" {
-			server = cfg.Server
-		}
-	}
-
 	// Validate we have token and server
 	if token == "" || server == "" {
-		result := VPNConnectResult{Success: false, Message: "Token and server are required"}
+		result := VPNConnectResult{Success: false, Message: "Token and server are required. Credentials are not saved - you must provide them on each connection."}
 		resp, _ := NewSuccessResponse(req.ID, result)
 		return resp
-	}
-
-	// Save config if token/server were provided
-	if params.Token != "" || params.Server != "" {
-		if err := config.Update(token, server); err != nil {
-			fmt.Printf("Warning: failed to save config: %v\n", err)
-		}
 	}
 
 	// Call API to get VPN configuration

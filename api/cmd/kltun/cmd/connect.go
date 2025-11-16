@@ -20,13 +20,10 @@ var connectCmd = &cobra.Command{
 The connection runs in the background via the kltun daemon. Once connected,
 you can access your Kloudlite workspace and services.
 
-If --token and --server are provided, they will be saved for future connections.
-Otherwise, the command will use previously saved credentials.`,
-	Example: `  # Connect with token and server (first time)
-  kltun connect --token YOUR_TOKEN --server https://subdomain.khost.dev
-
-  # Connect using saved credentials
-  kltun connect`,
+IMPORTANT: For security reasons, credentials are NOT saved to disk. You must
+provide --token and --server flags on every connection.`,
+	Example: `  # Connect with token and server (required every time)
+  kltun connect --token YOUR_TOKEN --server https://subdomain.khost.dev`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runConnect()
 	},

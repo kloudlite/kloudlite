@@ -65,49 +65,13 @@ func Load() (*Config, error) {
 }
 
 // Save saves the configuration to disk
+// DISABLED: Configuration persistence has been disabled for security reasons
 func Save(cfg *Config) error {
-	configMutex.Lock()
-	defer configMutex.Unlock()
-
-	// Create config directory if it doesn't exist
-	dir := filepath.Dir(configPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
-	}
-
-	data, err := yaml.Marshal(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
-	}
-
-	// Write to temp file first
-	tmpFile := configPath + ".tmp"
-	if err := os.WriteFile(tmpFile, data, 0600); err != nil {
-		return fmt.Errorf("failed to write config file: %w", err)
-	}
-
-	// Atomic rename
-	if err := os.Rename(tmpFile, configPath); err != nil {
-		os.Remove(tmpFile)
-		return fmt.Errorf("failed to save config file: %w", err)
-	}
-
-	return nil
+	return fmt.Errorf("configuration persistence is disabled - credentials are not saved to disk")
 }
 
 // Update updates specific fields in the config
+// DISABLED: Configuration persistence has been disabled for security reasons
 func Update(token, server string) error {
-	cfg, err := Load()
-	if err != nil {
-		return err
-	}
-
-	if token != "" {
-		cfg.Token = token
-	}
-	if server != "" {
-		cfg.Server = server
-	}
-
-	return Save(cfg)
+	return fmt.Errorf("configuration persistence is disabled - credentials are not saved to disk")
 }
