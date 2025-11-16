@@ -61,8 +61,9 @@ func (s *Server) Start(socketPath string) error {
 		return fmt.Errorf("failed to create listener: %w", err)
 	}
 
-	// Set socket permissions (only owner can access)
-	if err := os.Chmod(socketPath, 0600); err != nil {
+	// Set socket permissions (allow all users to connect)
+	// 0666 allows all users to read/write to the socket
+	if err := os.Chmod(socketPath, 0666); err != nil {
 		listener.Close()
 		return fmt.Errorf("failed to set socket permissions: %w", err)
 	}
