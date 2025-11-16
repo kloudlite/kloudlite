@@ -226,10 +226,10 @@ func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username 
 
 	// Determine server endpoint from WorkMachine IP
 	serverEndpoint := ""
-	if workMachine.Status.MachineInfo.PublicIP != "" {
-		serverEndpoint = fmt.Sprintf("%s:443", workMachine.Status.MachineInfo.PublicIP)
-	} else if workMachine.Status.MachineInfo.PrivateIP != "" {
-		serverEndpoint = fmt.Sprintf("%s:443", workMachine.Status.MachineInfo.PrivateIP)
+	if workMachine.Status.PublicIP != "" {
+		serverEndpoint = fmt.Sprintf("%s:443", workMachine.Status.PublicIP)
+	} else if workMachine.Status.PrivateIP != "" {
+		serverEndpoint = fmt.Sprintf("%s:443", workMachine.Status.PrivateIP)
 	}
 
 	// Return IPC config along with IP and public key
