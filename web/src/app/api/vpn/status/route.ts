@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 
 /**
  * VPN Status Check API Route
@@ -10,7 +9,7 @@ import { authOptions } from '@/lib/auth'
 export async function GET() {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -49,15 +48,15 @@ export async function GET() {
         connected: false,
         message: 'Backend unreachable'
       })
-    } catch (error) {
+    } catch (_error) {
       // Network error likely means VPN is not connected
       return NextResponse.json({
         connected: false,
         message: 'VPN not connected'
       })
     }
-  } catch (error) {
-    console.error('VPN status check error:', error)
+  } catch (_error) {
+    console.error('VPN status check error:', _error)
     return NextResponse.json(
       { connected: false, message: 'Status check failed' },
       { status: 500 }
