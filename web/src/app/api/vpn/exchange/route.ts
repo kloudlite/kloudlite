@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
     let tokenData: { e: string; b: string; t: string }
 
     try {
-      const { payload } = await jwtVerify(temporaryToken, secret)
+      // Add clock tolerance of 5 minutes to handle clock skew between servers
+      const { payload } = await jwtVerify(temporaryToken, secret, {
+        clockTolerance: 300, // 5 minutes in seconds
+      })
       tokenData = payload as { e: string; b: string; t: string }
 
       // Validate token type
