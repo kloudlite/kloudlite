@@ -29,13 +29,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify permanent VPN token
-    let claims: any
+    let claims: { type?: string; backendToken?: string }
     try {
       const secret = new TextEncoder().encode(jwtSecret)
       const { payload } = await jwtVerify(token, secret, {
         issuer: 'kloudlite-vpn',
       })
-      claims = payload
+      claims = payload as { type?: string; backendToken?: string }
     } catch (error) {
       console.error('Token verification failed:', error)
       return NextResponse.json(

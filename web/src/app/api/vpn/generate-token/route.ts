@@ -7,7 +7,7 @@ import { SignJWT } from 'jose'
  * Generates a short-lived compact JWT token (3 min) for kltun authentication
  * Requires user to be authenticated via NextAuth
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Get authenticated session
     const session = await auth()
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const secret = new TextEncoder().encode(jwtSecret)
 
     // Get backend token from session
-    const backendToken = (session.user as any).backendToken
+    const backendToken = (session.user as { backendToken?: string }).backendToken
 
     console.log('[VPN Generate] Creating token for email:', session.user.email)
     console.log('[VPN Generate] Current time:', Math.floor(Date.now() / 1000))

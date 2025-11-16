@@ -31,6 +31,7 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
     if (open && !tokenData) {
       generateToken()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   // Countdown timer
@@ -47,6 +48,7 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
       const interval = setInterval(updateTimer, 1000)
       return () => clearInterval(interval)
     }
+    return undefined
   }, [tokenData])
 
   const generateToken = async () => {
@@ -79,7 +81,7 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
       setCopiedCommand(label)
       toast.success('Copied to clipboard')
       setTimeout(() => setCopiedCommand(null), 2000)
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy to clipboard')
     }
   }
