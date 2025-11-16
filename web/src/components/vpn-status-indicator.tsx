@@ -40,9 +40,9 @@ export function VPNStatusIndicator() {
   const checkVPNStatus = async () => {
     try {
       const response = await fetch('/api/vpn/status')
-      const data: VPNStatus Response = await response.json()
+      const data: VPNStatusResponse = await response.json()
       setStatus(data.connected ? 'connected' : 'disconnected')
-    } catch (error) {
+    } catch (_error) {
       setStatus('disconnected')
     }
   }
@@ -55,8 +55,8 @@ export function VPNStatusIndicator() {
       if (data.token) {
         setToken(data.token)
       }
-    } catch (error) {
-      console.error('Failed to generate VPN token:', error)
+    } catch (_error) {
+      console.error('Failed to generate VPN token:', _error)
     }
   }
 
@@ -71,8 +71,8 @@ export function VPNStatusIndicator() {
       await navigator.clipboard.writeText(text)
       setCopiedCommand(commandType)
       setTimeout(() => setCopiedCommand(null), 2000)
-    } catch (error) {
-      console.error('Failed to copy:', error)
+    } catch (_error) {
+      console.error('Failed to copy:', _error)
     }
   }
 
