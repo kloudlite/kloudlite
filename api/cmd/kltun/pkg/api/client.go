@@ -73,9 +73,10 @@ func (c *Client) Connect() (*ConnectResponse, error) {
 
 // WireGuardConfigResponse represents WireGuard configuration with metadata
 type WireGuardConfigResponse struct {
-	Config     string `json:"config"`      // IPC format configuration
-	AssignedIP string `json:"assigned_ip"` // Device IP address (e.g., "10.17.0.2")
-	PublicKey  string `json:"public_key"`  // Device public key
+	Config         string `json:"config"`          // IPC format configuration
+	AssignedIP     string `json:"assigned_ip"`     // Device IP address (e.g., "10.17.0.2")
+	PublicKey      string `json:"public_key"`      // Device public key
+	ServerEndpoint string `json:"server_endpoint"` // WorkMachine endpoint (e.g., "203.0.113.1:443")
 }
 
 // GetWireGuardConfig calls the VPN WireGuard config API endpoint

@@ -15,6 +15,8 @@ import (
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/deviceid"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/hosts"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/netconfig"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/proxyguard"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wireguard"
 )
@@ -454,6 +456,8 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		fmt.Printf("[Session %s] Failed to get WireGuard config: %v\n", sessionID, err)
 		return
 	}
+	fmt.Printf("[Session %s] WireGuard config received - AssignedIP: %s\n", sessionID, wgConfig.AssignedIP)
+	fmt.Printf("[Session %s] WireGuard IPC config:\n%s\n", sessionID, wgConfig.Config)
 
 	// 2. Get CA certificate (one-time call)
 	fmt.Printf("[Session %s] Fetching CA certificate...\n", sessionID)
@@ -481,7 +485,22 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		}
 	}
 
-	// 3. Start WireGuard device
+	// 3. Start proxyguard client if ServerEndpoint is provided
+	var pgClient *proxyguard.Client
+	if wgConfig.ServerEndpoint != "" {
+		fmt.Printf("[Session %s] Starting proxyguard client...\n", sessionID)
+		fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, wgConfig.ServerEndpoint)
+
+		pgClient = proxyguard.NewClient("127.0.0.1:51821", wgConfig.ServerEndpoint)
+		if err := pgClient.Start(ctx); err != nil {
+			fmt.Printf("[Session %s] Failed to start proxyguard: %v\n", sessionID, err)
+			return
+		}
+		defer pgClient.Stop()
+		fmt.Printf("[Session %s] ✓ Proxyguard client started\n", sessionID)
+	}
+
+	// 4. Start WireGuard device
 	fmt.Printf("[Session %s] Starting WireGuard device...\n", sessionID)
 	wgDeviceConfig := &wireguard.Config{
 		InterfaceName: "utun", // macOS
@@ -506,6 +525,20 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		return
 	}
 
+	// Configure IP address and routes on the WireGuard interface
+	fmt.Printf("[Session %s] Configuring network interface...\n", sessionID)
+	netCfg := &netconfig.InterfaceConfig{
+		InterfaceName: wgDevice.InterfaceName(),
+		IPAddress:     wgConfig.AssignedIP + "/24",
+		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
+		Gateway:       "10.17.0.1",
+	}
+
+	if err := netconfig.ConfigureInterface(netCfg); err != nil {
+		fmt.Printf("[Session %s] Failed to configure network interface: %v\n", sessionID, err)
+		return
+	}
+
 	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, wgConfig.AssignedIP)
 
 	// 4. Start hosts polling goroutine (polls every 10 seconds)
@@ -526,6 +559,12 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	// Wait for hosts polling to stop
 	hostsCancel()
 	<-hostsDone
+
+	// Clean up network configuration
+	fmt.Printf("[Session %s] Cleaning up network configuration...\n", sessionID)
+	if err := netconfig.RemoveInterface(netCfg); err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to remove network configuration: %v\n", sessionID, err)
+	}
 
 	// Cleanup all hosts for this session
 	s.cleanupSessionHosts(sessionID)
