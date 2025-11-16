@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Package, Download } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
 import { ThemeSwitcher } from './theme-switcher'
+import { VPNStatusIndicator } from './vpn-status-indicator'
 import { KltunSetupDialog } from './kltun-setup-dialog'
 
 interface NavigationProps {
@@ -103,8 +104,9 @@ export function Navigation({
             </nav>
           </div>
 
-          {/* User Dropdown & Theme Switcher */}
+          {/* VPN Status, User Dropdown & Theme Switcher */}
           <div className="flex items-center gap-2">
+            <VPNStatusIndicator />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1">
