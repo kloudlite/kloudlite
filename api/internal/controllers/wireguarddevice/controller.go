@@ -2,6 +2,7 @@ package wireguarddevice
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"strings"
@@ -190,8 +191,8 @@ func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*
 		}
 
 		// Extract server public key - try dedicated field first, fallback to deriving from config
-		serverPublicKey := string(serverSecret.Data["server-public-key"])
-		if serverPublicKey == "" {
+		serverPublicKeyHex := string(serverSecret.Data["server-public-key"])
+		if serverPublicKeyHex == "" {
 			// Parse server private key from tunnel-server.conf and derive public key
 			serverConf := string(serverSecret.Data["tunnel-server.conf"])
 			if serverConf == "" {
@@ -216,21 +217,23 @@ func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*
 				return fmt.Errorf("server PrivateKey not found in tunnel-server.conf")
 			}
 
-			// Parse private key and derive public key
+			// Parse private key (base64) and derive public key in hex format
 			serverPrivKey, err := wgtypes.ParseKey(serverPrivateKeyStr)
 			if err != nil {
 				return fmt.Errorf("failed to parse server private key: %w", err)
 			}
-			serverPublicKey = serverPrivKey.PublicKey().String()
+			serverPubKey := serverPrivKey.PublicKey()
+			// WireGuard IPC protocol requires lowercase hex encoding
+			serverPublicKeyHex = hex.EncodeToString(serverPubKey[:])
 		}
 
 		// Get or generate private key
 		// If secret already exists with a private key, preserve it
 		// Otherwise, generate a new one using the public key from status
-		var privateKey string
+		var privateKeyHex string
 		if existingKey := string(secret.Data["private-key"]); existingKey != "" {
 			// Secret already has a private key, reuse it
-			privateKey = existingKey
+			privateKeyHex = existingKey
 		} else {
 			// Generate new private key from public key in status
 			// Note: We can't derive private key from public key, so we regenerate
@@ -239,7 +242,8 @@ func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*
 			if err != nil {
 				return fmt.Errorf("failed to generate private key: %w", err)
 			}
-			privateKey = privKey.String()
+			// WireGuard IPC protocol requires lowercase hex encoding
+			privateKeyHex = hex.EncodeToString(privKey[:])
 
 			// Update public key in status if it changed
 			pubKey := privKey.PublicKey()
@@ -248,29 +252,30 @@ func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*
 			}
 		}
 
-		// Create IPC format config
+		// Create IPC format config (uses hex-encoded keys)
 		ipcConfig := fmt.Sprintf(`private_key=%s
 listen_port=51820
 public_key=%s
 allowed_ip=10.17.0.0/24
 allowed_ip=10.43.0.0/16
 endpoint=127.0.0.1:51821
-`, privateKey, serverPublicKey)
+`, privateKeyHex, serverPublicKeyHex)
 
-		// Create INI format config
+		// Create INI format config (not currently used, but kept for reference)
+		// Note: INI format would use base64-encoded keys if needed
 		iniConfig := fmt.Sprintf(`[Interface]
-PrivateKey = %s
+PrivateKey = (base64 encoded)
 Address = %s/24
 ListenPort = 51820
 
 [Peer]
-PublicKey = %s
+PublicKey = (base64 encoded)
 AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
-`, privateKey, obj.Status.AssignedIP, serverPublicKey)
+`, obj.Status.AssignedIP)
 
 		secret.StringData = map[string]string{
-			"private-key": privateKey,
+			"private-key": privateKeyHex,
 			"peer.ipc":    ipcConfig,
 			"peer.conf":   iniConfig,
 		}
