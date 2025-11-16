@@ -52,8 +52,8 @@ export function VPNStatusIndicator() {
       const response = await fetch('/api/vpn/generate-token', { method: 'POST' })
       const data = await response.json()
 
-      if (data.token) {
-        setToken(data.token)
+      if (data.temporary_token) {
+        setToken(data.temporary_token)
       }
     } catch (_error) {
       console.error('Failed to generate VPN token:', _error)
