@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -188,7 +189,40 @@ func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*
 			return fmt.Errorf("failed to get tunnel-server secret: %w", err)
 		}
 
+		// Extract server public key - try dedicated field first, fallback to deriving from config
 		serverPublicKey := string(serverSecret.Data["server-public-key"])
+		if serverPublicKey == "" {
+			// Parse server private key from tunnel-server.conf and derive public key
+			serverConf := string(serverSecret.Data["tunnel-server.conf"])
+			if serverConf == "" {
+				return fmt.Errorf("tunnel-server.conf not found in secret")
+			}
+
+			// Extract PrivateKey from config using simple string parsing
+			lines := strings.Split(serverConf, "\n")
+			var serverPrivateKeyStr string
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if strings.HasPrefix(line, "PrivateKey") {
+					parts := strings.SplitN(line, "=", 2)
+					if len(parts) == 2 {
+						serverPrivateKeyStr = strings.TrimSpace(parts[1])
+						break
+					}
+				}
+			}
+
+			if serverPrivateKeyStr == "" {
+				return fmt.Errorf("server PrivateKey not found in tunnel-server.conf")
+			}
+
+			// Parse private key and derive public key
+			serverPrivKey, err := wgtypes.ParseKey(serverPrivateKeyStr)
+			if err != nil {
+				return fmt.Errorf("failed to parse server private key: %w", err)
+			}
+			serverPublicKey = serverPrivKey.PublicKey().String()
+		}
 
 		// Get or generate private key
 		// If secret already exists with a private key, preserve it
